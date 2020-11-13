@@ -11,7 +11,9 @@ NOTE: You're not expected to look at this raw XML file. Please open it in a webb
 https://stackoverflow.com/a/3839054
 https://stackoverflow.com/a/6251757
 
-Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
+Developers:
+ - Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
+ - Real-time settings can be marked with <realtime>SOME OPTIONAL TEXT</realtime>.
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
@@ -38,6 +40,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>chorus.active</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
+            <realtime/>
             <desc>
                 When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.</desc>
         </setting>
@@ -47,6 +50,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>8.0</def>
             <min>0.0</min>
             <max>256.0</max>
+            <realtime/>
             <desc>
                 Specifies the modulation depth of the chorus.</desc>
         </setting>
@@ -56,6 +60,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>2.0</def>
             <min>0.0</min>
             <max>10.0</max>
+            <realtime/>
             <desc>
                 Specifies the output amplitude of the chorus signal.</desc>
         </setting>
@@ -65,6 +70,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>3</def>
             <min>0</min>
             <max>99</max>
+            <realtime/>
             <desc>
                 Sets the voice count of the chorus.</desc>
         </setting>
@@ -74,6 +80,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0.3</def>
             <min>0.1</min>
             <max>5.0</max>
+            <realtime/>
             <desc>
                 Sets the modulation speed in Hz.</desc>
         </setting>
@@ -102,6 +109,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0</def>
             <min>0</min>
             <max>126</max>
+            <realtime/>
             <desc>
                 Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Only those SYSEX commands destined for this ID or to all devices will be acted upon.</desc>
         </setting>
@@ -136,6 +144,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0.2</def>
             <min>0.0</min>
             <max>10.0</max>
+            <realtime/>
             <desc>The gain is applied to the final or master output of the synthesizer. It is set to a low value by default to avoid the saturation of the output when many notes are played.</desc>
         </setting>
         <setting>
@@ -191,6 +200,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>1000.0</def>
             <min>-10000.0</min>
             <max>10000.0</max>
+            <realtime/>
             <desc>
                 This score is divided by the number of seconds this voice has been
                 active and is added to the overflow priority. It is usually a positive
@@ -204,6 +214,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>5000.0</def>
             <min>-50000.0</min>
             <max>50000.0</max>
+            <realtime/>
             <desc>
                 This score is added to voices on channels marked with the
                 synth.overflow.important-channels setting.
@@ -213,6 +224,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>overflow.important-channels</name>
             <type>str</type>
             <def>(empty string)</def>
+            <realtime/>
             <desc>
                 This setting is a comma-separated list of MIDI channel numbers that should
                 be treated as "important" by the overflow calculation, adding the score
@@ -229,6 +241,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>4000.0</def>
             <min>-10000.0</min>
             <max>10000.0</max>
+            <realtime/>
             <desc>
                 Sets the overflow priority score added to voices on a percussion
                 channel. This is usually a positive score, to give percussion voices
@@ -242,6 +255,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>-2000.0</def>
             <min>-10000.0</min>
             <max>10000.0</max>
+            <realtime/>
             <desc>
                 Sets the overflow priority score added to voices that have already
                 received a note-off event. This is usually a negative score, to give released
@@ -255,6 +269,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>-1000.0</def>
             <min>-10000.0</min>
             <max>10000.0</max>
+            <realtime/>
             <desc>
                 Sets the overflow priority score added to voices that are currently
                 sustained. With the default value, sustained voices are considered less
@@ -267,6 +282,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>500.0</def>
             <min>-10000.0</min>
             <max>10000.0</max>
+            <realtime/>
             <desc>
                 Sets the overflow priority score added to voices based on their current
                 volume. The voice volume is normalized to a value between 0 and 1 and
@@ -281,6 +297,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>256</def>
             <min>1</min>
             <max>65535</max>
+            <realtime/>
             <desc>
                 The polyphony defines how many voices can be played in parallel. A note event produces one or more voices. Its good to set this to a value which the system can handle and will thus limit FluidSynth's CPU usage. When FluidSynth runs out of voices it will begin terminating lower priority voices for new note events.</desc>
         </setting>
@@ -288,6 +305,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.active</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
+            <realtime/>
             <desc>
                 When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
             </desc>
@@ -298,6 +316,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0.0</def>
             <min>0.0</min>
             <max>1.0</max>
+            <realtime/>
             <desc>
                 Sets the amount of reverb damping.</desc>
         </setting>
@@ -307,6 +326,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0.9</def>
             <min>0.0</min>
             <max>1.0</max>
+            <realtime/>
             <desc>
                 Sets the reverb output amplitude.</desc>
         </setting>
@@ -316,6 +336,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0.2</def>
             <min>0.0</min>
             <max>1.0</max>
+            <realtime/>
             <desc>
                 Sets the room size (i.e. amount of wet) reverb.</desc>
         </setting>
@@ -325,6 +346,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>0.5</def>
             <min>0.0</min>
             <max>100.0</max>
+            <realtime/>
             <desc>
                 Sets the stereo spread of the reverb signal.</desc>
         </setting>
@@ -691,6 +713,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reset-synth</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
+            <realtime/>
             <desc>If true, reset the synth before starting a new MIDI song, so the state of a previous song can't affect the new song. Turn it off for seamless looping of a song.</desc>
         </setting>
         <setting>

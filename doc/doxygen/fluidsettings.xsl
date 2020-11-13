@@ -65,6 +65,18 @@
 <xsl:copy-of select="def" />
 \endhtmlonly
 
+<xsl:if test="realtime">
+\par Real-time
+<xsl:choose>
+    <xsl:when test="realtime/text()">
+\htmlonly
+<xsl:copy-of select="realtime" />
+\endhtmlonly
+</xsl:when>
+    <xsl:otherwise>This setting can be changed during runtime of the synthesizer.</xsl:otherwise>
+</xsl:choose>
+</xsl:if>
+
 <xsl:if test="deprecated">
 \deprecated This setting is deprecated and might be removed in a future version of FluidSynth.
 </xsl:if>
