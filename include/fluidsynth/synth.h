@@ -109,6 +109,8 @@ FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, int par
  * @defgroup voice_control Synthesis Voice Control
  * @ingroup synth
  *
+ * Low-level access to synthesis voices.
+ *
  * @{
  */
 FLUIDSYNTH_API int fluid_synth_start(fluid_synth_t *synth, unsigned int id,
@@ -128,6 +130,8 @@ FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t *synth,
 /**
  * @defgroup soundfont_management SoundFont Management
  * @ingroup synth
+ *
+ * Functions to load and unload SoundFonts.
  *
  * @{
  */
@@ -208,6 +212,9 @@ FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see flu
 /**
  * @defgroup synthesis_params Synthesis Parameters
  * @ingroup synth
+ *
+ * Functions to control and query synthesis parameters like gain and
+ * polyphony count.
  *
  * @{
  */
