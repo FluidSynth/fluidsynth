@@ -39,6 +39,7 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+*/
 
 /*!
 \example example.c
