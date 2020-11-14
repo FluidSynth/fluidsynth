@@ -61,7 +61,8 @@ span.permalink a {
     display: none;
 }
 
-#nav-tree
+#nav-tree,
+#side-nav
 {
     background: #333;
 }
@@ -74,9 +75,31 @@ span.permalink a {
     background: #666;
 }
 
+#side-nav {
+    width: 350px;
+}
+
+.ui-resizable-e {
+    background: #ddd;
+}
 
 #nav-sync {
     display: none;
+}
+
+@media (max-width: 767px) {
+    #side-nav {
+        display: none !important;
+    }
+    #doc-content {
+        margin-left: 0 !important;
+        height: auto !important;
+        width: auto !important;
+    }
+
+    #MSearchBox {
+        display: none !important;
+    }
 }
 
 #nav-tree,
