@@ -184,6 +184,16 @@ code {
     white-space: nowrap;
 }
 
+table.fieldtable,
+table.fieldtable td,
+table.fieldtable th
+{
+    box-shadow: none;
+    text-shadow: none;
+    border-radius: 0;
+    border-color: #DFE5F1 !important;
+}
+
 div.fragment {
     padding: 5px;
 }
