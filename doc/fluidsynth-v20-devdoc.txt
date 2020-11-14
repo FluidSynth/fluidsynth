@@ -39,6 +39,13 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+
+\page deprecated Deprecated Functions
+
+This page contains functions that have been marked obsolete.
+Functions listed here will be removed in the next major release.
+It is therefore not wise to use them in new code.
+
 */
 
 /*!
