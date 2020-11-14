@@ -87,6 +87,7 @@ WARN_LOGFILE =
 #---------------------------------------------------------------------------
 INPUT = \
 @CMAKE_SOURCE_DIR@/doc/fluidsynth-v20-devdoc.txt \
+@CMAKE_SOURCE_DIR@/doc/recent_changes.txt \
 @CMAKE_SOURCE_DIR@/include \
 @CMAKE_SOURCE_DIR@/include/fluidsynth \
 @CMAKE_SOURCE_DIR@/src \

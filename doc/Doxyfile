@@ -87,6 +87,7 @@ WARN_LOGFILE =
 #---------------------------------------------------------------------------
 INPUT = \
 ../doc/fluidsynth-v20-devdoc.txt \
+../doc/recent_changes.txt \
 ../include \
 ../include/fluidsynth \
 ../src
