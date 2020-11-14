@@ -92,7 +92,8 @@ INPUT = \
 ../doc/usage \
 ../include \
 ../include/fluidsynth \
-../src
+../src \
+../doc/doxygen/fluidsettings.txt
 
 INPUT_ENCODING = UTF-8
 FILE_PATTERNS = *.c *.h *.txt
