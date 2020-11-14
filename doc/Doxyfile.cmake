@@ -68,7 +68,6 @@ GENERATE_DEPRECATEDLIST = YES
 ENABLED_SECTIONS = 
 MAX_INITIALIZER_LINES = 30
 SHOW_USED_FILES = YES
-SHOW_DIRECTORIES = NO
 SHOW_FILES = YES
 SHOW_NAMESPACES = YES
 FILE_VERSION_FILTER = 
@@ -132,7 +131,6 @@ IGNORE_PREFIX =
 GENERATE_HTML = YES
 HTML_OUTPUT = html
 HTML_FILE_EXTENSION = .html
-HTML_ALIGN_MEMBERS = YES
 HTML_EXTRA_FILES = \
 @CMAKE_SOURCE_DIR@/doc/fluidsettings.xml \
 @CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl \
@@ -199,8 +197,6 @@ MAN_LINKS = NO
 #---------------------------------------------------------------------------
 GENERATE_XML = NO
 XML_OUTPUT = xml
-XML_SCHEMA = 
-XML_DTD = 
 XML_PROGRAMLISTING = YES
 #---------------------------------------------------------------------------
 # configuration options for the AutoGen Definitions output
@@ -242,7 +238,7 @@ CLASS_DIAGRAMS = YES
 MSCGEN_PATH = 
 HIDE_UNDOC_RELATIONS = YES
 HAVE_DOT = NO
-DOT_FONTNAME = FreeSans
+DOT_FONTNAME =
 DOT_FONTPATH = 
 CLASS_GRAPH = YES
 COLLABORATION_GRAPH = YES
