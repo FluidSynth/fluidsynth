@@ -88,12 +88,13 @@ WARN_LOGFILE =
 INPUT = \
 ../doc/fluidsynth-v20-devdoc.txt \
 ../doc/recent_changes.txt \
+../doc/usage \
 ../include \
 ../include/fluidsynth \
 ../src
 
 INPUT_ENCODING = UTF-8
-FILE_PATTERNS = *.c *.h
+FILE_PATTERNS = *.c *.h *.txt
 RECURSIVE = YES
 EXCLUDE = 
 EXCLUDE_SYMLINKS = NO
