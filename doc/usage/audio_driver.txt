@@ -40,7 +40,7 @@ with fluid_settings_setstr(). In most cases, the default driver should work
 out of the box. 
 
 Additional options that define the audio quality and latency are
-"audio.sample-format", "audio.period-size", and "audio.periods". The details
+\setting{audio_sample-format}, \setting{audio_period-size}, and \setting{audio_periods}. The details
 are described later. 
 
 You create the audio driver with the new_fluid_audio_driver() function. This
@@ -67,11 +67,11 @@ driver creates a separate thread that uses the synthesizer object to generate
 the audio.
  
 There are a number of general audio driver settings. The audio.driver
-settings define the audio subsystem that will be used. The audio.periods and
-audio.period-size settings define the latency and robustness against
+settings define the audio subsystem that will be used. The \setting{audio_periods} and
+\setting{audio_period-size} settings define the latency and robustness against
 scheduling delays. There are additional settings for the audio subsystems
 used. For a full list of available <strong>audio driver settings</strong>,
-please refer to the \ref settings_audio documentation.
+please refer to the \setting{audio} documentation.
 
 <strong>*Note:</strong> In order to use sdl2 as audio driver, the application
 is responsible for initializing SDL (e.g. with SDL_Init()). This must be done

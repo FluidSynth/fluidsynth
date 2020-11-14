@@ -38,10 +38,9 @@ int main(int argc, char** argv)
 }
 \endcode
 
-There are a number of general MIDI driver settings. The midi.driver setting
+There are a number of general MIDI driver settings. The \setting{midi_driver} setting
 defines the MIDI subsystem that will be used. There are additional settings
 for the MIDI subsystems used. For a full list of available
-<strong>midi driver settings</strong>, please refer to the \ref settings_midi
-documentation.
+<strong>midi driver settings</strong>, please refer to the \setting{midi} documentation.
 
 */

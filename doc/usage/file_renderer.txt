@@ -54,7 +54,7 @@ delete_fluid_settings(settings);
 \endcode
 
 Various output files types are supported, if compiled with libsndfile. Those
-can be specified via the \c settings object as well. Refer to the \ref
-settings_audio documentation for more \c audio.file\.\* options.
+can be specified via the \c settings object as well. Refer to the
+\setting{audio} documentation for more \c audio.file\.\* options.
 
 */

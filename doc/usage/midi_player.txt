@@ -50,6 +50,6 @@ int main(int argc, char** argv)
 
 
 A list of available <strong>MIDI player settings</strong> can be found in the
-\ref settings_player documentation.
+\setting{player} documentation.
 
 */

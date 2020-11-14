@@ -24,6 +24,6 @@ int main(int argc, char** argv)
 \endcode
 
 For a full list of available <strong>synthesizer settings</strong>, please
-refer to the \ref settings_synth documentation.
+refer to the \setting{synth} documentation.
 
 */

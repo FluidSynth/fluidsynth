@@ -27,6 +27,7 @@ TAB_SIZE = 8
 ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1\n@{"
 ALIASES += startlifecycle="\name Lifecycle Functions\n@{"
 ALIASES += endlifecycle="@}"
+ALIASES += setting{1}="\ref settings_\1"
 OPTIMIZE_OUTPUT_FOR_C = YES
 OPTIMIZE_OUTPUT_JAVA = NO
 OPTIMIZE_FOR_FORTRAN = NO
