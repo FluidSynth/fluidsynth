@@ -133,8 +133,7 @@ HTML_OUTPUT = html
 HTML_FILE_EXTENSION = .html
 HTML_EXTRA_FILES = \
 @CMAKE_SOURCE_DIR@/doc/fluidsettings.xml \
-@CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl \
-@CMAKE_SOURCE_DIR@/doc/FluidMixer.pdf
+@CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl
 
 # FluidSynth specific layout and style customizations.
 # Comment the following four lines to return to the

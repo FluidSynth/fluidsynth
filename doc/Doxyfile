@@ -134,8 +134,7 @@ HTML_FILE_EXTENSION = .html
 HTML_ALIGN_MEMBERS = YES
 HTML_EXTRA_FILES = \
 ../doc/fluidsettings.xml \
-../doc/fluidsettings.xsl \
-../doc/FluidMixer.pdf
+../doc/fluidsettings.xsl
 
 # FluidSynth specific layout and style customizations.
 # Comment the following four lines to return to the

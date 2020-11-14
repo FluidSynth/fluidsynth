@@ -251,7 +251,9 @@ table.directory tr {
     border-bottom: 1px solid #eee;
 }
 
-.image img {
+.image img,
+.image object
+{
     width: 100%;
     height: auto;
 }
