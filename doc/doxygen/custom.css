@@ -75,6 +75,10 @@ span.permalink a {
 }
 
 
+#nav-sync {
+    display: none;
+}
+
 #nav-tree,
 div.header,
 .ui-resizable-e,
