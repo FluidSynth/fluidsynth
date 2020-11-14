@@ -85,7 +85,12 @@ WARN_LOGFILE =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT = ../doc/fluidsynth-v20-devdoc.txt ../include ../include/fluidsynth ../src
+INPUT = \
+../doc/fluidsynth-v20-devdoc.txt \
+../include \
+../include/fluidsynth \
+../src
+
 INPUT_ENCODING = UTF-8
 FILE_PATTERNS = *.c *.h
 RECURSIVE = YES
