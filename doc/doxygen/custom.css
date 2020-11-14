@@ -102,6 +102,10 @@ span.permalink a {
     }
 }
 
+.sm-dox a:hover {
+    color: black !important;
+}
+
 #nav-tree,
 div.header,
 .ui-resizable-e,
