@@ -136,7 +136,12 @@ HTML_HEADER =
 HTML_FOOTER = @CMAKE_SOURCE_DIR@/doc/doxygen/footer.html
 HTML_EXTRA_STYLESHEET = @CMAKE_SOURCE_DIR@/doc/doxygen/custom.css
 HTML_ALIGN_MEMBERS = YES
-HTML_EXTRA_FILES = @CMAKE_SOURCE_DIR@/doc/fluidsettings.xml @CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl @CMAKE_SOURCE_DIR@/doc/FluidMixer.pdf @CMAKE_SOURCE_DIR@/doc/FluidMixer.jpg
+HTML_EXTRA_FILES = \
+@CMAKE_SOURCE_DIR@/doc/fluidsettings.xml \
+@CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl \
+@CMAKE_SOURCE_DIR@/doc/FluidMixer.pdf \
+@CMAKE_SOURCE_DIR@/doc/FluidMixer.jpg
+
 GENERATE_HTMLHELP = NO
 GENERATE_DOCSET = NO
 DOCSET_FEEDNAME = "Doxygen generated docs"
