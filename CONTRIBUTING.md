@@ -38,3 +38,60 @@ Find FluidSynth's style guide below. Syntax related issues, like missing braces,
 * Every block after an if, else, while or for should be enclosed in braces
 * **Allman-Style** braces everywhere
 
+### Documentation Style Guide
+We use Doxygen for public API functions, usage examples and other
+information.
+
+#### Order of Elements
+Please ensure that the order of elements in the documentation block
+is consistent with the existing documentation. Most importantly,
+each function starts with a single sentence brief description,
+followed by any `@param` and `@return` tags. `@deprecated` and
+`@since` should always come last.
+
+Example:
+```
+/**
+ * Brief description of the function (only a single sentence).
+ *
+ * @param ...
+ * @param ...
+ * @return ...
+ *
+ * Detailed description of the function. This can be multiple paragraphs,
+ * include code examples etc. It can also include @note, @warning or
+ * other special tags not mentioned below.
+ *
+ * @deprecated This is deprecated because ...
+ *
+ * @since 1.2.3
+ */
+```
+
+#### Mark Lifecycle Functions
+All functions are sorted alphabetically in the generated API documentation.
+To ensure that the `new_*` and `delete_*` functions appear first, please make
+sure to surround those lifecycle functions with `@startlifecycle{}` and
+`@endlifecycle` tags.
+
+Example:
+```
+/** @startlifecycle{Some Name} */
+new_fluid_some_name(...);
+delete_fluid_some_name(...);
+/** @endlifecycle */
+```
+
+#### Referencing Setting Items
+If you want to mention a setting item (for example `audio.periods`),
+please use the custom `@setting{name}` tag. The argument `name` should be
+the setting name with all `.` replaced by `_`.
+
+Example:
+```
+/**
+ * This is a comment that references \setting{audio_periods}. You
+ * can also link to a group of settings with \setting{audio} or
+ * \setting{synth}.
+ */
+```
