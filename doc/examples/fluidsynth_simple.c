@@ -17,6 +17,7 @@
 
 int main(int argc, char **argv)
 {
+    asdf
     fluid_settings_t *settings;
     fluid_synth_t *synth = NULL;
     fluid_audio_driver_t *adriver = NULL;
