@@ -103,7 +103,7 @@ EXCLUDE_SYMBOLS =
 EXAMPLE_PATH = ../doc/examples
 EXAMPLE_PATTERNS = *.c
 EXAMPLE_RECURSIVE = NO
-IMAGE_PATH = 
+IMAGE_PATH = ../doc/images
 INPUT_FILTER = 
 FILTER_PATTERNS = 
 FILTER_SOURCE_FILES = NO
@@ -137,8 +137,7 @@ HTML_ALIGN_MEMBERS = YES
 HTML_EXTRA_FILES = \
 ../doc/fluidsettings.xml \
 ../doc/fluidsettings.xsl \
-../doc/FluidMixer.pdf \
-../doc/FluidMixer.jpg
+../doc/FluidMixer.pdf
 
 GENERATE_HTMLHELP = NO
 GENERATE_DOCSET = NO

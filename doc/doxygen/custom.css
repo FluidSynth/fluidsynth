@@ -209,3 +209,8 @@ table.directory tr.even {
 table.directory tr {
     border-bottom: 1px solid #eee;
 }
+
+.image img {
+    width: 100%;
+    height: auto;
+}

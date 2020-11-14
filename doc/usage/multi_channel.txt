@@ -10,10 +10,6 @@ for information on how to do that: \ref fluidsynth_process.c
 The following chart illustrates how the voices (produced by MIDI NoteOns) are
 dispatched or mapped to their dry/effects audio buffers.
 
-\htmlonly
-<a href="FluidMixer.pdf">
-<img src="FluidMixer.jpg" alt="FluidSynth Mixer Chart">
-</a>
-\endhtmlonly
+\image html fluid_mixer.png "FluidSynth Mixer Chart"
 
 */
