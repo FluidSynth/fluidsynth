@@ -1,0 +1,30 @@
+/*!
+
+\page synth-context Understanding the "synthesis context"
+
+When reading through the functions exposed via our API, you will often read the
+note: "May or may not be called from synthesis context."
+
+The reason for this is that some functions are intentionally not thread-safe.
+Or they require to be called from this context to behave correctly.
+
+FluidSynth's rendering engine is implemented by using the "Dispatcher Thread
+Pattern". This means that a certain thread @c A which calls one of FluidSynth's
+rendering functions, namely
+
+- fluid_synth_process()
+- fluid_synth_nwrite_float()
+- fluid_synth_write_float()
+- fluid_synth_write_s16()
+
+automatically becomes the "synthesis thread". The terms "synthesis context" and
+"synthesis thread" are equivalent. A few locations in our API provide hooks
+that allow you to interfere this "synthesis context". At those locations you
+can register your own custom functions that will always be called by thread
+@c A. For this use-case, the following functions are of interest:
+
+- new_fluid_audio_driver2()
+- fluid_player_set_playback_callback()
+- fluid_sequencer_register_client()
+
+*/

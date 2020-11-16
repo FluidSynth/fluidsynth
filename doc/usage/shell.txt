@@ -1,0 +1,12 @@
+/*!
+
+\page Shell Shell interface
+
+The shell interface allows you to send simple textual commands to the
+synthesizer, to parse a command file, or to read commands from the stdin or
+other input streams. To find the list of currently supported commands, type
+@c help in the fluidsynth command line shell. For a full list of available
+<strong>command line settings</strong>, please refer to the \ref
+settings_shell documentation.
+
+*/

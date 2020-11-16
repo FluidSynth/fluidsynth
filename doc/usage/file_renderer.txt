@@ -1,0 +1,60 @@
+/*!
+
+\page FileRenderer Fast file renderer for non-realtime MIDI file rendering
+
+Instead of creating an audio driver as described in section \ref MIDIPlayer
+one may chose to use the file renderer, which is the fastest way to
+synthesize MIDI files.
+
+\code
+fluid_settings_t* settings;
+fluid_synth_t* synth;
+fluid_player_t* player;
+fluid_file_renderer_t* renderer;
+
+settings = new_fluid_settings();
+
+// specify the file to store the audio to
+// make sure you compiled fluidsynth with libsndfile to get a real wave file
+// otherwise this file will only contain raw s16 stereo PCM
+fluid_settings_setstr(settings, "audio.file.name", "/path/to/output.wav");
+
+// use number of samples processed as timing source, rather than the system timer
+fluid_settings_setstr(settings, "player.timing-source", "sample");
+
+// since this is a non-realtime scenario, there is no need to pin the sample data
+fluid_settings_setint(settings, "synth.lock-memory", 0);
+
+synth = new_fluid_synth(settings);
+
+// *** loading of a soundfont omitted ***
+
+player = new_fluid_player(synth);
+fluid_player_add(player, "/path/to/midifile.mid");
+fluid_player_play(player);
+
+renderer = new_fluid_file_renderer (synth);
+
+while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
+{
+    if (fluid_file_renderer_process_block(renderer) != FLUID_OK)
+    {
+        break;
+    }
+}
+
+// just for sure: stop the playback explicitly and wait until finished
+fluid_player_stop(player);
+fluid_player_join(player);
+
+delete_fluid_file_renderer(renderer);
+delete_fluid_player(player);
+delete_fluid_synth(synth);
+delete_fluid_settings(settings);
+\endcode
+
+Various output files types are supported, if compiled with libsndfile. Those
+can be specified via the \c settings object as well. Refer to the
+\setting{audio} documentation for more \c audio.file\.\* options.
+
+*/

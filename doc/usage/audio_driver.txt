@@ -1,0 +1,82 @@
+/*!
+
+\page CreatingAudioDriver Creating the audio driver
+
+The synthesizer itself does not write any audio to the audio output. This
+allows application developers to manage the audio output themselves if they
+wish. The next section describes the use of the synthesizer without an audio
+driver in more detail.
+
+Creating the audio driver is straightforward: set the
+<code>audio.driver</code> settings and create the driver object. Because the
+FluidSynth has support for several audio systems, you may want to change
+which one you want to use. The list below shows the audio systems that are
+currently supported. It displays the name, as used by the fluidsynth library,
+and a description. 
+
+- jack: JACK Audio Connection Kit (Linux, Mac OS X, Windows)
+- alsa: Advanced Linux Sound Architecture (Linux)
+- oss: Open Sound System (Linux, Unix)
+- pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
+- coreaudio: Apple CoreAudio (Mac OS X)
+- dsound: Microsoft DirectSound (Windows)
+- portaudio: PortAudio Library (Mac OS 9 & X, Windows, Linux)
+- sndman: Apple SoundManager (Mac OS Classic)
+- dart: DART sound driver (OS/2)
+- opensles: OpenSL ES (Android)
+- oboe: Oboe (Android)
+- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86,
+  Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
+  and later)
+- file: Driver to output audio to a file
+- sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
+  FreeBSD, Haiku, etc.)
+
+The default audio driver depends on the settings with which FluidSynth was
+compiled. You can get the default driver with
+fluid_settings_getstr_default(). To get the list of available drivers use the
+fluid_settings_foreach_option() function. Finally, you can set the driver
+with fluid_settings_setstr(). In most cases, the default driver should work
+out of the box. 
+
+Additional options that define the audio quality and latency are
+\setting{audio_sample-format}, \setting{audio_period-size}, and
+\setting{audio_periods}. The details are described later.
+
+You create the audio driver with the new_fluid_audio_driver() function. This
+function takes the settings and synthesizer object as arguments. For example: 
+
+\code
+void init() 
+{
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    fluid_audio_driver_t* adriver;
+    settings = new_fluid_settings();
+
+    /* Set the synthesizer settings, if necessary */
+    synth = new_fluid_synth(settings);
+
+    fluid_settings_setstr(settings, "audio.driver", "jack");
+    adriver = new_fluid_audio_driver(settings, synth);
+}
+\endcode
+
+As soon as the audio driver is created, it will start playing. The audio
+driver creates a separate thread that uses the synthesizer object to generate
+the audio.
+ 
+There are a number of general audio driver settings. The audio.driver settings
+define the audio subsystem that will be used. The \setting{audio_periods} and
+\setting{audio_period-size} settings define the latency and robustness against
+scheduling delays. There are additional settings for the audio subsystems used.
+For a full list of available <strong>audio driver settings</strong>, please
+refer to the \setting{audio} documentation.
+
+<strong>*Note:</strong> In order to use sdl2 as audio driver, the application
+is responsible for initializing SDL (e.g. with SDL_Init()). This must be done
+<strong>before</strong> the first call to <code>new_fluid_settings()</code>!
+Also make sure to call SDL_Quit() after all fluidsynth instances have been
+destroyed.
+
+*/

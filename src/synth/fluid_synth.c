@@ -600,7 +600,7 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @note The @p settings parameter is used directly and should freed after
  * the synth has been deleted. Further note that you may modify FluidSettings of the
  * @p settings instance. However, only those FluidSettings marked as 'realtime' will
- * affect the synth immediately.
+ * affect the synth immediately. See the \ref fluidsettings for more details.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
@@ -3021,15 +3021,6 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 /**
  * Pins all samples of the given preset.
  *
- * This function will attempt to pin all samples of the given preset and
- * load them into memory, if they are currently unloaded. "To pin" in this
- * context means preventing them from being unloaded by an upcoming channel
- * prog change.
- *
- * @note This function is only useful if <code>synth.dynamic-sample-loading</code> is enabled.
- * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
- * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
- * only preset loaded with the default soundfont loader do).
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param bank_num MIDI bank number
@@ -3038,6 +3029,17 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
  * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
  * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
  * the preset doesn't support dynamic-sample-loading.
+ *
+ * This function will attempt to pin all samples of the given preset and
+ * load them into memory, if they are currently unloaded. "To pin" in this
+ * context means preventing them from being unloaded by an upcoming channel
+ * prog change.
+ *
+ * @note This function is only useful if \ref settings_synth_dynamic-sample-loading is enabled.
+ * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
+ * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
+ * only preset loaded with the default soundfont loader do).
+ *
  * @since 2.2.0
  */
 int
@@ -3070,16 +3072,18 @@ fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int pre
 /**
  * Unpin all samples of the given preset.
  *
- * This function undoes the effect of fluid_synth_pin_preset(). If the preset is
- * not currently used, its samples will be unloaded.
- *
- * @note Only useful for presets loaded with the default soundfont loader and
- * only if <code>synth.dynamic-sample-loading</code> is enabled.
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
  * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ *
+ * This function undoes the effect of fluid_synth_pin_preset(). If the preset is
+ * not currently used, its samples will be unloaded.
+ *
+ * @note Only useful for presets loaded with the default soundfont loader and
+ * only if \ref settings_synth_dynamic-sample-loading is enabled.
+ *
  * @since 2.2.0
  */
 int
@@ -3457,7 +3461,8 @@ fluid_synth_program_reset(fluid_synth_t *synth)
 }
 
 /**
- * Synthesize a block of floating point audio to separate audio buffers (multichannel rendering). First effect channel used by reverb, second for chorus.
+ * Synthesize a block of floating point audio to separate audio buffers (multi-channel rendering).
+ *
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
  * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
@@ -3466,9 +3471,13 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
+ * First effect channel used by reverb, second for chorus.
+ *
  * @note Should only be called from synthesis thread.
  *
- * @deprecated fluid_synth_nwrite_float() is deprecated and will be removed in a future release. It may continue to work or it may return #FLUID_FAILED in the future. Consider using the more powerful and flexible fluid_synth_process().
+ * @deprecated fluid_synth_nwrite_float() is deprecated and will be removed in a future release.
+ * It may continue to work or it may return #FLUID_FAILED in the future. Consider using the more
+ * powerful and flexible fluid_synth_process().
  *
  * Usage example:
  * @code{.cpp}
@@ -3480,14 +3489,17 @@ fluid_synth_program_reset(fluid_synth_t *synth)
     // we need twice as many (mono-)buffers
     channels *= 2;
 
-    // fluid_synth_nwrite_float renders planar audio, e.g. if synth.audio-channels==16: each midi channel gets rendered to its own stereo buffer, rather than having one buffer and interleaved PCM
+    // fluid_synth_nwrite_float renders planar audio, e.g. if synth.audio-channels==16:
+    // each midi channel gets rendered to its own stereo buffer, rather than having
+    // one buffer and interleaved PCM
     float** mix_buf = new float*[channels];
     for(int i = 0; i < channels; i++)
     {
         mix_buf[i] = new float[FramesToRender];
     }
 
-    // retrieve number of (stereo) effect channels (internally hardcoded to reverb (first chan) and chrous (second chan))
+    // retrieve number of (stereo) effect channels (internally hardcoded to reverb (first chan)
+    // and chrous (second chan))
     fluid_settings_getint(settings, "synth.effects-channels", &channels);
     channels *= 2;
 
@@ -3705,7 +3717,34 @@ static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out
 }
 
 /**
- * @brief Synthesize floating point audio to stereo audio channels (implements the default interface #fluid_audio_func_t).
+ * Synthesize floating point audio to stereo audio channels
+ * (implements the default interface #fluid_audio_func_t).
+ *
+ * @param synth FluidSynth instance
+ *
+ * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
+ * Zero value is permitted, the function does nothing and return FLUID_OK.
+ *
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
+ * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
+ * Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
+ *
+ * @param fx Array of buffers to store effects audio to. Buffers may
+ * alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+ *
+ * @param nout Count of arrays in \c out. Must be a multiple of 2
+ * (because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
+ * Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.
+ *
+ * @param out Array of buffers to store (dry) audio to. Buffers may
+ * alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+ *
+ * @return #FLUID_OK on success,
+ * #FLUID_FAILED otherwise,
+ *  - <code>fx == NULL</code> while <code>nfx > 0</code>, or <code>out == NULL</code> while <code>nout > 0</code>.
+ *  - \c nfx or \c nout not multiple of 2.
+ *  - <code>len < 0</code>.
+ *  - \c nfx or \c nout exceed the range explained above.
  *
  * Synthesize and <strong>mix</strong> audio to a given number of planar audio buffers.
  * Therefore pass <code>nout = N*2</code> float buffers to \p out in order to render
@@ -3752,26 +3791,6 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  * <code>i = chan % fluid_synth_count_audio_groups()</code>
  *
  * <code>k = chan % fluid_synth_count_effects_groups()</code>
- *
- * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
- *  Zero value is permitted, the function does nothing and return FLUID_OK.
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
- * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
-  Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
- * @param fx Array of buffers to store effects audio to. Buffers may
-alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
- * @param nout Count of arrays in \c out. Must be a multiple of 2
-(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
- Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.
- * @param out Array of buffers to store (dry) audio to. Buffers may
-alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
- * @return #FLUID_OK on success,
- * #FLUID_FAILED otherwise,
- *  - <code>fx == NULL</code> while <code>nfx > 0</code>, or <code>out == NULL</code> while <code>nout > 0</code>.
- *  - \c nfx or \c nout not multiple of 2.
- *  - <code>len < 0</code>.
- *  - \c nfx or \c nout exceed the range explained above.
  *
  * @parblock
  * @note The owner of the sample buffers must zero them out before calling this
@@ -5484,6 +5503,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num)
 
 /**
  * Set reverb parameters.
+ *
  * @param synth FluidSynth instance
  * @param roomsize Reverb room size value (0.0-1.0)
  * @param damping Reverb damping value (0.0-1.0)
@@ -5503,7 +5523,10 @@ fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
 }
 
 /**
- * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
+ * Set reverb roomsize.
+ *
+ * @param synth FluidSynth instance
+ * @param roomsize Reverb room size value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
@@ -5512,7 +5535,10 @@ int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 }
 
 /**
- * Set reverb damping. See fluid_synth_set_reverb() for further info.
+ * Set reverb damping.
+ *
+ * @param synth FluidSynth instance
+ * @param damping Reverb damping value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
@@ -5521,7 +5547,10 @@ int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 }
 
 /**
- * Set reverb width. See fluid_synth_set_reverb() for further info.
+ * Set reverb width.
+ *
+ * @param synth FluidSynth instance
+ * @param width Reverb width value (0.0-100.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
@@ -5530,7 +5559,10 @@ int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 }
 
 /**
- * Set reverb level. See fluid_synth_set_reverb() for further info.
+ * Set reverb level.
+ *
+ * @param synth FluidSynth instance
+ * @param level Reverb level value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
@@ -5540,6 +5572,7 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 
 /**
  * Set one or more reverb parameters.
+ *
  * @param synth FluidSynth instance
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
  * @param roomsize Reverb room size value (0.0-1.2)
@@ -5680,8 +5713,8 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
 }
 
 /**
- * Set chorus parameters. It should be turned on with fluid_synth_set_chorus_on().
- * Keep in mind, that the needed CPU time is proportional to 'nr'.
+ * Set chorus parameters.
+ *
  * @param synth FluidSynth instance
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
@@ -5691,6 +5724,9 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * It should be turned on with fluid_synth_set_chorus_on().
+ * Keep in mind, that the needed CPU time is proportional to 'nr'.
  */
 int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
                            double speed, double depth_ms, int type)
@@ -5700,7 +5736,11 @@ int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
 }
 
 /**
- * Set the chorus voice count. See fluid_synth_set_chorus() for further info.
+ * Set the chorus voice count.
+ *
+ * @param synth FluidSynth instance
+ * @param nr Chorus voice count (0-99, CPU time consumption proportional to
+ *   this value)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
@@ -5709,7 +5749,10 @@ int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
 }
 
 /**
- * Set the chorus level. See fluid_synth_set_chorus() for further info.
+ * Set the chorus level.
+ *
+ * @param synth FluidSynth instance
+ * @param level Chorus level (0.0-10.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
@@ -5718,7 +5761,10 @@ int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
 }
 
 /**
- * Set the chorus speed. See fluid_synth_set_chorus() for further info.
+ * Set the chorus speed.
+ *
+ * @param synth FluidSynth instance
+ * @param speed Chorus speed in Hz (0.1-5.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
@@ -5727,7 +5773,11 @@ int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 }
 
 /**
- * Set the chorus depth. See fluid_synth_set_chorus() for further info.
+ * Set the chorus depth.
+ *
+ * @param synth FluidSynth instance
+ * @param depth_ms Chorus depth (max value depends on synth sample-rate,
+ *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
@@ -5736,7 +5786,10 @@ int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
 }
 
 /**
- * Set the chorus type. See fluid_synth_set_chorus() for further info.
+ * Set the chorus type.
+ *
+ * @param synth FluidSynth instance
+ * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
@@ -6934,14 +6987,13 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
 /**
  * Configure a general-purpose IIR biquad filter.
  *
- * This is an optional, additional filter that operates independently from the default low-pass filter required by the Soundfont2 standard.
- * By default this filter is off (#FLUID_IIR_DISABLED).
- *
  * @param synth FluidSynth instance
  * @param type Type of the IIR filter to use (see #fluid_iir_filter_type)
  * @param flags Additional flags to customize this filter or zero to stay with the default (see #fluid_iir_filter_flags)
- *
  * @return #FLUID_OK if the settings have been successfully applied, otherwise #FLUID_FAILED
+ *
+ * This is an optional, additional filter that operates independently from the default low-pass filter required by the Soundfont2 standard.
+ * By default this filter is off (#FLUID_IIR_DISABLED).
  */
 int fluid_synth_set_custom_filter(fluid_synth_t *synth, int type, int flags)
 {
@@ -7047,7 +7099,7 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
 }
 
 
-/**  API legato mode *********************************************************/
+/* API legato mode *********************************************************/
 
 /**
  * Sets the legato mode of a channel.
@@ -7100,7 +7152,7 @@ int fluid_synth_get_legato_mode(fluid_synth_t *synth, int chan, int *legatomode)
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API portamento mode *********************************************************/
+/* API portamento mode *********************************************************/
 
 /**
  * Sets the portamento mode of a channel.
@@ -7153,7 +7205,7 @@ int fluid_synth_get_portamento_mode(fluid_synth_t *synth, int chan,
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API breath mode *********************************************************/
+/*  API breath mode *********************************************************/
 
 /**
  * Sets the breath mode of a channel.

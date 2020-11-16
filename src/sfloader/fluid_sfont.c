@@ -156,8 +156,6 @@ void *fluid_sfloader_get_data(fluid_sfloader_t *loader)
 /**
  * Set custom callbacks to be used upon soundfont loading.
  *
- * Useful for loading a soundfont from memory, see \a doc/fluidsynth_sfload_mem.c as an example.
- *
  * @param loader The SoundFont loader instance.
  * @param open A function implementing #fluid_sfloader_callback_open_t.
  * @param read A function implementing #fluid_sfloader_callback_read_t.
@@ -165,6 +163,9 @@ void *fluid_sfloader_get_data(fluid_sfloader_t *loader)
  * @param tell A function implementing #fluid_sfloader_callback_tell_t.
  * @param close A function implementing #fluid_sfloader_callback_close_t.
  * @return #FLUID_OK if the callbacks have been successfully set, #FLUID_FAILED otherwise.
+ *
+ * Useful for loading a soundfont from memory, see \a doc/fluidsynth_sfload_mem.c as an example.
+ *
  */
 int fluid_sfloader_set_callbacks(fluid_sfloader_t *loader,
                                  fluid_sfloader_callback_open_t open,
@@ -196,6 +197,7 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t *loader,
 
 /**
  * Creates a new virtual SoundFont instance structure.
+ *
  * @param get_name A function implementing #fluid_sfont_get_name_t.
  * @param get_preset A function implementing #fluid_sfont_get_preset_t.
  * @param iter_start A function implementing #fluid_sfont_iteration_start_t, or NULL if preset iteration not needed.
@@ -285,8 +287,8 @@ const char *fluid_sfont_get_name(fluid_sfont_t *sfont)
 }
 
 /**
- * Retrieve the preset assigned the a SoundFont instance
- * for the given bank and preset number.
+ * Retrieve the preset assigned the a SoundFont instance for the given bank and preset number.
+ *
  * @param sfont The SoundFont instance.
  * @param bank bank number of the preset
  * @param prenum program number of the preset
@@ -300,6 +302,7 @@ fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenu
 
 /**
  * Starts / re-starts virtual preset iteration in a SoundFont.
+ *
  * @param sfont Virtual SoundFont instance
  */
 void fluid_sfont_iteration_start(fluid_sfont_t *sfont)
@@ -329,10 +332,11 @@ fluid_preset_t *fluid_sfont_iteration_next(fluid_sfont_t *sfont)
 /**
  * Destroys a SoundFont instance created with new_fluid_sfont().
  *
- * Implements #fluid_sfont_free_t.
- *
  * @param sfont The SoundFont instance to destroy.
  * @return Always returns 0.
+ *
+ * Implements #fluid_sfont_free_t.
+ *
  */
 int delete_fluid_sfont(fluid_sfont_t *sfont)
 {
@@ -467,9 +471,10 @@ fluid_sfont_t *fluid_preset_get_sfont(fluid_preset_t *preset)
 /**
  * Destroys a SoundFont preset instance created with new_fluid_preset().
  *
+ * @param preset The SoundFont preset instance to destroy.
+ *
  * Implements #fluid_preset_free_t.
  *
- * @param preset The SoundFont preset instance to destroy.
  */
 void delete_fluid_preset(fluid_preset_t *preset)
 {
@@ -480,6 +485,7 @@ void delete_fluid_preset(fluid_preset_t *preset)
 
 /**
  * Create a new sample instance.
+ *
  * @return  The sample on success, NULL otherwise.
  */
 fluid_sample_t *
@@ -502,6 +508,7 @@ new_fluid_sample()
 
 /**
  * Destroy a sample instance previously created with new_fluid_sample().
+ *
  * @param sample The sample to destroy.
  */
 void
@@ -521,9 +528,9 @@ delete_fluid_sample(fluid_sample_t *sample)
 /**
  * Returns the size of the fluid_sample_t structure.
  *
- * Useful in low latency scenarios e.g. to allocate a pool of samples.
- *
  * @return Size of fluid_sample_t in bytes
+ *
+ * Useful in low latency scenarios e.g. to allocate a pool of samples.
  *
  * @note It is recommend to zero initialize the memory before using the object.
  *
@@ -536,6 +543,7 @@ size_t fluid_sample_sizeof()
 
 /**
  * Set the name of a SoundFont sample.
+ *
  * @param sample SoundFont sample
  * @param name Name to assign to sample (20 chars in length + zero terminator)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
@@ -551,6 +559,7 @@ int fluid_sample_set_name(fluid_sample_t *sample, const char *name)
 
 /**
  * Assign sample data to a SoundFont sample.
+ *
  * @param sample SoundFont sample
  * @param data Buffer containing 16 bit (mono-)audio sample data
  * @param data24 If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples

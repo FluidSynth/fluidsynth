@@ -1,0 +1,76 @@
+/*!
+
+\page MIDIRouter Real-time MIDI router
+
+The MIDI router is one more processing layer directly behind the MIDI input.
+It processes incoming MIDI events and generates control events for the synth.
+It can be used to filter or modify events prior to sending them to the
+synthesizer. When created, the MIDI router is transparent and simply passes
+all MIDI events. Router "rules" must be added to actually make use of its
+capabilities.
+
+Some examples of MIDI router usage:
+
+- Filter messages (Example: Pass sustain pedal CCs only to selected channels)
+- Split the keyboard (Example: noteon with notenr < x: to ch 1, >x to ch 2)
+- Layer sounds (Example: for each noteon received on ch 1, create a noteon on
+  ch1, ch2, ch3,...)
+- Velocity scaling (Example: for each noteon event, scale the velocity by
+  1.27)
+- Velocity switching (Example: v <= 100: "Angel Choir"; v > 100: "Hell's
+  Bells")
+- Get rid of aftertouch
+
+The MIDI driver API has a clean separation between the midi thread and the
+synthesizer. That opens the door to add a midi router module.
+
+MIDI events coming from the MIDI player do not pass through the MIDI router.
+
+\code
+#include <fluidsynth.h>
+
+int main(int argc, char** argv) 
+{
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    fluid_midi_router_t* router;
+    fluid_midi_router_rule_t* rule;
+
+    settings = new_fluid_settings();
+    synth = new_fluid_synth(settings);
+
+    /* Create the MIDI router and pass events to the synthesizer */
+    router = new_fluid_midi_router (settings, fluid_synth_handle_midi_event, synth);
+
+    /* Clear default rules */
+    fluid_midi_router_clear_rules (router);
+
+    /* Add rule to map all notes < MIDI note #60 on any channel to channel 4 */
+    rule = new_fluid_midi_router_rule ();
+    fluid_midi_router_rule_set_chan (rule, 0, 15, 0.0, 4);	/* Map all to channel 4 */
+    fluid_midi_router_rule_set_param1 (rule, 0, 59, 1.0, 0);	/* Match notes < 60 */
+    fluid_midi_router_add_rule (router, rule, FLUID_MIDI_ROUTER_RULE_NOTE);
+
+    /* Add rule to map all notes >= MIDI note #60 on any channel to channel 5 */
+    rule = new_fluid_midi_router_rule ();
+    fluid_midi_router_rule_set_chan (rule, 0, 15, 0.0, 5);	/* Map all to channel 5 */
+    fluid_midi_router_rule_set_param1 (rule, 60, 127, 1.0, 0);	/* Match notes >= 60 */
+    fluid_midi_router_add_rule (router, rule, FLUID_MIDI_ROUTER_RULE_NOTE);
+
+    /* Add rule to reverse direction of pitch bender on channel 7 */
+    rule = new_fluid_midi_router_rule ();
+    fluid_midi_router_rule_set_chan (rule, 7, 7, 1.0, 0);	      /* Match channel 7 only */
+    fluid_midi_router_rule_set_param1 (rule, 0, 16383, -1.0, 16383);  /* Reverse pitch bender */
+    fluid_midi_router_add_rule (router, rule, FLUID_MIDI_ROUTER_RULE_PITCH_BEND);
+
+    /* ... Create audio driver, process events, etc ... */
+
+    /* cleanup */
+    delete_fluid_midi_router(router);
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
+    return 0;
+}
+\endcode
+
+*/

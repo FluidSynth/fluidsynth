@@ -288,6 +288,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
 
 /**
  * Create a new audio driver.
+ *
  * @param settings Configuration settings used to select and create the audio
  *   driver.
  * @param synth Synthesizer instance for which the audio driver is created for.
@@ -326,6 +327,7 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
 /**
  * Create a new audio driver.
+ *
  * @param settings Configuration settings used to select and create the audio
  *   driver.
  * @param func Function called to fill audio buffers for audio playback
@@ -378,6 +380,7 @@ new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, voi
 
 /**
  * Deletes an audio driver instance.
+ *
  * @param driver Audio driver instance to delete
  *
  * Shuts down an audio driver and deletes its instance.
@@ -391,7 +394,11 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
 
 
 /**
- * @brief Registers audio drivers to use
+ * Registers audio drivers to use
+ *
+ * @param adrivers NULL-terminated array of audio drivers to register. Pass NULL to register all available drivers.
+ * @return #FLUID_OK if all the audio drivers requested by the user are supported by fluidsynth and have been
+ * successfully registered. Otherwise #FLUID_FAILED is returned and this function has no effect.
  *
  * When creating a settings instance with new_fluid_settings(), all audio drivers are initialized once.
  * In the past this has caused segfaults and application crashes due to buggy soundcard drivers.
@@ -407,11 +414,8 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
  * are alive (e.g. as it would be the case right after fluidsynth's initial creation). Else the behaviour is undefined.
  * Furtermore any attempt of using audio drivers that have not been registered is undefined behaviour!
  *
- * @param adrivers NULL-terminated array of audio drivers to register. Pass NULL to register all available drivers.
- * @return #FLUID_OK if all the audio drivers requested by the user are supported by fluidsynth and have been
- * successfully registered. Otherwise #FLUID_FAILED is returned and this function has no effect.
- *
  * @note This function is not thread safe and will never be!
+ *
  * @since 1.1.9
  */
 int fluid_audio_driver_register(const char **adrivers)

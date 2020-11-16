@@ -276,6 +276,22 @@ a {
                                         <div class="value"><xsl:copy-of select="def" /></div>
                                     </div>
 
+                                    <xsl:if test="realtime">
+                                        <div class="setting-attribute">
+                                            <div class="label">Real-time:</div>
+                                            <div class="value">
+                                                <xsl:choose>
+                                                    <xsl:when test="realtime/text()">
+                                                        <xsl:copy-of select="realtime"/>
+                                                    </xsl:when>
+                                                    <xsl:otherwise>
+                                                        This setting can be changed during runtime of the synthesizer.
+                                                    </xsl:otherwise>
+                                                </xsl:choose>
+                                            </div>
+                                        </div>
+                                    </xsl:if>
+
                                     <xsl:if test="deprecated">
                                         <div class="setting-deprecated">
                                             This setting is deprecated and might be removed in a future version of FluidSynth.

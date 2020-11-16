@@ -1,0 +1,53 @@
+/*!
+
+\page SendingMIDI Sending MIDI events
+
+Once the synthesizer is up and running and a SoundFont is loaded, most people
+will want to do something useful with it. Make noise, for example. MIDI
+messages can be sent using the fluid_synth_noteon(), fluid_synth_noteoff(),
+fluid_synth_cc(), fluid_synth_pitch_bend(), fluid_synth_pitch_wheel_sens(),
+and fluid_synth_program_change() functions. For convenience, there's also a
+fluid_synth_bank_select() function (the bank select message is normally sent
+using a control change message). 
+
+The following example show a generic graphical button that plays a note when
+clicked: 
+
+\code
+class SoundButton : public SomeButton
+{
+public:	
+
+    SoundButton() : SomeButton() {
+        if (!_synth) {
+            initSynth();
+        }
+    }
+
+    static void initSynth() {
+        _settings = new_fluid_settings();
+        _synth = new_fluid_synth(_settings);
+        _adriver = new_fluid_audio_driver(_settings, _synth);
+    }
+
+    /* ... */
+
+    virtual int handleMouseDown(int x, int y) {
+        /* Play a note on key 60 with velocity 100 on MIDI channel 0 */
+        fluid_synth_noteon(_synth, 0, 60, 100);
+    }
+
+    virtual int handleMouseUp(int x, int y) {
+        /* Release the note on key 60 */
+        fluid_synth_noteoff(_synth, 0, 60);
+    }
+
+protected:
+
+    static fluid_settings_t* _settings;
+    static fluid_synth_t* _synth;
+    static fluid_audio_driver_t* _adriver;
+};
+\endcode
+
+*/
