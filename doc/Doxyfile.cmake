@@ -25,7 +25,6 @@ INHERIT_DOCS = YES
 SEPARATE_MEMBER_PAGES = NO
 TAB_SIZE = 8
 ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1\_linebr@{"
-ALIASES += startlifecycle="\name Lifecycle Functions\_linebr@{"
 ALIASES += endlifecycle="@}"
 ALIASES += setting{1}="\ref settings_\1"
 OPTIMIZE_OUTPUT_FOR_C = YES
