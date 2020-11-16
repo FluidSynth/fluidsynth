@@ -257,3 +257,26 @@ table.directory tr {
     width: 100%;
     height: auto;
 }
+
+.setting-item {
+    border-left: 1px solid #DFE5F1;
+    padding-bottom: 0.5em;
+    border-top-left-radius: 4px;
+}
+
+.setting-item h1 {
+    width: 100%;
+    padding: 0.3em 0 0.3em 10px;
+    box-sizing: border-box;
+    background: #DFE5F1;
+    border: 0;
+    font-size: 1.5em;
+    font-weight: normal;
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+}
+
+.setting-item dl,
+.setting-item p {
+    margin-left: 10px;
+}

@@ -34,9 +34,11 @@
 
 <!-- Setting template -->
 <xsl:template match="*" mode="Setting">
+\htmlonly
+<div class="setting-item">
+\endhtmlonly
 \section <xsl:value-of select="concat('settings_', name(..), '_', translate(name, '.', '_'))" /><xsl:text> </xsl:text><xsl:value-of select="concat(name(..), '.', name)" />
 <xsl:text>&#xa;</xsl:text>
-
 \par Type
 <xsl:choose>
     <xsl:when test="type = 'bool'">Boolean (int)</xsl:when>
@@ -83,6 +85,9 @@
 
 \htmlonly
 <xsl:copy-of select="desc"/>
+\endhtmlonly
+\htmlonly
+</div>
 \endhtmlonly
 </xsl:template>
 
