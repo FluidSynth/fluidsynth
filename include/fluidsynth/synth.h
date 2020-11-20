@@ -233,7 +233,7 @@ FLUIDSYNTH_API int fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int 
 FLUIDSYNTH_API int fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fx_group, double *speed);
 FLUIDSYNTH_API int fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int fx_group, double *depth_ms);
 FLUIDSYNTH_API int fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fx_group, int *type);
-/* @} Chrous */
+/* @} Chorus */
 
 /**
  * @defgroup synthesis_params Synthesis Parameters
