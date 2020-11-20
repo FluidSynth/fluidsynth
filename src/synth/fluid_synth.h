@@ -214,6 +214,9 @@ void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const 
 
 int fluid_synth_reset_reverb(fluid_synth_t *synth);
 int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num);
+int fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
+                                 int param,
+                                 double value);
 int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 

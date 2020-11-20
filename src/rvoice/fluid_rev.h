@@ -26,6 +26,16 @@
 
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
+/* enum describing each reverb parameter */
+enum fluid_reverb_param
+{
+    FLUID_REVERB_ROOMSIZE,  /**< reverb time */
+    FLUID_REVERB_DAMP,      /**< high frequency damping */
+    FLUID_REVERB_WIDTH,     /**< stereo width */
+    FLUID_REVERB_LEVEL,     /**< output level */
+    FLUID_REVERB_PARAM_LAST /* number of enum fluid_reverb_param */
+};
+
 /* return a bit flag from param: 2^param */
 #define FLUID_REVPARAM_TO_SETFLAG(param) (1 << param)
 

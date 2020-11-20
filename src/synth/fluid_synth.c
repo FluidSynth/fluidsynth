@@ -78,6 +78,9 @@ static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_set_preset(fluid_synth_t *synth, int chan,
                                   fluid_preset_t *preset);
+static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value);
+
 static fluid_preset_t *
 fluid_synth_get_preset(fluid_synth_t *synth, int sfontnum,
                        int banknum, int prognum);
@@ -5452,7 +5455,7 @@ fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
 /**
  * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_reverb_set_param instead.
+ * @deprecated Use fluid_synth_set_reverb_group_roomsize in new code instead.
  */
 int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 {
@@ -5462,7 +5465,7 @@ int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 /**
  * Set reverb damping. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_reverb_set_param instead.
+ * @deprecated Use fluid_synth_set_reverb_group_damp in new code instead.
  */
 int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 {
@@ -5472,7 +5475,7 @@ int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 /**
  * Set reverb width. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_reverb_set_param instead.
+ * @deprecated Use fluid_synth_set_reverb_group_width in new code instead.
  */
 int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 {
@@ -5482,11 +5485,75 @@ int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 /**
  * Set reverb level. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_reverb_set_param instead.
+ * @deprecated Use fluid_synth_set_reverb_group_level in new code instead.
  */
 int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 {
     return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_LEVEL, level);
+}
+
+/**
+ * Set reverb roomsize.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param roomsize roomsize value to set. Must be in the range indicated by
+ * synth.reverb.room-size setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int fx_group,
+                                          double roomsize)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_ROOMSIZE, roomsize);
+}
+
+/**
+ * Set reverb damp.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param damping damping value to set. Must be in the range indicated by
+ * synth.reverb.damp setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int fx_group,
+                                      double damping)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_DAMP, damping);
+}
+
+/**
+ * Set reverb width.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param width width value to set. Must be in the range indicated by
+ * synth.reverb.width setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int fx_group,
+                                      double width)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_WIDTH, width);
+}
+
+/**
+ * Set reverb level.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param level output level to set. Must be in the range indicated by
+ * synth.reverb.level setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int fx_group,
+                                       double level)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_LEVEL, level);
 }
 
 /**
@@ -5591,7 +5658,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
  * Get reverb room size of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb room size (0.0-1.2)
- * @deprecated Use fluid_synth_reverb_get_param instead.
+ * @deprecated Use fluid_synth_get_reverb_group_roomsize in new code instead.
  */
 double
 fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
@@ -5605,7 +5672,7 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
  * Get reverb damping of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb damping value (0.0-1.0)
- * @deprecated Use fluid_synth_reverb_get_param instead.
+ * @deprecated Use fluid_synth_get_reverb_group_damp in new code instead.
  */
 double
 fluid_synth_get_reverb_damp(fluid_synth_t *synth)
@@ -5619,7 +5686,7 @@ fluid_synth_get_reverb_damp(fluid_synth_t *synth)
  * Get reverb level of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb level value (0.0-1.0)
- * @deprecated Use fluid_synth_reverb_get_param instead.
+ * @deprecated Use fluid_synth_get_reverb_group_level in new code instead.
  */
 double
 fluid_synth_get_reverb_level(fluid_synth_t *synth)
@@ -5633,7 +5700,7 @@ fluid_synth_get_reverb_level(fluid_synth_t *synth)
  * Get reverb width of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb width value (0.0-100.0)
- * @deprecated Use fluid_synth_reverb_get_param instead.
+ * @deprecated Use fluid_synth_get_reverb_group_width in new code instead.
  */
 double
 fluid_synth_get_reverb_width(fluid_synth_t *synth)
@@ -5642,6 +5709,67 @@ fluid_synth_get_reverb_width(fluid_synth_t *synth)
     fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_WIDTH, &width);
     return width;
 }
+
+/**
+ * get reverb roomsize.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group from which roomsize must be get.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param roomsize valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int fx_group,
+                                          double *roomsize)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_ROOMSIZE, roomsize);
+}
+
+/**
+ * get reverb damp.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group from which roomsize must be get.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param damping valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int fx_group,
+                                      double *damping)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_DAMP, damping);
+}
+
+/**
+ * get reverb width.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group from which roomsize must be get.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param width valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int fx_group,
+                                       double *width)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_WIDTH, width);
+}
+
+/**
+ * get reverb level.
+ * @param synth FluidSynth instance.
+ * @param fx_group index of the fx group from which roomsize must be get.
+ *  must be in the range -1 to synth->effects_groups-1. If -1 the changes are
+ * applied to all fx groups.
+ * @param level valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int fx_group,
+                                       double *level)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_LEVEL, level);
+}
+
 
 /**
  * Get one reverb parameter value of one fx group.
