@@ -5910,8 +5910,8 @@ int fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int fx_group,
  * @param value pointer on the value to return.
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
-int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
-                                 int param, double *value)
+static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value)
 {
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_REVERB_PARAM_LAST), FLUID_FAILED);
@@ -6295,7 +6295,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 {
-    double nr;
+    double nr = 0.0;
     fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &nr);
     return (int)nr;
 }
@@ -6309,7 +6309,7 @@ fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 double
 fluid_synth_get_chorus_level(fluid_synth_t *synth)
 {
-    double level;
+    double level = 0.0;
     fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_LEVEL, &level);
     return level;
 }
@@ -6323,7 +6323,7 @@ fluid_synth_get_chorus_level(fluid_synth_t *synth)
 double
 fluid_synth_get_chorus_speed(fluid_synth_t *synth)
 {
-    double speed;
+    double speed = 0.0;
     fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_SPEED, &speed);
     return speed;
 }
@@ -6337,7 +6337,7 @@ fluid_synth_get_chorus_speed(fluid_synth_t *synth)
 double
 fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 {
-    double depth;
+    double depth = 0.0;
     fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_DEPTH, &depth);
     return depth;
 }
@@ -6351,7 +6351,7 @@ fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 int
 fluid_synth_get_chorus_type(fluid_synth_t *synth)
 {
-    double type;
+    double type = 0.0;
     fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_TYPE, &type);
     return (int)type;
 }
@@ -6368,7 +6368,7 @@ fluid_synth_get_chorus_type(fluid_synth_t *synth)
 int
 fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int fx_group, int *nr)
 {
-    double num_nr;
+    double num_nr = 0.0;
     int status;
     status = fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_NR, &num_nr);
     *nr = (int)num_nr;
@@ -6432,7 +6432,7 @@ fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int fx_group, double *d
 int
 fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fx_group, int *type)
 {
-    double num_type;
+    double num_type = 0.0;
     int status;
     status = fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_TYPE, &num_type);
     *type = (int)num_type;
@@ -6454,8 +6454,8 @@ fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fx_group, int *type)
  * @param value pointer on the value to return.
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
-int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
-                                 int param, double *value)
+static int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value)
 {
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_CHORUS_PARAM_LAST), FLUID_FAILED);
