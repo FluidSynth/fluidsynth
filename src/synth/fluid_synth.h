@@ -221,6 +221,8 @@ int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 
 int fluid_synth_reset_chorus(fluid_synth_t *synth);
+int fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group,
+                                 int param, double value);
 int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 

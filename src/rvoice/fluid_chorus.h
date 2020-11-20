@@ -27,6 +27,17 @@
 
 typedef struct _fluid_chorus_t fluid_chorus_t;
 
+/* enum describing each chorus parameter */
+enum fluid_chorus_param
+{
+    FLUID_CHORUS_NR,        /**< number of delay line */
+    FLUID_CHORUS_LEVEL,     /**< output level */
+    FLUID_CHORUS_SPEED,     /**< lfo frequency */
+    FLUID_CHORUS_DEPTH,     /**< modulation depth */
+    FLUID_CHORUS_TYPE,      /**< type of waveform */
+    FLUID_CHORUS_PARAM_LAST /* number of enum fluid_chorus_param */
+};
+
 /* return a bit flag from param: 2^param */
 #define FLUID_CHORPARAM_TO_SETFLAG(param) (1 << param)
 

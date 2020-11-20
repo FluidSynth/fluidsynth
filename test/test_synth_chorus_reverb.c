@@ -8,6 +8,7 @@ int main(void)
     fluid_synth_t *synth;
     fluid_settings_t *settings = new_fluid_settings();
     double value;
+    int int_value;
 
     TEST_ASSERT(settings != NULL);
     /* set 2 group of effects */
@@ -40,13 +41,13 @@ int main(void)
     TEST_ASSERT(fluid_synth_get_reverb_group_level(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.4);
 
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &value) == FLUID_OK);
-    TEST_ASSERT((int)value == 99);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_LEVEL, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, -1, &int_value) == FLUID_OK);
+    TEST_ASSERT(int_value == 99);
+    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.5);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_SPEED, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.6);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_DEPTH, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.7);
 
     // update the realtime settings for all reverb group and all chorus group afterward
@@ -70,13 +71,13 @@ int main(void)
     TEST_ASSERT(fluid_synth_get_reverb_group_level(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.44);
 
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &value) == FLUID_OK);
-    TEST_ASSERT((int)value == 11);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_LEVEL, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, -1, &int_value) == FLUID_OK);
+    TEST_ASSERT(int_value == 11);
+    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.55);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_SPEED, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.66);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_DEPTH, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, -1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.77);
 
     /*
@@ -102,24 +103,24 @@ int main(void)
 
     // test chorus invalid parameters range
     // number of chorus block valid range: 0..99
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_NR, 100) == FLUID_FAILED);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_NR, -1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_nr(synth, 1, 100) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_nr(synth, 1, -1) == FLUID_FAILED);
 
     // level valid range: 0..10
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_LEVEL, 10.1) == FLUID_FAILED);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_LEVEL, -0.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_level(synth, 0, 10.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_level(synth, 0, -0.1) == FLUID_FAILED);
 
     // lfo speed valid range: 0.1..5.0
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_SPEED, 5.1) == FLUID_FAILED);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_SPEED, 0.09) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_speed(synth, 0, 5.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_speed(synth, 0, 0.09) == FLUID_FAILED);
 
     // lfo depth valid range: 0..256
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_DEPTH, 256.1) == FLUID_FAILED);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_DEPTH, -0.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_depth(synth, 0, 256.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_depth(synth, 0, -0.1) == FLUID_FAILED);
 
     // lfo wafeform type valid range: 0..1
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_TYPE, 2.0) == FLUID_FAILED);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_TYPE, -1.0) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_type(synth, 0, 2) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_chorus_group_type(synth, 0, -1) == FLUID_FAILED);
 
     // set a value and check if we get the same value to reverb group 0
     TEST_ASSERT(fluid_synth_set_reverb_group_roomsize(synth, 0, 0.1110) == FLUID_OK);
@@ -152,40 +153,40 @@ int main(void)
     TEST_ASSERT(value == 0.4441);
 
     // set a value and check if we get the same value to chorus group 0
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_NR, 20) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_LEVEL, 0.5550) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_SPEED, 0.6660) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_DEPTH, 0.7770) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_TYPE, 0) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_nr(synth, 0, 20) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_level(synth, 0, 0.5550) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_speed(synth, 0, 0.6660) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_depth(synth, 0, 0.7770) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_type(synth, 0, 0) == FLUID_OK);
 
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 0, FLUID_CHORUS_NR, &value) == FLUID_OK);
-    TEST_ASSERT((int)value == 20);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 0, FLUID_CHORUS_LEVEL, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, 0, &int_value) == FLUID_OK);
+    TEST_ASSERT(int_value == 20);
+    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, 0, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.5550);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 0, FLUID_CHORUS_SPEED, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, 0, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.6660);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 0, FLUID_CHORUS_DEPTH, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, 0, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.7770);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 0, FLUID_CHORUS_TYPE, &value) == FLUID_OK);
-    TEST_ASSERT(value == 0);
+    TEST_ASSERT(fluid_synth_get_chorus_group_type(synth, 0, &int_value) == FLUID_OK);
+    TEST_ASSERT(int_value == 0);
 
     // set a value and check if we get the same value to chorus group 1
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_NR, 21) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_LEVEL, 0.5551) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_SPEED, 0.6661) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_DEPTH, 0.7771) == FLUID_OK);
-    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_TYPE, 1) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_nr(synth, 1, 21) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_level(synth, 1, 0.5551) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_speed(synth, 1, 0.6661) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_depth(synth, 1, 0.7771) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_set_chorus_group_type(synth, 1, 1) == FLUID_OK);
 
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 1, FLUID_CHORUS_NR, &value) == FLUID_OK);
-    TEST_ASSERT((int)value == 21);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 1, FLUID_CHORUS_LEVEL, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, 1, &int_value) == FLUID_OK);
+    TEST_ASSERT(int_value == 21);
+    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, 1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.5551);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 1, FLUID_CHORUS_SPEED, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, 1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.6661);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 1, FLUID_CHORUS_DEPTH, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, 1, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.7771);
-    TEST_ASSERT(fluid_synth_chorus_get_param(synth, 1, FLUID_CHORUS_TYPE, &value) == FLUID_OK);
-    TEST_ASSERT(value == 1);
+    TEST_ASSERT(fluid_synth_get_chorus_group_type(synth, 1, &int_value) == FLUID_OK);
+    TEST_ASSERT(int_value == 1);
 
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
