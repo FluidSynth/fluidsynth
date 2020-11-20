@@ -34,6 +34,8 @@
 #define EMU_ATTENUATION_FACTOR (0.4f)
 
 /* Dynamic sample loading functions */
+static int pin_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
+static int unpin_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
 static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
 static int unload_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
 static void unload_sample(fluid_sample_t *sample);
@@ -227,6 +229,17 @@ int delete_fluid_defsfont(fluid_defsfont_t *defsfont)
     fluid_sample_t *sample;
 
     fluid_return_val_if_fail(defsfont != NULL, FLUID_OK);
+
+    /* If we use dynamic sample loading, make sure we unpin any
+     * pinned presets before removing this soundfont */
+    if(defsfont->dynamic_samples)
+    {
+        for(list = defsfont->preset; list; list = fluid_list_next(list))
+        {
+            preset = (fluid_preset_t *)fluid_list_get(list);
+            unpin_preset_samples(defsfont, preset);
+        }
+    }
 
     /* Check that no samples are currently used */
     for(list = defsfont->sample; list; list = fluid_list_next(list))
@@ -637,6 +650,7 @@ new_fluid_defpreset(void)
     defpreset->num = 0;
     defpreset->global_zone = NULL;
     defpreset->zone = NULL;
+    defpreset->pinned = FALSE;
     return defpreset;
 }
 
@@ -2003,14 +2017,73 @@ static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int
     {
         FLUID_LOG(FLUID_DBG, "Selected preset '%s' on channel %d", fluid_preset_get_name(preset), chan);
         defsfont = fluid_sfont_get_data(preset->sfont);
-        load_preset_samples(defsfont, preset);
+        return load_preset_samples(defsfont, preset);
     }
-    else if(reason == FLUID_PRESET_UNSELECTED)
+
+    if(reason == FLUID_PRESET_UNSELECTED)
     {
         FLUID_LOG(FLUID_DBG, "Deselected preset '%s' from channel %d", fluid_preset_get_name(preset), chan);
         defsfont = fluid_sfont_get_data(preset->sfont);
-        unload_preset_samples(defsfont, preset);
+        return unload_preset_samples(defsfont, preset);
     }
+
+    if(reason == FLUID_PRESET_PIN)
+    {
+        defsfont = fluid_sfont_get_data(preset->sfont);
+        return pin_preset_samples(defsfont, preset);
+    }
+
+    if(reason == FLUID_PRESET_UNPIN)
+    {
+        defsfont = fluid_sfont_get_data(preset->sfont);
+        return unpin_preset_samples(defsfont, preset);
+    }
+
+    return FLUID_OK;
+}
+
+
+static int pin_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset;
+
+    defpreset = fluid_preset_get_data(preset);
+    if (defpreset->pinned)
+    {
+        return FLUID_OK;
+    }
+
+    FLUID_LOG(FLUID_DBG, "Pinning preset '%s'", fluid_preset_get_name(preset));
+
+    if(load_preset_samples(defsfont, preset) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
+    }
+
+    defpreset->pinned = TRUE;
+
+    return FLUID_OK;
+}
+
+
+static int unpin_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset;
+
+    defpreset = fluid_preset_get_data(preset);
+    if (!defpreset->pinned)
+    {
+        return FLUID_OK;
+    }
+
+    FLUID_LOG(FLUID_DBG, "Unpinning preset '%s'", fluid_preset_get_name(preset));
+
+    if(unload_preset_samples(defsfont, preset) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
+    }
+
+    defpreset->pinned = FALSE;
 
     return FLUID_OK;
 }

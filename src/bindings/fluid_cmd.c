@@ -386,12 +386,14 @@ static const fluid_cmd_t fluid_commands[] =
 
 /**
  * Process a string command.
- * NOTE: FluidSynth 1.0.8 and above no longer modifies the 'cmd' string.
+ *
  * @param handler FluidSynth command handler
  * @param cmd Command string (NOTE: Gets modified by FluidSynth prior to 1.0.8)
  * @param out Output stream to display command response to
  * @return Integer value corresponding to: -1 on command error, 0 on success,
  *   1 if 'cmd' is a comment or is empty and -2 if quit was issued
+ *
+ * @note FluidSynth 1.0.8 and above no longer modifies the 'cmd' string.
  */
 int
 fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out)
@@ -418,6 +420,7 @@ fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out
 
 /**
  * Create a new FluidSynth command shell.
+ *
  * @param settings Setting parameters to use with the shell
  * @param handler Command handler
  * @param in Input stream
@@ -550,8 +553,12 @@ fluid_shell_run(void *data)
 /**
  * A convenience function to create a shell interfacing to standard input/output
  * console streams.
+ *
  * @param settings Settings instance for the shell
  * @param handler Command handler callback
+ *
+ * The shell is run in the current thread, this function will only
+ * return after the \c quit command has been issued.
  */
 void
 fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler)
@@ -563,6 +570,7 @@ fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler)
 
 /**
  * Execute shell commands in a file.
+ *
  * @param handler Command handler callback
  * @param filename File name
  * @return 0 on success, a negative value on error
@@ -600,11 +608,12 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
 /**
  * Get the user specific FluidSynth command file name.
  *
- * On Windows this is currently @c "%USERPROFILE%\fluidsynth.cfg".
- * For anything else (except MACOS9) @c "$HOME/.fluidsynth".
  * @param buf Caller supplied string buffer to store file name to.
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no user command file for this system type.
+ *
+ * On Windows this is currently @c "%USERPROFILE%\fluidsynth.cfg".
+ * For anything else (except MACOS9) @c "$HOME/.fluidsynth".
  */
 char *
 fluid_get_userconf(char *buf, int len)
@@ -635,11 +644,12 @@ fluid_get_userconf(char *buf, int len)
 /**
  * Get the system FluidSynth command file name.
  *
- * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
- * returns @c "/etc/fluidsynth.conf".
  * @param buf Caller supplied string buffer to store file name to.
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no system command file for this system type.
+ *
+ * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
+ * returns @c "/etc/fluidsynth.conf".
  */
 char *
 fluid_get_sysconf(char *buf, int len)
@@ -4227,6 +4237,7 @@ fluid_cmd_handler_destroy_hash_value(void *value)
 
 /**
  * Create a new command handler.
+ *
  * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
  * @param router If not NULL, all the default midi_router commands will be added to the new handler.
  * @return New command handler, or NULL if alloc failed
@@ -4276,6 +4287,7 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
 
 /**
  * Delete a command handler.
+ *
  * @param handler Command handler to delete
  */
 void
@@ -4289,6 +4301,7 @@ delete_fluid_cmd_handler(fluid_cmd_handler_t *handler)
 
 /**
  * Register a new command to the handler.
+ *
  * @param handler Command handler instance
  * @param cmd Command info (gets copied)
  * @return #FLUID_OK if command was inserted, #FLUID_FAILED otherwise
@@ -4303,6 +4316,7 @@ fluid_cmd_handler_register(fluid_cmd_handler_t *handler, const fluid_cmd_t *cmd)
 
 /**
  * Unregister a command from a command handler.
+ *
  * @param handler Command handler instance
  * @param cmd Name of the command
  * @return TRUE if command was found and unregistered, FALSE otherwise
@@ -4491,6 +4505,7 @@ void delete_fluid_client(fluid_client_t *client)
 
 /**
  * Create a new TCP/IP command shell server.
+ *
  * @param settings Settings instance to use for the shell
  * @param synth If not NULL, the synth instance for the command handler to be used by the client
  * @param router If not NULL, the midi_router instance for the command handler to be used by the client
@@ -4540,6 +4555,7 @@ new_fluid_server(fluid_settings_t *settings,
 
 /**
  * Delete a TCP/IP shell server.
+ *
  * @param server Shell server instance
  */
 void
@@ -4556,6 +4572,7 @@ delete_fluid_server(fluid_server_t *server)
 
 /**
  * Join a shell server thread (wait until it quits).
+ *
  * @param server Shell server instance
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */

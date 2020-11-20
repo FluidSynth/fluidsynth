@@ -26,10 +26,12 @@ extern "C" {
 #endif
 
 /**
- * @file event.h
- * @brief Sequencer event functions and defines.
+ * @defgroup sequencer_events Sequencer Events
+ * @ingroup sequencer
  *
- * Functions and constants for creating/processing sequencer events.
+ * Create, modify, query and destroy sequencer events.
+ *
+ * @{
  */
 
 /**
@@ -59,14 +61,16 @@ enum fluid_seq_event_type
     FLUID_SEQ_KEYPRESSURE,        /**< Polyphonic aftertouch event @since 2.0.0 */
     FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
     FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
-#ifndef __DOXYGEN__
-    FLUID_SEQ_LASTEVENT		/**< @internal Defines the count of events enums @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
-#endif
+    FLUID_SEQ_LASTEVENT		/**< @internal Defines the count of events enums @warning This symbol 
+                              is not part of the public API and ABI stability guarantee and 
+                              may change at any time! */
 };
 
 /* Event alloc/free */
+/** @startlifecycle{Sequencer Event} */
 FLUIDSYNTH_API fluid_event_t *new_fluid_event(void);
 FLUIDSYNTH_API void delete_fluid_event(fluid_event_t *evt);
+/** @endlifecycle */
 
 /* Initializing events */
 FLUIDSYNTH_API void fluid_event_set_source(fluid_event_t *evt, fluid_seq_id_t src);
@@ -126,6 +130,7 @@ FLUIDSYNTH_API unsigned int fluid_event_get_duration(fluid_event_t *evt);
 FLUIDSYNTH_API short fluid_event_get_bank(fluid_event_t *evt);
 FLUIDSYNTH_API int fluid_event_get_pitch(fluid_event_t *evt);
 FLUIDSYNTH_API unsigned int fluid_event_get_sfont_id(fluid_event_t *evt);
+/* @} */
 
 #ifdef __cplusplus
 }

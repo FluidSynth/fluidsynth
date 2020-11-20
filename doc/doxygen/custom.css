@@ -1,0 +1,282 @@
+body
+{
+    background: #eee;
+}
+
+#titlearea
+{
+    background: white;
+}
+
+*
+{
+    text-shadow: none !important;
+}
+
+
+/* Reduce width of main content for more readibility */
+div.contents,
+div.header
+{
+    max-width: 60em;
+    background: white;
+    margin: 0;
+    padding: 1em;
+}
+
+#titlearea
+{
+    border: 0;
+}
+
+
+div.headertitle
+{
+    padding-left: 0;
+}
+
+
+/* Hide permalink icon in front of method name and make whole name clickable
+ * instead (by invisibly streting the permalink over the title). Not ideal,
+ * as the name can't be selected anymore, but better than the distracting
+ * icon. */
+span.permalink
+{
+    display: block;
+    position: relative;
+    font-size: unset;
+}
+
+span.permalink a {
+	position: absolute;
+	width: 100%;
+	opacity: 0;
+}
+
+
+/* Hide "libfluidsynth" root node of nav tree */
+#nav-tree-contents > ul > li:first-child > .item > .label,
+#nav-tree-contents > ul > li:first-child > .item > a
+{
+    display: none;
+}
+
+#nav-tree,
+#side-nav
+{
+    background: #333;
+}
+
+#nav-tree .label a {
+    color: #fff;
+}
+
+#nav-tree .selected {
+    background: #666;
+}
+
+#side-nav {
+    width: 350px;
+}
+
+.ui-resizable-e {
+    background: #ddd;
+}
+
+#nav-sync {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    #side-nav {
+        display: none !important;
+    }
+    #doc-content {
+        margin-left: 0 !important;
+        height: auto !important;
+        width: auto !important;
+    }
+
+    #MSearchBox {
+        display: none !important;
+    }
+}
+
+.sm-dox a:hover {
+    color: black !important;
+}
+
+#nav-tree,
+div.header,
+.ui-resizable-e,
+.sm-dox,
+.navpath ul,
+.memtitle,
+.sm-dox a,
+.fieldtable th
+{
+    background-image: none !important;
+}
+
+#main-nav {
+    background: #DFE5F1;
+}
+
+.memitem,
+.memproto,
+.memdoc,
+.memtitle,
+dl.reflist dd,
+dl.reflist dt
+{
+    box-shadow: none;
+    text-shadow: none;
+    border-right: none;
+    border-bottom: none;
+    border-bottom-left-radius: 0;
+    background-image: none;
+    border-color: #DFE5F1;
+}
+
+.memtitle,
+dl.reflist dt
+{
+    width: 100%;
+    box-sizing: border-box;
+    background: #DFE5F1;
+    border: 0;
+}
+
+.memproto {
+    background: #fafafa;
+    border-bottom: 1px solid #DFE5F1;
+    border-right: 1px solid #DFE5F1;
+}
+
+.mdescLeft,
+.mdescRight,
+.memItemLeft,
+.memItemRight,
+.memTemplItemLeft,
+.memTemplItemRight,
+.memTemplParams
+{
+    background: none;
+}
+
+.memSeparator {
+}
+
+dl.reflist {
+    padding: 0;
+}
+
+dl.reflist dd {
+    margin-bottom: 1.5em;
+    padding: 1em;
+}
+
+code {
+    background-color: #eeeeee;
+    text-shadow: none;
+    color: black;
+    margin-left: 4px;
+    margin-right: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+table.fieldtable,
+table.fieldtable td,
+table.fieldtable th
+{
+    box-shadow: none;
+    text-shadow: none;
+    border-radius: 0;
+    border-color: #DFE5F1 !important;
+}
+
+div.fragment {
+    padding: 5px;
+}
+
+div.fragment .line {
+    line-height: 1.4;
+}
+
+.memdoc dl {
+    padding-left: 0;
+}
+
+dl.note {
+    margin-left: -10px;
+    padding-left: 5px;
+    border-left: 5px solid;
+    border-color: lightblue;
+}
+
+dl.deprecated {
+    margin-left: -10px;
+    padding-left: 5px;
+    border-left: 5px solid;
+    border-color: orange;
+}
+
+dl.warning {
+    margin-left: -10px;
+    padding-left: 5px;
+    border-left: 5px solid;
+    border-color: red;
+}
+
+table.directory .arrow {
+    height: inherit;
+}
+
+table.directory tr td {
+    padding: 0.4em 6px;
+}
+
+table.directory td.desc {
+    border: 0;
+}
+
+table.directory tr.even {
+    background-color: inherit;
+}
+
+table.directory tr {
+    border-bottom: 1px solid #eee;
+}
+
+.image img,
+.image object
+{
+    width: 100%;
+    height: auto;
+}
+
+.setting-item {
+    border-left: 1px solid #DFE5F1;
+    padding-bottom: 0.5em;
+    border-top-left-radius: 4px;
+}
+
+.setting-item h1 {
+    width: 100%;
+    padding: 0.3em 0 0.3em 10px;
+    box-sizing: border-box;
+    background: #DFE5F1;
+    border: 0;
+    font-size: 1.5em;
+    font-weight: normal;
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+}
+
+.setting-item dl,
+.setting-item p {
+    margin-left: 10px;
+}

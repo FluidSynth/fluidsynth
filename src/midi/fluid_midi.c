@@ -1798,16 +1798,18 @@ fluid_player_add_track(fluid_player_t *player, fluid_track_t *track)
 }
 
 /**
- * Change the MIDI callback function. This is usually set to
- * fluid_synth_handle_midi_event(), but can optionally be changed
- * to a user-defined function instead, for intercepting all MIDI
- * messages sent to the synth. You can also use a midi router as
- * the callback function to modify the MIDI messages before sending
- * them to the synth.
+ * Change the MIDI callback function.
+ *
  * @param player MIDI player instance
  * @param handler Pointer to callback function
  * @param handler_data Parameter sent to the callback function
  * @returns FLUID_OK
+ *
+ * This is usually set to fluid_synth_handle_midi_event(), but can optionally
+ * be changed to a user-defined function instead, for intercepting all MIDI
+ * messages sent to the synth. You can also use a midi router as the callback
+ * function to modify the MIDI messages before sending them to the synth.
+ *
  * @since 1.1.4
  */
 int
@@ -2140,9 +2142,10 @@ fluid_player_play(fluid_player_t *player)
 /**
  * Pauses the MIDI playback.
  *
- * It will not rewind to the beginning of the file, use fluid_player_seek() for this purpose.
  * @param player MIDI player instance
  * @return Always returns #FLUID_OK
+ *
+ * It will not rewind to the beginning of the file, use fluid_player_seek() for this purpose.
  */
 int
 fluid_player_stop(fluid_player_t *player)
@@ -2167,15 +2170,17 @@ fluid_player_get_status(fluid_player_t *player)
 /**
  * Seek in the currently playing file.
  *
- * The actual seek will be performed when the synth calls back the player (i.e. a few
- * levels above the player's callback set with fluid_player_set_playback_callback()).
- * If the player's status is #FLUID_PLAYER_PLAYING and a previous seek operation has
- * not been completed yet, #FLUID_FAILED is returned.
  * @param player MIDI player instance
  * @param ticks the position to seek to in the current file
  * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file
  * [or, since 2.1.3, if another seek operation is currently in progress],
  * #FLUID_OK otherwise.
+ *
+ * The actual seek will be performed when the synth calls back the player (i.e. a few
+ * levels above the player's callback set with fluid_player_set_playback_callback()).
+ * If the player's status is #FLUID_PLAYER_PLAYING and a previous seek operation has
+ * not been completed yet, #FLUID_FAILED is returned.
+ *
  * @since 2.0.0
  */
 int fluid_player_seek(fluid_player_t *player, int ticks)
@@ -2210,13 +2215,15 @@ int fluid_player_seek(fluid_player_t *player, int ticks)
 
 /**
  * Enable looping of a MIDI player
+ *
  * @param player MIDI player instance
  * @param loop Times left to loop the playlist. -1 means loop infinitely.
  * @return Always returns #FLUID_OK
- * @since 1.1.0
  *
  * For example, if you want to loop the playlist twice, set loop to 2
  * and call this function before you start the player.
+ *
+ * @since 1.1.0
  */
 int fluid_player_set_loop(fluid_player_t *player, int loop)
 {

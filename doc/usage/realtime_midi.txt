@@ -1,0 +1,46 @@
+/*!
+
+\page RealtimeMIDI Creating a real-time MIDI driver
+
+FluidSynth can process real-time MIDI events received from hardware MIDI
+ports or other applications. To do so, the client must create a MIDI input
+driver. It is a very similar process to the creation of the audio driver: you
+initialize some properties in a settings instance and call the
+new_fluid_midi_driver() function providing a callback function that will be
+invoked when a MIDI event is received. The following MIDI drivers are
+currently supported:
+
+- jack: JACK Audio Connection Kit MIDI driver (Linux, Mac OS X)
+- oss: Open Sound System raw MIDI (Linux, Unix)
+- alsa_raw: ALSA raw MIDI interface (Linux)
+- alsa_seq: ALSA sequencer MIDI interface (Linux)
+- winmidi: Microsoft Windows MM System (Windows)
+- midishare: MIDI Share (Linux, Mac OS X)
+- coremidi: Apple CoreMIDI (Mac OS X)
+
+\code
+#include <fluidsynth.h>
+
+int handle_midi_event(void* data, fluid_midi_event_t* event)
+{
+    printf("event type: %d\n", fluid_midi_event_get_type(event));
+}
+
+int main(int argc, char** argv)
+{
+    fluid_settings_t* settings;
+    fluid_midi_driver_t* mdriver;
+    settings = new_fluid_settings();
+    mdriver = new_fluid_midi_driver(settings, handle_midi_event, NULL);
+    /* ... */    
+    delete_fluid_midi_driver(mdriver);
+    return 0;
+}
+\endcode
+
+There are a number of general MIDI driver settings. The \setting{midi_driver} setting
+defines the MIDI subsystem that will be used. There are additional settings
+for the MIDI subsystems used. For a full list of available
+<strong>midi driver settings</strong>, please refer to the \setting{midi} documentation.
+
+*/

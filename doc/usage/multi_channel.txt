@@ -1,0 +1,15 @@
+/*!
+
+\page Multi-channel Multi-channel audio rendering
+
+FluidSynth is capable of rendering all audio and all effects from all MIDI
+channels to separate stereo buffers. Refer to the documentation of
+fluid_synth_process() and review the different use-cases in the example file
+for information on how to do that: \ref fluidsynth_process.c
+
+The following chart illustrates how the voices (produced by MIDI NoteOns) are
+dispatched or mapped to their dry/effects audio buffers.
+
+\image html fluid_mixer.svg "FluidSynth Mixer Chart"
+
+*/

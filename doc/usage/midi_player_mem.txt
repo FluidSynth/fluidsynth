@@ -1,0 +1,64 @@
+/*!
+
+\page MIDIPlayerMem Playing a MIDI file from memory
+
+FluidSynth can be also play MIDI files directly from a buffer in memory. If
+you need to play a file from a stream (such as stdin, a network, or a
+high-level file interface), you can load the entire file into a buffer first,
+and then use this approach. Use the same technique as above, but rather than
+calling fluid_player_add(), load it into memory and call
+fluid_player_add_mem() instead. Once you have passed a buffer to
+fluid_player_add_mem(), it is copied, so you may use it again or free it
+immediately (it is your responsibility to free it if you allocated it).
+
+\code
+#include <stdlib.h>
+#include <string.h>
+#include <fluidsynth.h>
+
+/* An example midi file */
+const char MIDIFILE[] = {
+    0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
+    0x00, 0x01, 0x00, 0x01, 0x01, 0xe0, 0x4d, 0x54,
+    0x72, 0x6b, 0x00, 0x00, 0x00, 0x20, 0x00, 0x90,
+    0x3c, 0x64, 0x87, 0x40, 0x80, 0x3c, 0x7f, 0x00,
+    0x90, 0x43, 0x64, 0x87, 0x40, 0x80, 0x43, 0x7f,
+    0x00, 0x90, 0x48, 0x64, 0x87, 0x40, 0x80, 0x48,
+    0x7f, 0x83, 0x60, 0xff, 0x2f, 0x00
+};
+
+int main(int argc, char** argv)
+{
+    int i;
+    void* buffer;
+    size_t buffer_len;
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    fluid_player_t* player;
+    fluid_audio_driver_t* adriver;
+    settings = new_fluid_settings();
+    synth = new_fluid_synth(settings);
+    player = new_fluid_player(synth);
+    adriver = new_fluid_audio_driver(settings, synth);
+    /* process command line arguments */
+    for (i = 1; i < argc; i++) {
+        if (fluid_is_soundfont(argv[i])) {
+           fluid_synth_sfload(synth, argv[1], 1);
+        }
+    }
+    /* queue up the in-memory midi file */
+    fluid_player_add_mem(player, MIDIFILE, sizeof(MIDIFILE));
+    /* play the midi file */
+    fluid_player_play(player);
+    /* wait for playback termination */
+    fluid_player_join(player);
+    /* cleanup */
+    delete_fluid_audio_driver(adriver);
+    delete_fluid_player(player);
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
+    return 0;
+}
+\endcode
+
+*/

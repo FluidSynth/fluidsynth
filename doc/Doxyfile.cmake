@@ -11,7 +11,7 @@ CREATE_SUBDIRS = NO
 OUTPUT_LANGUAGE = English
 BRIEF_MEMBER_DESC = YES
 REPEAT_BRIEF = YES
-ABBREVIATE_BRIEF = "The $name class" "The $name widget" "The $name file" is provides specifies contains represents a an the
+ABBREVIATE_BRIEF = "Functions for" "Functions to" "The $name class" "The $name widget" "The $name file" is provides specifies contains represents a an the
 ALWAYS_DETAILED_SEC = NO
 INLINE_INHERITED_MEMB = NO
 FULL_PATH_NAMES = NO
@@ -24,7 +24,9 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS = YES
 SEPARATE_MEMBER_PAGES = NO
 TAB_SIZE = 8
-ALIASES = 
+ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1\_linebr@{"
+ALIASES += endlifecycle="@}"
+ALIASES += setting{1}="\ref settings_\1"
 OPTIMIZE_OUTPUT_FOR_C = YES
 OPTIMIZE_OUTPUT_JAVA = NO
 OPTIMIZE_FOR_FORTRAN = NO
@@ -34,7 +36,7 @@ CPP_CLI_SUPPORT = NO
 SIP_SUPPORT = NO
 IDL_PROPERTY_SUPPORT = YES
 DISTRIBUTE_GROUP_DOC = NO
-SUBGROUPING = NO
+SUBGROUPING = YES
 TYPEDEF_HIDES_STRUCT = NO
 #---------------------------------------------------------------------------
 # Build related configuration options
@@ -54,9 +56,9 @@ CASE_SENSE_NAMES = YES
 HIDE_SCOPE_NAMES = NO
 SHOW_INCLUDE_FILES = NO
 INLINE_INFO = YES
-SORT_MEMBER_DOCS = NO
-SORT_BRIEF_DOCS = NO
-SORT_GROUP_NAMES = NO
+SORT_MEMBER_DOCS = YES
+SORT_BRIEF_DOCS = YES
+SORT_GROUP_NAMES = YES
 SORT_BY_SCOPE_NAME = NO
 GENERATE_TODOLIST = NO
 GENERATE_TESTLIST = NO
@@ -65,7 +67,6 @@ GENERATE_DEPRECATEDLIST = YES
 ENABLED_SECTIONS = 
 MAX_INITIALIZER_LINES = 30
 SHOW_USED_FILES = YES
-SHOW_DIRECTORIES = NO
 SHOW_FILES = YES
 SHOW_NAMESPACES = YES
 FILE_VERSION_FILTER = 
@@ -82,18 +83,27 @@ WARN_LOGFILE =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT = @CMAKE_SOURCE_DIR@/doc/fluidsynth-v20-devdoc.txt @CMAKE_SOURCE_DIR@/include @CMAKE_SOURCE_DIR@/include/fluidsynth @CMAKE_SOURCE_DIR@/src @CMAKE_BINARY_DIR@/include/fluidsynth
+INPUT = \
+@CMAKE_SOURCE_DIR@/doc/fluidsynth-v20-devdoc.txt \
+@CMAKE_SOURCE_DIR@/doc/recent_changes.txt \
+@CMAKE_SOURCE_DIR@/doc/usage \
+@CMAKE_SOURCE_DIR@/include \
+@CMAKE_SOURCE_DIR@/include/fluidsynth \
+@CMAKE_SOURCE_DIR@/src \
+@CMAKE_BINARY_DIR@/include/fluidsynth \
+@CMAKE_BINARY_DIR@/doc/fluidsettings.txt
+
 INPUT_ENCODING = UTF-8
-FILE_PATTERNS = *.c *.h
+FILE_PATTERNS = *.c *.h *.txt
 RECURSIVE = YES
 EXCLUDE = 
 EXCLUDE_SYMLINKS = NO
 EXCLUDE_PATTERNS = fluid_*.h
 EXCLUDE_SYMBOLS = 
-EXAMPLE_PATH = @CMAKE_SOURCE_DIR@/doc
+EXAMPLE_PATH = @CMAKE_SOURCE_DIR@/doc/examples
 EXAMPLE_PATTERNS = *.c
 EXAMPLE_RECURSIVE = NO
-IMAGE_PATH = 
+IMAGE_PATH = @CMAKE_SOURCE_DIR@/doc/images
 INPUT_FILTER = 
 FILTER_PATTERNS = 
 FILTER_SOURCE_FILES = NO
@@ -103,8 +113,8 @@ FILTER_SOURCE_FILES = NO
 SOURCE_BROWSER = NO
 INLINE_SOURCES = NO
 STRIP_CODE_COMMENTS = YES
-REFERENCED_BY_RELATION = YES
-REFERENCES_RELATION = YES
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION = NO
 REFERENCES_LINK_SOURCE = YES
 USE_HTAGS = NO
 VERBATIM_HEADERS = NO
@@ -120,11 +130,19 @@ IGNORE_PREFIX =
 GENERATE_HTML = YES
 HTML_OUTPUT = html
 HTML_FILE_EXTENSION = .html
-HTML_HEADER = 
-HTML_FOOTER = 
-HTML_EXTRA_STYLESHEET = @CMAKE_SOURCE_DIR@/doc/doxy_formula.css
-HTML_ALIGN_MEMBERS = YES
-HTML_EXTRA_FILES = @CMAKE_SOURCE_DIR@/doc/fluidsettings.xml @CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl @CMAKE_SOURCE_DIR@/doc/FluidMixer.pdf @CMAKE_SOURCE_DIR@/doc/FluidMixer.jpg
+HTML_EXTRA_FILES = \
+@CMAKE_SOURCE_DIR@/doc/fluidsettings.xml \
+@CMAKE_SOURCE_DIR@/doc/fluidsettings.xsl
+
+# FluidSynth specific layout and style customizations.
+# Comment the following four lines to return to the
+# default doxygen styling and layout
+LAYOUT_FILE = @CMAKE_SOURCE_DIR@/doc/doxygen/layout.xml
+HTML_HEADER =
+HTML_FOOTER = @CMAKE_SOURCE_DIR@/doc/doxygen/footer.html
+HTML_EXTRA_STYLESHEET = @CMAKE_SOURCE_DIR@/doc/doxygen/custom.css
+# end FluidSynth styling and layout
+
 GENERATE_HTMLHELP = NO
 GENERATE_DOCSET = NO
 DOCSET_FEEDNAME = "Doxygen generated docs"
@@ -137,9 +155,9 @@ CHM_INDEX_ENCODING =
 BINARY_TOC = NO
 TOC_EXPAND = NO
 DISABLE_INDEX = NO
-ENUM_VALUES_PER_LINE = 4
-GENERATE_TREEVIEW = NO
-TREEVIEW_WIDTH = 250
+ENUM_VALUES_PER_LINE = 1
+GENERATE_TREEVIEW = YES
+TREEVIEW_WIDTH = 350
 FORMULA_FONTSIZE = 10
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
@@ -177,8 +195,6 @@ MAN_LINKS = NO
 #---------------------------------------------------------------------------
 GENERATE_XML = NO
 XML_OUTPUT = xml
-XML_SCHEMA = 
-XML_DTD = 
 XML_PROGRAMLISTING = YES
 #---------------------------------------------------------------------------
 # configuration options for the AutoGen Definitions output
@@ -195,12 +211,14 @@ PERLMOD_MAKEVAR_PREFIX =
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
 ENABLE_PREPROCESSING = YES
-MACRO_EXPANSION = NO
-EXPAND_ONLY_PREDEF = NO
+MACRO_EXPANSION = YES
+EXPAND_ONLY_PREDEF = YES
 SEARCH_INCLUDES = YES
 INCLUDE_PATH = 
 INCLUDE_FILE_PATTERNS = 
-PREDEFINED = __DOXYGEN__
+PREDEFINED = __DOXYGEN__ \
+             FLUIDSYNTH_API \
+             FLUID_DEPRECATED
 EXPAND_AS_DEFINED = 
 SKIP_FUNCTION_MACROS = YES
 #---------------------------------------------------------------------------
@@ -218,7 +236,7 @@ CLASS_DIAGRAMS = YES
 MSCGEN_PATH = 
 HIDE_UNDOC_RELATIONS = YES
 HAVE_DOT = NO
-DOT_FONTNAME = FreeSans
+DOT_FONTNAME =
 DOT_FONTPATH = 
 CLASS_GRAPH = YES
 COLLABORATION_GRAPH = YES

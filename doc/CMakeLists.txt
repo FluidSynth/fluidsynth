@@ -27,18 +27,25 @@ if ( DOXYGEN_FOUND )
     ${DOXYGEN} Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
+
+  find_package ( LibXslt )
+  if ( LIBXSLT_XSLTPROC_EXECUTABLE )
+      add_custom_target ( doxygen_settings
+          ${LIBXSLT_XSLTPROC_EXECUTABLE}
+              --output ${CMAKE_CURRENT_BINARY_DIR}/fluidsettings.txt
+              ${CMAKE_CURRENT_SOURCE_DIR}/doxygen/fluidsettings.xsl
+              ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      )
+      add_dependencies(doxygen doxygen_settings)
+  endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
+
 endif ( DOXYGEN_FOUND )
+
 
 if ( UNIX )
   install ( FILES fluidsynth.1
     DESTINATION ${MAN_INSTALL_DIR} )
 endif ( UNIX )
 
-include ( FluidUnitTest )
-add_custom_target ( demo )
-
-ADD_FLUID_DEMO ( example )
-ADD_FLUID_DEMO ( fluidsynth_arpeggio )
-ADD_FLUID_DEMO ( fluidsynth_fx )
-ADD_FLUID_DEMO ( fluidsynth_metronome )
-ADD_FLUID_DEMO ( fluidsynth_simple )
+add_subdirectory ( examples )

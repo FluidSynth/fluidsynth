@@ -1,0 +1,38 @@
+/*!
+
+\page CreatingSettings Creating and changing the settings
+
+Before you can use the synthesizer, you have to create a settings object. The
+settings objects is used by many components of the FluidSynth library. It gives
+a unified API to set the parameters of the audio drivers, the midi drivers, the
+synthesizer, and so forth. A number of default settings are defined by the
+current implementation.
+
+All settings have a name that follows the "dotted-name" notation. For example,
+\setting{synth_polyphony} refers to the number of voices (polyphony) allocated
+by the synthesizer. The settings also have a type. There are currently three
+types: strings, numbers (double floats), and integers. You can change the
+values of a setting using the fluid_settings_setstr(), fluid_settings_setnum(),
+and fluid_settings_setint() functions. For example:
+
+\code
+#include <fluidsynth.h>
+
+int main(int argc, char** argv) 
+{
+    fluid_settings_t* settings = new_fluid_settings();
+    fluid_settings_setint(settings, "synth.polyphony", 128);
+    /* ... */
+    delete_fluid_settings(settings);
+    return 0;
+}
+\endcode
+
+The API contains the functions to query the type, the current value, the
+default value, the range and the "hints" of a setting. The range is the minimum
+and maximum value of the setting. The hints gives additional information about
+a setting. For example, whether a string represents a filename. Or whether a
+number should be interpreted on on a logarithmic scale. Check the settings.h
+API documentation for a description of all functions.
+
+*/
