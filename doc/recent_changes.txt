@@ -11,6 +11,7 @@
   - Events that share the same tick was given a new, documented order, see fluid_sequencer_send_at().
   - The sequencer's scale can now be used for arbitrary tempo changes. Previously, the scale of the sequencer was limited to 1000. The only limitation now is >0.
 - The dynamic-sample-loader has learned support to pin samples, see fluid_synth_pin_preset() and fluid_synth_unpin_preset()
+- Added getter and setter functions for individual effect groups
 
 \section NewIn2_1_4 What's new in 2.1.4?
 

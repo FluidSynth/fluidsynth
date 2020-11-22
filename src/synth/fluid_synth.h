@@ -138,16 +138,11 @@ struct _fluid_synth_t
     int fromkey_portamento;			 /**< fromkey portamento */
     fluid_rvoice_eventhandler_t *eventhandler;
 
-    double reverb_roomsize;             /**< Shadow of reverb roomsize */
-    double reverb_damping;              /**< Shadow of reverb damping */
-    double reverb_width;                /**< Shadow of reverb width */
-    double reverb_level;                /**< Shadow of reverb level */
+    /**< Shadow of reverb parameter: roomsize, damping, width, level */
+    double reverb_param[FLUID_REVERB_PARAM_LAST];
 
-    int chorus_nr;                     /**< Shadow of chorus number */
-    double chorus_level;                /**< Shadow of chorus level */
-    double chorus_speed;                /**< Shadow of chorus speed */
-    double chorus_depth;                /**< Shadow of chorus depth */
-    int chorus_type;                   /**< Shadow of chorus type */
+    /**< Shadow of chorus parameter: chorus number, level, speed, depth, type */
+    double chorus_param[FLUID_CHORUS_PARAM_LAST];
 
     int cur;                           /**< the current sample in the audio buffers to be output */
     int curmax;                        /**< current amount of samples present in the audio buffers */
@@ -219,12 +214,17 @@ void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const 
 
 int fluid_synth_reset_reverb(fluid_synth_t *synth);
 int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num);
-int fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
-                                double damping, double width, double level);
+int fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
+                                 int param,
+                                 double value);
+int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
+                                const double values[]);
 
 int fluid_synth_reset_chorus(fluid_synth_t *synth);
-int fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
-                                double speed, double depth_ms, int type);
+int fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group,
+                                 int param, double value);
+int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
+                                const double values[]);
 
 fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_callback_t callback, void *data);
 void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer);
