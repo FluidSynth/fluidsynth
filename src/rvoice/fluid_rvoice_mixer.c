@@ -280,18 +280,18 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t *buffers, fluid_real_t **outbu
     for(i = 0; i < buffers->mixer->fx_units; i++)
     {
         int fx_idx = i * fx_channels_per_unit;
-        
+
         outbufs[offset + fx_idx + SYNTH_REVERB_CHANNEL] =
             (with_reverb)
             ? &base_ptr[(fx_idx + SYNTH_REVERB_CHANNEL) * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT]
             : NULL;
-            
+
         outbufs[offset + fx_idx + SYNTH_CHORUS_CHANNEL] =
             (with_chorus)
             ? &base_ptr[(fx_idx + SYNTH_CHORUS_CHANNEL) * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT]
             : NULL;
     }
-    
+
     /* The output associated with a MIDI channel is wrapped around
      * using the number of audio groups as modulo divider.  This is
      * typically the number of output channels on the 'sound card',
@@ -441,6 +441,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
         /* mixdown sample_count samples in the current buffer buf
            Note, that this loop could be unrolled by FLUID_BUFSIZE elements */
         #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
+
         for(dsp_i = 0; dsp_i < sample_count; dsp_i++)
         {
             // Index by blocks (not by samples) to let the compiler know that we always start accessing
@@ -469,20 +470,22 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
     {
         /* render one block in src_buf */
         int s = fluid_rvoice_write(rvoice, &src_buf[FLUID_BUFSIZE * i]);
+
         if(s == -1)
         {
             /* the voice is silent, mix back all the previously rendered sound */
             fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed,
-                                     total_samples - (last_block_mixed*FLUID_BUFSIZE),
+                                     total_samples - (last_block_mixed * FLUID_BUFSIZE),
                                      dest_bufs, dest_bufcount);
 
-            last_block_mixed = i+1; /* future block start index to mix from */
+            last_block_mixed = i + 1; /* future block start index to mix from */
             total_samples += FLUID_BUFSIZE; /* accumulate samples count rendered */
         }
         else
         {
             /* the voice wasn't quiet. Some samples have been rendered [0..FLUID_BUFSIZE] */
             total_samples += s;
+
             if(s < FLUID_BUFSIZE)
             {
                 /* voice has finished */
@@ -493,7 +496,7 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
 
     /* Now mix the remaining blocks from last_block_mixed to total_sample */
     fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed,
-                             total_samples - (last_block_mixed*FLUID_BUFSIZE),
+                             total_samples - (last_block_mixed * FLUID_BUFSIZE),
                              dest_bufs, dest_bufcount);
 
     if(total_samples < blockcount * FLUID_BUFSIZE)
@@ -712,6 +715,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
     fluid_real_t samplerate = param[1].real; // because fluid_synth_update_mixer() puts real into arg2
 
     int i;
+
     for(i = 0; i < mixer->fx_units; i++)
     {
         if(mixer->fx[i].chorus)
@@ -771,6 +775,7 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
 
     /* allocate the reverb module */
     mixer->fx = FLUID_ARRAY(fluid_mixer_fx_t, fx_units);
+
     if(mixer->fx == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -839,7 +844,7 @@ fluid_mixer_buffers_free(fluid_mixer_buffers_t *buffers)
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 {
     int i;
-    
+
     fluid_return_if_fail(mixer != NULL);
 
 #if ENABLE_MIXER_THREADS
@@ -868,7 +873,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 #endif
     fluid_mixer_buffers_free(&mixer->buffers);
 
-    
+
     for(i = 0; i < mixer->fx_units; i++)
     {
         if(mixer->fx[i].reverb)
@@ -958,9 +963,10 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
         fx_group = 0;
     }
 
-    for( ; fx_group < nr_units; fx_group++)
+    for(; fx_group < nr_units; fx_group++)
     {
         int param;
+
         for(param = 0; param < FLUID_REVERB_PARAM_LAST; param++)
         {
             if(set & FLUID_REVPARAM_TO_SETFLAG(param))
@@ -1024,6 +1030,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
     for(; fx_group < nr_units; fx_group++)
     {
         int param;
+
         for(param = 0; param < FLUID_CHORUS_PARAM_LAST; param++)
         {
             if(set & FLUID_CHORPARAM_TO_SETFLAG(param))
@@ -1074,20 +1081,25 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
         mixer->fx[fx_group].reverb_on = on;
     }
     /* on/off must be applied to all fx groups */
-    else for(fx_group = 0; fx_group < nr_units; fx_group++)
+    else
     {
-        mixer->fx[fx_group].reverb_on = on;
+        for(fx_group = 0; fx_group < nr_units; fx_group++)
+        {
+            mixer->fx[fx_group].reverb_on = on;
+        }
     }
 
     /* set with_reverb if at least one reverb unit is on */
     for(fx_group = 0; fx_group < nr_units; fx_group++)
     {
         on = mixer->fx[fx_group].reverb_on;
+
         if(on)
         {
             break;
         }
     }
+
     mixer->with_reverb = on;
 }
 
@@ -1113,20 +1125,25 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
         mixer->fx[fx_group].chorus_on = on;
     }
     /* on/off must be applied to all fx groups */
-    else for(fx_group = 0; fx_group < nr_units; fx_group++)
+    else
     {
-        mixer->fx[fx_group].chorus_on = on;
+        for(fx_group = 0; fx_group < nr_units; fx_group++)
+        {
+            mixer->fx[fx_group].chorus_on = on;
+        }
     }
 
     /* set with_chorus if at least one chorus unit is on */
     for(fx_group = 0; fx_group < nr_units; fx_group++)
     {
         on = mixer->fx[fx_group].chorus_on;
+
         if(on)
         {
             break;
         }
     }
+
     mixer->with_chorus = on;
 }
 
@@ -1175,6 +1192,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
     fluid_real_t level = param[5].real;
 
     int nr_units = mixer->fx_units;
+
     /* does parameters change should be applied only to fx group i ? */
     if(i >= 0)
     {
@@ -1195,6 +1213,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_reverb)
 {
     fluid_rvoice_mixer_t *mixer = obj;
     int i;
+
     for(i = 0; i < mixer->fx_units; i++)
     {
         fluid_revmodel_reset(mixer->fx[i].reverb);
@@ -1205,6 +1224,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus)
 {
     fluid_rvoice_mixer_t *mixer = obj;
     int i;
+
     for(i = 0; i < mixer->fx_units; i++)
     {
         fluid_chorus_reset(mixer->fx[i].chorus);

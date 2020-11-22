@@ -623,13 +623,13 @@ fluid_get_userconf(char *buf, int len)
 #if defined(WIN32)
     home = getenv("USERPROFILE");
     config_file = "\\fluidsynth.cfg";
-    
+
 #elif !defined(MACOS9)
     home = getenv("HOME");
     config_file = "/.fluidsynth";
-    
+
 #endif
-    
+
     if(home == NULL)
     {
         return NULL;
@@ -1109,13 +1109,13 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
   -2 if error.
 */
 static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
-                             fluid_synth_t *synth, const char *name_cde)
+                              fluid_synth_t *synth, const char *name_cde)
 {
     int fx_group; /* fx unit index */
     int ngroups;  /* count of fx groups */
 
     /* One or 2 arguments allowed */
-    if(ac < 1 || ac > 2 )
+    if(ac < 1 || ac > 2)
     {
         fluid_ostream_printf(out, "%s: needs 1 or 2 arguments\n", name_cde);
         return -2;
@@ -1123,10 +1123,12 @@ static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
 
     /* check optionnal first argument which is a fx group index */
     fx_group = -1;
-    if( ac > 1)
+
+    if(ac > 1)
     {
         fx_group = atoi(av[0]); /* get fx group index */
         ngroups = fluid_synth_count_effects_groups(synth);
+
         if(!fluid_is_number(av[0]) || fx_group < 0 || fx_group >= ngroups)
         {
             fluid_ostream_printf(out, "%s: group index \"%s\" must be in range [%d..%d]\n",
@@ -1134,6 +1136,7 @@ static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
             return -2;
         }
     }
+
     return fx_group;
 }
 
@@ -1156,12 +1159,13 @@ struct value
   -2 if error.
 */
 static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
-                       fluid_synth_t *synth, const char *name_cde,
-                       const struct value *value,
-                       fluid_real_t *param)
+                                 fluid_synth_t *synth, const char *name_cde,
+                                 const struct value *value,
+                                 fluid_real_t *param)
 {
     /* get and check fx group index argument */
     int fx_group = check_fx_group_idx(ac, av, out, synth, name_cde);
+
     if(fx_group >= -1)
     {
         fluid_real_t val;
@@ -1169,14 +1173,17 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
         /* get and check value argument */
         ac--;
         val = atof(av[ac]);
-        if( !fluid_is_number(av[ac]) || val < value->min || val > value->max)
+
+        if(!fluid_is_number(av[ac]) || val < value->min || val > value->max)
         {
             fluid_ostream_printf(out, "%s: %s \"%s\" must be in range [%f..%f]\n",
-                        name_cde, value->name, av[ac], value->min, value->max);
+                                 name_cde, value->name, av[ac], value->min, value->max);
             return -2;
         }
+
         *param = val;
     }
+
     return fx_group;
 }
 
@@ -1185,7 +1192,7 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
  */
 static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
-                            int param )
+                            int param)
 {
     int fx_group;
 
@@ -1229,6 +1236,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
         fluid_synth_reverb_set_param(handler->synth, fx_group, param, value);
         return FLUID_OK;
     }
+
     return FLUID_FAILED;
 }
 
@@ -1296,21 +1304,23 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
                                       enum rev_chor_on_cde cde)
 {
     /* commands name table */
-    static const char *name_cde[NBR_REV_CHOR_ON_CDE] ={"reverb", "chorus"};
+    static const char *name_cde[NBR_REV_CHOR_ON_CDE] = {"reverb", "chorus"};
     /* functions table */
-    static int (*onoff_func[NBR_REV_CHOR_ON_CDE]) (fluid_synth_t *, int, int) =
+    static int (*onoff_func[NBR_REV_CHOR_ON_CDE])(fluid_synth_t *, int, int) =
     {
         fluid_synth_reverb_on, fluid_synth_chorus_on
     };
 
     FLUID_ENTRY_COMMAND(data);
-	int onoff;
+    int onoff;
 
     /* get and check fx group index argument */
     int fx_group = check_fx_group_idx(ac, av, out, handler->synth, name_cde[cde]);
+
     if(fx_group >= -1)
     {
         ac--;
+
         /* check argument value */
         if((FLUID_STRCMP(av[ac], "0") == 0) || (FLUID_STRCMP(av[ac], "off") == 0))
         {
@@ -1330,6 +1340,7 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
         /* run on/off function */
         return onoff_func[cde](handler->synth, fx_group, onoff);
     }
+
     return FLUID_FAILED;
 }
 
@@ -1350,23 +1361,25 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
                             int param)
 {
     /* chorus commands name table */
-    static const char *name_cde[FLUID_CHORUS_PARAM_LAST -1] =
+    static const char *name_cde[FLUID_CHORUS_PARAM_LAST - 1] =
     {"cho_set_nr", "cho_set_level", "cho_set_speed", "cho_set_depth"};
 
     /* value name table */
-    static const char *name_value[FLUID_CHORUS_PARAM_LAST -1] =
+    static const char *name_value[FLUID_CHORUS_PARAM_LAST - 1] =
     {"nr", "level", "speed", "depth"};
 
     FLUID_ENTRY_COMMAND(data);
 
     /* get and check index fx group index argument */
     int fx_group = check_fx_group_idx(ac, av, out, handler->synth, name_cde[param]);
-    if( fx_group >= -1)
+
+    if(fx_group >= -1)
     {
         double value;
         /* get and check value argument */
         ac--;
-        if( !fluid_is_number(av[ac]))
+
+        if(!fluid_is_number(av[ac]))
         {
             fluid_ostream_printf(out, "%s: %s \"%s\" must be a number\n",
                                  name_cde[param], name_value[param], av[ac]);
@@ -1386,6 +1399,7 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
         fluid_synth_chorus_set_param(handler->synth, fx_group, param, value);
         return FLUID_OK;
     }
+
     return FLUID_FAILED;
 }
 
@@ -1956,7 +1970,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
     {
         fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
     }
-    
+
     if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))
     {
         fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
@@ -2550,7 +2564,8 @@ int fluid_handle_router_par2(void *data, int ac, char **av, fluid_ostream_t out)
 
 /**  commands Poly/mono mode *************************************************/
 
-static const char *const mode_name[] = {
+static const char *const mode_name[] =
+{
     "poly omni on (0)", "mono omni on (1)",
     "poly omni off(2)", "mono omni off(3)"
 };
@@ -2628,7 +2643,7 @@ static int get_channel_mode_num(char *name)
 {
     /* argument names for channel mode parameter (see resetbasicchannels and
        setbasicchannels commands*/
-    static const char * const name_channel_mode [FLUID_CHANNEL_MODE_LAST] =
+    static const char *const name_channel_mode [FLUID_CHANNEL_MODE_LAST] =
     {"poly_omnion", "mono_omnion", "poly_omnioff", "mono_omnioff"};
     int i;
 

@@ -132,7 +132,7 @@ int main(void)
     TEST_ASSERT(value == 0.1110);
     TEST_ASSERT(fluid_synth_get_reverb_group_damp(synth, 0, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.2220);
-    TEST_ASSERT(fluid_synth_get_reverb_group_width(synth, 0,&value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_get_reverb_group_width(synth, 0, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.3330);
     TEST_ASSERT(fluid_synth_get_reverb_group_level(synth, 0, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.4440);
