@@ -1947,7 +1947,6 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* GS DT1 message */
     if((synth->bank_select == FLUID_BANK_STYLE_GS)
-            && len >= 4
             && data[0] == MIDI_SYSEX_MANUF_ROLAND
             && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_GS_ID
