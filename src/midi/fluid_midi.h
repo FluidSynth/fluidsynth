@@ -187,6 +187,7 @@ enum midi_sysex_manuf
 /* SYSEX sub-ID #1 which follows device ID */
 #define MIDI_SYSEX_MIDI_TUNING_ID       0x08    /**< Sysex sub-ID #1 for MIDI tuning messages */
 #define MIDI_SYSEX_GM_ID                0x09    /**< Sysex sub-ID #1 for General MIDI messages */
+#define MIDI_SYSEX_GS_ID                0x42    /**< Model ID (GS) serving as sub-ID #1 for GS messages*/
 
 /**
  * SYSEX tuning message IDs.
@@ -208,6 +209,7 @@ enum midi_sysex_tuning_msg_id
 /* General MIDI sub-ID #2 */
 #define MIDI_SYSEX_GM_ON                0x01    /**< Enable GM mode */
 #define MIDI_SYSEX_GM_OFF               0x02    /**< Disable GM mode */
+#define MIDI_SYSEX_GS_DT1               0x12    /**< GS DT1 command */
 
 enum fluid_driver_status
 {
