@@ -66,6 +66,10 @@ static int fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data,
         int len, char *response,
         int *response_len, int avail_response,
         int *handled, int dryrun);
+static int fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data,
+        int len, char *response,
+        int *response_len, int avail_response,
+        int *handled, int dryrun);
 int fluid_synth_all_notes_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_all_sounds_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_system_reset_LOCAL(fluid_synth_t *synth);
@@ -1898,6 +1902,7 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  * Non-realtime:    0xF0 0x7E <DeviceId> [BODY] 0xF7
  * Realtime:        0xF0 0x7F <DeviceId> [BODY] 0xF7
  * Tuning messages: 0xF0 0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
+ * GS DT1 messages: 0xF0 0x41 <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
  */
 int
 fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
@@ -1937,6 +1942,22 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                                                response_len, avail_response,
                                                handled, dryrun);
 
+        FLUID_API_RETURN(result);
+    }
+
+    /* GS DT1 message */
+    if((synth->bank_select == FLUID_BANK_STYLE_GS)
+            && len >= 4
+            && data[0] == MIDI_SYSEX_MANUF_ROLAND
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_GS_ID
+            && data[3] == MIDI_SYSEX_GS_DT1)
+    {
+        int result;
+        fluid_synth_api_enter(synth);
+        result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
+                                          response_len, avail_response,
+                                          handled, dryrun);
         FLUID_API_RETURN(result);
     }
 
@@ -2232,6 +2253,61 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
         break;
     }
 
+    return FLUID_OK;
+}
+
+/* Handler for GS DT1 messages */
+static int
+fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
+                              char *response, int *response_len, int avail_response,
+                              int *handled, int dryrun)
+{
+    int addr;
+    int len_data;
+    int checksum = 0, i;
+
+    if(len < 9) // at least one byte of data should be transmitted
+    {
+        return FLUID_FAILED;
+    }
+    len_data = len - 8;
+    addr = (data[4] << 16) | (data[5] << 8) | data[6];
+
+    for (i = 4; i < len - 1; ++i)
+    {
+        checksum += data[i];
+    }
+    if (0x80 - (checksum & 0x7F) != data[len - 1])
+    {
+        return FLUID_FAILED;
+    }
+
+    if ((addr & 0xFFF0FF) == 0x401015) // Use for rhythm part
+    {
+        if (len_data > 1 || data[7] > 0x02)
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            int chan = (addr >> 8) & 0x0F;
+            //See the Patch Part parameters section in SC-88Pro/8850 owner's manual
+            chan = chan >= 0x0a ? chan : (chan == 0 ? 9 : chan - 1);
+            synth->channel[chan]->channel_type =
+                data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+
+            //Roland synths seem to "remember" the last instrument a channel
+            //used in the selected mode. This behavior is not replicated here.
+            fluid_synth_program_change(synth, chan, 0);
+        }
+        return FLUID_OK;
+    }
+
+    //silently ignore
     return FLUID_OK;
 }
 
