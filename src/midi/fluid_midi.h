@@ -294,8 +294,18 @@ struct _fluid_player_t
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
     int cur_msec;             /* the current time */
+    /* sync mode: indicate the tempo the player is driven by (see player_set_tempo()):
+       1, the player is driven by internal tempo (miditempo). This is the default.
+       0, the player is driven by external tempo (exttempo)
+    */
+    int sync_mode;
+    /* miditempo: internal tempo comming from MIDI file tempo change events
+      (in micro second per quarter note)
+    */
     int miditempo;            /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
-    double deltatime;         /* milliseconds per midi tick. depends on set-tempo */
+    /* exttempo: external tempo set by player_set_tempo() (in micro second per quarter note) */
+    int exttempo;
+    double deltatime;         /* milliseconds per midi tick. depends on current tempo (see sync_mode) */
     unsigned int division;
 
     handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */
