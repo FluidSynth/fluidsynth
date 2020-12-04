@@ -2363,6 +2363,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
  * @param tempo Tempo to set playback speed to (in microseconds per quarter note, as per MIDI file spec)
  * @return Always returns #FLUID_OK
  * @note Tempo change events contained in the MIDI file can override the specified tempo at any time!
+ * @deprecated. Never use this in new code. Use fluid_player_set_tempo() instead.
  */
 int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
 {
@@ -2378,6 +2379,7 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
  * @param bpm Tempo in beats per minute
  * @return Always returns #FLUID_OK
  * @note Tempo change events contained in the MIDI file can override the specified BPM at any time!
+ * @deprecated. Never use this in new code. Use fluid_player_set_tempo() instead.
  */
 int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {
