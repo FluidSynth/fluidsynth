@@ -2266,7 +2266,7 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
  *   comming from the MIDI file so that next call to fluid_player_set_tempo with
  *   FLUID_TEMPO_DEFAULT tempo type will set the player to follow this internal tempo.
  *
- * @return FLUID_OK if success or FLUID_FAILED otherwise (bad parameters).
+ * @return FLUID_OK if success or FLUID_FAILED otherwise (incorrect parameters).
  */
 int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 {
