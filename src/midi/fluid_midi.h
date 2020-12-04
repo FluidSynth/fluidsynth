@@ -314,7 +314,7 @@ struct _fluid_player_t
     int exttempo;
     /* multempo: tempo multiplier set by player_set_tempo() */
     float multempo;
-    double deltatime;         /* milliseconds per midi tick. depends on current tempo (see sync_mode) */
+    float deltatime;         /* milliseconds per midi tick. depends on current tempo (see sync_mode) */
     unsigned int division;
 
     handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */

@@ -54,6 +54,7 @@ static int fluid_player_reset(fluid_player_t *player);
 static int fluid_player_load(fluid_player_t *player, fluid_playlist_item *item);
 static void fluid_player_advancefile(fluid_player_t *player);
 static void fluid_player_playlist_load(fluid_player_t *player, unsigned int msec);
+static void fluid_player_update_tempo(fluid_player_t *player);
 
 static fluid_midi_file *new_fluid_midi_file(const char *buffer, size_t length);
 static void delete_fluid_midi_file(fluid_midi_file *mf);
@@ -1608,7 +1609,8 @@ fluid_track_send_events(fluid_track_t *track,
 
         if(event->type == MIDI_SET_TEMPO && player != NULL)
         {
-            fluid_player_set_midi_tempo(player, event->param1);
+            fluid_atomic_int_set(&player->miditempo, event->param1);
+            fluid_player_update_tempo(player);
         }
 
         fluid_track_next_event(track);
@@ -1949,7 +1951,7 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     }
 
     player->division = fluid_midi_file_get_division(midifile);
-    fluid_player_set_midi_tempo(player, player->miditempo); // Update deltatime
+    fluid_player_update_tempo(player);  // Update deltatime
     /*FLUID_LOG(FLUID_DBG, "quarter note division=%d\n", player->division); */
 
     if(fluid_midi_file_load_tracks(midifile, player) != FLUID_OK)
@@ -2068,6 +2070,7 @@ fluid_player_callback(void *data, unsigned int msec)
     }
     do
     {
+        float deltatime;
         int seek_ticks;
 
         if(loadnextfile)
@@ -2082,9 +2085,10 @@ fluid_player_callback(void *data, unsigned int msec)
         }
 
         player->cur_msec = msec;
+        deltatime = fluid_atomic_float_get(&player->deltatime);
         player->cur_ticks = (player->start_ticks
                              + (int)((double)(player->cur_msec - player->start_msec)
-                                     / player->deltatime + 0.5)); /* 0.5 to average overall error when casting */
+                                     / deltatime + 0.5)); /* 0.5 to average overall error when casting */
 
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
@@ -2240,6 +2244,36 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
 }
 
 /**
+ * update the tempo of a MIDI player.
+ * @param player MIDI player instance
+ */
+static void fluid_player_update_tempo(fluid_player_t *player)
+{
+    int tempo;
+    float deltatime;
+
+    if(fluid_atomic_int_get(&player->sync_mode))
+    {
+        tempo = fluid_atomic_int_get(&player->miditempo);
+    }
+    else
+    {
+        tempo = fluid_atomic_int_get(&player->exttempo);
+    }
+
+    deltatime = (float) tempo / player->division / 1000.0; /* in milliseconds */
+    deltatime /= fluid_atomic_float_get(&player->multempo); /* multiply tempo */
+    fluid_atomic_float_set(&player->deltatime, deltatime);
+    player->start_msec = player->cur_msec;
+    player->start_ticks = player->cur_ticks;
+
+    FLUID_LOG(FLUID_DBG,
+              "tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d",
+              tempo, player->deltatime, player->cur_msec, player->cur_ticks);
+
+}
+
+/**
  * Set the tempo of a MIDI player.
  * The player can be driven by internal tempo comming from MIDI file tempo
  * change or by external tempo expressed in bmp (or micro seconds per quarter note).
@@ -2309,7 +2343,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 	}
 
     /* update the tempo */
-	//TODO
+    fluid_player_update_tempo(player);
 
     return FLUID_OK;
 }
@@ -2324,14 +2358,8 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
 {
     player->miditempo = tempo;
-    player->deltatime = (double) tempo / player->division / 1000.0; /* in milliseconds */
-    player->start_msec = player->cur_msec;
-    player->start_ticks = player->cur_ticks;
 
-    FLUID_LOG(FLUID_DBG,
-              "tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d",
-              tempo, player->deltatime, player->cur_msec, player->cur_ticks);
-
+    fluid_player_update_tempo(player);
     return FLUID_OK;
 }
 
