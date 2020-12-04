@@ -242,8 +242,8 @@ FLUIDSYNTH_API int fluid_player_get_current_tick(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_total_ticks(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                                           double *tempo, int *sync_mode);
-FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t *player);
-FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t *player);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t *player);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_seek(fluid_player_t *player, int ticks);
 /* @} */
 

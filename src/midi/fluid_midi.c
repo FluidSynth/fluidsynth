@@ -2523,6 +2523,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
  * Get the tempo of a MIDI player in beats per minute.
  * @param player MIDI player instance
  * @return MIDI player tempo in BPM
+ * @deprecated. Never use this in new code. Use fluid_player_get_tempo() instead.
  * @since 1.1.7
  */
 int fluid_player_get_bpm(fluid_player_t *player)
@@ -2534,6 +2535,7 @@ int fluid_player_get_bpm(fluid_player_t *player)
  * Get the tempo of a MIDI player.
  * @param player MIDI player instance
  * @return Tempo of the MIDI player (in microseconds per quarter note, as per MIDI file spec)
+ * @deprecated. Never use this in new code. Use fluid_player_get_tempo() instead.
  * @since 1.1.7
  */
 int fluid_player_get_midi_tempo(fluid_player_t *player)
