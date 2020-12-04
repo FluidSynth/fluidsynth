@@ -217,12 +217,21 @@ FLUIDSYNTH_API fluid_player_t *new_fluid_player(fluid_synth_t *synth);
 FLUIDSYNTH_API void delete_fluid_player(fluid_player_t *player);
 /** @endlifecycle */
 
+enum fluid_tempo_type
+{
+    FLUID_TEMPO_DEFAULT,   /**< Use midi file tempo set in midi file (120 bpm by default) */
+    FLUID_TEMPO_BPM,       /**< Set player tempo in bpm, supersede midi file tempo */
+    FLUID_TEMPO_MIDI,      /**< Set player tempo in us per quarter note, supersede midi file tempo */
+    FLUID_TEMPO_RELATIVE   /**< Speed up or slow down tempo with a multiplying factor */
+};
+
 FLUIDSYNTH_API int fluid_player_add(fluid_player_t *player, const char *midifile);
 FLUIDSYNTH_API int fluid_player_add_mem(fluid_player_t *player, const void *buffer, size_t len);
 FLUIDSYNTH_API int fluid_player_play(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_stop(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_join(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_set_loop(fluid_player_t *player, int loop);
+FLUIDSYNTH_API int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo);
 FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo);
 FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t *player, int bpm);
 FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t *player, handle_midi_event_func_t handler, void *handler_data);
