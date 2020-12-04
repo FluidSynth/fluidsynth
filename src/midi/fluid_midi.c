@@ -1664,7 +1664,6 @@ new_fluid_player(fluid_synth_t *synth)
     player->playlist = NULL;
     player->currentfile = NULL;
     player->division = 0;
-    player->send_program_change = 1;
 
     /* internal tempo (from MIDI file) in micro seconds per quarter note */
     player->sync_mode = 1; /* the player follows internal tempo change */
@@ -1784,7 +1783,6 @@ fluid_player_reset(fluid_player_t *player)
     /*	player->loop = 1; */
     player->ntracks = 0;
     player->division = 0;
-    player->send_program_change = 1;
     player->miditempo = 500000;
     player->deltatime = 4.0;
     return 0;

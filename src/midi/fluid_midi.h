@@ -292,7 +292,6 @@ struct _fluid_player_t
     fluid_list_t *playlist; /* List of fluid_playlist_item* objects */
     fluid_list_t *currentfile; /* points to an item in files, or NULL if not playing */
 
-    char send_program_change; /* should we ignore the program changes? */
     char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
     char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
     fluid_atomic_int_t seek_ticks; /* new position in tempo ticks (midi ticks) for seeking */
