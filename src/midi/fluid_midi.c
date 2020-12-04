@@ -2249,21 +2249,25 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
  */
 static void fluid_player_update_tempo(fluid_player_t *player)
 {
-    int tempo;
+    int tempo; /* tempo in micro seconds by quarter note */
     float deltatime;
 
     if(fluid_atomic_int_get(&player->sync_mode))
     {
+        /* take internal tempo from MIDI file */
         tempo = fluid_atomic_int_get(&player->miditempo);
     }
     else
     {
+        /* take  external tempo */
         tempo = fluid_atomic_int_get(&player->exttempo);
     }
 
+    /* compute deltattime from current tempo and apply tempo multiplier */
     deltatime = (float) tempo / player->division / 1000.0; /* in milliseconds */
     deltatime /= fluid_atomic_float_get(&player->multempo); /* multiply tempo */
     fluid_atomic_float_set(&player->deltatime, deltatime);
+
     player->start_msec = player->cur_msec;
     player->start_ticks = player->cur_ticks;
 
@@ -2275,27 +2279,34 @@ static void fluid_player_update_tempo(fluid_player_t *player)
 
 /**
  * Set the tempo of a MIDI player.
- * The player can be driven by internal tempo comming from MIDI file tempo
- * change or by external tempo expressed in bmp (or micro seconds per quarter note).
+ * The player can be controlled by internal tempo comming from MIDI file tempo
+ * change or controlled by external tempo expressed in bmp
+ * (or in micro seconds per quarter note).
  *
  * @param player MIDI player instance. Must be a valid pointer.
  * @param tempo_type tempo type that indicates the meaning of tempo value and how
- *  the player will be driven.
- *  FLUID_TEMPO_DEFAULT, the  player will be driven by internal MIDI file tempo.
+ *  the player will be controlled:
+ *  FLUID_TEMPO_DEFAULT, the  player will be controlled by internal MIDI file tempo.
  *    (tempo parameter is ignored).(see note)
- *  FLUID_TEMPO_BPM, the player will be driven by the external tempo value provided
+ *
+ *  FLUID_TEMPO_BPM, the player will be controlled by the external tempo value provided
  *    by the tempo parameter in bpm (i.e in quarter notes per minute) which must be
  *    in the range (1 to 60000000). (see note)
- *  FLUID_TEMPO_MIDI, similar as FLUID_TEMPO_BPM, but the tempo parameter is in
+ *
+ *  FLUID_TEMPO_MIDI, similar as FLUID_TEMPO_BPM, but the tempo parameter value is in
  *    micro seconds per quarter note in the range (1 to 60000000).(see note).
+ *    Using micro second per quarter note is convenient when the tempo value is derived
+ *    from MIDI clock realtime messages.
+ *
  *  FLUID_TEMPO_RELATIVE, set a tempo multiplier value provided by the tempo parameter.
  *    The current tempo (internal or external) used by the player is multipied by this value.
  *    This is mainly useful when the player is driven by internal tempo (from MIDI file).
- *    For example, if the current tempo is 120 bpm and the multiplier value is 0.5 than
- *    the tempo will be lowered to 60 bpm. Must be in the range (0.001 to 1000).
- * @param tempo, tempo value or multiplier.
+ *    For example, if the current MIDI file tempo is 120 bpm and the multiplier
+ *    value is 0.5 then the tempo will be compressed to 60 bpm.
+ *    Must be in the range (0.001 to 1000).
+ * @param tempo, tempo value or multiplier (see tempo_type parameter).
  *
- * Note: When the player is driven by external tempo (FLUID_TEMPO_BPM or
+ * Note: When the player is controlled by an external tempo (FLUID_TEMPO_BPM or
  *   FLUID_TEMPO_MIDI) it continues to memorize the most recent internal tempo change
  *   comming from the MIDI file so that next call to fluid_player_set_tempo with
  *   FLUID_TEMPO_DEFAULT tempo type will set the player to follow this internal tempo.
