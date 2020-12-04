@@ -2285,23 +2285,24 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * @param tempo_type tempo type that indicates the meaning of tempo value and how
  *  the player will be controlled:
  *  FLUID_TEMPO_DEFAULT, the  player will be controlled by internal MIDI file tempo.
- *    (tempo parameter is ignored).(see note)
+ *  (tempo parameter is ignored).(see note)
  *
  *  FLUID_TEMPO_BPM, the player will be controlled by the external tempo value provided
- *    by the tempo parameter in bpm (i.e in quarter notes per minute) which must be
- *    in the range (1 to 60000000). (see note)
+ *  by the tempo parameter in bpm (i.e in quarter notes per minute) which must be
+ *  in the range (1 to 60000000). (see note)
  *
  *  FLUID_TEMPO_MIDI, similar as FLUID_TEMPO_BPM, but the tempo parameter value is in
- *    micro seconds per quarter note in the range (1 to 60000000).(see note).
- *    Using micro second per quarter note is convenient when the tempo value is derived
- *    from MIDI clock realtime messages.
+ *  micro seconds per quarter note in the range (1 to 60000000).(see note).
+ *  Using micro second per quarter note is convenient when the tempo value is derived
+ *  from MIDI clock realtime messages.
  *
  *  FLUID_TEMPO_RELATIVE, set a tempo multiplier value provided by the tempo parameter.
- *    The current tempo (internal or external) used by the player is multipied by this value.
- *    This is mainly useful when the player is driven by internal tempo (from MIDI file).
- *    For example, if the current MIDI file tempo is 120 bpm and the multiplier
- *    value is 0.5 then the tempo will be compressed to 60 bpm.
- *    Must be in the range (0.001 to 1000).
+ *  The current tempo (internal or external) used by the player is multipied by this value.
+ *  This is mainly useful when the player is driven by internal tempo (from MIDI file).
+ *  For example, if the current MIDI file tempo is 120 bpm and the multiplier
+ *  value is 0.5 then the tempo will be compressed to 60 bpm.
+ *  Must be in the range (0.001 to 1000).
+ *
  * @param tempo, tempo value or multiplier (see tempo_type parameter).
  *
  * Note: When the player is controlled by an external tempo (FLUID_TEMPO_BPM or
