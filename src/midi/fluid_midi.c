@@ -2284,20 +2284,22 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * @param player MIDI player instance. Must be a valid pointer.
  * @param tempo_type tempo type that indicates the meaning of tempo value and how
  *  the player will be controlled:
- *  FLUID_TEMPO_DEFAULT, the  player will be controlled by internal MIDI file tempo.
- *  (tempo parameter is ignored).(see note)
+ *  FLUID_PLAYER_TEMPO_DEFAULT, the  player will be controlled by internal MIDI
+ *  file tempo. (tempo parameter is ignored).(see note)
  *
- *  FLUID_TEMPO_BPM, the player will be controlled by the external tempo value provided
- *  by the tempo parameter in bpm (i.e in quarter notes per minute) which must be
- *  in the range (1 to 60000000). (see note)
+ *  FLUID_PLAYER_TEMPO_BPM, the player will be controlled by the external tempo
+ *  value provided  by the tempo parameter in bpm (i.e in quarter notes per minute)
+ *  which must be in the range (1 to 60000000). (see note)
  *
- *  FLUID_TEMPO_MIDI, similar as FLUID_TEMPO_BPM, but the tempo parameter value is in
- *  micro seconds per quarter note in the range (1 to 60000000).(see note).
- *  Using micro second per quarter note is convenient when the tempo value is derived
- *  from MIDI clock realtime messages.
+ *  FLUID_PLAYER_TEMPO_MIDI, similar as FLUID_PLAYER_TEMPO_BPM, but the tempo
+ *  parameter value is in  micro seconds per quarter note in the range
+ *  (1 to 60000000).(see note).
+ *  Using micro seconds per quarter note is convenient when the tempo value is
+ *  derived from MIDI clock realtime messages.
  *
- *  FLUID_TEMPO_RELATIVE, set a tempo multiplier value provided by the tempo parameter.
- *  The current tempo (internal or external) used by the player is multipied by this value.
+ *  FLUID_PLAYER_TEMPO_RELATIVE, set a tempo multiplier value provided by the
+ *  tempo parameter. The current tempo (internal or external) used by the player
+ *  is multipied by this value.
  *  This is mainly useful when the player is driven by internal tempo (from MIDI file).
  *  For example, if the current MIDI file tempo is 120 bpm and the multiplier
  *  value is 0.5 then the tempo will be compressed to 60 bpm.
@@ -2305,35 +2307,36 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  *
  * @param tempo, tempo value or multiplier (see tempo_type parameter).
  *
- * Note: When the player is controlled by an external tempo (FLUID_TEMPO_BPM or
- *   FLUID_TEMPO_MIDI) it continues to memorize the most recent internal tempo change
- *   comming from the MIDI file so that next call to fluid_player_set_tempo with
- *   FLUID_TEMPO_DEFAULT tempo type will set the player to follow this internal tempo.
+ * Note: When the player is controlled by an external tempo (FLUID_PLAYER_TEMPO_BPM
+ * or FLUID_PLAYER_TEMPO_MIDI) it continues to memorize the most recent internal
+ * tempo change comming from the MIDI file so that next call to fluid_player_set_tempo
+ * with FLUID_PLAYER_TEMPO_DEFAULT tempo type will set the player to follow this
+ * internal tempo.
  *
  * @return FLUID_OK if success or FLUID_FAILED otherwise (incorrect parameters).
  */
 int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 {
     fluid_return_val_if_fail(player != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(tempo_type >= FLUID_TEMPO_DEFAULT, FLUID_FAILED);
-    fluid_return_val_if_fail(tempo_type < FLUID_TEMPO_NBR, FLUID_FAILED);
+    fluid_return_val_if_fail(tempo_type >= FLUID_PLAYER_TEMPO_DEFAULT, FLUID_FAILED);
+    fluid_return_val_if_fail(tempo_type < FLUID_PLAYER_TEMPO_NBR, FLUID_FAILED);
 
-	switch(tempo_type)
-	{
+    switch(tempo_type)
+    {
         /* set the player to be driven by internal tempo comming from MIDI file */
-        case FLUID_TEMPO_DEFAULT:
+        case FLUID_PLAYER_TEMPO_DEFAULT:
             fluid_atomic_int_set(&player->sync_mode, 1); /* internal mode */
             break;
 
         /* set the player to be driven by external tempo */
-        case FLUID_TEMPO_BPM:  /* tempo value in bpm */
-        case FLUID_TEMPO_MIDI: /* tempo value in micro seconds per quater note */
+        case FLUID_PLAYER_TEMPO_BPM:  /* tempo value in bpm */
+        case FLUID_PLAYER_TEMPO_MIDI: /* tempo value in micro seconds per quater note */
             /* check if tempo is in correct range */
             fluid_return_val_if_fail(tempo >= MIN_TEMPO_VALUE, FLUID_FAILED);
             fluid_return_val_if_fail(tempo <= MAX_TEMPO_VALUE, FLUID_FAILED);
 
             /* set the tempo value */
-            if(tempo_type == FLUID_TEMPO_BPM)
+            if(tempo_type == FLUID_PLAYER_TEMPO_BPM)
             {
                 tempo = 60000000L / tempo; /* convert in micro seconds by quarter note*/
             }
@@ -2342,7 +2345,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
             break;
 
         /* set the tempo multiplier */
-        case FLUID_TEMPO_RELATIVE:
+        case FLUID_PLAYER_TEMPO_RELATIVE:
             /* check if the multiplier is in correct range */
             fluid_return_val_if_fail(tempo >= MIN_TEMPO_MULTIPLIER, FLUID_FAILED);
             fluid_return_val_if_fail(tempo <= MAX_TEMPO_MULTIPLIER, FLUID_FAILED);
@@ -2448,17 +2451,17 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  *
  * @param player MIDI player instance. Must be a valid pointer.
  * @param tempo_type tempo type that indicates the tempo information to get
- *  FLUID_TEMPO_DEFAULT, get the actual internal tempo comming from MIDI
+ *  FLUID_PLAYER_TEMPO_DEFAULT, get the actual internal tempo comming from MIDI
  *  file in micro seconds per quarter note.
  *
- *  FLUID_TEMPO_BPM, get the actual external tempo value previoulsly set by
- *  fluid_player_set_tempo. in bpm (i.e in quarter notes per minute).
+ *  FLUID_PLAYER_TEMPO_BPM, get the actual external tempo value previoulsly set
+ *  by fluid_player_set_tempo. in bpm (i.e in quarter notes per minute).
  *
- *  FLUID_TEMPO_MIDI, similar as FLUID_TEMPO_BPM, but the returned value is in
- *  micro seconds per quarter note.
+ *  FLUID_PLAYER_TEMPO_MIDI, similar as FLUID_PLAYER_TEMPO_BPM, but the returned
+ *  value is in micro seconds per quarter note.
  *
- *  FLUID_TEMPO_RELATIVE, get the tempo multiplier value previoulsly set by
- *  fluid_player_set_tempo.
+ *  FLUID_PLAYER_TEMPO_RELATIVE, get the tempo multiplier value previoulsly set
+ *  by fluid_player_set_tempo.
  *
  * @param tempo, pointer to the value the returned information will be written to.
  *  This pointer can be NULL to ignore the tempo information
@@ -2480,25 +2483,25 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
     double exttempo;
 
     fluid_return_val_if_fail(player != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(tempo_type >= FLUID_TEMPO_DEFAULT, FLUID_FAILED);
-    fluid_return_val_if_fail(tempo_type < FLUID_TEMPO_NBR, FLUID_FAILED);
+    fluid_return_val_if_fail(tempo_type >= FLUID_PLAYER_TEMPO_DEFAULT, FLUID_FAILED);
+    fluid_return_val_if_fail(tempo_type < FLUID_PLAYER_TEMPO_NBR, FLUID_FAILED);
     fluid_return_val_if_fail((tempo != NULL) || (sync_mode != NULL), FLUID_FAILED);
 
     if (tempo != NULL)
     switch(tempo_type)
     {
         /* get actual internal tempo */
-        case FLUID_TEMPO_DEFAULT:
+        case FLUID_PLAYER_TEMPO_DEFAULT:
             *tempo = (double) fluid_atomic_int_get(&player->miditempo);
             break;
 
         /* get the the external tempo value tempo */
-        case FLUID_TEMPO_BPM:  /* tempo value in bpm */
-        case FLUID_TEMPO_MIDI: /* tempo value in micro seconds per quater note */
+        case FLUID_PLAYER_TEMPO_BPM:  /* tempo value in bpm */
+        case FLUID_PLAYER_TEMPO_MIDI: /* tempo value in micro seconds per quater note */
            /* get tempo in micro seconds per quarter note */
             exttempo = (double) fluid_atomic_int_get(&player->exttempo);
 
-            if(tempo_type == FLUID_TEMPO_BPM)
+            if(tempo_type == FLUID_PLAYER_TEMPO_BPM)
             {
                 exttempo = 60000000L / exttempo; /* convert in bpm */
             }
@@ -2506,10 +2509,10 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
             break;
 
         /* get the tempo multiplier */
-        case FLUID_TEMPO_RELATIVE:
+        case FLUID_PLAYER_TEMPO_RELATIVE:
             *tempo = (double) fluid_atomic_float_get(&player->multempo);
             break;
-	}
+    }
 
     /* return tempo mode: (internal or external) */
     if (sync_mode != NULL)
