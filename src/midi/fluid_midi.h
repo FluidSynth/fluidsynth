@@ -305,6 +305,8 @@ struct _fluid_player_t
     int miditempo;            /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
     /* exttempo: external tempo set by player_set_tempo() (in micro second per quarter note) */
     int exttempo;
+    /* multempo: tempo multiplier set by player_set_tempo() */
+    float multempo;
     double deltatime;         /* milliseconds per midi tick. depends on current tempo (see sync_mode) */
     unsigned int division;
 
