@@ -269,6 +269,13 @@ typedef struct
     size_t buffer_len;  /** Number of bytes in buffer; 0 if filename */
 } fluid_playlist_item;
 
+/* range of tempo values */
+#define MIN_TEMPO_VALUE (1.0f)
+#define MAX_TEMPO_VALUE (60000000.0f)
+/* range of tempo multiplier values */
+#define MIN_TEMPO_MULTIPLIER (0.001f)
+#define MAX_TEMPO_MULTIPLIER (1000.0f)
+
 /*
  * fluid_player
  */
