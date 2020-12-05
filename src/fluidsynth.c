@@ -937,7 +937,7 @@ int main(int argc, char **argv)
     }
 
     /* try to load and execute the user or system configuration file */
-    cmd_handler = new_fluid_cmd_handler(synth, router);
+    cmd_handler = new_fluid_cmd_handler(synth, router, player);
 
     if(cmd_handler == NULL)
     {

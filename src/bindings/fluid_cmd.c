@@ -39,6 +39,7 @@ struct _fluid_cmd_handler_t
 {
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
+    fluid_player_t *player;
     fluid_cmd_hash_t *commands;
 
     fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
@@ -4255,9 +4256,11 @@ fluid_cmd_handler_destroy_hash_value(void *value)
  *
  * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
  * @param router If not NULL, all the default midi_router commands will be added to the new handler.
+ * @param player If not NULL, all the default midi file player commands will be added to the new handler.
  * @return New command handler, or NULL if alloc failed
  */
-fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router)
+fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router,
+                                           fluid_player_t *player)
 {
     unsigned int i;
     fluid_cmd_handler_t *handler;
@@ -4282,13 +4285,16 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
 
     handler->synth = synth;
     handler->router = router;
+    handler->player = player;
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
         const fluid_cmd_t *cmd = &fluid_commands[i];
         int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
+        int is_player_cmd = FLUID_STRCMP(cmd->topic, "player") == 0;
 
-        if((is_router_cmd && router == NULL) || (!is_router_cmd && synth == NULL))
+        if((is_router_cmd && router == NULL) || (is_player_cmd && player == NULL)
+			||(!is_router_cmd && !is_player_cmd && synth == NULL))
         {
             /* omit registering router and synth commands if they were not requested */
             continue;
@@ -4368,6 +4374,7 @@ struct _fluid_server_t
     fluid_settings_t *settings;
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
+    fluid_player_t *player;
     fluid_list_t *clients;
     fluid_mutex_t mutex;
 };
@@ -4478,7 +4485,7 @@ new_fluid_client(fluid_server_t *server, fluid_settings_t *settings, fluid_socke
     client->server = server;
     client->socket = sock;
     client->settings = settings;
-    client->handler = new_fluid_cmd_handler(server->synth, server->router);
+    client->handler = new_fluid_cmd_handler(server->synth, server->router, server->player);
     client->thread = new_fluid_thread("client", fluid_client_run, client,
                                       0, FALSE);
 
@@ -4528,7 +4535,8 @@ void delete_fluid_client(fluid_client_t *client)
  */
 fluid_server_t *
 new_fluid_server(fluid_settings_t *settings,
-                 fluid_synth_t *synth, fluid_midi_router_t *router)
+                 fluid_synth_t *synth, fluid_midi_router_t *router,
+                 fluid_player_t *player)
 {
 #ifdef NETWORK_SUPPORT
     fluid_server_t *server;
@@ -4546,6 +4554,7 @@ new_fluid_server(fluid_settings_t *settings,
     server->clients = NULL;
     server->synth = synth;
     server->router = router;
+    server->player = player;
 
     fluid_mutex_init(server->mutex);
 
