@@ -2315,6 +2315,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * internal tempo.
  *
  * @return FLUID_OK if success or FLUID_FAILED otherwise (incorrect parameters).
+ * @since ?
  */
 int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 {
@@ -2481,6 +2482,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  *
  * @return FLUID_OK if success or FLUID_FAILED otherwise (incorrect parameters).
  *  At least one of both pointers tempo or sync_mode must be non NULL.
+ * @since ?
  */
 int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                            double *tempo, int *sync_mode)
