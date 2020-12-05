@@ -1609,6 +1609,7 @@ fluid_track_send_events(fluid_track_t *track,
 
         if(event->type == MIDI_SET_TEMPO && player != NULL)
         {
+            /* memorize the tempo change value comming from the MIDI file */
             fluid_atomic_int_set(&player->miditempo, event->param1);
             fluid_player_update_tempo(player);
         }
@@ -2242,7 +2243,7 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
 }
 
 /**
- * update the tempo of a MIDI player.
+ * update the MIDI player internal deltatime dependant of actual tempo.
  * @param player MIDI player instance
  */
 static void fluid_player_update_tempo(fluid_player_t *player)
@@ -2261,8 +2262,8 @@ static void fluid_player_update_tempo(fluid_player_t *player)
         tempo = fluid_atomic_int_get(&player->exttempo);
     }
 
-    /* compute deltattime from current tempo and apply tempo multiplier */
-    deltatime = (float)tempo / (float)player->division / (float)1000.0; /* in milliseconds */
+    /* compute deltattime (in ms) from current tempo and apply tempo multiplier */
+    deltatime = (float)tempo / (float)player->division / (float)1000.0;
     deltatime /= fluid_atomic_float_get(&player->multempo); /* multiply tempo */
     fluid_atomic_float_set(&player->deltatime, deltatime);
 
@@ -2285,7 +2286,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * @param tempo_type tempo type (#fluid_player_tempo_type) that indicates the
  *  meaning of tempo value and how the player will be controlled:
  *  FLUID_PLAYER_TEMPO_DEFAULT, the  player will be controlled by internal MIDI
- *  file tempo. (tempo parameter is ignored).(see note)
+ *  file tempo changes. (tempo parameter is ignored).(see note)
  *
  *  FLUID_PLAYER_TEMPO_BPM, the player will be controlled by the external tempo
  *  value provided  by the tempo parameter in bpm (i.e in quarter notes per minute)
@@ -2302,7 +2303,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  *  is multipied by this value.
  *  This is mainly useful when the player is driven by internal tempo (from MIDI file).
  *  For example, if the current MIDI file tempo is 120 bpm and the multiplier
- *  value is 0.5 then the tempo will be compressed to 60 bpm.
+ *  value is 0.5 then the tempo will be slowed down to 60 bpm.
  *  Must be in the range (0.001 to 1000).
  *
  * @param tempo, tempo value or multiplier (see tempo_type parameter).
@@ -2341,7 +2342,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
                 tempo = 60000000L / tempo; /* convert in micro seconds by quarter note*/
             }
             fluid_atomic_int_set(&player->exttempo, (int)tempo);
-            fluid_atomic_int_set(&player->sync_mode, 0); /* external mode */
+            fluid_atomic_int_set(&player->sync_mode, 0); /* set external mode */
             break;
 
         /* set the tempo multiplier */
@@ -2358,7 +2359,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
             break;
 	}
 
-    /* update the tempo */
+    /* update deltatime depending of current tempo */
     fluid_player_update_tempo(player);
 
     return FLUID_OK;
@@ -2454,7 +2455,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  *
  * @param player MIDI player instance. Must be a valid pointer.
  * @param tempo_type tempo type (#fluid_player_tempo_type) that indicates the
- * tempo information to get
+ * tempo information to get:
  *  FLUID_PLAYER_TEMPO_DEFAULT, get the actual internal tempo comming from MIDI
  *  file in micro seconds per quarter note.
  *
@@ -2479,7 +2480,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  *  This pointer can be NULL to ignore the information.
  *
  * @return FLUID_OK if success or FLUID_FAILED otherwise (incorrect parameters).
- *  At least one of both pointer (tempo or sync_mode) must be non NULL.
+ *  At least one of both pointers tempo or sync_mode must be non NULL.
  */
 int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                            double *tempo, int *sync_mode)
