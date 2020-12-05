@@ -193,7 +193,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
 /* @} */
 
 /**
- * @defgroup midi_player MIDI file Player
+ * @defgroup midi_player MIDI File Player
  * @ingroup midi_input
  *
  * Parse standard MIDI files and emit MIDI events.
@@ -202,7 +202,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
  */
 
 /**
- * MIDI file player status enum.
+ * MIDI File Player status enum.
  * @since 1.1.0
  */
 enum fluid_player_status
@@ -213,7 +213,7 @@ enum fluid_player_status
 };
 
 /**
- * MIDI file player tempo enum.
+ * MIDI File Player tempo enum.
  * @since ?
  */
 enum fluid_player_tempo_type
