@@ -193,7 +193,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
 /* @} */
 
 /**
- * @defgroup midi_player MIDI Player
+ * @defgroup midi_player MIDI file Player
  * @ingroup midi_input
  *
  * Parse standard MIDI files and emit MIDI events.
@@ -202,7 +202,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
  */
 
 /**
- * MIDI player status enum.
+ * MIDI file player status enum.
  * @since 1.1.0
  */
 enum fluid_player_status
@@ -213,7 +213,7 @@ enum fluid_player_status
 };
 
 /**
- * MIDI player tempo enum.
+ * MIDI file player tempo enum.
  * @since ?
  */
 enum fluid_player_tempo_type
@@ -225,7 +225,7 @@ enum fluid_player_tempo_type
     FLUID_PLAYER_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
-/** @startlifecycle{MIDI Player} */
+/** @startlifecycle{MIDI file Player} */
 FLUIDSYNTH_API fluid_player_t *new_fluid_player(fluid_synth_t *synth);
 FLUIDSYNTH_API void delete_fluid_player(fluid_player_t *player);
 /** @endlifecycle */
