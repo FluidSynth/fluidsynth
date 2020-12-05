@@ -1671,7 +1671,7 @@ new_fluid_player(fluid_synth_t *synth)
     /* external tempo in micro seconds per quarter note */
     player->exttempo = 500000;
     /* tempo multiplier */
-    player->multempo = 1.0f;
+    player->multempo = 1.0F;
 
     player->deltatime = 4.0;
     player->cur_msec = 0;
