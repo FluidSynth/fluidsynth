@@ -2353,6 +2353,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
             /* set the tempo multiplier */
             fluid_atomic_float_set(&player->multempo, (float)tempo);
             break;
+
         default: /* shouldn't happens */
             break;
 	}
@@ -2490,32 +2491,35 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
     fluid_return_val_if_fail((tempo != NULL) || (sync_mode != NULL), FLUID_FAILED);
 
     if (tempo != NULL)
-    switch(tempo_type)
     {
-        /* get actual internal tempo */
-        case FLUID_PLAYER_TEMPO_DEFAULT:
-            *tempo = (double) fluid_atomic_int_get(&player->miditempo);
-            break;
+        switch(tempo_type)
+        {
+            /* get actual internal tempo */
+            case FLUID_PLAYER_TEMPO_DEFAULT:
+                *tempo = (double) fluid_atomic_int_get(&player->miditempo);
+                break;
 
-        /* get the the external tempo value tempo */
-        case FLUID_PLAYER_TEMPO_BPM:  /* tempo value in bpm */
-        case FLUID_PLAYER_TEMPO_MIDI: /* tempo value in micro seconds per quater note */
-           /* get tempo in micro seconds per quarter note */
-            exttempo = (double) fluid_atomic_int_get(&player->exttempo);
+            /* get the the external tempo value tempo */
+            case FLUID_PLAYER_TEMPO_BPM:  /* tempo value in bpm */
+            case FLUID_PLAYER_TEMPO_MIDI: /* tempo value in micro seconds per quater note */
+                /* get tempo in micro seconds per quarter note */
+                exttempo = (double) fluid_atomic_int_get(&player->exttempo);
 
-            if(tempo_type == FLUID_PLAYER_TEMPO_BPM)
-            {
-                exttempo = 60000000L / exttempo; /* convert in bpm */
-            }
-            *tempo = exttempo;
-            break;
+                if(tempo_type == FLUID_PLAYER_TEMPO_BPM)
+                {
+                    exttempo = 60000000L / exttempo; /* convert in bpm */
+                }
+                *tempo = exttempo;
+                break;
 
-        /* get the tempo multiplier */
-        case FLUID_PLAYER_TEMPO_RELATIVE:
-            *tempo = (double) fluid_atomic_float_get(&player->multempo);
-            break;
-        default: /* shouldn't happens */
-            break;
+            /* get the tempo multiplier */
+            case FLUID_PLAYER_TEMPO_RELATIVE:
+                *tempo = (double) fluid_atomic_float_get(&player->multempo);
+                break;
+
+            default: /* shouldn't happens */
+                break;
+        }
     }
 
     /* return tempo mode: (internal or external) */
