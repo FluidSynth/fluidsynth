@@ -2282,8 +2282,8 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * (or in micro seconds per quarter note).
  *
  * @param player MIDI player instance. Must be a valid pointer.
- * @param tempo_type tempo type that indicates the meaning of tempo value and how
- *  the player will be controlled:
+ * @param tempo_type tempo type (#fluid_player_tempo_type) that indicates the
+ *  meaning of tempo value and how the player will be controlled:
  *  FLUID_PLAYER_TEMPO_DEFAULT, the  player will be controlled by internal MIDI
  *  file tempo. (tempo parameter is ignored).(see note)
  *
@@ -2453,7 +2453,8 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  * (or in micro seconds per quarter note) (see fluid_player_set_tempo) .
  *
  * @param player MIDI player instance. Must be a valid pointer.
- * @param tempo_type tempo type that indicates the tempo information to get
+ * @param tempo_type tempo type (#fluid_player_tempo_type) that indicates the
+ * tempo information to get
  *  FLUID_PLAYER_TEMPO_DEFAULT, get the actual internal tempo comming from MIDI
  *  file in micro seconds per quarter note.
  *
