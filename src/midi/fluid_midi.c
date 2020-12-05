@@ -2353,6 +2353,8 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
             /* set the tempo multiplier */
             fluid_atomic_float_set(&player->multempo, (float)tempo);
             break;
+        default: /* shouldn't happens */
+            break;
 	}
 
     /* update the tempo */
@@ -2511,6 +2513,8 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
         /* get the tempo multiplier */
         case FLUID_PLAYER_TEMPO_RELATIVE:
             *tempo = (double) fluid_atomic_float_get(&player->multempo);
+            break;
+        default: /* shouldn't happens */
             break;
     }
 
