@@ -2262,7 +2262,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
     }
 
     /* compute deltattime from current tempo and apply tempo multiplier */
-    deltatime = (float)tempo / (float)player->division / 1000.0; /* in milliseconds */
+    deltatime = (float)tempo / (float)player->division / (float)1000.0; /* in milliseconds */
     deltatime /= fluid_atomic_float_get(&player->multempo); /* multiply tempo */
     fluid_atomic_float_set(&player->deltatime, deltatime);
 
