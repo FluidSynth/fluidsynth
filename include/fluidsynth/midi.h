@@ -214,18 +214,18 @@ enum fluid_player_status
 
 /**
  * MIDI File Player tempo enum.
- * @since ?
+ * @since 2.2.0
  */
 enum fluid_player_tempo_type
 {
     FLUID_PLAYER_TEMPO_DEFAULT,   /**< Use midi file tempo set in midi file (120 bpm by default) */
     FLUID_PLAYER_TEMPO_BPM,       /**< Set player tempo in bpm, supersede midi file tempo */
     FLUID_PLAYER_TEMPO_MIDI,      /**< Set player tempo in us per quarter note, supersede midi file tempo */
-    FLUID_PLAYER_TEMPO_RELATIVE,  /**< Speed up or slow down tempo with a multiplier factor */
+    FLUID_PLAYER_TEMPO_RELATIVE,  /**< Speed up or slow down midi file tempo with a multiplier factor */
     FLUID_PLAYER_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
-/** @startlifecycle{MIDI file Player} */
+/** @startlifecycle{MIDI File Player} */
 FLUIDSYNTH_API fluid_player_t *new_fluid_player(fluid_synth_t *synth);
 FLUIDSYNTH_API void delete_fluid_player(fluid_player_t *player);
 /** @endlifecycle */
