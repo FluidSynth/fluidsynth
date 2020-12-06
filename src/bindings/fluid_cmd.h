@@ -88,6 +88,7 @@ int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out
 int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_player_step(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out);
 

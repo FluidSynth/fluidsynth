@@ -367,7 +367,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* Midi file player commands */
     {
         "player_start", "player", fluid_handle_player_start,
-        "player_start               Start playing"
+        "player_start               Start playing from the beginning of current song"
     },
     {
         "player_stop", "player", fluid_handle_player_stop,
@@ -378,16 +378,20 @@ static const fluid_cmd_t fluid_commands[] =
         "player_cont                Continue playing"
     },
     {
+        "player_step", "player", fluid_handle_player_step,
+        "player_step num            Move forward/backward in current song to +/-num ticks"
+    },
+    {
         "player_next", "player", fluid_handle_player_next_song,
-        "player_next                Go to next song"
+        "player_next                Move to next song"
     },
     {
         "player_loop", "player", fluid_handle_player_loop,
-        "player_loop                Set loop number (-1, loop forever)"
+        "player_loop num            Set loop number to num (-1 = loop forever)"
     },
     {
         "player_tempo_bpm", "player", fluid_handle_player_tempo_bpm,
-        "player_tempo_bmp           Set tempo in BPM"
+        "player_tempo_bmp num       Set tempo to num beats per minute"
     },
 #if WITH_PROFILING
     /* Profiling commands */
@@ -3453,15 +3457,26 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
 }
 
 /**  commands  for Midi file player ******************************************/
+
+/* print current position and total ticks */
+void player_print_position(fluid_player_t *player, fluid_ostream_t out)
+{
+    int current_tick = fluid_player_get_current_tick(player);
+    int total_ticks = fluid_player_get_total_ticks(player);
+    fluid_ostream_printf(out, "player current pos:%d, end:%d\n\n",
+                         current_tick, total_ticks);
+}
+
 /* Command handler for "player_start" command */
 int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
 
-    /* start playing from the beginning of the MIDI file */
+    /* start playing from the beginning of the current song */
     fluid_player_stop(handler->player);
-    fluid_player_seek(handler->player,0);
+    fluid_player_seek(handler->player, 0);
     fluid_player_play(handler->player);
+    player_print_position(handler->player, out);
 
     return FLUID_OK;
 }
@@ -3472,6 +3487,7 @@ int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
     FLUID_ENTRY_COMMAND(data);
 
     fluid_player_stop(handler->player);
+    player_print_position(handler->player, out);
 
     return FLUID_OK;
 }
@@ -3482,55 +3498,91 @@ int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t 
     FLUID_ENTRY_COMMAND(data);
 
     fluid_player_play(handler->player);
-
-    return FLUID_OK;
-}
-
-/* Command handler for "player_next" command */
-int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
-{
-    FLUID_ENTRY_COMMAND(data);
-
-    /* go to next MIDI file */
-    int total_tick = fluid_player_get_total_ticks(handler->player);
-    fluid_player_seek(handler->player, total_tick);
+    player_print_position(handler->player, out);
 
     return FLUID_OK;
 }
 
 /* player commands enum */
-enum player_cde
+enum
 {
-    PLAYER_LOOP_CDE,
-    PLAYER_TEMPO_BPM_CDE,
+    PLAYER_STEP_CDE, /* player_step num (Move forward/backward to +/-num ticks) */
+    PLAYER_NEXT_CDE, /* player_next     (Move to next song) */
+    PLAYER_LOOP_CDE, /* player_loop num,(Set loop number to num) */
+    PLAYER_TEMPO_BPM_CDE, /* player_tempo_bpm num (Set tempo to num bpm) */
     NBR_PLAYER_CDE
 };
 
-/* Command handler for player commands: player_loop, player_tempo_bpm */
+/* Command handler for player commands: player_step, player_loop, player_tempo_bpm */
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
+    int arg;
+    int total_ticks = fluid_player_get_total_ticks(handler->player);
 
     /* commands name table */
-    static const char *name_cde[NBR_PLAYER_CDE] = {"player_loop", "player_tempo_bpm"};
+    static const char *name_cde[NBR_PLAYER_CDE] =
+    {"player_step", NULL, "player_loop", "player_tempo_bpm"};
 
     /* functions table */
     static int (*player_cde[NBR_PLAYER_CDE])(fluid_player_t *, int) =
     {
+        fluid_player_seek, fluid_player_seek,
         fluid_player_set_loop, fluid_player_set_bpm
     };
 
-    /* check argument */
-    if( ac != 1 || !fluid_is_number(av[0]))
+    /* get argument */
+    arg = total_ticks; /* for player_next command */
+    if(cmd != PLAYER_NEXT_CDE)
     {
-        fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
-        return FLUID_FAILED;
+        /* check argument */
+        if(ac != 1 || !fluid_is_number(av[0]))
+        {
+            fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
+            return FLUID_FAILED;
+        }
+
+        arg = atoi(av[0]);
+    }
+
+    if(cmd == PLAYER_STEP_CDE)
+    {
+        /* Move position forward/bacward +/- num ticks*/
+        arg  += fluid_player_get_current_tick(handler->player);
+
+        /* keep position between the beginning and the end of current song */
+        if(arg < 0)
+        {
+            arg = 0; /* minimum position */
+        }
+        if(arg > total_ticks)
+        {
+            arg = total_ticks; /* maximum position */
+        }
     }
 
     /* run player command */
-    player_cde[cmd](handler->player, atoi(av[0]));
+    player_cde[cmd](handler->player, arg);
+
+    /* display position for: player_step, player_next, player_tempo_bpm */
+    if(cmd != PLAYER_LOOP_CDE)
+    {
+        player_print_position(handler->player, out);
+    }
 
     return FLUID_OK;
+}
+
+/* Command handler for "player_step" command */
+int fluid_handle_player_step(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_STEP_CDE);
+}
+
+/* Command handler for "player_next" command */
+int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_NEXT_CDE);
 }
 
 /* Command handler for "player_loop" command */
