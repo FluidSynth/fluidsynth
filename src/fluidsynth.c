@@ -937,7 +937,6 @@ int main(int argc, char **argv)
     }
 
     /* try to load and execute the user or system configuration file */
-	printf("fluidsynt, player=%d\n", player); 
     cmd_handler = new_fluid_cmd_handler(synth, router, player);
 
     if(cmd_handler == NULL)
