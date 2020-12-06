@@ -385,6 +385,10 @@ static const fluid_cmd_t fluid_commands[] =
         "player_loop", "player", fluid_handle_player_loop,
         "player_loop                Set loop number (-1, loop forever)"
     },
+    {
+        "player_tempo_bpm", "player", fluid_handle_player_tempo_bpm,
+        "player_tempo_bmp           Set tempo in BPM"
+    },
 #if WITH_PROFILING
     /* Profiling commands */
     {
@@ -3494,21 +3498,51 @@ int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t
     return FLUID_OK;
 }
 
-/* Command handler for "player_loop" command */
-int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
+/* player commands enum */
+enum player_cde
+{
+    PLAYER_LOOP_CDE,
+    PLAYER_TEMPO_BPM_CDE,
+    NBR_PLAYER_CDE
+};
+
+/* Command handler for player commands: player_loop, player_tempo_bpm */
+int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
 
-    /* Set loop number */
+    /* commands name table */
+    static const char *name_cde[NBR_PLAYER_CDE] = {"player_loop", "player_tempo_bpm"};
+
+    /* functions table */
+    static int (*player_cde[NBR_PLAYER_CDE])(fluid_player_t *, int) =
+    {
+        fluid_player_set_loop, fluid_player_set_bpm
+    };
+
+    /* check argument */
     if( ac != 1 || !fluid_is_number(av[0]))
     {
-        fluid_ostream_printf(out, "%s: %s", "player_loop", invalid_arg_msg);
+        fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
         return FLUID_FAILED;
     }
 
-    fluid_player_set_loop(handler->player, atoi(av[0]));
+    /* run player command */
+    player_cde[cmd](handler->player, atoi(av[0]));
 
     return FLUID_OK;
+}
+
+/* Command handler for "player_loop" command */
+int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_LOOP_CDE);
+}
+
+/* Command handler for "player_tempo_bpm" command */
+int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_TEMPO_BPM_CDE);
 }
 
 #ifdef LADSPA

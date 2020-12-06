@@ -89,6 +89,7 @@ int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
 int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out);
 
 #if WITH_PROFILING
 int fluid_handle_profile(void *data, int ac, char **av, fluid_ostream_t out);
