@@ -4465,7 +4465,8 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
         if((is_router_cmd && router == NULL) || (is_player_cmd && player == NULL)
 			||(!is_router_cmd && !is_player_cmd && synth == NULL))
         {
-            /* omit registering router and synth commands if they were not requested */
+            /* omit registering router, player and synth commands if they were
+               not requested */
             continue;
         }
 
