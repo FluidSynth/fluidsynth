@@ -364,6 +364,23 @@ static const fluid_cmd_t fluid_commands[] =
         "router_end", "router", fluid_handle_router_end,
         "router_end                 closes and commits the current routing rule"
     },
+    /* Midi file player commands */
+    {
+        "player_start", "player", fluid_handle_player_start,
+        "player_start               Start playing"
+    },
+    {
+        "player_stop", "player", fluid_handle_player_stop,
+        "player_stop                Stop playing"
+    },
+    {
+        "player_cont", "player", fluid_handle_player_continue,
+        "player_cont                Continue playing"
+    },
+    {
+        "player_next", "player", fluid_handle_player_next_song,
+        "player_next                Go to next song"
+    },
 #if WITH_PROFILING
     /* Profiling commands */
     {
@@ -2560,6 +2577,52 @@ int fluid_handle_router_par2(void *data, int ac, char **av, fluid_ostream_t out)
 
     fluid_midi_router_rule_set_param2(handler->cmd_rule, atoi(av[0]), atoi(av[1]),
                                       atof(av[2]), atoi(av[3]));
+    return FLUID_OK;
+}
+
+/**  commands  for Midi file player ******************************************/
+/* Command handler for "player_start" command */
+int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    /* start playing from the beginning of the MIDI file */
+    fluid_player_stop(handler->player);
+    fluid_player_seek(handler->player,0);
+    fluid_player_play(handler->player);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_stop" command */
+int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    fluid_player_stop(handler->player);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_continue" command */
+int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    fluid_player_play(handler->player);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_next" command */
+int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    /* go to next MIDI file */
+    int total_tick = fluid_player_get_total_ticks(handler->player);
+    fluid_player_seek(handler->player,total_tick);
+
     return FLUID_OK;
 }
 
