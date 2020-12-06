@@ -381,6 +381,10 @@ static const fluid_cmd_t fluid_commands[] =
         "player_next", "player", fluid_handle_player_next_song,
         "player_next                Go to next song"
     },
+    {
+        "player_loop", "player", fluid_handle_player_loop,
+        "player_loop                Set loop number (-1, loop forever)"
+    },
 #if WITH_PROFILING
     /* Profiling commands */
     {
@@ -2580,52 +2584,6 @@ int fluid_handle_router_par2(void *data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 }
 
-/**  commands  for Midi file player ******************************************/
-/* Command handler for "player_start" command */
-int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out)
-{
-    FLUID_ENTRY_COMMAND(data);
-
-    /* start playing from the beginning of the MIDI file */
-    fluid_player_stop(handler->player);
-    fluid_player_seek(handler->player,0);
-    fluid_player_play(handler->player);
-
-    return FLUID_OK;
-}
-
-/* Command handler for "player_stop" command */
-int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
-{
-    FLUID_ENTRY_COMMAND(data);
-
-    fluid_player_stop(handler->player);
-
-    return FLUID_OK;
-}
-
-/* Command handler for "player_continue" command */
-int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out)
-{
-    FLUID_ENTRY_COMMAND(data);
-
-    fluid_player_play(handler->player);
-
-    return FLUID_OK;
-}
-
-/* Command handler for "player_next" command */
-int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
-{
-    FLUID_ENTRY_COMMAND(data);
-
-    /* go to next MIDI file */
-    int total_tick = fluid_player_get_total_ticks(handler->player);
-    fluid_player_seek(handler->player,total_tick);
-
-    return FLUID_OK;
-}
-
 /**  commands Poly/mono mode *************************************************/
 
 static const char *const mode_name[] =
@@ -3490,6 +3448,68 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
     return 0;
 }
 
+/**  commands  for Midi file player ******************************************/
+/* Command handler for "player_start" command */
+int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    /* start playing from the beginning of the MIDI file */
+    fluid_player_stop(handler->player);
+    fluid_player_seek(handler->player,0);
+    fluid_player_play(handler->player);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_stop" command */
+int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    fluid_player_stop(handler->player);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_continue" command */
+int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    fluid_player_play(handler->player);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_next" command */
+int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    /* go to next MIDI file */
+    int total_tick = fluid_player_get_total_ticks(handler->player);
+    fluid_player_seek(handler->player, total_tick);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_loop" command */
+int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    FLUID_ENTRY_COMMAND(data);
+
+    /* Set loop number */
+    if( ac != 1 || !fluid_is_number(av[0]))
+    {
+        fluid_ostream_printf(out, "%s: %s", "player_loop", invalid_arg_msg);
+        return FLUID_FAILED;
+    }
+
+    fluid_player_set_loop(handler->player, atoi(av[0]));
+
+    return FLUID_OK;
+}
 
 #ifdef LADSPA
 
