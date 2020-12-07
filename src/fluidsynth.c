@@ -316,12 +316,14 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     7)create the midi driver connected to the router.
     8)create a player and add it any midifile specified in command line.
 	  (multiple midifiles loading is possible).
-    9)loading a default soundfont if needed before starting the player.
-    10)create a command handler.
-    11)reading the configuration file and submit it to the command handler.
+    9)create a command handler.
+    10)reading the configuration file and submit it to the command handler
+       before starting the player.
+    11)loading a default soundfont if needed before starting the player,
+       then  start the player.
     12)create a tcp shell if any requested.
-    13)create a synchronous user shell if interactive.
-    14)entering fast rendering loop if requested.
+    13)entering fast rendering loop if requested, otherwise
+    14)create the synthesis thread and a synchronous user shell if interactive.
  */
 int main(int argc, char **argv)
 {
@@ -886,7 +888,7 @@ int main(int argc, char **argv)
         }
     }
 
-    /* play the midi files, if any */
+    /* create the player and add any midi files, if requested */
     for(i = arg1; i < argc; i++)
     {
         if((argv[i][0] != '-') && fluid_is_midifile(argv[i]))
@@ -912,30 +914,6 @@ int main(int argc, char **argv)
         }
     }
 
-    /* start the player */
-    if(player != NULL)
-    {
-        /* Try to load the default soundfont, if no soundfont specified */
-        if(fluid_synth_get_sfont(synth, 0) == NULL)
-        {
-            char *s;
-
-            if(fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
-            {
-                s = NULL;
-            }
-
-            if((s != NULL) && (s[0] != '\0'))
-            {
-                fluid_synth_sfload(synth, s, 1);
-            }
-
-            FLUID_FREE(s);
-        }
-
-        fluid_player_play(player);
-    }
-
     /* try to load and execute the user or system configuration file */
     cmd_handler = new_fluid_cmd_handler(synth, router, player);
 
@@ -959,6 +937,35 @@ int main(int argc, char **argv)
     else if(fluid_get_sysconf(buf, sizeof(buf)) != NULL)
     {
         fluid_source(cmd_handler, buf);
+    }
+
+    /* start the player. Must be done after executing commands configuration file.
+       This allows any existing player commands to be run prior the player is started.
+       Example:
+       player_tempo_bpm 60 # set a low tempo
+       player_loop -1      # loop song forever
+    */
+    if(player != NULL)
+    {
+        /* Try to load the default soundfont, if no soundfont specified */
+        if(fluid_synth_get_sfont(synth, 0) == NULL)
+        {
+            char *s;
+
+            if(fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
+            {
+                s = NULL;
+            }
+
+            if((s != NULL) && (s[0] != '\0'))
+            {
+                fluid_synth_sfload(synth, s, 1);
+            }
+
+            FLUID_FREE(s);
+        }
+
+        fluid_player_play(player);
     }
 
     /* run the server, if requested */
