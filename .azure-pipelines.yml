@@ -65,6 +65,7 @@ jobs:
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
+      continueOnError: 'true'
     - script: |
         @ECHO ON
         cd build
@@ -204,8 +205,9 @@ jobs:
         set PATH=%PATH:C:\Program Files\Git\bin;=%
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
         cd build || exit -1
-        mingw32-make.exe check || cd .
+        mingw32-make.exe check || exit -1
       displayName: 'Execute Unittests'
+      continueOnError: 'true'
     - script: |
         @ECHO ON
         cd build
