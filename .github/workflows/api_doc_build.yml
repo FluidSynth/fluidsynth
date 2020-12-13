@@ -41,7 +41,7 @@ jobs:
     - name: Publish API Docs to GH Pages
       uses: JamesIves/github-pages-deploy-action@3.7.1
       with:
-        FOLDER: ${{runner.workspace}}/build/doc/api/html/~
+        FOLDER: ${{runner.workspace}}/build/doc/api/html/
         REPOSITORY_NAME: FluidSynth/fluidsynth.github.io
         BRANCH: main
         TARGET_FOLDER: api/
