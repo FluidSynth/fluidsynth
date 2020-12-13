@@ -46,3 +46,4 @@ jobs:
         BRANCH: main
         TARGET_FOLDER: api/
         SSH: true
+        CLEAN: true
