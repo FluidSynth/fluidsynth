@@ -48,3 +48,5 @@ jobs:
         SSH: true
         CLEAN: true
         COMMIT_MESSAGE: Updating API doc from fluidsynth master
+        GIT_CONFIG_NAME: API Doc Deploy
+        GIT_CONFIG_EMAIL: fluid-api-deploy@fluidsynth.github.io
