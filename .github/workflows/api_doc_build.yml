@@ -47,3 +47,4 @@ jobs:
         TARGET_FOLDER: api/
         SSH: true
         CLEAN: true
+        COMMIT_MESSAGE: Updating API doc from fluidsynth master
