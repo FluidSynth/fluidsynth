@@ -212,6 +212,7 @@ void* fluid_alloc(size_t len);
 #define FLUID_STRCMP(_s,_t)          strcmp(_s,_t)
 #define FLUID_STRNCMP(_s,_t,_n)      strncmp(_s,_t,_n)
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
+#define FLUID_STRTOL(_s,_e,_b)       strtol(_s,_e,_b)
 
 #define FLUID_STRNCPY(_dst,_src,_n) \
 do { strncpy(_dst,_src,_n-1); \
