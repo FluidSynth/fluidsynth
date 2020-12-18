@@ -674,6 +674,7 @@ endif()
 
 # manipulate some variables to setup a proper test env
 set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
+set(TEST_SOUNDFONT_UTF8 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
 # Check for C99 float math

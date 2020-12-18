@@ -191,9 +191,11 @@ typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t pa
 void* fluid_alloc(size_t len);
 
 /* File access */
-#define FLUID_FOPEN(_f,_m)           fopen(_f,_m)
+#define FLUID_FOPEN(_f,_m)           fluid_fopen(_f,_m)
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
+
+FILE *fluid_fopen(const char *filename, const char *mode);
 
 #ifdef WIN32
 #define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)

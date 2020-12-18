@@ -218,6 +218,60 @@ void* fluid_alloc(size_t len)
 }
 
 /**
+ * Open a file with a UTF-8 string, even in Windows
+ * @param filename The name of the file to open
+ * @param mode The mode to open the file in
+ */
+FILE *fluid_fopen(const char *filename, const char *mode)
+{
+#if _WIN32
+    wchar_t *wpath, *wmode;
+    FILE *file;
+
+    int length = MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, filename, -1, NULL, 0);
+    wpath = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if (MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, filename, -1, wpath, length) <= 0)
+    {
+        FLUID_FREE(wpath);
+        errno = EINVAL;
+        return NULL;
+    }
+
+    length = MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, mode, -1, NULL, 0);
+    wmode = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wmode == NULL)
+    {
+        FLUID_FREE(wpath);
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if (MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, mode, -1, wmode, length) <= 0)
+    {
+        FLUID_FREE(wpath);
+        FLUID_FREE(wmode);
+        errno = EINVAL;
+        return NULL;
+    }
+
+    file = _wfopen(wpath, wmode);
+
+    FLUID_FREE(wpath);
+    FLUID_FREE(wmode);
+
+    return file;
+#else
+    return fopen(filename, mode);
+#endif
+}
+
+/**
  * Convenience wrapper for free() that satisfies at least C90 requirements.
  *
  * @param ptr Pointer to memory region that should be freed
