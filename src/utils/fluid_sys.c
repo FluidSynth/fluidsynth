@@ -224,11 +224,11 @@ void* fluid_alloc(size_t len)
  */
 FILE *fluid_fopen(const char *filename, const char *mode)
 {
-#if _WIN32
+#if defined(WIN32)
     wchar_t *wpath, *wmode;
     FILE *file;
 
-    int length = MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, filename, -1, NULL, 0);
+    int length = MultiByteToWideChar(CP_UTF8, 0, filename, -1, NULL, 0);
     wpath = FLUID_MALLOC(length * sizeof(wchar_t));
     if (wpath == NULL)
     {
@@ -236,14 +236,14 @@ FILE *fluid_fopen(const char *filename, const char *mode)
         return NULL;
     }
 
-    if (MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, filename, -1, wpath, length) <= 0)
+    if (MultiByteToWideChar(CP_UTF8, 0, filename, -1, wpath, length) <= 0)
     {
         FLUID_FREE(wpath);
         errno = EINVAL;
         return NULL;
     }
 
-    length = MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, mode, -1, NULL, 0);
+    length = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
     wmode = FLUID_MALLOC(length * sizeof(wchar_t));
     if (wmode == NULL)
     {
@@ -252,7 +252,7 @@ FILE *fluid_fopen(const char *filename, const char *mode)
         return NULL;
     }
 
-    if (MultiByteToWideChar(CP_UTF8, MB_COMPOSITE, mode, -1, wmode, length) <= 0)
+    if (MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, length) <= 0)
     {
         FLUID_FREE(wpath);
         FLUID_FREE(wmode);
