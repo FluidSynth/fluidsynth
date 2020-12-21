@@ -227,8 +227,13 @@ FILE *fluid_fopen(const char *filename, const char *mode)
 #if defined(WIN32)
     wchar_t *wpath, *wmode;
     FILE *file;
-
-    int length = MultiByteToWideChar(CP_UTF8, 0, filename, -1, NULL, 0);
+    int length;
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0)) == 0)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+    
     wpath = FLUID_MALLOC(length * sizeof(wchar_t));
     if (wpath == NULL)
     {
@@ -236,14 +241,15 @@ FILE *fluid_fopen(const char *filename, const char *mode)
         return NULL;
     }
 
-    if (MultiByteToWideChar(CP_UTF8, 0, filename, -1, wpath, length) <= 0)
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wpath, length);
+
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, NULL, 0)) == 0)
     {
         FLUID_FREE(wpath);
         errno = EINVAL;
         return NULL;
     }
 
-    length = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
     wmode = FLUID_MALLOC(length * sizeof(wchar_t));
     if (wmode == NULL)
     {
@@ -252,13 +258,7 @@ FILE *fluid_fopen(const char *filename, const char *mode)
         return NULL;
     }
 
-    if (MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, length) <= 0)
-    {
-        FLUID_FREE(wpath);
-        FLUID_FREE(wmode);
-        errno = EINVAL;
-        return NULL;
-    }
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, wmode, length);
 
     file = _wfopen(wpath, wmode);
 
