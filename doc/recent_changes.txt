@@ -13,6 +13,7 @@
 - The dynamic-sample-loader has learned support to pin samples, see fluid_synth_pin_preset() and fluid_synth_unpin_preset()
 - Added getter and setter functions for individual effect groups
 - Support for UTF-8 filenames under Windows, see fluid_synth_sfload()
+- MIDI Tempo of the fluid_player can now be overridden, see fluid_player_set_tempo() and fluid_player_get_tempo()
 
 \section NewIn2_1_4 What's new in 2.1.4?
 
