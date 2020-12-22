@@ -49,6 +49,7 @@ jobs:
         mv -f * ..
         cd ..
         rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -122,6 +123,7 @@ jobs:
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -182,6 +184,7 @@ jobs:
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
         cd mingw*\ && cp -rf * .. && cd .. && rm -rf mingw* || exit -1
         cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform) && cp -rf * d:\deps\ && mv -f * .. && cd .. &&  rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\ || exit -1
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -201,8 +204,9 @@ jobs:
         set PATH=%PATH:C:\Program Files\Git\bin;=%
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
         cd build || exit -1
-        mingw32-make.exe check || cd .
+        mingw32-make.exe check || exit -1
       displayName: 'Execute Unittests'
+      continueOnError: 'true'
     - script: |
         @ECHO ON
         cd build

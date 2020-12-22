@@ -5084,6 +5084,10 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, #FLUID_FAILED on error
+ * 
+ * @note Since FluidSynth 2.2.0 @c filename is treated as an UTF8 encoded string on Windows. FluidSynth will convert it
+ * to wide-char internally and then pass it to <code>_wfopen()</code>. Before FluidSynth 2.2.0, @c filename was treated as ANSI string
+ * on Windows. All other platforms directly pass it to <code>fopen()</code> without any conversion (usually, UTF8 is accepted).
  */
 int
 fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets)

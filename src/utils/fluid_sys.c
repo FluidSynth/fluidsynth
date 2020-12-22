@@ -218,6 +218,63 @@ void* fluid_alloc(size_t len)
 }
 
 /**
+ * Open a file with a UTF-8 string, even in Windows
+ * @param filename The name of the file to open
+ * @param mode The mode to open the file in
+ */
+FILE *fluid_fopen(const char *filename, const char *mode)
+{
+#if defined(WIN32)
+    wchar_t *wpath = NULL, *wmode = NULL;
+    FILE *file = NULL;
+    int length;
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0)) == 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to perform MultiByteToWideChar() conversion for filename '%s'. Error was: '%s'", filename, fluid_get_windows_error());
+        errno = EINVAL;
+        goto error_recovery;
+    }
+    
+    wpath = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "Out of memory.");
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wpath, length);
+
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, NULL, 0)) == 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to perform MultiByteToWideChar() conversion for mode '%s'. Error was: '%s'", mode, fluid_get_windows_error());
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    wmode = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wmode == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "Out of memory.");
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, wmode, length);
+
+    file = _wfopen(wpath, wmode);
+
+error_recovery:
+    FLUID_FREE(wpath);
+    FLUID_FREE(wmode);
+
+    return file;
+#else
+    return fopen(filename, mode);
+#endif
+}
+
+/**
  * Convenience wrapper for free() that satisfies at least C90 requirements.
  *
  * @param ptr Pointer to memory region that should be freed

@@ -344,31 +344,37 @@ int fluid_is_soundfont(const char *filename)
     FILE    *fp;
     uint32_t fcc;
     int      retcode = FALSE;
+    const char* err_msg;
 
     do
     {
-        if((fp = fluid_file_open(filename, NULL)) == NULL)
+        if((fp = fluid_file_open(filename, &err_msg)) == NULL)
         {
+            FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): fopen() failed: '%s'", err_msg);
             return retcode;
         }
 
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
         {
+            FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): failed to read RIFF chunk id.");
             break;
         }
 
         if(fcc != RIFF_FCC)
         {
+            FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): expected RIFF chunk id '0x%04X' but got '0x%04X'.", (unsigned int) RIFF_FCC, (unsigned int)fcc);
             break;
         }
 
         if(FLUID_FSEEK(fp, 4, SEEK_CUR))
         {
+            FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): cannot seek +4 bytes.");
             break;
         }
 
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
         {
+            FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): failed to read SFBK chunk id.");
             break;
         }
 

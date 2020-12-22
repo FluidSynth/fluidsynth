@@ -1143,7 +1143,7 @@ static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
 /* parameter value */
 struct value
 {
-    char *name;
+    const char *name;
     double min;
     double max;
 };
@@ -1197,7 +1197,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     int fx_group;
 
     /* reverb commands name table */
-    static const char *name_cde[FLUID_REVERB_PARAM_LAST] =
+    static const char *const name_cde[FLUID_REVERB_PARAM_LAST] =
     {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
 
     /* name and min/max values table */
@@ -1304,7 +1304,7 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
                                       enum rev_chor_on_cde cde)
 {
     /* commands name table */
-    static const char *name_cde[NBR_REV_CHOR_ON_CDE] = {"reverb", "chorus"};
+    static const char *const name_cde[NBR_REV_CHOR_ON_CDE] = {"reverb", "chorus"};
     /* functions table */
     static int (*onoff_func[NBR_REV_CHOR_ON_CDE])(fluid_synth_t *, int, int) =
     {
@@ -1361,11 +1361,11 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
                             int param)
 {
     /* chorus commands name table */
-    static const char *name_cde[FLUID_CHORUS_PARAM_LAST - 1] =
+    static const char *const name_cde[FLUID_CHORUS_PARAM_LAST - 1] =
     {"cho_set_nr", "cho_set_level", "cho_set_speed", "cho_set_depth"};
 
     /* value name table */
-    static const char *name_value[FLUID_CHORUS_PARAM_LAST - 1] =
+    static const char *const name_value[FLUID_CHORUS_PARAM_LAST - 1] =
     {"nr", "level", "speed", "depth"};
 
     FLUID_ENTRY_COMMAND(data);
@@ -2579,8 +2579,8 @@ static const char *const mode_name[] =
 */
 static int print_basic_channels(fluid_synth_t *synth, fluid_ostream_t out)
 {
-    static const char *warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n"
-                                     "Make use of setbasicchannels to set at least a default basic channel.\n";
+    static const char warning_msg[] = "Warning: no basic channels. All MIDI channels are disabled.\n"
+                                      "Make use of setbasicchannels to set at least a default basic channel.\n";
 
     int n_chan = synth->midi_channels;
     int i, n = 0;

@@ -14,6 +14,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
     
     - name: Install Dependencies
       run: sudo apt-get install doxygen xsltproc
@@ -30,9 +32,21 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config $BUILD_TYPE --target doxygen
-    
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+
+    - name: Install SSH Client 🔑
+      uses: webfactory/ssh-agent@v0.4.1
       with:
-        name: api_docs
-        path: ${{runner.workspace}}/build/doc/api/html
+        ssh-private-key: ${{ secrets.DEPLOY_API_TOKEN }}
+    
+    - name: Publish API Docs to GH Pages
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        FOLDER: ${{runner.workspace}}/build/doc/api/html/
+        REPOSITORY_NAME: FluidSynth/fluidsynth.github.io
+        BRANCH: main
+        TARGET_FOLDER: api/
+        SSH: true
+        CLEAN: true
+        COMMIT_MESSAGE: Updating API doc from fluidsynth master
+        GIT_CONFIG_NAME: API Doc Deploy
+        GIT_CONFIG_EMAIL: fluid-api-deploy@fluidsynth.github.io
