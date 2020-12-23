@@ -359,7 +359,7 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
     {
         /* try to convert current ascii index */
         char *end_idx = cur_idx;
-        dev_idx = g_ascii_strtoll(cur_idx, &end_idx, 10);
+        dev_idx = FLUID_STRTOL(cur_idx, &end_idx, 10);
 
         if(cur_idx == end_idx      /* not an integer number */
            || dev_idx < 0          /* invalid device index */

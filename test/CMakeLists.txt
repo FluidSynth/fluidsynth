@@ -25,6 +25,7 @@ ADD_FLUID_TEST(test_seq_scale)
 ADD_FLUID_TEST(test_seq_evt_order)
 ADD_FLUID_TEST(test_seq_event_queue_remove)
 ADD_FLUID_TEST(test_jack_obtaining_synth)
+ADD_FLUID_TEST(test_utf8_open)
 
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
