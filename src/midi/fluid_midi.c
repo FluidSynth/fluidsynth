@@ -2334,7 +2334,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 
         /* set the player to be driven by external tempo */
         case FLUID_PLAYER_SET_TEMPO_EXTERNAL_BPM:  /* value in bpm */
-        case FLUID_PLAYER_SET_TEMPO_EXTERNAL_MIDI: /* value in us/quater note */
+        case FLUID_PLAYER_SET_TEMPO_EXTERNAL_MIDI: /* value in us/quarter note */
             /* check if tempo is in correct range */
             fluid_return_val_if_fail(tempo >= MIN_TEMPO_VALUE, FLUID_FAILED);
             fluid_return_val_if_fail(tempo <= MAX_TEMPO_VALUE, FLUID_FAILED);
@@ -2507,7 +2507,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
 
             /* get the external tempo value set by fluid_player_set_tempo */
             case FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM:  /* tempo in bpm */
-            case FLUID_PLAYER_GET_TEMPO_EXTERNAL_MIDI: /* tempo in us/ quater note */
+            case FLUID_PLAYER_GET_TEMPO_EXTERNAL_MIDI: /* tempo in us/ quarter note */
                 /* get tempo in micro seconds per quarter note */
                 ret_tempo = (double) fluid_atomic_int_get(&player->exttempo);
 
