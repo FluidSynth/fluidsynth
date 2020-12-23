@@ -1609,7 +1609,7 @@ fluid_track_send_events(fluid_track_t *track,
 
         if(event->type == MIDI_SET_TEMPO && player != NULL)
         {
-            /* memorize the tempo change value comming from the MIDI file */
+            /* memorize the tempo change value coming from the MIDI file */
             fluid_atomic_int_set(&player->miditempo, event->param1);
             fluid_player_update_tempo(player);
         }
@@ -2278,7 +2278,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
 
 /**
  * Set the tempo of a MIDI player.
- * The player can be controlled by internal tempo comming from MIDI file tempo
+ * The player can be controlled by internal tempo coming from MIDI file tempo
  * change or controlled by external tempo expressed in BPM or in micro seconds
  * per quarter note.
  *
@@ -2288,7 +2288,8 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * @param tempo Tempo value or multiplier.
  * 
  *  #FLUID_PLAYER_TEMPO_DEFAULT, the player will be controlled by internal MIDI
- *  file tempo changes. The @c tempo parameter will be ignored.
+ *  file tempo changes. If there are no tempo change in the MIDI file a default
+ *  value of 120 bpm is used. The @c tempo parameter will be ignored.
  *
  *  #FLUID_PLAYER_TEMPO_BPM, the player will be controlled by the external tempo
  *  value provided  by the tempo parameter in bpm (i.e in quarter notes per minute)
@@ -2310,7 +2311,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  *
  * @note When the player is controlled by an external tempo (#FLUID_PLAYER_TEMPO_BPM
  * or #FLUID_PLAYER_TEMPO_MIDI) it continues to memorize the most recent internal
- * tempo change comming from the MIDI file so that next call to fluid_player_set_tempo()
+ * tempo change coming from the MIDI file so that next call to fluid_player_set_tempo()
  * with #FLUID_PLAYER_TEMPO_DEFAULT will set the player to follow this
  * internal tempo.
  *
@@ -2325,7 +2326,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 
     switch(tempo_type)
     {
-        /* set the player to be driven by internal tempo comming from MIDI file */
+        /* set the player to be driven by internal tempo coming from MIDI file */
         case FLUID_PLAYER_TEMPO_DEFAULT:
             fluid_atomic_int_set(&player->sync_mode, 1); /* internal mode */
             break;
@@ -2450,7 +2451,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
 
 /**
  * Get the tempo information of a MIDI player.
- * The player can be controlled by internal tempo comming from MIDI file tempo
+ * The player can be controlled by internal tempo coming from MIDI file tempo
  * change or controlled by external tempo expressed in BPM or in micro seconds
  * per quarter note.
  *
@@ -2461,14 +2462,14 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  * @param tempo Pointer to the value the returned information will be written to.
  *  This pointer can be NULL to ignore the tempo information
  *
- * @param sync_mode Pointer an int for returning the tempo mode the player
+ * @param sync_mode pointer to an int for returning the tempo mode the player
  *  is actally controlled by. This pointer can be NULL to ignore the information.
  *  - 1 means that the player is controlled by internal tempo changes from
  *    MIDI file.
  *  - 0 means that the player is controlled by an external tempo previously
  *    set by fluid_player_set_tempo()
  *
- *  #FLUID_PLAYER_TEMPO_DEFAULT, get the actual internal tempo comming from MIDI
+ *  #FLUID_PLAYER_TEMPO_DEFAULT, get the actual internal tempo coming from MIDI
  *  file in micro seconds per quarter note.
  *
  *  #FLUID_PLAYER_TEMPO_BPM, get the actual external tempo value previously set
