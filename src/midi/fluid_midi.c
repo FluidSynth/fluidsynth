@@ -2491,7 +2491,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
     {
         switch(tempo_type)
         {
-            /* get actual tempo used by the player internal/external */
+            /* get actual tempo used by the player (internal/external) */
             case FLUID_PLAYER_GET_TEMPO_USED_BPM:
             case FLUID_PLAYER_GET_TEMPO_USED_MIDI:
                 ret_tempo = ret_sync_mode ?
@@ -2505,7 +2505,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                 *tempo = ret_tempo;
                 break;
 
-            /* get the the external tempo value set by fluid_player_set_tempo */
+            /* get the external tempo value set by fluid_player_set_tempo */
             case FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM:  /* tempo in bpm */
             case FLUID_PLAYER_GET_TEMPO_EXTERNAL_MIDI: /* tempo in us/ quater note */
                 /* get tempo in micro seconds per quarter note */
