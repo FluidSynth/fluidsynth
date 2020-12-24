@@ -2489,6 +2489,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
 
     if (tempo != NULL)
     {
+        double multempo = (double)fluid_atomic_float_get(&player->multempo);
         switch(tempo_type)
         {
             /* get actual tempo used by the player (internal/external) */
@@ -2497,6 +2498,8 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                 ret_tempo = ret_sync_mode ?
                             fluid_atomic_int_get(&player->miditempo)
                            :fluid_atomic_int_get(&player->exttempo);
+
+                ret_tempo /= multempo; /* apply current tempo multiplier */
 
                 if(tempo_type == FLUID_PLAYER_GET_TEMPO_USED_BPM)
                 {
@@ -2520,7 +2523,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
 
             /* get the tempo multiplier set by fluid_player_set_tempo */
             case FLUID_PLAYER_GET_TEMPO_RELATIVE:
-                *tempo = (double) fluid_atomic_float_get(&player->multempo);
+                *tempo = multempo;
                 break;
 
             default: /* shouldn't happen */
