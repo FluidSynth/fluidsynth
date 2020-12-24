@@ -2477,8 +2477,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
 int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                            double *tempo, int *sync_mode)
 {
-    double ret_tempo;
-	int ret_sync_mode;
+    int ret_sync_mode;
 
     fluid_return_val_if_fail(player != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(tempo_type >= FLUID_PLAYER_GET_TEMPO_USED_BPM, FLUID_FAILED);
@@ -2490,31 +2489,25 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
     if (tempo != NULL)
     {
         double multempo = (double)fluid_atomic_float_get(&player->multempo);
+        double ret_tempo = (double)fluid_atomic_int_get(&player->exttempo);
         switch(tempo_type)
         {
             /* get actual tempo used by the player (internal/external) */
             case FLUID_PLAYER_GET_TEMPO_USED_BPM:
             case FLUID_PLAYER_GET_TEMPO_USED_MIDI:
-                ret_tempo = ret_sync_mode ?
-                            fluid_atomic_int_get(&player->miditempo)
-                           :fluid_atomic_int_get(&player->exttempo);
+                if(ret_sync_mode) /* look if the player is internally synced */
+                {
+                    ret_tempo = fluid_atomic_int_get(&player->miditempo);
+                }
 
                 ret_tempo /= multempo; /* apply current tempo multiplier */
-
-                if(tempo_type == FLUID_PLAYER_GET_TEMPO_USED_BPM)
-                {
-                    ret_tempo = 60000000L / ret_tempo; /* convert in bpm */
-                }
-                *tempo = ret_tempo;
-                break;
 
             /* get the external tempo value set by fluid_player_set_tempo */
             case FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM:  /* tempo in bpm */
             case FLUID_PLAYER_GET_TEMPO_EXTERNAL_MIDI: /* tempo in us/ quarter note */
-                /* get tempo in micro seconds per quarter note */
-                ret_tempo = (double) fluid_atomic_int_get(&player->exttempo);
 
-                if(tempo_type == FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM)
+                if((tempo_type == FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM)
+                   ||(tempo_type == FLUID_PLAYER_GET_TEMPO_USED_BPM))
                 {
                     ret_tempo = 60000000L / ret_tempo; /* convert in bpm */
                 }
