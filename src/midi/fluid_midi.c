@@ -2458,17 +2458,25 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  *
  * @param player MIDI player instance. Must be a valid pointer.
  * @param tempo_type A value of #fluid_player_get_tempo_type that indicates the
- * tempo information to retrieve.
+ * tempo information to retrieve. See below.
+ *  Current tempo used by the player:
+ *   #FLUID_PLAYER_GET_TEMPO_USED_BPM, current tempo in bpm.
+ *   #FLUID_PLAYER_GET_TEMPO_USED_MIDI, current tempo in us per quarter note.
+ *
+ *  Information set by fluid_player_set_tempo():
+ *   #FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM, external tempo in bpm.
+ *   #FLUID_PLAYER_GET_TEMPO_EXTERNAL_MIDI, external tempo in us per quarter note.
+ *   #FLUID_PLAYER_GET_TEMPO_RELATIVE, tempo multiplier.
  *
  * @param tempo Pointer to the value the returned information will be written to.
- *  This pointer can be NULL to ignore the tempo information
+ *  This pointer can be NULL to ignore the tempo information.
  *
  * @param sync_mode pointer to an int for returning the tempo mode the player
  *  is actally controlled by. This pointer can be NULL to ignore the information.
  *  - 1 means that the player is controlled by internal tempo changes from
  *    MIDI file.
  *  - 0 means that the player is controlled by an external tempo previously
- *    set by fluid_player_set_tempo()
+ *    set by fluid_player_set_tempo().
  *
  * @return #FLUID_OK if success or #FLUID_FAILED otherwise (incorrect parameters).
  *  At least one of both pointers @c tempo or @c sync_mode must be non NULL.
