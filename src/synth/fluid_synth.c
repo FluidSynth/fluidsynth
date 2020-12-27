@@ -6197,7 +6197,7 @@ fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int fx_group, double le
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
  *  parameter will be applied to all groups.
- * @param speed Lfo speed to set. Must be in the range indicated by \settings{synth_chorus_speed}
+ * @param speed Lfo speed to set. Must be in the range indicated by \setting{synth_chorus_speed}
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int
@@ -6212,7 +6212,7 @@ fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int fx_group, double sp
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
  *  parameter will be applied to all groups.
- * @depth_ms, lfo depth to set. Must be in the range indicated by synth.chorus.depth
+ * @param depth_ms lfo depth to set. Must be in the range indicated by \setting{synth_chorus_depth}
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int
@@ -6467,7 +6467,7 @@ fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fx_group, double *s
  * @param fx_group Index of the fx group from which lfo depth to fetch.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
  *  parameter common to all fx groups is fetched.
- * @param depth valid pointer on value to return.
+ * @param depth_ms valid pointer on value to return.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
