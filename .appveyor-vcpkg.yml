@@ -1,13 +1,12 @@
 
-workspace:
-  clean: all
-
 variables:
   toolset: v142
   generator: 'Visual Studio 16 2019'
 
 jobs:
 - job: vcpkg
+  workspace:
+    clean: all
   strategy:
     matrix:
       ARM:
