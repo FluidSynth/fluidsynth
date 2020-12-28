@@ -57,13 +57,11 @@ jobs:
         REM build libfluidsynth and fluidsynth exec
         cmake --build . --config $(configuration) || exit -1
       displayName: 'Compile fluidsynth'
-      enabled: 'false'
     - script: |
         @ECHO ON
         REM build and exec unittests, unless when cross-compiling
         if not "%platform%"=="ARM" ( cmake --build build --config $(configuration) --target check )
       displayName: 'Execute Unittests'
-      enabled: 'false'
     - script: |
         @ECHO ON
         cd build
@@ -75,7 +73,6 @@ jobs:
         del $(Build.ArtifactStagingDirectory)\lib\pkgconfig\libinstpatch*.pc
         rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-2 /s /q
       displayName: 'Copy Artifacts'
-      enabled: 'false'
     - task: PublishBuildArtifacts@1
       inputs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
