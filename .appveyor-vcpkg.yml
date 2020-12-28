@@ -1,4 +1,7 @@
 
+workspace:
+  clean: all
+
 variables:
   toolset: v142
   generator: 'Visual Studio 16 2019'
@@ -31,11 +34,12 @@ jobs:
         ninja --version
         cmake --version
         REM manually update vcpkg
-        cd "C:\Tools\vcpkg"
-        git pull
-        .\bootstrap-vcpkg.bat
-        cd $(Build.SourcesDirectory)
-        vcpkg install glib:%platform%-windows || type C:\Tools\vcpkg\buildtrees\libffi\config-arm-windows-out.log
+        REM cd "C:\Tools\vcpkg" || exit -1
+        REM git pull || exit -1
+        REM .\bootstrap-vcpkg.bat || exit -1
+        REM cd $(Build.SourcesDirectory)
+        where vcpkg.exe
+        vcpkg install glib:%platform%-windows
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
