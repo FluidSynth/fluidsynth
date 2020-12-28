@@ -29,7 +29,7 @@ jobs:
       displayName: "Cache vcpkg's packages"
       continueOnError: true
       inputs:
-        key: .\.vcpkg_deps.txt | "$(platform)" | ".v2"
+        key: "$(platform)"
         path: "$(VCPKG_DIR)"
         cacheHitVar: CACHE_RESTORED
     - script: |
@@ -53,7 +53,7 @@ jobs:
         @ECHO ON
         mkdir build
         cd build
-        cmake -Werror=dev -G "$(generator)" -A "$(cmake_platform)" -T "$(toolset)" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
+        cmake -Werror=dev -G "$(generator)" -A "$(cmake_platform)" -T "$(toolset)" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
         REM build libfluidsynth and fluidsynth exec
         cmake --build . --config $(configuration) || exit -1
       displayName: 'Compile fluidsynth'
@@ -66,12 +66,12 @@ jobs:
         @ECHO ON
         cd build
         cmake --build . --config $(configuration) --target install || exit -1
-        del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
-        del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
-        del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
-        del $(Build.ArtifactStagingDirectory)\lib\instpatch*.lib
-        del $(Build.ArtifactStagingDirectory)\lib\pkgconfig\libinstpatch*.pc
-        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-2 /s /q
+        REM del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
+        REM del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
+        REM del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
+        REM del $(Build.ArtifactStagingDirectory)\lib\instpatch*.lib
+        REM del $(Build.ArtifactStagingDirectory)\lib\pkgconfig\libinstpatch*.pc
+        REM rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-2 /s /q
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
