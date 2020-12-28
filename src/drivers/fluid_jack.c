@@ -327,12 +327,15 @@ static int
 fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *client,
                                  fluid_settings_t *settings)
 {
+    fluid_synth_t* synth = NULL;
     fluid_jack_audio_driver_t *dev;
     char name[64];
     int multi;
     int i;
     unsigned long jack_srate;
     double sample_rate;
+
+    fluid_jack_obtain_synth(settings, &synth);
 
     if(!isaudio)
     {
@@ -405,6 +408,13 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
     {
         fluid_settings_getint(settings, "synth.audio-channels", &dev->num_output_ports);
 
+        if(synth && (synth->audio_channels != dev->num_output_ports))
+        {
+            FLUID_LOG(FLUID_ERR, "synth is assuming %d audio channels, while jack is using %d",
+                      synth->audio_channels, dev->num_output_ports);
+            goto error_recovery;
+        }
+
         dev->output_ports = FLUID_ARRAY(jack_port_t *, 2 * dev->num_output_ports);
 
         if(dev->output_ports == NULL)
@@ -445,9 +455,26 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         }
 
         fluid_settings_getint(settings, "synth.effects-channels", &dev->num_fx_ports);
+
+        if(synth->effects_channels != dev->num_fx_ports)
+        {
+            FLUID_LOG(FLUID_ERR, "synth is assuming %d effect channels, while jack is using %d",
+                      synth->effects_channels * synth->effects_groups,
+                      dev->num_fx_ports);
+            goto error_recovery;
+        }
+
         fluid_settings_getint(settings, "synth.effects-groups", &i);
 
         dev->num_fx_ports *= i;
+
+        if(synth->effects_groups != i)
+        {
+            FLUID_LOG(FLUID_ERR, "synth is assuming %d effect groups, while jack is using %d",
+                      synth->effects_groups, i);
+            goto error_recovery;
+        }
+
         dev->fx_ports = FLUID_ARRAY(jack_port_t *, 2 * dev->num_fx_ports);
 
         if(dev->fx_ports == NULL)
@@ -496,8 +523,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
     if((unsigned long)sample_rate != jack_srate)
     {
-        fluid_synth_t* synth;
-        if(fluid_jack_obtain_synth(settings, &synth) == FLUID_OK)
+        if(synth)
         {
             FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
                   " (synth.sample-rate=%lu, jackd=%lu)", (unsigned long)sample_rate, jack_srate);
