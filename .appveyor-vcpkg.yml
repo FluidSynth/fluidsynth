@@ -33,7 +33,7 @@ jobs:
         ninja --version
         cmake --version
         REM manually update vcpkg
-        REM cd "C:\Tools\vcpkg" || exit -1
+        REM cd "C:\vcpkg" || exit -1
         REM git pull || exit -1
         REM .\bootstrap-vcpkg.bat || exit -1
         REM cd $(Build.SourcesDirectory)
@@ -44,7 +44,7 @@ jobs:
         @ECHO ON
         mkdir build
         cd build
-        cmake -Werror=dev -G "%generator%" -A %TARGET_PLATFORM% -T "%toolset%" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=c:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 ..
+        cmake -Werror=dev -G "%generator%" -A %TARGET_PLATFORM% -T "%toolset%" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 ..
         REM build libfluidsynth and fluidsynth exec
         cmake --build . --config Release
       displayName: 'Compile fluidsynth'
