@@ -328,7 +328,7 @@ int main(int argc, char **argv)
     fluid_settings_t *settings;
     int result = -1;
     int arg1 = 1;
-    char buf[512];
+    char cmd_file[512];
     int c, i;
     int interactive = 1;
     int quiet = 0;
@@ -830,6 +830,21 @@ int main(int argc, char **argv)
         fluid_settings_setint(settings, "synth.lock-memory", 0);
     }
 
+    /* Handle set commands */
+    if(config_file != NULL) {
+	strncpy(cmd_file, config_file, sizeof(cmd_file) - 1);
+	cmd_file[sizeof(cmd_file) - 1] = '\0';
+    }
+    else if(fluid_get_userconf(cmd_file, sizeof(cmd_file)) == NULL) {
+        fluid_get_sysconf(cmd_file, sizeof(cmd_file));
+    }
+
+    if(cmd_file[0] != '\0') {
+        if (parse_fluid_cmd_set(settings, cmd_file) < 0) {
+            fprintf(stderr, "Failed to execute set commands from configuration file '%s'\n", cmd_file);
+        }
+    }
+
     /* create the synthesizer */
     synth = new_fluid_synth(settings);
 
@@ -950,20 +965,12 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    if(config_file != NULL)
+    if(fluid_source(cmd_handler, cmd_file) < 0)
     {
-        if(fluid_source(cmd_handler, config_file) < 0)
+        if(config_file != NULL)
         {
-            fprintf(stderr, "Failed to execute user provided command configuration file '%s'\n", config_file);
+            fprintf(stderr, "Failed to execute user provided command configuration file '%s'\n", cmd_file);
         }
-    }
-    else if(fluid_get_userconf(buf, sizeof(buf)) != NULL)
-    {
-        fluid_source(cmd_handler, buf);
-    }
-    else if(fluid_get_sysconf(buf, sizeof(buf)) != NULL)
-    {
-        fluid_source(cmd_handler, buf);
     }
 
     /* run the server, if requested */

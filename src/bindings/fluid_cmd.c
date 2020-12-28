@@ -384,6 +384,15 @@ static const fluid_cmd_t fluid_commands[] =
 #endif
 };
 
+/** the table of the commands that are parsed before creating the synth */
+
+static const fluid_cmd_t pre_fluid_commands[] =
+{
+    {
+        "set", "settings", fluid_handle_set, ""
+    },
+};
+
 /**
  * Process a string command.
  *
@@ -1995,7 +2004,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
     }
 
-    if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))
+    if(handler->router && !fluid_settings_is_realtime(handler->synth->settings, av[0]))
     {
         fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
     }
@@ -4325,6 +4334,54 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
 }
 
 /**
+ * Handle set commands that are independent of the synth (no-realtime settings)
+ *
+ * @param settings Settings instance to use for the shell
+ * @param config_file Name of the config file to be parsed for set commands
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int parse_fluid_cmd_set(fluid_settings_t *settings, char *config_file)
+{
+    fluid_synth_t synth = { .settings = settings };
+    fluid_cmd_handler_t *handler;
+    unsigned int i;
+
+    handler = FLUID_NEW(fluid_cmd_handler_t);
+
+    if(handler == NULL)
+    {
+        return FLUID_FAILED;
+    }
+
+    FLUID_MEMSET(handler, 0, sizeof(*handler));
+
+    handler->commands = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal,
+                        NULL, fluid_cmd_handler_destroy_hash_value);
+
+    if(handler->commands == NULL)
+    {
+        FLUID_FREE(handler);
+        return FLUID_FAILED;
+    }
+
+    for(i = 0; i < FLUID_N_ELEMENTS(pre_fluid_commands); i++) {
+        fluid_cmd_handler_register(handler, &pre_fluid_commands[i]);
+        break;
+    }
+
+    handler->synth = &synth;
+
+    if(fluid_source(handler, config_file) < 0)
+    {
+        settings = NULL;
+    }
+
+    delete_fluid_cmd_handler(handler);
+
+    return FLUID_OK;
+}
+
+/**
  * Delete a command handler.
  *
  * @param handler Command handler to delete
@@ -4379,7 +4436,8 @@ fluid_cmd_handler_handle(void *data, int ac, char **av, fluid_ostream_t out)
         return (*cmd->handler)(handler, ac - 1, av + 1, out);
     }
 
-    fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
+    if (handler->router)
+        fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
     return FLUID_FAILED;
 }
 

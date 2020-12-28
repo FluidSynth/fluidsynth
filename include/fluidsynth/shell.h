@@ -67,6 +67,9 @@ void delete_fluid_cmd_handler(fluid_cmd_handler_t *handler);
 /** @endlifecycle */
 
 FLUIDSYNTH_API
+int parse_fluid_cmd_set(fluid_settings_t *settings, char *config_file);
+
+FLUIDSYNTH_API
 void fluid_cmd_handler_set_synth(fluid_cmd_handler_t *handler, fluid_synth_t *synth);
 
 FLUIDSYNTH_API
