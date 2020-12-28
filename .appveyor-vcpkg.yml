@@ -27,6 +27,7 @@ jobs:
   steps:
     - task: Cache@2
       displayName: "Cache vcpkg's packages"
+      continueOnError: true
       inputs:
         key: .\.vcpkg_deps.txt | "$(platform)" | ".v2"
         path: "$(VCPKG_DIR)"
