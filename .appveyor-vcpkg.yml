@@ -42,9 +42,8 @@ jobs:
       displayName: 'Prerequisites'
     - task: Cache@2
       displayName: "Cache vcpkg's packages"
-      continueOnError: true
       inputs:
-        key: $(VCPKG_DIR)\downloads\*.* | "$(platform)"
+        key: $(VCPKG_DIR)\downloads\glib.* | "$(platform)"
         path: "$(VCPKG_DIR)"
         cacheHitVar: CACHE_RESTORED
     - script: |
