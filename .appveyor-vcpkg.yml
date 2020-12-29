@@ -25,13 +25,6 @@ jobs:
   pool:
     vmImage: 'windows-2019'
   steps:
-    - task: Cache@2
-      displayName: "Cache vcpkg's packages"
-      continueOnError: true
-      inputs:
-        key: "$(platform)"
-        path: "$(VCPKG_DIR)"
-        cacheHitVar: CACHE_RESTORED
     - script: |
         @ECHO ON
         echo $(generator)
@@ -46,8 +39,19 @@ jobs:
         REM .\bootstrap-vcpkg.bat || exit -1
         REM cd $(Build.SourcesDirectory)
         where vcpkg.exe
-        vcpkg install glib:$(platform)-windows
+        vcpkg install --only-downloads glib:$(platform)-windows
       displayName: 'Prerequisites'
+    - task: Cache@2
+      displayName: "Cache vcpkg's packages"
+      continueOnError: true
+      inputs:
+        key: $(VCPKG_DIR)\downloads\*.* | "$(platform)"
+        path: "$(VCPKG_DIR)"
+        cacheHitVar: CACHE_RESTORED
+    - script: |
+        @ECHO ON
+        vcpkg install glib:$(platform)-windows
+      displayName: 'vcpkg build glib'
       condition: ne(variables.CACHE_RESTORED, 'true')
     - script: |
         @ECHO ON
