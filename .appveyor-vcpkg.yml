@@ -29,8 +29,7 @@ jobs:
         @ECHO ON
         echo $(generator)
         echo $(toolset)
-        REM make sure the latest version of git is installed
-        choco upgrade git ninja -y
+        choco upgrade ninja -y
         ninja --version
         cmake --version
         REM manually update vcpkg
