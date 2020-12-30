@@ -1017,7 +1017,6 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_return_if_fail(synth != NULL);
 
     fluid_profiling_print();
-
     /* turn off all voices, needed to unload SoundFont data */
     if(synth->voice != NULL)
     {
@@ -4629,6 +4628,9 @@ fluid_synth_check_finished_voices(fluid_synth_t *synth)
             else if(synth->voice[j]->overflow_rvoice == fv)
             {
                 fluid_voice_overflow_rvoice_finished(synth->voice[j]);
+
+                /* Decrement voice count */
+                synth->active_voice_count--;
                 break;
             }
         }

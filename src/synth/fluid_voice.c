@@ -1423,9 +1423,6 @@ void fluid_voice_overflow_rvoice_finished(fluid_voice_t *voice)
     /* Decrement the reference count of the sample to indicate
        that this sample isn't owned by the rvoice anymore */
     fluid_voice_sample_unref(&voice->overflow_rvoice->dsp.sample);
-
-    /* Decrement voice count */
-    voice->channel->synth->active_voice_count--;
 }
 
 /*
@@ -1460,6 +1457,8 @@ fluid_voice_stop(fluid_voice_t *voice)
     {
         fluid_voice_sample_unref(&voice->rvoice->dsp.sample);
     }
+
+    voice->sample = NULL;
 
     voice->status = FLUID_VOICE_OFF;
     voice->has_noteoff = 1;
