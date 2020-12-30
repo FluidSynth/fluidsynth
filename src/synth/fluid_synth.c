@@ -3252,17 +3252,17 @@ fluid_synth_update_presets(fluid_synth_t *synth)
 }
 
 static void
-fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
+fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float* sample_rate)
 {
     int i;
-    fluid_clip(sample_rate, 8000.0f, 96000.0f);
-    synth->sample_rate = sample_rate;
+    fluid_clip(*sample_rate, 8000.0f, 96000.0f);
+    synth->sample_rate = *sample_rate;
 
     synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
 
     for(i = 0; i < synth->polyphony; i++)
     {
-        fluid_voice_set_output_rate(synth->voice[i], sample_rate);
+        fluid_voice_set_output_rate(synth->voice[i], *sample_rate);
     }
 }
 
@@ -3299,7 +3299,7 @@ fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate)
     fluid_return_if_fail(synth != NULL);
     fluid_synth_api_enter(synth);
 
-    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
+    fluid_synth_set_sample_rate_LOCAL(synth, &sample_rate);
 
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate,
                              0, sample_rate);
@@ -3315,7 +3315,7 @@ fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate)
     fluid_return_if_fail(synth != NULL);
     fluid_synth_api_enter(synth);
     
-    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
+    fluid_synth_set_sample_rate_LOCAL(synth, &sample_rate);
 
     param[0].i = 0;
     param[1].real = sample_rate;
