@@ -321,12 +321,13 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     voice->has_noteoff = 0;
     UPDATE_RVOICE0(fluid_rvoice_reset);
 
-    /* Increment the reference count of the sample to prevent the
-       unloading of the soundfont while this voice is playing,
-       once for us and once for the rvoice. */
+    /*
+       We increment the reference count of the sample to indicate that this
+       sample is about to be owned by the rvoice. This will prevent the
+       unloading of the soundfont while this rvoice is playing.
+    */
     fluid_sample_incr_ref(sample);
     fluid_rvoice_eventhandler_push_ptr(voice->eventhandler, fluid_rvoice_set_sample, voice->rvoice, sample);
-    fluid_sample_incr_ref(sample);
     voice->sample = sample;
 
     i = fluid_channel_get_interp_method(channel);
@@ -1413,12 +1414,18 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
 }
 
 /*
- * Called by fluid_synth when the overflow rvoice can be reclaimed.
+ * Called by fluid_synth when the overflow rvoice has finished.
  */
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t *voice)
 {
     voice->can_access_overflow_rvoice = 1;
+
+    /* Decrement the reference count of the sample to indicate
+       that this sample isn't owned by the rvoice anymore */
     fluid_voice_sample_unref(&voice->overflow_rvoice->dsp.sample);
+
+    /* Decrement voice count */
+    voice->channel->synth->active_voice_count--;
 }
 
 /*
@@ -1446,6 +1453,9 @@ fluid_voice_stop(fluid_voice_t *voice)
 
     voice->chan = NO_CHANNEL;
 
+    /* Decrement the reference count of the sample, to indicate
+       that this sample isn't owned by the rvoice anymore.
+    */
     if(voice->can_access_rvoice)
     {
         fluid_voice_sample_unref(&voice->rvoice->dsp.sample);
@@ -1453,9 +1463,6 @@ fluid_voice_stop(fluid_voice_t *voice)
 
     voice->status = FLUID_VOICE_OFF;
     voice->has_noteoff = 1;
-
-    /* Decrement the reference count of the sample. */
-    fluid_voice_sample_unref(&voice->sample);
 
     /* Decrement voice count */
     voice->channel->synth->active_voice_count--;
