@@ -1419,7 +1419,7 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
  *
  * Called by fluid_synth when the overflow rvoice has finished by itself.
  * Must be called also explicitly at synth destruction to ensure that
- * the soundfont where unloaded successfully.
+ * the soundfont be unloaded successfully.
  */
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t *voice)
 {
