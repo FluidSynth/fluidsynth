@@ -842,19 +842,21 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-        if(!fluid_is_midifile(argv[i]))
+        if(fluid_is_midifile(argv[i]))
         {
-            if(fluid_is_soundfont(argv[i]))
+            continue;
+        }
+
+        if(fluid_is_soundfont(argv[i]))
+        {
+            if(fluid_synth_sfload(synth, argv[i], 1) == -1)
             {
-                if(fluid_synth_sfload(synth, argv[i], 1) == -1)
-                {
-                    fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
-                }
+                fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
             }
-            else
-            {
-                fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
-            }
+        }
+        else
+        {
+            fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
     }
 
