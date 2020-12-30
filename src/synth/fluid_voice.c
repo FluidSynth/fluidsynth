@@ -1414,7 +1414,12 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
 }
 
 /*
- * Called by fluid_synth when the overflow rvoice has finished.
+ * Unlock the overflow rvoice of the voice.
+ * Decrement the reference count of the sample owned by this rvoice.
+ *
+ * Called by fluid_synth when the overflow rvoice has finished by itself.
+ * Must be called also explicitly at synth destruction to ensure that
+ * the soundfont where unloaded successfully.
  */
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t *voice)
 {

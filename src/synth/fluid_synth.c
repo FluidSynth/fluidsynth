@@ -1029,6 +1029,12 @@ delete_fluid_synth(fluid_synth_t *synth)
                 continue;
             }
 
+            /* WARNING: A this point we must ensure that the reference counter
+               of any soundfont sample owned by any rvoice belonging to the voice
+               are correctly decremented. This is the contrary part to
+               to fluid_voice_init() where the sample's reference counter is
+               incremented.
+            */
             fluid_voice_unlock_rvoice(voice);
             fluid_voice_overflow_rvoice_finished(voice);
 
@@ -4627,9 +4633,20 @@ fluid_synth_check_finished_voices(fluid_synth_t *synth)
             }
             else if(synth->voice[j]->overflow_rvoice == fv)
             {
+                /* Unlock the overflow_rvoice of the voice.
+                   Decrement the reference count of the sample owned by this
+                   rvoice.
+                */
                 fluid_voice_overflow_rvoice_finished(synth->voice[j]);
 
-                /* Decrement voice count */
+                /* Decrement synth active voice count. Must not be incorporated
+                   in fluid_voice_overflow_rvoice_finished() because
+                   fluid_voice_overflow_rvoice_finished() is called also
+                   at synth destruction and in this case the variable should be
+                   accessed via voice->channel->synth->active_voice_count.
+                   And for certain voices which are not playing, the field
+                   voice->channel is NULL.
+                */
                 synth->active_voice_count--;
                 break;
             }
