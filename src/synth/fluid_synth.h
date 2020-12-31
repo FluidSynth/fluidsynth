@@ -248,6 +248,7 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
  * misc
  */
 void fluid_synth_settings(fluid_settings_t *settings);
+void fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate);
 
 
 /* extern declared in fluid_synth_monopoly.c */

@@ -501,9 +501,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         {
             FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
                   " (synth.sample-rate=%lu, jackd=%lu)", (unsigned long)sample_rate, jack_srate);
-            fluid_synth_set_sample_rate(synth, jack_srate);
-            /* Changing sample rate is non RT, so make sure we process it and/or other things now */
-            fluid_synth_process_event_queue(synth);
+            fluid_synth_set_sample_rate_immediately(synth, jack_srate);
         }
         else
         {
