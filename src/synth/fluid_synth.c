@@ -1070,6 +1070,13 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     delete_fluid_list(synth->loaders);
 
+    for(list = synth->fonts_to_be_unloaded; list; list = fluid_list_next(list))
+    {
+        fluid_timer_t* timer = fluid_list_get(list);
+        delete_fluid_timer(timer);
+    }
+
+    delete_fluid_list(synth->fonts_to_be_unloaded);
 
     if(synth->channel != NULL)
     {
@@ -4797,7 +4804,8 @@ fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont)
         } /* spin off a timer thread to unload the sfont later (SoundFont loader blocked unload) */
         else
         {
-            new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, TRUE, FALSE);
+            fluid_timer_t* timer = new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, FALSE, FALSE);
+            synth->fonts_to_be_unloaded = fluid_list_prepend(synth->fonts_to_be_unloaded, timer);
         }
     }
 }
