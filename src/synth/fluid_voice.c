@@ -174,6 +174,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t *voice)
     voice->can_access_rvoice = voice->can_access_overflow_rvoice;
     voice->overflow_rvoice = rtemp;
     voice->can_access_overflow_rvoice = ctemp;
+    voice->overflow_sample = voice->sample;
 }
 
 static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t output_rate)
@@ -242,6 +243,7 @@ new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate)
     voice->eventhandler = handler;
     voice->channel = NULL;
     voice->sample = NULL;
+    voice->overflow_sample = NULL;
     voice->output_rate = output_rate;
 
     /* Initialize both the rvoice and overflow_rvoice */
@@ -1420,7 +1422,7 @@ void fluid_voice_overflow_rvoice_finished(fluid_voice_t *voice)
 
     /* Decrement the reference count of the sample to indicate
        that this sample isn't owned by the rvoice anymore */
-    fluid_voice_sample_unref(&voice->overflow_rvoice->dsp.sample);
+    fluid_voice_sample_unref(&voice->overflow_sample);
 }
 
 /*
@@ -1451,12 +1453,7 @@ fluid_voice_stop(fluid_voice_t *voice)
     /* Decrement the reference count of the sample, to indicate
        that this sample isn't owned by the rvoice anymore.
     */
-    if(voice->can_access_rvoice)
-    {
-        fluid_voice_sample_unref(&voice->rvoice->dsp.sample);
-    }
-
-    voice->sample = NULL;
+    fluid_voice_sample_unref(&voice->sample);
 
     voice->status = FLUID_VOICE_OFF;
     voice->has_noteoff = 1;
