@@ -57,6 +57,8 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
     
     TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 127));
+    FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): note on C4, voice count=%d",
+                           fluid_synth_get_active_voice_count(synth));
     
     // need to render a bit to make synth->ticks_since_start advance, to make the previous voice "killable"
     TEST_SUCCESS(fluid_synth_process(synth, 2048, 0, NULL, 0, NULL));
@@ -66,7 +68,10 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     
     // need to render again, to make the synth thread assign rvoice->dsp.sample, so that sample_unref() later really unrefs
     TEST_SUCCESS(fluid_synth_process(synth, 2048, 0, NULL, 0, NULL));
-    
+    FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): note on C#4, voice count=%d",
+                           fluid_synth_get_active_voice_count(synth));
+
+    FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): unload sounfont");
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 1));
     
     TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 61));
@@ -77,7 +82,8 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     TEST_SUCCESS(fluid_synth_process(synth, 204800, 0, NULL, 0, NULL));
     
     // make any API call to execute fluid_synth_check_finished_voices()
-    fluid_synth_get_active_voice_count(synth);
+    FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): note off C#4, voice count=%d",
+                           fluid_synth_get_active_voice_count(synth));
     
     // there must be one font scheduled for lazy unloading
     TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
