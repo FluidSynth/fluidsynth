@@ -24,6 +24,9 @@ static void test_without_rendering(fluid_settings_t* settings)
     
     TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
     
+    // there must be one font scheduled for lazy unloading
+    TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
+    
     list = synth->fonts_to_be_unloaded;
     synth->fonts_to_be_unloaded = NULL;
     delete_fluid_synth(synth);
@@ -75,6 +78,9 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     
     // make any API call to execute fluid_synth_check_finished_voices()
     fluid_synth_get_active_voice_count(synth);
+    
+    // there must be one font scheduled for lazy unloading
+    TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
     
     list = synth->fonts_to_be_unloaded;
     synth->fonts_to_be_unloaded = NULL;
