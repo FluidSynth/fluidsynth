@@ -49,6 +49,7 @@ jobs:
         mv -f * ..
         cd ..
         rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -122,6 +123,7 @@ jobs:
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -146,12 +148,14 @@ jobs:
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         mingw-url: $(mingw-url-x86)
+        artifact-prefix: "fluidsynth-mingw"
       x64:
         CMAKE_FLAGS: 
         platform: x64
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         mingw-url: $(mingw-url-x64)
+        artifact-prefix: "fluidsynth-mingw"
   pool:
     vmImage: 'vs2017-win2016'
   steps:
@@ -180,6 +184,7 @@ jobs:
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
         cd mingw*\ && cp -rf * .. && cd .. && rm -rf mingw* || exit -1
         cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform) && cp -rf * d:\deps\ && mv -f * .. && cd .. &&  rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\ || exit -1
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -189,7 +194,7 @@ jobs:
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
         pkg-config --list-all
         mkdir build && cd build || exit -1
-        cmake -Werror=dev -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -Denable-readline=0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
+        cmake -Werror=dev -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -Denable-readline=0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
         mingw32-make.exe all || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
@@ -201,3 +206,20 @@ jobs:
         cd build || exit -1
         mingw32-make.exe check || exit -1
       displayName: 'Execute Unittests'
+      continueOnError: 'true'
+    - script: |
+        @ECHO ON
+        cd build
+        mingw32-make.exe install || exit -1
+        xcopy test $(Build.ArtifactStagingDirectory)\bin /s
+        del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
+        del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
+        del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
+        del $(Build.ArtifactStagingDirectory)\lib\instpatch*.lib
+        del $(Build.ArtifactStagingDirectory)\lib\pkgconfig\libinstpatch*.pc
+        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-2 /s /q
+      displayName: 'Copy Artifacts'
+    - task: PublishBuildArtifacts@1
+      inputs:
+          pathtoPublish: $(Build.ArtifactStagingDirectory)
+          artifactName: $(artifact-prefix)-$(platform)
