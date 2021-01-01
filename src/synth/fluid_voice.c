@@ -1574,11 +1574,14 @@ unsigned int fluid_voice_get_id(const fluid_voice_t *voice)
 /**
  * Check if a voice is producing sound.
  *
+ * Like fluid_voice_is_on() this will return TRUE once a call to 
+ * fluid_synth_start_voice() has been made. Contrary to fluid_voice_is_on(),
+ * this might also return TRUE after the voice received a noteoff event, as it may
+ * still be playing in release phase, or because it has been sustained or
+ * sostenuto'ed.
+ *
  * @param voice Voice instance
  * @return TRUE if playing, FALSE otherwise
- *
- * This might also return TRUE after the voice received a noteoff event, as it may
- * still be  playing in release phase.
  */
 int fluid_voice_is_playing(const fluid_voice_t *voice)
 {
@@ -1591,10 +1594,12 @@ int fluid_voice_is_playing(const fluid_voice_t *voice)
 /**
  * Check if a voice is ON.
  *
+ * A voice is in ON state as soon as a call to fluid_synth_start_voice() has been made
+ * (which is typically done in a fluid_preset_t's noteon function).
+ * A voice stays ON as long as it has not received a noteoff event.
+ *
  * @param voice Voice instance
  * @return TRUE if on, FALSE otherwise
- *
- * A voice is ON if it has not yet received a noteoff event.
  *
  * @since 1.1.7
  */
