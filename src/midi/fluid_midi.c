@@ -1717,6 +1717,9 @@ delete_fluid_player(fluid_player_t *player)
 
     fluid_return_if_fail(player != NULL);
 
+    fluid_settings_callback_int(player->synth->settings, "player.reset-synth",
+                                NULL, NULL);
+
     fluid_player_stop(player);
     fluid_player_reset(player);
 
