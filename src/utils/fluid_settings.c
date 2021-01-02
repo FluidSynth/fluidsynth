@@ -907,6 +907,10 @@ fluid_settings_get_hints(fluid_settings_t *settings, const char *name, int *hint
  * @param settings a settings object
  * @param name a setting's name
  * @return TRUE if the setting is changeable in real-time, FALSE otherwise
+ *
+ * @note Before using this function, make sure the @p settings object has already been used to create
+ * a synthesizer, a MIDI driver, an audio driver, a MIDI player, or a command handler (depending on
+ * which settings you want to query).
  */
 int
 fluid_settings_is_realtime(fluid_settings_t *settings, const char *name)
