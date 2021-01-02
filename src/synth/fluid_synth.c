@@ -1006,6 +1006,50 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
+    /* unregister all real-time settings callback, to avoid a use-after-free when changing those settings after
+     * this synth has been deleted*/
+
+    fluid_settings_callback_num(synth->settings, "synth.gain",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.polyphony",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.device-id",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.percussion",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.sustained",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.released",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.age",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.volume",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.important",
+                                NULL, NULL);
+    fluid_settings_callback_str(synth->settings, "synth.overflow.important-channels",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.room-size",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.damp",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.width",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.level",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.reverb.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.nr",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.level",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.depth",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.speed",
+                                NULL, NULL);
+
     /* turn off all voices, needed to unload SoundFont data */
     if(synth->voice != NULL)
     {
