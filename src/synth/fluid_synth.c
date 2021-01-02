@@ -597,10 +597,15 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * @note The @p settings parameter is used directly and should freed after
- * the synth has been deleted. Further note that you may modify FluidSettings of the
+ * @note The @p settings parameter is used directly, but the synth does not take ownership of it.
+ * Hence, the caller is responsible for freeing it, when no longer needed.
+ * Further note that you may modify FluidSettings of the
  * @p settings instance. However, only those FluidSettings marked as 'realtime' will
  * affect the synth immediately.
+ *
+ * @warning The @p settings object should only be used by a single synth at a time. I.e. creating
+ * multiple synth instances with a single @p settings object causes undefined behavior. Once the
+ * "single synth" has been deleted, you may use the @p settings object again for another synth.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
