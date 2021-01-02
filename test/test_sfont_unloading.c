@@ -97,6 +97,12 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     {
         fluid_timer_t* timer = fluid_list_get(list);
         FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): Start waiting for soundfont %d to unload", id);
+        if(fluid_timer_is_running(timer))
+        {
+            // timer still running, wait a bit
+            fluid_msleep(5000);
+            TEST_ASSERT(!fluid_timer_is_running(timer));
+        }
         fluid_timer_join(timer);
         delete_fluid_timer(timer);
         FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): End waiting for soundfont %d to unload", id);

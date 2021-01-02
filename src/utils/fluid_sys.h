@@ -232,6 +232,7 @@ fluid_timer_t *new_fluid_timer(int msec, fluid_timer_callback_t callback,
 void delete_fluid_timer(fluid_timer_t *timer);
 int fluid_timer_join(fluid_timer_t *timer);
 int fluid_timer_stop(fluid_timer_t *timer);
+int fluid_timer_is_running(fluid_timer_t *timer);
 
 // Macros to use for pre-processor if statements to test which Glib thread API we have (pre or post 2.32)
 #define NEW_GLIB_THREAD_API   GLIB_CHECK_VERSION(2,32,0)
