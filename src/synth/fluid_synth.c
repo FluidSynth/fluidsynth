@@ -4813,11 +4813,25 @@ fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets
 }
 
 /**
- * Unload a SoundFont.
+ * Schedule a SoundFont for unloading.
+ *
+ * If the SoundFont isn't used anymore by any playing voices, it will be unloaded immediately.
+ *
+ * If any samples of the given SoundFont are still required by active voices,
+ * the SoundFont will be unloaded in a lazy manner, once those voices have finished synthesizing.
+ * If you call delete_fluid_synth(), all voices will be destroyed and the SoundFont
+ * will be unloaded in any case.
+ * Once this function returned, fluid_synth_sfcount() and similar functions will behave as if
+ * the SoundFont has already been unloaded, even though the lazy-unloading is still pending.
+ *
+ * @note This lazy-unloading mechanism was broken between FluidSynth 1.1.4 and 2.1.5 . As a
+ * consequence, SoundFonts scheduled for lazy-unloading may be never freed under certain
+ * conditions. Calling delete_fluid_synth() does not recover this situation either.
+ *
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
- * @return #FLUID_OK on success, #FLUID_FAILED on error
+ * @return #FLUID_OK if the given @p id was found, #FLUID_FAILED otherwise.
  */
 int
 fluid_synth_sfunload(fluid_synth_t *synth, int id, int reset_presets)
