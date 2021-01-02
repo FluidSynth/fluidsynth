@@ -1195,13 +1195,13 @@ fluid_timer_join(fluid_timer_t *timer)
 }
 
 int
-fluid_timer_is_running(fluid_timer_t *timer)
+fluid_timer_is_running(const fluid_timer_t *timer)
 {
     // for unit test usage only
     return timer->callback != NULL;
 }
 
-int fluid_timer_get_interval(fluid_timer_t * timer)
+long fluid_timer_get_interval(const fluid_timer_t * timer)
 {
     // for unit test usage only
     return timer->msec;
