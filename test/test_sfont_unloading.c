@@ -103,7 +103,7 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     WAIT_AND_FREE;
 }
 
-static void test_default_polyphony(fluid_settings_t* settings)
+static void test_default_polyphony(fluid_settings_t* settings, int with_rendering)
 {
     enum { BUFSIZE = 128 };
     fluid_voice_t* buf[BUFSIZE];
@@ -122,7 +122,10 @@ static void test_default_polyphony(fluid_settings_t* settings)
     
     TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 127));
     
-    TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    if(with_rendering)
+    {
+        TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    }
     
     TEST_SUCCESS(fluid_synth_noteon(synth, 0, 61, 127));
     
@@ -130,11 +133,14 @@ static void test_default_polyphony(fluid_settings_t* settings)
     
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
     
-    // make the synth thread assign rvoice->dsp.sample
-    TEST_SUCCESS(fluid_synth_process(synth, 2 * fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    if(with_rendering)
+    {
+        // make the synth thread assign rvoice->dsp.sample
+        TEST_SUCCESS(fluid_synth_process(synth, 2 * fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+        
+        TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
+    }
     
-    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
-
     TEST_ASSERT(synth->fonts_to_be_unloaded == NULL);
     
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 1));
@@ -145,7 +151,10 @@ static void test_default_polyphony(fluid_settings_t* settings)
     
     // noteoff the second note and render something
     TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 61));
-    TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    if(with_rendering)
+    {
+        TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    }
     
     // still 4 because key 61 is playing in release phase now
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
@@ -155,7 +164,10 @@ static void test_default_polyphony(fluid_settings_t* settings)
     
     // noteoff the first note and render something
     TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
-    TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    if(with_rendering)
+    {
+        TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    }
     
     // still 4 because keys 60 + 61 are playing in release phase now
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
@@ -163,19 +175,28 @@ static void test_default_polyphony(fluid_settings_t* settings)
     TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
     TEST_ASSERT(fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
     
-    
-    // render enough, to make the synth thread release the rvoice so it can be reclaimed by
-    // fluid_synth_check_finished_voices()
-    TEST_SUCCESS(fluid_synth_process(synth, 2048000, 0, NULL, 0, NULL));
-    
-    // this API call should reclaim the rvoices and call fluid_voice_stop()
-    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
+    if(with_rendering)
+    {
+        // render enough, to make the synth thread release the rvoice so it can be reclaimed by
+        // fluid_synth_check_finished_voices()
+        TEST_SUCCESS(fluid_synth_process(synth, 2048000, 0, NULL, 0, NULL));
+        
+        // this API call should reclaim the rvoices and call fluid_voice_stop()
+        TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
+    }
 
     TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
-    // We want to see that the timer thread unloads the soundfont before we call delete_fluid_synth().
-    // Wait to give the timer thread a chance to unload and finish.
-    fluid_msleep(10 * fluid_timer_get_interval(fluid_list_get(synth->fonts_to_be_unloaded)));
-    TEST_ASSERT(!fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    if(with_rendering)
+    {
+        // We want to see that the timer thread unloads the soundfont before we call delete_fluid_synth().
+        // Wait to give the timer thread a chance to unload and finish.
+        fluid_msleep(10 * fluid_timer_get_interval(fluid_list_get(synth->fonts_to_be_unloaded)));
+        TEST_ASSERT(!fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    }
+    else
+    {
+        TEST_ASSERT(fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    }
     
     WAIT_AND_FREE;
 }
@@ -187,8 +208,12 @@ int main(void)
     fluid_settings_t *settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
     
-    FLUID_LOG(FLUID_INFO, "Begin test_default_polyphony()");
-    test_default_polyphony(settings);
+    FLUID_LOG(FLUID_INFO, "Begin test_default_polyphony() with rendering");
+    test_default_polyphony(settings, TRUE);
+    FLUID_LOG(FLUID_INFO, "End test_default_polyphony()\n");
+    
+    FLUID_LOG(FLUID_INFO, "Begin test_default_polyphony() without rendering");
+    test_default_polyphony(settings, FALSE);
     FLUID_LOG(FLUID_INFO, "End test_default_polyphony()\n");
     
     fluid_settings_setint(settings, "synth.polyphony", 2);
