@@ -1070,9 +1070,14 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     delete_fluid_list(synth->loaders);
 
+    /* wait for and delete all the lazy sfont unloading timers */
+
     for(list = synth->fonts_to_be_unloaded; list; list = fluid_list_next(list))
     {
         fluid_timer_t* timer = fluid_list_get(list);
+        // explicitly join to wait for the unload really to happen
+        fluid_timer_join(timer);
+        // delete_fluid_timer alone would stop the timer, even if it had not unloaded the soundfont yet
         delete_fluid_timer(timer);
     }
 

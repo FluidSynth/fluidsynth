@@ -35,6 +35,7 @@ static void test_without_rendering(fluid_settings_t* settings)
     {
         fluid_timer_t* timer = fluid_list_get(list);
         FLUID_LOG(FLUID_INFO, "test_without_rendering(): Start waiting for soundfont %d to unload", id);
+        fluid_timer_join(timer);
         delete_fluid_timer(timer);
         FLUID_LOG(FLUID_INFO, "test_without_rendering(): End waiting for soundfont %d to unload", id);
     }
@@ -96,6 +97,7 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     {
         fluid_timer_t* timer = fluid_list_get(list);
         FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): Start waiting for soundfont %d to unload", id);
+        fluid_timer_join(timer);
         delete_fluid_timer(timer);
         FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): End waiting for soundfont %d to unload", id);
     }
