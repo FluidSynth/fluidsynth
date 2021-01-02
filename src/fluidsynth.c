@@ -1113,7 +1113,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2020 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2021 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
            fluid_version_str());
