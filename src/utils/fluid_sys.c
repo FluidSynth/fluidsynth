@@ -1201,6 +1201,12 @@ fluid_timer_is_running(fluid_timer_t *timer)
     return timer->callback != NULL;
 }
 
+int fluid_timer_get_interval(fluid_timer_t * timer)
+{
+    // for unit test usage only
+    return timer->msec;
+}
+
 
 /***************************************************************
  *

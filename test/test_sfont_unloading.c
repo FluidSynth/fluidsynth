@@ -18,7 +18,7 @@ do {\
         if(fluid_timer_is_running(timer))\
         {\
             /* timer still running, wait a bit*/\
-            fluid_msleep(5000);\
+            fluid_msleep(50 * fluid_timer_get_interval(timer));\
             TEST_ASSERT(!fluid_timer_is_running(timer));\
         }\
         delete_fluid_timer(timer);\
@@ -170,8 +170,11 @@ static void test_default_polyphony(fluid_settings_t* settings)
     
     // this API call should reclaim the rvoices and call fluid_voice_stop()
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
-    // must be still running
+
     TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
+    // We want to see that the timer thread unloads the soundfont before we call delete_fluid_synth().
+    // Wait to give the timer thread a chance to unload and finish.
+    fluid_msleep(10 * fluid_timer_get_interval(fluid_list_get(synth->fonts_to_be_unloaded)));
     TEST_ASSERT(!fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
     
     WAIT_AND_FREE;
