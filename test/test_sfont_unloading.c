@@ -4,6 +4,29 @@
 #include "synth/fluid_synth.h"
 #include "utils/fluid_sys.h"
 
+// we make this a macro, so the line information of the TEST_ASSERT macro remains useful
+#define WAIT_AND_FREE \
+do {\
+    list = synth->fonts_to_be_unloaded;\
+    synth->fonts_to_be_unloaded = NULL;\
+    delete_fluid_synth(synth);\
+    \
+    for(; list; list = fluid_list_next(list))\
+    {\
+        fluid_timer_t* timer = fluid_list_get(list);\
+        FLUID_LOG(FLUID_INFO, "%s(): Start waiting for soundfont %d to unload", __func__, id);\
+        if(fluid_timer_is_running(timer))\
+        {\
+            /* timer still running, wait a bit*/\
+            fluid_msleep(5000);\
+            TEST_ASSERT(!fluid_timer_is_running(timer));\
+        }\
+        delete_fluid_timer(timer);\
+        FLUID_LOG(FLUID_INFO, "%s(): End waiting for soundfont %d to unload", __func__, id);\
+    }\
+    delete_fluid_list(list);\
+} while(0);
+
 static void test_without_rendering(fluid_settings_t* settings)
 {
     int id;
@@ -27,19 +50,7 @@ static void test_without_rendering(fluid_settings_t* settings)
     // there must be one font scheduled for lazy unloading
     TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
     
-    list = synth->fonts_to_be_unloaded;
-    synth->fonts_to_be_unloaded = NULL;
-    delete_fluid_synth(synth);
-    
-    for(; list; list = fluid_list_next(list))
-    {
-        fluid_timer_t* timer = fluid_list_get(list);
-        FLUID_LOG(FLUID_INFO, "test_without_rendering(): Start waiting for soundfont %d to unload", id);
-        fluid_timer_join(timer);
-        delete_fluid_timer(timer);
-        FLUID_LOG(FLUID_INFO, "test_without_rendering(): End waiting for soundfont %d to unload", id);
-    }
-    delete_fluid_list(list);
+    WAIT_AND_FREE;
 }
 
 // this should work fine after applying JJCs fix a4ac56502fec5f0c20a60187d965c94ba1dc81c2
@@ -89,25 +100,7 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     // there must be one font scheduled for lazy unloading
     TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
     
-    list = synth->fonts_to_be_unloaded;
-    synth->fonts_to_be_unloaded = NULL;
-    delete_fluid_synth(synth);
-    
-    for(; list; list = fluid_list_next(list))
-    {
-        fluid_timer_t* timer = fluid_list_get(list);
-        FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): Start waiting for soundfont %d to unload", id);
-        if(fluid_timer_is_running(timer))
-        {
-            // timer still running, wait a bit
-            fluid_msleep(5000);
-            TEST_ASSERT(!fluid_timer_is_running(timer));
-        }
-        fluid_timer_join(timer);
-        delete_fluid_timer(timer);
-        FLUID_LOG(FLUID_INFO, "test_after_polyphony_exceeded(): End waiting for soundfont %d to unload", id);
-    }
-    delete_fluid_list(list);
+    WAIT_AND_FREE;
 }
 
 // this tests the soundfont loading API of the synth.
