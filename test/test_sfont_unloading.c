@@ -103,12 +103,91 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     WAIT_AND_FREE;
 }
 
+static void test_default_polyphony(fluid_settings_t* settings)
+{
+    enum { BUFSIZE = 128 };
+    fluid_voice_t* buf[BUFSIZE];
+    
+    int id;
+    fluid_list_t *list;
+    fluid_synth_t *synth = new_fluid_synth(settings);
+    TEST_ASSERT(synth != NULL);
+
+    TEST_ASSERT(fluid_is_soundfont(TEST_SOUNDFONT) == TRUE);
+
+    // load a sfont to synth
+    TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
+    // one sfont loaded
+    TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
+    
+    TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 127));
+    
+    TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    
+    TEST_SUCCESS(fluid_synth_noteon(synth, 0, 61, 127));
+    
+    fluid_synth_get_voicelist(synth, buf, BUFSIZE, -1);
+    
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
+    
+    // make the synth thread assign rvoice->dsp.sample
+    TEST_SUCCESS(fluid_synth_process(synth, 2 * fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
+
+    TEST_ASSERT(synth->fonts_to_be_unloaded == NULL);
+    
+    TEST_SUCCESS(fluid_synth_sfunload(synth, id, 1));
+    
+    // now, there must be one font scheduled for lazy unloading
+    TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
+    TEST_ASSERT(fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    
+    // noteoff the second note and render something
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 61));
+    TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    
+    // still 4 because key 61 is playing in release phase now
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
+    // must be still running
+    TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
+    TEST_ASSERT(fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    
+    // noteoff the first note and render something
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
+    TEST_SUCCESS(fluid_synth_process(synth, fluid_synth_get_internal_bufsize(synth), 0, NULL, 0, NULL));
+    
+    // still 4 because keys 60 + 61 are playing in release phase now
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
+    // must be still running
+    TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
+    TEST_ASSERT(fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    
+    
+    // render enough, to make the synth thread release the rvoice so it can be reclaimed by
+    // fluid_synth_check_finished_voices()
+    TEST_SUCCESS(fluid_synth_process(synth, 2048000, 0, NULL, 0, NULL));
+    
+    // this API call should reclaim the rvoices and call fluid_voice_stop()
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
+    // must be still running
+    TEST_ASSERT(synth->fonts_to_be_unloaded != NULL);
+    TEST_ASSERT(!fluid_timer_is_running(fluid_list_get(synth->fonts_to_be_unloaded)));
+    
+    WAIT_AND_FREE;
+}
+
 // this tests the soundfont loading API of the synth.
 // might be expanded to test the soundfont loader as well...
 int main(void)
 {
     fluid_settings_t *settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
+    
+    FLUID_LOG(FLUID_INFO, "Begin test_default_polyphony()");
+    test_default_polyphony(settings);
+    FLUID_LOG(FLUID_INFO, "End test_default_polyphony()\n");
+    
     fluid_settings_setint(settings, "synth.polyphony", 2);
     
     FLUID_LOG(FLUID_INFO, "Begin test_after_polyphony_exceeded()");
