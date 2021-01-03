@@ -195,7 +195,7 @@ jobs:
         pkg-config --list-all
         mkdir build && cd build || exit -1
         cmake -Werror=dev -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
-        mingw32-make.exe all || exit -1
+        mingw32-make.exe -j4 all || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
         @ECHO ON
@@ -204,7 +204,7 @@ jobs:
         set PATH=%PATH:C:\Program Files\Git\bin;=%
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
         cd build || exit -1
-        mingw32-make.exe check || exit -1
+        mingw32-make.exe -j4 check || exit -1
       displayName: 'Execute Unittests'
       continueOnError: 'true'
     - script: |
