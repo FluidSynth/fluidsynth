@@ -1915,7 +1915,9 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
     int hints;
-    int ival;
+    int ival, icur;
+    double fval, fcur;
+    char *scur;
     int ret = FLUID_FAILED;
 
     if(ac < 2)
@@ -1950,15 +1952,36 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
             ival = atoi(av[1]);
         }
 
+        fluid_settings_getint(handler->synth->settings, av[0], &icur);
+        if (icur == ival)
+        {
+            return FLUID_OK;
+        }
+
         ret = fluid_settings_setint(handler->synth->settings, av[0], ival);
         break;
 
     case FLUID_NUM_TYPE:
-        ret = fluid_settings_setnum(handler->synth->settings, av[0], atof(av[1]));
+        fval = atof(av[1]);
+        fluid_settings_getnum(handler->synth->settings, av[0], &fcur);
+        if (fcur == fval)
+        {
+            return FLUID_OK;
+        }
+
+        ret = fluid_settings_setnum(handler->synth->settings, av[0], fval);
         break;
 
     case FLUID_STR_TYPE:
+        fluid_settings_dupstr(handler->synth->settings, av[0], &scur);
+
+        if(scur && !FLUID_STRCMP(scur, av[1]))
+        {
+            FLUID_FREE(scur);
+            return FLUID_OK;
+        }
         ret = fluid_settings_setstr(handler->synth->settings, av[0], av[1]);
+        FLUID_FREE(scur);
         break;
 
     case FLUID_SET_TYPE:
