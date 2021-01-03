@@ -539,7 +539,10 @@ fluid_shell_run(void *data)
 
         if(n == 0)
         {
-            FLUID_LOG(FLUID_INFO, "Received EOF while reading commands, exiting the shell.");
+            if(shell->settings)
+            {
+                FLUID_LOG(FLUID_INFO, "Received EOF while reading commands, exiting the shell.");
+            }
             break;
         }
     }
