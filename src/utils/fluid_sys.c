@@ -60,6 +60,10 @@ typedef struct
 struct _fluid_timer_t
 {
     long msec;
+
+    // Pointer to a function to be executed by the timer.
+    // This field is set to NULL once the timer is finished to indicate completion.
+    // This allows for timed waits, rather than waiting forever as fluid_timer_join() does.
     fluid_timer_callback_t callback;
     void *data;
     fluid_thread_t *thread;
@@ -1096,6 +1100,7 @@ fluid_timer_run(void *data)
     }
 
     FLUID_LOG(FLUID_DBG, "Timer thread finished");
+    timer->callback = NULL;
 
     if(timer->auto_destroy)
     {
@@ -1187,6 +1192,19 @@ fluid_timer_join(fluid_timer_t *timer)
     }
 
     return FLUID_OK;
+}
+
+int
+fluid_timer_is_running(const fluid_timer_t *timer)
+{
+    // for unit test usage only
+    return timer->callback != NULL;
+}
+
+long fluid_timer_get_interval(const fluid_timer_t * timer)
+{
+    // for unit test usage only
+    return timer->msec;
 }
 
 

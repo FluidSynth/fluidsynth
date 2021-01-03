@@ -127,6 +127,7 @@ struct _fluid_synth_t
     fluid_list_t *loaders;             /**< the SoundFont loaders */
     fluid_list_t *sfont;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
     int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
+    fluid_list_t *fonts_to_be_unloaded; /**< list of timers that try to unload a soundfont */
 
     float gain;                        /**< master gain */
     fluid_channel_t **channel;         /**< the channels */
