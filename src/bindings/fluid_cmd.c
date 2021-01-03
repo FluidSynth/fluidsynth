@@ -1938,6 +1938,11 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         return ret;
     }
 
+    /* Only handle early non-realtime settings */
+    if(!handler->router && fluid_settings_is_realtime(handler->synth->settings, av[0])) {
+        return FLUID_OK;
+    }
+
     switch(fluid_settings_get_type(handler->synth->settings, av[0]))
     {
     case FLUID_NO_TYPE:
