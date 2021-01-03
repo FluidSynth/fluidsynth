@@ -606,10 +606,15 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * @note The @p settings parameter is used directly and should freed after
- * the synth has been deleted. Further note that you may modify FluidSettings of the
+ * @note The @p settings parameter is used directly, but the synth does not take ownership of it.
+ * Hence, the caller is responsible for freeing it, when no longer needed.
+ * Further note that you may modify FluidSettings of the
  * @p settings instance. However, only those FluidSettings marked as 'realtime' will
  * affect the synth immediately. See the \ref fluidsettings for more details.
+ *
+ * @warning The @p settings object should only be used by a single synth at a time. I.e. creating
+ * multiple synth instances with a single @p settings object causes undefined behavior. Once the
+ * "single synth" has been deleted, you may use the @p settings object again for another synth.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
@@ -1018,6 +1023,50 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
+    /* unregister all real-time settings callback, to avoid a use-after-free when changing those settings after
+     * this synth has been deleted*/
+
+    fluid_settings_callback_num(synth->settings, "synth.gain",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.polyphony",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.device-id",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.percussion",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.sustained",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.released",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.age",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.volume",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.important",
+                                NULL, NULL);
+    fluid_settings_callback_str(synth->settings, "synth.overflow.important-channels",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.room-size",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.damp",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.width",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.level",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.reverb.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.nr",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.level",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.depth",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.speed",
+                                NULL, NULL);
+
     /* turn off all voices, needed to unload SoundFont data */
     if(synth->voice != NULL)
     {
@@ -1030,6 +1079,12 @@ delete_fluid_synth(fluid_synth_t *synth)
                 continue;
             }
 
+            /* WARNING: A this point we must ensure that the reference counter
+               of any soundfont sample owned by any rvoice belonging to the voice
+               are correctly decremented. This is the contrary part to
+               to fluid_voice_init() where the sample's reference counter is
+               incremented.
+            */
             fluid_voice_unlock_rvoice(voice);
             fluid_voice_overflow_rvoice_finished(voice);
 
@@ -1082,6 +1137,18 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     delete_fluid_list(synth->loaders);
 
+    /* wait for and delete all the lazy sfont unloading timers */
+
+    for(list = synth->fonts_to_be_unloaded; list; list = fluid_list_next(list))
+    {
+        fluid_timer_t* timer = fluid_list_get(list);
+        // explicitly join to wait for the unload really to happen
+        fluid_timer_join(timer);
+        // delete_fluid_timer alone would stop the timer, even if it had not unloaded the soundfont yet
+        delete_fluid_timer(timer);
+    }
+
+    delete_fluid_list(synth->fonts_to_be_unloaded);
 
     if(synth->channel != NULL)
     {
@@ -4653,7 +4720,21 @@ fluid_synth_check_finished_voices(fluid_synth_t *synth)
             }
             else if(synth->voice[j]->overflow_rvoice == fv)
             {
+                /* Unlock the overflow_rvoice of the voice.
+                   Decrement the reference count of the sample owned by this
+                   rvoice.
+                */
                 fluid_voice_overflow_rvoice_finished(synth->voice[j]);
+
+                /* Decrement synth active voice count. Must not be incorporated
+                   in fluid_voice_overflow_rvoice_finished() because
+                   fluid_voice_overflow_rvoice_finished() is called also
+                   at synth destruction and in this case the variable should be
+                   accessed via voice->channel->synth->active_voice_count.
+                   And for certain voices which are not playing, the field
+                   voice->channel is NULL.
+                */
+                synth->active_voice_count--;
                 break;
             }
         }
@@ -5161,11 +5242,25 @@ fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets
 }
 
 /**
- * Unload a SoundFont.
+ * Schedule a SoundFont for unloading.
+ *
+ * If the SoundFont isn't used anymore by any playing voices, it will be unloaded immediately.
+ *
+ * If any samples of the given SoundFont are still required by active voices,
+ * the SoundFont will be unloaded in a lazy manner, once those voices have finished synthesizing.
+ * If you call delete_fluid_synth(), all voices will be destroyed and the SoundFont
+ * will be unloaded in any case.
+ * Once this function returned, fluid_synth_sfcount() and similar functions will behave as if
+ * the SoundFont has already been unloaded, even though the lazy-unloading is still pending.
+ *
+ * @note This lazy-unloading mechanism was broken between FluidSynth 1.1.4 and 2.1.5 . As a
+ * consequence, SoundFonts scheduled for lazy-unloading may be never freed under certain
+ * conditions. Calling delete_fluid_synth() does not recover this situation either.
+ *
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
- * @return #FLUID_OK on success, #FLUID_FAILED on error
+ * @return #FLUID_OK if the given @p id was found, #FLUID_FAILED otherwise.
  */
 int
 fluid_synth_sfunload(fluid_synth_t *synth, int id, int reset_presets)
@@ -5226,7 +5321,8 @@ fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont)
         } /* spin off a timer thread to unload the sfont later (SoundFont loader blocked unload) */
         else
         {
-            new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, TRUE, FALSE);
+            fluid_timer_t* timer = new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, FALSE, FALSE);
+            synth->fonts_to_be_unloaded = fluid_list_prepend(synth->fonts_to_be_unloaded, timer);
         }
     }
 }
