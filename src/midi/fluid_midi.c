@@ -2509,6 +2509,7 @@ int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
                 }
 
                 ret_tempo /= multempo; /* apply current tempo multiplier */
+                /* fall through */
 
             /* get the external tempo value set by fluid_player_set_tempo */
             case FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM:  /* tempo in bpm */
