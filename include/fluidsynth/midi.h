@@ -218,21 +218,11 @@ enum fluid_player_status
  */
 enum fluid_player_set_tempo_type
 {
-    FLUID_PLAYER_SET_TEMPO_INTERNAL,      /**< Use midi file tempo set in midi file (120 bpm by default) */
-    FLUID_PLAYER_SET_TEMPO_EXTERNAL_BPM,  /**< Set player tempo in bpm, supersede midi file tempo */
-    FLUID_PLAYER_SET_TEMPO_EXTERNAL_MIDI, /**< Set player tempo in us per quarter note, supersede midi file tempo */
-    FLUID_PLAYER_SET_TEMPO_RELATIVE,      /**< Speed up or slow down midi file tempo with a multiplier factor */
-    FLUID_PLAYER_SET_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_set_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
-};
-
-enum fluid_player_get_tempo_type
-{
-    FLUID_PLAYER_GET_TEMPO_USED_BPM,      /**< get current tempo used by the player in bpm */
-    FLUID_PLAYER_GET_TEMPO_USED_MIDI,     /**< get current tempo used by the player in us per quarter note */
-    FLUID_PLAYER_GET_TEMPO_EXTERNAL_BPM,  /**< get external tempo set by fluid_player_set_tempo() (in bpm) */
-    FLUID_PLAYER_GET_TEMPO_EXTERNAL_MIDI, /**< get external tempo set by fluid_player_set_tempo() (in us per quarter note) */
-    FLUID_PLAYER_GET_TEMPO_RELATIVE,      /**< get tempo multiplier set by fluid_player_set_tempo() */
-    FLUID_PLAYER_GET_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_get_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+    FLUID_PLAYER_TEMPO_INTERNAL,      /**< Use midi file tempo set in midi file (120 bpm by default) */
+    FLUID_PLAYER_TEMPO_EXTERNAL_BPM,  /**< Set player tempo in bpm, supersede midi file tempo */
+    FLUID_PLAYER_TEMPO_EXTERNAL_MIDI, /**< Set player tempo in us per quarter note, supersede midi file tempo */
+    FLUID_PLAYER_TEMPO_RELATIVE,      /**< Speed up or slow down midi file tempo with a multiplier factor */
+    FLUID_PLAYER_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_set_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
 /** @startlifecycle{MIDI File Player} */
@@ -254,10 +244,8 @@ FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t *player, ha
 FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_current_tick(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_total_ticks(fluid_player_t *player);
-FLUIDSYNTH_API int fluid_player_get_tempo(fluid_player_t *player, int tempo_type,
-                                          double *tempo, int *sync_mode);
-FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t *player);
-FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t *player);
+FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t *player);
+FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_seek(fluid_player_t *player, int ticks);
 /* @} */
 
