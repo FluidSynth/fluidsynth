@@ -2486,13 +2486,12 @@ int fluid_player_get_bpm(fluid_player_t *player)
 int fluid_player_get_midi_tempo(fluid_player_t *player)
 {
     int midi_tempo; /* value to return */
-    int sync_mode;
 
     fluid_return_val_if_fail(player != NULL, 0);
 
     midi_tempo = fluid_atomic_int_get(&player->exttempo);
-    sync_mode = fluid_atomic_int_get(&player->sync_mode);
-    if(sync_mode) /* look if the player is internally synced */
+    /* look if the player is internally synced */
+    if(fluid_atomic_int_get(&player->sync_mode))
     {
         midi_tempo = (int)((float)fluid_atomic_int_get(&player->miditempo)/
                            fluid_atomic_float_get(&player->multempo));
