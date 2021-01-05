@@ -2456,7 +2456,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  * Get the tempo currently used by a MIDI player.
  * The player can be controlled by internal tempo coming from MIDI file tempo
  * change or controlled by external tempo see fluid_player_set_tempo().
- * @param player MIDI player instance
+ * @param player MIDI player instance. Must be a valid pointer.
  * @return MIDI player tempo in BPM or 0 if error.
  * @since 1.1.7
  */
@@ -2478,7 +2478,7 @@ int fluid_player_get_bpm(fluid_player_t *player)
  * The player can be controlled by internal tempo coming from MIDI file tempo
  * change or controlled by external tempo see fluid_player_set_tempo().
 
- * @param player MIDI player instance
+ * @param player MIDI player instance. Must be a valid pointer.
  * @return Tempo of the MIDI player (in microseconds per quarter note, as per MIDI file spec)
  *  or 0 if error.
  * @since 1.1.7
