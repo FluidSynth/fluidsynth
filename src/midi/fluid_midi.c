@@ -2304,7 +2304,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  *  derived from MIDI clock realtime messages.
  *
  *  #FLUID_PLAYER_TEMPO_RELATIVE, set a tempo multiplier value provided by the
- *  tempo parameter. The current tempo (internal or external) used by the player
+ *  tempo parameter. The current tempo (internal) used by the player
  *  is multipied by this value.
  *  This is only used when the player is driven by internal tempo (from MIDI file).
  *  For example, if the current MIDI file tempo is 120 bpm and the multiplier
