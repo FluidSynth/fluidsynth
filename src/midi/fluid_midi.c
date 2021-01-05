@@ -2325,7 +2325,7 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
 {
     fluid_return_val_if_fail(player != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(tempo_type >= FLUID_PLAYER_TEMPO_INTERNAL, FLUID_FAILED);
-    fluid_return_val_if_fail(tempo_type < FLUID_PLAYER_TEMPO_RELATIVE, FLUID_FAILED);
+    fluid_return_val_if_fail(tempo_type < FLUID_PLAYER_TEMPO_NBR, FLUID_FAILED);
 
     switch(tempo_type)
     {
