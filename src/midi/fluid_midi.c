@@ -2457,7 +2457,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  * The player can be controlled by internal tempo coming from MIDI file tempo
  * change or controlled by external tempo see fluid_player_set_tempo().
  * @param player MIDI player instance. Must be a valid pointer.
- * @return MIDI player tempo in BPM or 0 if error.
+ * @return MIDI player tempo in BPM or FLUID_FAILED if error.
  * @since 1.1.7
  */
 int fluid_player_get_bpm(fluid_player_t *player)
@@ -2479,15 +2479,15 @@ int fluid_player_get_bpm(fluid_player_t *player)
  * change or controlled by external tempo see fluid_player_set_tempo().
 
  * @param player MIDI player instance. Must be a valid pointer.
- * @return Tempo of the MIDI player (in microseconds per quarter note, as per MIDI file spec)
- *  or 0 if error.
+ * @return Tempo of the MIDI player (in microseconds per quarter note, as per
+ * MIDI file spec) or FLUID_FAILED if error.
  * @since 1.1.7
  */
 int fluid_player_get_midi_tempo(fluid_player_t *player)
 {
     int midi_tempo; /* value to return */
 
-    fluid_return_val_if_fail(player != NULL, 0);
+    fluid_return_val_if_fail(player != NULL, FLUID_FAILED);
 
     midi_tempo = fluid_atomic_int_get(&player->exttempo);
     /* look if the player is internally synced */
