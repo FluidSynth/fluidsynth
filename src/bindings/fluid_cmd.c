@@ -3474,11 +3474,10 @@ enum
     PLAYER_LOOP_CDE, /* player_loop num,(Set loop number to num) */
     PLAYER_STEP_CDE, /* player_step num (Move forward/backward to +/-num ticks) */
     PLAYER_TEMPO_BPM_CDE, /* player_tempo_bpm num (Set tempo to num bpm) */
-    PLAYER_STOP_CDE,  /* player_stop     (Stop playing) */
-    PLAYER_CONT_CDE,  /* player_cont     (Continue playing) */
-    PLAYER_NEXT_CDE,  /* player_next     (Move to next song) */
-    PLAYER_START_CDE, /* player_start   (Move to start song) */
-    NBR_PLAYER_CDE
+    PLAYER_STOP_CDE,      /* player_stop    (Stop playing) */
+    PLAYER_CONT_CDE,      /* player_cont    (Continue playing) */
+    PLAYER_NEXT_CDE,      /* player_next    (Move to next song) */
+    PLAYER_START_CDE      /* player_start   (Move to start of song) */
 };
 
 /* Command handler for player commands: player_step, player_loop, player_tempo_bpm */
@@ -3488,7 +3487,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
     int arg;
 
     /* commands name table */
-    static const char *name_cde[NBR_PLAYER_CDE] =
+    static const char *name_cde[] =
     {"player_loop", "player_step", "player_tempo_bpm"};
 
     /* get argument for PLAYER_LOOP_CDE, PLAYER_STEP_CDE, PLAYER_TEMPO_BPM_CDE */
@@ -3510,7 +3509,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
         return FLUID_OK;
     }
 
-    if(cmd == PLAYER_TEMPO_BPM_CDE)  /* player_bpm */
+    if(cmd == PLAYER_TEMPO_BPM_CDE)  /* player_tempo_bpm */
     {
         fluid_player_set_bpm(handler->player, arg);
         return FLUID_OK;
@@ -3538,7 +3537,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
                 }
                 else if(arg < seek)
                 {
-                    seek = arg; /* maximum position */
+                    seek = arg; /* seek < maximum position */
                 }
             }
 
