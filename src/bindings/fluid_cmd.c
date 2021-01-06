@@ -4461,9 +4461,10 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
         const fluid_cmd_t *cmd = &fluid_commands[i];
         int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
         int is_player_cmd = FLUID_STRCMP(cmd->topic, "player") == 0;
+        int is_synth_cmd = !(is_router_cmd || is_player_cmd);
 
         if((is_router_cmd && router == NULL) || (is_player_cmd && player == NULL)
-			||(!is_router_cmd && !is_player_cmd && synth == NULL))
+			||(is_synth_cmd && synth == NULL))
         {
             /* omit registering router, player and synth commands if they were
                not requested */
