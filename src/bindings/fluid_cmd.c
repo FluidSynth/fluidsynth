@@ -193,7 +193,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
-        "rev_preset num             Load preset num into all reverb unit"
+        "rev_preset num              Load preset num into all reverb unit"
     },
     {
         "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
@@ -213,7 +213,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
-        "reverb [0|1|on|off]        Turn all reverb groups on or off"
+        "reverb [0|1|on|off]         Turn all reverb groups on or off"
     },
     /* chorus commands */
     {
@@ -234,7 +234,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
-        "chorus [0|1|on|off]        Turn all chorus groups on or off"
+        "chorus [0|1|on|off]         Turn all chorus groups on or off"
     },
     {
         "gain", "general", fluid_handle_gain,
