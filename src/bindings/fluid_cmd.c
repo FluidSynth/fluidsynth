@@ -391,7 +391,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "player_tempo_bpm", "player", fluid_handle_player_tempo_bpm,
-        "player_tempo_bmp num       Set tempo to num beats per minute"
+        "player_tempo_bpm num       Set tempo to num beats per minute"
     },
 #if WITH_PROFILING
     /* Profiling commands */
