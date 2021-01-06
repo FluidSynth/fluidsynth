@@ -3515,39 +3515,42 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
         return FLUID_OK;
     }
 
+    if(cmd == PLAYER_CONT_CDE)  /* player_cont */
+    {
+        fluid_player_play(handler->player);
+        return FLUID_OK;
+    }
+
     fluid_player_stop(handler->player);  /* player_stop */
 
     if(cmd != PLAYER_STOP_CDE)
     {
-        if(cmd != PLAYER_CONT_CDE)
+        /* seek for player_next, player_step, player_start */
+        /* set seek to maximum position */
+        int seek = fluid_player_get_total_ticks(handler->player);
+
+        if(cmd == PLAYER_STEP_CDE)
         {
-            /* seek for player_next, player_step, player_start */
-            /* set seek to maximum position */
-            int seek = fluid_player_get_total_ticks(handler->player);
+            /* Move position forward/backward +/- num ticks*/
+            arg  += fluid_player_get_current_tick(handler->player);
 
-            if(cmd == PLAYER_STEP_CDE)
+            /* keep seek between minimum and maximum in current song */
+            if(arg < 0)
             {
-                /* Move position forward/backward +/- num ticks*/
-                arg  += fluid_player_get_current_tick(handler->player);
-
-                /* keep seek between minimum and maximum in current song */
-                if(arg < 0)
-                {
-                    seek = 0; /* minimum position */
-                }
-                else if(arg < seek)
-                {
-                    seek = arg; /* seek < maximum position */
-                }
+                seek = 0; /* minimum position */
             }
-
-            if(cmd == PLAYER_START_CDE)  /* player_start */
+            else if(arg < seek)
             {
-                seek = 0; /* beginning of the current song */
+                seek = arg; /* seek < maximum position */
             }
-
-            fluid_player_seek(handler->player, seek);
         }
+
+        if(cmd == PLAYER_START_CDE)  /* player_start */
+        {
+            seek = 0; /* beginning of the current song */
+        }
+
+        fluid_player_seek(handler->player, seek);
         fluid_player_play(handler->player);
     }
     /* display position */
