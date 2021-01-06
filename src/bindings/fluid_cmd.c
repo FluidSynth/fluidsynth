@@ -3463,8 +3463,9 @@ void player_print_position(fluid_player_t *player, fluid_ostream_t out)
 {
     int current_tick = fluid_player_get_current_tick(player);
     int total_ticks = fluid_player_get_total_ticks(player);
-    fluid_ostream_printf(out, "player current pos:%d, end:%d\n\n",
-                         current_tick, total_ticks);
+    int tempo_bpm = fluid_player_get_bpm(player);
+    fluid_ostream_printf(out, "player current pos:%d, end:%d, bpm:%d\n\n",
+                         current_tick, total_ticks, tempo_bpm);
 }
 
 /* Command handler for "player_start" command */
