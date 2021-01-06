@@ -2291,25 +2291,22 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * 
  *  #FLUID_PLAYER_TEMPO_INTERNAL, the player will be controlled by internal
  *  MIDI file tempo changes. If there are no tempo change in the MIDI file a default
- *  value of 120 bpm is used. The @c tempo parameter will be ignored.
+ *  value of 120 bpm is used. The @c tempo parameter is used as a multiplier factor
+ *  that must be in the range (0.001 to 1000).
+ *  For example, if the current MIDI file tempo is 120 bpm and the multiplier
+ *  value is 0.5 then this tempo will be slowed down to 60 bpm.
+ *  At creation, the player is set to be controlled by internal tempo with a
+ *  multiplier factor set to 1.0.
  *
  *  #FLUID_PLAYER_TEMPO_EXTERNAL_BPM, the player will be controlled by the
  *  external tempo value provided  by the tempo parameter in bpm
  *  (i.e in quarter notes per minute) which must be in the range (1 to 60000000).
  *
  *  #FLUID_PLAYER_TEMPO_EXTERNAL_MIDI, similar as FLUID_PLAYER_TEMPO_EXTERNAL_BPM,
- *  but the tempo parameter value is in  micro seconds per quarter note in the
- *  range (1 to 60000000).
+ *  but the tempo parameter value is in  micro seconds per quarter note which
+ *  must be in the range (1 to 60000000).
  *  Using micro seconds per quarter note is convenient when the tempo value is
  *  derived from MIDI clock realtime messages.
- *
- *  #FLUID_PLAYER_TEMPO_RELATIVE, set a tempo multiplier value provided by the
- *  tempo parameter. The current tempo (internal) used by the player
- *  is multipied by this value.
- *  This is only used when the player is driven by internal tempo (from MIDI file).
- *  For example, if the current MIDI file tempo is 120 bpm and the multiplier
- *  value is 0.5 then the tempo will be slowed down to 60 bpm.
- *  Must be in the range (0.001 to 1000).
  *
  * @note When the player is controlled by an external tempo
  * (#FLUID_PLAYER_TEMPO_EXTERNAL_BPM or #FLUID_PLAYER_TEMPO_EXTERNAL_MIDI) it
@@ -2331,7 +2328,13 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
     {
         /* set the player to be driven by internal tempo coming from MIDI file */
         case FLUID_PLAYER_TEMPO_INTERNAL:
-            fluid_atomic_int_set(&player->sync_mode, 1); /* internal mode */
+            /* check if the multiplier is in correct range */
+            fluid_return_val_if_fail(tempo >= MIN_TEMPO_MULTIPLIER, FLUID_FAILED);
+            fluid_return_val_if_fail(tempo <= MAX_TEMPO_MULTIPLIER, FLUID_FAILED);
+
+            /* set the tempo multiplier */
+            fluid_atomic_float_set(&player->multempo, (float)tempo);
+            fluid_atomic_int_set(&player->sync_mode, 1); /* set internal mode */
             break;
 
         /* set the player to be driven by external tempo */
@@ -2348,16 +2351,6 @@ int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
             }
             fluid_atomic_int_set(&player->exttempo, (int)tempo);
             fluid_atomic_int_set(&player->sync_mode, 0); /* set external mode */
-            break;
-
-        /* set the tempo multiplier */
-        case FLUID_PLAYER_TEMPO_RELATIVE:
-            /* check if the multiplier is in correct range */
-            fluid_return_val_if_fail(tempo >= MIN_TEMPO_MULTIPLIER, FLUID_FAILED);
-            fluid_return_val_if_fail(tempo <= MAX_TEMPO_MULTIPLIER, FLUID_FAILED);
-
-            /* set the tempo multiplier */
-            fluid_atomic_float_set(&player->multempo, (float)tempo);
             break;
 
         default: /* shouldn't happen */
