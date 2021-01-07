@@ -393,6 +393,10 @@ static const fluid_cmd_t fluid_commands[] =
         "player_tempo_bpm", "player", fluid_handle_player_tempo_bpm,
         "player_tempo_bpm num       Set tempo to num beats per minute"
     },
+    {
+        "player_tempo_int", "player", fluid_handle_player_tempo_int,
+        "player_tempo_int [mul]     Set internal tempo multiplied by mul (default mul=1.0)"
+    },
 #if WITH_PROFILING
     /* Profiling commands */
     {
@@ -3458,6 +3462,18 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
 
 /**  commands  for Midi file player ******************************************/
 
+/* check player argument */
+int player_check_arg(const char *name_cde, int ac, char **av, fluid_ostream_t out)
+{
+    /* check if there is one argument that is a number */
+    if(ac != 1 || !fluid_is_number(av[0]))
+    {
+        fluid_ostream_printf(out, "%s: %s", name_cde, invalid_arg_msg);
+        return FLUID_FAILED;
+    }
+    return FLUID_OK;
+}
+
 /* print current position and total ticks */
 void player_print_position(fluid_player_t *player, fluid_ostream_t out)
 {
@@ -3473,7 +3489,6 @@ enum
 {
     PLAYER_LOOP_CDE, /* player_loop num,(Set loop number to num) */
     PLAYER_STEP_CDE, /* player_step num (Move forward/backward to +/-num ticks) */
-    PLAYER_TEMPO_BPM_CDE, /* player_tempo_bpm num (Set tempo to num bpm) */
     PLAYER_STOP_CDE,      /* player_stop    (Stop playing) */
     PLAYER_CONT_CDE,      /* player_cont    (Continue playing) */
     PLAYER_NEXT_CDE,      /* player_next    (Move to next song) */
@@ -3488,15 +3503,14 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
 
     /* commands name table */
     static const char *name_cde[] =
-    {"player_loop", "player_step", "player_tempo_bpm"};
+    {"player_loop", "player_step"};
 
-    /* get argument for PLAYER_LOOP_CDE, PLAYER_STEP_CDE, PLAYER_TEMPO_BPM_CDE */
-    if(cmd <= PLAYER_TEMPO_BPM_CDE)
+    /* get argument for PLAYER_LOOP_CDE, PLAYER_STEP_CDE */
+    if(cmd <= PLAYER_STEP_CDE)
     {
         /* check argument */
-        if(ac != 1 || !fluid_is_number(av[0]))
+        if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
         {
-            fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
             return FLUID_FAILED;
         }
 
@@ -3506,12 +3520,6 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
     if(cmd == PLAYER_LOOP_CDE)  /* player_loop */
     {
         fluid_player_set_loop(handler->player, arg);
-        return FLUID_OK;
-    }
-
-    if(cmd == PLAYER_TEMPO_BPM_CDE)  /* player_tempo_bpm */
-    {
-        fluid_player_set_bpm(handler->player, arg);
         return FLUID_OK;
     }
 
@@ -3594,10 +3602,65 @@ int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
     return fluid_handle_player_cde(data, ac, av, out, PLAYER_LOOP_CDE);
 }
 
-/* Command handler for "player_tempo_bpm" command */
+// temporarily
+#define PLAYER_TEMPO_INTERNAL 0
+#define PLAYER_TEMPO_EXTERNAL_BMP 1
+
+/* Command handler for player tempo commands:
+   player_tempo_int [mul], set the player to internal tempo multiplied by mul
+   player_tempo_bpm bpm, set the player to external tempo in beat per minute.
+   examples:
+    player_tempo_int      set the player to internal tempo with a default
+                          multiplier set to 1.0.
+
+    player_tempo_int 0.5  set the player to internal tempo divided by 2.
+
+    player_tempo_bpm 75, set the player to external tempo of 75 beats per minute.
+*/
+int fluid_handle_player_tempo_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
+{
+    FLUID_ENTRY_COMMAND(data);
+    /* default multiplier for player_tempo_int command without argument*/
+    double arg = 1.0F;
+
+    /* commands name table */
+    static const char *name_cde[] =
+    {"player_tempo_int", "player_tempo_bpm"};
+
+    /* get argument for: player_tempo_int [mul],  player_tempo_bpm bpm */
+    if((cmd == PLAYER_TEMPO_EXTERNAL_BMP) || ac)
+    {
+        /* check argument */
+        if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+
+        arg = atof(av[0]);
+    }
+
+    if(cmd == PLAYER_TEMPO_EXTERNAL_BMP)
+    {
+        if(fluid_player_set_bpm(handler->player, arg) == FLUID_FAILED)
+        {
+            fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
+            return FLUID_FAILED;
+        }
+    }
+    else printf("player_tempo_int %f\n", arg);
+    return FLUID_OK;
+}
+
+/* Command handler for "player_tempo_int [mul]" command */
+int fluid_handle_player_tempo_int(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_tempo_cde(data, ac, av, out, PLAYER_TEMPO_INTERNAL);
+}
+
+/* Command handler for "player_tempo_bpm bmp" command */
 int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_player_cde(data, ac, av, out, PLAYER_TEMPO_BPM_CDE);
+    return fluid_handle_player_tempo_cde(data, ac, av, out, PLAYER_TEMPO_EXTERNAL_BMP);
 }
 
 #ifdef LADSPA
