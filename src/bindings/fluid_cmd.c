@@ -37,6 +37,7 @@
 /* the shell cmd handler struct */
 struct _fluid_cmd_handler_t
 {
+    fluid_settings_t *settings;
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
     fluid_cmd_hash_t *commands;
@@ -1212,20 +1213,20 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t value;
 
-    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.room-size",
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.room-size",
                                 &values[FLUID_REVERB_ROOMSIZE].min,
                                 &values[FLUID_REVERB_ROOMSIZE].max);
 
-    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.damp",
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.damp",
                                 &values[FLUID_REVERB_DAMP].min,
                                 &values[FLUID_REVERB_DAMP].max);
 
 
-    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.width",
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.width",
                                 &values[FLUID_REVERB_WIDTH].min,
                                 &values[FLUID_REVERB_WIDTH].max);
 
-    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.level",
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.level",
                                 &values[FLUID_REVERB_LEVEL].min,
                                 &values[FLUID_REVERB_LEVEL].max);
 
@@ -1929,14 +1930,14 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         return ret;
     }
 
-    switch(fluid_settings_get_type(handler->synth->settings, av[0]))
+    switch(fluid_settings_get_type(handler->settings, av[0]))
     {
     case FLUID_NO_TYPE:
         fluid_ostream_printf(out, "set: Parameter '%s' not found.\n", av[0]);
         return ret;
 
     case FLUID_INT_TYPE:
-        if(fluid_settings_get_hints(handler->synth->settings, av[0], &hints) == FLUID_OK
+        if(fluid_settings_get_hints(handler->settings, av[0], &hints) == FLUID_OK
                 && hints & FLUID_HINT_TOGGLED)
         {
             if(FLUID_STRCASECMP(av[1], "yes") == 0
@@ -1955,40 +1956,44 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
             ival = atoi(av[1]);
         }
 
-        fluid_settings_getint(handler->synth->settings, av[0], &icur);
+        fluid_settings_getint(handler->settings, av[0], &icur);
         if (icur == ival)
         {
             return FLUID_OK;
         }
 
-        ret = fluid_settings_setint(handler->synth->settings, av[0], ival);
+        ret = fluid_settings_setint(handler->settings, av[0], ival);
         break;
 
     case FLUID_NUM_TYPE:
         fval = atof(av[1]);
-        fluid_settings_getnum(handler->synth->settings, av[0], &fcur);
+        fluid_settings_getnum(handler->settings, av[0], &fcur);
         if (fcur == fval)
         {
             return FLUID_OK;
         }
 
-        ret = fluid_settings_setnum(handler->synth->settings, av[0], fval);
+        ret = fluid_settings_setnum(handler->settings, av[0], fval);
         break;
 
     case FLUID_STR_TYPE:
-        fluid_settings_dupstr(handler->synth->settings, av[0], &scur);
+        fluid_settings_dupstr(handler->settings, av[0], &scur);
 
         if(scur && !FLUID_STRCMP(scur, av[1]))
         {
             FLUID_FREE(scur);
             return FLUID_OK;
         }
-        ret = fluid_settings_setstr(handler->synth->settings, av[0], av[1]);
+        ret = fluid_settings_setstr(handler->settings, av[0], av[1]);
         FLUID_FREE(scur);
         break;
 
     case FLUID_SET_TYPE:
         fluid_ostream_printf(out, "set: Parameter '%s' is a node.\n", av[0]);
+        return FLUID_FAILED;
+
+    default:
+        fluid_ostream_printf(out, "Unhandled settings type.");
         return FLUID_FAILED;
     }
 
@@ -1997,7 +2002,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
     }
 
-    if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))
+    if(!fluid_settings_is_realtime(handler->settings, av[0]))
     {
         fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
     }
@@ -2016,7 +2021,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
-    switch(fluid_settings_get_type(fluid_synth_get_settings(handler->synth), av[0]))
+    switch(fluid_settings_get_type(handler->settings, av[0]))
     {
     case FLUID_NO_TYPE:
         fluid_ostream_printf(out, "get: no such setting '%s'.\n", av[0]);
@@ -2025,7 +2030,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
     case FLUID_NUM_TYPE:
     {
         double value;
-        fluid_settings_getnum(handler->synth->settings, av[0], &value);
+        fluid_settings_getnum(handler->settings, av[0], &value);
         fluid_ostream_printf(out, "%.3f\n", value);
         break;
     }
@@ -2033,7 +2038,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
     case FLUID_INT_TYPE:
     {
         int value;
-        fluid_settings_getint(handler->synth->settings, av[0], &value);
+        fluid_settings_getint(handler->settings, av[0], &value);
         fluid_ostream_printf(out, "%d\n", value);
         break;
     }
@@ -2041,7 +2046,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
     case FLUID_STR_TYPE:
     {
         char *s;
-        fluid_settings_dupstr(handler->synth->settings, av[0], &s);       /* ++ alloc string */
+        fluid_settings_dupstr(handler->settings, av[0], &s);       /* ++ alloc string */
         fluid_ostream_printf(out, "%s\n", s ? s : "NULL");
 
         if(s)
@@ -2063,7 +2068,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
 struct _fluid_handle_settings_data_t
 {
     size_t len;
-    fluid_synth_t *synth;
+    fluid_settings_t *settings;
     fluid_ostream_t out;
 };
 
@@ -2093,12 +2098,12 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
 
     fluid_ostream_printf(d->out, "   ");
 
-    switch(fluid_settings_get_type(fluid_synth_get_settings(d->synth), name))
+    switch(fluid_settings_get_type(d->settings, name))
     {
     case FLUID_NUM_TYPE:
     {
         double value;
-        fluid_settings_getnum(d->synth->settings, name, &value);
+        fluid_settings_getnum(d->settings, name, &value);
         fluid_ostream_printf(d->out, "%.3f\n", value);
         break;
     }
@@ -2106,9 +2111,9 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
     case FLUID_INT_TYPE:
     {
         int value, hints;
-        fluid_settings_getint(d->synth->settings, name, &value);
+        fluid_settings_getint(d->settings, name, &value);
 
-        if(fluid_settings_get_hints(d->synth->settings, name, &hints) == FLUID_OK)
+        if(fluid_settings_get_hints(d->settings, name, &hints) == FLUID_OK)
         {
             if(!(hints & FLUID_HINT_TOGGLED))
             {
@@ -2126,7 +2131,7 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
     case FLUID_STR_TYPE:
     {
         char *s;
-        fluid_settings_dupstr(d->synth->settings, name, &s);     /* ++ alloc string */
+        fluid_settings_dupstr(d->settings, name, &s);     /* ++ alloc string */
         fluid_ostream_printf(d->out, "%s\n", s ? s : "NULL");
 
         if(s)
@@ -2146,11 +2151,11 @@ fluid_handle_settings(void *d, int ac, char **av, fluid_ostream_t out)
     struct _fluid_handle_settings_data_t data;
 
     data.len = 0;
-    data.synth = handler->synth;
+    data.settings = handler->settings;
     data.out = out;
 
-    fluid_settings_foreach(fluid_synth_get_settings(handler->synth), &data, fluid_handle_settings_iter1);
-    fluid_settings_foreach(fluid_synth_get_settings(handler->synth), &data, fluid_handle_settings_iter2);
+    fluid_settings_foreach(handler->settings, &data, fluid_handle_settings_iter1);
+    fluid_settings_foreach(handler->settings, &data, fluid_handle_settings_iter2);
     return FLUID_OK;
 }
 
@@ -2180,7 +2185,7 @@ int
 fluid_handle_info(void *d, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(d);
-    fluid_settings_t *settings = fluid_synth_get_settings(handler->synth);
+    fluid_settings_t *settings = handler->settings;
     struct _fluid_handle_option_data_t data;
 
     if(ac < 1)
@@ -4279,11 +4284,24 @@ fluid_cmd_handler_destroy_hash_value(void *value)
 /**
  * Create a new command handler.
  *
+ * See new_fluid_cmd_handler2() for more information.
+ */
+fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router)
+{
+    return new_fluid_cmd_handler2(fluid_synth_get_settings(synth), synth, router);
+}
+
+/**
+ * Create a new command handler.
+ *
+ * @param settings If not NULL, all the settings related commands will be added to the new handler. The @p settings
+ * object must be the same as the one you used for creating the @p synth and @p router. Otherwise the
+ * behaviour is undefined.
  * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
  * @param router If not NULL, all the default midi_router commands will be added to the new handler.
  * @return New command handler, or NULL if alloc failed
  */
-fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router)
+fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t* settings, fluid_synth_t *synth, fluid_midi_router_t *router)
 {
     unsigned int i;
     fluid_cmd_handler_t *handler;
@@ -4306,6 +4324,7 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
         return NULL;
     }
 
+    handler->settings = settings;
     handler->synth = synth;
     handler->router = router;
 
@@ -4313,8 +4332,11 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
     {
         const fluid_cmd_t *cmd = &fluid_commands[i];
         int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
+        int is_settings_cmd = FLUID_STRCMP(cmd->topic, "settings") == 0;
 
-        if((is_router_cmd && router == NULL) || (!is_router_cmd && synth == NULL))
+        if((is_router_cmd && router == NULL) ||
+           (is_settings_cmd && settings == NULL) ||
+           (!is_router_cmd && !is_settings_cmd && synth == NULL))
         {
             /* omit registering router and synth commands if they were not requested */
             continue;
