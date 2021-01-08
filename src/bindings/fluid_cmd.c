@@ -2002,7 +2002,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
     }
 
-    if(!fluid_settings_is_realtime(handler->settings, av[0]))
+    if((handler->synth != NULL || handler->router != NULL) && !fluid_settings_is_realtime(handler->settings, av[0]))
     {
         fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
     }
