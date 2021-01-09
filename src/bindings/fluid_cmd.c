@@ -4338,11 +4338,15 @@ fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t* settings, fluid_sy
            (is_settings_cmd && settings == NULL) ||
            (!is_router_cmd && !is_settings_cmd && synth == NULL))
         {
-            /* omit registering router and synth commands if they were not requested */
-            continue;
+            /* register a no-op command, this avoids an unknown command error later on */
+            fluid_cmd_t noop = *cmd;
+            noop.handler = NULL;
+            fluid_cmd_handler_register(handler, &noop);
         }
-
-        fluid_cmd_handler_register(handler, &fluid_commands[i]);
+        else
+        {
+            fluid_cmd_handler_register(handler, cmd);
+        }
     }
 
     return handler;
@@ -4398,13 +4402,23 @@ fluid_cmd_handler_handle(void *data, int ac, char **av, fluid_ostream_t out)
 
     cmd = fluid_hashtable_lookup(handler->commands, av[0]);
 
-    if(cmd && cmd->handler)
+    if(cmd)
     {
-        return (*cmd->handler)(handler, ac - 1, av + 1, out);
+        if(cmd->handler)
+        {
+            return (*cmd->handler)(handler, ac - 1, av + 1, out);
+        }
+        else
+        {
+            /* no-op command */
+            return 1;
+        }
     }
-
-    fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
-    return FLUID_FAILED;
+    else
+    {
+        fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
+        return FLUID_FAILED;
+    }
 }
 
 
