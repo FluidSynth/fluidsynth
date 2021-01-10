@@ -50,7 +50,6 @@ void print_configure(void);
 /*
  * the globals
  */
-fluid_cmd_handler_t *cmd_handler = NULL;
 int option_help = 0;		/* set to 1 if "-o help" is specified */
 
 
@@ -308,6 +307,7 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
 
     1)creating the settings.
     2)reading/setting all options in command line.
+    2.5)read configuration file the first time and execute all "set" commands
     3)creating the synth.
     4)loading the soundfonts specified in command line
 	  (multiple soundfonts loading is possible).
@@ -318,7 +318,7 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
 	  (multiple midifiles loading is possible).
     9)loading a default soundfont if needed before starting the player.
     10)create a command handler.
-    11)reading the configuration file and submit it to the command handler.
+    11)reading the entire configuration file for the second time and submit it to the command handler.
     12)create a tcp shell if any requested.
     13)create a synchronous user shell if interactive.
     14)entering fast rendering loop if requested.
@@ -338,6 +338,7 @@ int main(int argc, char **argv)
     fluid_midi_driver_t *mdriver = NULL;
     fluid_audio_driver_t *adriver = NULL;
     fluid_synth_t *synth = NULL;
+    fluid_cmd_handler_t *cmd_handler = NULL;
 #ifdef NETWORK_SUPPORT
     fluid_server_t *server = NULL;
     int with_server = 0;
@@ -368,7 +369,6 @@ int main(int argc, char **argv)
     }
 
 #endif
-
 
     /* create the settings */
     settings = new_fluid_settings();
@@ -773,7 +773,8 @@ int main(int argc, char **argv)
     arg1 = i;
 #endif
 
-    if (!quiet) {
+    if (!quiet)
+    {
         print_welcome();
     }
 
@@ -828,6 +829,36 @@ int main(int argc, char **argv)
 #endif
         fluid_settings_setstr(settings, "player.timing-source", "sample");
         fluid_settings_setint(settings, "synth.lock-memory", 0);
+    }
+
+    if(config_file == NULL)
+    {
+        config_file = fluid_get_userconf(buf, sizeof(buf));
+        if(config_file == NULL)
+        {
+            config_file = fluid_get_sysconf(buf, sizeof(buf));
+        }
+    }
+
+    /* Handle set commands before creating the synth */
+    if(config_file != NULL)
+    {
+        cmd_handler = new_fluid_cmd_handler2(settings, NULL, NULL);
+        if(cmd_handler == NULL)
+        {
+            fprintf(stderr, "Failed to create the early command handler\n");
+            goto cleanup;
+        }
+
+        if(fluid_source(cmd_handler, config_file) < 0)
+        {
+            fprintf(stderr, "Failed to early-execute command configuration file '%s'\n", config_file);
+            /* the command file seems broken, don't read it again */
+            config_file = NULL;
+        }
+
+        delete_fluid_cmd_handler(cmd_handler);
+        cmd_handler = NULL;
     }
 
     /* create the synthesizer */
@@ -950,20 +981,9 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    if(config_file != NULL)
+    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
     {
-        if(fluid_source(cmd_handler, config_file) < 0)
-        {
-            fprintf(stderr, "Failed to execute user provided command configuration file '%s'\n", config_file);
-        }
-    }
-    else if(fluid_get_userconf(buf, sizeof(buf)) != NULL)
-    {
-        fluid_source(cmd_handler, buf);
-    }
-    else if(fluid_get_sysconf(buf, sizeof(buf)) != NULL)
-    {
-        fluid_source(cmd_handler, buf);
+        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
     }
 
     /* run the server, if requested */
@@ -1071,10 +1091,7 @@ cleanup:
 
 #endif	/* NETWORK_SUPPORT */
 
-    if(cmd_handler != NULL)
-    {
-        delete_fluid_cmd_handler(cmd_handler);
-    }
+    delete_fluid_cmd_handler(cmd_handler);
 
     if(player != NULL)
     {

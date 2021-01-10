@@ -63,6 +63,9 @@ FLUIDSYNTH_API
 fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router);
 
 FLUIDSYNTH_API
+fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings, fluid_synth_t *synth, fluid_midi_router_t *router);
+
+FLUIDSYNTH_API
 void delete_fluid_cmd_handler(fluid_cmd_handler_t *handler);
 /** @endlifecycle */
 
