@@ -185,7 +185,6 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
 
     switch(fluid_event_get_type(evt))
     {
-
     case FLUID_SEQ_NOTEON:
         fluid_synth_noteon(synth, fluid_event_get_channel(evt), fluid_event_get_key(evt), fluid_event_get_velocity(evt));
         break;
@@ -324,6 +323,10 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
 
     case FLUID_SEQ_TIMER:
         /* nothing in fluidsynth */
+        break;
+
+    case FLUID_SEQ_SCALE:
+        fluid_sequencer_set_time_scale(seq, fluid_event_get_scale(evt));
         break;
 
     default:

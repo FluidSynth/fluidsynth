@@ -50,7 +50,6 @@ void print_configure(void);
 /*
  * the globals
  */
-fluid_cmd_handler_t *cmd_handler = NULL;
 int option_help = 0;		/* set to 1 if "-o help" is specified */
 
 
@@ -308,22 +307,23 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
 
     1)creating the settings.
     2)reading/setting all options in command line.
-    3)creating the synth.
-    4)loading the soundfonts specified in command line
+    3)read configuration file the first time and execute all "set" commands
+    4)creating the synth.
+    5)loading the soundfonts specified in command line
 	  (multiple soundfonts loading is possible).
-    5)create the audio driver (if not fast rendering).
     6)create the router.
     7)create the midi driver connected to the router.
     8)create a player and add it any midifile specified in command line.
 	  (multiple midifiles loading is possible).
-    9)create a command handler.
-    10)reading the configuration file and submit it to the command handler
-       before starting the player.
-    11)loading a default soundfont if needed before starting the player,
-       then  start the player.
+    9)loading a default soundfont if needed before starting the player.
+    10)create a command handler.
+    11)reading the entire configuration file for the second time and submit it
+       to the command handler before starting the player.
+	12)Start the player
     12)create a tcp shell if any requested.
     13)entering fast rendering loop if requested, otherwise
-    14)create the synthesis thread and a synchronous user shell if interactive.
+    14)create the audio driver (i.e synthesis thread) and a synchronous user
+       shell if interactive.
  */
 int main(int argc, char **argv)
 {
@@ -340,6 +340,7 @@ int main(int argc, char **argv)
     fluid_midi_driver_t *mdriver = NULL;
     fluid_audio_driver_t *adriver = NULL;
     fluid_synth_t *synth = NULL;
+    fluid_cmd_handler_t *cmd_handler = NULL;
 #ifdef NETWORK_SUPPORT
     fluid_server_t *server = NULL;
     int with_server = 0;
@@ -370,7 +371,6 @@ int main(int argc, char **argv)
     }
 
 #endif
-
 
     /* create the settings */
     settings = new_fluid_settings();
@@ -775,7 +775,8 @@ int main(int argc, char **argv)
     arg1 = i;
 #endif
 
-    if (!quiet) {
+    if (!quiet)
+    {
         print_welcome();
     }
 
@@ -832,6 +833,36 @@ int main(int argc, char **argv)
         fluid_settings_setint(settings, "synth.lock-memory", 0);
     }
 
+    if(config_file == NULL)
+    {
+        config_file = fluid_get_userconf(buf, sizeof(buf));
+        if(config_file == NULL)
+        {
+            config_file = fluid_get_sysconf(buf, sizeof(buf));
+        }
+    }
+
+    /* Handle set commands before creating the synth */
+    if(config_file != NULL)
+    {
+        cmd_handler = new_fluid_cmd_handler2(settings, NULL, NULL, NULL);
+        if(cmd_handler == NULL)
+        {
+            fprintf(stderr, "Failed to create the early command handler\n");
+            goto cleanup;
+        }
+
+        if(fluid_source(cmd_handler, config_file) < 0)
+        {
+            fprintf(stderr, "Failed to early-execute command configuration file '%s'\n", config_file);
+            /* the command file seems broken, don't read it again */
+            config_file = NULL;
+        }
+
+        delete_fluid_cmd_handler(cmd_handler);
+        cmd_handler = NULL;
+    }
+
     /* create the synthesizer */
     synth = new_fluid_synth(settings);
 
@@ -844,6 +875,11 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
+        if(fluid_is_midifile(argv[i]))
+        {
+            continue;
+        }
+
         if(fluid_is_soundfont(argv[i]))
         {
             if(fluid_synth_sfload(synth, argv[i], 1) == -1)
@@ -851,7 +887,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
             }
         }
-        else if(!fluid_is_midifile(argv[i]))
+        else
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
@@ -915,7 +951,7 @@ int main(int argc, char **argv)
     }
 
     /* try to load and execute the user or system configuration file */
-    cmd_handler = new_fluid_cmd_handler(synth, router, player);
+    cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
 
     if(cmd_handler == NULL)
     {
@@ -923,20 +959,9 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    if(config_file != NULL)
+    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
     {
-        if(fluid_source(cmd_handler, config_file) < 0)
-        {
-            fprintf(stderr, "Failed to execute user provided command configuration file '%s'\n", config_file);
-        }
-    }
-    else if(fluid_get_userconf(buf, sizeof(buf)) != NULL)
-    {
-        fluid_source(cmd_handler, buf);
-    }
-    else if(fluid_get_sysconf(buf, sizeof(buf)) != NULL)
-    {
-        fluid_source(cmd_handler, buf);
+        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
     }
 
     /* start the player. Must be done after executing commands configuration file.
@@ -973,7 +998,7 @@ int main(int argc, char **argv)
 
     if(with_server)
     {
-        server = new_fluid_server(settings, synth, router, player);
+        server = new_fluid_server2(settings, synth, router, player);
 
         if(server == NULL)
         {
@@ -1073,10 +1098,7 @@ cleanup:
 
 #endif	/* NETWORK_SUPPORT */
 
-    if(cmd_handler != NULL)
-    {
-        delete_fluid_cmd_handler(cmd_handler);
-    }
+    delete_fluid_cmd_handler(cmd_handler);
 
     if(player != NULL)
     {
@@ -1117,7 +1139,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2020 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2021 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of Creative Technology Ltd.\n\n",
            fluid_version_str());

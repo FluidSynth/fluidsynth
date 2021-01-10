@@ -60,6 +60,10 @@ typedef struct
 struct _fluid_timer_t
 {
     long msec;
+
+    // Pointer to a function to be executed by the timer.
+    // This field is set to NULL once the timer is finished to indicate completion.
+    // This allows for timed waits, rather than waiting forever as fluid_timer_join() does.
     fluid_timer_callback_t callback;
     void *data;
     fluid_thread_t *thread;
@@ -215,6 +219,63 @@ void* fluid_alloc(size_t len)
     }
 #endif
     return ptr;
+}
+
+/**
+ * Open a file with a UTF-8 string, even in Windows
+ * @param filename The name of the file to open
+ * @param mode The mode to open the file in
+ */
+FILE *fluid_fopen(const char *filename, const char *mode)
+{
+#if defined(WIN32)
+    wchar_t *wpath = NULL, *wmode = NULL;
+    FILE *file = NULL;
+    int length;
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0)) == 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to perform MultiByteToWideChar() conversion for filename '%s'. Error was: '%s'", filename, fluid_get_windows_error());
+        errno = EINVAL;
+        goto error_recovery;
+    }
+    
+    wpath = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "Out of memory.");
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wpath, length);
+
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, NULL, 0)) == 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to perform MultiByteToWideChar() conversion for mode '%s'. Error was: '%s'", mode, fluid_get_windows_error());
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    wmode = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wmode == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "Out of memory.");
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, wmode, length);
+
+    file = _wfopen(wpath, wmode);
+
+error_recovery:
+    FLUID_FREE(wpath);
+    FLUID_FREE(wmode);
+
+    return file;
+#else
+    return fopen(filename, mode);
+#endif
 }
 
 /**
@@ -1103,6 +1164,7 @@ fluid_timer_run(void *data)
     }
 
     FLUID_LOG(FLUID_DBG, "Timer thread finished");
+    timer->callback = NULL;
 
     if(timer->auto_destroy)
     {
@@ -1194,6 +1256,19 @@ fluid_timer_join(fluid_timer_t *timer)
     }
 
     return FLUID_OK;
+}
+
+int
+fluid_timer_is_running(const fluid_timer_t *timer)
+{
+    // for unit test usage only
+    return timer->callback != NULL;
+}
+
+long fluid_timer_get_interval(const fluid_timer_t * timer)
+{
+    // for unit test usage only
+    return timer->msec;
 }
 
 
