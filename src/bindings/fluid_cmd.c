@@ -4582,8 +4582,8 @@ fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings,
         int is_player_cmd = FLUID_STRCMP(cmd->topic, "player") == 0;
         int is_synth_cmd = !(is_settings_cmd || is_router_cmd || is_player_cmd);
 
-        int no_cmd = is_settings_cmd && settings == NULL;   /* no settings commands */
-        no_cmd = no_cmd || (is_router_cmd && router == NULL); /* no router commands */
+        int no_cmd = is_settings_cmd && settings == NULL;   /* no settings command */
+        no_cmd = no_cmd || (is_router_cmd && router == NULL); /* no router command */
         no_cmd = no_cmd || (is_player_cmd && player == NULL); /* no player command */
         no_cmd = no_cmd || (is_synth_cmd && synth == NULL);   /* no synth command */
 
