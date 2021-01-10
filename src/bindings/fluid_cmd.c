@@ -4582,8 +4582,12 @@ fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings,
         int is_player_cmd = FLUID_STRCMP(cmd->topic, "player") == 0;
         int is_synth_cmd = !(is_settings_cmd || is_router_cmd || is_player_cmd);
 
-        if((is_settings_cmd && settings == NULL) || (is_router_cmd && router == NULL)
-            || (is_player_cmd && player == NULL) ||(is_synth_cmd && synth == NULL))
+        int no_cmd = is_settings_cmd && settings == NULL;   /* no settings commands */
+        no_cmd = no_cmd || (is_router_cmd && router == NULL); /* no router commands */
+        no_cmd = no_cmd || (is_player_cmd && player == NULL); /* no player command */
+        no_cmd = no_cmd || (is_synth_cmd && synth == NULL);   /* no synth command */
+
+        if(no_cmd)
         {
             /* register a no-op command, this avoids an unknown command error later on */
             fluid_cmd_t noop = *cmd;
