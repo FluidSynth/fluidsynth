@@ -193,7 +193,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
 /* @} */
 
 /**
- * @defgroup midi_player MIDI Player
+ * @defgroup midi_player MIDI File Player
  * @ingroup midi_input
  *
  * Parse standard MIDI files and emit MIDI events.
@@ -202,7 +202,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
  */
 
 /**
- * MIDI player status enum.
+ * MIDI File Player status enum.
  * @since 1.1.0
  */
 enum fluid_player_status
@@ -212,7 +212,19 @@ enum fluid_player_status
     FLUID_PLAYER_DONE             /**< Player is finished playing */
 };
 
-/** @startlifecycle{MIDI Player} */
+/**
+ * MIDI File Player tempo enum.
+ * @since 2.2.0
+ */
+enum fluid_player_set_tempo_type
+{
+    FLUID_PLAYER_TEMPO_INTERNAL,      /**< Use midi file tempo set in midi file (120 bpm by default). Multiplied by a factor */
+    FLUID_PLAYER_TEMPO_EXTERNAL_BPM,  /**< Set player tempo in bpm, supersede midi file tempo */
+    FLUID_PLAYER_TEMPO_EXTERNAL_MIDI, /**< Set player tempo in us per quarter note, supersede midi file tempo */
+    FLUID_PLAYER_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_set_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+};
+
+/** @startlifecycle{MIDI File Player} */
 FLUIDSYNTH_API fluid_player_t *new_fluid_player(fluid_synth_t *synth);
 FLUIDSYNTH_API void delete_fluid_player(fluid_player_t *player);
 /** @endlifecycle */
@@ -223,8 +235,9 @@ FLUIDSYNTH_API int fluid_player_play(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_stop(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_join(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_set_loop(fluid_player_t *player, int loop);
-FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo);
-FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t *player, int bpm);
+FLUIDSYNTH_API int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t *player, int bpm);
 FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t *player, handle_midi_event_func_t handler, void *handler_data);
 
 FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t *player);
