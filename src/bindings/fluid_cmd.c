@@ -3633,10 +3633,6 @@ int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
     return fluid_handle_player_cde(data, ac, av, out, PLAYER_LOOP_CDE);
 }
 
-// temporarily
-#define PLAYER_TEMPO_INTERNAL 0
-#define PLAYER_TEMPO_EXTERNAL_BMP 1
-
 /* Command handler for player tempo commands:
    player_tempo_int [mul], set the player to internal tempo multiplied by mul
    player_tempo_bpm bpm, set the player to external tempo in beat per minute.
@@ -3659,7 +3655,7 @@ int fluid_handle_player_tempo_cde(void *data, int ac, char **av, fluid_ostream_t
     {"player_tempo_int", "player_tempo_bpm"};
 
     /* get argument for: player_tempo_int [mul],  player_tempo_bpm bpm */
-    if((cmd == PLAYER_TEMPO_EXTERNAL_BMP) || ac)
+    if((cmd == FLUID_PLAYER_TEMPO_EXTERNAL_BPM) || ac)
     {
         /* check argument */
         if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
@@ -3670,28 +3666,25 @@ int fluid_handle_player_tempo_cde(void *data, int ac, char **av, fluid_ostream_t
         arg = atof(av[0]);
     }
 
-    if(cmd == PLAYER_TEMPO_EXTERNAL_BMP)
+    if(fluid_player_set_tempo(handler->player, cmd, arg) == FLUID_FAILED)
     {
-        if(fluid_player_set_bpm(handler->player, arg) == FLUID_FAILED)
-        {
-            fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
-            return FLUID_FAILED;
-        }
+        fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
+        return FLUID_FAILED;
     }
-    else printf("player_tempo_int %f\n", arg);
+
     return FLUID_OK;
 }
 
 /* Command handler for "player_tempo_int [mul]" command */
 int fluid_handle_player_tempo_int(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_player_tempo_cde(data, ac, av, out, PLAYER_TEMPO_INTERNAL);
+    return fluid_handle_player_tempo_cde(data, ac, av, out, FLUID_PLAYER_TEMPO_INTERNAL);
 }
 
 /* Command handler for "player_tempo_bpm bmp" command */
 int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_player_tempo_cde(data, ac, av, out, PLAYER_TEMPO_EXTERNAL_BMP);
+    return fluid_handle_player_tempo_cde(data, ac, av, out, FLUID_PLAYER_TEMPO_EXTERNAL_BPM);
 }
 
 #ifdef LADSPA
