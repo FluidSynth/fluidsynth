@@ -311,11 +311,11 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     4)creating the synth.
     5)loading the soundfonts specified in command line
 	  (multiple soundfonts loading is possible).
-    6)create the router.
-    7)create the midi driver connected to the router.
-    8)create a player and add it any midifile specified in command line.
+    6)loading a default soundfont if no soundfont are supplied.
+    7)create the router.
+    8)create the midi driver connected to the router.
+    9)create a player and add it any midifile specified in command line.
 	  (multiple midifiles loading is possible).
-    9)loading a default soundfont if needed before starting the player.
     10)create a command handler.
     11)reading the entire configuration file for the second time and submit it
        to the command handler before starting the player.
@@ -893,6 +893,24 @@ int main(int argc, char **argv)
         }
     }
 
+    /* Try to load the default soundfont, if no soundfont specified */
+    if(fluid_synth_get_sfont(synth, 0) == NULL)
+    {
+        char *s;
+
+        if(fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
+        {
+            s = NULL;
+        }
+
+        if((s != NULL) && (s[0] != '\0'))
+        {
+            fluid_synth_sfload(synth, s, 1);
+        }
+
+        FLUID_FREE(s);
+    }
+
     router = new_fluid_midi_router(
                  settings,
                  dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event,
@@ -972,24 +990,6 @@ int main(int argc, char **argv)
     */
     if(player != NULL)
     {
-        /* Try to load the default soundfont, if no soundfont specified */
-        if(fluid_synth_get_sfont(synth, 0) == NULL)
-        {
-            char *s;
-
-            if(fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
-            {
-                s = NULL;
-            }
-
-            if((s != NULL) && (s[0] != '\0'))
-            {
-                fluid_synth_sfload(synth, s, 1);
-            }
-
-            FLUID_FREE(s);
-        }
-
         fluid_player_play(player);
     }
 
