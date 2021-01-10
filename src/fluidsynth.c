@@ -319,10 +319,10 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     10)create a command handler.
     11)reading the entire configuration file for the second time and submit it
        to the command handler before starting the player.
-	12)Start the player
-    12)create a tcp shell if any requested.
-    13)entering fast rendering loop if requested, otherwise
-    14)create the audio driver (i.e synthesis thread) and a synchronous user
+    12)Start the player.
+    13)create a tcp shell if any requested.
+    14)entering fast rendering loop if requested, otherwise
+    15)create the audio driver (i.e synthesis thread) and a synchronous user
        shell if interactive.
  */
 int main(int argc, char **argv)
