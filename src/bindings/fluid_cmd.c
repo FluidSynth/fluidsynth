@@ -3654,23 +3654,33 @@ int fluid_handle_player_tempo_cde(void *data, int ac, char **av, fluid_ostream_t
     static const char *name_cde[] =
     {"player_tempo_int", "player_tempo_bpm"};
 
+    static const struct
+    {
+        double min;
+        double max;
+    }min_max[2] = {{0.1F, 10.F}, {1.0F, 600.0F}};
+
     /* get argument for: player_tempo_int [mul],  player_tempo_bpm bpm */
     if((cmd == FLUID_PLAYER_TEMPO_EXTERNAL_BPM) || ac)
     {
-        /* check argument */
+        /* check argument presence */
         if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
         {
             return FLUID_FAILED;
         }
 
         arg = atof(av[0]);
+
+        /* check if argument is in valid range */
+        if(arg < min_max[cmd].min || arg > min_max[cmd].max)
+        {
+            fluid_ostream_printf(out, "%s: arg %f must be in range [%f..%f]\n",
+                                 name_cde[cmd], arg, min_max[cmd].min, min_max[cmd].max);
+            return FLUID_FAILED;
+        }
     }
 
-    if(fluid_player_set_tempo(handler->player, cmd, arg) == FLUID_FAILED)
-    {
-        fluid_ostream_printf(out, "%s: %s", name_cde[cmd], invalid_arg_msg);
-        return FLUID_FAILED;
-    }
+    fluid_player_set_tempo(handler->player, cmd, arg);
 
     return FLUID_OK;
 }
