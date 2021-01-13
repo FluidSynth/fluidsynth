@@ -156,6 +156,21 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         ->setContentType(ContentType::Music)
         ->setCallback(dev->oboe_callback.get());
 
+        switch(performance_mode)
+        {
+        case 2:
+            builder->setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
+            break;
+
+        case 1:
+            builder->setSampleRateConversionQuality(SampleRateConversionQuality::Fastest);
+            break;
+
+        default:
+            builder->setSampleRateConversionQuality(SampleRateConversionQuality::High);
+            break;
+        }
+
         result = builder->openStream(dev->stream);
 
         if(result != Result::OK)
