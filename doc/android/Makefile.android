@@ -35,7 +35,7 @@ prepare: checkout-oboe checkout-cerbero
 
 .PHONY: checkout-oboe
 checkout-oboe: $(OBOE)
-	cd $(OBOE) && git checkout 395f3d6ac25c2b069d53451b89dff4aa96d26eb8
+	cd $(OBOE) && git checkout 1.5.0
 
 $(OBOE):
 	git clone https://github.com/Google/oboe.git $(OBOE) 
