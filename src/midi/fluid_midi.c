@@ -2392,6 +2392,11 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
  */
 int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {
+    if(bpm <= 0)
+    {
+        return FLUID_FAILED; /* to avoid a division by 0 */
+    }
+
     return fluid_player_set_midi_tempo(player, 60000000L / bpm);
 }
 

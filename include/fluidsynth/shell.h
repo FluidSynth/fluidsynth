@@ -63,7 +63,8 @@ FLUIDSYNTH_API
 fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router);
 
 FLUIDSYNTH_API
-fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings, fluid_synth_t *synth, fluid_midi_router_t *router);
+fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings, fluid_synth_t *synth,
+                                            fluid_midi_router_t *router, fluid_player_t *player);
 
 FLUIDSYNTH_API
 void delete_fluid_cmd_handler(fluid_cmd_handler_t *handler);
@@ -129,6 +130,11 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t *shell);
 FLUIDSYNTH_API
 fluid_server_t *new_fluid_server(fluid_settings_t *settings,
                                  fluid_synth_t *synth, fluid_midi_router_t *router);
+
+FLUIDSYNTH_API
+fluid_server_t *new_fluid_server2(fluid_settings_t *settings,
+                                 fluid_synth_t *synth, fluid_midi_router_t *router,
+                                 fluid_player_t *player);
 
 FLUIDSYNTH_API void delete_fluid_server(fluid_server_t *server);
 

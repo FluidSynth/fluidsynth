@@ -40,6 +40,7 @@ struct _fluid_cmd_handler_t
     fluid_settings_t *settings;
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
+    fluid_player_t *player;
     fluid_cmd_hash_t *commands;
 
     fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
@@ -193,7 +194,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
-        "rev_preset num             Load preset num into all reverb unit"
+        "rev_preset num              Load preset num into all reverb unit"
     },
     {
         "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
@@ -213,7 +214,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
-        "reverb [0|1|on|off]        Turn all reverb groups on or off"
+        "reverb [0|1|on|off]         Turn all reverb groups on or off"
     },
     /* chorus commands */
     {
@@ -234,7 +235,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
-        "chorus [0|1|on|off]        Turn all chorus groups on or off"
+        "chorus [0|1|on|off]         Turn all chorus groups on or off"
     },
     {
         "gain", "general", fluid_handle_gain,
@@ -363,6 +364,39 @@ static const fluid_cmd_t fluid_commands[] =
     {
         "router_end", "router", fluid_handle_router_end,
         "router_end                 closes and commits the current routing rule"
+    },
+    /* Midi file player commands */
+    {
+        "player_start", "player", fluid_handle_player_start,
+        "player_start               Start playing from the beginning of current song"
+    },
+    {
+        "player_stop", "player", fluid_handle_player_stop,
+        "player_stop                Stop playing"
+    },
+    {
+        "player_cont", "player", fluid_handle_player_continue,
+        "player_cont                Continue playing"
+    },
+    {
+        "player_step", "player", fluid_handle_player_step,
+        "player_step num            Move forward/backward in current song to +/-num ticks"
+    },
+    {
+        "player_next", "player", fluid_handle_player_next_song,
+        "player_next                Move to next song"
+    },
+    {
+        "player_loop", "player", fluid_handle_player_loop,
+        "player_loop num            Set loop number to num (-1 = loop forever)"
+    },
+    {
+        "player_tempo_bpm", "player", fluid_handle_player_tempo_bpm,
+        "player_tempo_bpm num       Set tempo to num beats per minute"
+    },
+    {
+        "player_tempo_int", "player", fluid_handle_player_tempo_int,
+        "player_tempo_int [mul]     Set internal tempo multiplied by mul (default mul=1.0)"
     },
 #if WITH_PROFILING
     /* Profiling commands */
@@ -3457,6 +3491,213 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
     return 0;
 }
 
+/**  commands  for Midi file player ******************************************/
+
+/* check player argument */
+int player_check_arg(const char *name_cde, int ac, char **av, fluid_ostream_t out)
+{
+    /* check if there is one argument that is a number */
+    if(ac != 1 || !fluid_is_number(av[0]))
+    {
+        fluid_ostream_printf(out, "%s: %s", name_cde, invalid_arg_msg);
+        return FLUID_FAILED;
+    }
+    return FLUID_OK;
+}
+
+/* print current position and total ticks */
+void player_print_position(fluid_player_t *player, fluid_ostream_t out)
+{
+    int current_tick = fluid_player_get_current_tick(player);
+    int total_ticks = fluid_player_get_total_ticks(player);
+    int tempo_bpm = fluid_player_get_bpm(player);
+    fluid_ostream_printf(out, "player current pos:%d, end:%d, bpm:%d\n\n",
+                         current_tick, total_ticks, tempo_bpm);
+}
+
+/* player commands enum */
+enum
+{
+    PLAYER_LOOP_CDE, /* player_loop num,(Set loop number to num) */
+    PLAYER_STEP_CDE, /* player_step num (Move forward/backward to +/-num ticks) */
+    PLAYER_STOP_CDE,      /* player_stop    (Stop playing) */
+    PLAYER_CONT_CDE,      /* player_cont    (Continue playing) */
+    PLAYER_NEXT_CDE,      /* player_next    (Move to next song) */
+    PLAYER_START_CDE      /* player_start   (Move to start of song) */
+};
+
+/* Command handler for player commands: player_step, player_loop, player_tempo_bpm */
+int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
+{
+    FLUID_ENTRY_COMMAND(data);
+    int arg;
+
+    /* commands name table */
+    static const char *name_cde[] =
+    {"player_loop", "player_step"};
+
+    /* get argument for PLAYER_LOOP_CDE, PLAYER_STEP_CDE */
+    if(cmd <= PLAYER_STEP_CDE)
+    {
+        /* check argument */
+        if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+
+        arg = atoi(av[0]);
+    }
+
+    if(cmd == PLAYER_LOOP_CDE)  /* player_loop */
+    {
+        fluid_player_set_loop(handler->player, arg);
+        return FLUID_OK;
+    }
+
+    if(cmd == PLAYER_CONT_CDE)  /* player_cont */
+    {
+        fluid_player_play(handler->player);
+        return FLUID_OK;
+    }
+
+    fluid_player_stop(handler->player);  /* player_stop */
+
+    if(cmd != PLAYER_STOP_CDE)
+    {
+        /* seek for player_next, player_step, player_start */
+        /* set seek to maximum position */
+        int seek = fluid_player_get_total_ticks(handler->player);
+
+        if(cmd == PLAYER_STEP_CDE)
+        {
+            /* Move position forward/backward +/- num ticks*/
+            arg  += fluid_player_get_current_tick(handler->player);
+
+            /* keep seek between minimum and maximum in current song */
+            if(arg < 0)
+            {
+                seek = 0; /* minimum position */
+            }
+            else if(arg < seek)
+            {
+                seek = arg; /* seek < maximum position */
+            }
+        }
+
+        if(cmd == PLAYER_START_CDE)  /* player_start */
+        {
+            seek = 0; /* beginning of the current song */
+        }
+
+        fluid_player_seek(handler->player, seek);
+        fluid_player_play(handler->player);
+    }
+    /* display position */
+    player_print_position(handler->player, out);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_start" command */
+int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_START_CDE);
+}
+
+/* Command handler for "player_stop" command */
+int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_STOP_CDE);
+}
+
+/* Command handler for "player_continue" command */
+int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_CONT_CDE);
+}
+/* Command handler for "player_step" command */
+int fluid_handle_player_step(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_STEP_CDE);
+}
+
+/* Command handler for "player_next" command */
+int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_NEXT_CDE);
+}
+
+/* Command handler for "player_loop" command */
+int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_LOOP_CDE);
+}
+
+/* Command handler for player tempo commands:
+   player_tempo_int [mul], set the player to internal tempo multiplied by mul
+   player_tempo_bpm bpm, set the player to external tempo in beat per minute.
+   examples:
+    player_tempo_int      set the player to internal tempo with a default
+                          multiplier set to 1.0.
+
+    player_tempo_int 0.5  set the player to internal tempo divided by 2.
+
+    player_tempo_bpm 75, set the player to external tempo of 75 beats per minute.
+*/
+int fluid_handle_player_tempo_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
+{
+    FLUID_ENTRY_COMMAND(data);
+    /* default multiplier for player_tempo_int command without argument*/
+    double arg = 1.0F;
+
+    /* commands name table */
+    static const char *name_cde[] =
+    {"player_tempo_int", "player_tempo_bpm"};
+
+    static const struct /* argument infos */
+    {
+        double min;
+        double max;
+        char *name;
+    }argument[2] = {{0.1F, 10.F, "multiplier"}, {1.0F, 600.0F, "bpm"}};
+
+    /* get argument for: player_tempo_int [mul],  player_tempo_bpm bpm */
+    if((cmd == FLUID_PLAYER_TEMPO_EXTERNAL_BPM) || ac)
+    {
+        /* check argument presence */
+        if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+
+        arg = atof(av[0]);
+
+        /* check if argument is in valid range */
+        if(arg < argument[cmd].min || arg > argument[cmd].max)
+        {
+            fluid_ostream_printf(out, "%s: %s %f must be in range [%f..%f]\n",
+                                 name_cde[cmd], argument[cmd].name, arg,
+                                 argument[cmd].min, argument[cmd].max);
+            return FLUID_FAILED;
+        }
+    }
+
+    fluid_player_set_tempo(handler->player, cmd, arg);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_tempo_int [mul]" command */
+int fluid_handle_player_tempo_int(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_tempo_cde(data, ac, av, out, FLUID_PLAYER_TEMPO_INTERNAL);
+}
+
+/* Command handler for "player_tempo_bpm bmp" command */
+int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_tempo_cde(data, ac, av, out, FLUID_PLAYER_TEMPO_EXTERNAL_BPM);
+}
 
 #ifdef LADSPA
 
@@ -4288,7 +4529,7 @@ fluid_cmd_handler_destroy_hash_value(void *value)
  */
 fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router)
 {
-    return new_fluid_cmd_handler2(fluid_synth_get_settings(synth), synth, router);
+    return new_fluid_cmd_handler2(fluid_synth_get_settings(synth), synth, router, NULL);
 }
 
 /**
@@ -4299,9 +4540,13 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
  * behaviour is undefined.
  * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
  * @param router If not NULL, all the default midi_router commands will be added to the new handler.
+ * @param player If not NULL, all the default midi file player commands will be added to the new handler.
  * @return New command handler, or NULL if alloc failed
  */
-fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t* settings, fluid_synth_t *synth, fluid_midi_router_t *router)
+fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings,
+                                            fluid_synth_t *synth,
+                                            fluid_midi_router_t *router,
+                                            fluid_player_t *player)
 {
     unsigned int i;
     fluid_cmd_handler_t *handler;
@@ -4327,16 +4572,22 @@ fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t* settings, fluid_sy
     handler->settings = settings;
     handler->synth = synth;
     handler->router = router;
+    handler->player = player;
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
         const fluid_cmd_t *cmd = &fluid_commands[i];
-        int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
         int is_settings_cmd = FLUID_STRCMP(cmd->topic, "settings") == 0;
+        int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
+        int is_player_cmd = FLUID_STRCMP(cmd->topic, "player") == 0;
+        int is_synth_cmd = !(is_settings_cmd || is_router_cmd || is_player_cmd);
 
-        if((is_router_cmd && router == NULL) ||
-           (is_settings_cmd && settings == NULL) ||
-           (!is_router_cmd && !is_settings_cmd && synth == NULL))
+        int no_cmd = is_settings_cmd && settings == NULL;   /* no settings command */
+        no_cmd = no_cmd || (is_router_cmd && router == NULL); /* no router command */
+        no_cmd = no_cmd || (is_player_cmd && player == NULL); /* no player command */
+        no_cmd = no_cmd || (is_synth_cmd && synth == NULL);   /* no synth command */
+
+        if(no_cmd)
         {
             /* register a no-op command, this avoids an unknown command error later on */
             fluid_cmd_t noop = *cmd;
@@ -4430,6 +4681,7 @@ struct _fluid_server_t
     fluid_settings_t *settings;
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
+    fluid_player_t *player;
     fluid_list_t *clients;
     fluid_mutex_t mutex;
 };
@@ -4540,7 +4792,9 @@ new_fluid_client(fluid_server_t *server, fluid_settings_t *settings, fluid_socke
     client->server = server;
     client->socket = sock;
     client->settings = settings;
-    client->handler = new_fluid_cmd_handler(server->synth, server->router);
+    client->handler = new_fluid_cmd_handler2(fluid_synth_get_settings(server->synth),
+                                             server->synth, server->router,
+                                             server->player);
     client->thread = new_fluid_thread("client", fluid_client_run, client,
                                       0, FALSE);
 
@@ -4583,14 +4837,28 @@ void delete_fluid_client(fluid_client_t *client)
 /**
  * Create a new TCP/IP command shell server.
  *
- * @param settings Settings instance to use for the shell
- * @param synth If not NULL, the synth instance for the command handler to be used by the client
- * @param router If not NULL, the midi_router instance for the command handler to be used by the client
- * @return New shell server instance or NULL on error
+ * See new_fluid_server2() for more information.
  */
 fluid_server_t *
 new_fluid_server(fluid_settings_t *settings,
                  fluid_synth_t *synth, fluid_midi_router_t *router)
+{
+    return new_fluid_server2(settings, synth, router, NULL);
+}
+
+/**
+ * Create a new TCP/IP command shell server.
+ *
+ * @param settings Settings instance to use for the shell
+ * @param synth If not NULL, the synth instance for the command handler to be used by the client
+ * @param router If not NULL, the midi_router instance for the command handler to be used by the client
+ * @param player If not NULL, the player instance for the command handler to be used by the client
+ * @return New shell server instance or NULL on error
+ */
+fluid_server_t *
+new_fluid_server2(fluid_settings_t *settings,
+                 fluid_synth_t *synth, fluid_midi_router_t *router,
+                 fluid_player_t *player)
 {
 #ifdef NETWORK_SUPPORT
     fluid_server_t *server;
@@ -4608,6 +4876,7 @@ new_fluid_server(fluid_settings_t *settings,
     server->clients = NULL;
     server->synth = synth;
     server->router = router;
+    server->player = player;
 
     fluid_mutex_init(server->mutex);
 
