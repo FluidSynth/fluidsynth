@@ -422,6 +422,7 @@ SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs)
 
     FLUID_MEMSET(sf, 0, sizeof(SFData));
 
+    fluid_rec_mutex_init(sf->mtx);
     sf->fcbs = fcbs;
 
     if((sf->sffd = fcbs->fopen(fname)) == NULL)
@@ -530,6 +531,7 @@ void fluid_sffile_close(SFData *sf)
     SFPreset *preset;
     SFInst *inst;
 
+    fluid_rec_mutex_destroy(sf->mtx);
     if(sf->sffd)
     {
         sf->fcbs->fclose(sf->sffd);
@@ -2529,10 +2531,12 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
         goto fail; /* proper error handling not possible?? */
     }
 
-    if(sf->fcbs->fseek(sf->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED)
+    fluid_rec_mutex_lock(sf->mtx);
+    if (sf->fcbs->fseek(sf->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED)
     {
         data->offset = new_offset;
     }
+    fluid_rec_mutex_unlock(sf->mtx);
 
 fail:
     return data->offset;
@@ -2556,11 +2560,21 @@ static sf_count_t sfvio_read(void *ptr, sf_count_t count, void *user_data)
         return count;
     }
 
-    if(sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
+    fluid_rec_mutex_lock(sf->mtx);
+    if (sf->fcbs->fseek(ptr, data->offset, SEEK_SET) == FLUID_FAILED)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to read compressed sample data");
-        return 0;
+        FLUID_LOG(FLUID_ERR, "This should never happen: fseek failed in sfvoid_read()");
+        count = 0;
     }
+    else
+    {
+        if (sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to read compressed sample data");
+            count = 0;
+        }
+    }
+    fluid_rec_mutex_unlock(sf->mtx);
 
     data->offset += count;
 
