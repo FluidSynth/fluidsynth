@@ -1,0 +1,34 @@
+/*!
+
+\page LoadingSoundfonts Loading and managing SoundFonts
+
+Before any sound can be produced, the synthesizer needs a SoundFont.
+
+SoundFonts are loaded with the fluid_synth_sfload() function. The function
+takes the path to a SoundFont file and a boolean to indicate whether the
+presets of the MIDI channels should be updated after the SoundFont is loaded.
+When the boolean value is TRUE, all MIDI channel bank and program numbers
+will be refreshed, which may cause new instruments to be selected from the
+newly loaded SoundFont.
+
+The synthesizer can load any number of SoundFonts. The loaded SoundFonts are
+treated as a stack, where each new loaded SoundFont is placed at the top of
+the stack. When selecting presets by bank and program numbers, SoundFonts are
+searched beginning at the top of the stack. In the case where there are
+presets in different SoundFonts with identical bank and program numbers, the
+preset from the most recently loaded SoundFont is used. The
+fluid_synth_program_select() can be used for unambiguously selecting a preset
+or bank offsets could be applied to each SoundFont with
+fluid_synth_set_bank_offset(), to try and ensure that each preset has unique
+bank and program numbers.
+
+The fluid_synth_sfload() function returns the unique identifier of the loaded
+SoundFont, or -1 in case of an error. This identifier is used in subsequent
+management functions: fluid_synth_sfunload() removes the SoundFont,
+fluid_synth_sfreload() reloads the SoundFont. When a SoundFont is reloaded,
+it retains it's ID and position on the SoundFont stack.
+
+Additional API functions are provided to get the number of loaded SoundFonts
+and to get a pointer to the SoundFont. 
+
+*/

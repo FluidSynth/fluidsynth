@@ -171,6 +171,12 @@ else ( SYSTEMD_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  systemd:               no\n" )
 endif ( SYSTEMD_SUPPORT )
 
+if ( HAVE_GETOPT_H )
+  set ( MISC_REPORT "${MISC_REPORT}  getopt:                yes\n" )
+else ( HAVE_GETOPT_H )
+  set ( MISC_REPORT "${MISC_REPORT}  getopt:                no\n" )
+endif ( HAVE_GETOPT_H )
+
 
 set ( DEVEL_REPORT "\nDeveloper nerds info:\n" )
 

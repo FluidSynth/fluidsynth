@@ -25,10 +25,21 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup soundfonts SountFonts
+ *
+ * SoundFont related functions
+ *
+ * This part of the API contains functions, defines and types that are mostly
+ * only used by internal or custom SoundFont loaders or client code that
+ * modifies loaded presets, SoundFonts or voices directly.
+ */
 
 /**
- * @file sfont.h
- * @brief SoundFont plugins
+ * @defgroup soundfont_loader SoundFont Loader
+ * @ingroup soundfonts
+ *
+ * Create custom SoundFont loaders
  *
  * It is possible to add new SoundFont loaders to the
  * synthesizer. This API allows for virtual SoundFont files to be loaded
@@ -59,6 +70,8 @@ extern "C" {
  * generator, use fluid_voice_gen_set() or fluid_voice_gen_incr(). When you are
  * finished initializing the voice call fluid_voice_start() to
  * start playing the synthesis voice.
+ *
+ * @{
  */
 
 /**
@@ -68,11 +81,14 @@ enum
 {
     FLUID_PRESET_SELECTED,                /**< Preset selected notify */
     FLUID_PRESET_UNSELECTED,              /**< Preset unselected notify */
-    FLUID_SAMPLE_DONE                     /**< Sample no longer needed notify */
+    FLUID_SAMPLE_DONE,                    /**< Sample no longer needed notify */
+    FLUID_PRESET_PIN,                     /**< Request to pin preset samples to cache */
+    FLUID_PRESET_UNPIN                    /**< Request to unpin preset samples from cache */
 };
 
 /**
  * Indicates the type of a sample used by the _fluid_sample_t::sampletype field.
+ *
  * This enum corresponds to the \c SFSampleLink enum in the SoundFont spec.
  * One \c flag may be bit-wise OR-ed with one \c value.
  */
@@ -90,6 +106,7 @@ enum fluid_sample_type
 /**
  * Method to load an instrument file (does not actually need to be a real file name,
  * could be another type of string identifier that the \a loader understands).
+ *
  * @param loader SoundFont loader
  * @param filename File name or other string identifier
  * @return The loaded instrument file (SoundFont) or NULL if an error occurred.
@@ -98,24 +115,31 @@ typedef fluid_sfont_t *(*fluid_sfloader_load_t)(fluid_sfloader_t *loader, const 
 
 /**
  * The free method should free the memory allocated for a fluid_sfloader_t instance in
- * addition to any private data. Any custom user provided cleanup function must ultimately call
+ * addition to any private data.
+ *
+ * @param loader SoundFont loader
+ *
+ * Any custom user provided cleanup function must ultimately call
  * delete_fluid_sfloader() to ensure proper cleanup of the #fluid_sfloader_t struct. If no private data
  * needs to be freed, setting this to delete_fluid_sfloader() is sufficient.
- * @param loader SoundFont loader
+ *
  */
 typedef void (*fluid_sfloader_free_t)(fluid_sfloader_t *loader);
 
 
+/** @startlifecycle{SoundFont Loader} */
 FLUIDSYNTH_API fluid_sfloader_t *new_fluid_sfloader(fluid_sfloader_load_t load, fluid_sfloader_free_t free);
 FLUIDSYNTH_API void delete_fluid_sfloader(fluid_sfloader_t *loader);
 
 FLUIDSYNTH_API fluid_sfloader_t *new_fluid_defsfloader(fluid_settings_t *settings);
+/** @endlifecycle */
 
 /**
  * Opens the file or memory indicated by \c filename in binary read mode.
- * \c filename matches the string provided during the fluid_synth_sfload() call.
  *
  * @return returns a file handle on success, NULL otherwise
+ *
+ * \c filename matches the string provided during the fluid_synth_sfload() call.
  */
 typedef void *(* fluid_sfloader_callback_open_t)(const char *filename);
 
@@ -130,7 +154,6 @@ typedef int (* fluid_sfloader_callback_read_t)(void *buf, fluid_long_long_t coun
  * Same purpose and behaviour as fseek.
  *
  * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
- *
  * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise
  */
 typedef int (* fluid_sfloader_callback_seek_t)(void *handle, fluid_long_long_t offset, int origin);
@@ -160,6 +183,7 @@ FLUIDSYNTH_API void *fluid_sfloader_get_data(fluid_sfloader_t *loader);
 
 /**
  * Method to return the name of a virtual SoundFont.
+ *
  * @param sfont Virtual SoundFont
  * @return The name of the virtual SoundFont.
  */
@@ -167,6 +191,7 @@ typedef const char *(*fluid_sfont_get_name_t)(fluid_sfont_t *sfont);
 
 /**
  * Get a virtual SoundFont preset by bank and program numbers.
+ *
  * @param sfont Virtual SoundFont
  * @param bank MIDI bank number (0-16383)
  * @param prenum MIDI preset number (0-127)
@@ -177,6 +202,7 @@ typedef fluid_preset_t *(*fluid_sfont_get_preset_t)(fluid_sfont_t *sfont, int ba
 
 /**
  * Start virtual SoundFont preset iteration method.
+ *
  * @param sfont Virtual SoundFont
  *
  * Starts/re-starts virtual preset iteration in a SoundFont.
@@ -185,6 +211,7 @@ typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t *sfont);
 
 /**
  * Virtual SoundFont preset iteration function.
+ *
  * @param sfont Virtual SoundFont
  * @return NULL when no more presets are available, otherwise the a pointer to the current preset
  *
@@ -194,17 +221,21 @@ typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t *sfont);
 typedef fluid_preset_t *(*fluid_sfont_iteration_next_t)(fluid_sfont_t *sfont);
 
 /**
- * Method to free a virtual SoundFont bank. Any custom user provided cleanup function must ultimately call
- * delete_fluid_sfont() to ensure proper cleanup of the #fluid_sfont_t struct. If no private data
- * needs to be freed, setting this to delete_fluid_sfont() is sufficient.
+ * Method to free a virtual SoundFont bank.
+ *
  * @param sfont Virtual SoundFont to free.
  * @return Should return 0 when it was able to free all resources or non-zero
  *   if some of the samples could not be freed because they are still in use,
  *   in which case the free will be tried again later, until success.
+ *
+ * Any custom user provided cleanup function must ultimately call
+ * delete_fluid_sfont() to ensure proper cleanup of the #fluid_sfont_t struct. If no private data
+ * needs to be freed, setting this to delete_fluid_sfont() is sufficient.
  */
 typedef int (*fluid_sfont_free_t)(fluid_sfont_t *sfont);
 
 
+/** @startlifecycle{SoundFont} */
 FLUIDSYNTH_API fluid_sfont_t *new_fluid_sfont(fluid_sfont_get_name_t get_name,
         fluid_sfont_get_preset_t get_preset,
         fluid_sfont_iteration_start_t iter_start,
@@ -212,6 +243,7 @@ FLUIDSYNTH_API fluid_sfont_t *new_fluid_sfont(fluid_sfont_get_name_t get_name,
         fluid_sfont_free_t free);
 
 FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t *sfont);
+/** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t *sfont, void *data);
 FLUIDSYNTH_API void *fluid_sfont_get_data(fluid_sfont_t *sfont);
@@ -224,6 +256,7 @@ FLUIDSYNTH_API fluid_preset_t *fluid_sfont_iteration_next(fluid_sfont_t *sfont);
 
 /**
  * Method to get a virtual SoundFont preset name.
+ *
  * @param preset Virtual SoundFont preset
  * @return Should return the name of the preset.  The returned string must be
  *   valid for the duration of the virtual preset (or the duration of the
@@ -233,6 +266,7 @@ typedef const char *(*fluid_preset_get_name_t)(fluid_preset_t *preset);
 
 /**
  * Method to get a virtual SoundFont preset MIDI bank number.
+ *
  * @param preset Virtual SoundFont preset
  * @param return The bank number of the preset
  */
@@ -240,6 +274,7 @@ typedef int (*fluid_preset_get_banknum_t)(fluid_preset_t *preset);
 
 /**
  * Method to get a virtual SoundFont preset MIDI program number.
+ *
  * @param preset Virtual SoundFont preset
  * @param return The program number of the preset
  */
@@ -247,6 +282,7 @@ typedef int (*fluid_preset_get_num_t)(fluid_preset_t *preset);
 
 /**
  * Method to handle a noteon event (synthesize the instrument).
+ *
  * @param preset Virtual SoundFont preset
  * @param synth Synthesizer instance
  * @param chan MIDI channel number of the note on event
@@ -270,14 +306,18 @@ typedef int (*fluid_preset_get_num_t)(fluid_preset_t *preset);
 typedef int (*fluid_preset_noteon_t)(fluid_preset_t *preset, fluid_synth_t *synth, int chan, int key, int vel);
 
 /**
- * Method to free a virtual SoundFont preset. Any custom user provided cleanup function must ultimately call
- * delete_fluid_preset() to ensure proper cleanup of the #fluid_preset_t struct. If no private data
- * needs to be freed, setting this to delete_fluid_preset() is sufficient.
+ * Method to free a virtual SoundFont preset.
+ *
  * @param preset Virtual SoundFont preset
  * @return Should return 0
+ *
+ * Any custom user provided cleanup function must ultimately call
+ * delete_fluid_preset() to ensure proper cleanup of the #fluid_preset_t struct. If no private data
+ * needs to be freed, setting this to delete_fluid_preset() is sufficient.
  */
 typedef void (*fluid_preset_free_t)(fluid_preset_t *preset);
 
+/** @startlifecycle{Preset} */
 FLUIDSYNTH_API fluid_preset_t *new_fluid_preset(fluid_sfont_t *parent_sfont,
         fluid_preset_get_name_t get_name,
         fluid_preset_get_banknum_t get_bank,
@@ -285,6 +325,7 @@ FLUIDSYNTH_API fluid_preset_t *new_fluid_preset(fluid_sfont_t *parent_sfont,
         fluid_preset_noteon_t noteon,
         fluid_preset_free_t free);
 FLUIDSYNTH_API void delete_fluid_preset(fluid_preset_t *preset);
+/** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_preset_set_data(fluid_preset_t *preset, void *data);
 FLUIDSYNTH_API void *fluid_preset_get_data(fluid_preset_t *preset);
@@ -294,8 +335,11 @@ FLUIDSYNTH_API int fluid_preset_get_banknum(fluid_preset_t *preset);
 FLUIDSYNTH_API int fluid_preset_get_num(fluid_preset_t *preset);
 FLUIDSYNTH_API fluid_sfont_t *fluid_preset_get_sfont(fluid_preset_t *preset);
 
+/** @startlifecycle{Sample} */
 FLUIDSYNTH_API fluid_sample_t *new_fluid_sample(void);
 FLUIDSYNTH_API void delete_fluid_sample(fluid_sample_t *sample);
+/** @endlifecycle */
+
 FLUIDSYNTH_API size_t fluid_sample_sizeof(void);
 
 FLUIDSYNTH_API int fluid_sample_set_name(fluid_sample_t *sample, const char *name);
@@ -308,6 +352,8 @@ FLUIDSYNTH_API int fluid_sample_set_sound_data(fluid_sample_t *sample,
 
 FLUIDSYNTH_API int fluid_sample_set_loop(fluid_sample_t *sample, unsigned int loop_start, unsigned int loop_end);
 FLUIDSYNTH_API int fluid_sample_set_pitch(fluid_sample_t *sample, int root_key, int fine_tune);
+
+/* @} */
 
 #ifdef __cplusplus
 }

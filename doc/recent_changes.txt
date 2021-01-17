@@ -1,0 +1,152 @@
+/*!
+
+\page RecentChanges Recent Changes
+\section NewIn2_2_0 What's new in 2.2.0?
+
+- #fluid_file_callbacks_t now uses <code>long long</code> as file-offset type (see #fluid_long_long_t). This is a breaking change, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.
+- fluid_event_any_control_change() has been removed
+- various fluid_event_*() functions that received a "value" argument of type <code>short</code> now receive an <code>int</code> argument in preparation for MIDI 2.0 support
+- The sequencer has received a major revisal. For you that means:
+  - The sequencer's queue no longer blocks the synthesizer thread, due to being busy arranging its events internally.
+  - Events that share the same tick was given a new, documented order, see fluid_sequencer_send_at().
+  - The sequencer's scale can now be used for arbitrary tempo changes. Previously, the scale of the sequencer was limited to 1000. The only limitation now is >0.
+  - There is now a dedicated event type for changing the sequencer's time scale, see fluid_event_scale().
+- The dynamic-sample-loader has learned support to pin samples, see fluid_synth_pin_preset() and fluid_synth_unpin_preset()
+- Added getter and setter functions for individual effect groups
+- Support for UTF-8 filenames under Windows, see fluid_synth_sfload()
+- MIDI Tempo of the fluid_player can now be overridden, see fluid_player_set_tempo()
+
+\section NewIn2_1_4 What's new in 2.1.4?
+
+- a regression introduced in 2.1.3 broke fluid_synth_start() for DLS presets
+
+\section NewIn2_1_1 What's new in 2.1.1?
+
+- requirements for explicit sequencer client unregistering have been relaxed: delete_fluid_sequencer() now correctly frees any registered sequencer clients (clients can still be explicitly unregistered)
+- using the sequencer with the system timer as timing source has been deprecated
+
+\section NewIn2_1_0 What's new in 2.1.0?
+
+- <span style="color:red">refrain from using fluid_synth_set_sample_rate()</span>
+- \setting{synth_sample-rate} is no real-time setting anymore, see note about fluid_synth_set_sample_rate()
+- new reverb engine
+- chorus is now stereophonic
+- smallest allowed chorus speed is now 0.1 Hz (previously 0.29 Hz)
+- the following audio drivers were added:
+  - opensles
+  - oboe
+  - sdl2
+  - waveout
+
+\section NewIn2_0_8 What's new in 2.0.8?
+
+- fluid_sample_set_sound_data() caused broken sound when copying sample data
+
+\section NewIn2_0_7 What's new in 2.0.7?
+
+- fluid_free() has been added to allow proper deallocation by programming languages other than C/C++
+
+\section NewIn2_0_6 What's new in 2.0.6?
+
+- the MIDI player did not emit any audio when calling fluid_player_play() after fluid_player_stop()
+
+\section NewIn2_0_5 What's new in 2.0.5?
+
+- fluid_synth_process() omitted audio samples when called with arbitrary sample counts that were not a multiple of fluid_synth_get_internal_bufsize()
+- fluid_synth_sfunload() was not releasing sample buffers of SoundFont3 files if \setting{synth_dynamic-sample-loading} was set to FALSE
+
+\section NewIn2_0_3 What's new in 2.0.3?
+
+- fix incorrect behaviour of fluid_sample_set_sound_data()
+- add missing getters for midi events:
+  - fluid_midi_event_get_text()
+  - fluid_midi_event_get_lyrics()
+
+\section NewIn2_0_2 What's new in 2.0.2?
+
+- fluid_synth_error() has been deprecated, use fluid_set_log_function() to interfere log messages
+
+\section NewIn2_0_0 What's new in 2.0.0?
+
+FluidSynths major version was bumped. The API was reworked, deprecated functions were removed.
+
+<strong><span style="color:red">Important changes that may not result in a compilation error but may cause your app to misbehave:</span></strong>
+
+- all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
+- fluid_settings_setstr() cannot be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint() instead, for example: <br /><code>fluid_settings_setint(settings, "synth.reverb.active", 0)</code> instead of <code>fluid_settings_setstr(settings, "synth.reverb.active", "no")</code>
+- <span style="text-decoration:line-through;">explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()</span> (since fluidsynth 2.1.1 not required anymore, but still recommend)
+- all public functions consistently receive signed integers for soundfont ids, bank and program numbers
+- use unique device names for the \setting{audio_portaudio_device} setting
+- fluid_synth_process() received a new more flexible implementation, but now requires zeroed-out sample buffers
+
+<strong>Other changes in FluidSynth 2.0.0 concerning developers:</strong>
+
+- all public \c delete_* functions return void and are safe when called with NULL
+- the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
+- \c fluid_settings_set* functions no longer silently register unknown settings but return an error instead
+- reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
+- rename \c fluid_mod_new() and \c fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
+- rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
+- fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
+- introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
+- fluid_get_userconf() has been implemented for Windows
+
+<strong>New Features and API additions:</strong>
+
+- add \setting{midi_autoconnect} a setting for automatically connecting fluidsynth to available MIDI input ports
+- add \setting{synth_overflow_important} and \setting{synth_overflow_important-channels} settings to take midi channels during overflow calculation into account that are considered to be "important"
+- add \setting{synth_dynamic-sample-loading} a setting for enabling on demand sample loading
+- add support for polyphonic key pressure events, see fluid_event_key_pressure() and fluid_synth_key_pressure()
+- add fluid_synth_add_default_mod() and fluid_synth_remove_default_mod() for manipulating default modulators
+- add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
+- add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
+- add realtime settings for \setting{synth_reverb_damp} and \setting{synth_chorus_depth} parameters
+- add seek support to midi-player, see fluid_player_seek()
+- expose functions to manipulate the ladspa effects unit (see ladspa.h)
+- add support for text and lyrics midi events, see fluid_midi_event_set_lyrics() and fluid_midi_event_set_text()
+- complete rewrite of the soundfont loader API, see sfont.h
+  - support for 24 bit audio samples, see fluid_sample_set_sound_data()
+  - expose new_fluid_defsfloader() to support loading soundfonts from memory, see fluid_sfloader_set_callbacks() and <a href="fluidsynth_sfload_mem_8c-example.html">fluidsynth_sfload_mem.c</a>
+  - remove these structs from the public API and provide proper getter and setter functions instead:
+    - struct _fluid_sfloader_t
+    - struct _fluid_sample_t
+    - struct _fluid_sfont_t
+    - struct _fluid_preset_t
+- add an additional general-purpose IIR filter, see fluid_synth_set_custom_filter()
+- add a custom sinusoidal modulator mapping function, see #FLUID_MOD_SIN
+- implement polymono support according to MIDI specs:
+  - add basic channel support, see fluid_synth_reset_basic_channel(), fluid_synth_set_basic_channel(), fluid_synth_get_basic_channel()
+  - implement MIDI modes Omni On, Omni Off, Poly, Mono, see #fluid_basic_channel_modes
+  - implement portamento control, see fluid_synth_set_portamento_mode(), fluid_synth_get_portamento_mode()
+  - implement legato control, see fluid_synth_set_legato_mode(), fluid_synth_get_legato_mode()
+  - implement breath control, see fluid_synth_set_breath_mode(), fluid_synth_get_breath_mode()
+
+<strong>API cleanups:</strong>
+  
+- the ramsfont has been removed, because it is unmaintained and believed to be unused; please get in touch with the mailing list if you still need it
+- remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
+- remove deprecated fluid_settings_getstr()
+- remove deprecated fluid_synth_set_midi_router(), instead supply the midi-router instance when creating a command handler with new_fluid_cmd_handler()
+- remove deprecated fluid_get_hinstance() and fluid_set_hinstance() (dsound driver now uses the desktop window)
+- remove deprecated fluid_synth_create_key_tuning(), use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_create_octave_tuning(), use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_select_tuning(), use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead
+- remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
+- remove deprecated FLUID_HINT_INTEGER
+- remove deprecated fluid_synth_set_gen2() as there doesn't seem to be a use case for absolute generator values
+- remove deprecated "synth.parallel-render" setting
+- remove obsolete "audio.[out|in]put-channels" settings
+- remove unimplemented "synth.dump" setting
+- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
+- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
+- remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
+- remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
+- remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
+- remove FLUID_NUM_MOD macro from public API
+- remove the following deprecated enum values from public API:
+  - GEN_LAST
+  - LAST_LOG_LEVEL
+  - FLUID_SEQ_LASTEVENT
+  - FLUID_MIDI_ROUTER_RULE_COUNT
+
+*/

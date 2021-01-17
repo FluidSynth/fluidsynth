@@ -480,6 +480,20 @@ fluid_event_unregistering(fluid_event_t *evt)
 }
 
 /**
+ * Set a sequencer event to be a scale change event.
+ * Useful for scheduling tempo changes.
+ * @param evt Sequencer event structure
+ * @param new_scale The new time scale to apply to the sequencer, see fluid_sequencer_set_time_scale()
+ * @since 2.2.0
+ */
+void
+fluid_event_scale(fluid_event_t *evt, double new_scale)
+{
+    evt->type = FLUID_SEQ_SCALE;
+    evt->scale = new_scale;
+}
+
+/**
  * Set a sequencer event to be a channel-wide aftertouch event.
  * @param evt Sequencer event structure
  * @param channel MIDI channel number
@@ -743,4 +757,16 @@ unsigned int
 fluid_event_get_sfont_id(fluid_event_t *evt)
 {
     return evt->duration;
+}
+
+/**
+ * Gets time scale field from a sequencer event structure.
+ * @param evt Sequencer event structure
+ * @return SoundFont identifier value.
+ *
+ * Used by the #FLUID_SEQ_SCALE event type.
+ */
+double fluid_event_get_scale(fluid_event_t *evt)
+{
+    return evt->scale;
 }

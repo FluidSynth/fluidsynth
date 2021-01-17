@@ -227,15 +227,16 @@ error_recovery:
 }
 
 /**
- * Destroys and frees a LADSPA effects unit previously created
- * with new_fluid_ladspa_fx.
+ * Destroy and free a LADSPA effects unit previously created
+ * with new_fluid_ladspa_fx().
+ *
+ * @param fx LADSPA effects instance
  *
  * @note This function does not check the engine state for
  * possible users, so make sure that you only call this
  * if you are sure nobody is using the engine anymore (especially
  * that nobody calls fluid_ladspa_run)
  *
- * @param fx LADSPA effects instance
  */
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 {
@@ -268,15 +269,16 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 /**
  * Add host buffers to the LADSPA engine.
  *
- * @note The size of the buffers pointed to by the buffers array must be
- * at least as large as the buffer size given to new_fluid_ladspa_fx.
- *
  * @param fx LADSPA fx instance
  * @param prefix common name prefix for the created nodes
  * @param num_buffers number of of buffers buffer array
  * @param buffers array of sample buffers
  * @param buf_stride number of samples contained in one buffer
  * @return FLUID_OK on success, otherwise FLUID_FAILED
+ *
+ * @note The size of the buffers pointed to by the buffers array must be
+ * at least as large as the buffer size given to new_fluid_ladspa_fx.
+ *
  */
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
                                 int num_buffers, fluid_real_t buffers[], int buf_stride)
@@ -319,12 +321,13 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
 /**
  * Set the sample rate of the LADSPA effects.
  *
- * Resets the LADSPA effects if the sample rate is different from the
- * previous sample rate.
- *
  * @param fx LADSPA fx instance
  * @param sample_rate new sample rate
  * @return FLUID_OK on success, otherwise FLUID_FAILED
+ *
+ * Resets the LADSPA effects if the sample rate is different from the
+ * previous sample rate.
+ *
  */
 int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate)
 {
@@ -357,13 +360,13 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
 /**
  * Check if the LADSPA engine is currently used to render audio
  *
+ * @param fx LADSPA fx instance
+ * @return TRUE if LADSPA effects engine is active, otherwise FALSE
+ *
  * If an engine is active, the only allowed user actions are deactivation or
  * setting values of  control ports on effects. Anything else, especially
  * adding or removing effects, buffers or ports, is only allowed in deactivated
  * state.
- *
- * @param fx LADSPA fx instance
- * @return TRUE if LADSPA effects engine is active, otherwise FALSE
  */
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 {
@@ -424,10 +427,10 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
 /**
  * Deactivate a LADSPA fx instance and all configured effects.
  *
- * @note This function may sleep.
- *
  * @param fx LADSPA fx instance
  * @return FLUID_OK if deactivation succeeded, otherwise FLUID_FAILED
+ *
+ * @note This function may sleep.
  */
 int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
 {
@@ -468,11 +471,13 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
 }
 
 /**
- * Reset the LADSPA effects engine: Deactivate LADSPA if currently active, remove all
- * effects, remove all user nodes and unload all libraries.
+ * Reset the LADSPA effects engine.
  *
  * @param fx LADSPA fx instance
  * @return FLUID_OK on success, otherwise FLUID_FAILED
+ *
+ * Deactivate LADSPA if currently active, remove all
+ * effects, remove all user nodes and unload all libraries.
  */
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 {
@@ -496,15 +501,15 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 /**
  * Processes audio data via the LADSPA effects unit.
  *
+ * @param fx LADSPA effects instance
+ * @param block_count number of blocks to render
+ * @param block_size number of samples in a block
+ *
  * FluidSynth calls this function during main output mixing, just after
  * the internal reverb and chorus effects have been processed.
  *
  * It copies audio data from the supplied buffers, runs all effects and copies the
  * resulting audio back into the same buffers.
- *
- * @param fx LADSPA effects instance
- * @param block_count number of blocks to render
- * @param block_size number of samples in a block
  */
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
 {
@@ -862,7 +867,7 @@ int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_na
 }
 
 /**
- * Create an effect, i.e. an instance of a LADSPA plugin
+ * Create an instance of a LADSPA plugin as an effect
  *
  * @param fx LADSPA effects instance
  * @param effect_name name of the effect
@@ -922,14 +927,14 @@ int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
 /**
  * Connect an effect port to a host port or buffer
  *
- * @note There is no corresponding disconnect function. If the connections need to be changed,
- * clear everything with fluid_ladspa_reset and start again from scratch.
- *
  * @param fx LADSPA effects instance
  * @param effect_name name of the effect
  * @param port_name the port name to connect to (case-insensitive prefix match)
  * @param name the host port or buffer to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
+ *
+ * @note There is no corresponding disconnect function. If the connections need to be changed,
+ * clear everything with fluid_ladspa_reset and start again from scratch.
  */
 int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
                              const char *port_name, const char *name)
@@ -1009,13 +1014,13 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
 /**
  * Do a sanity check for problems in the LADSPA setup
  *
- * If the check detects problems and the err pointer is not NULL, a description of the first found
- * problem is written to that string (up to err_size - 1 characters).
- *
  * @param fx LADSPA fx instance
  * @param err externally provided buffer for the error message. Set to NULL if you don't need an error message.
  * @param err_size size of the err buffer
  * @return FLUID_OK if setup is valid, otherwise FLUID_FAILED (err will contain the error message)
+ *
+ * If the check detects problems and the err pointer is not NULL, a description of the first found
+ * problem is written to that string (up to err_size - 1 characters).
  */
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 {
@@ -1139,13 +1144,13 @@ static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name)
 /**
  * Return a LADSPA effect port index by name, using a 'fuzzy match'.
  *
- * Returns the first effect port which matches the name. If no exact match is
- * found, returns the port that starts with the specified name, but only if there is
- * only one such match.
- *
  * @param effect pointer to fluid_ladspa_effect_t
  * @param name the port name
  * @return index of the port in the effect or -1 on error
+ *
+ * Returns the first effect port which matches the name. If no exact match is
+ * found, returns the port that starts with the specified name, but only if there is
+ * only one such match.
  */
 static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *name)
 {
@@ -1178,11 +1183,11 @@ static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *
 /**
  * Return a LADSPA descriptor structure for a plugin in a LADSPA library.
  *
- * If name is optional if the library contains only one plugin.
- *
  * @param lib pointer to the dynamically loaded library
  * @param name name (LADSPA Label) of the plugin
  * @return pointer to LADSPA_Descriptor, NULL on error or if not found
+ *
+ * The name is optional if the library contains only one plugin.
  */
 static const LADSPA_Descriptor *get_plugin_descriptor(fluid_module_t *lib, const char *name)
 {
@@ -1233,13 +1238,13 @@ static const LADSPA_Descriptor *get_plugin_descriptor(fluid_module_t *lib, const
  * Instantiate a LADSPA plugin from a library and set up the associated
  * control structures needed by the LADSPA fx engine.
  *
- * If the library contains only one plugin, then the name is optional.
- * Plugins are identified by their "Label" in the plugin descriptor structure.
- *
  * @param fx LADSPA fx instance
  * @param lib_name file path of the plugin library
  * @param plugin_name (optional) string name of the plugin (the LADSPA Label)
  * @return pointer to the new ladspa_plugin_t structure or NULL on error
+ *
+ * If the library contains only one plugin, then the name is optional.
+ * Plugins are identified by their "Label" in the plugin descriptor structure.
  */
 static fluid_ladspa_effect_t *
 new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name)

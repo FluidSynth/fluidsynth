@@ -68,11 +68,14 @@ struct _fluid_midi_router_rule_t
 
 
 /**
- * Create a new midi router.  The default rules will pass all events unmodified.
+ * Create a new midi router.
+ *
  * @param settings Settings used to configure MIDI router
  * @param handler MIDI event callback.
  * @param event_handler_data Caller defined data pointer which gets passed to 'handler'
  * @return New MIDI router instance or NULL on error
+ *
+ * The new router will start with default rules and therefore pass all events unmodified.
  *
  * The MIDI handler callback should process the possibly filtered/modified MIDI
  * events from the MIDI router and forward them on to a synthesizer for example.
@@ -151,10 +154,13 @@ delete_fluid_midi_router(fluid_midi_router_t *router)
 }
 
 /**
- * Set a MIDI router to use default "unity" rules. Such a router will pass all
- * events unmodified.
+ * Set a MIDI router to use default "unity" rules.
+ *
  * @param router Router to set to default rules.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * Such a router will pass all events unmodified.
+ *
  * @since 1.1.0
  */
 int
@@ -244,10 +250,13 @@ fluid_midi_router_set_default_rules(fluid_midi_router_t *router)
 }
 
 /**
- * Clear all rules in a MIDI router. Such a router will drop all events until
- * rules are added.
+ * Clear all rules in a MIDI router.
+ *
  * @param router Router to clear all rules from
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * An empty router will drop all events until rules are added.
+ *
  * @since 1.1.0
  */
 int
@@ -357,11 +366,13 @@ fluid_midi_router_add_rule(fluid_midi_router_t *router, fluid_midi_router_rule_t
 
 /**
  * Create a new MIDI router rule.
+ *
  * @return Newly allocated router rule or NULL if out of memory.
- * @since 1.1.0
  *
  * The new rule is a "unity" rule which will accept any values and wont modify
  * them.
+ *
+ * @since 1.1.0
  */
 fluid_midi_router_rule_t *
 new_fluid_midi_router_rule(void)
@@ -396,11 +407,13 @@ new_fluid_midi_router_rule(void)
 
 /**
  * Free a MIDI router rule.
+ *
  * @param rule Router rule to free
- * @since 1.1.0
  *
  * Note that rules which have been added to a router are managed by the router,
  * so this function should seldom be needed.
+ *
+ * @since 1.1.0
  */
 void
 delete_fluid_midi_router_rule(fluid_midi_router_rule_t *rule)
@@ -411,12 +424,12 @@ delete_fluid_midi_router_rule(fluid_midi_router_rule_t *rule)
 
 /**
  * Set the channel portion of a rule.
+ *
  * @param rule MIDI router rule
  * @param min Minimum value for rule match
  * @param max Maximum value for rule match
  * @param mul Value which is multiplied by matching event's channel value (1.0 to not modify)
  * @param add Value which is added to matching event's channel value (0 to not modify)
- * @since 1.1.0
  *
  * The \a min and \a max parameters define a channel range window to match
  * incoming events to.  If \a min is less than or equal to \a max then an event
@@ -426,6 +439,8 @@ delete_fluid_midi_router_rule(fluid_midi_router_rule_t *rule)
  *
  * The \a mul and \a add values are used to modify event channel values prior to
  * sending the event, if the rule matches.
+ *
+ * @since 1.1.0
  */
 void
 fluid_midi_router_rule_set_chan(fluid_midi_router_rule_t *rule, int min, int max,
@@ -440,12 +455,12 @@ fluid_midi_router_rule_set_chan(fluid_midi_router_rule_t *rule, int min, int max
 
 /**
  * Set the first parameter portion of a rule.
+ *
  * @param rule MIDI router rule
  * @param min Minimum value for rule match
  * @param max Maximum value for rule match
  * @param mul Value which is multiplied by matching event's 1st parameter value (1.0 to not modify)
  * @param add Value which is added to matching event's 1st parameter value (0 to not modify)
- * @since 1.1.0
  *
  * The 1st parameter of an event depends on the type of event.  For note events
  * its the MIDI note #, for CC events its the MIDI control number, for program
@@ -464,6 +479,8 @@ fluid_midi_router_rule_set_chan(fluid_midi_router_rule_t *rule, int min, int max
  *
  * The \a mul and \a add values are used to modify event 1st parameter values prior to
  * sending the event, if the rule matches.
+ *
+ * @since 1.1.0
  */
 void
 fluid_midi_router_rule_set_param1(fluid_midi_router_rule_t *rule, int min, int max,
@@ -478,12 +495,12 @@ fluid_midi_router_rule_set_param1(fluid_midi_router_rule_t *rule, int min, int m
 
 /**
  * Set the second parameter portion of a rule.
+ *
  * @param rule MIDI router rule
  * @param min Minimum value for rule match
  * @param max Maximum value for rule match
  * @param mul Value which is multiplied by matching event's 2nd parameter value (1.0 to not modify)
  * @param add Value which is added to matching event's 2nd parameter value (0 to not modify)
- * @since 1.1.0
  *
  * The 2nd parameter of an event depends on the type of event.  For note events
  * its the MIDI velocity, for CC events its the control value and for key pressure
@@ -499,6 +516,8 @@ fluid_midi_router_rule_set_param1(fluid_midi_router_rule_t *rule, int min, int m
  *
  * The \a mul and \a add values are used to modify event 2nd parameter values prior to
  * sending the event, if the rule matches.
+ *
+ * @since 1.1.0
  */
 void
 fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int max,

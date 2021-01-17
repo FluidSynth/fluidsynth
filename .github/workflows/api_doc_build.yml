@@ -1,0 +1,52 @@
+name: API Doc Build
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    
+    - name: Install Dependencies
+      run: sudo apt-get install doxygen xsltproc
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+    - name: Build
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config $BUILD_TYPE --target doxygen
+
+    - name: Install SSH Client 🔑
+      uses: webfactory/ssh-agent@v0.4.1
+      with:
+        ssh-private-key: ${{ secrets.DEPLOY_API_TOKEN }}
+    
+    - name: Publish API Docs to GH Pages
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        FOLDER: ${{runner.workspace}}/build/doc/api/html/
+        REPOSITORY_NAME: FluidSynth/fluidsynth.github.io
+        BRANCH: main
+        TARGET_FOLDER: api/
+        SSH: true
+        CLEAN: true
+        COMMIT_MESSAGE: Updating API doc from fluidsynth master
+        GIT_CONFIG_NAME: API Doc Deploy
+        GIT_CONFIG_EMAIL: fluid-api-deploy@fluidsynth.github.io

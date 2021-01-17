@@ -171,22 +171,24 @@ fluid_file_renderer_settings(fluid_settings_t *settings)
 
 /**
  * Create a new file renderer and open the file.
+ *
  * @param synth The synth that creates audio data.
  * @return the new object, or NULL on failure
- * @since 1.1.0
  *
- * NOTE: Available file types and formats depends on if libfluidsynth was
+ * @note Available file types and formats depends on if libfluidsynth was
  * built with libsndfile support or not.  If not then only RAW 16 bit output is
  * supported.
  *
  * Uses the following settings from the synth object:
- *   - audio.file.name: Output filename
- *   - audio.file.type: File type, "auto" tries to determine type from filename
+ *   - \ref settings_audio_file_name : Output filename
+ *   - \ref settings_audio_file_type : File type, "auto" tries to determine type from filename
  *     extension with fallback to "wav".
- *   - audio.file.format: Audio format
- *   - audio.file.endian: Endian byte order, "auto" for file type's default byte order
- *   - audio.period-size: Size of audio blocks to process
- *   - synth.sample-rate: Sample rate to use
+ *   - \ref settings_audio_file_format : Audio format
+ *   - \ref settings_audio_file_endian : Endian byte order, "auto" for file type's default byte order
+ *   - \ref settings_audio_period-size : Size of audio blocks to process
+ *   - \ref settings_synth_sample-rate : Sample rate to use
+ *
+ * @since 1.1.0
  */
 fluid_file_renderer_t *
 new_fluid_file_renderer(fluid_synth_t *synth)

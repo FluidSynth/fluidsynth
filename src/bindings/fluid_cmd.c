@@ -37,8 +37,10 @@
 /* the shell cmd handler struct */
 struct _fluid_cmd_handler_t
 {
+    fluid_settings_t *settings;
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
+    fluid_player_t *player;
     fluid_cmd_hash_t *commands;
 
     fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
@@ -192,48 +194,48 @@ static const fluid_cmd_t fluid_commands[] =
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
-        "rev_preset num             Load preset num into the reverb unit"
+        "rev_preset num              Load preset num into all reverb unit"
     },
     {
         "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
-        "rev_setroomsize num        Change reverb room size"
+        "rev_setroomsize [group] num Set room size of all or one reverb group to num"
     },
     {
         "rev_setdamp", "reverb", fluid_handle_reverbsetdamp,
-        "rev_setdamp num            Change reverb damping"
+        "rev_setdamp [group] num     Set damping of all or one reverb group to num"
     },
     {
         "rev_setwidth", "reverb", fluid_handle_reverbsetwidth,
-        "rev_setwidth num           Change reverb width"
+        "rev_setwidth [group] num    Set width of all or one reverb group to num"
     },
     {
         "rev_setlevel", "reverb", fluid_handle_reverbsetlevel,
-        "rev_setlevel num           Change reverb level"
+        "rev_setlevel [group] num    Set output level of all or one reverb group to num"
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
-        "reverb [0|1|on|off]        Turn the reverb on or off"
+        "reverb [0|1|on|off]         Turn all reverb groups on or off"
     },
     /* chorus commands */
     {
         "cho_set_nr", "chorus", fluid_handle_chorusnr,
-        "cho_set_nr n               Use n delay lines (default 3)"
+        "cho_set_nr [group] n        Set n delay lines (default 3) in all or one chorus group"
     },
     {
         "cho_set_level", "chorus", fluid_handle_choruslevel,
-        "cho_set_level num          Set output level of each chorus line to num"
+        "cho_set_level [group] num   Set output level of all or one chorus group to num"
     },
     {
         "cho_set_speed", "chorus", fluid_handle_chorusspeed,
-        "cho_set_speed num          Set mod speed of chorus to num (Hz)"
+        "cho_set_speed [group] num   Set mod speed of all or one chorus group to num (Hz)"
     },
     {
         "cho_set_depth", "chorus", fluid_handle_chorusdepth,
-        "cho_set_depth num          Set chorus modulation depth to num (ms)"
+        "cho_set_depth [group] num   Set modulation depth of all or one chorus group to num (ms)"
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
-        "chorus [0|1|on|off]        Turn the chorus on or off"
+        "chorus [0|1|on|off]         Turn all chorus groups on or off"
     },
     {
         "gain", "general", fluid_handle_gain,
@@ -363,6 +365,39 @@ static const fluid_cmd_t fluid_commands[] =
         "router_end", "router", fluid_handle_router_end,
         "router_end                 closes and commits the current routing rule"
     },
+    /* Midi file player commands */
+    {
+        "player_start", "player", fluid_handle_player_start,
+        "player_start               Start playing from the beginning of current song"
+    },
+    {
+        "player_stop", "player", fluid_handle_player_stop,
+        "player_stop                Stop playing"
+    },
+    {
+        "player_cont", "player", fluid_handle_player_continue,
+        "player_cont                Continue playing"
+    },
+    {
+        "player_step", "player", fluid_handle_player_step,
+        "player_step num            Move forward/backward in current song to +/-num ticks"
+    },
+    {
+        "player_next", "player", fluid_handle_player_next_song,
+        "player_next                Move to next song"
+    },
+    {
+        "player_loop", "player", fluid_handle_player_loop,
+        "player_loop num            Set loop number to num (-1 = loop forever)"
+    },
+    {
+        "player_tempo_bpm", "player", fluid_handle_player_tempo_bpm,
+        "player_tempo_bpm num       Set tempo to num beats per minute"
+    },
+    {
+        "player_tempo_int", "player", fluid_handle_player_tempo_int,
+        "player_tempo_int [mul]     Set internal tempo multiplied by mul (default mul=1.0)"
+    },
 #if WITH_PROFILING
     /* Profiling commands */
     {
@@ -386,12 +421,14 @@ static const fluid_cmd_t fluid_commands[] =
 
 /**
  * Process a string command.
- * NOTE: FluidSynth 1.0.8 and above no longer modifies the 'cmd' string.
+ *
  * @param handler FluidSynth command handler
  * @param cmd Command string (NOTE: Gets modified by FluidSynth prior to 1.0.8)
  * @param out Output stream to display command response to
  * @return Integer value corresponding to: -1 on command error, 0 on success,
  *   1 if 'cmd' is a comment or is empty and -2 if quit was issued
+ *
+ * @note FluidSynth 1.0.8 and above no longer modifies the 'cmd' string.
  */
 int
 fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out)
@@ -418,6 +455,7 @@ fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out
 
 /**
  * Create a new FluidSynth command shell.
+ *
  * @param settings Setting parameters to use with the shell
  * @param handler Command handler
  * @param in Input stream
@@ -536,7 +574,10 @@ fluid_shell_run(void *data)
 
         if(n == 0)
         {
-            FLUID_LOG(FLUID_INFO, "Received EOF while reading commands, exiting the shell.");
+            if(shell->settings)
+            {
+                FLUID_LOG(FLUID_INFO, "Received EOF while reading commands, exiting the shell.");
+            }
             break;
         }
     }
@@ -550,8 +591,12 @@ fluid_shell_run(void *data)
 /**
  * A convenience function to create a shell interfacing to standard input/output
  * console streams.
+ *
  * @param settings Settings instance for the shell
  * @param handler Command handler callback
+ *
+ * The shell is run in the current thread, this function will only
+ * return after the \c quit command has been issued.
  */
 void
 fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler)
@@ -563,6 +608,7 @@ fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler)
 
 /**
  * Execute shell commands in a file.
+ *
  * @param handler Command handler callback
  * @param filename File name
  * @return 0 on success, a negative value on error
@@ -600,11 +646,12 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
 /**
  * Get the user specific FluidSynth command file name.
  *
- * On Windows this is currently @c "%USERPROFILE%\fluidsynth.cfg".
- * For anything else (except MACOS9) @c "$HOME/.fluidsynth".
  * @param buf Caller supplied string buffer to store file name to.
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no user command file for this system type.
+ *
+ * On Windows this is currently @c "%USERPROFILE%\fluidsynth.cfg".
+ * For anything else (except MACOS9) @c "$HOME/.fluidsynth".
  */
 char *
 fluid_get_userconf(char *buf, int len)
@@ -614,13 +661,13 @@ fluid_get_userconf(char *buf, int len)
 #if defined(WIN32)
     home = getenv("USERPROFILE");
     config_file = "\\fluidsynth.cfg";
-    
+
 #elif !defined(MACOS9)
     home = getenv("HOME");
     config_file = "/.fluidsynth";
-    
+
 #endif
-    
+
     if(home == NULL)
     {
         return NULL;
@@ -635,11 +682,12 @@ fluid_get_userconf(char *buf, int len)
 /**
  * Get the system FluidSynth command file name.
  *
- * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
- * returns @c "/etc/fluidsynth.conf".
  * @param buf Caller supplied string buffer to store file name to.
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no system command file for this system type.
+ *
+ * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
+ * returns @c "/etc/fluidsynth.conf".
  */
 char *
 fluid_get_sysconf(char *buf, int len)
@@ -1086,275 +1134,365 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 }
 
+/*
+  The function is useful for reverb and chorus commands which have
+  1 or 2 parameters.
+  The function checks that there is 1 or 2 aguments.
+  When there is 2 parameters it checks the first argument that must be
+  an fx group index in the range[0..synth->effects_groups-1].
+
+  return the group index:
+  -1, when the command is for all fx groups.
+  0 to synth->effects_groups-1, when the command is for this group index.
+  -2 if error.
+*/
+static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
+                              fluid_synth_t *synth, const char *name_cde)
+{
+    int fx_group; /* fx unit index */
+    int ngroups;  /* count of fx groups */
+
+    /* One or 2 arguments allowed */
+    if(ac < 1 || ac > 2)
+    {
+        fluid_ostream_printf(out, "%s: needs 1 or 2 arguments\n", name_cde);
+        return -2;
+    }
+
+    /* check optionnal first argument which is a fx group index */
+    fx_group = -1;
+
+    if(ac > 1)
+    {
+        fx_group = atoi(av[0]); /* get fx group index */
+        ngroups = fluid_synth_count_effects_groups(synth);
+
+        if(!fluid_is_number(av[0]) || fx_group < 0 || fx_group >= ngroups)
+        {
+            fluid_ostream_printf(out, "%s: group index \"%s\" must be in range [%d..%d]\n",
+                                 name_cde, av[0], 0, ngroups - 1);
+            return -2;
+        }
+    }
+
+    return fx_group;
+}
+
+/* parameter value */
+struct value
+{
+    const char *name;
+    double min;
+    double max;
+};
+
+/*
+  check 2 arguments for reverb commands : fx group index  , value
+  - group index must be an integer in the range [-1..synth->effects_groups].
+  - value must be a double in the range [min..max]
+  @param param a pointer on a value to return the second value argument.
+  return the fx group index:
+  -1 when the command is for all fx group.
+  0 to synth->effects_groups-1 when the command is for this group index.
+  -2 if error.
+*/
+static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
+                                 fluid_synth_t *synth, const char *name_cde,
+                                 const struct value *value,
+                                 fluid_real_t *param)
+{
+    /* get and check fx group index argument */
+    int fx_group = check_fx_group_idx(ac, av, out, synth, name_cde);
+
+    if(fx_group >= -1)
+    {
+        fluid_real_t val;
+
+        /* get and check value argument */
+        ac--;
+        val = atof(av[ac]);
+
+        if(!fluid_is_number(av[ac]) || val < value->min || val > value->max)
+        {
+            fluid_ostream_printf(out, "%s: %s \"%s\" must be in range [%f..%f]\n",
+                                 name_cde, value->name, av[ac], value->min, value->max);
+            return -2;
+        }
+
+        *param = val;
+    }
+
+    return fx_group;
+}
+
+/* Purpose:
+ * Response to fluid_handle_reverbsetxxxx commands
+ */
+static int
+fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
+                            int param)
+{
+    int fx_group;
+
+    /* reverb commands name table */
+    static const char *const name_cde[FLUID_REVERB_PARAM_LAST] =
+    {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
+
+    /* name and min/max values table */
+    static struct value values[FLUID_REVERB_PARAM_LAST] =
+    {
+        {"room size"}, {"damp"}, {"width"}, {"level"}
+    };
+
+    FLUID_ENTRY_COMMAND(data);
+    fluid_real_t value;
+
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.room-size",
+                                &values[FLUID_REVERB_ROOMSIZE].min,
+                                &values[FLUID_REVERB_ROOMSIZE].max);
+
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.damp",
+                                &values[FLUID_REVERB_DAMP].min,
+                                &values[FLUID_REVERB_DAMP].max);
+
+
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.width",
+                                &values[FLUID_REVERB_WIDTH].min,
+                                &values[FLUID_REVERB_WIDTH].max);
+
+    fluid_settings_getnum_range(handler->settings, "synth.reverb.level",
+                                &values[FLUID_REVERB_LEVEL].min,
+                                &values[FLUID_REVERB_LEVEL].max);
+
+    /* get and check command arguments */
+    fx_group = check_fx_reverb_param(ac, av, out, handler->synth,
+                                     name_cde[param], &values[param], &value);
+
+    if(fx_group >= -1)
+    {
+        /* run reverb function */
+        fluid_synth_reverb_set_param(handler->synth, fx_group, param, value);
+        return FLUID_OK;
+    }
+
+    return FLUID_FAILED;
+}
+
 /* Purpose:
  * Response to 'rev_setroomsize' command.
- * Load the new room size into the reverb unit. */
+ * Load the new room size into the reverb fx group.
+ * Example: rev_setroomzize 0 0.5
+ * load roomsize 0.5 in the reverb fx group at index 0
+ */
 int
 fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t room_size;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.room-size %s' instead.\n", av[0]);
-
-    room_size = atof(av[0]);
-
-    if(room_size < 0)
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: Room size must be positive!\n");
-        return FLUID_FAILED;
-    }
-
-    if(room_size > 1.0)
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: Room size too big!\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_roomsize(handler->synth, room_size);
-    return FLUID_OK;
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_ROOMSIZE);
 }
 
 /* Purpose:
  * Response to 'rev_setdamp' command.
- * Load the new damp factor into the reverb unit. */
+ * Load the new damp factor into the reverb fx group.
+ * Example: rev_setdamp 1 0.5
+ * load damp 0.5 in the reverb fx group at index 1
+ */
 int
 fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t damp;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "rev_setdamp: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "rev_setdamp is deprecated! Use 'set synth.reverb.damp %s' instead.\n", av[0]);
-
-    damp = atof(av[0]);
-
-    if((damp < 0.0f) || (damp > 1))
-    {
-        fluid_ostream_printf(out, "rev_setdamp: damp must be between 0 and 1!\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_damp(handler->synth, damp);
-    return FLUID_OK;
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_DAMP);
 }
 
 /* Purpose:
  * Response to 'rev_setwidth' command.
- * Load the new width into the reverb unit. */
+ * Load the new width into the reverb fx group.
+ * Example: rev_setwidth 1 0.5
+ * load width 0.5 in the reverb fx group at index 1.
+ */
 int
 fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t width;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "rev_setwidth: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.width %s' instead.\n", av[0]);
-
-    width = atof(av[0]);
-
-    if((width < 0) || (width > 100))
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: Too wide! (0..100)\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_width(handler->synth, width);
-    return FLUID_OK;
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_WIDTH);
 }
 
 /* Purpose:
  * Response to 'rev_setlevel' command.
- * Load the new level into the reverb unit. */
+ * Load the new level into the reverb fx group.
+ * Example: rev_setlevel 1 0.5
+ * load level 0.5 in the reverb fx group at index 1.
+ */
 int
 fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_LEVEL);
+}
+
+/* reverb/chorus on/off commands enum */
+enum rev_chor_on_cde
+{
+    REVERB_ON_CDE,
+    CHORUS_ON_CDE,
+    NBR_REV_CHOR_ON_CDE
+};
+
+/* Purpose:
+ * Set all reverb/chorus units on or off
+ */
+static int
+fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostream_t out,
+                                      enum rev_chor_on_cde cde)
+{
+    /* commands name table */
+    static const char *const name_cde[NBR_REV_CHOR_ON_CDE] = {"reverb", "chorus"};
+    /* functions table */
+    static int (*onoff_func[NBR_REV_CHOR_ON_CDE])(fluid_synth_t *, int, int) =
+    {
+        fluid_synth_reverb_on, fluid_synth_chorus_on
+    };
+
     FLUID_ENTRY_COMMAND(data);
-    fluid_real_t level;
+    int onoff;
 
-    if(ac < 1)
+    /* get and check fx group index argument */
+    int fx_group = check_fx_group_idx(ac, av, out, handler->synth, name_cde[cde]);
+
+    if(fx_group >= -1)
     {
-        fluid_ostream_printf(out, "rev_setlevel: too few arguments.\n");
-        return FLUID_FAILED;
+        ac--;
+
+        /* check argument value */
+        if((FLUID_STRCMP(av[ac], "0") == 0) || (FLUID_STRCMP(av[ac], "off") == 0))
+        {
+            onoff = 0;
+        }
+        else if((FLUID_STRCMP(av[ac], "1") == 0) || (FLUID_STRCMP(av[ac], "on") == 0))
+        {
+            onoff = 1;
+        }
+        else
+        {
+            fluid_ostream_printf(out, "%s: invalid arguments %s [0|1|on|off]\n",
+                                 name_cde[cde], av[ac]);
+            return FLUID_FAILED;
+        }
+
+        /* run on/off function */
+        return onoff_func[cde](handler->synth, fx_group, onoff);
     }
 
-    fluid_ostream_printf(out, "rev_setlevel is deprecated! Use 'set synth.reverb.level %s' instead.\n", av[0]);
-
-    level = atof(av[0]);
-
-    if(fabs(level) > 30)
-    {
-        fluid_ostream_printf(out, "rev_setlevel: Value too high! (Value of 10 =+20 dB)\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_level(handler->synth, level);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
- * Response to 'reverb' command.
- * Change the FLUID_REVERB flag in the synth */
+ * Set all reverb units on
+ */
 int
 fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "reverb: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "reverb is deprecated! Use 'set synth.reverb.active %s' instead.\n", av[0]);
-
-    if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
-    {
-        fluid_synth_set_reverb_on(handler->synth, 0);
-    }
-    else if((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0))
-    {
-        fluid_synth_set_reverb_on(handler->synth, 1);
-    }
-    else
-    {
-        fluid_ostream_printf(out, "reverb: invalid arguments %s [0|1|on|off]", av[0]);
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
+    return fluid_handle_reverb_chorus_on_command(data, ac, av, out, REVERB_ON_CDE);
 }
 
+/* Purpose:
+ * Response to fluid_handle_chorus_xxx commands
+ */
+static int
+fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
+                            int param)
+{
+    /* chorus commands name table */
+    static const char *const name_cde[FLUID_CHORUS_PARAM_LAST - 1] =
+    {"cho_set_nr", "cho_set_level", "cho_set_speed", "cho_set_depth"};
+
+    /* value name table */
+    static const char *const name_value[FLUID_CHORUS_PARAM_LAST - 1] =
+    {"nr", "level", "speed", "depth"};
+
+    FLUID_ENTRY_COMMAND(data);
+
+    /* get and check index fx group index argument */
+    int fx_group = check_fx_group_idx(ac, av, out, handler->synth, name_cde[param]);
+
+    if(fx_group >= -1)
+    {
+        double value;
+        /* get and check value argument */
+        ac--;
+
+        if(!fluid_is_number(av[ac]))
+        {
+            fluid_ostream_printf(out, "%s: %s \"%s\" must be a number\n",
+                                 name_cde[param], name_value[param], av[ac]);
+            return FLUID_FAILED;
+        }
+
+        /* run chorus function */
+        if(param == FLUID_CHORUS_NR) /* commands with integer parameter */
+        {
+            value = (double)atoi(av[ac]);
+        }
+        else /* commands with float parameter */
+        {
+            value = atof(av[ac]);
+        }
+
+        fluid_synth_chorus_set_param(handler->synth, fx_group, param, value);
+        return FLUID_OK;
+    }
+
+    return FLUID_FAILED;
+}
 
 /* Purpose:
- * Response to 'chorus_setnr' command */
+ * Response to 'cho_set_nr' command
+ * Load the new voice count into the chorus fx group.
+ * Example: cho_set_nr 1 3
+ * load 3 voices in the chorus fx group at index 1.
+ */
 int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    int nr;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "cho_set_nr: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "cho_set_nr is deprecated! Use 'set synth.chorus.nr %s' instead.\n", av[0]);
-
-    nr = atoi(av[0]);
-    fluid_synth_set_chorus_nr(handler->synth, nr);
-    return FLUID_OK;
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_NR);
 }
 
 /* Purpose:
- * Response to 'chorus_setlevel' command */
+ * Response to 'cho_setlevel' command
+ * Example: cho_set_level 1 3
+ * load level 3 in the chorus fx group at index 1.
+ */
 int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t level;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "cho_set_level: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "cho_set_level is deprecated! Use 'set synth.chorus.level %s' instead.\n", av[0]);
-
-    level = atof(av[0]);
-    fluid_synth_set_chorus_level(handler->synth, level);
-    return FLUID_OK;
-
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_LEVEL);
 }
 
 /* Purpose:
- * Response to 'chorus_setspeed' command */
+ * Response to 'cho_setspeed' command
+ * Example: cho_set_speed 1 0.1
+ * load speed 0.1 in the chorus fx group at index 1.
+ */
 int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t speed;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "cho_set_speed: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "cho_set_speed is deprecated! Use 'set synth.chorus.speed %s' instead.\n", av[0]);
-
-    speed = atof(av[0]);
-    fluid_synth_set_chorus_speed(handler->synth, speed);
-    return FLUID_OK;
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_SPEED);
 }
 
 /* Purpose:
- * Response to 'chorus_setdepth' command */
+ * Response to 'cho_setdepth' command
+ * Example: cho_set_depth 1 0.3
+ * load depth 0.3 in the chorus fx group at index 1.
+ */
 int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t depth;
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "cho_set_depth: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "cho_set_depth is deprecated! Use 'set synth.chorus.depth %s' instead.\n", av[0]);
-
-    depth = atof(av[0]);
-    fluid_synth_set_chorus_depth(handler->synth, depth);
-    return FLUID_OK;
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_DEPTH);
 }
 
+/* Purpose:
+ * Set all chorus units on
+ */
 int
 fluid_handle_chorus(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "chorus: too few arguments\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "chorus is deprecated! Use 'set synth.chorus.active %s' instead.\n", av[0]);
-
-    if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
-    {
-        fluid_synth_set_chorus_on(handler->synth, 0);
-    }
-    else if((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0))
-    {
-        fluid_synth_set_chorus_on(handler->synth, 1);
-    }
-    else
-    {
-        fluid_ostream_printf(out, "chorus: invalid arguments %s [0|1|on|off]", av[0]);
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
+    return fluid_handle_reverb_chorus_on_command(data, ac, av, out, CHORUS_ON_CDE);
 }
 
 /* Purpose:
@@ -1815,7 +1953,9 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
     int hints;
-    int ival;
+    int ival, icur;
+    double fval, fcur;
+    char *scur;
     int ret = FLUID_FAILED;
 
     if(ac < 2)
@@ -1824,14 +1964,14 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         return ret;
     }
 
-    switch(fluid_settings_get_type(handler->synth->settings, av[0]))
+    switch(fluid_settings_get_type(handler->settings, av[0]))
     {
     case FLUID_NO_TYPE:
         fluid_ostream_printf(out, "set: Parameter '%s' not found.\n", av[0]);
         return ret;
 
     case FLUID_INT_TYPE:
-        if(fluid_settings_get_hints(handler->synth->settings, av[0], &hints) == FLUID_OK
+        if(fluid_settings_get_hints(handler->settings, av[0], &hints) == FLUID_OK
                 && hints & FLUID_HINT_TOGGLED)
         {
             if(FLUID_STRCASECMP(av[1], "yes") == 0
@@ -1850,19 +1990,44 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
             ival = atoi(av[1]);
         }
 
-        ret = fluid_settings_setint(handler->synth->settings, av[0], ival);
+        fluid_settings_getint(handler->settings, av[0], &icur);
+        if (icur == ival)
+        {
+            return FLUID_OK;
+        }
+
+        ret = fluid_settings_setint(handler->settings, av[0], ival);
         break;
 
     case FLUID_NUM_TYPE:
-        ret = fluid_settings_setnum(handler->synth->settings, av[0], atof(av[1]));
+        fval = atof(av[1]);
+        fluid_settings_getnum(handler->settings, av[0], &fcur);
+        if (fcur == fval)
+        {
+            return FLUID_OK;
+        }
+
+        ret = fluid_settings_setnum(handler->settings, av[0], fval);
         break;
 
     case FLUID_STR_TYPE:
-        ret = fluid_settings_setstr(handler->synth->settings, av[0], av[1]);
+        fluid_settings_dupstr(handler->settings, av[0], &scur);
+
+        if(scur && !FLUID_STRCMP(scur, av[1]))
+        {
+            FLUID_FREE(scur);
+            return FLUID_OK;
+        }
+        ret = fluid_settings_setstr(handler->settings, av[0], av[1]);
+        FLUID_FREE(scur);
         break;
 
     case FLUID_SET_TYPE:
         fluid_ostream_printf(out, "set: Parameter '%s' is a node.\n", av[0]);
+        return FLUID_FAILED;
+
+    default:
+        fluid_ostream_printf(out, "Unhandled settings type.");
         return FLUID_FAILED;
     }
 
@@ -1870,8 +2035,8 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
     {
         fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
     }
-    
-    if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))
+
+    if((handler->synth != NULL || handler->router != NULL) && !fluid_settings_is_realtime(handler->settings, av[0]))
     {
         fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
     }
@@ -1890,7 +2055,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
-    switch(fluid_settings_get_type(fluid_synth_get_settings(handler->synth), av[0]))
+    switch(fluid_settings_get_type(handler->settings, av[0]))
     {
     case FLUID_NO_TYPE:
         fluid_ostream_printf(out, "get: no such setting '%s'.\n", av[0]);
@@ -1899,7 +2064,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
     case FLUID_NUM_TYPE:
     {
         double value;
-        fluid_settings_getnum(handler->synth->settings, av[0], &value);
+        fluid_settings_getnum(handler->settings, av[0], &value);
         fluid_ostream_printf(out, "%.3f\n", value);
         break;
     }
@@ -1907,7 +2072,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
     case FLUID_INT_TYPE:
     {
         int value;
-        fluid_settings_getint(handler->synth->settings, av[0], &value);
+        fluid_settings_getint(handler->settings, av[0], &value);
         fluid_ostream_printf(out, "%d\n", value);
         break;
     }
@@ -1915,7 +2080,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
     case FLUID_STR_TYPE:
     {
         char *s;
-        fluid_settings_dupstr(handler->synth->settings, av[0], &s);       /* ++ alloc string */
+        fluid_settings_dupstr(handler->settings, av[0], &s);       /* ++ alloc string */
         fluid_ostream_printf(out, "%s\n", s ? s : "NULL");
 
         if(s)
@@ -1937,7 +2102,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
 struct _fluid_handle_settings_data_t
 {
     size_t len;
-    fluid_synth_t *synth;
+    fluid_settings_t *settings;
     fluid_ostream_t out;
 };
 
@@ -1967,12 +2132,12 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
 
     fluid_ostream_printf(d->out, "   ");
 
-    switch(fluid_settings_get_type(fluid_synth_get_settings(d->synth), name))
+    switch(fluid_settings_get_type(d->settings, name))
     {
     case FLUID_NUM_TYPE:
     {
         double value;
-        fluid_settings_getnum(d->synth->settings, name, &value);
+        fluid_settings_getnum(d->settings, name, &value);
         fluid_ostream_printf(d->out, "%.3f\n", value);
         break;
     }
@@ -1980,9 +2145,9 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
     case FLUID_INT_TYPE:
     {
         int value, hints;
-        fluid_settings_getint(d->synth->settings, name, &value);
+        fluid_settings_getint(d->settings, name, &value);
 
-        if(fluid_settings_get_hints(d->synth->settings, name, &hints) == FLUID_OK)
+        if(fluid_settings_get_hints(d->settings, name, &hints) == FLUID_OK)
         {
             if(!(hints & FLUID_HINT_TOGGLED))
             {
@@ -2000,7 +2165,7 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
     case FLUID_STR_TYPE:
     {
         char *s;
-        fluid_settings_dupstr(d->synth->settings, name, &s);     /* ++ alloc string */
+        fluid_settings_dupstr(d->settings, name, &s);     /* ++ alloc string */
         fluid_ostream_printf(d->out, "%s\n", s ? s : "NULL");
 
         if(s)
@@ -2020,11 +2185,11 @@ fluid_handle_settings(void *d, int ac, char **av, fluid_ostream_t out)
     struct _fluid_handle_settings_data_t data;
 
     data.len = 0;
-    data.synth = handler->synth;
+    data.settings = handler->settings;
     data.out = out;
 
-    fluid_settings_foreach(fluid_synth_get_settings(handler->synth), &data, fluid_handle_settings_iter1);
-    fluid_settings_foreach(fluid_synth_get_settings(handler->synth), &data, fluid_handle_settings_iter2);
+    fluid_settings_foreach(handler->settings, &data, fluid_handle_settings_iter1);
+    fluid_settings_foreach(handler->settings, &data, fluid_handle_settings_iter2);
     return FLUID_OK;
 }
 
@@ -2054,7 +2219,7 @@ int
 fluid_handle_info(void *d, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(d);
-    fluid_settings_t *settings = fluid_synth_get_settings(handler->synth);
+    fluid_settings_t *settings = handler->settings;
     struct _fluid_handle_option_data_t data;
 
     if(ac < 1)
@@ -2464,7 +2629,8 @@ int fluid_handle_router_par2(void *data, int ac, char **av, fluid_ostream_t out)
 
 /**  commands Poly/mono mode *************************************************/
 
-static const char *const mode_name[] = {
+static const char *const mode_name[] =
+{
     "poly omni on (0)", "mono omni on (1)",
     "poly omni off(2)", "mono omni off(3)"
 };
@@ -2478,8 +2644,8 @@ static const char *const mode_name[] = {
 */
 static int print_basic_channels(fluid_synth_t *synth, fluid_ostream_t out)
 {
-    static const char *warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n"
-                                     "Make use of setbasicchannels to set at least a default basic channel.\n";
+    static const char warning_msg[] = "Warning: no basic channels. All MIDI channels are disabled.\n"
+                                      "Make use of setbasicchannels to set at least a default basic channel.\n";
 
     int n_chan = synth->midi_channels;
     int i, n = 0;
@@ -2542,7 +2708,7 @@ static int get_channel_mode_num(char *name)
 {
     /* argument names for channel mode parameter (see resetbasicchannels and
        setbasicchannels commands*/
-    static const char * const name_channel_mode [FLUID_CHANNEL_MODE_LAST] =
+    static const char *const name_channel_mode [FLUID_CHANNEL_MODE_LAST] =
     {"poly_omnion", "mono_omnion", "poly_omnioff", "mono_omnioff"};
     int i;
 
@@ -3325,6 +3491,213 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
     return 0;
 }
 
+/**  commands  for Midi file player ******************************************/
+
+/* check player argument */
+int player_check_arg(const char *name_cde, int ac, char **av, fluid_ostream_t out)
+{
+    /* check if there is one argument that is a number */
+    if(ac != 1 || !fluid_is_number(av[0]))
+    {
+        fluid_ostream_printf(out, "%s: %s", name_cde, invalid_arg_msg);
+        return FLUID_FAILED;
+    }
+    return FLUID_OK;
+}
+
+/* print current position and total ticks */
+void player_print_position(fluid_player_t *player, fluid_ostream_t out)
+{
+    int current_tick = fluid_player_get_current_tick(player);
+    int total_ticks = fluid_player_get_total_ticks(player);
+    int tempo_bpm = fluid_player_get_bpm(player);
+    fluid_ostream_printf(out, "player current pos:%d, end:%d, bpm:%d\n\n",
+                         current_tick, total_ticks, tempo_bpm);
+}
+
+/* player commands enum */
+enum
+{
+    PLAYER_LOOP_CDE, /* player_loop num,(Set loop number to num) */
+    PLAYER_STEP_CDE, /* player_step num (Move forward/backward to +/-num ticks) */
+    PLAYER_STOP_CDE,      /* player_stop    (Stop playing) */
+    PLAYER_CONT_CDE,      /* player_cont    (Continue playing) */
+    PLAYER_NEXT_CDE,      /* player_next    (Move to next song) */
+    PLAYER_START_CDE      /* player_start   (Move to start of song) */
+};
+
+/* Command handler for player commands: player_step, player_loop, player_tempo_bpm */
+int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
+{
+    FLUID_ENTRY_COMMAND(data);
+    int arg;
+
+    /* commands name table */
+    static const char *name_cde[] =
+    {"player_loop", "player_step"};
+
+    /* get argument for PLAYER_LOOP_CDE, PLAYER_STEP_CDE */
+    if(cmd <= PLAYER_STEP_CDE)
+    {
+        /* check argument */
+        if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+
+        arg = atoi(av[0]);
+    }
+
+    if(cmd == PLAYER_LOOP_CDE)  /* player_loop */
+    {
+        fluid_player_set_loop(handler->player, arg);
+        return FLUID_OK;
+    }
+
+    if(cmd == PLAYER_CONT_CDE)  /* player_cont */
+    {
+        fluid_player_play(handler->player);
+        return FLUID_OK;
+    }
+
+    fluid_player_stop(handler->player);  /* player_stop */
+
+    if(cmd != PLAYER_STOP_CDE)
+    {
+        /* seek for player_next, player_step, player_start */
+        /* set seek to maximum position */
+        int seek = fluid_player_get_total_ticks(handler->player);
+
+        if(cmd == PLAYER_STEP_CDE)
+        {
+            /* Move position forward/backward +/- num ticks*/
+            arg  += fluid_player_get_current_tick(handler->player);
+
+            /* keep seek between minimum and maximum in current song */
+            if(arg < 0)
+            {
+                seek = 0; /* minimum position */
+            }
+            else if(arg < seek)
+            {
+                seek = arg; /* seek < maximum position */
+            }
+        }
+
+        if(cmd == PLAYER_START_CDE)  /* player_start */
+        {
+            seek = 0; /* beginning of the current song */
+        }
+
+        fluid_player_seek(handler->player, seek);
+        fluid_player_play(handler->player);
+    }
+    /* display position */
+    player_print_position(handler->player, out);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_start" command */
+int fluid_handle_player_start(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_START_CDE);
+}
+
+/* Command handler for "player_stop" command */
+int fluid_handle_player_stop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_STOP_CDE);
+}
+
+/* Command handler for "player_continue" command */
+int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_CONT_CDE);
+}
+/* Command handler for "player_step" command */
+int fluid_handle_player_step(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_STEP_CDE);
+}
+
+/* Command handler for "player_next" command */
+int fluid_handle_player_next_song(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_NEXT_CDE);
+}
+
+/* Command handler for "player_loop" command */
+int fluid_handle_player_loop(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_LOOP_CDE);
+}
+
+/* Command handler for player tempo commands:
+   player_tempo_int [mul], set the player to internal tempo multiplied by mul
+   player_tempo_bpm bpm, set the player to external tempo in beat per minute.
+   examples:
+    player_tempo_int      set the player to internal tempo with a default
+                          multiplier set to 1.0.
+
+    player_tempo_int 0.5  set the player to internal tempo divided by 2.
+
+    player_tempo_bpm 75, set the player to external tempo of 75 beats per minute.
+*/
+int fluid_handle_player_tempo_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
+{
+    FLUID_ENTRY_COMMAND(data);
+    /* default multiplier for player_tempo_int command without argument*/
+    double arg = 1.0F;
+
+    /* commands name table */
+    static const char *name_cde[] =
+    {"player_tempo_int", "player_tempo_bpm"};
+
+    static const struct /* argument infos */
+    {
+        double min;
+        double max;
+        char *name;
+    }argument[2] = {{0.1F, 10.F, "multiplier"}, {1.0F, 600.0F, "bpm"}};
+
+    /* get argument for: player_tempo_int [mul],  player_tempo_bpm bpm */
+    if((cmd == FLUID_PLAYER_TEMPO_EXTERNAL_BPM) || ac)
+    {
+        /* check argument presence */
+        if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+
+        arg = atof(av[0]);
+
+        /* check if argument is in valid range */
+        if(arg < argument[cmd].min || arg > argument[cmd].max)
+        {
+            fluid_ostream_printf(out, "%s: %s %f must be in range [%f..%f]\n",
+                                 name_cde[cmd], argument[cmd].name, arg,
+                                 argument[cmd].min, argument[cmd].max);
+            return FLUID_FAILED;
+        }
+    }
+
+    fluid_player_set_tempo(handler->player, cmd, arg);
+
+    return FLUID_OK;
+}
+
+/* Command handler for "player_tempo_int [mul]" command */
+int fluid_handle_player_tempo_int(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_tempo_cde(data, ac, av, out, FLUID_PLAYER_TEMPO_INTERNAL);
+}
+
+/* Command handler for "player_tempo_bpm bmp" command */
+int fluid_handle_player_tempo_bpm(void *data, int ac, char **av, fluid_ostream_t out)
+{
+    return fluid_handle_player_tempo_cde(data, ac, av, out, FLUID_PLAYER_TEMPO_EXTERNAL_BPM);
+}
 
 #ifdef LADSPA
 
@@ -4151,11 +4524,29 @@ fluid_cmd_handler_destroy_hash_value(void *value)
 
 /**
  * Create a new command handler.
- * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
- * @param router If not NULL, all the default midi_router commands will be added to the new handler.
- * @return New command handler, or NULL if alloc failed
+ *
+ * See new_fluid_cmd_handler2() for more information.
  */
 fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router)
+{
+    return new_fluid_cmd_handler2(fluid_synth_get_settings(synth), synth, router, NULL);
+}
+
+/**
+ * Create a new command handler.
+ *
+ * @param settings If not NULL, all the settings related commands will be added to the new handler. The @p settings
+ * object must be the same as the one you used for creating the @p synth and @p router. Otherwise the
+ * behaviour is undefined.
+ * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
+ * @param router If not NULL, all the default midi_router commands will be added to the new handler.
+ * @param player If not NULL, all the default midi file player commands will be added to the new handler.
+ * @return New command handler, or NULL if alloc failed
+ */
+fluid_cmd_handler_t *new_fluid_cmd_handler2(fluid_settings_t *settings,
+                                            fluid_synth_t *synth,
+                                            fluid_midi_router_t *router,
+                                            fluid_player_t *player)
 {
     unsigned int i;
     fluid_cmd_handler_t *handler;
@@ -4178,21 +4569,35 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
         return NULL;
     }
 
+    handler->settings = settings;
     handler->synth = synth;
     handler->router = router;
+    handler->player = player;
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
         const fluid_cmd_t *cmd = &fluid_commands[i];
+        int is_settings_cmd = FLUID_STRCMP(cmd->topic, "settings") == 0;
         int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
+        int is_player_cmd = FLUID_STRCMP(cmd->topic, "player") == 0;
+        int is_synth_cmd = !(is_settings_cmd || is_router_cmd || is_player_cmd);
 
-        if((is_router_cmd && router == NULL) || (!is_router_cmd && synth == NULL))
+        int no_cmd = is_settings_cmd && settings == NULL;   /* no settings command */
+        no_cmd = no_cmd || (is_router_cmd && router == NULL); /* no router command */
+        no_cmd = no_cmd || (is_player_cmd && player == NULL); /* no player command */
+        no_cmd = no_cmd || (is_synth_cmd && synth == NULL);   /* no synth command */
+
+        if(no_cmd)
         {
-            /* omit registering router and synth commands if they were not requested */
-            continue;
+            /* register a no-op command, this avoids an unknown command error later on */
+            fluid_cmd_t noop = *cmd;
+            noop.handler = NULL;
+            fluid_cmd_handler_register(handler, &noop);
         }
-
-        fluid_cmd_handler_register(handler, &fluid_commands[i]);
+        else
+        {
+            fluid_cmd_handler_register(handler, cmd);
+        }
     }
 
     return handler;
@@ -4200,6 +4605,7 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
 
 /**
  * Delete a command handler.
+ *
  * @param handler Command handler to delete
  */
 void
@@ -4213,6 +4619,7 @@ delete_fluid_cmd_handler(fluid_cmd_handler_t *handler)
 
 /**
  * Register a new command to the handler.
+ *
  * @param handler Command handler instance
  * @param cmd Command info (gets copied)
  * @return #FLUID_OK if command was inserted, #FLUID_FAILED otherwise
@@ -4227,6 +4634,7 @@ fluid_cmd_handler_register(fluid_cmd_handler_t *handler, const fluid_cmd_t *cmd)
 
 /**
  * Unregister a command from a command handler.
+ *
  * @param handler Command handler instance
  * @param cmd Name of the command
  * @return TRUE if command was found and unregistered, FALSE otherwise
@@ -4245,13 +4653,23 @@ fluid_cmd_handler_handle(void *data, int ac, char **av, fluid_ostream_t out)
 
     cmd = fluid_hashtable_lookup(handler->commands, av[0]);
 
-    if(cmd && cmd->handler)
+    if(cmd)
     {
-        return (*cmd->handler)(handler, ac - 1, av + 1, out);
+        if(cmd->handler)
+        {
+            return (*cmd->handler)(handler, ac - 1, av + 1, out);
+        }
+        else
+        {
+            /* no-op command */
+            return 1;
+        }
     }
-
-    fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
-    return FLUID_FAILED;
+    else
+    {
+        fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
+        return FLUID_FAILED;
+    }
 }
 
 
@@ -4263,6 +4681,7 @@ struct _fluid_server_t
     fluid_settings_t *settings;
     fluid_synth_t *synth;
     fluid_midi_router_t *router;
+    fluid_player_t *player;
     fluid_list_t *clients;
     fluid_mutex_t mutex;
 };
@@ -4373,7 +4792,9 @@ new_fluid_client(fluid_server_t *server, fluid_settings_t *settings, fluid_socke
     client->server = server;
     client->socket = sock;
     client->settings = settings;
-    client->handler = new_fluid_cmd_handler(server->synth, server->router);
+    client->handler = new_fluid_cmd_handler2(fluid_synth_get_settings(server->synth),
+                                             server->synth, server->router,
+                                             server->player);
     client->thread = new_fluid_thread("client", fluid_client_run, client,
                                       0, FALSE);
 
@@ -4415,14 +4836,29 @@ void delete_fluid_client(fluid_client_t *client)
 
 /**
  * Create a new TCP/IP command shell server.
- * @param settings Settings instance to use for the shell
- * @param synth If not NULL, the synth instance for the command handler to be used by the client
- * @param router If not NULL, the midi_router instance for the command handler to be used by the client
- * @return New shell server instance or NULL on error
+ *
+ * See new_fluid_server2() for more information.
  */
 fluid_server_t *
 new_fluid_server(fluid_settings_t *settings,
                  fluid_synth_t *synth, fluid_midi_router_t *router)
+{
+    return new_fluid_server2(settings, synth, router, NULL);
+}
+
+/**
+ * Create a new TCP/IP command shell server.
+ *
+ * @param settings Settings instance to use for the shell
+ * @param synth If not NULL, the synth instance for the command handler to be used by the client
+ * @param router If not NULL, the midi_router instance for the command handler to be used by the client
+ * @param player If not NULL, the player instance for the command handler to be used by the client
+ * @return New shell server instance or NULL on error
+ */
+fluid_server_t *
+new_fluid_server2(fluid_settings_t *settings,
+                 fluid_synth_t *synth, fluid_midi_router_t *router,
+                 fluid_player_t *player)
 {
 #ifdef NETWORK_SUPPORT
     fluid_server_t *server;
@@ -4440,6 +4876,7 @@ new_fluid_server(fluid_settings_t *settings,
     server->clients = NULL;
     server->synth = synth;
     server->router = router;
+    server->player = player;
 
     fluid_mutex_init(server->mutex);
 
@@ -4464,6 +4901,7 @@ new_fluid_server(fluid_settings_t *settings,
 
 /**
  * Delete a TCP/IP shell server.
+ *
  * @param server Shell server instance
  */
 void
@@ -4480,6 +4918,7 @@ delete_fluid_server(fluid_server_t *server)
 
 /**
  * Join a shell server thread (wait until it quits).
+ *
  * @param server Shell server instance
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */

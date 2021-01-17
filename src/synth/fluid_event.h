@@ -46,6 +46,7 @@ struct _fluid_event_t
     fluid_note_id_t id;
     int pitch;
     unsigned int duration;
+    double scale;
     void *data;
 };
 

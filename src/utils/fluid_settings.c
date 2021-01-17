@@ -255,6 +255,7 @@ delete_fluid_set_setting(fluid_setting_node_t *node)
 
 /**
  * Create a new settings object
+ *
  * @return the pointer to the settings object
  */
 fluid_settings_t *
@@ -278,6 +279,7 @@ new_fluid_settings(void)
 
 /**
  * Delete the provided settings object
+ *
  * @param settings a settings object
  */
 void
@@ -907,6 +909,10 @@ fluid_settings_get_hints(fluid_settings_t *settings, const char *name, int *hint
  * @param settings a settings object
  * @param name a setting's name
  * @return TRUE if the setting is changeable in real-time, FALSE otherwise
+ *
+ * @note Before using this function, make sure the @p settings object has already been used to create
+ * a synthesizer, a MIDI driver, an audio driver, a MIDI player, or a command handler (depending on
+ * which settings you want to query).
  */
 int
 fluid_settings_is_realtime(fluid_settings_t *settings, const char *name)
@@ -1015,15 +1021,17 @@ error_recovery:
 
 /**
  * Copy the value of a string setting into the provided buffer (thread safe)
+ *
  * @param settings a settings object
  * @param name a setting's name
  * @param str Caller supplied buffer to copy string value to
  * @param len Size of 'str' buffer (no more than len bytes will be written, which
  *   will always include a zero terminator)
  * @return #FLUID_OK if the value exists, #FLUID_FAILED otherwise
- * @since 1.1.0
  *
  * @note A size of 256 should be more than sufficient for the string buffer.
+ *
+ * @since 1.1.0
  */
 int
 fluid_settings_copystr(fluid_settings_t *settings, const char *name,
@@ -1075,14 +1083,16 @@ fluid_settings_copystr(fluid_settings_t *settings, const char *name,
 
 /**
  * Duplicate the value of a string setting
+ *
  * @param settings a settings object
  * @param name a setting's name
  * @param str Location to store pointer to allocated duplicate string
  * @return #FLUID_OK if the value exists and was successfully duplicated, #FLUID_FAILED otherwise
- * @since 1.1.0
  *
  * Like fluid_settings_copystr() but allocates a new copy of the string.  Caller
  * owns the string and should free it with fluid_free() when done using it.
+ *
+ * @since 1.1.0
  */
 int
 fluid_settings_dupstr(fluid_settings_t *settings, const char *name, char **str)
@@ -1194,13 +1204,14 @@ fluid_settings_str_equal(fluid_settings_t *settings, const char *name, const cha
 }
 
 /**
- * Get the default value of a string setting.  Note that the returned string is
- * not owned by the caller and should not be modified or freed.
+ * Get the default value of a string setting.
  *
  * @param settings a settings object
  * @param name a setting's name
  * @param def the default string value of the setting if it exists
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ *
+ * @note The returned string is* not owned by the caller and should not be modified or freed.
  */
 int
 fluid_settings_getstr_default(fluid_settings_t *settings, const char *name, char **def)
@@ -1240,6 +1251,7 @@ fluid_settings_getstr_default(fluid_settings_t *settings, const char *name, char
 
 /**
  * Add an option to a string setting (like an enumeration value).
+ *
  * @param settings a settings object
  * @param name a setting's name
  * @param s option string to add
@@ -1277,6 +1289,7 @@ fluid_settings_add_option(fluid_settings_t *settings, const char *name, const ch
 
 /**
  * Remove an option previously assigned by fluid_settings_add_option().
+ *
  * @param settings a settings object
  * @param name a setting's name
  * @param s option string to remove
@@ -1602,6 +1615,7 @@ fluid_settings_getint(fluid_settings_t *settings, const char *name, int *val)
 
 /**
  * Get the range of values of an integer setting
+ *
  * @param settings a settings object
  * @param name a setting's name
  * @param min setting's range lower limit
@@ -1727,10 +1741,12 @@ fluid_settings_foreach_option(fluid_settings_t *settings, const char *name,
 
 /**
  * Count option string values for a string setting.
+ *
  * @param settings a settings object
  * @param name Name of setting
  * @return Count of options for this string setting (0 if none, -1 if not found
  *   or not a string setting)
+ *
  * @since 1.1.0
  */
 int
@@ -1758,11 +1774,13 @@ fluid_settings_option_count(fluid_settings_t *settings, const char *name)
 
 /**
  * Concatenate options for a string setting together with a separator between.
+ *
  * @param settings Settings object
  * @param name Settings name
  * @param separator String to use between options (NULL to use ", ")
  * @return Newly allocated string or NULL on error (out of memory, not a valid
  *   setting \p name or not a string setting). Free the string when finished with it by using fluid_free().
+ *
  * @since 1.1.0
  */
 char *

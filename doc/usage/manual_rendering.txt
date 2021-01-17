@@ -1,0 +1,17 @@
+/*!
+
+\page UsingSynth Using the synthesizer without an audio driver
+
+It is possible to use the synthesizer object without creating an audio
+driver. This is desirable if the application using FluidSynth manages the
+audio output itself. The synthesizer has several API functions that can be
+used to obtain the audio output: 
+
+fluid_synth_write_s16() fills two buffers (left and right channel) with
+samples coded as signed 16 bits (the endian-ness is machine dependent).
+fluid_synth_write_float() fills a left and right audio buffer with 32 bits
+floating point samples. The function fluid_synth_process() is the generic
+interface for synthesizing audio, which is also capable of multi channel
+audio output.
+
+*/

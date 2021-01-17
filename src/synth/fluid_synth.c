@@ -66,6 +66,10 @@ static int fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data,
         int len, char *response,
         int *response_len, int avail_response,
         int *handled, int dryrun);
+static int fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data,
+        int len, char *response,
+        int *response_len, int avail_response,
+        int *handled, int dryrun);
 int fluid_synth_all_notes_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_all_sounds_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_system_reset_LOCAL(fluid_synth_t *synth);
@@ -78,6 +82,11 @@ static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_set_preset(fluid_synth_t *synth, int chan,
                                   fluid_preset_t *preset);
+static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value);
+static int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value);
+
 static fluid_preset_t *
 fluid_synth_get_preset(fluid_synth_t *synth, int sfontnum,
                        int banknum, int prognum);
@@ -597,10 +606,15 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * @note The @p settings parameter is used directly and should freed after
- * the synth has been deleted. Further note that you may modify FluidSettings of the
+ * @note The @p settings parameter is used directly, but the synth does not take ownership of it.
+ * Hence, the caller is responsible for freeing it, when no longer needed.
+ * Further note that you may modify FluidSettings of the
  * @p settings instance. However, only those FluidSettings marked as 'realtime' will
- * affect the synth immediately.
+ * affect the synth immediately. See the \ref fluidsettings for more details.
+ *
+ * @warning The @p settings object should only be used by a single synth at a time. I.e. creating
+ * multiple synth instances with a single @p settings object causes undefined behavior. Once the
+ * "single synth" has been deleted, you may use the @p settings object again for another synth.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
@@ -926,44 +940,35 @@ new_fluid_synth(fluid_settings_t *settings)
 
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony,
                              synth->polyphony, 0.0f);
-    fluid_synth_set_reverb_on(synth, synth->with_reverb);
-    fluid_synth_set_chorus_on(synth, synth->with_chorus);
+    fluid_synth_reverb_on(synth, -1, synth->with_reverb);
+    fluid_synth_chorus_on(synth, -1, synth->with_chorus);
 
     synth->cur = FLUID_BUFSIZE;
     synth->curmax = 0;
     synth->dither_index = 0;
 
     {
-        double room, damp, width, level;
+        double values[FLUID_REVERB_PARAM_LAST];
 
-        fluid_settings_getnum(settings, "synth.reverb.room-size", &room);
-        fluid_settings_getnum(settings, "synth.reverb.damp", &damp);
-        fluid_settings_getnum(settings, "synth.reverb.width", &width);
-        fluid_settings_getnum(settings, "synth.reverb.level", &level);
+        fluid_settings_getnum(settings, "synth.reverb.room-size", &values[FLUID_REVERB_ROOMSIZE]);
+        fluid_settings_getnum(settings, "synth.reverb.damp", &values[FLUID_REVERB_DAMP]);
+        fluid_settings_getnum(settings, "synth.reverb.width", &values[FLUID_REVERB_WIDTH]);
+        fluid_settings_getnum(settings, "synth.reverb.level", &values[FLUID_REVERB_LEVEL]);
 
-        fluid_synth_set_reverb_full(synth,
-                                          FLUID_REVMODEL_SET_ALL,
-                                          room,
-                                          damp,
-                                          width,
-                                          level);
+        fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
     }
 
     {
-        double level, speed, depth;
+        double values[FLUID_CHORUS_PARAM_LAST];
 
         fluid_settings_getint(settings, "synth.chorus.nr", &i);
-        fluid_settings_getnum(settings, "synth.chorus.level", &level);
-        fluid_settings_getnum(settings, "synth.chorus.speed", &speed);
-        fluid_settings_getnum(settings, "synth.chorus.depth", &depth);
+        values[FLUID_CHORUS_NR] = (double)i;
+        fluid_settings_getnum(settings, "synth.chorus.level", &values[FLUID_CHORUS_LEVEL]);
+        fluid_settings_getnum(settings, "synth.chorus.speed", &values[FLUID_CHORUS_SPEED]);
+        fluid_settings_getnum(settings, "synth.chorus.depth", &values[FLUID_CHORUS_DEPTH]);
+        values[FLUID_CHORUS_TYPE] = (double)FLUID_CHORUS_DEFAULT_TYPE;
 
-        fluid_synth_set_chorus_full(synth,
-                                          FLUID_CHORUS_SET_ALL,
-                                          i,
-                                          level,
-                                          speed,
-                                          depth,
-                                          FLUID_CHORUS_DEFAULT_TYPE);
+        fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_ALL, values);
     }
 
 
@@ -1018,6 +1023,50 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
+    /* unregister all real-time settings callback, to avoid a use-after-free when changing those settings after
+     * this synth has been deleted*/
+
+    fluid_settings_callback_num(synth->settings, "synth.gain",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.polyphony",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.device-id",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.percussion",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.sustained",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.released",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.age",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.volume",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.important",
+                                NULL, NULL);
+    fluid_settings_callback_str(synth->settings, "synth.overflow.important-channels",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.room-size",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.damp",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.width",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.level",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.reverb.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.nr",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.level",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.depth",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.speed",
+                                NULL, NULL);
+
     /* turn off all voices, needed to unload SoundFont data */
     if(synth->voice != NULL)
     {
@@ -1030,6 +1079,12 @@ delete_fluid_synth(fluid_synth_t *synth)
                 continue;
             }
 
+            /* WARNING: A this point we must ensure that the reference counter
+               of any soundfont sample owned by any rvoice belonging to the voice
+               are correctly decremented. This is the contrary part to
+               to fluid_voice_init() where the sample's reference counter is
+               incremented.
+            */
             fluid_voice_unlock_rvoice(voice);
             fluid_voice_overflow_rvoice_finished(voice);
 
@@ -1082,6 +1137,18 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     delete_fluid_list(synth->loaders);
 
+    /* wait for and delete all the lazy sfont unloading timers */
+
+    for(list = synth->fonts_to_be_unloaded; list; list = fluid_list_next(list))
+    {
+        fluid_timer_t* timer = fluid_list_get(list);
+        // explicitly join to wait for the unload really to happen
+        fluid_timer_join(timer);
+        // delete_fluid_timer alone would stop the timer, even if it had not unloaded the soundfont yet
+        delete_fluid_timer(timer);
+    }
+
+    delete_fluid_list(synth->fonts_to_be_unloaded);
 
     if(synth->channel != NULL)
     {
@@ -1902,6 +1969,7 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  * Non-realtime:    0xF0 0x7E <DeviceId> [BODY] 0xF7
  * Realtime:        0xF0 0x7F <DeviceId> [BODY] 0xF7
  * Tuning messages: 0xF0 0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
+ * GS DT1 messages: 0xF0 0x41 <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
  */
 int
 fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
@@ -1941,6 +2009,21 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                                                response_len, avail_response,
                                                handled, dryrun);
 
+        FLUID_API_RETURN(result);
+    }
+
+    /* GS DT1 message */
+    if((synth->bank_select == FLUID_BANK_STYLE_GS)
+            && data[0] == MIDI_SYSEX_MANUF_ROLAND
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_GS_ID
+            && data[3] == MIDI_SYSEX_GS_DT1)
+    {
+        int result;
+        fluid_synth_api_enter(synth);
+        result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
+                                          response_len, avail_response,
+                                          handled, dryrun);
         FLUID_API_RETURN(result);
     }
 
@@ -2236,6 +2319,61 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
         break;
     }
 
+    return FLUID_OK;
+}
+
+/* Handler for GS DT1 messages */
+static int
+fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
+                              char *response, int *response_len, int avail_response,
+                              int *handled, int dryrun)
+{
+    int addr;
+    int len_data;
+    int checksum = 0, i;
+
+    if(len < 9) // at least one byte of data should be transmitted
+    {
+        return FLUID_FAILED;
+    }
+    len_data = len - 8;
+    addr = (data[4] << 16) | (data[5] << 8) | data[6];
+
+    for (i = 4; i < len - 1; ++i)
+    {
+        checksum += data[i];
+    }
+    if (0x80 - (checksum & 0x7F) != data[len - 1])
+    {
+        return FLUID_FAILED;
+    }
+
+    if ((addr & 0xFFF0FF) == 0x401015) // Use for rhythm part
+    {
+        if (len_data > 1 || data[7] > 0x02)
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            int chan = (addr >> 8) & 0x0F;
+            //See the Patch Part parameters section in SC-88Pro/8850 owner's manual
+            chan = chan >= 0x0a ? chan : (chan == 0 ? 9 : chan - 1);
+            synth->channel[chan]->channel_type =
+                data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+
+            //Roland synths seem to "remember" the last instrument a channel
+            //used in the selected mode. This behavior is not replicated here.
+            fluid_synth_program_change(synth, chan, 0);
+        }
+        return FLUID_OK;
+    }
+
+    //silently ignore
     return FLUID_OK;
 }
 
@@ -3019,6 +3157,101 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 }
 
 /**
+ * Pins all samples of the given preset.
+ *
+ * @param synth FluidSynth instance
+ * @param sfont_id ID of a loaded SoundFont
+ * @param bank_num MIDI bank number
+ * @param preset_num MIDI program number
+ * @return #FLUID_OK if the preset was found, pinned and loaded
+ * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
+ * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
+ * the preset doesn't support dynamic-sample-loading.
+ *
+ * This function will attempt to pin all samples of the given preset and
+ * load them into memory, if they are currently unloaded. "To pin" in this
+ * context means preventing them from being unloaded by an upcoming channel
+ * prog change.
+ *
+ * @note This function is only useful if \ref settings_synth_dynamic-sample-loading is enabled.
+ * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
+ * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
+ * only preset loaded with the default soundfont loader do).
+ *
+ * @since 2.2.0
+ */
+int
+fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
+{
+    int ret;
+    fluid_preset_t *preset;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    preset = fluid_synth_get_preset(synth, sfont_id, bank_num, preset_num);
+
+    if(preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+                  bank_num, preset_num, sfont_id);
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    ret = fluid_preset_notify(preset, FLUID_PRESET_PIN, -1); // channel unused for pinning messages
+
+    FLUID_API_RETURN(ret);
+}
+
+/**
+ * Unpin all samples of the given preset.
+ *
+ * @param synth FluidSynth instance
+ * @param sfont_id ID of a loaded SoundFont
+ * @param bank_num MIDI bank number
+ * @param preset_num MIDI program number
+ * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ *
+ * This function undoes the effect of fluid_synth_pin_preset(). If the preset is
+ * not currently used, its samples will be unloaded.
+ *
+ * @note Only useful for presets loaded with the default soundfont loader and
+ * only if \ref settings_synth_dynamic-sample-loading is enabled.
+ *
+ * @since 2.2.0
+ */
+int
+fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
+{
+    int ret;
+    fluid_preset_t *preset;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    preset = fluid_synth_get_preset(synth, sfont_id, bank_num, preset_num);
+
+    if(preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+                  bank_num, preset_num, sfont_id);
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    ret = fluid_preset_notify(preset, FLUID_PRESET_UNPIN, -1); // channel unused for pinning messages
+
+    FLUID_API_RETURN(ret);
+}
+
+/**
  * Select an instrument on a MIDI channel by SoundFont name, bank and program numbers.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -3085,6 +3318,21 @@ fluid_synth_update_presets(fluid_synth_t *synth)
     }
 }
 
+static void
+fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
+{
+    int i;
+    fluid_clip(sample_rate, 8000.0f, 96000.0f);
+    synth->sample_rate = sample_rate;
+
+    synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
+
+    for(i = 0; i < synth->polyphony; i++)
+    {
+        fluid_voice_set_output_rate(synth->voice[i], sample_rate);
+    }
+}
+
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
  * @warning This function is broken-by-design! Don't use it! Instead, specify the sample-rate when creating the synth.
@@ -3115,21 +3363,31 @@ fluid_synth_update_presets(fluid_synth_t *synth)
 void
 fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate)
 {
-    int i;
     fluid_return_if_fail(synth != NULL);
     fluid_synth_api_enter(synth);
-    fluid_clip(sample_rate, 8000.0f, 96000.0f);
-    synth->sample_rate = sample_rate;
 
-    synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
-
-    for(i = 0; i < synth->polyphony; i++)
-    {
-        fluid_voice_set_output_rate(synth->voice[i], sample_rate);
-    }
+    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
 
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate,
-                             0, sample_rate);
+                             0, synth->sample_rate);
+    fluid_synth_api_exit(synth);
+}
+
+// internal sample rate change function for the jack driver
+// executes immediately, therefore, make sure no rendering call is running!
+void
+fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate)
+{
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_return_if_fail(synth != NULL);
+    fluid_synth_api_enter(synth);
+    
+    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
+
+    param[0].i = 0;
+    param[1].real = synth->sample_rate;
+    fluid_rvoice_mixer_set_samplerate(synth->eventhandler->mixer, param);
+    
     fluid_synth_api_exit(synth);
 }
 
@@ -3366,7 +3624,8 @@ fluid_synth_program_reset(fluid_synth_t *synth)
 }
 
 /**
- * Synthesize a block of floating point audio to separate audio buffers (multichannel rendering). First effect channel used by reverb, second for chorus.
+ * Synthesize a block of floating point audio to separate audio buffers (multi-channel rendering).
+ *
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
  * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
@@ -3375,9 +3634,13 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
+ * First effect channel used by reverb, second for chorus.
+ *
  * @note Should only be called from synthesis thread.
  *
- * @deprecated fluid_synth_nwrite_float() is deprecated and will be removed in a future release. It may continue to work or it may return #FLUID_FAILED in the future. Consider using the more powerful and flexible fluid_synth_process().
+ * @deprecated fluid_synth_nwrite_float() is deprecated and will be removed in a future release.
+ * It may continue to work or it may return #FLUID_FAILED in the future. Consider using the more
+ * powerful and flexible fluid_synth_process().
  *
  * Usage example:
  * @code{.cpp}
@@ -3389,14 +3652,17 @@ fluid_synth_program_reset(fluid_synth_t *synth)
     // we need twice as many (mono-)buffers
     channels *= 2;
 
-    // fluid_synth_nwrite_float renders planar audio, e.g. if synth.audio-channels==16: each midi channel gets rendered to its own stereo buffer, rather than having one buffer and interleaved PCM
+    // fluid_synth_nwrite_float renders planar audio, e.g. if synth.audio-channels==16:
+    // each midi channel gets rendered to its own stereo buffer, rather than having
+    // one buffer and interleaved PCM
     float** mix_buf = new float*[channels];
     for(int i = 0; i < channels; i++)
     {
         mix_buf[i] = new float[FramesToRender];
     }
 
-    // retrieve number of (stereo) effect channels (internally hardcoded to reverb (first chan) and chrous (second chan))
+    // retrieve number of (stereo) effect channels (internally hardcoded to reverb (first chan)
+    // and chrous (second chan))
     fluid_settings_getint(settings, "synth.effects-channels", &channels);
     channels *= 2;
 
@@ -3614,7 +3880,34 @@ static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out
 }
 
 /**
- * @brief Synthesize floating point audio to stereo audio channels (implements the default interface #fluid_audio_func_t).
+ * Synthesize floating point audio to stereo audio channels
+ * (implements the default interface #fluid_audio_func_t).
+ *
+ * @param synth FluidSynth instance
+ *
+ * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
+ * Zero value is permitted, the function does nothing and return FLUID_OK.
+ *
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
+ * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
+ * Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
+ *
+ * @param fx Array of buffers to store effects audio to. Buffers may
+ * alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+ *
+ * @param nout Count of arrays in \c out. Must be a multiple of 2
+ * (because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
+ * Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.
+ *
+ * @param out Array of buffers to store (dry) audio to. Buffers may
+ * alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+ *
+ * @return #FLUID_OK on success,
+ * #FLUID_FAILED otherwise,
+ *  - <code>fx == NULL</code> while <code>nfx > 0</code>, or <code>out == NULL</code> while <code>nout > 0</code>.
+ *  - \c nfx or \c nout not multiple of 2.
+ *  - <code>len < 0</code>.
+ *  - \c nfx or \c nout exceed the range explained above.
  *
  * Synthesize and <strong>mix</strong> audio to a given number of planar audio buffers.
  * Therefore pass <code>nout = N*2</code> float buffers to \p out in order to render
@@ -3661,26 +3954,6 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  * <code>i = chan % fluid_synth_count_audio_groups()</code>
  *
  * <code>k = chan % fluid_synth_count_effects_groups()</code>
- *
- * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
- *  Zero value is permitted, the function does nothing and return FLUID_OK.
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
- * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
-  Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
- * @param fx Array of buffers to store effects audio to. Buffers may
-alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
- * @param nout Count of arrays in \c out. Must be a multiple of 2
-(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
- Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.
- * @param out Array of buffers to store (dry) audio to. Buffers may
-alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
- * @return #FLUID_OK on success,
- * #FLUID_FAILED otherwise,
- *  - <code>fx == NULL</code> while <code>nfx > 0</code>, or <code>out == NULL</code> while <code>nout > 0</code>.
- *  - \c nfx or \c nout not multiple of 2.
- *  - <code>len < 0</code>.
- *  - \c nfx or \c nout exceed the range explained above.
  *
  * @parblock
  * @note The owner of the sample buffers must zero them out before calling this
@@ -4447,7 +4720,21 @@ fluid_synth_check_finished_voices(fluid_synth_t *synth)
             }
             else if(synth->voice[j]->overflow_rvoice == fv)
             {
+                /* Unlock the overflow_rvoice of the voice.
+                   Decrement the reference count of the sample owned by this
+                   rvoice.
+                */
                 fluid_voice_overflow_rvoice_finished(synth->voice[j]);
+
+                /* Decrement synth active voice count. Must not be incorporated
+                   in fluid_voice_overflow_rvoice_finished() because
+                   fluid_voice_overflow_rvoice_finished() is called also
+                   at synth destruction and in this case the variable should be
+                   accessed via voice->channel->synth->active_voice_count.
+                   And for certain voices which are not playing, the field
+                   voice->channel is NULL.
+                */
+                synth->active_voice_count--;
                 break;
             }
         }
@@ -4539,31 +4826,31 @@ static void fluid_synth_handle_reverb_chorus_num(void *data, const char *name, d
 
     if(FLUID_STRCMP(name, "synth.reverb.room-size") == 0)
     {
-        fluid_synth_set_reverb_roomsize(synth, value);
+        fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_ROOMSIZE, value);
     }
     else if(FLUID_STRCMP(name, "synth.reverb.damp") == 0)
     {
-        fluid_synth_set_reverb_damp(synth, value);
+        fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_DAMP, value);
     }
     else if(FLUID_STRCMP(name, "synth.reverb.width") == 0)
     {
-        fluid_synth_set_reverb_width(synth, value);
+        fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_WIDTH, value);
     }
     else if(FLUID_STRCMP(name, "synth.reverb.level") == 0)
     {
-        fluid_synth_set_reverb_level(synth, value);
+        fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_LEVEL, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.depth") == 0)
     {
-        fluid_synth_set_chorus_depth(synth, value);
+        fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_DEPTH, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.speed") == 0)
     {
-        fluid_synth_set_chorus_speed(synth, value);
+        fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_SPEED, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.level") == 0)
     {
-        fluid_synth_set_chorus_level(synth, value);
+        fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_LEVEL, value);
     }
 }
 
@@ -4577,15 +4864,15 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
 
     if(FLUID_STRCMP(name, "synth.reverb.active") == 0)
     {
-        fluid_synth_set_reverb_on(synth, value);
+        fluid_synth_reverb_on(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.active") == 0)
     {
-        fluid_synth_set_chorus_on(synth, value);
+        fluid_synth_chorus_on(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.nr") == 0)
     {
-        fluid_synth_set_chorus_nr(synth, value);
+		fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, (double)value);
     }
 }
 
@@ -4903,6 +5190,10 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, #FLUID_FAILED on error
+ * 
+ * @note Since FluidSynth 2.2.0 @c filename is treated as an UTF8 encoded string on Windows. FluidSynth will convert it
+ * to wide-char internally and then pass it to <code>_wfopen()</code>. Before FluidSynth 2.2.0, @c filename was treated as ANSI string
+ * on Windows. All other platforms directly pass it to <code>fopen()</code> without any conversion (usually, UTF8 is accepted).
  */
 int
 fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets)
@@ -4951,11 +5242,25 @@ fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets
 }
 
 /**
- * Unload a SoundFont.
+ * Schedule a SoundFont for unloading.
+ *
+ * If the SoundFont isn't used anymore by any playing voices, it will be unloaded immediately.
+ *
+ * If any samples of the given SoundFont are still required by active voices,
+ * the SoundFont will be unloaded in a lazy manner, once those voices have finished synthesizing.
+ * If you call delete_fluid_synth(), all voices will be destroyed and the SoundFont
+ * will be unloaded in any case.
+ * Once this function returned, fluid_synth_sfcount() and similar functions will behave as if
+ * the SoundFont has already been unloaded, even though the lazy-unloading is still pending.
+ *
+ * @note This lazy-unloading mechanism was broken between FluidSynth 1.1.4 and 2.1.5 . As a
+ * consequence, SoundFonts scheduled for lazy-unloading may be never freed under certain
+ * conditions. Calling delete_fluid_synth() does not recover this situation either.
+ *
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
- * @return #FLUID_OK on success, #FLUID_FAILED on error
+ * @return #FLUID_OK if the given @p id was found, #FLUID_FAILED otherwise.
  */
 int
 fluid_synth_sfunload(fluid_synth_t *synth, int id, int reset_presets)
@@ -5016,7 +5321,8 @@ fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont)
         } /* spin off a timer thread to unload the sfont later (SoundFont loader blocked unload) */
         else
         {
-            new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, TRUE, FALSE);
+            fluid_timer_t* timer = new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, FALSE, FALSE);
+            synth->fonts_to_be_unloaded = fluid_list_prepend(synth->fonts_to_be_unloaded, timer);
         }
     }
 }
@@ -5354,19 +5660,57 @@ fluid_synth_get_voicelist(fluid_synth_t *synth, fluid_voice_t *buf[], int bufsiz
 /**
  * Enable or disable reverb effect.
  * @param synth FluidSynth instance
- * @param on TRUE to enable reverb, FALSE to disable
+ * @param on TRUE to enable chorus, FALSE to disable
+ * @deprecated Use fluid_synth_reverb_on() instead.
  */
 void
 fluid_synth_set_reverb_on(fluid_synth_t *synth, int on)
 {
     fluid_return_if_fail(synth != NULL);
-
     fluid_synth_api_enter(synth);
 
     synth->with_reverb = (on != 0);
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_reverb_enabled,
                              on != 0, 0.0f);
     fluid_synth_api_exit(synth);
+}
+
+/**
+ * Enable or disable reverb on one fx group unit.
+ * @param synth FluidSynth instance
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param on TRUE to enable reverb, FALSE to disable
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on)
+{
+    int ret;
+	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if(fx_group  < 0 )
+    {
+        synth->with_reverb = (on != 0);
+    }
+
+    param[0].i = fx_group;
+    param[1].i = on;
+    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                         fluid_rvoice_mixer_reverb_enable,
+                                         synth->eventhandler->mixer,
+                                         param);
+
+    FLUID_API_RETURN(ret);
 }
 
 /**
@@ -5380,201 +5724,415 @@ fluid_synth_set_reverb_on(fluid_synth_t *synth, int on)
 int
 fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num)
 {
+    double values[FLUID_REVERB_PARAM_LAST];
+
     fluid_return_val_if_fail(
         num < FLUID_N_ELEMENTS(revmodel_preset),
         FLUID_FAILED
     );
 
-    fluid_synth_set_reverb(synth, revmodel_preset[num].roomsize,
-                           revmodel_preset[num].damp, revmodel_preset[num].width,
-                           revmodel_preset[num].level);
+    values[FLUID_REVERB_ROOMSIZE] = revmodel_preset[num].roomsize;
+    values[FLUID_REVERB_DAMP] = revmodel_preset[num].damp;
+    values[FLUID_REVERB_WIDTH] = revmodel_preset[num].width;
+    values[FLUID_REVERB_LEVEL] = revmodel_preset[num].level;
+    fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
     return FLUID_OK;
 }
 
 /**
- * Set reverb parameters.
+ * Set reverb parameters to all groups.
+ *
  * @param synth FluidSynth instance
  * @param roomsize Reverb room size value (0.0-1.0)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * @note Not realtime safe and therefore should not be called from synthesis
- * context at the risk of stalling audio output.
+ * @deprecated Use the individual reverb setter functions in new code instead.
  */
 int
 fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
                        double width, double level)
 {
-    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_ALL,
-                                       roomsize, damping, width, level);
+    double values[FLUID_REVERB_PARAM_LAST];
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    values[FLUID_REVERB_ROOMSIZE] = roomsize;
+    values[FLUID_REVERB_DAMP] = damping;
+    values[FLUID_REVERB_WIDTH] = width;
+    values[FLUID_REVERB_LEVEL] = level;
+    return fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
 }
 
 /**
- * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
+ * Set reverb roomsize of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param roomsize Reverb room size value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_roomsize() in new code instead.
  */
 int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 {
-    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_ROOMSIZE, roomsize, 0, 0, 0);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_ROOMSIZE, roomsize);
 }
 
 /**
- * Set reverb damping. See fluid_synth_set_reverb() for further info.
+ * Set reverb damping of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param damping Reverb damping value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_damp() in new code instead.
  */
 int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 {
-    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_DAMPING, 0, damping, 0, 0);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_DAMP, damping);
 }
 
 /**
- * Set reverb width. See fluid_synth_set_reverb() for further info.
+ * Set reverb width of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param width Reverb width value (0.0-100.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_width() in new code instead.
  */
 int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 {
-    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_WIDTH, 0, 0, width, 0);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_WIDTH, width);
 }
 
 /**
- * Set reverb level. See fluid_synth_set_reverb() for further info.
+ * Set reverb level of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param level Reverb level value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_level() in new code instead.
  */
 int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 {
-    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_LEVEL, 0, 0, 0, level);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_LEVEL, level);
 }
 
 /**
- * Set one or more reverb parameters.
- * @param synth FluidSynth instance
- * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
- * @param roomsize Reverb room size value (0.0-1.2)
- * @param damping Reverb damping value (0.0-1.0)
- * @param width Reverb width value (0.0-100.0)
- * @param level Reverb level value (0.0-1.0)
+ * Set reverb roomsize to one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all fx groups.
+ * @param roomsize roomsize value to set. Must be in the range indicated by
+ * synth.reverb.room-size setting.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * @note Not realtime safe and therefore should not be called from synthesis
- * context at the risk of stalling audio output.
+ */
+int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int fx_group,
+                                          double roomsize)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_ROOMSIZE, roomsize);
+}
+
+/**
+ * Set reverb damp to one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all fx groups.
+ * @param damping damping value to set. Must be in the range indicated by
+ * synth.reverb.damp setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int fx_group,
+                                      double damping)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_DAMP, damping);
+}
+
+/**
+ * Set reverb width to one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all fx groups.
+ * @param width width value to set. Must be in the range indicated by
+ * synth.reverb.width setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int fx_group,
+                                      double width)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_WIDTH, width);
+}
+
+/**
+ * Set reverb level to one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all fx groups.
+ * @param level output level to set. Must be in the range indicated by
+ * synth.reverb.level setting.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int fx_group,
+                                       double level)
+{
+    return fluid_synth_reverb_set_param(synth, fx_group, FLUID_REVERB_LEVEL, level);
+}
+
+/**
+ * Set one reverb parameter to one fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all fx groups.
+ * @param enum indicating the parameter to set (#fluid_reverb_param).
+ *  FLUID_REVERB_ROOMSIZE, roomsize Reverb room size value (0.0-1.0)
+ *  FLUID_REVERB_DAMP, reverb damping value (0.0-1.0)
+ *  FLUID_REVERB_WIDTH, reverb width value (0.0-100.0)
+ *  FLUID_REVERB_LEVEL, reverb level value (0.0-1.0)
+ * @param value, parameter value
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
-                            double damping, double width, double level)
+fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
+                             int param, double value)
 {
     int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    double values[FLUID_REVERB_PARAM_LAST] = {0.0};
+    static const char *name[FLUID_REVERB_PARAM_LAST] =
+    {
+        "synth.reverb.room-size", "synth.reverb.damp",
+        "synth.reverb.width", "synth.reverb.level"
+    };
 
+    double min; /* minimum value */
+    double max; /* maximum value */
+
+    /* check parameters */
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
-    /* if non of the flags is set, fail */
-    fluid_return_val_if_fail(set & FLUID_REVMODEL_SET_ALL, FLUID_FAILED);
-
-    /* Synth shadow values are set here so that they will be returned if querried */
-
+    fluid_return_val_if_fail((param >= 0) && (param < FLUID_REVERB_PARAM_LAST), FLUID_FAILED);
     fluid_synth_api_enter(synth);
 
-    if(set & FLUID_REVMODEL_SET_ROOMSIZE)
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
     {
-        synth->reverb_roomsize = roomsize;
+        FLUID_API_RETURN(FLUID_FAILED);
     }
 
-    if(set & FLUID_REVMODEL_SET_DAMPING)
-    {
-        synth->reverb_damping = damping;
-    }
+    /* check if reverb value is in max min range */
+    fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
+    fluid_return_val_if_fail( min <= value &&  value <= max, FLUID_FAILED);
 
-    if(set & FLUID_REVMODEL_SET_WIDTH)
-    {
-        synth->reverb_width = width;
-    }
-
-    if(set & FLUID_REVMODEL_SET_LEVEL)
-    {
-        synth->reverb_level = level;
-    }
-
-    param[0].i = set;
-    param[1].real = roomsize;
-    param[2].real = damping;
-    param[3].real = width;
-    param[4].real = level;
-    /* finally enqueue an rvoice event to the mixer to actual update reverb */
-    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
-                                         fluid_rvoice_mixer_set_reverb_params,
-                                         synth->eventhandler->mixer,
-                                         param);
+    /* set the value */
+    values[param] = value;
+    ret = fluid_synth_set_reverb_full(synth, fx_group, FLUID_REVPARAM_TO_SETFLAG(param), values);
     FLUID_API_RETURN(ret);
 }
 
+int
+fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
+                            const double values[])
+{
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+
+    /* if non of the flags is set, fail */
+    fluid_return_val_if_fail(set & FLUID_REVMODEL_SET_ALL, FLUID_FAILED);
+
+    /* fx group shadow values are set here so that they will be returned if queried */
+    fluid_rvoice_mixer_set_reverb_full(synth->eventhandler->mixer, fx_group, set,
+                                       values);
+
+    /* Synth shadow values are set here so that they will be returned if queried */
+    if (fx_group < 0)
+    {
+        int i;
+        for(i = 0; i < FLUID_REVERB_PARAM_LAST; i++)
+        {
+            if(set & FLUID_REVPARAM_TO_SETFLAG(i))
+            {
+                synth->reverb_param[i] = values[i];
+            }
+        }
+    }
+
+    param[0].i = fx_group;
+    param[1].i = set;
+    param[2].real = values[FLUID_REVERB_ROOMSIZE];
+    param[3].real = values[FLUID_REVERB_DAMP];
+    param[4].real = values[FLUID_REVERB_WIDTH];
+    param[5].real = values[FLUID_REVERB_LEVEL];
+    /* finally enqueue an rvoice event to the mixer to actual update reverb */
+    return fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                         fluid_rvoice_mixer_set_reverb_params,
+                                         synth->eventhandler->mixer,
+                                         param);
+}
+
 /**
- * Get reverb room size.
+ * Get reverb room size of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb room size (0.0-1.2)
+ * @deprecated Use fluid_synth_get_reverb_group_roomsize() in new code instead.
  */
 double
 fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-    result = synth->reverb_roomsize;
-    FLUID_API_RETURN(result);
+    double roomsize = 0.0;
+    fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_ROOMSIZE, &roomsize);
+    return roomsize;
 }
 
 /**
- * Get reverb damping.
+ * Get reverb damping of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb damping value (0.0-1.0)
+ * @deprecated Use fluid_synth_get_reverb_group_damp() in new code instead.
  */
 double
 fluid_synth_get_reverb_damp(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->reverb_damping;
-    FLUID_API_RETURN(result);
+    double damp = 0.0;
+    fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_DAMP, &damp);
+    return damp;
 }
 
 /**
- * Get reverb level.
+ * Get reverb level of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb level value (0.0-1.0)
+ * @deprecated Use fluid_synth_get_reverb_group_level() in new code instead.
  */
 double
 fluid_synth_get_reverb_level(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->reverb_level;
-    FLUID_API_RETURN(result);
+    double level = 0.0;
+    fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_LEVEL, &level);
+    return level;
 }
 
 /**
- * Get reverb width.
+ * Get reverb width of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb width value (0.0-100.0)
+ * @deprecated Use fluid_synth_get_reverb_group_width() in new code instead.
  */
 double
 fluid_synth_get_reverb_width(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->reverb_width;
-    FLUID_API_RETURN(result);
+    double width = 0.0;
+    fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_WIDTH, &width);
+    return width;
 }
 
 /**
- * Enable or disable chorus effect.
+ * get reverb roomsize of one or all groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param roomsize valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int fx_group,
+                                          double *roomsize)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_ROOMSIZE, roomsize);
+}
+
+/**
+ * get reverb damp of one or all groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param damping valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int fx_group,
+                                      double *damping)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_DAMP, damping);
+}
+
+/**
+ * get reverb width of one or all groups
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param width valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int fx_group,
+                                       double *width)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_WIDTH, width);
+}
+
+/**
+ * get reverb level of one or all groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param level valid pointer on the value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int fx_group,
+                                       double *level)
+{
+    return fluid_synth_reverb_get_param(synth, fx_group, FLUID_REVERB_LEVEL, level);
+}
+
+
+/**
+ * Get one reverb parameter value of one fx groups.
+ * @param synth FluidSynth instance
+ * @param fx_group index of the fx group to get parameter value from.
+ *  Must be in the range -1 to synth->effects_groups-1. If -1 get the
+ *  parameter common to all fx groups.
+ * @param enum indicating the parameter to get (#fluid_reverb_param).
+ *  FLUID_REVERB_ROOMSIZE, reverb room size value.
+ *  FLUID_REVERB_DAMP, reverb damping value.
+ *  FLUID_REVERB_WIDTH, reverb width value.
+ *  FLUID_REVERB_LEVEL, reverb level value.
+ * @param value pointer on the value to return.
+ * @return FLUID_OK if success, FLUID_FAILED otherwise.
+ */
+static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value)
+{
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((param >= 0) && (param < FLUID_REVERB_PARAM_LAST), FLUID_FAILED);
+    fluid_return_val_if_fail(value != NULL, FLUID_FAILED);
+    fluid_synth_api_enter(synth);
+
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if (fx_group < 0)
+    {
+        /* return reverb param common to all fx groups */
+        *value = synth->reverb_param[param];
+    }
+    else
+    {
+        /* return reverb param of fx group at index fx_group */
+        *value = fluid_rvoice_mixer_reverb_get_param(synth->eventhandler->mixer,
+                                                     fx_group, param);
+    }
+
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Enable or disable all chorus groups.
  * @param synth FluidSynth instance
  * @param on TRUE to enable chorus, FALSE to disable
+ * @deprecated Use fluid_synth_chorus_on() in new code instead.
  */
 void
 fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
@@ -5589,7 +6147,45 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
 }
 
 /**
- * Set chorus parameters. It should be turned on with fluid_synth_set_chorus_on().
+ * Enable or disable chorus on one or all groups.
+ * @param synth FluidSynth instance
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param on TRUE to enable chorus, FALSE to disable
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
+{
+    int ret;
+	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if(fx_group  < 0 )
+    {
+        synth->with_chorus = (on != 0);
+    }
+
+    param[0].i = fx_group;
+    param[1].i = on;
+    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                         fluid_rvoice_mixer_chorus_enable,
+                                         synth->eventhandler->mixer,
+                                         param);
+
+    FLUID_API_RETURN(ret);
+}
+
+/**
+ * Set chorus parameters to all fx groups.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
  * @param synth FluidSynth instance
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
@@ -5600,190 +6196,465 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use the individual chorus setter functions in new code instead.
+ * 
+ * Keep in mind, that the needed CPU time is proportional to 'nr'.
  */
 int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
                            double speed, double depth_ms, int type)
 {
-    return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_ALL, nr, level, speed,
-                                       depth_ms, type);
+    double values[FLUID_CHORUS_PARAM_LAST];
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    values[FLUID_CHORUS_NR] = nr;
+    values[FLUID_CHORUS_LEVEL] = level;
+    values[FLUID_CHORUS_SPEED] = speed;
+    values[FLUID_CHORUS_DEPTH] = depth_ms;
+    values[FLUID_CHORUS_TYPE] = type;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_ALL, values);
 }
 
 /**
- * Set the chorus voice count. See fluid_synth_set_chorus() for further info.
+ * Set the chorus voice count of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param nr Chorus voice count (0-99, CPU time consumption proportional to
+ *   this value)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_nr() in new code instead.
  */
 int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
 {
-    return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_NR, nr, 0, 0, 0, 0);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, nr);
 }
 
 /**
- * Set the chorus level. See fluid_synth_set_chorus() for further info.
+ * Set the chorus level of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param level Chorus level (0.0-10.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_level() in new code instead.
  */
 int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
 {
-    return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_LEVEL, 0, level, 0, 0, 0);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_LEVEL, level);
 }
 
 /**
- * Set the chorus speed. See fluid_synth_set_chorus() for further info.
+ * Set the chorus speed of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param speed Chorus speed in Hz (0.1-5.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_level() in new code instead.
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 {
-    return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_SPEED, 0, 0, speed, 0, 0);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_SPEED, speed);
 }
 
 /**
- * Set the chorus depth. See fluid_synth_set_chorus() for further info.
+ * Set the chorus depth of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param depth_ms Chorus depth (max value depends on synth sample-rate,
+ *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_depth() in new code instead.
  */
 int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
 {
-    return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_DEPTH, 0, 0, 0, depth_ms, 0);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_DEPTH, depth_ms);
 }
 
 /**
- * Set the chorus type. See fluid_synth_set_chorus() for further info.
+ * Set the chorus type of all groups.
+ *
+ * @param synth FluidSynth instance
+ * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_type() in new code instead.
  */
 int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 {
-    return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_TYPE, 0, 0, 0, 0, type);
-}
-
-int
-fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
-                            double speed, double depth_ms, int type)
-{
-    int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
-
-    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
-    /* if non of the flags is set, fail */
-    fluid_return_val_if_fail(set & FLUID_CHORUS_SET_ALL, FLUID_FAILED);
-
-    /* Synth shadow values are set here so that they will be returned if queried */
-    fluid_synth_api_enter(synth);
-
-    if(set & FLUID_CHORUS_SET_NR)
-    {
-        synth->chorus_nr = nr;
-    }
-
-    if(set & FLUID_CHORUS_SET_LEVEL)
-    {
-        synth->chorus_level = level;
-    }
-
-    if(set & FLUID_CHORUS_SET_SPEED)
-    {
-        synth->chorus_speed = speed;
-    }
-
-    if(set & FLUID_CHORUS_SET_DEPTH)
-    {
-        synth->chorus_depth = depth_ms;
-    }
-
-    if(set & FLUID_CHORUS_SET_TYPE)
-    {
-        synth->chorus_type = type;
-    }
-
-    param[0].i = set;
-    param[1].i = nr;
-    param[2].real = level;
-    param[3].real = speed;
-    param[4].real = depth_ms;
-    param[5].i = type;
-    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
-                                         fluid_rvoice_mixer_set_chorus_params,
-                                         synth->eventhandler->mixer,
-                                         param);
-
-    FLUID_API_RETURN(ret);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_TYPE, type);
 }
 
 /**
- * Get chorus voice number (delay line count) value.
+ * Set chorus voice count nr to one or all chorus groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all groups.
+ * @param nr Voice count to set. Must be in the range indicated by \setting{synth_chorus_nr}
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_set_chorus_group_nr(fluid_synth_t *synth, int fx_group, int nr)
+{
+    return fluid_synth_chorus_set_param(synth, fx_group, FLUID_CHORUS_NR, (double)nr);
+}
+
+/**
+ * Set chorus output level to one or all chorus groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all groups.
+ * @param level Output level to set. Must be in the range indicated by \setting{synth_chorus_level}
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int fx_group, double level)
+{
+    return fluid_synth_chorus_set_param(synth, fx_group, FLUID_CHORUS_LEVEL, level);
+}
+
+/**
+ * Set chorus lfo speed to one or all chorus groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all groups.
+ * @param speed Lfo speed to set. Must be in the range indicated by \setting{synth_chorus_speed}
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int fx_group, double speed)
+{
+    return fluid_synth_chorus_set_param(synth, fx_group, FLUID_CHORUS_SPEED, speed);
+}
+
+/**
+ * Set chorus lfo depth to one or all chorus groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all groups.
+ * @param depth_ms lfo depth to set. Must be in the range indicated by \setting{synth_chorus_depth}
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_set_chorus_group_depth(fluid_synth_t *synth, int fx_group, double depth_ms)
+{
+    return fluid_synth_chorus_set_param(synth, fx_group, FLUID_CHORUS_DEPTH, depth_ms);
+}
+
+/**
+ * Set chorus lfo waveform type to one or all chorus groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all groups.
+ * @param type Lfo waveform type to set. (#fluid_chorus_mod)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int fx_group, int type)
+{
+    return fluid_synth_chorus_set_param(synth, fx_group, FLUID_CHORUS_TYPE, (double)type);
+}
+
+/**
+ * Set one chorus parameter to one fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter will be applied to all groups.
+ * @param enum indicating the parameter to set (#fluid_chorus_param).
+ *  FLUID_CHORUS_NR, chorus voice count (0-99, CPU time consumption proportional to
+ *  this value).
+ *  FLUID_CHORUS_LEVEL, chorus level (0.0-10.0).
+ *  FLUID_CHORUS_SPEED, chorus speed in Hz (0.1-5.0).
+ *  FLUID_CHORUS_DEPTH, chorus depth (max value depends on synth sample-rate,
+ *   0.0-21.0 is safe for sample-rate values up to 96KHz).
+ *  FLUID_CHORUS_TYPE, chorus waveform type (#fluid_chorus_mod)
+ * @param value, parameter value
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
+                             double value)
+{
+    int ret;
+    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
+
+    /* setting name (except lfo waveform type) */
+    static const char *name[FLUID_CHORUS_PARAM_LAST-1] =
+    {
+        "synth.chorus.nr", "synth.chorus.level",
+        "synth.chorus.speed", "synth.chorus.depth"
+    };
+
+    /* check parameters */
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((param >= 0) && (param < FLUID_CHORUS_PARAM_LAST), FLUID_FAILED);
+    fluid_synth_api_enter(synth);
+
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    /* check if chorus value is in max min range */
+    if(param == FLUID_CHORUS_TYPE || param == FLUID_CHORUS_NR) /* integer value */
+    {
+        int min = FLUID_CHORUS_MOD_SINE;
+        int max = FLUID_CHORUS_MOD_TRIANGLE;
+        if(param == FLUID_CHORUS_NR)
+        {
+            fluid_settings_getint_range(synth->settings, name[param], &min, &max);
+        }
+        fluid_return_val_if_fail(min <= (int)value && (int)value <= max, FLUID_FAILED);
+    }
+    else /* float value */
+    {
+        double min;
+        double max;
+        fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
+        fluid_return_val_if_fail(min <= value &&  value <= max, FLUID_FAILED);
+    }
+
+    /* set the value */
+    values[param] = value;
+    ret = fluid_synth_set_chorus_full(synth, fx_group,
+                                      FLUID_CHORPARAM_TO_SETFLAG(param), values);
+    FLUID_API_RETURN(ret);
+}
+
+int
+fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
+                            const double values[])
+{
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+
+    /* if non of the flags is set, fail */
+    fluid_return_val_if_fail(set & FLUID_CHORUS_SET_ALL, FLUID_FAILED);
+
+    /* fx group shadow values are set here so that they will be returned if queried */
+    fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, fx_group,
+                                       set, values);
+
+    /* Synth shadow values are set here so that they will be returned if queried */
+    if (fx_group < 0)
+    {
+        int i;
+        for(i = 0; i < FLUID_CHORUS_PARAM_LAST; i++)
+        {
+            if(set & FLUID_CHORPARAM_TO_SETFLAG(i))
+            {
+                synth->chorus_param[i] = values[i];
+            }
+        }
+    }
+
+    param[0].i = fx_group;
+    param[1].i = set;
+    param[2].i = (int)values[FLUID_CHORUS_NR];
+    param[3].real = values[FLUID_CHORUS_LEVEL];
+    param[4].real = values[FLUID_CHORUS_SPEED];
+    param[5].real = values[FLUID_CHORUS_DEPTH];
+    param[6].i = (int)values[FLUID_CHORUS_TYPE];
+    return fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                         fluid_rvoice_mixer_set_chorus_params,
+                                         synth->eventhandler->mixer,
+                                         param);
+}
+
+/**
+ * Get chorus voice number (delay line count) value of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus voice count
+ * @deprecated Use fluid_synth_get_chorus_group_nr() in new code instead.
  */
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 {
-    int result;
-    fluid_return_val_if_fail(synth != NULL, 0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_nr;
-    FLUID_API_RETURN(result);
+    double nr = 0.0;
+    fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &nr);
+    return (int)nr;
 }
 
 /**
- * Get chorus level.
+ * Get chorus level of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus level value
+ * @deprecated Use fluid_synth_get_chorus_group_level() in new code instead.
  */
 double
 fluid_synth_get_chorus_level(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_level;
-    FLUID_API_RETURN(result);
+    double level = 0.0;
+    fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_LEVEL, &level);
+    return level;
 }
 
 /**
- * Get chorus speed in Hz.
+ * Get chorus speed in Hz of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus speed in Hz
+ * @deprecated Use fluid_synth_get_chorus_group_speed() in new code instead.
  */
 double
 fluid_synth_get_chorus_speed(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_speed;
-    FLUID_API_RETURN(result);
+    double speed = 0.0;
+    fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_SPEED, &speed);
+    return speed;
 }
 
 /**
- * Get chorus depth.
+ * Get chorus depth of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus depth
+ * @deprecated Use fluid_synth_get_chorus_group_depth() in new code instead.
  */
 double
 fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_depth;
-    FLUID_API_RETURN(result);
+    double depth = 0.0;
+    fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_DEPTH, &depth);
+    return depth;
 }
 
 /**
- * Get chorus waveform type.
+ * Get chorus waveform type of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus waveform type (#fluid_chorus_mod)
+ * @deprecated Use fluid_synth_get_chorus_group_type() in new code instead.
  */
 int
 fluid_synth_get_chorus_type(fluid_synth_t *synth)
 {
-    int result;
-    fluid_return_val_if_fail(synth != NULL, 0);
+    double type = 0.0;
+    fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_TYPE, &type);
+    return (int)type;
+}
+
+/**
+ * Get chorus count nr of one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group from which to fetch the chorus voice count.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param nr valid pointer on value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int fx_group, int *nr)
+{
+    double num_nr = 0.0;
+    int status;
+    status = fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_NR, &num_nr);
+    *nr = (int)num_nr;
+    return status;
+}
+
+/**
+ * Get chorus output level of one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group from which chorus level to fetch.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param level valid pointer on value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int fx_group, double *level)
+{
+    return fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_LEVEL, level);
+}
+
+/**
+ * Get chorus waveform lfo speed of one or all fx groups.
+ * @param synth FluidSynth instance.
+ * @param fx_group Index of the fx group from which lfo speed to fetch.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param speed valid pointer on value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
+int
+fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fx_group, double *speed)
+{
+    return fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_SPEED, speed);
+}
+
+/**
+ * Get chorus lfo depth of one or all fx groups.
+ * @param synth FluidSynth instance
+ * @param fx_group Index of the fx group from which lfo depth to fetch.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param depth_ms valid pointer on value to return.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int fx_group, double *depth_ms)
+{
+    return fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_DEPTH, depth_ms);
+}
+
+/**
+ * Get chorus waveform type of one or all fx groups.
+ * @param synth FluidSynth instance
+ * @param fx_group Index of the fx group from which to fetch the waveform type.
+ *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
+ *  parameter common to all fx groups is fetched.
+ * @param type valid pointer on waveform type to return (#fluid_chorus_mod)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fx_group, int *type)
+{
+    double num_type = 0.0;
+    int status;
+    status = fluid_synth_chorus_get_param(synth, fx_group, FLUID_CHORUS_TYPE, &num_type);
+    *type = (int)num_type;
+    return status;
+}
+
+/**
+ * Get chorus parameter value of one or all fx groups.
+ * @param synth FluidSynth instance
+ * @param fx_group index of the fx group
+ * @param enum indicating the parameter to get.
+ *  FLUID_CHORUS_NR, chorus voice count.
+ *  FLUID_CHORUS_LEVEL, chorus level.
+ *  FLUID_CHORUS_SPEED, chorus speed.
+ *  FLUID_CHORUS_DEPTH, chorus depth.
+ *  FLUID_CHORUS_TYPE, chorus waveform type.
+ * @param value pointer on the value to return.
+ * @return FLUID_OK if success, FLUID_FAILED otherwise.
+ */
+static int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
+                                        int param, double *value)
+{
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((param >= 0) && (param < FLUID_CHORUS_PARAM_LAST), FLUID_FAILED);
+    fluid_return_val_if_fail(value != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
 
-    result = synth->chorus_type;
-    FLUID_API_RETURN(result);
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if (fx_group < 0)
+    {
+        /* return chorus param common to all fx groups */
+        *value = synth->chorus_param[param];
+    }
+    else
+    {
+        /* return chorus param of fx group at index group */
+        *value = fluid_rvoice_mixer_chorus_get_param(synth->eventhandler->mixer,
+                                                     fx_group, param);
+    }
+
+    FLUID_API_RETURN(FLUID_OK);
 }
 
 /*
@@ -5938,6 +6809,8 @@ fluid_synth_count_effects_channels(fluid_synth_t *synth)
 
 /**
  * Get the total number of allocated effects units.
+ * 
+ * This is the same number as initially provided by the setting \setting{synth_effects-groups}.
  * @param synth FluidSynth instance
  * @return Count of allocated effects units
  */
@@ -6843,14 +7716,13 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
 /**
  * Configure a general-purpose IIR biquad filter.
  *
- * This is an optional, additional filter that operates independently from the default low-pass filter required by the Soundfont2 standard.
- * By default this filter is off (#FLUID_IIR_DISABLED).
- *
  * @param synth FluidSynth instance
  * @param type Type of the IIR filter to use (see #fluid_iir_filter_type)
  * @param flags Additional flags to customize this filter or zero to stay with the default (see #fluid_iir_filter_flags)
- *
  * @return #FLUID_OK if the settings have been successfully applied, otherwise #FLUID_FAILED
+ *
+ * This is an optional, additional filter that operates independently from the default low-pass filter required by the Soundfont2 standard.
+ * By default this filter is off (#FLUID_IIR_DISABLED).
  */
 int fluid_synth_set_custom_filter(fluid_synth_t *synth, int type, int flags)
 {
@@ -6956,7 +7828,7 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
 }
 
 
-/**  API legato mode *********************************************************/
+/* API legato mode *********************************************************/
 
 /**
  * Sets the legato mode of a channel.
@@ -7009,7 +7881,7 @@ int fluid_synth_get_legato_mode(fluid_synth_t *synth, int chan, int *legatomode)
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API portamento mode *********************************************************/
+/* API portamento mode *********************************************************/
 
 /**
  * Sets the portamento mode of a channel.
@@ -7062,7 +7934,7 @@ int fluid_synth_get_portamento_mode(fluid_synth_t *synth, int chan,
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API breath mode *********************************************************/
+/*  API breath mode *********************************************************/
 
 /**
  * Sets the breath mode of a channel.

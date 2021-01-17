@@ -1,0 +1,16 @@
+/*!
+
+\page Advanced Advanced features
+
+The following features are not yet fully documented. Some information can be
+found in the API reference and in the GitHub Wiki.
+
+- Accessing low-level voice parameters
+- Reverb settings
+- Chorus settings
+- Interpolation settings (set_gen, get_gen, NRPN)
+- Voice overflow settings
+- LADSPA effects unit
+- MIDI tunings
+
+*/
