@@ -2492,7 +2492,6 @@ error_exit:
 typedef struct _sfvio_data_t
 {
     SFData *sffile;
-    FILE *sffd;
     sf_count_t start;  /* start byte offset of compressed data */
     sf_count_t end;    /* end byte offset of compressed data */
     sf_count_t offset; /* current virtual file offset from start byte offset */
@@ -2530,7 +2529,7 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
         goto fail; /* proper error handling not possible?? */
     }
 
-    if(sf->fcbs->fseek(data->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED)
+    if(sf->fcbs->fseek(sf->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED)
     {
         data->offset = new_offset;
     }
@@ -2557,7 +2556,7 @@ static sf_count_t sfvio_read(void *ptr, sf_count_t count, void *user_data)
         return count;
     }
 
-    if(sf->fcbs->fread(ptr, count, data->sffd) == FLUID_FAILED)
+    if(sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
     {
         FLUID_LOG(FLUID_ERR, "Failed to read compressed sample data");
         return 0;
@@ -2608,7 +2607,6 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     // Initialize file position indicator and SF_INFO structure
     sfdata.sffile = sf;
-    sfdata.sffd = fopen(sf->fname, "rb");
     sfdata.start = start_byte;
     sfdata.end = end_byte;
     sfdata.offset = 0;
@@ -2616,9 +2614,8 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
     FLUID_MEMSET(&sfinfo, 0, sizeof(sfinfo));
 
     /* Seek to beginning of Ogg Vorbis data in Soundfont */
-    if(sf->fcbs->fseek(sfdata.sffd, sf->samplepos + start_byte, SEEK_SET) == FLUID_FAILED)
+    if(sf->fcbs->fseek(sf->sffd, sf->samplepos + start_byte, SEEK_SET) == FLUID_FAILED)
     {
-        fclose(sfdata.sffd);
         FLUID_LOG(FLUID_ERR, "Failed to seek to compressd sample position");
         return -1;
     }
@@ -2628,7 +2625,6 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     if(!sndfile)
     {
-        fclose(sfdata.sffd);
         FLUID_LOG(FLUID_ERR, "sf_open_virtual(): %s", sf_strerror(sndfile));
         return -1;
     }
@@ -2639,7 +2635,6 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         FLUID_LOG(FLUID_DBG, "Empty decompressed sample");
         *data = NULL;
         sf_close(sndfile);
-        fclose(sfdata.sffd);
         return 0;
     }
 
@@ -2672,7 +2667,6 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
     }
 
     sf_close(sndfile);
-    fclose(sfdata.sffd);
 
     *data = wav_data;
 
@@ -2681,7 +2675,6 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 error_exit:
     FLUID_FREE(wav_data);
     sf_close(sndfile);
-    fclose(sfdata.sffd);
     return -1;
 }
 #else
