@@ -375,7 +375,6 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
     fluid_sample_t *sample;
     int sf3_file = (sfdata->version.major == 3);
     int sample_parsing_result = FLUID_OK;
-    fluid_long_long_t old_offset;
 
     /* For SF2 files, we load the sample data in one large block */
     if(!sf3_file)
@@ -394,8 +393,6 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
         }
     }
 
-    // save position in file
-    old_offset = sfdata->fcbs->ftell(sfdata->sffd);
     #pragma omp parallel
     #pragma omp single
     for(list = defsfont->sample; list; list = fluid_list_next(list))
@@ -432,9 +429,6 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
             fluid_voice_optimize_sample(sample);
         }
     }
-
-    // restore position in file
-    sfdata->fcbs->fseek(sfdata->sffd, old_offset, SEEK_SET);
 
     return sample_parsing_result;
 }

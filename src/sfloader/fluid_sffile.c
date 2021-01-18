@@ -2531,10 +2531,12 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
         goto fail; /* proper error handling not possible?? */
     }
 
+    new_offset += data->start;
     fluid_rec_mutex_lock(sf->mtx);
-    if (sf->fcbs->fseek(sf->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED)
+    if (data->start <= new_offset && new_offset <= data->end &&
+        sf->fcbs->fseek(sf->sffd, new_offset, SEEK_SET) != FLUID_FAILED)
     {
-        data->offset = new_offset;
+        data->offset = new_offset - data->start;
     }
     fluid_rec_mutex_unlock(sf->mtx);
 
@@ -2561,7 +2563,7 @@ static sf_count_t sfvio_read(void *ptr, sf_count_t count, void *user_data)
     }
 
     fluid_rec_mutex_lock(sf->mtx);
-    if (sf->fcbs->fseek(ptr, data->offset, SEEK_SET) == FLUID_FAILED)
+    if (sf->fcbs->fseek(sf->sffd, data->start + data->offset, SEEK_SET) == FLUID_FAILED)
     {
         FLUID_LOG(FLUID_ERR, "This should never happen: fseek failed in sfvoid_read()");
         count = 0;
@@ -2621,18 +2623,19 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     // Initialize file position indicator and SF_INFO structure
     sfdata.sffile = sf;
-    sfdata.start = start_byte;
-    sfdata.end = end_byte;
-    sfdata.offset = 0;
+    sfdata.start = sf->samplepos + start_byte;
+    sfdata.end = sf->samplepos + end_byte;
+    sfdata.offset = -1;
 
-    FLUID_MEMSET(&sfinfo, 0, sizeof(sfinfo));
-
-    /* Seek to beginning of Ogg Vorbis data in Soundfont */
-    if(sf->fcbs->fseek(sf->sffd, sf->samplepos + start_byte, SEEK_SET) == FLUID_FAILED)
+    /* Seek to sfdata.start, the beginning of Ogg Vorbis data in Soundfont */
+    sfvio_seek(0, SEEK_SET, &sfdata);
+    if (sfdata.offset != 0)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to seek to compressd sample position");
+        FLUID_LOG(FLUID_ERR, "Failed to seek to compressed sample position");
         return -1;
     }
+
+    FLUID_MEMSET(&sfinfo, 0, sizeof(sfinfo));
 
     // Open sample as a virtual file
     sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, &sfdata);
