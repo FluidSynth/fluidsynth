@@ -114,7 +114,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     {
         "dsound",
         new_fluid_dsound_audio_driver,
-        NULL,
+        new_fluid_dsound_audio_driver2,
         delete_fluid_dsound_audio_driver,
         fluid_dsound_audio_driver_settings
     },
