@@ -124,7 +124,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     {
         "waveout",
         new_fluid_waveout_audio_driver,
-        NULL,
+        new_fluid_waveout_audio_driver2,
         delete_fluid_waveout_audio_driver,
         fluid_waveout_audio_driver_settings
     },
