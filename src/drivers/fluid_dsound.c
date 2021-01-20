@@ -93,8 +93,8 @@ typedef struct
     /* callback called by the task for audio rendering in dsound buffers */
     fluid_audio_channels_callback_t write;
     HANDLE quit_ev;       /* Event object to request the audio task to stop */
-    float *lbuf;
-    float *rbuf;
+    float **drybuf;
+    float **efxbuf;
 
     int   bytes_per_second; /* number of bytes per second */
     DWORD buffer_byte_size; /* size of one buffer in bytes */
@@ -200,6 +200,7 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     double sample_rate;
     int periods, period_size;
     int audio_channels;
+    int i;
     fluid_dsound_devsel_t devsel;
     WAVEFORMATEXTENSIBLE format;
 
@@ -223,6 +224,9 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
 
     /* Clear format structure*/
     ZeroMemory(&format, sizeof(WAVEFORMATEXTENSIBLE));
+
+    /* Set this early so that if buffer allocation failed we can free the memory */
+    dev->channels_count = audio_channels * 2;
 
     /* check the format */
     if(!func)
@@ -262,12 +266,24 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
         format.Format.wBitsPerSample = 8 * sizeof(float);
         format.SubFormat = guid_float;
         format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-        dev->lbuf = FLUID_ARRAY(float, periods * period_size);
-        dev->rbuf = FLUID_ARRAY(float, periods * period_size);
-        if (dev->lbuf == NULL || dev->rbuf == NULL)
+        dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
+        dev->efxbuf = FLUID_ARRAY(float*, audio_channels * 2);
+        if(dev->drybuf == NULL || dev->efxbuf == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             goto error_recovery;
+        }
+        FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
+        FLUID_MEMSET(dev->efxbuf, 0, sizeof(float*) * audio_channels * 2);
+        for(i = 0; i < audio_channels * 2; ++i)
+        {
+            dev->drybuf[i] = FLUID_ARRAY(float, periods * period_size);
+            dev->efxbuf[i] = FLUID_ARRAY(float, periods * period_size);
+            if(dev->drybuf[i] == NULL || dev->efxbuf[i] == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Out of memory");
+                goto error_recovery;
+            }
         }
     }
 
@@ -305,7 +321,6 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     dev->buffer_byte_size = period_size * dev->frame_size;
     dev->queue_byte_size = periods * dev->buffer_byte_size;
     dev->bytes_per_second = format.Format.nAvgBytesPerSec;
-    dev->channels_count = format.Format.nChannels;
 
     devsel.devGUID = NULL;
 
@@ -452,6 +467,8 @@ error_recovery:
 
 void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
 {
+    int i;
+
     fluid_dsound_audio_driver_t *dev = (fluid_dsound_audio_driver_t *) d;
     fluid_return_if_fail(dev != NULL);
 
@@ -506,8 +523,17 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         IDirectSound_Release(dev->direct_sound);
     }
 
-    FLUID_FREE(dev->lbuf);
-    FLUID_FREE(dev->rbuf);
+    if(dev->func)
+    {
+        for(i = 0; i < dev->channels_count; ++i)
+        {
+            FLUID_FREE(dev->drybuf[i]);
+            FLUID_FREE(dev->efxbuf[i]);
+        }
+    }
+
+    FLUID_FREE(dev->drybuf);
+    FLUID_FREE(dev->efxbuf);
 
     FLUID_FREE(dev);
 }
@@ -689,23 +715,24 @@ static int fluid_dsound_write_processed_channels(fluid_synth_t *data, int len,
                                void *channels_out[], int channels_off[],
                                int channels_incr[])
 {
-    int i;
+    int i, ch;
     int ret;
     fluid_dsound_audio_driver_t *drv = (fluid_dsound_audio_driver_t*) data;
-    float *out[2] = {drv->lbuf, drv->rbuf};
-    float *lptr;
-    float *rptr;
-    FLUID_MEMSET(drv->lbuf, 0, len * sizeof(float));
-    FLUID_MEMSET(drv->rbuf, 0, len * sizeof(float));
-    ret = drv->func(drv->synth, len, 0, NULL, 2, out);
-    lptr = (float*)channels_out[0] + channels_off[0];
-    rptr = (float*)channels_out[1] + channels_off[1];
-    for (i = 0; i < len; ++i)
+    float *optr[DSOUND_MAX_STEREO_CHANNELS * 2];
+    for(ch = 0; ch < drv->channels_count; ++ch)
     {
-        *lptr = drv->lbuf[i];
-        *rptr = drv->rbuf[i];
-        lptr += channels_incr[0];
-        rptr += channels_incr[1];
+        FLUID_MEMSET(drv->drybuf[ch], 0, len * sizeof(float));
+        FLUID_MEMSET(drv->efxbuf[ch], 0, len * sizeof(float));
+        optr[ch] = (float*)channels_out[ch] + channels_off[ch];
+    }
+    ret = drv->func(drv->synth, len, drv->channels_count, drv->efxbuf, drv->channels_count, drv->drybuf);
+    for(ch = 0; ch < drv->channels_count; ++ch)
+    {
+        for(i = 0; i < len; ++i)
+        {
+            *optr[ch] = drv->drybuf[ch][i] + drv->efxbuf[ch][i];
+            optr[ch] += channels_incr[ch];
+        }
     }
     return ret;
 }
