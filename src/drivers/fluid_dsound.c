@@ -185,7 +185,7 @@ void fluid_dsound_audio_driver_settings(fluid_settings_t *settings)
 fluid_audio_driver_t *
 new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-    return new_fluid_dsound_audio_driver2(settings, NULL, synth);
+    return new_fluid_dsound_audio_driver2(settings, (fluid_audio_func_t)fluid_synth_process, synth);
 }
 
 fluid_audio_driver_t *
@@ -215,8 +215,6 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     FLUID_MEMSET(dev, 0, sizeof(fluid_dsound_audio_driver_t));
     dev->synth = data;
     dev->func = func;
-    dev->lbuf = NULL;
-    dev->rbuf = NULL;
 
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_getint(settings, "audio.periods", &periods);
@@ -508,15 +506,8 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         IDirectSound_Release(dev->direct_sound);
     }
 
-    if(dev->lbuf != NULL)
-    {
-        FLUID_FREE(dev->lbuf);
-    }
-
-    if(dev->rbuf != NULL)
-    {
-        FLUID_FREE(dev->rbuf);
-    }
+    FLUID_FREE(dev->lbuf);
+    FLUID_FREE(dev->rbuf);
 
     FLUID_FREE(dev);
 }
@@ -704,8 +695,8 @@ static int fluid_dsound_write_processed_channels(fluid_synth_t *data, int len,
     float *out[2] = {drv->lbuf, drv->rbuf};
     float *lptr;
     float *rptr;
-    memset(drv->lbuf, 0, len * sizeof(float));
-    memset(drv->rbuf, 0, len * sizeof(float));
+    FLUID_MEMSET(drv->lbuf, 0, len * sizeof(float));
+    FLUID_MEMSET(drv->rbuf, 0, len * sizeof(float));
     ret = drv->func(drv->synth, len, 0, NULL, 2, out);
     lptr = (float*)channels_out[0] + channels_off[0];
     rptr = (float*)channels_out[1] + channels_off[1];

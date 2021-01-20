@@ -267,7 +267,7 @@ void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
 fluid_audio_driver_t *
 new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-    return new_fluid_waveout_audio_driver2(settings, NULL, synth);
+    return new_fluid_waveout_audio_driver2(settings, (fluid_audio_func_t)fluid_synth_process, synth);
 }
 
 fluid_audio_driver_t *
@@ -395,11 +395,6 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
             delete_fluid_waveout_audio_driver(&dev->driver);
             return NULL;
         }
-    }
-    else
-    {
-        dev->lbuf = NULL;
-        dev->rbuf = NULL;
     }
 
     /* get the selected device name. if none is specified, use default device. */
@@ -543,15 +538,8 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
         CloseHandle(dev->hQuit);
     }
 
-    if(dev->lbuf != NULL)
-    {
-        FLUID_FREE(dev->lbuf);
-    }
-
-    if(dev->rbuf != NULL)
-    {
-        FLUID_FREE(dev->rbuf);
-    }
+    FLUID_FREE(dev->lbuf);
+    FLUID_FREE(dev->rbuf);
 
     HeapFree(GetProcessHeap(), 0, dev);
 }
@@ -567,8 +555,8 @@ static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
     float *out[2] = {drv->lbuf, drv->rbuf};
     float *lptr;
     float *rptr;
-    memset(drv->lbuf, 0, len * sizeof(float));
-    memset(drv->rbuf, 0, len * sizeof(float));
+    FLUID_MEMSET(drv->lbuf, 0, len * sizeof(float));
+    FLUID_MEMSET(drv->rbuf, 0, len * sizeof(float));
     ret = drv->func(drv->synth, len, 0, NULL, 2, out);
     lptr = (float*)channels_out[0] + channels_off[0];
     rptr = (float*)channels_out[1] + channels_off[1];
