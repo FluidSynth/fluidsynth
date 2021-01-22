@@ -120,7 +120,6 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         AudioStreamBuilder builder_obj;
         AudioStreamBuilder *builder = &builder_obj;
 
-        int period_frames;
         double sample_rate;
         int is_sample_format_float;
         int device_id;
@@ -132,7 +131,6 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         dev->synth = synth;
         dev->oboe_callback = std::make_unique<OboeAudioStreamCallback>(dev);
 
-        fluid_settings_getint(settings, "audio.period-size", &period_frames);
         fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
         is_sample_format_float = fluid_settings_str_equal(settings, "audio.sample-format", "float");
         fluid_settings_getint(settings, "audio.oboe.id", &device_id);
@@ -146,7 +144,6 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         ->setDirection(Direction::Output)
         ->setChannelCount(NUM_CHANNELS)
         ->setSampleRate(sample_rate)
-        ->setFramesPerCallback(period_frames)
         ->setFormat(is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
         ->setSharingMode(sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
         ->setPerformanceMode(
