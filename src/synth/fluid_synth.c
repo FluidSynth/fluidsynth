@@ -3888,7 +3888,7 @@ static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
  * Zero value is permitted, the function does nothing and return FLUID_OK.
  *
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
  * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
  *
