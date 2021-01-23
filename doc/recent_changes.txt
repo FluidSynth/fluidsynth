@@ -16,6 +16,11 @@
 - Support for UTF-8 filenames under Windows, see fluid_synth_sfload()
 - MIDI Tempo of the fluid_player can now be overridden, see fluid_player_set_tempo()
 
+
+\section NewIn2_1_7 What's new in 2.1.7?
+
+- a regression introduced in 2.1.0 prevented chorus from being audible when fluid_synth_process() was used
+
 \section NewIn2_1_4 What's new in 2.1.4?
 
 - a regression introduced in 2.1.3 broke fluid_synth_start() for DLS presets
