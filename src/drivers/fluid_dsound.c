@@ -94,7 +94,6 @@ typedef struct
     fluid_audio_channels_callback_t write;
     HANDLE quit_ev;       /* Event object to request the audio task to stop */
     float **drybuf;
-    float **efxbuf;
 
     int   bytes_per_second; /* number of bytes per second */
     DWORD buffer_byte_size; /* size of one buffer in bytes */
@@ -267,19 +266,16 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
         format.SubFormat = guid_float;
         format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
         dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
-        dev->efxbuf = FLUID_ARRAY(float*, audio_channels * 2);
-        if(dev->drybuf == NULL || dev->efxbuf == NULL)
+        if(dev->drybuf == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             goto error_recovery;
         }
         FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
-        FLUID_MEMSET(dev->efxbuf, 0, sizeof(float*) * audio_channels * 2);
         for(i = 0; i < audio_channels * 2; ++i)
         {
             dev->drybuf[i] = FLUID_ARRAY(float, periods * period_size);
-            dev->efxbuf[i] = FLUID_ARRAY(float, periods * period_size);
-            if(dev->drybuf[i] == NULL || dev->efxbuf[i] == NULL)
+            if(dev->drybuf[i] == NULL)
             {
                 FLUID_LOG(FLUID_ERR, "Out of memory");
                 goto error_recovery;
@@ -528,12 +524,10 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         for(i = 0; i < dev->channels_count; ++i)
         {
             FLUID_FREE(dev->drybuf[i]);
-            FLUID_FREE(dev->efxbuf[i]);
         }
     }
 
     FLUID_FREE(dev->drybuf);
-    FLUID_FREE(dev->efxbuf);
 
     FLUID_FREE(dev);
 }
@@ -722,15 +716,14 @@ static int fluid_dsound_write_processed_channels(fluid_synth_t *data, int len,
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
         FLUID_MEMSET(drv->drybuf[ch], 0, len * sizeof(float));
-        FLUID_MEMSET(drv->efxbuf[ch], 0, len * sizeof(float));
         optr[ch] = (float*)channels_out[ch] + channels_off[ch];
     }
-    ret = drv->func(drv->synth, len, drv->channels_count, drv->efxbuf, drv->channels_count, drv->drybuf);
+    ret = drv->func(drv->synth, len, 0, NULL, drv->channels_count, drv->drybuf);
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
         for(i = 0; i < len; ++i)
         {
-            *optr[ch] = drv->drybuf[ch][i] + drv->efxbuf[ch][i];
+            *optr[ch] = drv->drybuf[ch][i];
             optr[ch] += channels_incr[ch];
         }
     }
