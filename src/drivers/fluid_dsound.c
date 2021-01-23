@@ -401,7 +401,7 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     }
 
     /* fill the buffer with silence */
-    memset(buf1, 0, bytes1);
+    FLUID_MEMSET(buf1, 0, bytes1);
 
     /* Unlock dsound buffer */
     IDirectSoundBuffer_Unlock(dev->sec_buffer, buf1, bytes1, 0, 0);
@@ -490,13 +490,16 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         IDirectSound_Release(dev->direct_sound);
     }
 
-    for(i = 0; i < dev->channels_count; ++i)
+    if(dev->drybuf != NULL)
     {
-        FLUID_FREE(dev->drybuf[i]);
+        for(i = 0; i < dev->channels_count; ++i)
+        {
+            FLUID_FREE(dev->drybuf[i]);
+        }
+
+        FLUID_FREE(dev->drybuf);
     }
-
-    FLUID_FREE(dev->drybuf);
-
+    
     FLUID_FREE(dev);
 }
 

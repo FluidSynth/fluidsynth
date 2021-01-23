@@ -526,12 +526,15 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
         CloseHandle(dev->hQuit);
     }
 
-    for(i = 0; i < dev->channels_count; ++i)
+    if(dev->drybuf != NULL)
     {
-        FLUID_FREE(dev->drybuf[i]);
-    }
+        for(i = 0; i < dev->channels_count; ++i)
+        {
+            FLUID_FREE(dev->drybuf[i]);
+        }
 
-    FLUID_FREE(dev->drybuf);
+        FLUID_FREE(dev->drybuf);
+    }
 
     HeapFree(GetProcessHeap(), 0, dev);
 }
