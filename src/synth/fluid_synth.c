@@ -278,7 +278,7 @@ fluid_synth_init(void)
 {
 #ifdef TRAP_ON_FPE
     /* Turn on floating point exception traps */
-    feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
+    feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
 #endif
 
     init_dither();
