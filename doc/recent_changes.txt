@@ -12,9 +12,12 @@
   - The sequencer's scale can now be used for arbitrary tempo changes. Previously, the scale of the sequencer was limited to 1000. The only limitation now is >0.
   - There is now a dedicated event type for changing the sequencer's time scale, see fluid_event_scale().
 - The dynamic-sample-loader has learned support to pin samples, see fluid_synth_pin_preset() and fluid_synth_unpin_preset()
-- Added getter and setter functions for individual effect groups
-- Support for UTF-8 filenames under Windows, see fluid_synth_sfload()
+- added getter and setter functions for individual effect groups
+- support for UTF-8 filenames under Windows, see fluid_synth_sfload()
 - MIDI Tempo of the fluid_player can now be overridden, see fluid_player_set_tempo()
+- the following drivers have gained support for new_fluid_audio_driver2():
+  - DSound
+  - WaveOut
 
 
 \section NewIn2_1_7 What's new in 2.1.7?
