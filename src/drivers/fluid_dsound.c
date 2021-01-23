@@ -37,10 +37,6 @@
 #include <ksmedia.h>
 
 static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
-static int fluid_dsound_write_processed_channels(fluid_synth_t *data, int len,
-                               int channels_count,
-                               void *channels_out[], int channels_off[],
-                               int channels_incr[]);
 
 static char *fluid_win32_error(HRESULT hr);
 
@@ -91,7 +87,7 @@ typedef struct
     void *synth; /* fluidsynth instance, or user pointer if custom processing function is defined */
     fluid_audio_func_t func;
     /* callback called by the task for audio rendering in dsound buffers */
-    fluid_audio_channels_callback_t write;
+
     HANDLE quit_ev;       /* Event object to request the audio task to stop */
     float **drybuf;
 
@@ -101,6 +97,11 @@ typedef struct
     DWORD frame_size;       /* frame size in bytes */
     int channels_count; /* number of channels in audio stream */
 } fluid_dsound_audio_driver_t;
+
+static int fluid_dsound_write_processed_channels(fluid_dsound_audio_driver_t *drv, int len,
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[]);
 
 typedef struct
 {
@@ -203,6 +204,8 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     fluid_dsound_devsel_t devsel;
     WAVEFORMATEXTENSIBLE format;
 
+    fluid_return_val_if_fail(func != NULL, NULL);
+
     /* create and clear the driver data */
     dev = FLUID_NEW(fluid_dsound_audio_driver_t);
 
@@ -228,58 +231,26 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     dev->channels_count = audio_channels * 2;
 
     /* check the format */
-    if(!func)
+    GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
+    FLUID_LOG(FLUID_DBG, "DSound: Selected 32 bit sample format");
+    /* sample container size in bits: 32 bits */
+    format.Format.wBitsPerSample = 8 * sizeof(float);
+    format.SubFormat = guid_float;
+    format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
+    if(dev->drybuf == NULL)
     {
-        if(fluid_settings_str_equal(settings, "audio.sample-format", "float"))
-        {
-            GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
-            FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
-            dev->write = fluid_synth_write_float_channels;
-            /* sample container size in bits: 32 bits */
-            format.Format.wBitsPerSample = 8 * sizeof(float);
-            format.SubFormat = guid_float;
-            format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-        }
-        else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
-        {
-            GUID guid_pcm = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM)};
-            FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
-            dev->write = fluid_synth_write_s16_channels;
-            /* sample container size in bits: 16bits */
-            format.Format.wBitsPerSample = 8 * sizeof(short);
-            format.SubFormat = guid_pcm;
-            format.Format.wFormatTag = WAVE_FORMAT_PCM;
-        }
-        else
-        {
-            FLUID_LOG(FLUID_ERR, "Unhandled sample format");
-            goto error_recovery;
-        }
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        goto error_recovery;
     }
-    else
+    FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
+    for(i = 0; i < audio_channels * 2; ++i)
     {
-        GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
-        FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
-        dev->write = fluid_dsound_write_processed_channels;
-        /* sample container size in bits: 32 bits */
-        format.Format.wBitsPerSample = 8 * sizeof(float);
-        format.SubFormat = guid_float;
-        format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-        dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
-        if(dev->drybuf == NULL)
+        dev->drybuf[i] = FLUID_ARRAY(float, periods * period_size);
+        if(dev->drybuf[i] == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             goto error_recovery;
-        }
-        FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
-        for(i = 0; i < audio_channels * 2; ++i)
-        {
-            dev->drybuf[i] = FLUID_ARRAY(float, periods * period_size);
-            if(dev->drybuf[i] == NULL)
-            {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
-                goto error_recovery;
-            }
         }
     }
 
@@ -519,12 +490,9 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         IDirectSound_Release(dev->direct_sound);
     }
 
-    if(dev->func)
+    for(i = 0; i < dev->channels_count; ++i)
     {
-        for(i = 0; i < dev->channels_count; ++i)
-        {
-            FLUID_FREE(dev->drybuf[i]);
-        }
+        FLUID_FREE(dev->drybuf[i]);
     }
 
     FLUID_FREE(dev->drybuf);
@@ -627,16 +595,9 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
                 while(i);
 
                 /* calling write function */
-                if(dev->func == NULL)
-                {
-                    dev->write(dev->synth, frames, dev->channels_count,
+                fluid_dsound_write_processed_channels(dev, frames, dev->channels_count,
                             channels_out, channels_off, channels_incr);
-                }
-                else
-                {
-                    dev->write((fluid_synth_t*)dev, frames, dev->channels_count,
-                            channels_out, channels_off, channels_incr);
-                }
+
                 cur_position += frames * dev->frame_size;
             }
 
@@ -659,16 +620,9 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
                 while(i);
 
                 /* calling write function */
-                if(dev->func == NULL)
-                {
-                    dev->write(dev->synth, frames, dev->channels_count,
+                fluid_dsound_write_processed_channels(dev, frames, dev->channels_count,
                             channels_out, channels_off, channels_incr);
-                }
-                else
-                {
-                    dev->write((fluid_synth_t*)dev, frames, dev->channels_count,
-                            channels_out, channels_off, channels_incr);
-                }
+
                 cur_position += frames * dev->frame_size;
             }
 
@@ -704,21 +658,31 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
     return 0;
 }
 
-static int fluid_dsound_write_processed_channels(fluid_synth_t *data, int len,
+static int fluid_dsound_write_processed_channels(fluid_dsound_audio_driver_t *drv, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[])
 {
     int i, ch;
     int ret;
-    fluid_dsound_audio_driver_t *drv = (fluid_dsound_audio_driver_t*) data;
     float *optr[DSOUND_MAX_STEREO_CHANNELS * 2];
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
         FLUID_MEMSET(drv->drybuf[ch], 0, len * sizeof(float));
         optr[ch] = (float*)channels_out[ch] + channels_off[ch];
     }
-    ret = drv->func(drv->synth, len, 0, NULL, drv->channels_count, drv->drybuf);
+
+    if(drv->func == fluid_synth_process)
+    {
+        // just like fluid_synth_write_float, mix the effects with the primary output
+        float* fx[4] = { drv->drybuf[0], drv->drybuf[1], drv->drybuf[0], drv->drybuf[1] };
+        ret = fluid_synth_process(drv->synth, len, sizeof(fx) / sizeof(fx[0]), fx, drv->channels_count, drv->drybuf);
+    }
+    else
+    {
+        ret = drv->func(drv->synth, len, 0, NULL, drv->channels_count, drv->drybuf);
+    }
+
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
         for(i = 0; i < len; ++i)

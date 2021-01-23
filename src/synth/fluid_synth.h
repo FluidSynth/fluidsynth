@@ -181,29 +181,6 @@ typedef int (*fluid_audio_callback_t)(fluid_synth_t *synth, int len,
                                       void *out1, int loff, int lincr,
                                       void *out2, int roff, int rincr);
 
-typedef int (*fluid_audio_channels_callback_t)(fluid_synth_t *synth, int len,
-                                               int channels_count,
-                                               void *channels_out[], int channels_off[],
-                                               int channels_incr[]);
-
-int
-fluid_synth_write_float_channels_LOCAL(fluid_synth_t *synth, int len,
-                                       int channels_count,
-                                       void *channels_out[], int channels_off[],
-                                       int channels_incr[],
-                                       int (*block_render_func)(fluid_synth_t *, int));
-
-int
-fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
-                               int channels_count,
-                               void *channels_out[], int channels_off[],
-                               int channels_incr[]);
-int
-fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
-                                 int channels_count,
-                                 void *channels_out[], int channels_off[],
-                                 int channels_incr[]);
-
 fluid_preset_t *fluid_synth_find_preset(fluid_synth_t *synth,
                                         int banknum,
                                         int prognum);

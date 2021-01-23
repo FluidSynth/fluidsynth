@@ -125,6 +125,25 @@ static void fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id);
 
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
 
+static int
+fluid_synth_write_float_channels_LOCAL(fluid_synth_t *synth, int len,
+                                       int channels_count,
+                                       void *channels_out[], int channels_off[],
+                                       int channels_incr[],
+                                       int (*block_render_func)(fluid_synth_t *, int));
+
+static int
+fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[]);
+
+static int
+fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
+                                 int channels_count,
+                                 void *channels_out[], int channels_off[],
+                                 int channels_incr[]);
+
 
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);

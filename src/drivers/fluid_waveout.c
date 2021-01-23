@@ -49,10 +49,6 @@
 #define WAVEOUT_MAX_STEREO_CHANNELS 4
 
 static char *fluid_waveout_error(MMRESULT hr);
-static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
-                               int channels_count,
-                               void *channels_out[], int channels_off[],
-                               int channels_incr[]);
 
 /* speakers mapping */
 const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
@@ -87,7 +83,6 @@ typedef struct
 
     void *synth;
     fluid_audio_func_t func;
-    fluid_audio_channels_callback_t write_ptr;
     float **drybuf;
 
     HWAVEOUT hWaveOut;
@@ -105,6 +100,10 @@ typedef struct
 
 } fluid_waveout_audio_driver_t;
 
+static int fluid_waveout_write_processed_channels(fluid_waveout_audio_driver_t *data, int len,
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[]);
 
 /* Thread for playing sample buffers */
 static DWORD WINAPI fluid_waveout_synth_thread(void *data)
@@ -197,7 +196,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
                 }
                 while(i);
 
-                dev->write_ptr(dev->func ? (fluid_synth_t*)dev : dev->synth, dev->num_frames, dev->channels_count,
+                fluid_waveout_write_processed_channels(dev, dev->num_frames, dev->channels_count,
                                channels_out, channels_off, channels_incr);
 
                 waveOutWrite((HWAVEOUT)msg.wParam, pWave, sizeof(WAVEHDR));
@@ -273,7 +272,6 @@ fluid_audio_driver_t *
 new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
     fluid_waveout_audio_driver_t *dev = NULL;
-    fluid_audio_channels_callback_t write_ptr;
     double sample_rate;
     int frequency, sample_size;
     int periods, period_size;
@@ -286,6 +284,8 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     char dev_name[MAXPNAMELEN];
     MMRESULT errCode;
 
+    fluid_return_val_if_fail(func != NULL, NULL);
+
     /* Retrieve the settings */
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_getint(settings, "audio.periods", &periods);
@@ -296,31 +296,12 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
 
     /* check the format */
-    if(fluid_settings_str_equal(settings, "audio.sample-format", "float") || func)
-    {
-        GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
-        FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
+    GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
+    FLUID_LOG(FLUID_DBG, "WaveOut: Selected 32 bit sample format");
 
-        sample_size = sizeof(float);
-        write_ptr = func ? fluid_waveout_write_processed_channels : fluid_synth_write_float_channels;
-        wfx.SubFormat = guid_float;
-        wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-    }
-    else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
-    {
-        GUID guid_pcm = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM)};
-        FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
-
-        sample_size = sizeof(short);
-        write_ptr = fluid_synth_write_s16_channels;
-        wfx.SubFormat = guid_pcm;
-        wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
-    }
-    else
-    {
-        FLUID_LOG(FLUID_ERR, "Unhandled sample format");
-        return NULL;
-    }
+    sample_size = sizeof(float);
+    wfx.SubFormat = guid_float;
+    wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
 
     /* Set frequency to integer */
     frequency = (int)sample_rate;
@@ -374,7 +355,6 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     dev->func = func;
 
     /* Save copy of other variables */
-    dev->write_ptr = write_ptr;
     dev->sample_size = sample_size;
 
     /* Calculate the number of frames in a block */
@@ -384,25 +364,22 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     /* Set default device to use */
     device = WAVE_MAPPER;
 
-    if(func)
+    dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
+    if(dev->drybuf == NULL)
     {
-        dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
-        if(dev->drybuf == NULL)
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        delete_fluid_waveout_audio_driver(&dev->driver);
+        return NULL;
+    }
+    FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
+    for(i = 0; i < audio_channels * 2; ++i)
+    {
+        dev->drybuf[i] = FLUID_ARRAY(float, periods * period_size);
+        if(dev->drybuf[i] == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             delete_fluid_waveout_audio_driver(&dev->driver);
             return NULL;
-        }
-        FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
-        for(i = 0; i < audio_channels * 2; ++i)
-        {
-            dev->drybuf[i] = FLUID_ARRAY(float, periods * period_size);
-            if(dev->drybuf[i] == NULL)
-            {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
-                delete_fluid_waveout_audio_driver(&dev->driver);
-                return NULL;
-            }
         }
     }
 
@@ -549,12 +526,9 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
         CloseHandle(dev->hQuit);
     }
 
-    if(dev->func)
+    for(i = 0; i < dev->channels_count; ++i)
     {
-        for(i = 0; i < dev->channels_count; ++i)
-        {
-            FLUID_FREE(dev->drybuf[i]);
-        }
+        FLUID_FREE(dev->drybuf[i]);
     }
 
     FLUID_FREE(dev->drybuf);
@@ -562,21 +536,31 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
     HeapFree(GetProcessHeap(), 0, dev);
 }
 
-static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
+static int fluid_waveout_write_processed_channels(fluid_waveout_audio_driver_t *drv, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[])
 {
     int i, ch;
     int ret;
-    fluid_waveout_audio_driver_t *drv = (fluid_waveout_audio_driver_t*) data;
     float *optr[WAVEOUT_MAX_STEREO_CHANNELS * 2];
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
         FLUID_MEMSET(drv->drybuf[ch], 0, len * sizeof(float));
         optr[ch] = (float*)channels_out[ch] + channels_off[ch];
     }
-    ret = drv->func(drv->synth, len, 0, NULL, drv->channels_count, drv->drybuf);
+
+    if(drv->func == fluid_synth_process)
+    {
+        // just like fluid_synth_write_float, mix the effects with the primary output
+        float* fx[4] = { drv->drybuf[0], drv->drybuf[1], drv->drybuf[0], drv->drybuf[1] };
+        ret = fluid_synth_process(drv->synth, len, sizeof(fx) / sizeof(fx[0]), fx, drv->channels_count, drv->drybuf);
+    }
+    else
+    {
+        ret = drv->func(drv->synth, len, 0, NULL, drv->channels_count, drv->drybuf);
+    }
+
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
         for(i = 0; i < len; ++i)
