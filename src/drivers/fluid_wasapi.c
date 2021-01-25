@@ -51,6 +51,10 @@
 #define AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY 0x08000000
 #endif
 
+static const CLSID _CLSID_MMDeviceEnumerator = {
+    0xbcde0395, 0xe52f, 0x467c, {0x8e, 0x3d, 0xc4, 0x57, 0x92, 0x91, 0x69, 0x2e}
+};
+
 static const IID   _IID_IMMDeviceEnumerator = {
     0xa95664d2, 0x9614, 0x4f35, {0xa7, 0x46, 0xde, 0x8d, 0xb6, 0x36, 0x17, 0xe6}
 };
@@ -235,7 +239,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     }
 
     ret = CoCreateInstance(
-            &CLSID_MMDeviceEnumerator, NULL,
+            &_CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_ALL, &_IID_IMMDeviceEnumerator,
             (void**)&denum);
     if(FAILED(ret))
@@ -588,7 +592,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     }
 
     ret = CoCreateInstance(
-            &CLSID_MMDeviceEnumerator, NULL,
+            &_CLSID_MMDeviceEnumerator, NULL,
             CLSCTX_ALL, &_IID_IMMDeviceEnumerator,
             (void**)&denum);
     if(FAILED(ret))
