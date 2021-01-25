@@ -29,6 +29,7 @@
 #define COBJMACROS
 
 #include <objbase.h>
+#include <windows.h>
 #include <initguid.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
@@ -38,7 +39,6 @@
 #include <oaidl.h>
 #include <ksguid.h>
 #include <ksmedia.h>
-#include <versionhelpers.h>
 
 // these symbols are either never found in headers, or
 // only defined but there are no library containing the actual symbol...
@@ -161,8 +161,13 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     IMMDeviceEnumerator *denum = NULL;
     IMMDevice *mmdev = NULL;
     HRESULT ret;
+    OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0};
 
-    if(!IsWindowsVistaOrGreater())
+    if(!VerifyVersionInfoW(&vi, VER_MAJORVERSION|VER_MINORVERSION|VER_SERVICEPACKMAJOR,
+        VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
+            VER_MAJORVERSION,VER_GREATER_EQUAL),
+            VER_MINORVERSION,VER_GREATER_EQUAL),
+            VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: this driver requires Windows Vista or newer.");
         return NULL;
@@ -303,7 +308,13 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         if(rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) // needs resampling
         {
             flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
-            if(IsWindows7OrGreater()) //IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set
+            vi.dwMinorVersion = 1;
+            if(VerifyVersionInfoW(&vi, VER_MAJORVERSION|VER_MINORVERSION|VER_SERVICEPACKMAJOR,
+                VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
+                    VER_MAJORVERSION,VER_GREATER_EQUAL),
+                    VER_MINORVERSION,VER_GREATER_EQUAL),
+                    VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
+                    //IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set
             {
                 flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
             }
