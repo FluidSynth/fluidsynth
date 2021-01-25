@@ -120,6 +120,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if WASAPI_SUPPORT
+    {
+        "wasapi",
+        new_fluid_wasapi_audio_driver,
+        new_fluid_wasapi_audio_driver2,
+        delete_fluid_wasapi_audio_driver,
+        fluid_wasapi_audio_driver_settings
+    },
+#endif
+
 #if WAVEOUT_SUPPORT
     {
         "waveout",

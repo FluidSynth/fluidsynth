@@ -193,6 +193,9 @@
 /* Define to enable DirectSound driver */
 #cmakedefine DSOUND_SUPPORT @DSOUND_SUPPORT@
 
+/* Define to enable Windows WASAPI driver */
+#cmakedefine WASAPI_SUPPORT @WASAPI_SUPPORT@
+
 /* Define to enable Windows WaveOut driver */
 #cmakedefine WAVEOUT_SUPPORT @WAVEOUT_SUPPORT@
 
