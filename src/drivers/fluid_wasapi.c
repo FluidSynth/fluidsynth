@@ -150,22 +150,22 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     fluid_wasapi_audio_driver_t *dev = NULL;
     double sample_rate;
     int periods, period_size;
-    long long buffer_duration_reftime;
-    long long periods_reftime;
-    long long latency_reftime;
+    fluid_long_long_t buffer_duration_reftime;
+    fluid_long_long_t periods_reftime;
+    fluid_long_long_t latency_reftime;
     int audio_channels;
     int sample_size;
     int i;
     char *dname = NULL;
     DWORD flags = 0;
-    GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
+    //GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
     WAVEFORMATEXTENSIBLE wfx;
     WAVEFORMATEXTENSIBLE *rwfx = NULL;
     AUDCLNT_SHAREMODE share_mode;
     IMMDeviceEnumerator *denum = NULL;
     IMMDevice *mmdev = NULL;
     HRESULT ret;
-    OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0};
+    OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
 
     if(!VerifyVersionInfoW(&vi, VER_MAJORVERSION|VER_MINORVERSION|VER_SERVICEPACKMAJOR,
         VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
@@ -228,8 +228,8 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     dev->buffer_duration = periods * period_size / sample_rate;
     dev->channels_count = audio_channels * 2;
     dev->float_samples = (wfx.Format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT);
-    buffer_duration_reftime = (long long)(dev->buffer_duration * 1e7 + .5);
-    periods_reftime = (long long)(period_size / sample_rate * 1e7 +.5);
+    buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
+    periods_reftime = (fluid_long_long_t)(period_size / sample_rate * 1e7 +.5);
 
     ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if(FAILED(ret))
@@ -253,23 +253,15 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         mmdev = fluid_wasapi_find_device(denum, dname);
         if (mmdev == NULL)
         {
+            FLUID_FREE(dname);
             goto cleanup;
         }
     }
     else
     {
-        ret = IMMDeviceEnumerator_GetDefaultAudioEndpoint(
-                denum,
-                eRender,
-                eMultimedia,
-                &mmdev);
-        if(FAILED(ret))
-        {
-            FLUID_LOG(FLUID_ERR, "wasapi: cannot get default audio device. %x", (unsigned)ret);
-            goto cleanup;
-        }
+        FLUID_LOG(FLUID_ERR, "wasapi: out of memory.");
+        goto cleanup;
     }
-
     FLUID_FREE(dname);
     
     ret = IMMDevice_Activate(mmdev,
@@ -292,12 +284,12 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     }
     if(share_mode == AUDCLNT_SHAREMODE_SHARED)
     {
-        FLUID_LOG(FLUID_INFO, "wasapi: using shared mode.");
+        FLUID_LOG(FLUID_DBG, "wasapi: using shared mode.");
         periods_reftime = 0;
     }
     else
     {
-        FLUID_LOG(FLUID_INFO, "wasapi: using exclusive mode.");
+        FLUID_LOG(FLUID_DBG, "wasapi: using exclusive mode.");
     }
 
     ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode, (const WAVEFORMATEX*)&wfx, (WAVEFORMATEX**)&rwfx);
@@ -308,6 +300,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     }
     else if(ret == S_FALSE)
     {
+        //rwfx is non-null only in this case
         FLUID_LOG(FLUID_INFO, "wasapi: requested mode cannot be fully satisfied.");
         if(rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) // needs resampling
         {
@@ -323,6 +316,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
                 flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
             }
         }
+        CoTaskMemFree(rwfx);
     }
     
     ret = IAudioClient_Initialize(dev->aucl, share_mode, flags,
@@ -332,7 +326,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         FLUID_LOG(FLUID_ERR, "wasapi: failed to initialize audio client. %x", (unsigned)ret);
         if(ret == AUDCLNT_E_INVALID_DEVICE_PERIOD)
         {
-            long long defp, minp;
+            fluid_long_long_t defp, minp;
             FLUID_LOG(FLUID_ERR, "wasapi: the device period size is invalid.");
             if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, &minp)))
             {
@@ -350,7 +344,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio buffer size. %x", (unsigned)ret);
         goto cleanup;
     }
-    FLUID_LOG(FLUID_INFO, "wasapi: requested %d frames of buffers, got %u.", periods * period_size, dev->nframes);
+    FLUID_LOG(FLUID_DBG, "wasapi: requested %d frames of buffers, got %u.", periods * period_size, dev->nframes);
     dev->buffer_duration = dev->nframes / sample_rate;
 
     dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
@@ -379,7 +373,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(SUCCEEDED(IAudioClient_GetStreamLatency(dev->aucl, &latency_reftime)))
     {
-        FLUID_LOG(FLUID_INFO, "wasapi: latency: %fms.", latency_reftime / 1e4);
+        FLUID_LOG(FLUID_DBG, "wasapi: latency: %fms.", latency_reftime / 1e4);
     }
 
     dev->quit_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -400,7 +394,6 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     IMMDevice_Release(mmdev);
     IMMDeviceEnumerator_Release(denum);
-    CoTaskMemFree(rwfx);
     return &dev->driver;
 
 cleanup:
@@ -412,7 +405,6 @@ cleanup:
     {
         IMMDeviceEnumerator_Release(denum);
     }
-    CoTaskMemFree(rwfx);
     delete_fluid_wasapi_audio_driver(&dev->driver);
     return NULL;
 }
@@ -430,7 +422,7 @@ void delete_fluid_wasapi_audio_driver(fluid_audio_driver_t *p)
 
         if(WaitForSingleObject(dev->thread, 2000) != WAIT_OBJECT_0)
         {
-            FLUID_LOG(FLUID_DBG, "wasapi: couldn't join the audio thread. killing it.");
+            FLUID_LOG(FLUID_WARN, "wasapi: couldn't join the audio thread. killing it.");
             TerminateThread(dev->thread, 0);
         }
 
@@ -727,7 +719,7 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
         }
         nsz = wcslen(id);
         d->id = FLUID_ARRAY(wchar_t, nsz + 1);
-        memcpy(d->id, id, sizeof(wchar_t) * (nsz + 1));
+        FLUID_MEMCPY(d->id, id, sizeof(wchar_t) * (nsz + 1));
     }
 
 cleanup:
