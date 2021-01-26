@@ -625,8 +625,6 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
         IMMDevice_Release(dev);
     }
 cleanup:
-    CoUninitialize();
-
     if(dcoll != NULL)
     {
         IMMDeviceCollection_Release(dcoll);
@@ -636,6 +634,8 @@ cleanup:
     {
         IMMDeviceEnumerator_Release(denum);
     }
+
+    CoUninitialize();
 }
 
 static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
