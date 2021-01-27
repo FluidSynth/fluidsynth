@@ -90,7 +90,6 @@ typedef struct
     HWAVEOUT hWaveOut;
     WAVEHDR  waveHeader[NB_SOUND_BUFFERS];
 
-    int sample_size;
     int periods; /* numbers of internal driver buffers */
     int num_frames;
 
@@ -379,7 +378,6 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
 
     /* Save copy of other variables */
     dev->write_ptr = write_ptr;
-    dev->sample_size = sample_size;
     /* number of frames in a buffer */
     dev->num_frames = period_size;
     /* number of buffers */
