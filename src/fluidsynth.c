@@ -967,7 +967,7 @@ int main(int argc, char **argv)
             fluid_player_add(player, argv[i]);
         }
     }
-
+#if 0
     /* try to load and execute the user or system configuration file */
     cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
 
@@ -981,7 +981,7 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
     }
-
+#endif
     /* start the player. Must be done after executing commands configuration file.
        This allows any existing player commands to be run prior the player is started.
        Example:
@@ -1060,6 +1060,21 @@ int main(int argc, char **argv)
             goto cleanup;
         }
 
+#if 1
+    /* try to load and execute the user or system configuration file */
+    cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
+
+    if(cmd_handler == NULL)
+    {
+        fprintf(stderr, "Failed to create the command handler\n");
+        goto cleanup;
+    }
+
+    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
+    {
+        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
+    }
+#endif
         /* run the shell */
         if(interactive)
         {
