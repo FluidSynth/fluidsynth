@@ -184,7 +184,7 @@ void fluid_dsound_audio_driver_settings(fluid_settings_t *settings)
 fluid_audio_driver_t *
 new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-    return new_fluid_dsound_audio_driver2(settings, (fluid_audio_func_t)fluid_synth_process, synth);
+    return new_fluid_dsound_audio_driver2(settings, NULL, synth);
 }
 
 fluid_audio_driver_t *
