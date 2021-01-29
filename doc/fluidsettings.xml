@@ -393,7 +393,7 @@ and commit the results. Refresh with the following command:
                   coreaudio (Mac OS X),<br />
                   dart (OS/2)
             </def>
-            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl2, sndman, waveout</vals>
+            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl2, sndman, wasapi, waveout</vals>
             <desc>
                 The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> sdl2 and waveout are available since fluidsynth 2.1.
             </desc>
@@ -627,6 +627,38 @@ and commit the results. Refresh with the following command:
             <def>default</def>
             <desc>
                 Server to use for PulseAudio driver output.
+            </desc>
+        </setting>
+        <setting>
+            <name>sdl2.device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Device to use for SDL2 driver output.
+            </desc>
+        </setting>
+        <setting>
+            <name>wasapi.device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Device to use for WASAPI driver output.
+            </desc>
+        </setting>
+        <setting>
+            <name>wasapi.exclusive-mode</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                By default, WASAPI will operate in shared mode. Set it to 1 (TRUE) to use WASAPI in exclusive mode. In this mode, you'll benefit from direct soundcard access via kernel streaming, which has an extremely low latency. However, you must pay close attention to other settings, such as synth.sample-rate and audio.sample-format as your soundcard may not accept any possible sample configuration.
+            </desc>
+        </setting>
+        <setting>
+            <name>waveout.device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Device to use for WaveOut driver output.
             </desc>
         </setting>
     </audio>
