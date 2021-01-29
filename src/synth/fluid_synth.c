@@ -544,7 +544,6 @@ fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_c
     }
 
     fluid_sample_timer_reset(synth, result);
-    result->isfinished = 0;
     result->data = data;
     result->callback = callback;
     result->next = synth->sample_timers;
@@ -576,6 +575,7 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
 void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer)
 {
     timer->starttick = fluid_synth_get_ticks(synth);
+    timer->isfinished = 0;
 }
 
 /***************************************************************
