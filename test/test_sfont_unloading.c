@@ -18,7 +18,7 @@ void wait_and_free(fluid_synth_t* synth, int id, const char* calling_func)
         if(fluid_timer_is_running(timer))
         {
             /* timer still running, wait a bit*/
-            fluid_msleep(50 * fluid_timer_get_interval(timer));
+            fluid_msleep(2 * fluid_timer_get_interval(timer));
             TEST_ASSERT(!fluid_timer_is_running(timer));
         }
         delete_fluid_timer(timer);

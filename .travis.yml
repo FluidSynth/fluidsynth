@@ -101,9 +101,10 @@ before_script:
 
 script:
     - cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 ..
-    - ${BW} make -j4
+    - echo Can handle `nproc` jobs in parallel
+    - ${BW} make -j`nproc`
     - ls -la
-    - make check
+    - make -j`nproc` check
     - make install
     - cd ..
     - ${SONARSC}
