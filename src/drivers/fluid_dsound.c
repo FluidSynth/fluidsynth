@@ -519,7 +519,7 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         IDirectSound_Release(dev->direct_sound);
     }
 
-    if(dev->func)
+    if(dev->drybuf != NULL)
     {
         for(i = 0; i < dev->channels_count; ++i)
         {

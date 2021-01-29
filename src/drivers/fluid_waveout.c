@@ -561,7 +561,7 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
         CloseHandle(dev->hQuit);
     }
 
-    if(dev->func)
+    if(dev->drybuf != NULL)
     {
         for(i = 0; i < dev->channels_count; ++i)
         {
