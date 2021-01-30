@@ -1059,7 +1059,6 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to create the audio driver\n");
             goto cleanup;
         }
-
 #if 1
     /* try to load and execute the user or system configuration file */
     cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
