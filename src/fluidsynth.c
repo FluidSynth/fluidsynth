@@ -316,14 +316,13 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     8)create the midi driver connected to the router.
     9)create a player and add it any midifile specified in command line.
 	  (multiple midifiles loading is possible).
-    10)create a command handler.
-    11)reading the entire configuration file for the second time and submit it
-       to the command handler before starting the player.
-    12)Start the player.
-    13)create a tcp shell if any requested.
-    14)entering fast rendering loop if requested, otherwise
-    15)create the audio driver (i.e synthesis thread) and a synchronous user
-       shell if interactive.
+    10)Start the player.
+    11)create a tcp shell if any requested.
+    12)entering fast rendering loop if requested, otherwise
+    13)create the audio driver (i.e synthesis thread)
+       - create a command handler and reading the entire configuration
+         file for the second time and submit it to the command handler.
+       - create a synchronous user shell if interactive.
  */
 int main(int argc, char **argv)
 {
@@ -967,27 +966,7 @@ int main(int argc, char **argv)
             fluid_player_add(player, argv[i]);
         }
     }
-#if 0
-    /* try to load and execute the user or system configuration file */
-    cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
 
-    if(cmd_handler == NULL)
-    {
-        fprintf(stderr, "Failed to create the command handler\n");
-        goto cleanup;
-    }
-
-    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
-    {
-        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
-    }
-#endif
-    /* start the player. Must be done after executing commands configuration file.
-       This allows any existing player commands to be run prior the player is started.
-       Example:
-       player_tempo_bpm 60 # set a low tempo
-       player_loop -1      # loop song forever
-    */
     if(player != NULL)
     {
         fluid_player_play(player);
@@ -1048,6 +1027,32 @@ int main(int argc, char **argv)
             FLUID_FREE(filename);
         }
 
+        /* try to load and execute the user or system configuration file.
+           For the player, this allows any existing useful player commands to be run
+           prior rendering the  audio file. Example:
+           player_tempo_bpm 60 # set a low tempo
+           Notes:
+           - seeking commands (player_step, player_next) can't work because the fast
+             rendering loop isn't yet started making those commands to be ignored.
+           - don't use the command player_loop -1, because this infine loop will fill
+             your disk entirely.
+        */
+        if(config_file != NULL)
+        {
+            cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
+            if(cmd_handler == NULL)
+            {
+                fprintf(stderr, "Failed to create the command handler\n");
+                goto cleanup;
+            }
+
+            if(fluid_source(cmd_handler, config_file) < 0)
+            {
+                fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
+            }
+        }
+
+        /* enter the synchronous fast render loop */
         fast_render_loop(settings, synth, player);
     }
     else /* start the synthesis thread */
@@ -1059,21 +1064,25 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to create the audio driver\n");
             goto cleanup;
         }
-#if 1
-    /* try to load and execute the user or system configuration file */
-    cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
 
-    if(cmd_handler == NULL)
-    {
-        fprintf(stderr, "Failed to create the command handler\n");
-        goto cleanup;
-    }
+        /* create the command handler */
+        cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
+        if(cmd_handler == NULL)
+        {
+            fprintf(stderr, "Failed to create the command handler\n");
+            goto cleanup;
+        }
 
-    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
-    {
-        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
-    }
-#endif
+        /* try to load and execute the user or system configuration file.
+           For the player, this must be done after starting the synthesis thread
+           (i.e audio driver) to ensure that any seeking player commands in the
+           file (player_step, player_next) are taking account by the player.
+        */
+        if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
+        {
+            fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
+        }
+
         /* run the shell */
         if(interactive)
         {
