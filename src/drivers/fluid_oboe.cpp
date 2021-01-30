@@ -35,6 +35,8 @@ extern "C" {
 #if OBOE_SUPPORT
 
 #include <oboe/Oboe.h>
+#include <sstream>
+#include <stdexcept>
 
 using namespace oboe;
 
@@ -91,6 +93,8 @@ private:
     void *user_data;
 };
 
+constexpr char SRCQ_SET[] = "audio.oboe.sample-rate-conversion-quality";
+
 void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
 {
     fluid_settings_register_int(settings, "audio.oboe.id", 0, 0, 0x7FFFFFFF, 0);
@@ -103,8 +107,55 @@ void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "None");
     fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "PowerSaving");
     fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "LowLatency");
+
+    fluid_settings_register_str(settings, SRCQ_SET, "Medium", 0);
+    fluid_settings_add_option(settings,   SRCQ_SET, "None");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Fastest");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Low");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Medium");
+    fluid_settings_add_option(settings,   SRCQ_SET, "High");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Best");
 }
 
+static oboe::SampleRateConversionQuality get_srate_conversion_quality(fluid_settings_t *settings)
+{
+    oboe::SampleRateConversionQuality q;
+
+    if(fluid_settings_str_equal(settings, SRCQ_SET, "None"))
+    {
+        q = oboe::SampleRateConversionQuality::None;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Fastest"))
+    {
+        q = oboe::SampleRateConversionQuality::Fastest;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Low"))
+    {
+        q = oboe::SampleRateConversionQuality::Low;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Medium"))
+    {
+        q = oboe::SampleRateConversionQuality::Medium;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "High"))
+    {
+        q = oboe::SampleRateConversionQuality::High;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Best"))
+    {
+        q = oboe::SampleRateConversionQuality::Best;
+    }
+    else
+    {
+        char buf[256];
+        fluid_settings_copystr(settings, SRCQ_SET, buf, sizeof(buf));
+        std::stringstream ss;
+        ss << "'" << SRCQ_SET << "' has unexpected value '" << buf << "'";
+        throw std::runtime_error(ss.str());
+    }
+
+    return q;
+}
 
 /*
  * new_fluid_oboe_audio_driver
@@ -151,22 +202,8 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
             performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
         ->setUsage(Usage::Media)
         ->setContentType(ContentType::Music)
-        ->setCallback(dev->oboe_callback.get());
-
-        switch(performance_mode)
-        {
-        case 2:
-            builder->setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
-            break;
-
-        case 1:
-            builder->setSampleRateConversionQuality(SampleRateConversionQuality::Fastest);
-            break;
-
-        default:
-            builder->setSampleRateConversionQuality(SampleRateConversionQuality::High);
-            break;
-        }
+        ->setCallback(dev->oboe_callback.get())
+        ->setSampleRateConversionQuality(get_srate_conversion_quality(settings));
 
         result = builder->openStream(dev->stream);
 
@@ -192,7 +229,11 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     }
     catch(const std::bad_alloc &)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_ERR, "oboe: std::bad_alloc caught: Out of memory");
+    }
+    catch(const std::exception &e)
+    {
+        FLUID_LOG(FLUID_ERR, "oboe: std::exception caught: %s", e.what());
     }
     catch(...)
     {

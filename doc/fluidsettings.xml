@@ -564,6 +564,15 @@ and commit the results. Refresh with the following command:
             </desc>
         </setting>
         <setting>
+            <name>oboe.sample-rate-conversion-quality</name>
+            <type>str</type>
+            <def>None</def>
+            <vals>None, Fastest, Low, Medium, High, Best</vals>
+            <desc>
+                Sets the sample-rate conversion quality as pointed out by Oboe's documentation.
+            </desc>
+        </setting>
+        <setting>
             <name>oboe.sharing-mode</name>
             <type>str</type>
             <def>Shared</def>
