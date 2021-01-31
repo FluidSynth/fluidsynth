@@ -1650,7 +1650,8 @@ new_fluid_player(fluid_synth_t *synth)
         return NULL;
     }
 
-    fluid_atomic_int_set(&player->status, FLUID_PLAYER_READY);
+    /* set the player in stopped state */
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
     player->loop = 1;
     player->ntracks = 0;
 
