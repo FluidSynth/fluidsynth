@@ -1063,7 +1063,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to create the audio driver\n");
             goto cleanup;
         }
-#if 1
+
         /* try to load and execute the user or system configuration file only
            for the player. This must be done after starting the synthesis thread
            (i.e audio driver) to ensure that any seeking player commands in the
@@ -1084,9 +1084,8 @@ int main(int argc, char **argv)
             }
 
             delete_fluid_cmd_handler(cmd_handler);
-            cmd_handler = NULL;
         }
-#endif
+
         /* run the shell */
         if(interactive)
         {
