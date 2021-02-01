@@ -2164,7 +2164,7 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    fluid_msleep(100); /* let the synthesis thread running a bit */
+    fluid_msleep(100); /* let the timer thread running a bit */
     fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
@@ -2210,7 +2210,7 @@ int fluid_player_seek(fluid_player_t *player, int ticks)
         if(fluid_atomic_int_compare_and_exchange(&player->seek_ticks, -1, ticks))
         {
             // new seek position has been set, as no previous seek was in progress
-            fluid_msleep(100); /* let the synthesis thread taking the new position */
+            fluid_msleep(100); /* let the timer thread taking the new position */
             return FLUID_OK;
         }
     }
@@ -2221,7 +2221,7 @@ int fluid_player_seek(fluid_player_t *player, int ticks)
         // fluid_player_stop();
         // fluid_player_seek(0); // to beginning
         fluid_atomic_int_set(&player->seek_ticks, ticks);
-        fluid_msleep(100); /* let the synthesis thread taking the new position */
+        fluid_msleep(100); /* let the timer thread taking the new position */
         return FLUID_OK;
     }
 

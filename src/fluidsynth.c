@@ -967,6 +967,30 @@ int main(int argc, char **argv)
         }
     }
 
+    /* try to load and execute the user or system configuration file.
+       Notes for the player, this allows any existing useful player commands to be run
+       prior starting the player:
+       - player_tempo_bpm 60 # set a low tempo
+       - For fast audio rendering:
+         - seeking commands (player_step, player_next) can't work because
+           the fast rendering loop isn't yet started making those commands to be ignored.
+         - don't use the command player_loop -1, because this infine loop will fill
+           your disk entirely !.
+    */
+    /* create the command handler */
+    cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
+    if(cmd_handler == NULL)
+    {
+        fprintf(stderr, "Failed to create the command handler\n");
+        goto cleanup;
+    }
+
+    /* try to load and execute the user or system configuration file. */
+    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
+    {
+        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
+    }
+
     if(player != NULL)
     {
         fluid_player_play(player);
@@ -1027,31 +1051,6 @@ int main(int argc, char **argv)
             FLUID_FREE(filename);
         }
 
-        /* try to load and execute the user or system configuration file.
-           For the player, this allows any existing useful player commands to be run
-           prior rendering the  audio file. Example:
-           player_tempo_bpm 60 # set a low tempo
-           Notes:
-           - seeking commands (player_step, player_next) can't work because the fast
-             rendering loop isn't yet started making those commands to be ignored.
-           - don't use the command player_loop -1, because this infine loop will fill
-             your disk entirely.
-        */
-        if(config_file != NULL)
-        {
-            cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
-            if(cmd_handler == NULL)
-            {
-                fprintf(stderr, "Failed to create the command handler\n");
-                goto cleanup;
-            }
-
-            if(fluid_source(cmd_handler, config_file) < 0)
-            {
-                fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
-            }
-        }
-
         /* enter the synchronous fast render loop */
         fast_render_loop(settings, synth, player);
     }
@@ -1064,25 +1063,30 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to create the audio driver\n");
             goto cleanup;
         }
-
-        /* create the command handler */
-        cmd_handler = new_fluid_cmd_handler2(settings, synth, router, player);
-        if(cmd_handler == NULL)
-        {
-            fprintf(stderr, "Failed to create the command handler\n");
-            goto cleanup;
-        }
-
-        /* try to load and execute the user or system configuration file.
-           For the player, this must be done after starting the synthesis thread
+#if 1
+        /* try to load and execute the user or system configuration file only
+           for the player. This must be done after starting the synthesis thread
            (i.e audio driver) to ensure that any seeking player commands in the
            file (player_step, player_next) are taking account by the player.
         */
-        if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
+        if(config_file != NULL && player != NULL)
         {
-            fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
-        }
+            fluid_cmd_handler_t *cmd_handler = new_fluid_cmd_handler2(NULL, NULL, NULL, player);
+            if(cmd_handler == NULL)
+            {
+                fprintf(stderr, "Failed to create the command handler\n");
+                goto cleanup;
+            }
 
+            if(fluid_source(cmd_handler, config_file) < 0)
+            {
+                fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
+            }
+
+            delete_fluid_cmd_handler(cmd_handler);
+            cmd_handler = NULL;
+        }
+#endif
         /* run the shell */
         if(interactive)
         {
