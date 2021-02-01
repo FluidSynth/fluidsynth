@@ -2199,7 +2199,7 @@ fluid_player_get_status(fluid_player_t *player)
  */
 int fluid_player_seek(fluid_player_t *player, int ticks)
 {
-    if(ticks < 0 || ticks > fluid_player_get_total_ticks(player))
+    if(ticks < 0 || (fluid_player_get_status(player) != FLUID_PLAYER_READY && ticks > fluid_player_get_total_ticks(player)))
     {
         return FLUID_FAILED;
     }

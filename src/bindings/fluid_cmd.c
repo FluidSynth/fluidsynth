@@ -3525,7 +3525,7 @@ enum
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
-    int arg;
+    int arg, was_running;
     int seek = -1;  /* current seek position in tick */
 
     /* commands name table */
@@ -3556,7 +3556,11 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
         return FLUID_OK;
     }
 
-    fluid_player_stop(handler->player);  /* player_stop */
+    was_running = fluid_player_get_status(handler->player) == FLUID_PLAYER_PLAYING;
+    if(was_running)
+    {
+        fluid_player_stop(handler->player);  /* player_stop */
+    }
 
     if(cmd != PLAYER_STOP_CDE)
     {
@@ -3574,7 +3578,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
             {
                 seek = 0; /* minimum position */
             }
-            else if(arg < seek)
+            else if(!was_running || arg < seek)
             {
                 seek = arg; /* seek < maximum position */
             }
@@ -3586,7 +3590,10 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
         }
 
         fluid_player_seek(handler->player, seek);
-        fluid_player_play(handler->player);
+        if(was_running)
+        {
+            fluid_player_play(handler->player);
+        }
     }
     /* display position */
     player_print_position(handler->player, seek, out);
