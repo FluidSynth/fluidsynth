@@ -15,7 +15,21 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        CMAKE_FLAGS: ["-Denable-profiling=1", "-Denable-floats=1 -Denable-profiling=1", "-Denable-floats=1", "-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0","-Denable-ubsan=1"]
+        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0","-Denable-ubsan=1"]
+        include:
+          - CC: "gcc-7"
+            CXX: "g++-7"
+          - CC: "gcc-8"
+            CXX: "g++-8"
+            CMAKE_FLAGS: "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
+          - CC: "clang-7"
+            CXX: "clang++-7"
+          - CC: "clang-8"
+            CXX: "clang++-8"
+          - CC: "clang-9"
+            CXX: "clang++-9"
+          - CC: "clang-10"
+            CXX: "clang++-10"
 
     steps:
     - uses: actions/checkout@v2
@@ -51,7 +65,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
+      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev $CMAKE_FLAGS -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
 
     - name: Build
       working-directory: ${{github.workspace}}/build
