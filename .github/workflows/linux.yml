@@ -62,6 +62,8 @@ jobs:
         ls -la `which clang-tidy` || true
         echo $PATH
         echo $SONARSC
+        export CC=${{ matrix.CC }}
+        export CXX=${{ matrix.CXX }}
         echo CC=$CC
         echo CXX=$CXX
 
@@ -73,7 +75,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev $CMAKE_FLAGS -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
+      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev ${{ matrix.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
 
     - name: Build
       working-directory: ${{github.workspace}}/build
