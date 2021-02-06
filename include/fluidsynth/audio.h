@@ -70,12 +70,39 @@ extern "C" {
  * This function is responsible for rendering audio to the buffers.
  * The buffers passed to this function are allocated and owned by the respective
  * audio driver and are only valid during that specific call (do not cache them).
+ * The buffers have already been zeroed-out.
  * For further details please refer to fluid_synth_process().
  *
+ * @parblock
  * @note Whereas fluid_synth_process() allows aliasing buffers, there is the guarentee that @p out
  * and @p fx buffers provided by fluidsynth's audio drivers never alias. This prevents downstream
  * applications from e.g. applying a custom effect accidentially to the same buffer multiple times.
+ * @endparblock
  *
+ * @parblock
+ * @note Also note that the Jack driver is currently the only driver that has dedicated @p fx buffers
+ * (but only if \setting{audio_jack_multi} is true). All other drivers do not provide @p fx buffers.
+ * In this case, users are encouraged to mix the effects into the provided dry buffers when calling
+ * fluid_synth_process().
+ * @code{.cpp}
+int myCallback(void *, int len, int nfx, float *fx[], int nout, float *out[])
+{
+    int ret;
+    if(nfx == 0)
+    {
+        float *fxb[4] = {out[0], out[1], out[0], out[1]};
+        ret = fluid_synth_process(synth, len, sizeof(fxb) / sizeof(fxb[0]), fxb, nout, out);
+    }
+    else
+    {
+        ret = fluid_synth_process(synth, len, nfx, fx, nout, out);
+    }
+    // ... client-code ...
+    return ret;
+}
+ * @endcode
+ * For other possible use-cases refer to \ref fluidsynth_process.c .
+ * @endparblock
  */
 typedef int (*fluid_audio_func_t)(void *data, int len,
                                   int nfx, float *fx[],

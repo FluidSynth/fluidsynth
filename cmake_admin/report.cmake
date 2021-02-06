@@ -79,6 +79,12 @@ else ( SDL2_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  no\n" )
 endif ( SDL2_SUPPORT )
 
+if ( WASAPI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WASAPI:                yes\n" )
+else ( WASAPI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WASAPI:                no\n" )
+endif ( WASAPI_SUPPORT )
+
 if ( WAVEOUT_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WaveOut:               yes\n" )
 else ( WAVEOUT_SUPPORT )

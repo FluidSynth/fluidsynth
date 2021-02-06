@@ -287,7 +287,7 @@ fluid_synth_init(void)
 {
 #ifdef TRAP_ON_FPE
     /* Turn on floating point exception traps */
-    feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
+    feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
 #endif
 
     init_dither();
@@ -544,7 +544,6 @@ fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_c
     }
 
     fluid_sample_timer_reset(synth, result);
-    result->isfinished = 0;
     result->data = data;
     result->callback = callback;
     result->next = synth->sample_timers;
@@ -576,6 +575,7 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
 void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer)
 {
     timer->starttick = fluid_synth_get_ticks(synth);
+    timer->isfinished = 0;
 }
 
 /***************************************************************
@@ -3888,7 +3888,7 @@ static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
  * Zero value is permitted, the function does nothing and return FLUID_OK.
  *
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
  * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
  *

@@ -95,13 +95,29 @@ void fluid_core_audio_driver_settings(fluid_settings_t *settings);
 #if DSOUND_SUPPORT
 fluid_audio_driver_t *new_fluid_dsound_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);
+fluid_audio_driver_t *new_fluid_dsound_audio_driver2(fluid_settings_t *settings,
+        fluid_audio_func_t func,
+        void *data);
 void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *p);
 void fluid_dsound_audio_driver_settings(fluid_settings_t *settings);
+#endif
+
+#if WASAPI_SUPPORT
+fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings,
+        fluid_synth_t *synth);
+fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
+        fluid_audio_func_t func,
+        void *data);
+void delete_fluid_wasapi_audio_driver(fluid_audio_driver_t *p);
+void fluid_wasapi_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
 #if WAVEOUT_SUPPORT
 fluid_audio_driver_t *new_fluid_waveout_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);
+fluid_audio_driver_t *new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
+        fluid_audio_func_t func,
+        void *data);
 void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *p);
 void fluid_waveout_audio_driver_settings(fluid_settings_t *settings);
 #endif

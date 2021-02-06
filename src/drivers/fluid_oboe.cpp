@@ -22,6 +22,7 @@
  *
  * Audio driver for Android Oboe.
  *
+ * This file may make use of C++14, because it's required by oboe anyway.
  */
 
 extern "C" {
@@ -34,10 +35,12 @@ extern "C" {
 #if OBOE_SUPPORT
 
 #include <oboe/Oboe.h>
+#include <sstream>
+#include <stdexcept>
 
 using namespace oboe;
 
-static const int NUM_CHANNELS = 2;
+constexpr int NUM_CHANNELS = 2;
 
 class OboeAudioStreamCallback;
 
@@ -49,10 +52,10 @@ class OboeAudioStreamCallback;
 typedef struct
 {
     fluid_audio_driver_t driver;
-    fluid_synth_t *synth;
-    int cont;
-    OboeAudioStreamCallback *oboe_callback;
-    AudioStream *stream;
+    fluid_synth_t *synth = nullptr;
+    bool cont = false;
+    std::unique_ptr<OboeAudioStreamCallback> oboe_callback;
+    std::shared_ptr<AudioStream> stream;
 } fluid_oboe_audio_driver_t;
 
 
@@ -90,6 +93,8 @@ private:
     void *user_data;
 };
 
+constexpr char SRCQ_SET[] = "audio.oboe.sample-rate-conversion-quality";
+
 void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
 {
     fluid_settings_register_int(settings, "audio.oboe.id", 0, 0, 0x7FFFFFFF, 0);
@@ -102,8 +107,55 @@ void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "None");
     fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "PowerSaving");
     fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "LowLatency");
+
+    fluid_settings_register_str(settings, SRCQ_SET, "Medium", 0);
+    fluid_settings_add_option(settings,   SRCQ_SET, "None");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Fastest");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Low");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Medium");
+    fluid_settings_add_option(settings,   SRCQ_SET, "High");
+    fluid_settings_add_option(settings,   SRCQ_SET, "Best");
 }
 
+static oboe::SampleRateConversionQuality get_srate_conversion_quality(fluid_settings_t *settings)
+{
+    oboe::SampleRateConversionQuality q;
+
+    if(fluid_settings_str_equal(settings, SRCQ_SET, "None"))
+    {
+        q = oboe::SampleRateConversionQuality::None;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Fastest"))
+    {
+        q = oboe::SampleRateConversionQuality::Fastest;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Low"))
+    {
+        q = oboe::SampleRateConversionQuality::Low;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Medium"))
+    {
+        q = oboe::SampleRateConversionQuality::Medium;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "High"))
+    {
+        q = oboe::SampleRateConversionQuality::High;
+    }
+    else if(fluid_settings_str_equal(settings, SRCQ_SET, "Best"))
+    {
+        q = oboe::SampleRateConversionQuality::Best;
+    }
+    else
+    {
+        char buf[256];
+        fluid_settings_copystr(settings, SRCQ_SET, buf, sizeof(buf));
+        std::stringstream ss;
+        ss << "'" << SRCQ_SET << "' has unexpected value '" << buf << "'";
+        throw std::runtime_error(ss.str());
+    }
+
+    return q;
+}
 
 /*
  * new_fluid_oboe_audio_driver
@@ -111,41 +163,25 @@ void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
 fluid_audio_driver_t *
 new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-    Result result;
-    fluid_oboe_audio_driver_t *dev;
-    AudioStreamBuilder builder_obj;
-    AudioStreamBuilder *builder = &builder_obj;
-    AudioStream *stream;
-
-    int period_frames;
-    double sample_rate;
-    int is_sample_format_float;
-    int device_id;
-    int sharing_mode; // 0: Shared, 1: Exclusive
-    int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
+    fluid_oboe_audio_driver_t *dev = nullptr;
 
     try
     {
-        dev = FLUID_NEW(fluid_oboe_audio_driver_t);
+        Result result;
+        AudioStreamBuilder builder_obj;
+        AudioStreamBuilder *builder = &builder_obj;
 
-        if(dev == NULL)
-        {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
-            return NULL;
-        }
+        double sample_rate;
+        int is_sample_format_float;
+        int device_id;
+        int sharing_mode; // 0: Shared, 1: Exclusive
+        int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
 
-        FLUID_MEMSET(dev, 0, sizeof(fluid_oboe_audio_driver_t));
+        dev = new fluid_oboe_audio_driver_t();
 
         dev->synth = synth;
-        dev->oboe_callback = new(std::nothrow) OboeAudioStreamCallback(dev);
+        dev->oboe_callback = std::make_unique<OboeAudioStreamCallback>(dev);
 
-        if(!dev->oboe_callback)
-        {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
-            goto error_recovery;
-        }
-
-        fluid_settings_getint(settings, "audio.period-size", &period_frames);
         fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
         is_sample_format_float = fluid_settings_str_equal(settings, "audio.sample-format", "float");
         fluid_settings_getint(settings, "audio.oboe.id", &device_id);
@@ -159,7 +195,6 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         ->setDirection(Direction::Output)
         ->setChannelCount(NUM_CHANNELS)
         ->setSampleRate(sample_rate)
-        ->setFramesPerCallback(period_frames)
         ->setFormat(is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
         ->setSharingMode(sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
         ->setPerformanceMode(
@@ -167,28 +202,38 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
             performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
         ->setUsage(Usage::Media)
         ->setContentType(ContentType::Music)
-        ->setCallback(dev->oboe_callback);
+        ->setCallback(dev->oboe_callback.get())
+        ->setSampleRateConversionQuality(get_srate_conversion_quality(settings));
 
-        result = builder->openStream(&stream);
+        result = builder->openStream(dev->stream);
+
         if(result != Result::OK)
         {
             FLUID_LOG(FLUID_ERR, "Unable to open Oboe audio stream");
             goto error_recovery;
         }
 
-        dev->stream = stream;
-        dev->cont = 1;
+        dev->cont = true;
 
         FLUID_LOG(FLUID_INFO, "Using Oboe driver");
 
-        result = stream->start();
+        result = dev->stream->start();
+
         if(result != Result::OK)
         {
             FLUID_LOG(FLUID_ERR, "Unable to start Oboe audio stream");
             goto error_recovery;
         }
 
-        return reinterpret_cast<fluid_audio_driver_t *>(dev);
+        return &dev->driver;
+    }
+    catch(const std::bad_alloc &)
+    {
+        FLUID_LOG(FLUID_ERR, "oboe: std::bad_alloc caught: Out of memory");
+    }
+    catch(const std::exception &e)
+    {
+        FLUID_LOG(FLUID_ERR, "oboe: std::exception caught: %s", e.what());
     }
     catch(...)
     {
@@ -197,33 +242,31 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
 error_recovery:
     delete_fluid_oboe_audio_driver(reinterpret_cast<fluid_audio_driver_t *>(dev));
-    return NULL;
+    return nullptr;
 }
 
 void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
 {
     fluid_oboe_audio_driver_t *dev = reinterpret_cast<fluid_oboe_audio_driver_t *>(p);
 
-    fluid_return_if_fail(dev != NULL);
+    fluid_return_if_fail(dev != nullptr);
 
     try
     {
-        dev->cont = 0;
+        dev->cont = false;
 
-        if(dev->stream != NULL)
+        if(dev->stream != nullptr)
         {
             dev->stream->stop();
             dev->stream->close();
         }
     }
-    catch(...) {}
+    catch(...)
+    {
+        FLUID_LOG(FLUID_ERR, "Exception caught while stopping and closing Oboe stream.");
+    }
 
-    // the audio stream is silently allocated with new, but neither the API docs nor code examples mention that it should be deleted
-    delete dev->stream;
-
-    delete dev->oboe_callback;
-
-    FLUID_FREE(dev);
+    delete dev;
 }
 
 #endif // OBOE_SUPPORT

@@ -980,13 +980,17 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
             d_out[1] +=  out ;
         }
 
+        /* Write the current input sample into the circular buffer.
+         * Note that 'in' may be aliased with 'left_out'. Hence this must be done
+         * before "processing stereo unit" (below). This ensures input buffer
+         * not being overwritten by stereo unit output.
+         */
+        push_in_delay_line(chorus, in[sample_index]);
+
         /* process stereo unit */
         /* Add the chorus stereo unit d_out to left and right output */
         left_out[sample_index]  += d_out[0] * chorus->wet1  + d_out[1] * chorus->wet2;
         right_out[sample_index] += d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
-
-        /* Write the current input sample into the circular buffer */
-        push_in_delay_line(chorus, in[sample_index]);
     }
 }
 
@@ -1052,12 +1056,16 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
             d_out[1] +=  out ;
         }
 
+        /* Write the current input sample into the circular buffer.
+         * Note that 'in' may be aliased with 'left_out'. Hence this must be done
+         * before "processing stereo unit" (below). This ensures input buffer
+         * not being overwritten by stereo unit output.
+         */
+        push_in_delay_line(chorus, in[sample_index]);
+
         /* process stereo unit */
         /* store the chorus stereo unit d_out to left and right output */
         left_out[sample_index]  = d_out[0] * chorus->wet1  + d_out[1] * chorus->wet2;
         right_out[sample_index] = d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
-
-        /* Write the current input sample into the circular buffer */
-        push_in_delay_line(chorus, in[sample_index]);
     }
 }
