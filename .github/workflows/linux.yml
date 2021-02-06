@@ -1,0 +1,91 @@
+name: FluidSynth Linux
+
+on: [push]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: RelWithDebInfo
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add apt-get repositories
+      run: |
+        sudo add-apt-repository \
+        ubuntu-toolchain-r-test \
+        llvm-toolchain-focal-7 \
+        llvm-toolchain-focal-8 \
+        llvm-toolchain-focal-9 \
+        llvm-toolchain-focal-10
+
+    - name: Update apt
+      run: sudo apt update
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get -yq --no-install-suggests --no-install-recommends install \
+        cmake-data \
+        cmake \
+        libglib2.0-0 \
+        libsndfile-dev \
+        libasound2-dev \
+        libjack-dev \
+        portaudio19-dev \
+        libpulse-dev \
+        libdbus-glib-1-dev \
+        ladspa-sdk \
+        libsdl2-dev
+      
+    - name: Create Build Environment
+      # Some projects don't allow in-source building, so create a separate build directory
+      # We'll use this as our working directory for all subsequent commands
+      run: |
+        cmake --version
+        cmake -E make_directory ${{github.workspace}}/build
+        which clang-tidy || true
+        ls -la `which clang-tidy` || true
+        echo $PATH
+        echo $MATRIX_EVAL
+        eval "${MATRIX_EVAL}"
+        echo $SONARSC
+
+    - name: Configure CMake
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      # Note the current convention is to use the -S and -B options here to specify source 
+      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: |
+        cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+           -Werror=dev \
+           -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install \
+           -Denable-portaudio=1 \
+           -Denable-ladspa=1 \
+           -DCMAKE_VERBOSE_MAKEFILE=1 \
+           -DNO_GUI=1
+
+    - name: Build
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: make -j`nproc`
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      # Execute tests defined by the CMake configuration.
+      run: make -j`nproc` check
+
+    - name: Install
+      working-directory: ${{github.workspace}}/build
+      run: make install
