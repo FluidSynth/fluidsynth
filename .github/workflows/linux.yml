@@ -19,11 +19,7 @@ jobs:
 
     - name: Add apt-get repositories
       run: |
-        sudo add-apt-repository ubuntu-toolchain-r-test
-        sudo add-apt-repository llvm-toolchain-focal-7
-        sudo add-apt-repository llvm-toolchain-focal-8
-        sudo add-apt-repository llvm-toolchain-focal-9
-        sudo add-apt-repository llvm-toolchain-focal-10
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 
     - name: Update apt
       run: sudo apt update
