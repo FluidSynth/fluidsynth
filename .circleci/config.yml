@@ -31,7 +31,8 @@ jobs:
           working_directory: doc/android
           command: |
             export TERM=dumb
-            make -f Makefile.android prepare
+            echo Starting `nproc` parallel jobs
+            make -j`nproc` -f Makefile.android prepare
       - run:
           name: Link Cerbero NDK for build
           command: |
@@ -46,7 +47,7 @@ jobs:
           working_directory: doc/android
           command: |
             export TERM=dumb
-            make -f Makefile.android
+            make -j`nproc` -f Makefile.android
       - run:
           name: Show directory contents
           working_directory: doc/android
