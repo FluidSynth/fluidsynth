@@ -18,12 +18,12 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Add apt-get repositories
-      run: sudo add-apt-repository \
-        ubuntu-toolchain-r-test \
-        llvm-toolchain-focal-7 \
-        llvm-toolchain-focal-8 \
-        llvm-toolchain-focal-9 \
-        llvm-toolchain-focal-10
+      run: |
+        sudo add-apt-repository ubuntu-toolchain-r-test
+        sudo add-apt-repository llvm-toolchain-focal-7
+        sudo add-apt-repository llvm-toolchain-focal-8
+        sudo add-apt-repository llvm-toolchain-focal-9
+        sudo add-apt-repository llvm-toolchain-focal-10
 
     - name: Update apt
       run: sudo apt update
