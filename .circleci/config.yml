@@ -18,13 +18,12 @@ jobs:
       - run:
           name: Install FluidSynth build dependencies
           command: sudo apt-get update && sudo apt-get install autotools-dev automake autoconf libtool g++ autopoint make cmake
-            bison flex yasm pkg-config gtk-doc-tools libxv-dev libx11-dev libpulse-dev
-            python3-dev texinfo gettext build-essential pkg-config doxygen curl libxext-dev
-            libxi-dev x11proto-record-dev libxrender-dev libgl1-mesa-dev libxfixes-dev
-            libxdamage-dev libxcomposite-dev libasound2-dev libxml-simple-perl dpkg-dev
+            bison flex yasm pkg-config libpulse-dev
+            python3-dev gettext build-essential pkg-config curl
+            libasound2-dev dpkg-dev
             debhelper build-essential devscripts fakeroot transfig gperf libdbus-glib-1-dev
-            wget glib-networking libxtst-dev libxrandr-dev libglu1-mesa-dev libegl1-mesa-dev
-            git subversion xutils-dev intltool ccache python3-setuptools autogen maven make
+            wget glib-networking libxtst-dev libxrandr-dev
+            git intltool ccache python3-setuptools autogen maven make
       - checkout
       - run:
           name: Build Cerbero and Oboe
