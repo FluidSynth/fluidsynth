@@ -31,7 +31,7 @@ all: build
 .PHONY: prepare
 prepare: checkout-oboe checkout-cerbero
 	for abi in $(ABIS_SIMPLE) ; do \
-		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc bootstrap && cd $(PWD) ; \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc bootstrap --jobs $(JOBS) && cd $(PWD) ; \
 	done
 
 .PHONY: checkout-oboe
@@ -54,7 +54,7 @@ build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynt
 .PHONY: build-deps-cerbero
 build-deps-cerbero:
 	for abi in $(ABIS_SIMPLE) ; do \
-		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib libsndfile && cd $(PWD) ; \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build --jobs $(JOBS) glib libsndfile && cd $(PWD) ; \
 	done
 
 define run_make_abi_target
