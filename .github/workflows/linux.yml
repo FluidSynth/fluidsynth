@@ -20,6 +20,7 @@ jobs:
     - name: Add apt-get repositories
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo apt-add-repository "deb https://apt.llvm.org/focal/ llvm-toolchain-focal-7 main"
 
     - name: Update apt
