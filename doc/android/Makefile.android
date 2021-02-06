@@ -16,6 +16,7 @@ PWD=$(shell pwd)
 CERBERO=$(PWD)/external/cerbero
 OBOE=$(PWD)/external/oboe
 CMAKE=cmake
+JOBS=$(shell nproc)
 
 ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-21
 
@@ -104,11 +105,11 @@ build-fluidsynth-one:
 		-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake \
 		-Denable-opensles=on -Denable-oboe=on -Denable-oss=off -Denable-libsndfile=on \
 		-DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DANDROID_ABI=$(A_ABI) ../../../.. && \
-	make
+	make -j$(JOBS)
 
 build-oboe-one:
 	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
-		$(CMAKE) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DANDROID_ABI=$(A_ABI) -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DBUILD_SHARED_LIBS=on ../.. && make
+		$(CMAKE) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DANDROID_ABI=$(A_ABI) -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DBUILD_SHARED_LIBS=on ../.. && make -j$(JOBS)
 	cp oboe-1.0.pc $(OBOE)/build/$(A_ABI)
 
 dist-oboe-one:
