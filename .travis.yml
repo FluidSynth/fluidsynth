@@ -9,10 +9,6 @@ addons:
     update: true
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-focal-7
-    - llvm-toolchain-focal-8
-    - llvm-toolchain-focal-9
-    - llvm-toolchain-focal-10
     packages:
     - cmake-data
     - cmake
@@ -25,18 +21,6 @@ addons:
     - libdbus-glib-1-dev
     - ladspa-sdk
     - libsdl2-dev
-env:
-    - CMAKE_FLAGS="-Denable-profiling=1"
-    - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
-    - CMAKE_FLAGS="-Denable-floats=1"
-    - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
-    - CMAKE_FLAGS="-Denable-fpe-check=1"
-    - CMAKE_FLAGS="-Denable-ipv6=0"
-    - CMAKE_FLAGS="-Denable-network=0"
-    - CMAKE_FLAGS="-Denable-aufile=0"
-    - CMAKE_FLAGS="-DBUILD_SHARED_LIBS=0"
-    - CMAKE_FLAGS="-Denable-ubsan=1"
-
 matrix:
   include:
     - addons:
@@ -51,37 +35,6 @@ matrix:
         - CC="gcc-7"
         - CXX="g++-7"
         - MATRIX_EVAL="sudo apt-get install gcc-7 g++-7"
-
-    - dist: trusty
-      env:
-        - CMAKE_FLAGS=""
-
-    - env:
-        - CC="gcc-8"
-        - CXX="g++-8"
-        - MATRIX_EVAL="sudo apt-get install gcc-8 g++-8"
-        - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
-
-    - env:
-        - CC="clang-7"
-        - CXX="clang++-7"
-        - MATRIX_EVAL="sudo apt-get install clang-7"
-
-    - env:
-        - CC="clang-8"
-        - CXX="clang++-8"
-        - MATRIX_EVAL="sudo rm -f /usr/local/clang-7.0.0/bin/clang-tidy && sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy && sudo apt-get install clang-8 clang-tidy-8"
-        - CMAKE_FLAGS="-Denable-profiling=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
-
-    - env:
-        - CC="clang-9"
-        - CXX="clang++-9"
-        - MATRIX_EVAL="sudo apt-get install clang-9"
-
-    - env:
-        - CC="clang-10"
-        - CXX="clang++-10"
-        - MATRIX_EVAL="sudo apt-get install clang-10"
 
     - os: linux-ppc64le
       env:
