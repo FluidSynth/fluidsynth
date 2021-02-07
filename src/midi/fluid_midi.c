@@ -2419,10 +2419,24 @@ fluid_player_join(fluid_player_t *player)
  * Get the number of tempo ticks passed.
  * @param player MIDI player instance
  * @return The number of tempo ticks passed
+ * Note: if a seek is in progress, the function waits for the seek position
+ *       before returning.
  * @since 1.1.7
  */
 int fluid_player_get_current_tick(fluid_player_t *player)
 {
+    int time_out = 0;
+
+    /* wait a limited time (500 ms max) if a seek is in progress */
+    while(fluid_atomic_int_get(&player->seek_ticks) != -1)
+    {
+        fluid_msleep(10);
+        if(++time_out == 50) /* stop waiting if timeout (500 ms) is reached */
+        {
+            break;
+        }
+    }
+
     return player->cur_ticks;
 }
 
