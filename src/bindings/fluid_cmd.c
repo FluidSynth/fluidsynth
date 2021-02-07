@@ -372,11 +372,11 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "player_stop", "player", fluid_handle_player_stop,
-        "player_stop                Stop playing"
+        "player_stop                Stop playing (cannot be executed in a user command file)"
     },
     {
         "player_cont", "player", fluid_handle_player_continue,
-        "player_cont                Continue playing"
+        "player_cont                Continue playing (cannot be executed in a user command file)"
     },
     {
         "player_step", "player", fluid_handle_player_step,
@@ -384,7 +384,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "player_next", "player", fluid_handle_player_next_song,
-        "player_next                Move to next song"
+        "player_next                Move to next song (cannot be executed in a user command file)"
     },
     {
         "player_loop", "player", fluid_handle_player_loop,
