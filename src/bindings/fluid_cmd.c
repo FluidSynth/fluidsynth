@@ -3494,12 +3494,18 @@ int player_check_arg(const char *name_cde, int ac, char **av, fluid_ostream_t ou
     return FLUID_OK;
 }
 
-/* print current position and total ticks */
-void player_print_position(fluid_player_t *player, fluid_ostream_t out)
+/* print current position, total ticks, and tempo
+ * @current_tick position to display. if -1 the function displays the value
+ *  returned by fluid_player_get_current_tick().
+*/
+void player_print_position(fluid_player_t *player, int current_tick, fluid_ostream_t out)
 {
-    int current_tick = fluid_player_get_current_tick(player);
     int total_ticks = fluid_player_get_total_ticks(player);
     int tempo_bpm = fluid_player_get_bpm(player);
+    if(current_tick == -1)
+    {
+        current_tick = fluid_player_get_current_tick(player);
+    }
     fluid_ostream_printf(out, "player current pos:%d, end:%d, bpm:%d\n\n",
                          current_tick, total_ticks, tempo_bpm);
 }
@@ -3520,6 +3526,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
 {
     FLUID_ENTRY_COMMAND(data);
     int arg;
+    int seek = -1;  /* current seek position in tick */
 
     /* commands name table */
     static const char *name_cde[] =
@@ -3555,7 +3562,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
     {
         /* seek for player_next, player_step, player_start */
         /* set seek to maximum position */
-        int seek = fluid_player_get_total_ticks(handler->player);
+        seek = fluid_player_get_total_ticks(handler->player);
 
         if(cmd == PLAYER_STEP_CDE)
         {
@@ -3582,7 +3589,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
         fluid_player_play(handler->player);
     }
     /* display position */
-    player_print_position(handler->player, out);
+    player_print_position(handler->player, seek, out);
 
     return FLUID_OK;
 }
