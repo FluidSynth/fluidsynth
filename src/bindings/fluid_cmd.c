@@ -379,8 +379,8 @@ static const fluid_cmd_t fluid_commands[] =
         "player_cont                Continue playing (cannot be executed in a user command file)"
     },
     {
-        "player_step", "player", fluid_handle_player_step,
-        "player_step num            Move forward/backward in current song to +/-num ticks"
+        "player_seek", "player", fluid_handle_player_seek,
+        "player_seek num            Move forward/backward in current song to +/-num ticks"
     },
     {
         "player_next", "player", fluid_handle_player_next_song,
@@ -3514,14 +3514,14 @@ void player_print_position(fluid_player_t *player, int current_tick, fluid_ostre
 enum
 {
     PLAYER_LOOP_CDE, /* player_loop num,(Set loop number to num) */
-    PLAYER_STEP_CDE, /* player_step num (Move forward/backward to +/-num ticks) */
+    PLAYER_SEEK_CDE, /* player_seek num (Move forward/backward to +/-num ticks) */
     PLAYER_STOP_CDE,      /* player_stop    (Stop playing) */
     PLAYER_CONT_CDE,      /* player_cont    (Continue playing) */
     PLAYER_NEXT_CDE,      /* player_next    (Move to next song) */
     PLAYER_START_CDE      /* player_start   (Move to start of song) */
 };
 
-/* Command handler for player commands: player_step, player_loop, player_tempo_bpm */
+/* Command handler for player commands: player_seek, player_loop, player_tempo_bpm */
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
@@ -3530,10 +3530,10 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
 
     /* commands name table */
     static const char *name_cde[] =
-    {"player_loop", "player_step"};
+    {"player_loop", "player_seek"};
 
-    /* get argument for PLAYER_LOOP_CDE, PLAYER_STEP_CDE */
-    if(cmd <= PLAYER_STEP_CDE)
+    /* get argument for PLAYER_LOOP_CDE, PLAYER_SEEK_CDE */
+    if(cmd <= PLAYER_SEEK_CDE)
     {
         /* check argument */
         if(player_check_arg(name_cde[cmd], ac, av, out) == FLUID_FAILED)
@@ -3564,11 +3564,11 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
 
     if(cmd != PLAYER_STOP_CDE)
     {
-        /* seek for player_next, player_step, player_start */
+        /* seek for player_next, player_seek, player_start */
         /* set seek to maximum position */
         seek = fluid_player_get_total_ticks(handler->player);
 
-        if(cmd == PLAYER_STEP_CDE)
+        if(cmd == PLAYER_SEEK_CDE)
         {
             /* Move position forward/backward +/- num ticks*/
             arg  += fluid_player_get_current_tick(handler->player);
@@ -3618,10 +3618,10 @@ int fluid_handle_player_continue(void *data, int ac, char **av, fluid_ostream_t 
 {
     return fluid_handle_player_cde(data, ac, av, out, PLAYER_CONT_CDE);
 }
-/* Command handler for "player_step" command */
-int fluid_handle_player_step(void *data, int ac, char **av, fluid_ostream_t out)
+/* Command handler for "player_seek" command */
+int fluid_handle_player_seek(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_player_cde(data, ac, av, out, PLAYER_STEP_CDE);
+    return fluid_handle_player_cde(data, ac, av, out, PLAYER_SEEK_CDE);
 }
 
 /* Command handler for "player_next" command */
