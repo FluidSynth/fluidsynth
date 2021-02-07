@@ -11,8 +11,9 @@ jobs:
   steps:
     - script: |
         brew update || brew update
-        brew upgrade
-        brew install glib gobject-introspection libsndfile pkg-config jack dbus-glib pulseaudio portaudio sdl2
+        PACKAGES="glib gobject-introspection libsndfile pkg-config jack dbus-glib pulseaudio portaudio sdl2"
+        brew upgrade $PACKAGES
+        brew install $PACKAGES
       displayName: 'Prerequisites'
     - script: |
         mkdir build && cd build
