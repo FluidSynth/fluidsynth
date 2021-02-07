@@ -379,7 +379,6 @@ if ( WASAPI_SUPPORT )
   set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} fluid_wasapi_device_enumerate.c )
 endif ( WASAPI_SUPPORT )
 
-
 add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
 )

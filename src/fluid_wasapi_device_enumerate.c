@@ -3,10 +3,7 @@
 #include <assert.h>
 
 static char **devs;
-static int devcnt;
 static int flag;
-static const int sample_rates[] = {8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 88200, 96000, 0};
-static const char *sample_formats[3] = {"16bits", "float", "\0"};
 
 static void devenumcb(void *p, const char *s, const char *opt)
 {
@@ -24,6 +21,10 @@ static void eatlog(int lvl,const char *m, void* d)
 
 void fluid_wasapi_device_enumerate(void)
 {
+    static const int sample_rates[] = {8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 88200, 96000, 0};
+    static const char *sample_formats[3] = {"16bits", "float", "\0"};
+
+    int e, d, s, f, i, devcnt;
     fluid_synth_t *synth;
     fluid_audio_driver_t *adriver;
     fluid_settings_t *settings = new_fluid_settings();
@@ -41,20 +42,20 @@ void fluid_wasapi_device_enumerate(void)
 
 	assert(devcnt == fluid_settings_option_count(settings, "audio.wasapi.device"));
 	puts("");
-	for (int e = 0; e < 2; ++e)
+	for (e = 0; e < 2; ++e)
 	{
 		puts(e ? "Exclusive mode:" : "Shared mode:");
 		fluid_settings_setint(settings, "audio.wasapi.exclusive-mode", e);
-		for (int d = 0; d < devcnt; ++d)
+		for (d = 0; d < devcnt; ++d)
 		{
 			printf("\t%s\n", devs[d]);
 			fluid_settings_setstr(settings, "audio.wasapi.device", devs[d]);
-			for (int s = 0; sample_rates[s]; ++s)
+			for (s = 0; sample_rates[s]; ++s)
 			{
 				fluid_settings_setnum(settings, "synth.sample-rate", sample_rates[s]);
-				for (int f = 0; sample_formats[f][0]; ++f)
+				for (f = 0; sample_formats[f][0]; ++f)
 				{
-					int n, supported;
+					int n, supported, c;
 					fluid_settings_setstr(settings, "audio.sample-format", sample_formats[f]);
 					flag = 0;
 					synth = new_fluid_synth(settings);
@@ -63,7 +64,7 @@ void fluid_wasapi_device_enumerate(void)
                     delete_fluid_audio_driver(adriver);
 					delete_fluid_synth(synth);
 					n = printf("\t  %dHz, %s ", sample_rates[s], sample_formats[f]);
-					for (int c = 50 - n; c; --c)
+					for (c = 50 - n; c; --c)
 					{
 						putchar('.');
 					}
@@ -79,7 +80,7 @@ void fluid_wasapi_device_enumerate(void)
     puts("FAILED: Mode is not supported.");
 
 	delete_fluid_settings(settings);
-	for (int i = 0; i < devcnt; ++i)
+	for (i = 0; i < devcnt; ++i)
 	{
 		free(devs[i]);
 	}
