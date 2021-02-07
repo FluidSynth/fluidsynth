@@ -2065,7 +2065,7 @@ fluid_player_callback(void *data, unsigned int msec)
 
     loadnextfile = player->currentfile == NULL ? 1 : 0;
 
-    if(fluid_player_get_status(player) == FLUID_PLAYER_DONE)
+    if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
     {
         fluid_synth_all_notes_off(synth, -1);
         return 1;
