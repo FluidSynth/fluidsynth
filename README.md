@@ -2,7 +2,7 @@
 
 | | Build Status |
 |---|---|
-| <img src="https://www.kernel.org/theme/images/logos/tux.png" height="30" alt=""> **Linux** | [![Build Status](https://travis-ci.com/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.com/FluidSynth/fluidsynth) |
+| <img src="https://www.kernel.org/theme/images/logos/tux.png" height="30" alt=""> **Linux** | [![FluidSynth Linux](https://github.com/FluidSynth/fluidsynth/workflows/FluidSynth%20Linux/badge.svg)](https://github.com/FluidSynth/fluidsynth/actions?query=workflow%3A%22FluidSynth+Linux%22) |
 | <img src="https://cdn.pling.com/img//hive/content-pre1/112422-1.png" height="25" alt=""> **FreeBSD** | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
 | <img src="https://www.microsoft.com/windows/favicon.ico" height="25" alt=""> **Windows** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.Win?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) |
 | <img src="https://www.microsoft.com/windows/favicon.ico" height="25" alt=""> **Windows (vcpkg)** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.vcpkg?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=6&branchName=master) |
