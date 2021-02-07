@@ -61,10 +61,6 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: |
         ./build-wrapper-linux-x86-64 --out-dir bw-output make -j`nproc`
-        set -ex
-        cd bw-output
-        pwd
-        ls -la .
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -72,10 +68,6 @@ jobs:
       # Execute tests defined by the CMake configuration.
       run: |
         ./build-wrapper-linux-x86-64 --out-dir bw-output make -j`nproc` check
-        set -ex
-        cd bw-output
-        pwd
-        ls -la .
 
 # sonar-scanner does not like utf8 filenames
     - name: Prepare for Sonar
