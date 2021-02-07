@@ -3495,7 +3495,8 @@ int player_check_arg(const char *name_cde, int ac, char **av, fluid_ostream_t ou
 }
 
 /* print current position, total ticks, and tempo
- * current_tick position to display
+ * @current_tick position to display. if -1 the function displays the value
+ *  returned by fluid_player_get_current_tick().
 */
 void player_print_position(fluid_player_t *player, int current_tick, fluid_ostream_t out)
 {
@@ -3525,7 +3526,7 @@ int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, 
 {
     FLUID_ENTRY_COMMAND(data);
     int arg;
-    int seek = -1;  /* current position in tick */
+    int seek = -1;  /* current seek position in tick */
 
     /* commands name table */
     static const char *name_cde[] =
