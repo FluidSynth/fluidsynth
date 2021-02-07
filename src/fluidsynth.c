@@ -46,6 +46,7 @@ void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 void print_configure(void);
+void fluid_wasapi_device_enumerate(void);
 
 /*
  * the globals
@@ -407,6 +408,7 @@ int main(int argc, char **argv)
             {"no-shell", 0, 0, 'i'},
             {"option", 1, 0, 'o'},
             {"portname", 1, 0, 'p'},
+            {"query-audio-devices", 0, 0, 'D'},
             {"quiet", 0, 0, 'q'},
             {"reverb", 1, 0, 'R'},
             {"sample-rate", 1, 0, 'r'},
@@ -518,6 +520,17 @@ int main(int argc, char **argv)
                 goto cleanup;
             }
             break;
+
+        case 'D':
+            print_welcome();
+#ifdef WASAPI_SUPPORT
+            fluid_wasapi_device_enumerate();
+            result = 0;
+#else
+            fprintf(stderr, "Error: This version of fluidsynth was compiled without WASAPI support. Audio device enumeration is not available.");
+            result = 1;
+#endif
+            goto cleanup;
 
         case 'd':
             dump = 1;
@@ -1184,6 +1197,10 @@ print_help(fluid_settings_t *settings)
            "    Number of audio buffers\n");
     printf(" -C, --chorus\n"
            "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
+#ifdef WASAPI_SUPPORT
+    printf(" -D, --query-audio-devices\n"
+           "    Probe all available soundcards for supported modes, sample-rates and sample-formats.\n");
+#endif
     printf(" -d, --dump\n"
            "    Dump incoming and outgoing MIDI events to stdout\n");
     printf(" -E, --audio-file-endian\n"
