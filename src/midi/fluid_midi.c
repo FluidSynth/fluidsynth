@@ -2426,9 +2426,9 @@ fluid_player_join(fluid_player_t *player)
 int fluid_player_get_current_tick(fluid_player_t *player)
 {
     int time_out = 0;
-
     /* wait a limited time (500 ms max) if a seek is in progress */
-    while(fluid_atomic_int_get(&player->seek_ticks) != -1)
+    while((fluid_atomic_int_get(&player->seek_ticks) != -1)
+           && (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING))
     {
         fluid_msleep(10);
         if(++time_out == 50) /* stop waiting if timeout (500 ms) is reached */
@@ -2436,7 +2436,6 @@ int fluid_player_get_current_tick(fluid_player_t *player)
             break;
         }
     }
-
     return player->cur_ticks;
 }
 
