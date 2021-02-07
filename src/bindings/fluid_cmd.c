@@ -3521,7 +3521,9 @@ enum
     PLAYER_START_CDE      /* player_start   (Move to start of song) */
 };
 
-/* Command handler for player commands: player_seek, player_loop, player_tempo_bpm */
+/* Command handler: see player commands enum (above)
+ * @cmd player commands enumeration value.
+*/
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
