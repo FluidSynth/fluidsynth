@@ -1766,7 +1766,16 @@ fluid_player_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1, FLUID_HINT_TOGGLED);
 }
 
-
+/**
+ * Discard, release all pending tracks and reset the player.
+ *
+ * @param player The player instance
+ * @return #FLUID_FAILED if the player is playing, #FLUID_OK otherwise
+ *
+ * This should be called while the player is stopped.
+ * It can be used to discard a stopped MIDI file
+ * and start playing another without creating another player.
+ */
 int
 fluid_player_reset(fluid_player_t *player)
 {
