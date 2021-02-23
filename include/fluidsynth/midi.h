@@ -59,6 +59,15 @@ typedef int (*handle_midi_event_func_t)(void *data, fluid_midi_event_t *event);
 /* @} */
 
 /**
+ * Generic callback function fired once by MIDI tick change.
+ *
+ * @param data User defined data pointer
+ * @param tick The current (zero-based) tick, which triggered the callback
+ * @return Should return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+typedef int (*handle_midi_tick_func_t)(void *data, int tick);
+
+/**
  * @defgroup midi_events MIDI Events
  * @ingroup midi_input
  *
@@ -239,6 +248,7 @@ FLUIDSYNTH_API int fluid_player_set_tempo(fluid_player_t *player, int tempo_type
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo);
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t *player, int bpm);
 FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t *player, handle_midi_event_func_t handler, void *handler_data);
+FLUIDSYNTH_API int fluid_player_set_tick_callback(fluid_player_t *player, handle_midi_tick_func_t handler, void *handler_data);
 
 FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_current_tick(fluid_player_t *player);

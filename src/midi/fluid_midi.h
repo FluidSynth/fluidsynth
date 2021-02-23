@@ -297,6 +297,7 @@ struct _fluid_player_t
     fluid_atomic_int_t seek_ticks; /* new position in tempo ticks (midi ticks) for seeking */
     int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
     int cur_ticks;            /* the number of tempo ticks passed */
+    int last_callback_ticks;  /* the last tick number that was passed to player->tick_callback */
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
     int cur_msec;             /* the current time */
@@ -318,6 +319,8 @@ struct _fluid_player_t
 
     handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */
     void *playback_userdata; /* pointer to user-defined data passed to playback_callback function */
+    handle_midi_tick_func_t tick_callback; /* function fired on each tick change */
+    void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
 };
 
 void fluid_player_settings(fluid_settings_t *settings);

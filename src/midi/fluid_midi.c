@@ -1677,8 +1677,10 @@ new_fluid_player(fluid_synth_t *synth)
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
+    player->last_callback_ticks = -1;
     fluid_atomic_int_set(&player->seek_ticks, -1);
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
+    fluid_player_set_tick_callback(player, NULL, NULL);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
                                "player.timing-source", "system");
     if(player->use_system_timer)
@@ -1830,6 +1832,28 @@ fluid_player_set_playback_callback(fluid_player_t *player,
 {
     player->playback_callback = handler;
     player->playback_userdata = handler_data;
+    return FLUID_OK;
+}
+
+/**
+ * Add a listener function for every MIDI tick change.
+ *
+ * @param player MIDI player instance
+ * @param handler Pointer to callback function
+ * @param handler_data Opaque parameter to be sent to the callback function
+ * @returns #FLUID_OK
+ *
+ * This callback is not set by default, but can optionally
+ * be changed to a user-defined function for intercepting all MIDI
+ * tick changes and react to them with precision.
+ *
+ * @since 2.2.0
+ */
+int
+fluid_player_set_tick_callback(fluid_player_t *player, handle_midi_tick_func_t handler, void *handler_data)
+{
+    player->tick_callback = handler;
+    player->tick_userdata = handler_data;
     return FLUID_OK;
 }
 
@@ -2121,6 +2145,11 @@ fluid_player_callback(void *data, unsigned int msec)
             FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", __FILE__,
                       __LINE__, (msec - player->begin_msec) / 1000.0);
             loadnextfile = 1;
+        }
+
+        if (player->tick_callback != NULL && player->last_callback_ticks != player->cur_ticks) {
+            player->tick_callback(player->tick_userdata, player->cur_ticks);
+            player->last_callback_ticks = player->cur_ticks;
         }
     }
     while(loadnextfile);
