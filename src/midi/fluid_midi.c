@@ -1772,6 +1772,11 @@ fluid_player_reset(fluid_player_t *player)
 {
     int i;
 
+    if(fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
+    {
+        return FLUID_FAILED;
+    }
+
     for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
     {
         if(player->track[i] != NULL)
