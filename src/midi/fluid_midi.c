@@ -1775,6 +1775,8 @@ fluid_player_settings(fluid_settings_t *settings)
  * This should be called while the player is stopped.
  * It can be used to discard a stopped MIDI file
  * and start playing another without creating another player.
+ *
+ * @since 2.2.0
  */
 int
 fluid_player_reset(fluid_player_t *player)
