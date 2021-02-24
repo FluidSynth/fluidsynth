@@ -64,6 +64,32 @@ typedef int (*handle_midi_event_func_t)(void *data, fluid_midi_event_t *event);
  * @param data User defined data pointer
  * @param tick The current (zero-based) tick, which triggered the callback
  * @return Should return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * This callback is fired at a constant rate depending on the current BPM and PPQ.
+ * e.g. for PPQ = 192 and BPM = 140 the callback is fired 192 * 140 times per minute (448/sec).
+ *
+ * It can be used to sync external elements with the beat,
+ * or stop / loop the song on a given tick.
+ * Ticks being BPM-dependent, you can manipulate values such as bars or beats,
+ * without having to care about BPM.
+ *
+ * For example, this callback loops the song whenever it reaches the 5th bar :
+ *
+ * int handle_tick_event(void *data, int tick)
+ * {
+ *      fluid_player_t *player = (fluid_player_t *)data;
+ *      int ppq = 192; // From MIDI header
+ *      int beatsPerBar = 4; // From the song's time signature
+ *      int loopBar = 5;
+ *      int loopTick = (loopBar - 1) * ppq * beatsPerBar;
+ *
+ *      if (tick == loopTick)
+ *      {
+ *	        return fluid_player_seek(player, 0);
+ *	}
+ *
+ *	return FLUID_OK;
+ * }
  */
 typedef int (*handle_midi_tick_func_t)(void *data, int tick);
 
