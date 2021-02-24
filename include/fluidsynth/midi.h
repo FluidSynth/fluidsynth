@@ -72,24 +72,6 @@ typedef int (*handle_midi_event_func_t)(void *data, fluid_midi_event_t *event);
  * or stop / loop the song on a given tick.
  * Ticks being BPM-dependent, you can manipulate values such as bars or beats,
  * without having to care about BPM.
- *
- * For example, this callback loops the song whenever it reaches the 5th bar :
- *
- * int handle_tick(void *data, int tick)
- * {
- *      fluid_player_t *player = (fluid_player_t *)data;
- *      int ppq = 192; // From MIDI header
- *      int beatsPerBar = 4; // From the song's time signature
- *      int loopBar = 5;
- *      int loopTick = (loopBar - 1) * ppq * beatsPerBar;
- *
- *      if (tick == loopTick)
- *      {
- *              return fluid_player_seek(player, 0);
- *      }
- *
- *      return FLUID_OK;
- * }
  */
 typedef int (*handle_midi_tick_func_t)(void *data, int tick);
 
