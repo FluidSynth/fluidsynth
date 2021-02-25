@@ -209,6 +209,7 @@ enum fluid_player_status
 {
     FLUID_PLAYER_READY,           /**< Player is ready */
     FLUID_PLAYER_PLAYING,         /**< Player is currently playing */
+    FLUID_PLAYER_STOPPING,        /**< Player is stopping, but hasn't finished yet */
     FLUID_PLAYER_DONE             /**< Player is finished playing */
 };
 
