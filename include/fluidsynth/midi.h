@@ -56,7 +56,6 @@ extern "C" {
  * a \ref sequencer via fluid_sequencer_add_midi_event_to_buffer().
  */
 typedef int (*handle_midi_event_func_t)(void *data, fluid_midi_event_t *event);
-/* @} */
 
 /**
  * Generic callback function fired once by MIDI tick change.
@@ -94,6 +93,7 @@ int handle_tick(void *data, int tick)
  * @endcode
  */
 typedef int (*handle_midi_tick_func_t)(void *data, int tick);
+/* @} */
 
 /**
  * @defgroup midi_events MIDI Events
