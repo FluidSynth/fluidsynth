@@ -56,6 +56,43 @@ extern "C" {
  * a \ref sequencer via fluid_sequencer_add_midi_event_to_buffer().
  */
 typedef int (*handle_midi_event_func_t)(void *data, fluid_midi_event_t *event);
+
+/**
+ * Generic callback function fired once by MIDI tick change.
+ *
+ * @param data User defined data pointer
+ * @param tick The current (zero-based) tick, which triggered the callback
+ * @return Should return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * This callback is fired at a constant rate depending on the current BPM and PPQ.
+ * e.g. for PPQ = 192 and BPM = 140 the callback is fired 192 * 140 times per minute (448/sec).
+ *
+ * It can be used to sync external elements with the beat,
+ * or stop / loop the song on a given tick.
+ * Ticks being BPM-dependent, you can manipulate values such as bars or beats,
+ * without having to care about BPM.
+ *
+ * For example, this callback loops the song whenever it reaches the 5th bar :
+ *
+ * @code{.cpp}
+int handle_tick(void *data, int tick)
+{
+    fluid_player_t *player = (fluid_player_t *)data;
+    int ppq = 192; // From MIDI header
+    int beatsPerBar = 4; // From the song's time signature
+    int loopBar = 5;
+    int loopTick = (loopBar - 1) * ppq * beatsPerBar;
+
+    if (tick == loopTick)
+    {
+        return fluid_player_seek(player, 0);
+    }
+
+    return FLUID_OK;
+}
+ * @endcode
+ */
+typedef int (*handle_midi_tick_func_t)(void *data, int tick);
 /* @} */
 
 /**
@@ -239,6 +276,7 @@ FLUIDSYNTH_API int fluid_player_set_tempo(fluid_player_t *player, int tempo_type
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo);
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t *player, int bpm);
 FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t *player, handle_midi_event_func_t handler, void *handler_data);
+FLUIDSYNTH_API int fluid_player_set_tick_callback(fluid_player_t *player, handle_midi_tick_func_t handler, void *handler_data);
 
 FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_current_tick(fluid_player_t *player);
