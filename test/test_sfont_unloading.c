@@ -6,6 +6,7 @@
 
 void wait_and_free(fluid_synth_t* synth, int id, const char* calling_func)
 {
+    int i;
     fluid_list_t *list, *list_orig;
     list_orig = list = synth->fonts_to_be_unloaded;
     synth->fonts_to_be_unloaded = NULL;
@@ -15,12 +16,13 @@ void wait_and_free(fluid_synth_t* synth, int id, const char* calling_func)
     {
         fluid_timer_t* timer = fluid_list_get(list);
         FLUID_LOG(FLUID_INFO, "%s(): Start waiting for soundfont %d to unload", calling_func, id);
-        if(fluid_timer_is_running(timer))
+        for(i = 0; fluid_timer_is_running(timer) && i < 5; i++)
         {
-            /* timer still running, wait a bit*/
-            fluid_msleep(2 * fluid_timer_get_interval(timer));
-            TEST_ASSERT(!fluid_timer_is_running(timer));
+            /* timer still running, wait a bit */
+            fluid_msleep(fluid_timer_get_interval(timer));
         }
+        // In worst case we've waited 5*timer_interval, i.e. soundfont should be really unloaded by now.
+        TEST_ASSERT(!fluid_timer_is_running(timer));
         delete_fluid_timer(timer);
         FLUID_LOG(FLUID_INFO, "%s(): End waiting for soundfont %d to unload", calling_func, id);
     }
