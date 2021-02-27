@@ -15,6 +15,7 @@
 - added getter and setter functions for individual effect groups
 - support for UTF-8 filenames under Windows, see fluid_synth_sfload()
 - MIDI Tempo of the fluid_player can now be overridden, see fluid_player_set_tempo()
+- a per-tick callback has been added to the MIDI player, see fluid_player_set_tick_callback()
 - WASAPI audio driver is now available on Windows
 - the following drivers have gained support for new_fluid_audio_driver2():
   - DSound
