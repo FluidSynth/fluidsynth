@@ -375,6 +375,10 @@ target_link_libraries ( libfluidsynth
 
 set ( fluidsynth_SOURCES fluidsynth.c )
 
+if ( WASAPI_SUPPORT )
+  set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} fluid_wasapi_device_enumerate.c )
+endif ( WASAPI_SUPPORT )
+
 add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
 )
