@@ -451,27 +451,42 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
          * But it seems like having two separate loops is easier for compilers to understand, and therefore
          * auto-vectorizing the loops.
          */
-        #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
-        for(dsp_i = 0; dsp_i < FLUID_BUFSIZE; dsp_i++)
+        if(sample_count < FLUID_BUFSIZE)
         {
-            // We cannot simply increment current_amp by amp_incr during every iteration, as this would create a dependency and prevent vectorization.
-            buf[start_block * FLUID_BUFSIZE + dsp_i] += (current_amp + amp_incr * dsp_i) * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
-        }
-
-        if(target_amp > 0)
-        {
-            /* Note, that this loop could be unrolled by FLUID_BUFSIZE elements */
-            #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
-            for(dsp_i = FLUID_BUFSIZE; dsp_i < sample_count; dsp_i++)
+            // scalar loop variant, the voice will have finished afterwards
+            for(dsp_i = 0; dsp_i < sample_count; dsp_i++)
             {
-                // Index by blocks (not by samples) to let the compiler know that we always start accessing
-                // buf and dsp_buf at the FLUID_BUFSIZE*sizeof(fluid_real_t) byte boundary and never somewhere
-                // in between.
-                // A good compiler should understand: Aha, so I don't need to add a peel loop when vectorizing
-                // this loop. Great.
-                buf[start_block * FLUID_BUFSIZE + dsp_i] += target_amp * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+                buf[start_block * FLUID_BUFSIZE + dsp_i] += current_amp * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+                current_amp += amp_incr;
             }
         }
+        else
+        {
+            // here goes the vectorizable loop
+            #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
+            for(dsp_i = 0; dsp_i < FLUID_BUFSIZE; dsp_i++)
+            {
+                // We cannot simply increment current_amp by amp_incr during every iteration, as this would create a dependency and prevent vectorization.
+                buf[start_block * FLUID_BUFSIZE + dsp_i] += (current_amp + amp_incr * dsp_i) * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+            }
+            
+            // we have reached the target_amp
+            if(target_amp > 0)
+            {
+                /* Note, that this loop could be unrolled by FLUID_BUFSIZE elements */
+                #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
+                for(dsp_i = FLUID_BUFSIZE; dsp_i < sample_count; dsp_i++)
+                {
+                    // Index by blocks (not by samples) to let the compiler know that we always start accessing
+                    // buf and dsp_buf at the FLUID_BUFSIZE*sizeof(fluid_real_t) byte boundary and never somewhere
+                    // in between.
+                    // A good compiler should understand: Aha, so I don't need to add a peel loop when vectorizing
+                    // this loop. Great.
+                    buf[start_block * FLUID_BUFSIZE + dsp_i] += target_amp * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+                }
+            }
+        }
+        
         buffers->bufs[i].current_amp = target_amp;
     }
 }
