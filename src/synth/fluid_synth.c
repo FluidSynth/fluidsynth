@@ -5922,7 +5922,10 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
 
     /* check if reverb value is in max min range */
     fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
-    fluid_return_val_if_fail( min <= value &&  value <= max, FLUID_FAILED);
+    if(value  < min || value > max)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
 
     /* set the value */
     values[param] = value;
@@ -6407,14 +6410,20 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
         {
             fluid_settings_getint_range(synth->settings, name[param], &min, &max);
         }
-        fluid_return_val_if_fail(min <= (int)value && (int)value <= max, FLUID_FAILED);
+        if((int)value  < min || (int)value > max)
+        {
+            FLUID_API_RETURN(FLUID_FAILED);
+        }
     }
     else /* float value */
     {
         double min;
         double max;
         fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
-        fluid_return_val_if_fail(min <= value &&  value <= max, FLUID_FAILED);
+        if(value  < min || value > max)
+        {
+            FLUID_API_RETURN(FLUID_FAILED);
+        }
     }
 
     /* set the value */

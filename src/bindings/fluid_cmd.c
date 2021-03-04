@@ -1406,6 +1406,13 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
     static const char *const name_value[FLUID_CHORUS_PARAM_LAST - 1] =
     {"nr", "level", "speed", "depth"};
 
+    /* setting name (except lfo waveform type) */
+    static const char *name[FLUID_CHORUS_PARAM_LAST-1] =
+    {
+        "synth.chorus.nr", "synth.chorus.level",
+        "synth.chorus.speed", "synth.chorus.depth"
+    };
+
     FLUID_ENTRY_COMMAND(data);
 
     /* get and check index fx group index argument */
@@ -1424,16 +1431,35 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
             return FLUID_FAILED;
         }
 
-        /* run chorus function */
         if(param == FLUID_CHORUS_NR) /* commands with integer parameter */
         {
-            value = (double)atoi(av[ac]);
+            int min, max;
+            int int_value = atoi(av[ac]);
+
+            fluid_settings_getint_range(handler->settings, name[param], &min, &max);
+            if(int_value < min || int_value > max)
+            {
+                fluid_ostream_printf(out, "%s: %s \"%s\" must be in range [%d..%d]\n",
+                                     name_cde[param], name_value[param], av[ac], min, max);
+                return FLUID_FAILED;
+            }
+            value = (double)int_value;
         }
         else /* commands with float parameter */
         {
+            double min, max;
             value = atof(av[ac]);
+
+            fluid_settings_getnum_range(handler->settings, name[param], &min, &max);
+            if(value < min || value > max)
+            {
+                fluid_ostream_printf(out, "%s: %s \"%s\" must be in range [%f..%f]\n",
+                                     name_cde[param], name_value[param], av[ac], min, max);
+                return FLUID_FAILED;
+            }
         }
 
+        /* run chorus function */
         fluid_synth_chorus_set_param(handler->synth, fx_group, param, value);
         return FLUID_OK;
     }
