@@ -194,8 +194,10 @@ void* fluid_alloc(size_t len);
 #define FLUID_FOPEN(_f,_m)           fluid_fopen(_f,_m)
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
+#define FLUID_FEXIST(_f)             fluid_fexist(_f)
 
 FILE *fluid_fopen(const char *filename, const char *mode);
+int fluid_fexist(const char *filename);
 
 #ifdef WIN32
 #define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)

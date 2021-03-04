@@ -25,6 +25,7 @@
 #include "fluid_midi_router.h"
 #include "fluid_sfont.h"
 #include "fluid_chan.h"
+#include "fluid_sys.h"
 
 /* FIXME: LADSPA used to need a lot of parameters on a single line. This is not
  * necessary anymore, so the limits below could probably be reduced */
@@ -667,6 +668,10 @@ fluid_get_userconf(char *buf, int len)
     config_file = "/.fluidsynth";
 
 #endif
+    if(FLUID_FEXIST(config_file) == FLUID_FAILED)
+    {
+        return NULL;
+    }
 
     if(home == NULL)
     {
@@ -692,10 +697,17 @@ fluid_get_userconf(char *buf, int len)
 char *
 fluid_get_sysconf(char *buf, int len)
 {
+    static const char *fluid_sysconf_name = "/etc/fluidsynth.conf";
+
 #if defined(WIN32) || defined(MACOS9)
     return NULL;
 #else
-    FLUID_SNPRINTF(buf, len, "/etc/fluidsynth.conf");
+    if(!FLUID_FEXIST(fluid_sysconf_name) == FLUID_FAILED)
+    {
+        return NULL;
+    }
+
+    FLUID_SNPRINTF(buf, len, fluid_sysconf_name);
     return buf;
 #endif
 }

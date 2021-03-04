@@ -279,6 +279,23 @@ error_recovery:
 }
 
 /**
+ * Check if a file exist with a UTF-8 string, even in Windows
+ * @param filename The name of the file to exist
+ * @return FLUID_OK if the file exist, FLUID_FAILED otherwise
+ */
+int fluid_fexist(const char *filename)
+{
+    FILE *file = FLUID_FOPEN(filename, "r");
+
+    if(file != NULL)
+    {
+        FLUID_FCLOSE(file);
+        return FLUID_OK;
+    }
+    return FLUID_FAILED;
+}
+
+/**
  * Convenience wrapper for free() that satisfies at least C90 requirements.
  *
  * @param ptr Pointer to memory region that should be freed
