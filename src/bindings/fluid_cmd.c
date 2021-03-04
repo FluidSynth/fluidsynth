@@ -668,12 +668,8 @@ fluid_get_userconf(char *buf, int len)
     config_file = "/.fluidsynth";
 
 #endif
-    if(FLUID_FEXIST(config_file) == FLUID_FAILED)
-    {
-        return NULL;
-    }
-
-    if(home == NULL)
+    /* check if the file exists */
+    if((home == NULL) || (FLUID_FEXIST(config_file) == FLUID_FAILED))
     {
         return NULL;
     }
@@ -702,7 +698,8 @@ fluid_get_sysconf(char *buf, int len)
 #if defined(WIN32) || defined(MACOS9)
     return NULL;
 #else
-    if(!FLUID_FEXIST(fluid_sysconf_name) == FLUID_FAILED)
+    /* check if the file exists */
+    if(FLUID_FEXIST(fluid_sysconf_name) == FLUID_FAILED)
     {
         return NULL;
     }
