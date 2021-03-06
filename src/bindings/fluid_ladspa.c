@@ -108,13 +108,9 @@ struct _fluid_ladspa_fx_t
     /* The buffer size for all audio buffers (in samples) */
     int buffer_size;
 
-    fluid_list_t *nodes;
-
-    /* Pointers to host nodes in nodes list */
     fluid_list_t *host_nodes;
 
-    /* Pointers to user audio nodes in nodes list */
-    fluid_list_t *audio_nodes;
+    fluid_list_t *user_nodes;
 
     fluid_list_t *effects;
 
@@ -242,8 +238,8 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 
     clear_ladspa(fx);
 
-    /* clear the remaining input or output nodes */
-    for(list = fx->nodes; list; list = fluid_list_next(list))
+    /* Delete the remaining host nodes */
+    for(list = fx->host_nodes; list; list = fluid_list_next(list))
     {
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
         delete_fluid_ladspa_node(node);
@@ -313,7 +309,6 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
 
-        fx->nodes = fluid_list_append(fx->nodes, node);
         fx->host_nodes = fluid_list_append(fx->host_nodes, node);
     }
 
@@ -546,9 +541,10 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
     copy_host_to_effect_buffers(fx, num_samples);
 #endif
 
-    for(list = fx->audio_nodes; list; list = fluid_list_next(list))
+    for(list = fx->user_nodes; list; list = fluid_list_next(list))
     {
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
+
         FLUID_MEMSET(node->effect_buffer, 0, fx->buffer_size * sizeof(LADSPA_Data));
     }
 
@@ -676,32 +672,23 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
     delete_fluid_list(fx->effects);
     fx->effects = NULL;
 
-    /* Delete all nodes but keep the host audio nodes */
-    for(list = fx->nodes; list; list = fluid_list_next(list))
+    /* Delete all user nodes */
+    for(list = fx->user_nodes; list; list = fluid_list_next(list))
     {
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
-
-        if((node->type & FLUID_LADSPA_NODE_HOST) &&
-                (node->type & FLUID_LADSPA_NODE_AUDIO))
-        {
-            continue;
-        }
 
         delete_fluid_ladspa_node(node);
     }
-    delete_fluid_list(fx->nodes);
-    fx->nodes = NULL;
+    delete_fluid_list(fx->user_nodes);
+    fx->user_nodes = NULL;
 
-    delete_fluid_list(fx->audio_nodes);
-    fx->audio_nodes = NULL;
-
-    /* Fill the node list with the host nodes and reset the connection counts */
+    /* Mark all host nodes as unconnected */
     for(list = fx->host_nodes; list; list = fluid_list_next(list))
     {
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
+
         node->num_inputs = 0;
         node->num_outputs = 0;
-        fx->nodes = fluid_list_append(fx->nodes, node);
     }
 }
 
@@ -827,8 +814,7 @@ int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name)
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    fx->nodes = fluid_list_append(fx->nodes, node);
-    fx->audio_nodes = fluid_list_append(fx->audio_nodes, node);
+    fx->user_nodes = fluid_list_append(fx->user_nodes, node);
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -1143,7 +1129,17 @@ static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name)
     fluid_list_t *list;
     fluid_ladspa_node_t *node;
 
-    for(list = fx->nodes; list; list = fluid_list_next(list))
+    for(list = fx->host_nodes; list; list = fluid_list_next(list))
+    {
+        node = (fluid_ladspa_node_t *) fluid_list_get(list);
+
+        if(FLUID_STRCASECMP(node->name, name) == 0)
+        {
+            return node;
+        }
+    }
+
+    for(list = fx->user_nodes; list; list = fluid_list_next(list))
     {
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
 
@@ -1733,7 +1729,7 @@ static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **n
     fluid_list_t *list;
     fluid_ladspa_node_t *node;
 
-    for(list = fx->audio_nodes; list; list = fluid_list_next(list))
+    for(list = fx->user_nodes; list; list = fluid_list_next(list))
     {
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
 
