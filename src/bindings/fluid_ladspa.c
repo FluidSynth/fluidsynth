@@ -1319,7 +1319,24 @@ new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char 
 
 static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
 {
+    unsigned int i;
+    fluid_ladspa_node_t *node;
+
     fluid_return_if_fail(effect != NULL);
+
+    /* Control nodes are created automatically when the effect is instantiated and
+     * are private to this effect, so we can safely remove them here. Nodes connected
+     * to audio ports might be connected to other effects as well, so we simply remove
+     * any pointers to them from the effect. */
+    for(i = 0; i < effect->desc->PortCount; i++)
+    {
+        node = (fluid_ladspa_node_t *) effect->port_nodes[i];
+
+        if(node && node->type & FLUID_LADSPA_NODE_CONTROL)
+        {
+            delete_fluid_ladspa_node(node);
+        }
+    }
 
     FLUID_FREE(effect->port_nodes);
 
@@ -1586,8 +1603,6 @@ static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_
         {
             return FLUID_FAILED;
         }
-
-        fx->nodes = fluid_list_append(fx->nodes, node);
 
         node->effect_buffer[0] = get_default_port_value(effect, i, fx->sample_rate);
 
