@@ -853,6 +853,12 @@ int main(int argc, char **argv)
         {
             config_file = fluid_get_sysconf(buf, sizeof(buf));
         }
+
+        /* if the automatically selected command file does not exist, do not even attempt to open it */
+        if(!g_file_test(config_file, G_FILE_TEST_EXISTS))
+        {
+            config_file = NULL;
+        }
     }
 
     /* Handle set commands before creating the synth */
