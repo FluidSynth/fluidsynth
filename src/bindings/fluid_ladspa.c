@@ -283,6 +283,7 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
 {
     int i;
     char name[99];
+    fluid_ladspa_node_t *node;
 
     LADSPA_API_ENTER(fx);
 
@@ -304,12 +305,16 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
             FLUID_STRNCPY(name, prefix, sizeof(name));
         }
 
-        if(new_fluid_ladspa_node(fx, name,
-                                 FLUID_LADSPA_NODE_AUDIO | FLUID_LADSPA_NODE_HOST,
-                                 &buffers[i * buf_stride]) == NULL)
+        node = new_fluid_ladspa_node(fx, name,
+                                     FLUID_LADSPA_NODE_AUDIO | FLUID_LADSPA_NODE_HOST,
+                                     &buffers[i * buf_stride]);
+        if (node == NULL)
         {
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
+
+        fx->nodes = fluid_list_append(fx->nodes, node);
+        fx->host_nodes = fluid_list_append(fx->host_nodes, node);
     }
 
     LADSPA_API_RETURN(fx, FLUID_OK);
@@ -821,6 +826,9 @@ int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
+
+    fx->nodes = fluid_list_append(fx->nodes, node);
+    fx->audio_nodes = fluid_list_append(fx->audio_nodes, node);
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -1397,19 +1405,6 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
         FLUID_MEMSET(node->effect_buffer, 0, buffer_size * sizeof(LADSPA_Data));
     }
 
-    fx->nodes = fluid_list_append(fx->nodes, node);
-
-    /* Host and user audio nodes are also noted in separate lists to access them
-     * quickly during fluid_ladspa_run */
-    if((type & FLUID_LADSPA_NODE_AUDIO) && (type & FLUID_LADSPA_NODE_HOST))
-    {
-        fx->host_nodes = fluid_list_append(fx->host_nodes, node);
-    }
-    else if((type & FLUID_LADSPA_NODE_AUDIO) && (type & FLUID_LADSPA_NODE_USER))
-    {
-        fx->audio_nodes = fluid_list_append(fx->audio_nodes, node);
-    }
-
     return node;
 }
 
@@ -1591,6 +1586,8 @@ static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_
         {
             return FLUID_FAILED;
         }
+
+        fx->nodes = fluid_list_append(fx->nodes, node);
 
         node->effect_buffer[0] = get_default_port_value(effect, i, fx->sample_rate);
 
