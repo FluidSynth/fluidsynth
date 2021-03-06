@@ -33,7 +33,7 @@
 #include <ladspa.h>
 
 #define FLUID_LADSPA_MAX_EFFECTS 100
-#define FLUID_LADSPA_MAX_NODES 100
+#define FLUID_LADSPA_MAX_NODES 1000
 
 typedef enum _fluid_ladspa_state_t
 {
