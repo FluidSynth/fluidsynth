@@ -931,11 +931,11 @@ int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
 }
 
 /**
- * Connect an effect port to a host port or buffer
+ * Connect an effect audio port to a host port or buffer
  *
  * @param fx LADSPA effects instance
  * @param effect_name name of the effect
- * @param port_name the port name to connect to (case-insensitive prefix match)
+ * @param port_name the audio port name to connect to (case-insensitive prefix match)
  * @param name the host port or buffer to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  *
@@ -979,27 +979,25 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
+    port_flags = effect->desc->PortDescriptors[port_idx];
+
+    if(!LADSPA_IS_PORT_AUDIO(port_flags))
+    {
+        FLUID_LOG(FLUID_ERR, "Only audio effect ports can be linked to buffers or host ports");
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
     node = get_node(fx, name);
 
     if(node == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Node '%s' not found", name);
+        FLUID_LOG(FLUID_ERR, "Link target '%s' not found", name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    port_flags = effect->desc->PortDescriptors[port_idx];
-
-    /* Check that requested port type matches the node type */
-    if(LADSPA_IS_PORT_CONTROL(port_flags) && !(node->type & FLUID_LADSPA_NODE_CONTROL))
+    if(!(node->type & FLUID_LADSPA_NODE_AUDIO))
     {
-        FLUID_LOG(FLUID_ERR, "Control port '%s' on effect '%s' can only connect to "
-                  "other control ports", port_name, effect_name);
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-    else if(LADSPA_IS_PORT_AUDIO(port_flags) && !(node->type & FLUID_LADSPA_NODE_AUDIO))
-    {
-        FLUID_LOG(FLUID_ERR, "Audio port '%s' on effect '%s' can only connect to"
-                  "other audio port or buffer", port_name, effect_name);
+        FLUID_LOG(FLUID_ERR, "Link target '%s' needs to be an audio port or buffer", name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
