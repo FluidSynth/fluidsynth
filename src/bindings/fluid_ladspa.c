@@ -244,6 +244,7 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
         node = (fluid_ladspa_node_t *) fluid_list_get(list);
         delete_fluid_ladspa_node(node);
     }
+    delete_fluid_list(fx->host_nodes);
 
     if(fx->run_finished_cond != NULL)
     {
