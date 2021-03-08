@@ -510,7 +510,7 @@ fluid_thread_self_set_prio(int prio_level)
  *               Floating point exceptions
  *
  *  The floating point exception functions were taken from Ircam's
- *  jMax source code. http://www.ircam.fr/jmax
+ *  jMax source code. https://www.ircam.fr/jmax
  *
  *  FIXME: check in config for i386 machine
  *

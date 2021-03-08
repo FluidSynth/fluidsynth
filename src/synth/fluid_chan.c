@@ -115,7 +115,7 @@ fluid_channel_init(fluid_channel_t *chan)
 
 /*
   @param is_all_ctrl_off if nonzero, only resets some controllers, according to
-  http://www.midi.org/techspecs/rp15.php
+  https://www.midi.org/techspecs/rp15.php
 */
 void
 fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
@@ -211,7 +211,7 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
         /* fluid_channel_set_cc (chan, EFFECTS_DEPTH1, 40); */
         /* Note: although XG standard specifies the default amount of reverb to
            be 40, most people preferred having it at zero.
-           See http://lists.gnu.org/archive/html/fluid-dev/2009-07/msg00016.html */
+           See https://lists.gnu.org/archive/html/fluid-dev/2009-07/msg00016.html */
     }
 }
 
@@ -323,7 +323,7 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
     {
         /* XG bank, do drum-channel auto-switch */
         /* The number "120" was based on several keyboards having drums at 120 - 127,
-           reference: http://lists.nongnu.org/archive/html/fluid-dev/2011-02/msg00003.html */
+           reference: https://lists.nongnu.org/archive/html/fluid-dev/2011-02/msg00003.html */
         chan->channel_type = (120 <= bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
         return;
     }

@@ -7,7 +7,7 @@ Although some tests might serve as educational demonstration of how to use certa
 they are **not** intended to do so! It is most likely that those tests will consist of many hacky parts
 that are necessary to test fluidsynth (e.g. including fluidsynth's private headers to access internal
 data types and functions). For user applications this programming style is strongly discouraged!
-Keep referring to the documentation and code examples listed in the [API documentation](http://www.fluidsynth.org/api/).
+Keep referring to the documentation and code examples listed in the [API documentation](https://www.fluidsynth.org/api/).
 
 #### Developers
 

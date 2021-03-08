@@ -13,7 +13,7 @@ Else it might be closed without further notice.
 If you have a question look into our wiki
 ( https://github.com/FluidSynth/fluidsynth/wiki )
 or the developer resources
-( http://www.fluidsynth.org/api/ )
+( https://www.fluidsynth.org/api/ )
 
 If you still have a question, need support or want to discuss ideas, contact our mailing list
 https://lists.nongnu.org/mailman/listinfo/fluid-dev

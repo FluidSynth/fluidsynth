@@ -11,8 +11,8 @@ Release: %{release}
 Prefix: %{prefix}
 Copyright: LGPL
 Group: Sound
-Source: http://savannah.nongnu.org/download/fluid/stable.pkg/%{version}/fluidsynth-%{version}.tar.gz
-URL: http://www.fluidsynth.org/
+Source: https://savannah.nongnu.org/download/fluid/stable.pkg/%{version}/fluidsynth-%{version}.tar.gz
+URL: https://www.fluidsynth.org/
 BuildRoot: /var/tmp/%{name}-%{version}
 
 %description
