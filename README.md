@@ -27,7 +27,7 @@ The central place for documentation and further links is our **wiki** here at Gi
 If you are missing parts of the documentation, let us know by writing to our mailing list.
 Of course, you are welcome to edit and improve the wiki yourself. All you need is an account at GitHub. Alternatively, you may send an EMail to our mailing list along with your suggested changes. Further information about the mailing list is available in the wiki as well.
 
-Latest information about FluidSynth is also available on the web site at http://www.fluidsynth.org/.
+Latest information about FluidSynth is also available on the web site at https://www.fluidsynth.org/.
 
 ## License
 
@@ -39,11 +39,11 @@ For information on how to build FluidSynth from source, please [refer to our wik
 
 ## Links
 
-- FluidSynth's Home Page, http://www.fluidsynth.org
+- FluidSynth's Home Page, https://www.fluidsynth.org
 
 - FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
 
-- FluidSynth's API documentation, http://www.fluidsynth.org/api/
+- FluidSynth's API documentation, https://www.fluidsynth.org/api/
 
 ---
 
