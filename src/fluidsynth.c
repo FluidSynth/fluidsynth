@@ -408,7 +408,7 @@ int main(int argc, char **argv)
             {"no-shell", 0, 0, 'i'},
             {"option", 1, 0, 'o'},
             {"portname", 1, 0, 'p'},
-            {"query-audio-devices", 0, 0, 'D'},
+            {"query-audio-devices", 0, 0, 'Q'},
             {"quiet", 0, 0, 'q'},
             {"reverb", 1, 0, 'R'},
             {"sample-rate", 1, 0, 'r'},
@@ -520,17 +520,6 @@ int main(int argc, char **argv)
                 goto cleanup;
             }
             break;
-
-        case 'D':
-            print_welcome();
-#ifdef WASAPI_SUPPORT
-            fluid_wasapi_device_enumerate();
-            result = 0;
-#else
-            fprintf(stderr, "Error: This version of fluidsynth was compiled without WASAPI support. Audio device enumeration is not available.");
-            result = 1;
-#endif
-            goto cleanup;
 
         case 'd':
             dump = 1;
@@ -680,6 +669,17 @@ int main(int argc, char **argv)
                 goto cleanup;
             }
             break;
+
+        case 'Q':
+            print_welcome();
+#ifdef WASAPI_SUPPORT
+            fluid_wasapi_device_enumerate();
+            result = 0;
+#else
+            fprintf(stderr, "Error: This version of fluidsynth was compiled without WASAPI support. Audio device enumeration is not available.");
+            result = 1;
+#endif
+            goto cleanup;
 
         case 'q':
             quiet = 1;
