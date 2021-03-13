@@ -72,11 +72,11 @@ int main (int argc, char *argv[])
     if (argc < 2)
         return -1;
     
-    open_table(&fp, argv[1], "fluid_conv_tables.c");
+    open_table(&fp, argv[1], "fluid_conv_tables.inc.h");
     gen_conv_table(fp);
     fclose(fp);
 
-    open_table(&fp, argv[1], "fluid_rvoice_dsp_tables.c");
+    open_table(&fp, argv[1], "fluid_rvoice_dsp_tables.inc.h");
     gen_rvoice_table_dsp(fp);
     fclose(fp);
 
