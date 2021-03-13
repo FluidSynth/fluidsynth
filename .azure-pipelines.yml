@@ -211,6 +211,11 @@ jobs:
         @ECHO ON
         cd build
         mingw32-make.exe install || exit -1
+        xcopy d:\deps\bin\libgcc_s_sjlj-1.dll $(Build.ArtifactStagingDirectory)\bin
+        xcopy d:\deps\bin\libgcc_s_seh-1.dll $(Build.ArtifactStagingDirectory)\bin
+        xcopy d:\deps\bin\libgomp-1.dll $(Build.ArtifactStagingDirectory)\bin
+        xcopy d:\deps\bin\libstdc++-6.dll $(Build.ArtifactStagingDirectory)\bin
+        xcopy d:\deps\bin\libwinpthread-1.dll $(Build.ArtifactStagingDirectory)\bin
         REM xcopy test $(Build.ArtifactStagingDirectory)\bin /s
         del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
         del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
