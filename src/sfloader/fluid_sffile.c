@@ -1285,17 +1285,17 @@ static int load_pbag(SFData *sf, int size)
 /* preset modulator loader */
 static int load_pmod(SFData *sf, int size)
 {
-    fluid_list_t *p;
+    fluid_list_t *preset_list;
     fluid_list_t *zone_list;
     fluid_list_t *mod_list;
     SFMod *m;
 
-    p = sf->preset;
+    preset_list = sf->preset;
 
-    while(p)
+    while(preset_list)
     {
         /* traverse through all presets */
-        zone_list = ((SFPreset *)(p->data))->zone;
+        zone_list = ((SFPreset *)(preset_list->data))->zone;
 
         while(zone_list)
         {
@@ -1329,7 +1329,7 @@ static int load_pmod(SFData *sf, int size)
             zone_list = fluid_list_next(zone_list);
         }
 
-        p = fluid_list_next(p);
+        preset_list = fluid_list_next(preset_list);
     }
 
     /*
