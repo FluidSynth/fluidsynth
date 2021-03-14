@@ -2152,7 +2152,8 @@ static int load_shdr(SFData *sf, unsigned int size)
 /* "fixup" (inst # -> inst ptr) instrument references in preset list */
 static int fixup_pgen(SFData *sf)
 {
-    fluid_list_t *p, *p2;
+    fluid_list_t *p;
+    fluid_list_t *zone_list;
     fluid_list_t *inst_list;
     SFZone *z;
     int i;
@@ -2161,12 +2162,12 @@ static int fixup_pgen(SFData *sf)
 
     while(p)
     {
-        p2 = ((SFPreset *)(p->data))->zone;
+        zone_list = ((SFPreset *)(p->data))->zone;
 
-        while(p2)
+        while(zone_list)
         {
             /* traverse this preset's zones */
-            z = (SFZone *)(p2->data);
+            z = (SFZone *)(zone_list->data);
 
             if((i = FLUID_POINTER_TO_INT(z->instsamp)))
             {
@@ -2187,7 +2188,7 @@ static int fixup_pgen(SFData *sf)
                 z->instsamp = NULL;
             }
 
-            p2 = fluid_list_next(p2);
+            zone_list = fluid_list_next(zone_list);
         }
 
         p = fluid_list_next(p);
