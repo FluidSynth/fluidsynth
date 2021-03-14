@@ -1673,7 +1673,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
 /* instrument bag loader */
 static int load_ibag(SFData *sf, int size)
 {
-    fluid_list_t *p;
+    fluid_list_t *inst_list;
     fluid_list_t *zone_list;
     SFZone *z, *pz = NULL;
     unsigned short genndx, modndx, pgenndx = 0, pmodndx = 0;
@@ -1685,12 +1685,12 @@ static int load_ibag(SFData *sf, int size)
         return FALSE;
     }
 
-    p = sf->inst;
+    inst_list = sf->inst;
 
-    while(p)
+    while(inst_list)
     {
         /* traverse through inst */
-        zone_list = ((SFInst *)(p->data))->zone;
+        zone_list = ((SFInst *)(inst_list->data))->zone;
 
         while(zone_list)
         {
@@ -1750,7 +1750,7 @@ static int load_ibag(SFData *sf, int size)
             zone_list = fluid_list_next(zone_list);
         }
 
-        p = fluid_list_next(p);
+        inst_list = fluid_list_next(inst_list);
     }
 
     size -= SF_BAG_SIZE;
