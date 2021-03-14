@@ -2193,7 +2193,8 @@ static int fixup_pgen(SFData *sf)
 /* "fixup" (sample # -> sample ptr) sample references in instrument list */
 static int fixup_igen(SFData *sf)
 {
-    fluid_list_t *p, *p2, *p3;
+    fluid_list_t *p, *p2;
+    fluid_list_t *inst_list;
     SFZone *z;
     int i;
 
@@ -2211,16 +2212,16 @@ static int fixup_igen(SFData *sf)
             if((i = FLUID_POINTER_TO_INT(z->instsamp)))
             {
                 /* load sample # */
-                p3 = fluid_list_nth(sf->sample, i - 1);
+                inst_list = fluid_list_nth(sf->sample, i - 1);
 
-                if(!p3)
+                if(!inst_list)
                 {
                     FLUID_LOG(FLUID_ERR, "Instrument '%s': Invalid sample reference",
                               ((SFInst *)(p->data))->name);
                     return FALSE;
                 }
 
-                z->instsamp = p3;
+                z->instsamp = inst_list;
             }
 
             p2 = fluid_list_next(p2);
