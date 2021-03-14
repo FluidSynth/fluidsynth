@@ -1592,7 +1592,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
 {
     unsigned int i;
     int i2;
-    SFInst *p, *pr = NULL; /* ptr to current & previous instrument */
+    SFInst *inst, *pr = NULL; /* ptr to current & previous instrument */
     unsigned short zndx, pzndx = 0;
 
     if(size % SF_IHDR_SIZE || size == 0)  /* chunk size is valid? */
@@ -1614,16 +1614,16 @@ static int load_ihdr(SFData *sf, unsigned int size)
     for(i = 0; i < size; i++)
     {
         /* load all instrument headers */
-        if((p = FLUID_NEW(SFInst)) == NULL)
+        if((inst = FLUID_NEW(SFInst)) == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             return FALSE;
         }
 
-        sf->inst = fluid_list_append(sf->inst, p);
-        p->zone = NULL; /* For proper cleanup if fail (fluid_sffile_close) */
-        p->idx = i;
-        READSTR(sf, &p->name); /* Possible read failure ^ */
+        sf->inst = fluid_list_append(sf->inst, inst);
+        inst->zone = NULL; /* For proper cleanup if fail (fluid_sffile_close) */
+        inst->idx = i;
+        READSTR(sf, &inst->name); /* Possible read failure ^ */
         READW(sf, zndx);
 
         if(pr)
@@ -1648,7 +1648,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
         }
 
         pzndx = zndx;
-        pr = p; /* update instrument ptr */
+        pr = inst; /* update instrument ptr */
     }
 
     FSKIP(sf, 20);
