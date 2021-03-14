@@ -1592,7 +1592,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
 {
     unsigned int i;
     int i2;
-    SFInst *inst, *pr = NULL; /* ptr to current & previous instrument */
+    SFInst *inst, *prev_inst = NULL; /* ptr to current & previous instrument */
     unsigned short zndx, pzndx = 0;
 
     if(size % SF_IHDR_SIZE || size == 0)  /* chunk size is valid? */
@@ -1626,7 +1626,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
         READSTR(sf, &inst->name); /* Possible read failure ^ */
         READW(sf, zndx);
 
-        if(pr)
+        if(prev_inst)
         {
             /* not first instrument? */
             if(zndx < pzndx)
@@ -1639,7 +1639,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
 
             while(i2--)
             {
-                pr->zone = fluid_list_prepend(pr->zone, NULL);
+                prev_inst->zone = fluid_list_prepend(prev_inst->zone, NULL);
             }
         }
         else if(zndx > 0)  /* 1st inst, warn if ofs >0 */
@@ -1648,7 +1648,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
         }
 
         pzndx = zndx;
-        pr = inst; /* update instrument ptr */
+        prev_inst = inst; /* update instrument ptr */
     }
 
     FSKIP(sf, 20);
@@ -1664,7 +1664,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
 
     while(i2--)
     {
-        pr->zone = fluid_list_prepend(pr->zone, NULL);
+        prev_inst->zone = fluid_list_prepend(prev_inst->zone, NULL);
     }
 
     return TRUE;
