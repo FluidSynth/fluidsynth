@@ -1516,12 +1516,13 @@ static int load_pgen(SFData *sf, int size)
                 }
                 else
                 {
-                    SFZone * pzone = fluid_list_get(p2);
+                    p2 = fluid_list_next(p2); /* advance to next zone before deleting the current list element */
                     /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone",
                               ((SFPreset *)(p->data))->name);
-                    *hz = fluid_list_remove(start_of_zone_list, pzone);
-                    delete_zone(pzone);
+                    fluid_list_remove(start_of_zone_list, z);
+                    delete_zone(z);
+                    continue;
                 }
             }
 
@@ -2025,12 +2026,13 @@ static int load_igen(SFData *sf, int size)
                 }
                 else
                 {
-                    SFZone * izone = fluid_list_get(p2);
+                    p2 = fluid_list_next(p2); /* advance to next zone before deleting the current list element */
                     /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
                               ((SFInst *)(p->data))->name);
-                    *hz = fluid_list_remove(start_of_zone_list, izone);
-                    delete_zone(izone);
+                    fluid_list_remove(start_of_zone_list, z);
+                    delete_zone(z);
+                    continue;
                 }
             }
 
