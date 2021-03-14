@@ -1812,17 +1812,17 @@ static int load_ibag(SFData *sf, int size)
 /* instrument modulator loader */
 static int load_imod(SFData *sf, int size)
 {
-    fluid_list_t *p;
+    fluid_list_t *inst_list;
     fluid_list_t *zone_list;
     fluid_list_t *mod_list;
     SFMod *m;
 
-    p = sf->inst;
+    inst_list = sf->inst;
 
-    while(p)
+    while(inst_list)
     {
         /* traverse through all inst */
-        zone_list = ((SFInst *)(p->data))->zone;
+        zone_list = ((SFInst *)(inst_list->data))->zone;
 
         while(zone_list)
         {
@@ -1856,7 +1856,7 @@ static int load_imod(SFData *sf, int size)
             zone_list = fluid_list_next(zone_list);
         }
 
-        p = fluid_list_next(p);
+        inst_list = fluid_list_next(inst_list);
     }
 
     /*
