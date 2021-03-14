@@ -1146,7 +1146,8 @@ static int load_phdr(SFData *sf, unsigned int size)
 /* preset bag loader */
 static int load_pbag(SFData *sf, int size)
 {
-    fluid_list_t *p, *p2;
+    fluid_list_t *p;
+    fluid_list_t *zone_list;
     SFZone *z, *pz = NULL;
     unsigned short genndx, modndx;
     unsigned short pgenndx = 0, pmodndx = 0;
@@ -1163,9 +1164,9 @@ static int load_pbag(SFData *sf, int size)
     while(p)
     {
         /* traverse through presets */
-        p2 = ((SFPreset *)(p->data))->zone;
+        zone_list = ((SFPreset *)(p->data))->zone;
 
-        while(p2)
+        while(zone_list)
         {
             /* traverse preset's zones */
             if((size -= SF_BAG_SIZE) < 0)
@@ -1180,7 +1181,7 @@ static int load_pbag(SFData *sf, int size)
                 return FALSE;
             }
 
-            p2->data = z;
+            zone_list->data = z;
             z->gen = NULL; /* Init gen and mod before possible failure, */
             z->mod = NULL; /* to ensure proper cleanup (fluid_sffile_close) */
             READW(sf, genndx); /* possible read failure ^ */
@@ -1220,7 +1221,7 @@ static int load_pbag(SFData *sf, int size)
             pz = z; /* update previous zone ptr */
             pgenndx = genndx; /* update previous zone gen index */
             pmodndx = modndx; /* update previous zone mod index */
-            p2 = fluid_list_next(p2);
+            zone_list = fluid_list_next(zone_list);
         }
 
         p = fluid_list_next(p);
