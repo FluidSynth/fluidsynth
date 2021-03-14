@@ -1884,7 +1884,8 @@ static int load_imod(SFData *sf, int size)
 /* load instrument generators (see load_pgen for loading rules) */
 static int load_igen(SFData *sf, int size)
 {
-    fluid_list_t *p, *dup, **hz = NULL;
+    fluid_list_t *dup, **hz = NULL;
+    fluid_list_t *inst_list;
     fluid_list_t *zone_list;
     fluid_list_t *gen_list;
     SFZone *z;
@@ -1893,14 +1894,14 @@ static int load_igen(SFData *sf, int size)
     unsigned short genid;
     int level, skip, drop, gzone, discarded;
 
-    p = sf->inst;
+    inst_list = sf->inst;
 
-    while(p)
+    while(inst_list)
     {
         /* traverse through all instruments */
         gzone = FALSE;
         discarded = FALSE;
-        zone_list = ((SFInst *)(p->data))->zone;
+        zone_list = ((SFInst *)(inst_list->data))->zone;
 
         if(zone_list)
         {
@@ -2038,7 +2039,7 @@ static int load_igen(SFData *sf, int size)
                     {
                         void *save = zone_list->data;
                         FLUID_LOG(FLUID_WARN, "Instrument '%s': Global zone is not first zone",
-                                  ((SFPreset *)(p->data))->name);
+                                  ((SFPreset *)(inst_list->data))->name);
                         SLADVREM(*hz, zone_list);
                         *hz = fluid_list_prepend(*hz, save);
                         continue;
@@ -2048,7 +2049,7 @@ static int load_igen(SFData *sf, int size)
                 {
                     /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
-                              ((SFInst *)(p->data))->name);
+                              ((SFInst *)(inst_list->data))->name);
                     *hz = fluid_list_remove(*hz, zone_list->data);
                     delete_zone((SFZone *)fluid_list_get(zone_list));
                 }
@@ -2076,10 +2077,10 @@ static int load_igen(SFData *sf, int size)
         {
             FLUID_LOG(FLUID_WARN,
                       "Instrument '%s': Some invalid generators were discarded",
-                      ((SFInst *)(p->data))->name);
+                      ((SFInst *)(inst_list->data))->name);
         }
 
-        p = fluid_list_next(p);
+        inst_list = fluid_list_next(inst_list);
     }
 
     /* for those non-terminal record cases, grr! */
