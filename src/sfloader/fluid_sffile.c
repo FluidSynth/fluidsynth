@@ -1366,7 +1366,8 @@ static int load_pmod(SFData *sf, int size)
  * ------------------------------------------------------------------- */
 static int load_pgen(SFData *sf, int size)
 {
-    fluid_list_t *p, *p2, *p3, *dup, **hz = NULL;
+    fluid_list_t *p, *p2, *dup, **hz = NULL;
+    fluid_list_t *gen_list;
     SFZone *z;
     SFGen *g;
     SFGenAmount genval;
@@ -1392,9 +1393,9 @@ static int load_pgen(SFData *sf, int size)
             /* traverse preset's zones */
             level = 0;
             z = (SFZone *)(p2->data);
-            p3 = z->gen;
+            gen_list = z->gen;
 
-            while(p3)
+            while(gen_list)
             {
                 /* load zone's generators */
                 dup = NULL;
@@ -1472,7 +1473,7 @@ static int load_pgen(SFData *sf, int size)
                             return FALSE;
                         }
 
-                        p3->data = g;
+                        gen_list->data = g;
                         g->id = genid;
                     }
                     else
@@ -1493,18 +1494,18 @@ static int load_pgen(SFData *sf, int size)
 
                 if(!drop)
                 {
-                    p3 = fluid_list_next(p3);    /* next gen */
+                    gen_list = fluid_list_next(gen_list);    /* next gen */
                 }
                 else
                 {
-                    SLADVREM(z->gen, p3);    /* drop place holder */
+                    SLADVREM(z->gen, gen_list);    /* drop place holder */
                 }
 
             } /* generator loop */
 
             if(level == 3)
             {
-                SLADVREM(z->gen, p3);    /* zone has inst? */
+                SLADVREM(z->gen, gen_list);    /* zone has inst? */
             }
             else
             {
@@ -1535,7 +1536,7 @@ static int load_pgen(SFData *sf, int size)
                 }
             }
 
-            while(p3)
+            while(gen_list)
             {
                 /* Kill any zones following an instrument */
                 discarded = TRUE;
@@ -1547,7 +1548,7 @@ static int load_pgen(SFData *sf, int size)
                 }
 
                 FSKIP(sf, SF_GEN_SIZE);
-                SLADVREM(z->gen, p3);
+                SLADVREM(z->gen, gen_list);
             }
 
             p2 = fluid_list_next(p2); /* next zone */
