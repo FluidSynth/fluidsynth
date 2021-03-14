@@ -2406,6 +2406,14 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
 
     if(sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
     {
+#if FLUID_VERSION_CHECK(FLUIDSYNTH_VERSION_MAJOR, FLUIDSYNTH_VERSION_MINOR, FLUIDSYNTH_VERSION_MICRO) < FLUID_VERSION_CHECK(2,2,0)
+        if((int)(num_samples * sizeof(short)) < 0)
+        {
+            FLUID_LOG(FLUID_INFO,
+                      "This SoundFont seems to be bigger than 2GB, which is not supported in this version of fluidsynth. "
+                      "You need to use at least fluidsynth 2.2.0");
+        }
+#endif
         FLUID_LOG(FLUID_ERR, "Failed to read sample data");
         goto error_exit;
     }
