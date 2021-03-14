@@ -2146,7 +2146,8 @@ static int load_shdr(SFData *sf, unsigned int size)
 /* "fixup" (inst # -> inst ptr) instrument references in preset list */
 static int fixup_pgen(SFData *sf)
 {
-    fluid_list_t *p, *p2, *p3;
+    fluid_list_t *p, *p2;
+    fluid_list_t *inst_list;
     SFZone *z;
     int i;
 
@@ -2164,16 +2165,16 @@ static int fixup_pgen(SFData *sf)
             if((i = FLUID_POINTER_TO_INT(z->instsamp)))
             {
                 /* load instrument # */
-                p3 = fluid_list_nth(sf->inst, i - 1);
+                inst_list = fluid_list_nth(sf->inst, i - 1);
 
-                if(!p3)
+                if(!inst_list)
                 {
                     FLUID_LOG(FLUID_ERR, "Preset %03d %03d: Invalid instrument reference",
                               ((SFPreset *)(p->data))->bank, ((SFPreset *)(p->data))->prenum);
                     return FALSE;
                 }
 
-                z->instsamp = p3;
+                z->instsamp = inst_list;
             }
             else
             {
