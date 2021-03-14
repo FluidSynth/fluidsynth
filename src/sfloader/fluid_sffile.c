@@ -2200,7 +2200,8 @@ static int fixup_pgen(SFData *sf)
 /* "fixup" (sample # -> sample ptr) sample references in instrument list */
 static int fixup_igen(SFData *sf)
 {
-    fluid_list_t *p, *p2;
+    fluid_list_t *p;
+    fluid_list_t *zone_list;
     fluid_list_t *inst_list;
     SFZone *z;
     int i;
@@ -2209,12 +2210,12 @@ static int fixup_igen(SFData *sf)
 
     while(p)
     {
-        p2 = ((SFInst *)(p->data))->zone;
+        zone_list = ((SFInst *)(p->data))->zone;
 
-        while(p2)
+        while(zone_list)
         {
             /* traverse instrument's zones */
-            z = (SFZone *)(p2->data);
+            z = (SFZone *)(zone_list->data);
 
             if((i = FLUID_POINTER_TO_INT(z->instsamp)))
             {
@@ -2231,7 +2232,7 @@ static int fixup_igen(SFData *sf)
                 z->instsamp = inst_list;
             }
 
-            p2 = fluid_list_next(p2);
+            zone_list = fluid_list_next(zone_list);
         }
 
         p = fluid_list_next(p);
