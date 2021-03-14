@@ -1883,7 +1883,8 @@ static int load_imod(SFData *sf, int size)
 /* load instrument generators (see load_pgen for loading rules) */
 static int load_igen(SFData *sf, int size)
 {
-    fluid_list_t *p, *p2, *dup, **hz = NULL;
+    fluid_list_t *p, *dup, **hz = NULL;
+    fluid_list_t *zone_list;
     fluid_list_t *gen_list;
     SFZone *z;
     SFGen *g;
@@ -1898,18 +1899,18 @@ static int load_igen(SFData *sf, int size)
         /* traverse through all instruments */
         gzone = FALSE;
         discarded = FALSE;
-        p2 = ((SFInst *)(p->data))->zone;
+        zone_list = ((SFInst *)(p->data))->zone;
 
-        if(p2)
+        if(zone_list)
         {
-            hz = &p2;
+            hz = &zone_list;
         }
 
-        while(p2)
+        while(zone_list)
         {
             /* traverse this instrument's zones */
             level = 0;
-            z = (SFZone *)(p2->data);
+            z = (SFZone *)(zone_list->data);
             gen_list = z->gen;
 
             while(gen_list)
@@ -1960,7 +1961,7 @@ static int load_igen(SFData *sf, int size)
                     /* sample is last gen */
                     level = 3;
                     READW(sf, genval.uword);
-                    ((SFZone *)(p2->data))->instsamp = FLUID_INT_TO_POINTER(genval.uword + 1);
+                    ((SFZone *)(zone_list->data))->instsamp = FLUID_INT_TO_POINTER(genval.uword + 1);
                     break; /* break out of generator loop */
                 }
                 else
@@ -2032,12 +2033,12 @@ static int load_igen(SFData *sf, int size)
                     gzone = TRUE;
 
                     /* if global zone is not 1st zone, relocate */
-                    if(*hz != p2)
+                    if(*hz != zone_list)
                     {
-                        void *save = p2->data;
+                        void *save = zone_list->data;
                         FLUID_LOG(FLUID_WARN, "Instrument '%s': Global zone is not first zone",
                                   ((SFPreset *)(p->data))->name);
-                        SLADVREM(*hz, p2);
+                        SLADVREM(*hz, zone_list);
                         *hz = fluid_list_prepend(*hz, save);
                         continue;
                     }
@@ -2047,8 +2048,8 @@ static int load_igen(SFData *sf, int size)
                     /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
                               ((SFInst *)(p->data))->name);
-                    *hz = fluid_list_remove(*hz, p2->data);
-                    delete_zone((SFZone *)fluid_list_get(p2));
+                    *hz = fluid_list_remove(*hz, zone_list->data);
+                    delete_zone((SFZone *)fluid_list_get(zone_list));
                 }
             }
 
@@ -2067,7 +2068,7 @@ static int load_igen(SFData *sf, int size)
                 SLADVREM(z->gen, gen_list);
             }
 
-            p2 = fluid_list_next(p2); /* next zone */
+            zone_list = fluid_list_next(zone_list); /* next zone */
         }
 
         if(discarded)
