@@ -1372,6 +1372,7 @@ static int load_pgen(SFData *sf, int size)
     fluid_list_t *preset_list;
     fluid_list_t *zone_list;
     fluid_list_t *gen_list;
+    fluid_list_t *start_of_zone_list;
     SFZone *z;
     SFGen *g;
     SFGenAmount genval;
@@ -1385,7 +1386,7 @@ static int load_pgen(SFData *sf, int size)
         /* traverse through all presets */
         gzone = FALSE;
         discarded = FALSE;
-        zone_list = ((SFPreset *)(preset_list->data))->zone;
+        start_of_zone_list = zone_list = ((SFPreset *)(preset_list->data))->zone;
 
         if(zone_list)
         {
@@ -1532,11 +1533,13 @@ static int load_pgen(SFData *sf, int size)
                 }
                 else
                 {
+                    zone_list = fluid_list_next(zone_list); /* advance to next zone before deleting the current list element */
                     /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone",
                               ((SFPreset *)(preset_list->data))->name);
-                    *hz = fluid_list_remove(*hz, zone_list->data);
-                    delete_zone((SFZone *)fluid_list_get(zone_list));
+                    fluid_list_remove(start_of_zone_list, z);
+                    delete_zone(z);
+                    continue;
                 }
             }
 
@@ -1888,6 +1891,7 @@ static int load_igen(SFData *sf, int size)
     fluid_list_t *inst_list;
     fluid_list_t *zone_list;
     fluid_list_t *gen_list;
+    fluid_list_t *start_of_zone_list;
     SFZone *z;
     SFGen *g;
     SFGenAmount genval;
@@ -1901,7 +1905,7 @@ static int load_igen(SFData *sf, int size)
         /* traverse through all instruments */
         gzone = FALSE;
         discarded = FALSE;
-        zone_list = ((SFInst *)(inst_list->data))->zone;
+        start_of_zone_list = zone_list = ((SFInst *)(inst_list->data))->zone;
 
         if(zone_list)
         {
@@ -2047,11 +2051,13 @@ static int load_igen(SFData *sf, int size)
                 }
                 else
                 {
+                    zone_list = fluid_list_next(zone_list); /* advance to next zone before deleting the current list element */
                     /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
                               ((SFInst *)(inst_list->data))->name);
-                    *hz = fluid_list_remove(*hz, zone_list->data);
-                    delete_zone((SFZone *)fluid_list_get(zone_list));
+                    fluid_list_remove(start_of_zone_list, z);
+                    delete_zone(z);
+                    continue;
                 }
             }
 
@@ -2435,6 +2441,14 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
 
     if(sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
     {
+#if FLUID_VERSION_CHECK(FLUIDSYNTH_VERSION_MAJOR, FLUIDSYNTH_VERSION_MINOR, FLUIDSYNTH_VERSION_MICRO) < FLUID_VERSION_CHECK(2,2,0)
+        if((int)(num_samples * sizeof(short)) < 0)
+        {
+            FLUID_LOG(FLUID_INFO,
+                      "This SoundFont seems to be bigger than 2GB, which is not supported in this version of fluidsynth. "
+                      "You need to use at least fluidsynth 2.2.0");
+        }
+#endif
         FLUID_LOG(FLUID_ERR, "Failed to read sample data");
         goto error_exit;
     }
