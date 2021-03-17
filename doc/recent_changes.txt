@@ -3,9 +3,9 @@
 \page RecentChanges Recent Changes
 \section NewIn2_2_0 What's new in 2.2.0?
 
-- #fluid_file_callbacks_t now uses <code>long long</code> as file-offset type (see #fluid_long_long_t). This is a breaking change, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.
+- #fluid_file_callbacks_t <span style="color:red">now uses <code>long long</code> as file-offset type (see #fluid_long_long_t).</span><span style="color:red;font-weight:bold">This is a breaking change</span>, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.
+- <span style="color:red">various fluid_event_*() functions that received a "value" argument of type <code>short</code> now receive an <code>int</code> argument</span> in preparation for MIDI 2.0 support
 - fluid_event_any_control_change() has been removed
-- various fluid_event_*() functions that received a "value" argument of type <code>short</code> now receive an <code>int</code> argument in preparation for MIDI 2.0 support
 - the sequencer has received a major revisal. For you that means:
   - the sequencer's queue no longer blocks the synthesizer thread, due to being busy arranging its events internally.
   - events that share the same tick was given a new, documented order, see fluid_sequencer_send_at().
