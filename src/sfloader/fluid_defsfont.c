@@ -422,11 +422,14 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
         }
         else
         {
-            /* Data pointers of SF2 samples point to large sample data block loaded above */
-            sample->data = defsfont->sampledata;
-            sample->data24 = defsfont->sample24data;
-            fluid_sample_sanitize_loop(sample, defsfont->samplesize);
-            fluid_voice_optimize_sample(sample);
+            #pragma omp task firstprivate(sample, defsfont) default(none)
+            {
+                /* Data pointers of SF2 samples point to large sample data block loaded above */
+                sample->data = defsfont->sampledata;
+                sample->data24 = defsfont->sample24data;
+                fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+                fluid_voice_optimize_sample(sample);
+            }
         }
     }
 
