@@ -30,6 +30,8 @@ ADD_FLUID_TEST(test_seq_event_queue_remove)
 ADD_FLUID_TEST(test_jack_obtaining_synth)
 ADD_FLUID_TEST(test_utf8_open)
 
+ADD_FLUID_TEST_UTIL(dump_sfont)
+
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
 endif ( LIBSNDFILE_HASVORBIS )
