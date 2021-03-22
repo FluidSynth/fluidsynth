@@ -53,6 +53,24 @@ macro ( ADD_FLUID_TEST_UTIL _util )
 
 endmacro ( ADD_FLUID_TEST_UTIL )
 
+# This macro adds a test that writes its output to a file called
+# <test>.output (in the current working dir) and then compares
+# the content with the file given in _expected_output
+macro ( ADD_FLUID_SF_DUMP_TEST _sfname)
+
+    set( test_args "${CMAKE_SOURCE_DIR}/sf2/${_sfname} ${_sfname}.yml" )
+
+    ADD_TEST(${_sfname}_dump_test
+        ${CMAKE_COMMAND}
+        -Dtest_cmd=${CMAKE_BINARY_DIR}/test/dump_sfont
+        -Dtest_args=${test_args}
+        -Dtest_output=${_sfname}.yml
+        -Dexpected_output=${CMAKE_SOURCE_DIR}/sf2/${_sfname}.yml
+        -P ${CMAKE_SOURCE_DIR}/cmake_admin/RunOutputTest.cmake
+    )
+
+endmacro ( ADD_FLUID_SF_DUMP_TEST )
+
 macro ( ADD_FLUID_DEMO _demo )
     ADD_EXECUTABLE(${_demo} ${_demo}.c )
 
