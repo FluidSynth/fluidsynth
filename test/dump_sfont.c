@@ -67,6 +67,12 @@ int main(int argc, char **argv)
         goto EXIT;
     }
 
+    if (sfont->free != &fluid_defsfont_sfont_delete)
+    {
+        fprintf(stderr, "This tool only supports SoundFonts loaded by the default loader\n");
+        goto EXIT;
+    }
+
     defsfont = (fluid_defsfont_t *)fluid_sfont_get_data(sfont);
     if (defsfont == NULL)
     {
