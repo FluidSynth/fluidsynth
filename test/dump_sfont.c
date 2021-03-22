@@ -145,7 +145,7 @@ static void dump_gens(const fluid_gen_t gen[])
     {
         if (gen[i].flags)
         {
-            fmt("%d: %.2f", i, gen[i].val);
+            fmt("%s: %.2f", fluid_gen_name(i), gen[i].val);
         }
     }
     outdent();
@@ -153,7 +153,7 @@ static void dump_gens(const fluid_gen_t gen[])
 
 static void dump_mod(const fluid_mod_t *mod)
 {
-    fmt("dest: %u", mod->dest);
+    fmt("dest: %s", fluid_gen_name(mod->dest));
     fmt("src1: %u", mod->src1);
     fmt("flags1: %u", mod->flags1);
     fmt("src2: %u", mod->src2);
