@@ -33,6 +33,9 @@ macro ( ADD_FLUID_TEST_UTIL _util )
     # only build this unit test when explicitly requested by "make check"
     set_target_properties(${_util} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
+    # append no-op generator expression to avoid VS or XCode from adding per-config subdirectories
+    set_target_properties(${_util} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test/utils/$<0:>)
+
     # import necessary compile flags and dependency libraries
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_util} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
@@ -62,7 +65,7 @@ macro ( ADD_FLUID_SF_DUMP_TEST _sfname)
 
     ADD_TEST(${_sfname}_dump_test
         ${CMAKE_COMMAND}
-        -Dtest_cmd=${CMAKE_BINARY_DIR}/test/dump_sfont
+        -Dtest_cmd=${CMAKE_BINARY_DIR}/test/utils/dump_sfont${CMAKE_EXECUTABLE_SUFFIX}
         -Dtest_args=${test_args}
         -Dtest_output=${_sfname}.yml
         -Dexpected_output=${CMAKE_SOURCE_DIR}/sf2/${_sfname}.yml
