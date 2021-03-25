@@ -1094,9 +1094,9 @@ static int load_phdr(SFData *sf, unsigned int size)
         READW(sf, preset->prenum);
         READW(sf, preset->bank);
         READW(sf, pbag_idx);
-        READD(sf, preset->libr);
-        READD(sf, preset->genre);
-        READD(sf, preset->morph);
+        FSKIP(sf, 4); /* library ignored */
+        FSKIP(sf, 4); /* genre ignored */
+        FSKIP(sf, 4); /* morphology ignored */
 
         if(prev_preset)
         {

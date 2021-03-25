@@ -130,9 +130,6 @@ struct _SFPreset
     char name[21]; /* preset name */
     unsigned short prenum; /* preset number */
     unsigned short bank; /* bank number */
-    unsigned int libr; /* Not used (preserved) */
-    unsigned int genre; /* Not used (preserved) */
-    unsigned int morph; /* Not used (preserved) */
     fluid_list_t *zone; /* list of preset zones */
 };
 
@@ -189,9 +186,6 @@ struct _SFPhdr
     unsigned short preset; /* preset number */
     unsigned short bank; /* bank number */
     unsigned short pbagndx; /* index into preset bag */
-    unsigned int library; /* just for preserving them */
-    unsigned int genre; /* Not used */
-    unsigned int morphology; /* Not used */
 };
 
 struct _SFBag
