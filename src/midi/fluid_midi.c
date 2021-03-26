@@ -2059,11 +2059,6 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
     player->start_ticks = 0;
     player->cur_ticks = 0;
 
-    if(player->reset_synth_between_songs)
-    {
-        fluid_synth_system_reset(player->synth);
-    }
-
     for(i = 0; i < player->ntracks; i++)
     {
         if(player->track[i] != NULL)
@@ -2145,6 +2140,12 @@ fluid_player_callback(void *data, unsigned int msec)
         {
             FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", __FILE__,
                       __LINE__, (msec - player->begin_msec) / 1000.0);
+
+            if(player->reset_synth_between_songs)
+            {
+                fluid_synth_system_reset(player->synth);
+            }
+
             loadnextfile = 1;
         }
 
