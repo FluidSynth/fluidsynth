@@ -187,7 +187,6 @@ static const unsigned short invalid_inst_gen[] =
     Gen_Reserved1,
     Gen_Reserved2,
     Gen_Reserved3,
-    0
 };
 
 static const unsigned short invalid_preset_gen[] =
@@ -205,7 +204,6 @@ static const unsigned short invalid_preset_gen[] =
     Gen_SampleModes,
     Gen_ExclusiveClass,
     Gen_OverrideRootKey,
-    0
 };
 
 
@@ -2370,37 +2368,43 @@ static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist)
 /* check validity of instrument generator */
 static int valid_inst_genid(unsigned short genid)
 {
-    int i = 0;
+    size_t i;
 
     if(genid >= Gen_Last)
     {
         return FALSE;
     }
 
-    while(invalid_inst_gen[i] && invalid_inst_gen[i] != genid)
+    for(i = 0; i < FLUID_N_ELEMENTS(invalid_inst_gen); i++)
     {
-        i++;
+        if (invalid_inst_gen[i] == genid)
+        {
+            return FALSE;
+        }
     }
 
-    return (invalid_inst_gen[i] == 0);
+    return TRUE;
 }
 
 /* check validity of preset generator */
 static int valid_preset_genid(unsigned short genid)
 {
-    int i = 0;
+    size_t i;
 
     if(!valid_inst_genid(genid))
     {
         return FALSE;
     }
 
-    while(invalid_preset_gen[i] && invalid_preset_gen[i] != genid)
+    for(i = 0; i < FLUID_N_ELEMENTS(invalid_preset_gen); i++)
     {
-        i++;
+        if (invalid_preset_gen[i] == genid)
+        {
+            return FALSE;
+        }
     }
 
-    return (invalid_preset_gen[i] == 0);
+    return TRUE;
 }
 
 
