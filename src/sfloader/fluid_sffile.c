@@ -174,11 +174,11 @@ typedef enum
     Gen_ScaleTune,
     Gen_ExclusiveClass,
     Gen_OverrideRootKey,
-    Gen_Dummy
+    Gen_Last /* Sentinel value, not a valid generator */
 } Gen_Type;
 
-#define Gen_MaxValid Gen_Dummy - 1 /* maximum valid generator */
-#define Gen_Count Gen_Dummy /* count of generators */
+#define Gen_MaxValid Gen_Last - 1 /* maximum valid generator */
+#define Gen_Count Gen_Last /* count of generators */
 #define GenArrSize sizeof(SFGenAmount) * Gen_Count /* gen array size */
 
 
