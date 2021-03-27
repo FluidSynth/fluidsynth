@@ -2195,7 +2195,8 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    fluid_atomic_int_set(&player->status, FLUID_PLAYER_STOPPING);
+    fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_READY, FLUID_PLAYER_STOPPING);
+    fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_PLAYING, FLUID_PLAYER_STOPPING);
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
