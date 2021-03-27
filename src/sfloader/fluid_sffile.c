@@ -177,9 +177,6 @@ typedef enum
     Gen_Last /* Sentinel value, not a valid generator */
 } Gen_Type;
 
-#define Gen_Count Gen_Last /* count of generators */
-#define GenArrSize sizeof(SFGenAmount) * Gen_Count /* gen array size */
-
 
 static const unsigned short invalid_inst_gen[] =
 {
