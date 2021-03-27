@@ -121,6 +121,7 @@ static const unsigned short invalid_inst_gen[] =
     GEN_RESERVED1,
     GEN_RESERVED2,
     GEN_RESERVED3,
+    GEN_INSTRUMENT,
 };
 
 static const unsigned short invalid_preset_gen[] =
@@ -138,6 +139,7 @@ static const unsigned short invalid_preset_gen[] =
     GEN_SAMPLEMODE,
     GEN_EXCLUSIVECLASS,
     GEN_OVERRIDEROOTKEY,
+    GEN_SAMPLEID,
 };
 
 
