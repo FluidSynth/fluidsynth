@@ -1079,14 +1079,14 @@ static int load_pbag(SFData *sf, int size)
 
     preset_list = sf->preset;
 
+    /* traverse through presets */
     while(preset_list)
     {
-        /* traverse through presets */
         zone_list = ((SFPreset *)(preset_list->data))->zone;
 
+        /* traverse preset's zones */
         while(zone_list)
         {
-            /* traverse preset's zones */
             if((size -= SF_BAG_SIZE) < 0)
             {
                 FLUID_LOG(FLUID_ERR, "Preset bag chunk size mismatch");
@@ -1285,37 +1285,33 @@ static int load_pmod(SFData *sf, int size)
  * ------------------------------------------------------------------- */
 static int load_pgen(SFData *sf, int size)
 {
-    fluid_list_t *dup, **hz = NULL;
+    fluid_list_t *dup;
     fluid_list_t *preset_list;
     fluid_list_t *zone_list;
     fluid_list_t *gen_list;
-    fluid_list_t *start_of_zone_list;
-    SFZone *z;
+    SFZone *zone;
     SFGen *g;
+    SFPreset *preset;
     SFGenAmount genval;
     unsigned short genid;
-    int level, skip, drop, gzone, discarded;
+    int level, skip, drop, discarded;
 
     preset_list = sf->preset;
 
     while(preset_list)
     {
+        preset = fluid_list_get(preset_list);
+
         /* traverse through all presets */
-        gzone = FALSE;
         discarded = FALSE;
-        start_of_zone_list = zone_list = ((SFPreset *)(preset_list->data))->zone;
+        zone_list = preset->zone;
 
-        if(zone_list)
-        {
-            hz = &zone_list;
-        }
-
+        /* traverse preset's zones */
         while(zone_list)
         {
-            /* traverse preset's zones */
+            zone = fluid_list_get(zone_list);
             level = 0;
-            z = (SFZone *)(zone_list->data);
-            gen_list = z->gen;
+            gen_list = zone->gen;
 
             while(gen_list)
             {
@@ -1374,7 +1370,7 @@ static int load_pgen(SFData *sf, int size)
                     {
                         /* generator valid? */
                         READW(sf, genval.sword);
-                        dup = find_gen_by_id(genid, z->gen);
+                        dup = find_gen_by_id(genid, zone->gen);
                     }
                     else
                     {
@@ -1418,11 +1414,10 @@ static int load_pgen(SFData *sf, int size)
                 }
                 else
                 {
-                    SLADVREM(z->gen, gen_list);    /* drop place holder */
+                    SLADVREM(zone->gen, gen_list);    /* drop place holder */
                 }
 
-                /* Level 3 means we found an instrument generator, which
-                 * should be the last generator in the list. */
+                /* GEN_INSTRUMENT should be the last generator */
                 if (level == 3)
                 {
                     break;
@@ -1430,42 +1425,27 @@ static int load_pgen(SFData *sf, int size)
 
             } /* generator loop */
 
-            /* Level 3 means we found an instrument generator, so any zone
-             * with a lower level is by definition a global zone */
-            if(level < 3)
+            /* Anything below level 3 means it's a global zone. The global zone
+             * should always be the first zone in the list, so discard any
+             * other global zones we encounter */
+            if(level < 3 && (zone_list != preset->zone))
             {
-                /* congratulations its a global zone */
-                if(!gzone)
-                {
-                    /* Prior global zones? */
-                    gzone = TRUE;
+                /* advance to next zone before deleting the current list element */
+                zone_list = fluid_list_next(zone_list);
 
-                    /* if global zone is not 1st zone, relocate */
-                    if(*hz != zone_list)
-                    {
-                        void *save = zone_list->data;
-                        FLUID_LOG(FLUID_WARN, "Preset '%s': Global zone is not first zone",
-                                  ((SFPreset *)(preset_list->data))->name);
-                        SLADVREM(*hz, zone_list);
-                        *hz = fluid_list_prepend(*hz, save);
-                        continue;
-                    }
-                }
-                else
-                {
-                    zone_list = fluid_list_next(zone_list); /* advance to next zone before deleting the current list element */
-                    /* previous global zone exists, discard */
-                    FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone",
-                              ((SFPreset *)(preset_list->data))->name);
-                    fluid_list_remove(start_of_zone_list, z);
-                    delete_zone(z);
-                    continue;
-                }
+                FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone",
+                            preset->name);
+                preset->zone = fluid_list_remove(preset->zone, zone);
+                delete_zone(zone);
+
+                /* we have already advanced the zone_list pointer, so continue with next zone */
+                continue;
             }
 
+            /* All remaining generators are invalid and should be discarded
+             * (because they come after an instrument generator) */
             while(gen_list)
             {
-                /* Kill any zones following an instrument */
                 discarded = TRUE;
 
                 if((size -= SF_GEN_SIZE) < 0)
@@ -1475,17 +1455,17 @@ static int load_pgen(SFData *sf, int size)
                 }
 
                 FSKIP(sf, SF_GEN_SIZE);
-                SLADVREM(z->gen, gen_list);
+                SLADVREM(zone->gen, gen_list);
             }
 
-            zone_list = fluid_list_next(zone_list); /* next zone */
+            zone_list = fluid_list_next(zone_list);
         }
 
         if(discarded)
         {
             FLUID_LOG(FLUID_WARN,
                       "Preset '%s': Some invalid generators were discarded",
-                      ((SFPreset *)(preset_list->data))->name);
+                      preset->name);
         }
 
         preset_list = fluid_list_next(preset_list);
@@ -1806,37 +1786,34 @@ static int load_imod(SFData *sf, int size)
 /* load instrument generators (see load_pgen for loading rules) */
 static int load_igen(SFData *sf, int size)
 {
-    fluid_list_t *dup, **hz = NULL;
+    fluid_list_t *dup;
     fluid_list_t *inst_list;
     fluid_list_t *zone_list;
     fluid_list_t *gen_list;
-    fluid_list_t *start_of_zone_list;
-    SFZone *z;
+    SFZone *zone;
     SFGen *g;
+    SFInst *inst;
     SFGenAmount genval;
     unsigned short genid;
-    int level, skip, drop, gzone, discarded;
+    int level, skip, drop, discarded;
 
     inst_list = sf->inst;
 
+    /* traverse through all instruments */
     while(inst_list)
     {
-        /* traverse through all instruments */
-        gzone = FALSE;
+        inst = fluid_list_get(inst_list);
+
         discarded = FALSE;
-        start_of_zone_list = zone_list = ((SFInst *)(inst_list->data))->zone;
+        zone_list = inst->zone;
 
-        if(zone_list)
-        {
-            hz = &zone_list;
-        }
-
+        /* traverse this instrument's zones */
         while(zone_list)
         {
-            /* traverse this instrument's zones */
+            zone = fluid_list_get(zone_list);
+
             level = 0;
-            z = (SFZone *)(zone_list->data);
-            gen_list = z->gen;
+            gen_list = zone->gen;
 
             while(gen_list)
             {
@@ -1895,7 +1872,7 @@ static int load_igen(SFData *sf, int size)
                     {
                         /* gen valid? */
                         READW(sf, genval.sword);
-                        dup = find_gen_by_id(genid, z->gen);
+                        dup = find_gen_by_id(genid, zone->gen);
                     }
                     else
                     {
@@ -1939,9 +1916,10 @@ static int load_igen(SFData *sf, int size)
                 }
                 else
                 {
-                    SLADVREM(z->gen, gen_list);
+                    SLADVREM(zone->gen, gen_list);
                 }
 
+                /* GEN_SAMPLEID should be last generator */
                 if (level == 3)
                 {
                     break;
@@ -1949,39 +1927,27 @@ static int load_igen(SFData *sf, int size)
 
             } /* generator loop */
 
-            if (level < 3)
+            /* Anything below level 3 means it's a global zone. The global zone
+             * should always be the first zone in the list, so discard any
+             * other global zones we encounter */
+            if(level < 3 && (zone_list != inst->zone))
             {
-                /* its a global zone */
-                if(!gzone)
-                {
-                    gzone = TRUE;
+                /* advance to next zone before deleting the current list element */
+                zone_list = fluid_list_next(zone_list);
 
-                    /* if global zone is not 1st zone, relocate */
-                    if(*hz != zone_list)
-                    {
-                        void *save = zone_list->data;
-                        FLUID_LOG(FLUID_WARN, "Instrument '%s': Global zone is not first zone",
-                                  ((SFPreset *)(inst_list->data))->name);
-                        SLADVREM(*hz, zone_list);
-                        *hz = fluid_list_prepend(*hz, save);
-                        continue;
-                    }
-                }
-                else
-                {
-                    zone_list = fluid_list_next(zone_list); /* advance to next zone before deleting the current list element */
-                    /* previous global zone exists, discard */
-                    FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
-                              ((SFInst *)(inst_list->data))->name);
-                    fluid_list_remove(start_of_zone_list, z);
-                    delete_zone(z);
-                    continue;
-                }
+                FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
+                            inst->name);
+                inst->zone = fluid_list_remove(inst->zone, zone);
+                delete_zone(zone);
+
+                /* we have already advanced the zone_list pointer, so continue with next zone */
+                continue;
             }
 
+            /* All remaining generators must be invalid and should be discarded
+             * (because they come after a sampleid generator) */
             while(gen_list)
             {
-                /* Kill any zones following a sample */
                 discarded = TRUE;
 
                 if((size -= SF_GEN_SIZE) < 0)
@@ -1991,7 +1957,7 @@ static int load_igen(SFData *sf, int size)
                 }
 
                 FSKIP(sf, SF_GEN_SIZE);
-                SLADVREM(z->gen, gen_list);
+                SLADVREM(zone->gen, gen_list);
             }
 
             zone_list = fluid_list_next(zone_list); /* next zone */
@@ -2001,7 +1967,7 @@ static int load_igen(SFData *sf, int size)
         {
             FLUID_LOG(FLUID_WARN,
                       "Instrument '%s': Some invalid generators were discarded",
-                      ((SFInst *)(inst_list->data))->name);
+                      inst->name);
         }
 
         inst_list = fluid_list_next(inst_list);
