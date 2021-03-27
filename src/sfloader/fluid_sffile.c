@@ -239,8 +239,6 @@ static int load_ibag(SFData *sf, int size);
 static int load_imod(SFData *sf, int size);
 static int load_igen(SFData *sf, int size);
 static int load_shdr(SFData *sf, unsigned int size);
-static int fixup_pgen(SFData *sf);
-static int fixup_igen(SFData *sf);
 
 static int chunkid(uint32_t id);
 static int read_listchunk(SFData *sf, SFChunk *chunk);
@@ -625,16 +623,6 @@ static int load_body(SFData *sf)
     }
 
     if(!process_pdta(sf, sf->hydrasize))
-    {
-        return FALSE;
-    }
-
-    if(!fixup_pgen(sf))
-    {
-        return FALSE;
-    }
-
-    if(!fixup_igen(sf))
     {
         return FALSE;
     }
@@ -1116,7 +1104,6 @@ static int load_pbag(SFData *sf, int size)
             z->mod = NULL; /* to ensure proper cleanup (fluid_sffile_close) */
             READW(sf, genndx); /* possible read failure ^ */
             READW(sf, modndx);
-            z->instsamp = NULL;
 
             if(pz)
             {
@@ -1378,8 +1365,6 @@ static int load_pgen(SFData *sf, int size)
                     /* inst is last gen */
                     level = 3;
                     READW(sf, genval.uword);
-                    ((SFZone *)(zone_list->data))->instsamp = FLUID_INT_TO_POINTER(genval.uword + 1);
-                    break; /* break out of generator loop */
                 }
                 else
                 {
@@ -1436,13 +1421,18 @@ static int load_pgen(SFData *sf, int size)
                     SLADVREM(z->gen, gen_list);    /* drop place holder */
                 }
 
+                /* Level 3 means we found an instrument generator, which
+                 * should be the last generator in the list. */
+                if (level == 3)
+                {
+                    break;
+                }
+
             } /* generator loop */
 
-            if(level == 3)
-            {
-                SLADVREM(z->gen, gen_list);    /* zone has inst? */
-            }
-            else
+            /* Level 3 means we found an instrument generator, so any zone
+             * with a lower level is by definition a global zone */
+            if(level < 3)
             {
                 /* congratulations its a global zone */
                 if(!gzone)
@@ -1645,7 +1635,6 @@ static int load_ibag(SFData *sf, int size)
             z->mod = NULL; /* fluid_sffile_close can clean up */
             READW(sf, genndx); /* READW = possible read failure */
             READW(sf, modndx);
-            z->instsamp = NULL;
 
             if(pz)
             {
@@ -1897,8 +1886,6 @@ static int load_igen(SFData *sf, int size)
                     /* sample is last gen */
                     level = 3;
                     READW(sf, genval.uword);
-                    ((SFZone *)(zone_list->data))->instsamp = FLUID_INT_TO_POINTER(genval.uword + 1);
-                    break; /* break out of generator loop */
                 }
                 else
                 {
@@ -1955,13 +1942,14 @@ static int load_igen(SFData *sf, int size)
                     SLADVREM(z->gen, gen_list);
                 }
 
+                if (level == 3)
+                {
+                    break;
+                }
+
             } /* generator loop */
 
-            if(level == 3)
-            {
-                SLADVREM(z->gen, gen_list);    /* zone has sample? */
-            }
-            else
+            if (level < 3)
             {
                 /* its a global zone */
                 if(!gzone)
@@ -2068,6 +2056,7 @@ static int load_shdr(SFData *sf, unsigned int size)
             FLUID_LOG(FLUID_ERR, "Out of memory");
             return FALSE;
         }
+        p->idx = i;
 
         sf->sample = fluid_list_append(sf->sample, p);
         READSTR(sf, &p->name);
@@ -2083,98 +2072,6 @@ static int load_shdr(SFData *sf, unsigned int size)
     }
 
     FSKIP(sf, SF_SHDR_SIZE); /* skip terminal shdr */
-
-    return TRUE;
-}
-
-/* "fixup" (inst # -> inst ptr) instrument references in preset list */
-static int fixup_pgen(SFData *sf)
-{
-    fluid_list_t *p;
-    fluid_list_t *zone_list;
-    fluid_list_t *inst_list;
-    SFZone *z;
-    int i;
-
-    p = sf->preset;
-
-    while(p)
-    {
-        zone_list = ((SFPreset *)(p->data))->zone;
-
-        while(zone_list)
-        {
-            /* traverse this preset's zones */
-            z = (SFZone *)(zone_list->data);
-
-            if((i = FLUID_POINTER_TO_INT(z->instsamp)))
-            {
-                /* load instrument # */
-                inst_list = fluid_list_nth(sf->inst, i - 1);
-
-                if(!inst_list)
-                {
-                    FLUID_LOG(FLUID_ERR, "Preset %03d %03d: Invalid instrument reference",
-                              ((SFPreset *)(p->data))->bank, ((SFPreset *)(p->data))->prenum);
-                    return FALSE;
-                }
-
-                z->instsamp = inst_list;
-            }
-            else
-            {
-                z->instsamp = NULL;
-            }
-
-            zone_list = fluid_list_next(zone_list);
-        }
-
-        p = fluid_list_next(p);
-    }
-
-    return TRUE;
-}
-
-/* "fixup" (sample # -> sample ptr) sample references in instrument list */
-static int fixup_igen(SFData *sf)
-{
-    fluid_list_t *p;
-    fluid_list_t *zone_list;
-    fluid_list_t *inst_list;
-    SFZone *z;
-    int i;
-
-    p = sf->inst;
-
-    while(p)
-    {
-        zone_list = ((SFInst *)(p->data))->zone;
-
-        while(zone_list)
-        {
-            /* traverse instrument's zones */
-            z = (SFZone *)(zone_list->data);
-
-            if((i = FLUID_POINTER_TO_INT(z->instsamp)))
-            {
-                /* load sample # */
-                inst_list = fluid_list_nth(sf->sample, i - 1);
-
-                if(!inst_list)
-                {
-                    FLUID_LOG(FLUID_ERR, "Instrument '%s': Invalid sample reference",
-                              ((SFInst *)(p->data))->name);
-                    return FALSE;
-                }
-
-                z->instsamp = inst_list;
-            }
-
-            zone_list = fluid_list_next(zone_list);
-        }
-
-        p = fluid_list_next(p);
-    }
 
     return TRUE;
 }

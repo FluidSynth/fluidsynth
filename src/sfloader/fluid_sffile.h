@@ -85,7 +85,6 @@ struct _SFGen
 struct _SFZone
 {
     /* Sample/instrument zone structure */
-    fluid_list_t *instsamp; /* instrument/sample pointer for zone */
     fluid_list_t *gen; /* list of generators */
     fluid_list_t *mod; /* list of modulators */
 };
@@ -94,6 +93,7 @@ struct _SFSample
 {
     /* Sample structure */
     char name[21]; /* Name of sample */
+    int idx; /* Index of this instrument in the Soundfont */
     unsigned int start; /* Offset in sample area to start of sample */
     unsigned int end; /* Offset from start to end of sample,
              this is the last point of the
