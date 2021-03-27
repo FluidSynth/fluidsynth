@@ -112,98 +112,32 @@ static const uint32_t idlist[] =
     SM24_FCC
 };
 
-/* generator types */
-typedef enum
-{
-    Gen_StartAddrOfs,
-    Gen_EndAddrOfs,
-    Gen_StartLoopAddrOfs,
-    Gen_EndLoopAddrOfs,
-    Gen_StartAddrCoarseOfs,
-    Gen_ModLFO2Pitch,
-    Gen_VibLFO2Pitch,
-    Gen_ModEnv2Pitch,
-    Gen_FilterFc,
-    Gen_FilterQ,
-    Gen_ModLFO2FilterFc,
-    Gen_ModEnv2FilterFc,
-    Gen_EndAddrCoarseOfs,
-    Gen_ModLFO2Vol,
-    Gen_Unused1,
-    Gen_ChorusSend,
-    Gen_ReverbSend,
-    Gen_Pan,
-    Gen_Unused2,
-    Gen_Unused3,
-    Gen_Unused4,
-    Gen_ModLFODelay,
-    Gen_ModLFOFreq,
-    Gen_VibLFODelay,
-    Gen_VibLFOFreq,
-    Gen_ModEnvDelay,
-    Gen_ModEnvAttack,
-    Gen_ModEnvHold,
-    Gen_ModEnvDecay,
-    Gen_ModEnvSustain,
-    Gen_ModEnvRelease,
-    Gen_Key2ModEnvHold,
-    Gen_Key2ModEnvDecay,
-    Gen_VolEnvDelay,
-    Gen_VolEnvAttack,
-    Gen_VolEnvHold,
-    Gen_VolEnvDecay,
-    Gen_VolEnvSustain,
-    Gen_VolEnvRelease,
-    Gen_Key2VolEnvHold,
-    Gen_Key2VolEnvDecay,
-    Gen_Instrument,
-    Gen_Reserved1,
-    Gen_KeyRange,
-    Gen_VelRange,
-    Gen_StartLoopAddrCoarseOfs,
-    Gen_Keynum,
-    Gen_Velocity,
-    Gen_Attenuation,
-    Gen_Reserved2,
-    Gen_EndLoopAddrCoarseOfs,
-    Gen_CoarseTune,
-    Gen_FineTune,
-    Gen_SampleId,
-    Gen_SampleModes,
-    Gen_Reserved3,
-    Gen_ScaleTune,
-    Gen_ExclusiveClass,
-    Gen_OverrideRootKey,
-    Gen_Last /* Sentinel value, not a valid generator */
-} Gen_Type;
-
-
 static const unsigned short invalid_inst_gen[] =
 {
-    Gen_Unused1,
-    Gen_Unused2,
-    Gen_Unused3,
-    Gen_Unused4,
-    Gen_Reserved1,
-    Gen_Reserved2,
-    Gen_Reserved3,
+    GEN_UNUSED1,
+    GEN_UNUSED2,
+    GEN_UNUSED3,
+    GEN_UNUSED4,
+    GEN_RESERVED1,
+    GEN_RESERVED2,
+    GEN_RESERVED3,
 };
 
 static const unsigned short invalid_preset_gen[] =
 {
-    Gen_StartAddrOfs,
-    Gen_EndAddrOfs,
-    Gen_StartLoopAddrOfs,
-    Gen_EndLoopAddrOfs,
-    Gen_StartAddrCoarseOfs,
-    Gen_EndAddrCoarseOfs,
-    Gen_StartLoopAddrCoarseOfs,
-    Gen_Keynum,
-    Gen_Velocity,
-    Gen_EndLoopAddrCoarseOfs,
-    Gen_SampleModes,
-    Gen_ExclusiveClass,
-    Gen_OverrideRootKey,
+    GEN_STARTADDROFS,
+    GEN_ENDADDROFS,
+    GEN_STARTLOOPADDROFS,
+    GEN_ENDLOOPADDROFS,
+    GEN_STARTADDRCOARSEOFS,
+    GEN_ENDADDRCOARSEOFS,
+    GEN_STARTLOOPADDRCOARSEOFS,
+    GEN_KEYNUM,
+    GEN_VELOCITY,
+    GEN_ENDLOOPADDRCOARSEOFS,
+    GEN_SAMPLEMODE,
+    GEN_EXCLUSIVECLASS,
+    GEN_OVERRIDEROOTKEY,
 };
 
 
@@ -1409,7 +1343,7 @@ static int load_pgen(SFData *sf, int size)
 
                 READW(sf, genid);
 
-                if(genid == Gen_KeyRange)
+                if(genid == GEN_KEYRANGE)
                 {
                     /* nothing precedes */
                     if(level == 0)
@@ -1423,7 +1357,7 @@ static int load_pgen(SFData *sf, int size)
                         skip = TRUE;
                     }
                 }
-                else if(genid == Gen_VelRange)
+                else if(genid == GEN_VELRANGE)
                 {
                     /* only KeyRange precedes */
                     if(level <= 1)
@@ -1437,7 +1371,7 @@ static int load_pgen(SFData *sf, int size)
                         skip = TRUE;
                     }
                 }
-                else if(genid == Gen_Instrument)
+                else if(genid == GEN_INSTRUMENT)
                 {
                     /* inst is last gen */
                     level = 3;
@@ -1928,7 +1862,7 @@ static int load_igen(SFData *sf, int size)
 
                 READW(sf, genid);
 
-                if(genid == Gen_KeyRange)
+                if(genid == GEN_KEYRANGE)
                 {
                     /* nothing precedes */
                     if(level == 0)
@@ -1942,7 +1876,7 @@ static int load_igen(SFData *sf, int size)
                         skip = TRUE;
                     }
                 }
-                else if(genid == Gen_VelRange)
+                else if(genid == GEN_VELRANGE)
                 {
                     /* only KeyRange precedes */
                     if(level <= 1)
@@ -1956,7 +1890,7 @@ static int load_igen(SFData *sf, int size)
                         skip = TRUE;
                     }
                 }
-                else if(genid == Gen_SampleId)
+                else if(genid == GEN_SAMPLEID)
                 {
                     /* sample is last gen */
                     level = 3;
@@ -2370,7 +2304,10 @@ static int valid_inst_genid(unsigned short genid)
 {
     size_t i;
 
-    if(genid >= Gen_Last)
+    /* OVERRIDEROOTKEY is the last official generator, everything
+     * following it are generators internal to FluidSynth and will
+     * never appear in a SoundFont file. */
+    if(genid > GEN_OVERRIDEROOTKEY)
     {
         return FALSE;
     }
