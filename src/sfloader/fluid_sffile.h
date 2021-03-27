@@ -45,10 +45,6 @@ typedef struct _SFInst SFInst;
 typedef struct _SFPreset SFPreset;
 typedef struct _SFData SFData;
 typedef struct _SFChunk SFChunk;
-typedef struct _SFPhdr SFPhdr;
-typedef struct _SFBag SFBag;
-typedef struct _SFIhdr SFIhdr;
-typedef struct _SFShdr SFShdr;
 
 
 struct _SFVersion
@@ -178,41 +174,6 @@ struct _SFChunk
     /* RIFF file chunk structure */
     unsigned int id; /* chunk id */
     unsigned int size; /* size of the following chunk */
-};
-
-struct _SFPhdr
-{
-    unsigned char name[20]; /* preset name */
-    unsigned short preset; /* preset number */
-    unsigned short bank; /* bank number */
-    unsigned short pbagndx; /* index into preset bag */
-};
-
-struct _SFBag
-{
-    unsigned short genndx; /* index into generator list */
-    unsigned short modndx; /* index into modulator list */
-};
-
-struct _SFIhdr
-{
-    char name[20]; /* Name of instrument */
-    unsigned short ibagndx; /* Instrument bag index */
-};
-
-struct _SFShdr
-{
-    /* Sample header loading struct */
-    char name[20]; /* Sample name */
-    unsigned int start; /* Offset to start of sample */
-    unsigned int end; /* Offset to end of sample */
-    unsigned int loopstart; /* Offset to start of loop */
-    unsigned int loopend; /* Offset to end of loop */
-    unsigned int samplerate; /* Sample rate recorded at */
-    unsigned char origpitch; /* root midi key number */
-    signed char pitchadj; /* pitch correction in cents */
-    unsigned short samplelink; /* Not used */
-    unsigned short sampletype; /* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
 };
 
 /* Public functions  */
