@@ -177,7 +177,6 @@ typedef enum
     Gen_Last /* Sentinel value, not a valid generator */
 } Gen_Type;
 
-#define Gen_MaxValid Gen_Last - 1 /* maximum valid generator */
 #define Gen_Count Gen_Last /* count of generators */
 #define GenArrSize sizeof(SFGenAmount) * Gen_Count /* gen array size */
 
@@ -2376,7 +2375,7 @@ static int valid_inst_genid(unsigned short genid)
 {
     int i = 0;
 
-    if(genid > Gen_MaxValid)
+    if(genid >= Gen_Last)
     {
         return FALSE;
     }
