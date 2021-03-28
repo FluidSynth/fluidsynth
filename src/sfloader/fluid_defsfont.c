@@ -562,7 +562,7 @@ err_exit:
  */
 int fluid_defsfont_add_sample(fluid_defsfont_t *defsfont, fluid_sample_t *sample)
 {
-    defsfont->sample = fluid_list_append(defsfont->sample, sample);
+    defsfont->sample = fluid_list_prepend(defsfont->sample, sample);
     return FLUID_OK;
 }
 

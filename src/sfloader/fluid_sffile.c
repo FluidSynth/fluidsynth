@@ -2024,7 +2024,7 @@ static int load_shdr(SFData *sf, unsigned int size)
         }
         p->idx = i;
 
-        sf->sample = fluid_list_append(sf->sample, p);
+        sf->sample = fluid_list_prepend(sf->sample, p);
         READSTR(sf, &p->name);
         READD(sf, p->start);
         READD(sf, p->end);
