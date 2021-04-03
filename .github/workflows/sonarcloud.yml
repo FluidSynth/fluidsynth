@@ -73,7 +73,11 @@ jobs:
     - name: Prepare for Sonar
       run: |
        rm -rf ${{ github.workspace }}/sf2
+       gcovr --version
+       gcovr --help
+       ls -la ${{ github.workspace }}
        ls -la ${{ github.workspace }}/build
+       ls -la ${{ github.workspace }}/build/coverage
 
 # The offical sonarsource/sonarcloud-github-action@v1.5 action does not work properly.
 # It keeps complaining that the build-wrapper.json cannot be found.
