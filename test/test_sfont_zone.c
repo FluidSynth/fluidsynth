@@ -151,8 +151,10 @@ int main(void)
 
         unsigned char buf[] =
         {
+            // zone 1
             Gen_ReverbSend, 0, 50, 0,
             Gen_VolEnvRelease, 0, 206, 249,
+            // zone 2
             Gen_KeyRange, 0, 0, 35, 
             Gen_OverrideRootKey, 0, 43, 0,
             Gen_StartAddrCoarseOfs, 0, 0, 0,  
