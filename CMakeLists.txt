@@ -226,16 +226,20 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
       set ( ENABLE_UBSAN 1 )
     endif ( enable-ubsan )
 
-    if ( enable-coverage AND CMAKE_COMPILER_IS_GNUCXX )
-      include ( CodeCoverage )
-      set ( CODE_COVERAGE_VERBOSE TRUE )
+    if ( enable-coverage )
+      if ( CMAKE_COMPILER_IS_GNUCXX )
+        include ( CodeCoverage )
+        set ( CODE_COVERAGE_VERBOSE TRUE )
 
-      append_coverage_compiler_flags()
-      setup_target_for_coverage_gcovr_html (
-        NAME coverage
-        EXECUTABLE ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --output-on-failure
-        DEPENDENCIES check )
-      set ( ENABLE_COVERAGE 1 )
+        append_coverage_compiler_flags()
+        setup_target_for_coverage_gcovr_html (
+            NAME coverage
+            EXECUTABLE ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --output-on-failure
+            DEPENDENCIES check )
+        set ( ENABLE_COVERAGE 1 )
+      else()
+        message ( SEND_ERROR "Code Coverage is currently only supported for GNU Compiler (GCC)" )
+      endif()
     endif ()
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
