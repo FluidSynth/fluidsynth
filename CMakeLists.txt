@@ -231,7 +231,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
       set ( CODE_COVERAGE_VERBOSE TRUE )
 
       append_coverage_compiler_flags()
-      setup_target_for_coverage_lcov (
+      setup_target_for_coverage_gcovr_html (
         NAME coverage
         EXECUTABLE ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --output-on-failure
         DEPENDENCIES check )
