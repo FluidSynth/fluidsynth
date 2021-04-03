@@ -92,6 +92,6 @@ jobs:
       run: sonar-scanner
            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
            -Dsonar.cfamily.build-wrapper-output=${{ github.workspace }}/build/bw-output
-           -Dsonar.cfamily.gcov.reportsPath=build
+           -Dsonar.coverageReportPaths=build/coverage/sonarqube.report
            -Dsonar.verbose=false
            -Dsonar.host.url=https://sonarcloud.io/

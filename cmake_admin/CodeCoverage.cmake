@@ -366,98 +366,6 @@ endfunction() # setup_target_for_coverage_lcov
 # NOTE! The executable should always have a ZERO as exit code otherwise
 # the coverage generation will not complete.
 #
-# setup_target_for_coverage_gcovr_xml(
-#     NAME ctest_coverage                    # New target name
-#     EXECUTABLE ctest -j ${PROCESSOR_COUNT} # Executable in PROJECT_BINARY_DIR
-#     DEPENDENCIES executable_target         # Dependencies to build first
-#     BASE_DIRECTORY "../"                   # Base directory for report
-#                                            #  (defaults to PROJECT_SOURCE_DIR)
-#     EXCLUDE "src/dir1/*" "src/dir2/*"      # Patterns to exclude (can be relative
-#                                            #  to BASE_DIRECTORY, with CMake 3.4+)
-# )
-# The user can set the variable GCOVR_ADDITIONAL_ARGS to supply additional flags to the
-# GCVOR command.
-function(setup_target_for_coverage_gcovr_xml)
-
-    set(options NONE)
-    set(oneValueArgs BASE_DIRECTORY NAME)
-    set(multiValueArgs EXCLUDE EXECUTABLE EXECUTABLE_ARGS DEPENDENCIES)
-    cmake_parse_arguments(Coverage "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(NOT GCOVR_PATH)
-        message(FATAL_ERROR "gcovr not found! Aborting...")
-    endif() # NOT GCOVR_PATH
-
-    # Set base directory (as absolute path), or default to PROJECT_SOURCE_DIR
-    if(DEFINED Coverage_BASE_DIRECTORY)
-        get_filename_component(BASEDIR ${Coverage_BASE_DIRECTORY} ABSOLUTE)
-    else()
-        set(BASEDIR ${PROJECT_SOURCE_DIR})
-    endif()
-
-    # Collect excludes (CMake 3.4+: Also compute absolute paths)
-    set(GCOVR_EXCLUDES "")
-    foreach(EXCLUDE ${Coverage_EXCLUDE} ${COVERAGE_EXCLUDES} ${COVERAGE_GCOVR_EXCLUDES})
-        if(CMAKE_VERSION VERSION_GREATER 3.4)
-            get_filename_component(EXCLUDE ${EXCLUDE} ABSOLUTE BASE_DIR ${BASEDIR})
-        endif()
-        list(APPEND GCOVR_EXCLUDES "${EXCLUDE}")
-    endforeach()
-    list(REMOVE_DUPLICATES GCOVR_EXCLUDES)
-
-    # Combine excludes to several -e arguments
-    set(GCOVR_EXCLUDE_ARGS "")
-    foreach(EXCLUDE ${GCOVR_EXCLUDES})
-        list(APPEND GCOVR_EXCLUDE_ARGS "-e")
-        list(APPEND GCOVR_EXCLUDE_ARGS "${EXCLUDE}")
-    endforeach()
-    
-    # Set up commands which will be run to generate coverage data
-    # Run tests
-    set(GCOVR_XML_EXEC_TESTS_CMD
-        ${Coverage_EXECUTABLE} ${Coverage_EXECUTABLE_ARGS}
-    )
-    # Running gcovr
-    set(GCOVR_XML_CMD
-        ${GCOVR_PATH} -k --xml -r ${BASEDIR} ${GCOVR_ADDITIONAL_ARGS} ${GCOVR_EXCLUDE_ARGS}
-        --object-directory=${PROJECT_BINARY_DIR} -o ${Coverage_NAME}.xml
-    )
-    
-    if(CODE_COVERAGE_VERBOSE)
-        message(STATUS "Executed command report")
-
-        message(STATUS "Command to run tests: ")
-        string(REPLACE ";" " " GCOVR_XML_EXEC_TESTS_CMD_SPACED "${GCOVR_XML_EXEC_TESTS_CMD}")
-        message(STATUS "${GCOVR_XML_EXEC_TESTS_CMD_SPACED}")
-
-        message(STATUS "Command to generate gcovr XML coverage data: ")
-        string(REPLACE ";" " " GCOVR_XML_CMD_SPACED "${GCOVR_XML_CMD}")
-        message(STATUS "${GCOVR_XML_CMD_SPACED}")
-    endif()
-
-    add_custom_target(${Coverage_NAME}
-        COMMAND ${GCOVR_XML_EXEC_TESTS_CMD}
-        COMMAND ${GCOVR_XML_CMD}
-        
-        BYPRODUCTS ${Coverage_NAME}.xml
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        DEPENDS ${Coverage_DEPENDENCIES}
-        VERBATIM # Protect arguments to commands
-        COMMENT "Running gcovr to produce Cobertura code coverage report."
-    )
-
-    # Show info where to find the report
-    add_custom_command(TARGET ${Coverage_NAME} POST_BUILD
-        COMMAND ;
-        COMMENT "Cobertura code coverage report saved in ${Coverage_NAME}.xml."
-    )
-endfunction() # setup_target_for_coverage_gcovr_xml
-
-# Defines a target for running and collection code coverage information
-# Builds dependencies, runs the given executable and outputs reports.
-# NOTE! The executable should always have a ZERO as exit code otherwise
-# the coverage generation will not complete.
-#
 # setup_target_for_coverage_gcovr_html(
 #     NAME ctest_coverage                    # New target name
 #     EXECUTABLE ctest -j ${PROCESSOR_COUNT} # Executable in PROJECT_BINARY_DIR
@@ -515,9 +423,17 @@ function(setup_target_for_coverage_gcovr_html)
     )
     # Running gcovr
     set(GCOVR_HTML_CMD
-        ${GCOVR_PATH} -k --html --html-details -r ${BASEDIR} ${GCOVR_ADDITIONAL_ARGS}
-        ${GCOVR_EXCLUDE_ARGS} --object-directory=${PROJECT_BINARY_DIR} 
+        ${GCOVR_PATH} --html --html-details -r ${BASEDIR} ${GCOVR_ADDITIONAL_ARGS}
+        ${GCOVR_EXCLUDE_ARGS} --object-directory=${PROJECT_BINARY_DIR}
         -o ${Coverage_NAME}/index.html
+    )
+
+    # The --keep option is broken since gcovr 4.0 all our gcov files are deleted before SonarQube
+    # can use them. Hence create an additional sonarqube report, but do not fail if this fails.
+    set(GCOVR_SONAR_CMD
+        ${GCOVR_PATH} --sonarqube -r ${BASEDIR} ${GCOVR_ADDITIONAL_ARGS}
+        ${GCOVR_EXCLUDE_ARGS} --object-directory=${PROJECT_BINARY_DIR}
+        -o ${Coverage_NAME}/sonarqube.report || true
     )
 
     if(CODE_COVERAGE_VERBOSE)
@@ -540,6 +456,7 @@ function(setup_target_for_coverage_gcovr_html)
         COMMAND ${GCOVR_HTML_EXEC_TESTS_CMD}
         COMMAND ${GCOVR_HTML_FOLDER_CMD}
         COMMAND ${GCOVR_HTML_CMD}
+        COMMAND ${GCOVR_SONAR_CMD}
 
         BYPRODUCTS ${PROJECT_BINARY_DIR}/${Coverage_NAME}/index.html  # report directory
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
