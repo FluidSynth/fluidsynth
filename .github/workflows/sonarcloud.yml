@@ -29,7 +29,7 @@ jobs:
       run: sudo apt-get update -y
 
     - name: Install Dependencies
-      run: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libsystemd-dev libinstpatch-dev libreadline-dev
+      run: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libsystemd-dev libinstpatch-dev libreadline-dev lcov gcov
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
@@ -52,7 +52,7 @@ jobs:
       # access regardless of the host operating system
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -Denable-portaudio=1 -Denable-ladspa=1 -DNO_GUI=1 $GITHUB_WORKSPACE
+      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -Denable-portaudio=1 -Denable-ladspa=1 -Denable-coverage=1 -DNO_GUI=1 $GITHUB_WORKSPACE
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -66,7 +66,7 @@ jobs:
       shell: bash
       # Execute tests defined by the CMake configuration.
       run: |
-        ./build-wrapper-linux-x86-64 --out-dir bw-output make -j`nproc` check
+        ./build-wrapper-linux-x86-64 --out-dir bw-output make -j`nproc` coverage
 
 # sonar-scanner does not like utf8 filenames
     - name: Prepare for Sonar
@@ -86,5 +86,6 @@ jobs:
       run: sonar-scanner
            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
            -Dsonar.cfamily.build-wrapper-output=${{ github.workspace }}/build/bw-output
+           -Dsonar.cfamily.llvm-cov.reportPath=${{ github.workspace }}/build/coverage.total
            -Dsonar.verbose=false
            -Dsonar.host.url=https://sonarcloud.io/
