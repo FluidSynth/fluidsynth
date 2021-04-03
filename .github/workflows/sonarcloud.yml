@@ -73,6 +73,7 @@ jobs:
     - name: Prepare for Sonar
       run: |
        rm -rf ${{ github.workspace }}/sf2
+       ls -la ${{ github.workspace }}/build
 
 # The offical sonarsource/sonarcloud-github-action@v1.5 action does not work properly.
 # It keeps complaining that the build-wrapper.json cannot be found.
@@ -81,13 +82,12 @@ jobs:
       uses: warchant/setup-sonar-scanner@v3
       
     - name: Run sonarqube
-      working-directory: ${{github.workspace}}/build
       env:
         # to get access to secrets.SONAR_TOKEN, provide GITHUB_TOKEN
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: sonar-scanner
            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
            -Dsonar.cfamily.build-wrapper-output=${{ github.workspace }}/build/bw-output
-           -Dsonar.cfamily.gcov.reportsPath=.
+           -Dsonar.cfamily.gcov.reportsPath=build
            -Dsonar.verbose=false
            -Dsonar.host.url=https://sonarcloud.io/
