@@ -49,6 +49,7 @@ set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
 # Options disabled by default
+option ( enable-coverage "enable gcov code coverage" off )
 option ( enable-debug "enable debugging (default=no)" off )
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
@@ -224,6 +225,22 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
       set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
       set ( ENABLE_UBSAN 1 )
     endif ( enable-ubsan )
+
+    if ( enable-coverage )
+      if ( CMAKE_COMPILER_IS_GNUCXX )
+        include ( CodeCoverage )
+        set ( CODE_COVERAGE_VERBOSE TRUE )
+
+        append_coverage_compiler_flags()
+        setup_target_for_coverage_gcovr_html (
+            NAME coverage
+            EXECUTABLE ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --output-on-failure
+            DEPENDENCIES check )
+        set ( ENABLE_COVERAGE 1 )
+      else()
+        message ( SEND_ERROR "Code Coverage is currently only supported for GNU Compiler (GCC)" )
+      endif()
+    endif ()
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
@@ -742,6 +759,9 @@ link_directories (
     ${OBOE_LIBRARY_DIRS}
     ${LIBINSTPATCH_LIBRARY_DIRS}
 )
+
+# required to allow ctest to be called from top-level build directory
+ENABLE_TESTING()
 
 # Process subdirectories
 add_subdirectory ( src )
