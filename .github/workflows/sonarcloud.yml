@@ -60,14 +60,14 @@ jobs:
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: |
-        ./build-wrapper-linux-x86-64 --out-dir bw-output make -j`nproc`
+        ./build-wrapper-linux-x86-64 --out-dir bw-output make
 
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute tests defined by the CMake configuration.
       run: |
-        ./build-wrapper-linux-x86-64 --out-dir bw-output make -j`nproc` coverage
+        ./build-wrapper-linux-x86-64 --out-dir bw-output make coverage
 
 # sonar-scanner does not like utf8 filenames
     - name: Prepare for Sonar
@@ -81,12 +81,13 @@ jobs:
       uses: warchant/setup-sonar-scanner@v3
       
     - name: Run sonarqube
+      working-directory: ${{github.workspace}}/build
       env:
         # to get access to secrets.SONAR_TOKEN, provide GITHUB_TOKEN
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: sonar-scanner
            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
            -Dsonar.cfamily.build-wrapper-output=${{ github.workspace }}/build/bw-output
-           -Dsonar.cfamily.gcov.reportsPath=${{ github.workspace }}/build/
+           -Dsonar.cfamily.gcov.reportsPath=.
            -Dsonar.verbose=false
            -Dsonar.host.url=https://sonarcloud.io/
