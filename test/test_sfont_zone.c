@@ -269,6 +269,9 @@ int main(void)
 
     delete_inst(inst);
     delete_preset(preset);
+    delete_fluid_list(sf->inst);
+    delete_fluid_list(sf->preset);
+    // we cannot call fluid_sffile_close here, because it would destroy the mutex which is not initialized
     FLUID_FREE(sf);
     return EXIT_SUCCESS;
 }
