@@ -62,7 +62,7 @@ static void good_test_1zone_2gen_1termgen(int (*load_func)(SFData *sf, int size)
     file_buf = buf;
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_KeyRange);
     TEST_ASSERT(gen->amount.range.lo == 60);
@@ -84,7 +84,7 @@ static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size)
     static const unsigned char buf[] = { Gen_VelRange, 0, 0 };
     file_buf = buf;
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)) == FALSE);
-    SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen == NULL);
     TEST_ASSERT(file_buf == buf);
 
@@ -108,7 +108,7 @@ static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFDat
     file_buf = buf;
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_VelRange);
     TEST_ASSERT(gen->amount.range.lo == 60);
@@ -133,7 +133,7 @@ static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFD
     file_buf = buf;
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_VelRange);
     TEST_ASSERT(gen->amount.range.lo == 60);
@@ -141,7 +141,7 @@ static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFD
 
     // The INSTRUMENT generator is mistakenly accepted by load_igen. This will be fixed by Marcus' PR.
     // Once merge, this if clause should be removed.
-    if (load_func != load_igen)
+    if (load_func != &load_igen)
     {
         gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
         TEST_ASSERT(gen == NULL);
@@ -150,7 +150,7 @@ static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFD
     gen = fluid_list_get(fluid_list_nth(zone->gen, 2));
     TEST_ASSERT(gen == NULL);
 
-    if (load_func == load_pgen)
+    if (load_func == &load_pgen)
     {
         TEST_ASSERT(FLUID_POINTER_TO_UINT(zone->instsamp) == 0xDDDD + 1);
         zone->instsamp = NULL;
@@ -161,7 +161,7 @@ static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFD
 }
 
 // This test-case is derived from the invalid SoundFont provided in #808
-static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1, SFZone *zone2)
+static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1)
 {
     static const unsigned char buf[] =
     {
@@ -179,7 +179,7 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     file_buf = buf;
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+    const SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_ReverbSend);
     TEST_ASSERT(gen->amount.range.lo == 50);
@@ -247,7 +247,7 @@ int main(void)
 
     zone1 = new_test_zone(&preset->zone, 2);
     zone2 = new_test_zone(&preset->zone, 5);
-    bad_test_issue_808(&load_pgen, sf, zone1, zone2);
+    bad_test_issue_808(&load_pgen, sf, zone1);
     // zone 2 was dropped
     TEST_ASSERT(preset->zone->next == NULL);
     delete_zone(zone1);
@@ -258,7 +258,7 @@ int main(void)
 
     zone1 = new_test_zone(&inst->zone, 2);
     zone2 = new_test_zone(&inst->zone, 5);
-    bad_test_issue_808(&load_igen, sf, zone1, zone2);
+    bad_test_issue_808(&load_igen, sf, zone1);
     // zone 2 was dropped
     TEST_ASSERT(inst->zone->next == NULL);
     delete_zone(zone1);
