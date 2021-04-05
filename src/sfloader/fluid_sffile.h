@@ -232,8 +232,6 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int sample_start, unsigne
 /* extern only for unit test purposes */
 int load_igen(SFData *sf, int size);
 int load_pgen(SFData *sf, int size);
-void delete_preset(SFPreset *preset);
-void delete_inst(SFInst *inst);
 void delete_zone(SFZone *zone);
 
 /* generator types */

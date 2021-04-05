@@ -255,6 +255,9 @@ static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
 static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
 
+static void delete_preset(SFPreset *preset);
+static void delete_inst(SFInst *inst);
+
 static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data);
 static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24);
 
@@ -2179,7 +2182,7 @@ static int fixup_igen(SFData *sf)
     return TRUE;
 }
 
-void delete_preset(SFPreset *preset)
+static void delete_preset(SFPreset *preset)
 {
     fluid_list_t *entry;
     SFZone *zone;
@@ -2203,7 +2206,7 @@ void delete_preset(SFPreset *preset)
     FLUID_FREE(preset);
 }
 
-void delete_inst(SFInst *inst)
+static void delete_inst(SFInst *inst)
 {
     fluid_list_t *entry;
     SFZone *zone;
