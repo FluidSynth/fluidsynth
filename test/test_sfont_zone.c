@@ -202,7 +202,7 @@ int main(void)
 {
     // prepare a soundfont that has one preset and one instrument, with up to 2 zones
 
-    const SFZone *zone1;
+    SFZone *zone1;
     SFData *sf = FLUID_NEW(SFData);
     SFPreset *preset = FLUID_NEW(SFPreset);
     SFInst *inst = FLUID_NEW(SFInst);
