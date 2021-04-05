@@ -185,3 +185,22 @@ int main(void)
 
     return EXIT_SUCCESS;
 }
+
+static SFZone* new_test_zone(fluid_list_t** parent_list, int gen_count)
+{
+    int i;
+    SFZone *zone = FLUID_NEW(SFZone);
+    TEST_ASSERT(zone != NULL);
+    
+    for(i=0; i<gen_count; i++)
+    {
+        zone->gen = fluid_list_prepend(zone->gen, NULL);
+    }
+    
+    if(parent_list != NULL)
+    {
+        *parent_list = fluid_list_append(*parent_list, zone);
+    }
+    
+    return zone;
+}
