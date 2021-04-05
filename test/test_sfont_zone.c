@@ -267,6 +267,8 @@ int main(void)
     delete_fluid_list(inst->zone);
     inst->zone = NULL;
 
-    fluid_sffile_close(sf);
+    delete_inst(inst);
+    delete_preset(preset);
+    FLUID_FREE(sf);
     return EXIT_SUCCESS;
 }
