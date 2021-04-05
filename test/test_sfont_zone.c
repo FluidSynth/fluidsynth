@@ -202,7 +202,7 @@ int main(void)
 {
     // prepare a soundfont that has one preset and one instrument, with up to 2 zones
 
-    SFZone *zone1, *zone2;
+    const SFZone *zone1;
     SFData *sf = FLUID_NEW(SFData);
     SFPreset *preset = FLUID_NEW(SFPreset);
     SFInst *inst = FLUID_NEW(SFInst);
@@ -246,24 +246,22 @@ int main(void)
     TEST_CASE_1(bad_test_gen_wrong_order, 3);
 
     zone1 = new_test_zone(&preset->zone, 2);
-    zone2 = new_test_zone(&preset->zone, 5);
+    (void)new_test_zone(&preset->zone, 5);
     bad_test_issue_808(&load_pgen, sf, zone1);
     // zone 2 was dropped
     TEST_ASSERT(preset->zone->next == NULL);
     delete_zone(zone1);
     // zone2 already deleted
-    zone2 = NULL;
     delete_fluid_list(preset->zone);
     preset->zone = NULL;
 
     zone1 = new_test_zone(&inst->zone, 2);
-    zone2 = new_test_zone(&inst->zone, 5);
+    (void)new_test_zone(&inst->zone, 5);
     bad_test_issue_808(&load_igen, sf, zone1);
     // zone 2 was dropped
     TEST_ASSERT(inst->zone->next == NULL);
     delete_zone(zone1);
     // zone2 already deleted
-    zone2 = NULL;
     delete_fluid_list(inst->zone);
     inst->zone = NULL;
 
