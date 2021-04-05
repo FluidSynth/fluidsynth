@@ -7,9 +7,28 @@
 #include "utils/fluid_sys.h"
 
 
+#define SET_BUF(BUF)                                     \
+    do                                                   \
+    {                                                    \
+        file_buf = BUF;                                  \
+        file_end = (BUF) + sizeof(BUF) / sizeof(*(BUF)); \
+    } while (0)
+
+#define UNSET_BUF        \
+    do                   \
+    {                    \
+        file_buf = NULL; \
+        file_end = NULL; \
+    } while (0)
+
 static const unsigned char *file_buf = NULL;
+static const unsigned char *file_end = NULL;
 static int test_reader(void *buf, fluid_long_long_t count, void *h)
 {
+    if (file_buf + count > file_end)
+    {
+        return FLUID_FAILED;
+    }
     FLUID_MEMCPY(buf, file_buf, count);
     file_buf += count;
     return FLUID_OK;
@@ -20,6 +39,10 @@ static int test_seek(void *handle, fluid_long_long_t offset, int origin)
     if (origin == SEEK_CUR)
     {
         file_buf += offset;
+        if (file_buf > file_end)
+        {
+            return FLUID_FAILED;
+        }
         return FLUID_OK;
     }
 
@@ -55,60 +78,106 @@ static SFZone* new_test_zone(fluid_list_t** parent_list, int gen_count)
 // test the good case first: one zone, with two generators and one terminal generator
 static void good_test_1zone_2gen_1termgen(int (*load_func)(SFData *sf, int size), SFData* sf, SFZone *zone)
 {
+    const SFGen *gen;
     static const unsigned char buf[] =
     {
         Gen_KeyRange, 0, 60, 127, Gen_VelRange, 0, 60, 127, 0, 0, 0, 0
     };
-    file_buf = buf;
+    SET_BUF(buf);
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
-    TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_KeyRange);
-    TEST_ASSERT(gen->amount.range.lo == 60);
-    TEST_ASSERT(gen->amount.range.hi == 127);
-
-    gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
-    TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_VelRange);
-    TEST_ASSERT(gen->amount.range.lo == 60);
-    TEST_ASSERT(gen->amount.range.hi == 127);
-
-    TEST_ASSERT(file_buf == buf + sizeof(buf));
-    file_buf = NULL;
-}
-
-// bad case: too few generators in buffer, triggering a chunk size mismatch
-static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
-{
-    static const unsigned char buf[] = { Gen_VelRange, 0, 0 };
-    file_buf = buf;
-    TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)) == FALSE);
-    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
-    TEST_ASSERT(gen == NULL);
-    TEST_ASSERT(file_buf == buf);
-
-    static const unsigned char buf2[] = { Gen_KeyRange, 0, 60, 127, Gen_OverrideRootKey };
-    file_buf = buf2;
-    TEST_ASSERT(load_func(sf, sizeof(buf2) / sizeof(*buf2)) == FALSE);
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_KeyRange);
     TEST_ASSERT(gen->amount.range.lo == 60);
     TEST_ASSERT(gen->amount.range.hi == 127);
 
-    TEST_ASSERT(file_buf == buf2 + sizeof(buf2) - 1);
-    file_buf = NULL;
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == Gen_VelRange);
+    TEST_ASSERT(gen->amount.range.lo == 60);
+    TEST_ASSERT(gen->amount.range.hi == 127);
+
+    TEST_ASSERT(file_buf == buf + sizeof(buf));
+    UNSET_BUF;
+}
+
+// bad case: too few generators in buffer, triggering a chunk size mismatch
+static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
+{
+    const SFGen *gen;
+    static const unsigned char buf1[] = { Gen_KeyRange, 0, 0 };
+    static const unsigned char buf2[] = { Gen_KeyRange, 0 };
+    static const unsigned char buf3[] = { Gen_KeyRange };
+    static const unsigned char buf4[] = { Gen_VelRange, 0, 0, 127, Gen_CoarseTune, 0, 4 };
+    static const unsigned char buf5[] = { Gen_VelRange, 0, 0, 127, Gen_CoarseTune, 0 };
+    static const unsigned char buf6[] = { Gen_VelRange, 0, 0, 127, Gen_CoarseTune };
+    static const unsigned char buf7[] = { Gen_KeyRange, 0, 60, 127, Gen_OverrideRootKey };
+
+    SET_BUF(buf1);
+    TEST_ASSERT(load_func(sf, 8 /* pretend that our input buffer is big enough, to make it fail in the fcbs later */) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen == NULL);
+    TEST_ASSERT(file_buf == buf1 + sizeof(buf1));
+
+    SET_BUF(buf2);
+    TEST_ASSERT(load_func(sf, 8) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen == NULL);
+    TEST_ASSERT(file_buf == buf2 + sizeof(buf2));
+
+    SET_BUF(buf3);
+    TEST_ASSERT(load_func(sf, 8) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen == NULL);
+    TEST_ASSERT(file_buf == buf3);
+
+    SET_BUF(buf4);
+    TEST_ASSERT(load_func(sf, 8) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
+    TEST_ASSERT(gen == NULL);
+    TEST_ASSERT(file_buf == buf4 + sizeof(buf4) - 1);
+
+    SET_BUF(buf5);
+    TEST_ASSERT(load_func(sf, 8) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
+    TEST_ASSERT(gen == NULL);
+    TEST_ASSERT(file_buf == buf5 + sizeof(buf5));
+
+    SET_BUF(buf6);
+    TEST_ASSERT(load_func(sf, 8) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
+    TEST_ASSERT(gen == NULL);
+    TEST_ASSERT(file_buf == buf6 + sizeof(buf6) - 1);
+
+    SET_BUF(buf7);
+    TEST_ASSERT(load_func(sf, sizeof(buf7) / sizeof(*buf7)) == FALSE);
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == Gen_KeyRange);
+    TEST_ASSERT(gen->amount.range.lo == 60);
+    TEST_ASSERT(gen->amount.range.hi == 127);
+
+    TEST_ASSERT(file_buf == buf7 + sizeof(buf7) - 1);
+    UNSET_BUF;
 }
 
 // bad case: one zone, with two similar generators
 static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
 {
+    const SFGen *gen;
     static const unsigned char buf[] = { Gen_VelRange, 0, 60, 127, Gen_VelRange, 0, 60, 127 };
-    file_buf = buf;
+
+    SET_BUF(buf);
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_VelRange);
     TEST_ASSERT(gen->amount.range.lo == 60);
@@ -118,22 +187,23 @@ static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFDat
     TEST_ASSERT(gen == NULL);
 
     TEST_ASSERT(file_buf == buf + sizeof(buf));
-    file_buf = NULL;
+    UNSET_BUF;
 }
 
 // bad case: with one zone, generators in wrong order
 static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
 {
+    const SFGen *gen;
     static const unsigned char buf[] =
     {
         Gen_VelRange, 0, 60, 127,
         Gen_KeyRange, 0, 60, 127,
         Gen_Instrument, 0, 0xDD, 0xDD
     };
-    file_buf = buf;
+    SET_BUF(buf);
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    const SFGen *gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_VelRange);
     TEST_ASSERT(gen->amount.range.lo == 60);
@@ -157,12 +227,13 @@ static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFD
     }
 
     TEST_ASSERT(file_buf == buf + sizeof(buf));
-    file_buf = NULL;
+    UNSET_BUF;
 }
 
 // This test-case is derived from the invalid SoundFont provided in #808
 static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1)
 {
+    const SFGen *gen;
     static const unsigned char buf[] =
     {
         // zone 1
@@ -176,10 +247,10 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
         Gen_StartAddrOfs, 0, 0, 0
     };
 
-    file_buf = buf;
+    SET_BUF(buf);
     TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
 
-    const SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_ReverbSend);
     TEST_ASSERT(gen->amount.range.lo == 50);
@@ -195,7 +266,52 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     TEST_ASSERT(gen == NULL);
 
     TEST_ASSERT(file_buf == buf + sizeof(buf));
-    file_buf = NULL;
+    UNSET_BUF;
+}
+
+// This test-case has a single zone which has additional generators after the final generator, while still having an extra terminal gen.
+static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1)
+{
+    const SFGen *gen;
+    const Gen_Type final_gen = (load_func == &load_pgen) ? Gen_Instrument : Gen_SampleId;
+
+    unsigned char buf[] =
+    {
+        // zone 1
+        Gen_KeyRange, 0, 60, 127,
+        Gen_Unused1, 0, 0xFF, 0xFF,
+        final_gen, 0, 0xDD, 0xDD,
+        Gen_KeyRange, 0, 0, 35,
+        Gen_OverrideRootKey, 0, 43, 0,
+        0, 0, 0, 0 // terminal generator
+    };
+
+    SET_BUF(buf);
+    TEST_ASSERT(load_func(sf, sizeof(buf) / sizeof(*buf)));
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == Gen_KeyRange);
+    TEST_ASSERT(gen->amount.range.lo == 60);
+    TEST_ASSERT(gen->amount.range.hi == 127);
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 1));
+    TEST_ASSERT(gen == NULL);
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 2));
+    TEST_ASSERT(gen == NULL);
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 3));
+    TEST_ASSERT(gen == NULL);
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 4));
+    TEST_ASSERT(gen == NULL);
+
+    TEST_ASSERT(FLUID_POINTER_TO_UINT(zone1->instsamp) == 0xDDDD + 1);
+    zone1->instsamp = NULL;
+
+    TEST_ASSERT(file_buf == buf + sizeof(buf));
+    UNSET_BUF;
 }
 
 int main(void)
@@ -238,12 +354,14 @@ int main(void)
     TEST_CASE_1(good_test_1zone_2gen_1termgen, 2);
     TEST_CASE_1(good_test_1zone_2gen_1termgen, 3);
 
-    TEST_CASE_1(bad_test_too_short_gen_buffer, 1);
+    TEST_CASE_1(bad_test_too_short_gen_buffer, 2);
 
     TEST_CASE_1(bad_test_duplicate_gen, 1);
     TEST_CASE_1(bad_test_duplicate_gen, 2);
 
     TEST_CASE_1(bad_test_gen_wrong_order, 3);
+
+    TEST_CASE_1(bad_test_additional_gens_after_final_gen, 5);
 
     zone1 = new_test_zone(&preset->zone, 2);
     (void)new_test_zone(&preset->zone, 5);
