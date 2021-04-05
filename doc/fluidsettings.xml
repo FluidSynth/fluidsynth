@@ -760,7 +760,7 @@ and commit the results. Refresh with the following command:
             <type>bool</type>
             <def>1 (TRUE)</def>
             <realtime/>
-            <desc>If true, reset the synth before starting a new MIDI song, so the state of a previous song can't affect the new song. Turn it off for seamless looping of a song.</desc>
+            <desc>If true, reset the synth after the end of a MIDI song, so that the state of a previous song can't affect the next song. Turn it off for seamless looping of a song.</desc>
         </setting>
         <setting>
             <name>timing-source</name>

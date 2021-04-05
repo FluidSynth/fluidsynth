@@ -234,6 +234,12 @@ else ( ENABLE_UBSAN )
   set ( DEVEL_REPORT "${DEVEL_REPORT}  UBSan (debug):         no\n" )
 endif ( ENABLE_UBSAN )
 
+if ( ENABLE_COVERAGE )
+  set ( DEVEL_REPORT "${DEVEL_REPORT}  Coverage:              yes\n" )
+else ( ENABLE_COVERAGE )
+  set ( DEVEL_REPORT "${DEVEL_REPORT}  Coverage:              no\n" )
+endif ( ENABLE_COVERAGE )
+
 message( STATUS 
         "\n**************************************************************\n"
         "Build Summary:\n"

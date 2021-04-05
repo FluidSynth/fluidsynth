@@ -70,7 +70,7 @@ int main(void)
         zone1->gen = fluid_list_prepend(zone1->gen, NULL);
 
         unsigned char buf[] = { Gen_KeyRange, 0, 60, 127, Gen_VelRange, 0, 60, 127, 0,0,0,0 };
-        file_buf = (unsigned char *)buf;
+        file_buf = buf;
         TEST_ASSERT(load_pgen(sf, sizeof(buf) / sizeof(*buf)));
 
         SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
@@ -86,6 +86,41 @@ int main(void)
         delete_fluid_list(zone1->gen);
         zone1->gen = NULL;
     }
+    
+    // bad case: too few generators in buffer, trigger an IGEN chunk size mismatch
+    {
+        inst->zone = fluid_list_prepend(inst->zone, zone1);
+        
+        zone1->gen = fluid_list_prepend(zone1->gen, NULL);
+
+        unsigned char buf[] = { Gen_VelRange, 0, 0 };
+        file_buf = buf;
+        TEST_ASSERT(load_pgen(sf, sizeof(buf) / sizeof(*buf)) == FALSE);
+        SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+        TEST_ASSERT(gen == NULL);
+        
+        file_buf = buf;
+        TEST_ASSERT(load_igen(sf, sizeof(buf) / sizeof(*buf)) == FALSE);
+        gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+        TEST_ASSERT(gen == NULL);
+
+        unsigned char buf2[] = { Gen_KeyRange, 0, 60, 127, Gen_OverrideRootKey };
+        file_buf = buf2;
+        TEST_ASSERT(load_pgen(sf, sizeof(buf2) / sizeof(*buf2)) == FALSE);
+        gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+        TEST_ASSERT(gen != NULL);
+        
+        file_buf = buf2;
+        TEST_ASSERT(load_igen(sf, sizeof(buf2) / sizeof(*buf2)) == FALSE);
+        gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+        TEST_ASSERT(gen != NULL);
+
+        delete_fluid_list(zone1->gen);
+        zone1->gen = NULL;
+        
+        delete_fluid_list(inst->zone);
+        inst->zone = NULL;
+    }
 
     // bad case: one preset, with one zone, with two similar generators
     {
@@ -93,7 +128,7 @@ int main(void)
         zone1->gen = fluid_list_prepend(zone1->gen, NULL);
 
         unsigned char buf[] = { Gen_VelRange, 0, 60, 127, Gen_VelRange, 0, 60, 127 };
-        file_buf = (unsigned char *)buf;
+        file_buf = buf;
         TEST_ASSERT(load_pgen(sf, sizeof(buf) / sizeof(*buf)));
 
         SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
@@ -115,7 +150,7 @@ int main(void)
         zone1->gen = fluid_list_prepend(zone1->gen, NULL);
 
         unsigned char buf[] = { Gen_VelRange, 0, 60, 127, Gen_KeyRange, 0, 60, 127, Gen_Instrument, 0, 0xDD, 0xDD };
-        file_buf = (unsigned char *)buf;
+        file_buf = buf;
         TEST_ASSERT(load_pgen(sf, sizeof(buf) / sizeof(*buf)));
 
         SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
@@ -151,15 +186,17 @@ int main(void)
 
         unsigned char buf[] =
         {
+            // zone 1
             Gen_ReverbSend, 0, 50, 0,
             Gen_VolEnvRelease, 0, 206, 249,
+            // zone 2
             Gen_KeyRange, 0, 0, 35, 
             Gen_OverrideRootKey, 0, 43, 0,
             Gen_StartAddrCoarseOfs, 0, 0, 0,  
             Gen_SampleModes, 0, 1, 0,
             Gen_StartAddrOfs, 0, 0, 0
         };
-        file_buf = (unsigned char *)buf;
+        file_buf = buf;
         TEST_ASSERT(load_igen(sf, sizeof(buf) / sizeof(*buf)));
 
         SFGen *gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
@@ -181,7 +218,8 @@ int main(void)
         delete_fluid_list(zone1->gen);
         zone1->gen = NULL;
     }
-
+    
+    file_buf = NULL;
 
     return EXIT_SUCCESS;
 }
