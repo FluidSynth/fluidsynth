@@ -193,16 +193,16 @@ static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size)
 static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
 {
     const SFGen *gen;
-    static const unsigned char buf[] = { Gen_VelRange, 0, 60, 127, Gen_VelRange, 0, 60, 127 };
+    static const unsigned char buf[] = { Gen_CoarseTune, 0, 5, 0, Gen_CoarseTune, 0, 10, 0 };
 
     SET_BUF(buf);
     TEST_ASSERT(load_func(sf, FLUID_N_ELEMENTS(buf)));
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_VelRange);
-    TEST_ASSERT(gen->amount.range.lo == 60);
-    TEST_ASSERT(gen->amount.range.hi == 127);
+    TEST_ASSERT(gen->id == Gen_CoarseTune);
+    TEST_ASSERT(gen->amount.range.lo == 5);
+    TEST_ASSERT(gen->amount.range.hi == 0);
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
     TEST_ASSERT(gen == NULL);
@@ -294,7 +294,7 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
 static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1)
 {
     unsigned int i;
-    const SFGen *gen;
+    SFGen *gen;
     const Gen_Type final_gen = (load_func == &load_pgen) ? Gen_Instrument : Gen_SampleId;
 
     const unsigned char buf1[] =
