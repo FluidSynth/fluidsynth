@@ -201,7 +201,7 @@ static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFDat
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == Gen_CoarseTune);
-    TEST_ASSERT(gen->amount.range.lo == 5);
+    TEST_ASSERT(gen->amount.range.lo == 10);
     TEST_ASSERT(gen->amount.range.hi == 0);
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
@@ -436,7 +436,6 @@ int main(void)
 
     TEST_CASE_1(bad_test_too_short_gen_buffer, 2);
 
-    TEST_CASE_1(bad_test_duplicate_gen, 1);
     TEST_CASE_1(bad_test_duplicate_gen, 2);
 
     TEST_CASE_1(bad_test_gen_wrong_order, 3);
