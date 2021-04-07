@@ -39,6 +39,7 @@
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreAudio/AudioHardware.h>
 #include <AudioUnit/AudioUnit.h>
+#include <AudioUnit/AudioComponent.h>
 
 /*
  * fluid_core_audio_driver_t
@@ -187,14 +188,14 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     dev->data = data;
 
     // Open the default output unit
-    ComponentDescription desc;
+    AudioComponentDescription desc;
     desc.componentType = kAudioUnitType_Output;
     desc.componentSubType = kAudioUnitSubType_HALOutput; //kAudioUnitSubType_DefaultOutput;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
 
-    Component comp = FindNextComponent(NULL, &desc);
+    AudioComponent comp = AudioComponentFindNext(NULL, &desc);
 
     if(comp == NULL)
     {
@@ -202,7 +203,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         goto error_recovery;
     }
 
-    status = OpenAComponent(comp, &dev->outputUnit);
+    status = AudioComponentInstanceNew(comp, &dev->outputUnit);
 
     if(status != noErr)
     {
@@ -372,7 +373,7 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t *p)
     fluid_core_audio_driver_t *dev = (fluid_core_audio_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
 
-    CloseComponent(dev->outputUnit);
+    AudioComponentInstanceDispose(dev->outputUnit);
 
     if(dev->buffers[0])
     {
