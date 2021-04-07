@@ -39,7 +39,6 @@
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreAudio/AudioHardware.h>
 #include <AudioUnit/AudioUnit.h>
-#include <AudioUnit/AudioComponent.h>
 
 /*
  * fluid_core_audio_driver_t
