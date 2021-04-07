@@ -5,8 +5,16 @@
 
 jobs:
 - job: macOS
+  strategy:
+    matrix:
+      10_14:
+        imageName: 'macOS-10.14'
+      10_15:
+        imageName: 'macOS-10.15'
+      11_00:
+        imageName: 'macOS-11.0'
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: $(imageName)
 # recommended by https://github.com/Homebrew/brew/issues/2491#issuecomment-294207661
 #        brew update || brew update
 #        brew upgrade $PACKAGES
