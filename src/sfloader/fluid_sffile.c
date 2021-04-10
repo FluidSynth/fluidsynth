@@ -112,71 +112,6 @@ static const uint32_t idlist[] =
     SM24_FCC
 };
 
-/* generator types */
-typedef enum
-{
-    Gen_StartAddrOfs,
-    Gen_EndAddrOfs,
-    Gen_StartLoopAddrOfs,
-    Gen_EndLoopAddrOfs,
-    Gen_StartAddrCoarseOfs,
-    Gen_ModLFO2Pitch,
-    Gen_VibLFO2Pitch,
-    Gen_ModEnv2Pitch,
-    Gen_FilterFc,
-    Gen_FilterQ,
-    Gen_ModLFO2FilterFc,
-    Gen_ModEnv2FilterFc,
-    Gen_EndAddrCoarseOfs,
-    Gen_ModLFO2Vol,
-    Gen_Unused1,
-    Gen_ChorusSend,
-    Gen_ReverbSend,
-    Gen_Pan,
-    Gen_Unused2,
-    Gen_Unused3,
-    Gen_Unused4,
-    Gen_ModLFODelay,
-    Gen_ModLFOFreq,
-    Gen_VibLFODelay,
-    Gen_VibLFOFreq,
-    Gen_ModEnvDelay,
-    Gen_ModEnvAttack,
-    Gen_ModEnvHold,
-    Gen_ModEnvDecay,
-    Gen_ModEnvSustain,
-    Gen_ModEnvRelease,
-    Gen_Key2ModEnvHold,
-    Gen_Key2ModEnvDecay,
-    Gen_VolEnvDelay,
-    Gen_VolEnvAttack,
-    Gen_VolEnvHold,
-    Gen_VolEnvDecay,
-    Gen_VolEnvSustain,
-    Gen_VolEnvRelease,
-    Gen_Key2VolEnvHold,
-    Gen_Key2VolEnvDecay,
-    Gen_Instrument,
-    Gen_Reserved1,
-    Gen_KeyRange,
-    Gen_VelRange,
-    Gen_StartLoopAddrCoarseOfs,
-    Gen_Keynum,
-    Gen_Velocity,
-    Gen_Attenuation,
-    Gen_Reserved2,
-    Gen_EndLoopAddrCoarseOfs,
-    Gen_CoarseTune,
-    Gen_FineTune,
-    Gen_SampleId,
-    Gen_SampleModes,
-    Gen_Reserved3,
-    Gen_ScaleTune,
-    Gen_ExclusiveClass,
-    Gen_OverrideRootKey,
-    Gen_Dummy
-} Gen_Type;
-
 #define Gen_MaxValid Gen_Dummy - 1 /* maximum valid generator */
 #define Gen_Count Gen_Dummy /* count of generators */
 #define GenArrSize sizeof(SFGenAmount) * Gen_Count /* gen array size */
@@ -303,11 +238,11 @@ static int process_pdta(SFData *sf, int size);
 static int load_phdr(SFData *sf, unsigned int size);
 static int load_pbag(SFData *sf, int size);
 static int load_pmod(SFData *sf, int size);
-static int load_pgen(SFData *sf, int size);
+extern int load_pgen(SFData *sf, int size);
 static int load_ihdr(SFData *sf, unsigned int size);
 static int load_ibag(SFData *sf, int size);
 static int load_imod(SFData *sf, int size);
-static int load_igen(SFData *sf, int size);
+extern int load_igen(SFData *sf, int size);
 static int load_shdr(SFData *sf, unsigned int size);
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
@@ -319,11 +254,6 @@ static int preset_compare_func(void *a, void *b);
 static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
 static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
-
-
-static void delete_preset(SFPreset *preset);
-static void delete_inst(SFInst *inst);
-static void delete_zone(SFZone *zone);
 
 static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data);
 static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24);
@@ -1366,7 +1296,7 @@ static int load_pmod(SFData *sf, int size)
  * if a generator follows an instrument discard it
  * if a duplicate generator exists replace previous one
  * ------------------------------------------------------------------- */
-static int load_pgen(SFData *sf, int size)
+int load_pgen(SFData *sf, int size)
 {
     fluid_list_t *dup, **hz = NULL;
     fluid_list_t *preset_list;
@@ -1885,7 +1815,7 @@ static int load_imod(SFData *sf, int size)
 }
 
 /* load instrument generators (see load_pgen for loading rules) */
-static int load_igen(SFData *sf, int size)
+int load_igen(SFData *sf, int size)
 {
     fluid_list_t *dup, **hz = NULL;
     fluid_list_t *inst_list;
@@ -2249,7 +2179,7 @@ static int fixup_igen(SFData *sf)
     return TRUE;
 }
 
-static void delete_preset(SFPreset *preset)
+void delete_preset(SFPreset *preset)
 {
     fluid_list_t *entry;
     SFZone *zone;
@@ -2273,7 +2203,7 @@ static void delete_preset(SFPreset *preset)
     FLUID_FREE(preset);
 }
 
-static void delete_inst(SFInst *inst)
+void delete_inst(SFInst *inst)
 {
     fluid_list_t *entry;
     SFZone *zone;
@@ -2299,7 +2229,7 @@ static void delete_inst(SFInst *inst)
 
 
 /* Free all elements of a zone (Preset or Instrument) */
-static void delete_zone(SFZone *zone)
+void delete_zone(SFZone *zone)
 {
     fluid_list_t *entry;
 
