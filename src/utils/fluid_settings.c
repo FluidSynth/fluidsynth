@@ -546,6 +546,7 @@ fluid_settings_register_str(fluid_settings_t *settings, const char *name, const 
         if(node->type == FLUID_STR_TYPE)
         {
             fluid_str_setting_t *setting = &node->str;
+            FLUID_FREE(setting->def);
             setting->def = def ? FLUID_STRDUP(def) : NULL;
             setting->hints = hints;
             retval = FLUID_OK;
