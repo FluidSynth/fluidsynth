@@ -117,6 +117,13 @@ fluid_jack_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.jack.server", "", 0);
 }
 
+static void fluid_jack_error(const char *msg)
+{
+    FLUID_LOG(FLUID_ERR, "jack: %s", msg);
+}
+
+static void fluid_jack_silent_error(const char *msg) {}
+
 /*
  * Connect all midi input ports to all terminal midi output ports
  */
@@ -169,6 +176,8 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
     }
 
     fluid_mutex_lock(last_client_mutex);      /* ++ lock last_client */
+
+    jack_set_error_function(fluid_jack_error);
 
     /* If the last client uses the same server and is not the same type (audio or MIDI),
      * then re-use the client. */
@@ -246,9 +255,16 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
     }
     else
     {
-        client_ref->client = jack_client_open(name,
-                start_server ? JackNullOption : JackNoStartServer,
-                NULL);
+        if (start_server)
+        {
+            client_ref->client = jack_client_open(name, JackNullOption, NULL);
+        }
+        else
+        {
+            jack_set_error_function(fluid_jack_silent_error);
+            client_ref->client = jack_client_open(name, JackNoStartServer, NULL);
+            jack_set_error_function(fluid_jack_error);
+        }
     }
 
     if(!client_ref->client)
