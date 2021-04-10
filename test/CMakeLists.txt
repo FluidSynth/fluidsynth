@@ -30,6 +30,11 @@ ADD_FLUID_TEST(test_seq_event_queue_remove)
 ADD_FLUID_TEST(test_jack_obtaining_synth)
 ADD_FLUID_TEST(test_utf8_open)
 
+ADD_FLUID_TEST_UTIL(dump_sfont)
+
+ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf2)
+
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
+    ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf3)
 endif ( LIBSNDFILE_HASVORBIS )
