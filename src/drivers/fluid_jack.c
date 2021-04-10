@@ -94,6 +94,10 @@ static fluid_audio_driver_t *
 new_fluid_jack_audio_driver_LOCAL(fluid_settings_t *settings, fluid_audio_func_t func, void *data,
         int start_server);
 
+static fluid_midi_driver_t *
+new_fluid_jack_midi_driver_LOCAL(fluid_settings_t *settings,
+                           handle_midi_event_func_t handler, void *data, int start_server);
+
 void fluid_jack_driver_shutdown(void *arg);
 int fluid_jack_driver_srate(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_bufsize(jack_nframes_t nframes, void *arg);
@@ -856,12 +860,26 @@ void fluid_jack_midi_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "midi.jack.server", "", 0);
 }
 
-/*
- * new_fluid_jack_midi_driver
- */
 fluid_midi_driver_t *
 new_fluid_jack_midi_driver(fluid_settings_t *settings,
                            handle_midi_event_func_t handler, void *data)
+{
+    return new_fluid_jack_midi_driver_LOCAL(settings, handler, data, FALSE);
+}
+
+fluid_midi_driver_t *
+new_fluid_jack_midi_driver_server(fluid_settings_t *settings,
+                           handle_midi_event_func_t handler, void *data)
+{
+    return new_fluid_jack_midi_driver_LOCAL(settings, handler, data, TRUE);
+}
+
+/*
+ * new_fluid_jack_midi_driver
+ */
+static fluid_midi_driver_t *
+new_fluid_jack_midi_driver_LOCAL(fluid_settings_t *settings,
+                           handle_midi_event_func_t handler, void *data, int start_server)
 {
     fluid_jack_midi_driver_t *dev;
 
@@ -893,7 +911,7 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
     fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconnect_inputs);
     fluid_atomic_int_set(&dev->autoconnect_is_outdated, dev->autoconnect_inputs);
 
-    dev->client_ref = new_fluid_jack_client(settings, FALSE, dev, FALSE);
+    dev->client_ref = new_fluid_jack_client(settings, FALSE, dev, start_server);
 
     if(!dev->client_ref)
     {

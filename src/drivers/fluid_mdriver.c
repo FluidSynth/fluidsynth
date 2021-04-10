@@ -38,6 +38,14 @@ struct _fluid_mdriver_definition_t
 
 static const fluid_mdriver_definition_t fluid_midi_drivers[] =
 {
+#if JACK_SUPPORT
+    {
+        "jack_client",
+        new_fluid_jack_midi_driver,
+        delete_fluid_jack_midi_driver,
+        fluid_jack_midi_driver_settings
+    },
+#endif
 #if ALSA_SUPPORT
     {
         "alsa_seq",
@@ -52,20 +60,20 @@ static const fluid_mdriver_definition_t fluid_midi_drivers[] =
         fluid_alsa_rawmidi_driver_settings
     },
 #endif
-#if JACK_SUPPORT
-    {
-        "jack",
-        new_fluid_jack_midi_driver,
-        delete_fluid_jack_midi_driver,
-        fluid_jack_midi_driver_settings
-    },
-#endif
 #if OSS_SUPPORT
     {
         "oss",
         new_fluid_oss_midi_driver,
         delete_fluid_oss_midi_driver,
         fluid_oss_midi_driver_settings
+    },
+#endif
+#if JACK_SUPPORT
+    {
+        "jack",
+        new_fluid_jack_midi_driver_server,
+        delete_fluid_jack_midi_driver,
+        fluid_jack_midi_driver_settings
     },
 #endif
 #if WINMIDI_SUPPORT
@@ -147,40 +155,63 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
 fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data)
 {
     fluid_midi_driver_t *driver = NULL;
-    char *allnames;
+    char *valid_options;
+    char *selected_option;
     const fluid_mdriver_definition_t *def;
+    int auto_select = fluid_settings_str_equal(settings, "midi.driver", "auto");
 
     for(def = fluid_midi_drivers; def->name != NULL; def++)
     {
-        if(fluid_settings_str_equal(settings, "midi.driver", def->name))
+        if(!auto_select && !fluid_settings_str_equal(settings, "midi.driver", def->name))
         {
-            FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", def->name);
-            driver = def->new(settings, handler, event_handler_data);
+            continue;
+        }
 
-            if(driver)
-            {
-                driver->define = def;
-            }
+        FLUID_LOG(FLUID_DBG, "Trying '%s' MIDI driver", def->name);
 
+        driver = def->new(settings, handler, event_handler_data);
+
+        if(driver)
+        {
+            driver->define = def;
             return driver;
         }
+
+        FLUID_LOG(FLUID_DBG, "'%s' MIDI driver failed to start", def->name);
+
+        if (auto_select)
+        {
+            continue;
+        }
+
+        break;
     }
 
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver.");
-    allnames = fluid_settings_option_concat(settings, "midi.driver", NULL);
-    if(allnames != NULL)
+    valid_options = fluid_settings_option_concat(settings, "midi.driver", NULL);
+    if (valid_options == NULL || valid_options[0] == '\0')
     {
-        if(allnames[0] != '\0')
-        {
-            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
-        }
-        else
-        {
-            FLUID_LOG(FLUID_INFO, "No MIDI drivers available.");
-        }
-
-        FLUID_FREE(allnames);
+        FLUID_FREE(valid_options);
+        FLUID_LOG(FLUID_ERR, "No MIDI drivers available.");
+        return NULL;
     }
+
+    if (auto_select)
+    {
+        FLUID_LOG(FLUID_ERR,
+                "Couldn't auto-select a MIDI driver, tried %s",
+                valid_options);
+    }
+    else
+    {
+        fluid_settings_dupstr(settings, "midi.driver", &selected_option);
+        FLUID_LOG(FLUID_ERR, "Couldn't find the requested MIDI driver '%s'.",
+                selected_option ? selected_option : "NULL");
+        FLUID_FREE(selected_option);
+
+        FLUID_LOG(FLUID_INFO, "Valid MIDI drivers are: %s", valid_options);
+    }
+
+    FLUID_FREE(valid_options);
 
     return NULL;
 }

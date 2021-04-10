@@ -59,6 +59,9 @@ void fluid_jack_midi_driver_settings(fluid_settings_t *settings);
 fluid_midi_driver_t *new_fluid_jack_midi_driver(fluid_settings_t *settings,
         handle_midi_event_func_t handler,
         void *data);
+fluid_midi_driver_t *new_fluid_jack_midi_driver_server(fluid_settings_t *settings,
+        handle_midi_event_func_t handler,
+        void *data);
 void delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 #endif
 
