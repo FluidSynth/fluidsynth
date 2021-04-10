@@ -45,10 +45,6 @@ typedef struct _SFInst SFInst;
 typedef struct _SFPreset SFPreset;
 typedef struct _SFData SFData;
 typedef struct _SFChunk SFChunk;
-typedef struct _SFPhdr SFPhdr;
-typedef struct _SFBag SFBag;
-typedef struct _SFIhdr SFIhdr;
-typedef struct _SFShdr SFShdr;
 
 
 struct _SFVersion
@@ -89,7 +85,6 @@ struct _SFGen
 struct _SFZone
 {
     /* Sample/instrument zone structure */
-    fluid_list_t *instsamp; /* instrument/sample pointer for zone */
     fluid_list_t *gen; /* list of generators */
     fluid_list_t *mod; /* list of modulators */
 };
@@ -98,6 +93,7 @@ struct _SFSample
 {
     /* Sample structure */
     char name[21]; /* Name of sample */
+    int idx; /* Index of this instrument in the Soundfont */
     unsigned int start; /* Offset in sample area to start of sample */
     unsigned int end; /* Offset from start to end of sample,
              this is the last point of the
@@ -130,9 +126,6 @@ struct _SFPreset
     char name[21]; /* preset name */
     unsigned short prenum; /* preset number */
     unsigned short bank; /* bank number */
-    unsigned int libr; /* Not used (preserved) */
-    unsigned int genre; /* Not used (preserved) */
-    unsigned int morph; /* Not used (preserved) */
     fluid_list_t *zone; /* list of preset zones */
 };
 
@@ -183,44 +176,6 @@ struct _SFChunk
     unsigned int size; /* size of the following chunk */
 };
 
-struct _SFPhdr
-{
-    unsigned char name[20]; /* preset name */
-    unsigned short preset; /* preset number */
-    unsigned short bank; /* bank number */
-    unsigned short pbagndx; /* index into preset bag */
-    unsigned int library; /* just for preserving them */
-    unsigned int genre; /* Not used */
-    unsigned int morphology; /* Not used */
-};
-
-struct _SFBag
-{
-    unsigned short genndx; /* index into generator list */
-    unsigned short modndx; /* index into modulator list */
-};
-
-struct _SFIhdr
-{
-    char name[20]; /* Name of instrument */
-    unsigned short ibagndx; /* Instrument bag index */
-};
-
-struct _SFShdr
-{
-    /* Sample header loading struct */
-    char name[20]; /* Sample name */
-    unsigned int start; /* Offset to start of sample */
-    unsigned int end; /* Offset to end of sample */
-    unsigned int loopstart; /* Offset to start of loop */
-    unsigned int loopend; /* Offset to end of loop */
-    unsigned int samplerate; /* Sample rate recorded at */
-    unsigned char origpitch; /* root midi key number */
-    signed char pitchadj; /* pitch correction in cents */
-    unsigned short samplelink; /* Not used */
-    unsigned short sampletype; /* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
-};
-
 /* Public functions  */
 SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs);
 void fluid_sffile_close(SFData *sf);
@@ -235,70 +190,5 @@ int load_pgen(SFData *sf, int size);
 void delete_preset(SFPreset *preset);
 void delete_inst(SFInst *inst);
 void delete_zone(SFZone *zone);
-
-/* generator types */
-typedef enum
-{
-    Gen_StartAddrOfs,
-    Gen_EndAddrOfs,
-    Gen_StartLoopAddrOfs,
-    Gen_EndLoopAddrOfs,
-    Gen_StartAddrCoarseOfs,
-    Gen_ModLFO2Pitch,
-    Gen_VibLFO2Pitch,
-    Gen_ModEnv2Pitch,
-    Gen_FilterFc,
-    Gen_FilterQ,
-    Gen_ModLFO2FilterFc,
-    Gen_ModEnv2FilterFc,
-    Gen_EndAddrCoarseOfs,
-    Gen_ModLFO2Vol,
-    Gen_Unused1,
-    Gen_ChorusSend,
-    Gen_ReverbSend,
-    Gen_Pan,
-    Gen_Unused2,
-    Gen_Unused3,
-    Gen_Unused4,
-    Gen_ModLFODelay,
-    Gen_ModLFOFreq,
-    Gen_VibLFODelay,
-    Gen_VibLFOFreq,
-    Gen_ModEnvDelay,
-    Gen_ModEnvAttack,
-    Gen_ModEnvHold,
-    Gen_ModEnvDecay,
-    Gen_ModEnvSustain,
-    Gen_ModEnvRelease,
-    Gen_Key2ModEnvHold,
-    Gen_Key2ModEnvDecay,
-    Gen_VolEnvDelay,
-    Gen_VolEnvAttack,
-    Gen_VolEnvHold,
-    Gen_VolEnvDecay,
-    Gen_VolEnvSustain,
-    Gen_VolEnvRelease,
-    Gen_Key2VolEnvHold,
-    Gen_Key2VolEnvDecay,
-    Gen_Instrument,
-    Gen_Reserved1,
-    Gen_KeyRange,
-    Gen_VelRange,
-    Gen_StartLoopAddrCoarseOfs,
-    Gen_Keynum,
-    Gen_Velocity,
-    Gen_Attenuation,
-    Gen_Reserved2,
-    Gen_EndLoopAddrCoarseOfs,
-    Gen_CoarseTune,
-    Gen_FineTune,
-    Gen_SampleId,
-    Gen_SampleModes,
-    Gen_Reserved3,
-    Gen_ScaleTune,
-    Gen_ExclusiveClass,
-    Gen_OverrideRootKey,
-    Gen_Dummy
-} Gen_Type;
 
 #endif /* _FLUID_SFFILE_H */

@@ -533,7 +533,7 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
             goto err_exit;
         }
 
-        if(fluid_defpreset_import_sfont(defpreset, sfpreset, defsfont) != FLUID_OK)
+        if(fluid_defpreset_import_sfont(defpreset, sfpreset, defsfont, sfdata) != FLUID_OK)
         {
             goto err_exit;
         }
@@ -562,7 +562,7 @@ err_exit:
  */
 int fluid_defsfont_add_sample(fluid_defsfont_t *defsfont, fluid_sample_t *sample)
 {
-    defsfont->sample = fluid_list_append(defsfont->sample, sample);
+    defsfont->sample = fluid_list_prepend(defsfont->sample, sample);
     return FLUID_OK;
 }
 
@@ -1028,7 +1028,8 @@ fluid_defpreset_set_global_zone(fluid_defpreset_t *defpreset, fluid_preset_zone_
 int
 fluid_defpreset_import_sfont(fluid_defpreset_t *defpreset,
                              SFPreset *sfpreset,
-                             fluid_defsfont_t *defsfont)
+                             fluid_defsfont_t *defsfont,
+                             SFData *sfdata)
 {
     fluid_list_t *p;
     SFZone *sfzone;
@@ -1061,7 +1062,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t *defpreset,
             return FLUID_FAILED;
         }
 
-        if(fluid_preset_zone_import_sfont(zone, sfzone, defsfont) != FLUID_OK)
+        if(fluid_preset_zone_import_sfont(zone, sfzone, defsfont, sfdata) != FLUID_OK)
         {
             delete_fluid_preset_zone(zone);
             return FLUID_FAILED;
@@ -1424,8 +1425,13 @@ fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, SFZone 
             gen[sfgen->id].flags = GEN_SET;
             break;
 
+        case GEN_INSTRUMENT:
+        case GEN_SAMPLEID:
+            gen[sfgen->id].val = (fluid_real_t) sfgen->amount.uword;
+            gen[sfgen->id].flags = GEN_SET;
+            break;
+
         default:
-            /* FIXME: some generators have an unsigne word amount value but i don't know which ones */
             gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword;
             gen[sfgen->id].flags = GEN_SET;
             break;
@@ -1630,24 +1636,27 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
  * fluid_preset_zone_import_sfont
  */
 int
-fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_defsfont_t *defsfont)
+fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata)
 {
     /* import the generators */
     fluid_zone_gen_import_sfont(zone->gen, &zone->range, sfzone);
 
-    if((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL))
+    if(zone->gen[GEN_INSTRUMENT].flags == GEN_SET)
     {
-        SFInst *sfinst = sfzone->instsamp->data;
+        int inst_idx = (int) zone->gen[GEN_INSTRUMENT].val;
 
-        zone->inst = find_inst_by_idx(defsfont, sfinst->idx);
+        zone->inst = find_inst_by_idx(defsfont, inst_idx);
 
         if(zone->inst == NULL)
         {
-            zone->inst = fluid_inst_import_sfont(sfinst, defsfont);
+            zone->inst = fluid_inst_import_sfont(inst_idx, defsfont, sfdata);
         }
 
         if(zone->inst == NULL)
         {
+
+            FLUID_LOG(FLUID_ERR, "Preset zone %s: Invalid instrument reference",
+                    zone->name);
             return FLUID_FAILED;
         }
 
@@ -1655,6 +1664,9 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_
         {
             return FLUID_FAILED;
         }
+
+        /* We don't need this generator anymore */
+        zone->gen[GEN_INSTRUMENT].flags = GEN_UNUSED;
     }
 
     /* Import the modulators (only SF2.1 and higher) */
@@ -1735,14 +1747,29 @@ fluid_inst_set_global_zone(fluid_inst_t *inst, fluid_inst_zone_t *zone)
  * fluid_inst_import_sfont
  */
 fluid_inst_t *
-fluid_inst_import_sfont(SFInst *sfinst, fluid_defsfont_t *defsfont)
+fluid_inst_import_sfont(int inst_idx, fluid_defsfont_t *defsfont, SFData *sfdata)
 {
     fluid_list_t *p;
+    fluid_list_t *inst_list;
     fluid_inst_t *inst;
     SFZone *sfzone;
+    SFInst *sfinst;
     fluid_inst_zone_t *inst_zone;
     char zone_name[256];
     int count;
+
+    for (inst_list = sfdata->inst; inst_list; inst_list = fluid_list_next(inst_list))
+    {
+        sfinst = fluid_list_get(inst_list);
+        if (sfinst->idx == inst_idx)
+        {
+            break;
+        }
+    }
+    if (inst_list == NULL)
+    {
+        return NULL;
+    }
 
     inst = (fluid_inst_t *) new_fluid_inst();
 
@@ -1781,7 +1808,7 @@ fluid_inst_import_sfont(SFInst *sfinst, fluid_defsfont_t *defsfont)
             return NULL;
         }
 
-        if(fluid_inst_zone_import_sfont(inst_zone, sfzone, defsfont) != FLUID_OK)
+        if(fluid_inst_zone_import_sfont(inst_zone, sfzone, defsfont, sfdata) != FLUID_OK)
         {
             delete_fluid_inst_zone(inst_zone);
             return NULL;
@@ -1913,7 +1940,8 @@ fluid_inst_zone_next(fluid_inst_zone_t *zone)
  * fluid_inst_zone_import_sfont
  */
 int
-fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont)
+fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont,
+                             SFData *sfdata)
 {
     /* import the generators */
     fluid_zone_gen_import_sfont(inst_zone->gen, &inst_zone->range, sfzone);
@@ -1923,10 +1951,32 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid
     /*      FLUID_LOG(FLUID_DBG, "ExclusiveClass=%d\n", (int) zone->gen[GEN_EXCLUSIVECLASS].val); */
     /*    } */
 
-    /* fixup sample pointer */
-    if((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL))
+    if (inst_zone->gen[GEN_SAMPLEID].flags == GEN_SET)
     {
-        inst_zone->sample = ((SFSample *)(sfzone->instsamp->data))->fluid_sample;
+        fluid_list_t *list;
+        SFSample *sfsample;
+        int sample_idx = (int) inst_zone->gen[GEN_SAMPLEID].val;
+
+        /* find the SFSample by index */
+        for(list = sfdata->sample; list; list = fluid_list_next(list))
+        {
+            sfsample = fluid_list_get(list);
+            if (sfsample->idx == sample_idx)
+            {
+                break;
+            }
+        }
+        if (list == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Instrument zone '%s': Invalid sample reference",
+                      inst_zone->name);
+            return FLUID_FAILED;
+        }
+
+        inst_zone->sample = sfsample->fluid_sample;
+
+        /* we don't need this generator anymore, mark it as unused */
+        inst_zone->gen[GEN_SAMPLEID].flags = GEN_UNUSED;
     }
 
     /* Import the modulators (only SF2.1 and higher) */

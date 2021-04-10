@@ -92,20 +92,20 @@ static void good_test_1zone_2gen_1termgen(int (*load_func)(SFData *sf, int size)
     const SFGen *gen;
     static const unsigned char buf[] =
     {
-        Gen_KeyRange, 0, 60, 127, Gen_VelRange, 0, 60, 127, 0, 0, 0, 0
+        GEN_KEYRANGE, 0, 60, 127, GEN_VELRANGE, 0, 60, 127, 0, 0, 0, 0
     };
     SET_BUF(buf);
     TEST_ASSERT(load_func(sf, FLUID_N_ELEMENTS(buf)));
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_KeyRange);
+    TEST_ASSERT(gen->id == GEN_KEYRANGE);
     TEST_ASSERT(gen->amount.range.lo == 60);
     TEST_ASSERT(gen->amount.range.hi == 127);
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_VelRange);
+    TEST_ASSERT(gen->id == GEN_VELRANGE);
     TEST_ASSERT(gen->amount.range.lo == 60);
     TEST_ASSERT(gen->amount.range.hi == 127);
 
@@ -116,22 +116,22 @@ static void good_test_1zone_2gen_1termgen(int (*load_func)(SFData *sf, int size)
 // bad case: too few generators in buffer, triggering a chunk size mismatch
 static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
 {
-    const Gen_Type final_gen = (load_func == &load_pgen) ? Gen_Instrument : Gen_SampleId;
+    const unsigned char final_gen = (load_func == &load_pgen) ? GEN_INSTRUMENT : GEN_SAMPLEID;
     SFGen *gen;
     unsigned int i;
-    static const unsigned char buf1[] = { Gen_KeyRange, 0, 0 };
-    static const unsigned char buf2[] = { Gen_KeyRange, 0 };
-    static const unsigned char buf3[] = { Gen_KeyRange };
-    static const unsigned char buf8[] = { Gen_VelRange, 0, 0 };
-    static const unsigned char buf9[] = { Gen_VelRange, 0 };
-    static const unsigned char buf10[] = { Gen_VelRange };
-    static const unsigned char buf4[] = { Gen_VelRange, 0, 0, 127, Gen_CoarseTune, 0, 4 };
-    static const unsigned char buf5[] = { Gen_VelRange, 0, 0, 127, Gen_CoarseTune, 0 };
-    static const unsigned char buf6[] = { Gen_VelRange, 0, 0, 127, Gen_CoarseTune };
-    const unsigned char buf11[] = { Gen_VelRange, 0, 0, 127, final_gen, 0, 4 };
-    const unsigned char buf12[] = { Gen_VelRange, 0, 0, 127, final_gen, 0 };
-    const unsigned char buf13[] = { Gen_VelRange, 0, 0, 127, final_gen };
-    static const unsigned char buf7[] = { Gen_KeyRange, 0, 60, 127, Gen_OverrideRootKey };
+    static const unsigned char buf1[] = { GEN_KEYRANGE, 0, 0 };
+    static const unsigned char buf2[] = { GEN_KEYRANGE, 0 };
+    static const unsigned char buf3[] = { GEN_KEYRANGE };
+    static const unsigned char buf8[] = { GEN_VELRANGE, 0, 0 };
+    static const unsigned char buf9[] = { GEN_VELRANGE, 0 };
+    static const unsigned char buf10[] = { GEN_VELRANGE };
+    static const unsigned char buf4[] = { GEN_VELRANGE, 0, 0, 127, GEN_COARSETUNE, 0, 4 };
+    static const unsigned char buf5[] = { GEN_VELRANGE, 0, 0, 127, GEN_COARSETUNE, 0 };
+    static const unsigned char buf6[] = { GEN_VELRANGE, 0, 0, 127, GEN_COARSETUNE };
+    const unsigned char buf11[] = { GEN_VELRANGE, 0, 0, 127, final_gen, 0, 4 };
+    const unsigned char buf12[] = { GEN_VELRANGE, 0, 0, 127, final_gen, 0 };
+    const unsigned char buf13[] = { GEN_VELRANGE, 0, 0, 127, final_gen };
+    static const unsigned char buf7[] = { GEN_KEYRANGE, 0, 60, 127, GEN_OVERRIDEROOTKEY };
 
     static const buf_t buf_with_one_gen[] =
     {
@@ -181,7 +181,7 @@ static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size)
     TEST_ASSERT(load_func(sf, FLUID_N_ELEMENTS(buf7)) == FALSE);
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_KeyRange);
+    TEST_ASSERT(gen->id == GEN_KEYRANGE);
     TEST_ASSERT(gen->amount.range.lo == 60);
     TEST_ASSERT(gen->amount.range.hi == 127);
 
@@ -193,14 +193,14 @@ static void bad_test_too_short_gen_buffer(int (*load_func)(SFData *sf, int size)
 static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone)
 {
     const SFGen *gen;
-    static const unsigned char buf[] = { Gen_CoarseTune, 0, 5, 0, Gen_CoarseTune, 0, 10, 0 };
+    static const unsigned char buf[] = { GEN_COARSETUNE, 0, 5, 0, GEN_COARSETUNE, 0, 10, 0 };
 
     SET_BUF(buf);
     TEST_ASSERT(load_func(sf, FLUID_N_ELEMENTS(buf)));
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_CoarseTune);
+    TEST_ASSERT(gen->id == GEN_COARSETUNE);
     TEST_ASSERT(gen->amount.range.lo == 10);
     TEST_ASSERT(gen->amount.range.hi == 0);
 
@@ -217,35 +217,33 @@ static void bad_test_gen_wrong_order(int (*load_func)(SFData *sf, int size), SFD
     const SFGen *gen;
     static const unsigned char buf[] =
     {
-        Gen_VelRange, 0, 60, 127,
-        Gen_KeyRange, 0, 60, 127,
-        Gen_Instrument, 0, 0xDD, 0xDD
+        GEN_VELRANGE, 0, 60, 127,
+        GEN_KEYRANGE, 0, 60, 127,
+        GEN_INSTRUMENT, 0, 0xDD, 0xDD
     };
     SET_BUF(buf);
     TEST_ASSERT(load_func(sf, FLUID_N_ELEMENTS(buf)));
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_VelRange);
+    TEST_ASSERT(gen->id == GEN_VELRANGE);
     TEST_ASSERT(gen->amount.range.lo == 60);
     TEST_ASSERT(gen->amount.range.hi == 127);
 
-    // The INSTRUMENT generator is mistakenly accepted by load_igen. This will be fixed by Marcus' PR.
-    // Once merge, this if clause should be removed.
-    if (load_func != &load_igen)
+    gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
+    if (load_func == &load_igen)
     {
-        gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
         TEST_ASSERT(gen == NULL);
+    }
+    else
+    {
+        TEST_ASSERT(gen != NULL);
+        TEST_ASSERT(gen->id == GEN_INSTRUMENT);
+        TEST_ASSERT(gen->amount.uword == 0xDDDDu);
     }
    
     gen = fluid_list_get(fluid_list_nth(zone->gen, 2));
     TEST_ASSERT(gen == NULL);
-
-    if (load_func == &load_pgen)
-    {
-        TEST_ASSERT(FLUID_POINTER_TO_UINT(zone->instsamp) == 0xDDDD + 1);
-        zone->instsamp = NULL;
-    }
 
     TEST_ASSERT(file_buf == buf + sizeof(buf));
     UNSET_BUF;
@@ -258,14 +256,14 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     static const unsigned char buf[] =
     {
         // zone 1
-        Gen_ReverbSend, 0, 50, 0,
-        Gen_VolEnvRelease, 0, 206, 249,
+        GEN_REVERBSEND, 0, 50, 0,
+        GEN_VOLENVRELEASE, 0, 206, 249,
         // zone 2
-        Gen_KeyRange, 0, 0, 35,
-        Gen_OverrideRootKey, 0, 43, 0,
-        Gen_StartAddrCoarseOfs, 0, 0, 0,
-        Gen_SampleModes, 0, 1, 0,
-        Gen_StartAddrOfs, 0, 0, 0
+        GEN_KEYRANGE, 0, 0, 35,
+        GEN_OVERRIDEROOTKEY, 0, 43, 0,
+        GEN_STARTADDRCOARSEOFS, 0, 0, 0,
+        GEN_SAMPLEMODE, 0, 1, 0,
+        GEN_STARTADDROFS, 0, 0, 0
     };
 
     SET_BUF(buf);
@@ -273,13 +271,13 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
 
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_ReverbSend);
+    TEST_ASSERT(gen->id == GEN_REVERBSEND);
     TEST_ASSERT(gen->amount.range.lo == 50);
     TEST_ASSERT(gen->amount.range.hi == 0);
 
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 1));
     TEST_ASSERT(gen != NULL);
-    TEST_ASSERT(gen->id == Gen_VolEnvRelease);
+    TEST_ASSERT(gen->id == GEN_VOLENVRELEASE);
     TEST_ASSERT(gen->amount.range.lo == 206);
     TEST_ASSERT(gen->amount.range.hi == 249);
 
@@ -295,48 +293,48 @@ static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf
 {
     unsigned int i;
     SFGen *gen;
-    const Gen_Type final_gen = (load_func == &load_pgen) ? Gen_Instrument : Gen_SampleId;
+    const unsigned char final_gen = (load_func == &load_pgen) ? GEN_INSTRUMENT : GEN_SAMPLEID;
 
     const unsigned char buf1[] =
     {
         // zone 1
-        Gen_KeyRange, 0, 60, 127,
-        Gen_Unused1, 0, 0xFF, 0xFF,
+        GEN_KEYRANGE, 0, 60, 127,
+        GEN_UNUSED1, 0, 0xFF, 0xFF,
         final_gen, 0, 0xDD, 0xDD,
-        Gen_KeyRange, 0, 0, 35,
-        Gen_OverrideRootKey, 0, 43, 0,
+        GEN_KEYRANGE, 0, 0, 35,
+        GEN_OVERRIDEROOTKEY, 0, 43, 0,
         0, 0, 0, 0 // terminal generator
     };
 
     const unsigned char buf2[] =
     {
         // zone 1
-        Gen_KeyRange, 0, 60, 127,
-        Gen_Unused1, 0, 0xFF, 0xFF,
+        GEN_KEYRANGE, 0, 60, 127,
+        GEN_UNUSED1, 0, 0xFF, 0xFF,
         final_gen, 0, 0xDD, 0xDD,
-        Gen_KeyRange, 0, 0, 35,
-        Gen_OverrideRootKey, 0, 43, 0,
+        GEN_KEYRANGE, 0, 0, 35,
+        GEN_OVERRIDEROOTKEY, 0, 43, 0,
         0, 0, 0 // incomplete terminal generator
     };
 
     const unsigned char buf3[] =
     {
         // zone 1
-        Gen_KeyRange, 0, 60, 127,
-        Gen_Unused1, 0, 0xFF, 0xFF,
+        GEN_KEYRANGE, 0, 60, 127,
+        GEN_UNUSED1, 0, 0xFF, 0xFF,
         final_gen, 0, 0xDD, 0xDD,
-        Gen_KeyRange, 0, 0, 35,
-        Gen_OverrideRootKey, 0, 43
+        GEN_KEYRANGE, 0, 0, 35,
+        GEN_OVERRIDEROOTKEY, 0, 43
     };
 
     const unsigned char buf4[] =
     {
         // zone 1
-        Gen_KeyRange, 0, 60, 127,
-        Gen_Unused1, 0, 0xFF, 0xFF,
+        GEN_KEYRANGE, 0, 60, 127,
+        GEN_UNUSED1, 0, 0xFF, 0xFF,
         final_gen, 0, 0xDD, 0xDD,
-        Gen_KeyRange, 0, 0, 35,
-        Gen_OverrideRootKey, 0
+        GEN_KEYRANGE, 0, 0, 35,
+        GEN_OVERRIDEROOTKEY, 0
     };
 
     const buf_t buf[] =
@@ -357,7 +355,7 @@ static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf
 
         gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
         TEST_ASSERT(gen != NULL);
-        TEST_ASSERT(gen->id == Gen_KeyRange);
+        TEST_ASSERT(gen->id == GEN_KEYRANGE);
         TEST_ASSERT(gen->amount.range.lo == 60);
         TEST_ASSERT(gen->amount.range.hi == 127);
 
@@ -366,7 +364,19 @@ static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf
         zone1->gen->data = NULL;
 
         gen = fluid_list_get(fluid_list_nth(zone1->gen, 1));
-        TEST_ASSERT(gen == NULL);
+        TEST_ASSERT(gen != NULL);
+        if (load_func == &load_igen)
+        {
+            TEST_ASSERT(gen->id == GEN_SAMPLEID);
+        }
+        else
+        {
+            TEST_ASSERT(gen->id == GEN_INSTRUMENT);
+        }
+        TEST_ASSERT(gen->amount.uword == 0xDDDDu);
+        // delete this generator
+        FLUID_FREE(gen);
+        zone1->gen->data = NULL;
 
         gen = fluid_list_get(fluid_list_nth(zone1->gen, 2));
         TEST_ASSERT(gen == NULL);
@@ -376,9 +386,6 @@ static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf
 
         gen = fluid_list_get(fluid_list_nth(zone1->gen, 4));
         TEST_ASSERT(gen == NULL);
-
-        TEST_ASSERT(FLUID_POINTER_TO_UINT(zone1->instsamp) == 0xDDDD + 1);
-        zone1->instsamp = NULL;
 
         TEST_ASSERT(file_buf == buf[i].end);
         UNSET_BUF;
