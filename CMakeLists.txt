@@ -103,6 +103,10 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
+if ( CMAKE_SYSTEM MATCHES "Windows" )
+    option ( enable-static-crt "enable linking the static C runtime library when compiling with MSVC" on )
+endif()
+
 # Initialize the library directory name suffix.
 if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -291,7 +295,8 @@ if ( WIN32 )
   if  ( MSVC )
     # statically link in the CRT library to avoid a bunch of runtime DLL dependencies and allow 
     # the CI windows builds to be run under WinXP
-    foreach ( flag_var
+    if ( enable-static-crt )
+      foreach ( flag_var
         CMAKE_C_FLAGS
         CMAKE_C_FLAGS_DEBUG
         CMAKE_C_FLAGS_RELEASE
@@ -303,11 +308,11 @@ if ( WIN32 )
         CMAKE_CXX_FLAGS_MINSIZEREL
         CMAKE_CXX_FLAGS_RELWITHDEBINFO
         )
-      if ( ${flag_var} MATCHES "/MD" )
-        string ( REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}" )
-      endif ( ${flag_var} MATCHES "/MD" )
-    endforeach ( flag_var )
-
+        if ( ${flag_var} MATCHES "/MD" )
+          string ( REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}" )
+        endif ( ${flag_var} MATCHES "/MD" )
+      endforeach ( flag_var )
+    endif()
   else ( MSVC )
     # only set debug postfix if not MSVS building
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
