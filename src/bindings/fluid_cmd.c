@@ -3556,7 +3556,7 @@ enum
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
-    int arg, was_running;
+    int arg = 0, was_running;
     int seek = -1;  /* current seek position in tick */
 
     /* commands name table */
