@@ -131,7 +131,10 @@ void delete_fluid_portaudio_driver(fluid_audio_driver_t *p);
 
 #if JACK_SUPPORT
 fluid_audio_driver_t *new_fluid_jack_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
+fluid_audio_driver_t *new_fluid_jack_audio_driver_server(fluid_settings_t *settings, fluid_synth_t *synth);
 fluid_audio_driver_t *new_fluid_jack_audio_driver2(fluid_settings_t *settings,
+        fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *new_fluid_jack_audio_driver_server2(fluid_settings_t *settings,
         fluid_audio_func_t func, void *data);
 void delete_fluid_jack_audio_driver(fluid_audio_driver_t *p);
 void fluid_jack_audio_driver_settings(fluid_settings_t *settings);

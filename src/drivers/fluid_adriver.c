@@ -42,7 +42,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
 {
 #if JACK_SUPPORT
     {
-        "jack",
+        "jack_client",
         new_fluid_jack_audio_driver,
         new_fluid_jack_audio_driver2,
         delete_fluid_jack_audio_driver,
@@ -77,6 +77,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_oss_audio_driver2,
         delete_fluid_oss_audio_driver,
         fluid_oss_audio_driver_settings
+    },
+#endif
+
+#if JACK_SUPPORT
+    {
+        "jack",
+        new_fluid_jack_audio_driver_server,
+        new_fluid_jack_audio_driver_server2,
+        delete_fluid_jack_audio_driver,
+        fluid_jack_audio_driver_settings
     },
 #endif
 
@@ -286,7 +296,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
         {
             if (def->new2 == NULL)
             {
-                FLUID_LOG(FLUID_DBG, "'%s' does not support callback mode", def->name);
+                FLUID_LOG(FLUID_DBG, "'%s' audio driver does not support callback mode", def->name);
                 driver = NULL;
             }
             else
@@ -301,7 +311,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
             return driver;
         }
 
-        FLUID_LOG(FLUID_DBG, "'%s' failed to start", def->name);
+        FLUID_LOG(FLUID_DBG, "'%s' audio driver failed to start", def->name);
 
         if (auto_select)
         {
@@ -332,7 +342,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
                 selected_option ? selected_option : "NULL");
         FLUID_FREE(selected_option);
 
-        FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", valid_options);
+        FLUID_LOG(FLUID_INFO, "Valid audio drivers are: %s", valid_options);
     }
 
     FLUID_FREE(valid_options);
