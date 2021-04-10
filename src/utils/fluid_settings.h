@@ -24,6 +24,7 @@
 
 int fluid_settings_add_option(fluid_settings_t *settings, const char *name, const char *s);
 int fluid_settings_remove_option(fluid_settings_t *settings, const char *name, const char *s);
+int fluid_settings_option_is_valid(fluid_settings_t *settings, const char *name, const char *s);
 
 
 typedef void (*fluid_str_update_t)(void *data, const char *name, const char *value);

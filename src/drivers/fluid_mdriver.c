@@ -193,11 +193,18 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
     else
     {
         fluid_settings_dupstr(settings, "midi.driver", &selected_option);
-        FLUID_LOG(FLUID_ERR, "Couldn't find the requested MIDI driver '%s'.",
-                selected_option ? selected_option : "NULL");
+        if (fluid_settings_option_is_valid(settings, "midi.driver", selected_option))
+        {
+            FLUID_LOG(FLUID_ERR, "Couldn't start the requested MIDI driver '%s'.",
+                    selected_option ? selected_option : "NULL");
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "Invalid MIDI driver '%s'.",
+                    selected_option ? selected_option : "NULL");
+            FLUID_LOG(FLUID_INFO, "Valid MIDI drivers are: %s", valid_options);
+        }
         FLUID_FREE(selected_option);
-
-        FLUID_LOG(FLUID_INFO, "Valid MIDI drivers are: %s", valid_options);
     }
 
     FLUID_FREE(valid_options);

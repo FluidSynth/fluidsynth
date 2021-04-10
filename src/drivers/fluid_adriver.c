@@ -256,7 +256,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
 {
     unsigned int i;
     char *valid_options;
-    char *selected_option;
+    char *selected_option = NULL;
     fluid_audio_driver_t *driver = NULL;
     const fluid_audriver_definition_t *def;
     int auto_select = fluid_settings_str_equal(settings, "audio.driver", "auto");
@@ -327,11 +327,18 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
     else
     {
         fluid_settings_dupstr(settings, "audio.driver", &selected_option);
-        FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver '%s'.",
-                selected_option ? selected_option : "NULL");
+        if (fluid_settings_option_is_valid(settings, "audio.driver", selected_option))
+        {
+            FLUID_LOG(FLUID_ERR, "Couldn't start the requested audio driver '%s'.",
+                    selected_option ? selected_option : "NULL");
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "Invalid audio driver '%s'.",
+                    selected_option ? selected_option : "NULL");
+            FLUID_LOG(FLUID_INFO, "Valid audio drivers are: %s", valid_options);
+        }
         FLUID_FREE(selected_option);
-
-        FLUID_LOG(FLUID_INFO, "Valid audio drivers are: %s", valid_options);
     }
 
     FLUID_FREE(valid_options);

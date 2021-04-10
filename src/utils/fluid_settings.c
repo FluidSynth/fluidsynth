@@ -1336,6 +1336,46 @@ fluid_settings_remove_option(fluid_settings_t *settings, const char *name, const
     return retval;
 }
 
+int
+fluid_settings_option_is_valid(fluid_settings_t *settings, const char *name, const char *s)
+{
+    fluid_setting_node_t *node;
+    fluid_str_setting_t *setting;
+    int retval = FALSE;
+    fluid_list_t *list;
+
+
+    fluid_return_val_if_fail(settings != NULL, retval);
+    fluid_return_val_if_fail(name != NULL, retval);
+    fluid_return_val_if_fail(name[0] != '\0', retval);
+    fluid_return_val_if_fail(s != NULL, retval);
+
+    fluid_rec_mutex_lock(settings->mutex);
+
+    if(fluid_settings_get(settings, name, &node) != FLUID_OK
+            || (node->type != FLUID_STR_TYPE))
+    {
+        goto EXIT;
+    }
+
+    setting = &node->str;
+
+    for(list = setting->options; list; list = fluid_list_next(list))
+    {
+        const char *option = fluid_list_get(list);
+
+        if (FLUID_STRCMP(s, option) == 0)
+        {
+            retval = TRUE;
+            goto EXIT;
+        }
+    }
+
+EXIT:
+    fluid_rec_mutex_unlock(settings->mutex);
+    return retval;
+}
+
 /**
  * Set a numeric value for a named setting.
  *
