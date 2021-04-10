@@ -5680,7 +5680,7 @@ fluid_synth_set_reverb_on(fluid_synth_t *synth, int on)
  * @param synth FluidSynth instance
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
- *  parameter common to all fx groups is fetched.
+ *  parameter will be applied to all fx groups.
  * @param on TRUE to enable reverb, FALSE to disable
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
@@ -6154,7 +6154,7 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  * @param synth FluidSynth instance
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
- *  parameter common to all fx groups is fetched.
+ *  parameter will be applied to all fx groups.
  * @param on TRUE to enable chorus, FALSE to disable
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
