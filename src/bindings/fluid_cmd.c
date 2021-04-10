@@ -1241,7 +1241,10 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     /* name and min/max values table */
     static struct value values[FLUID_REVERB_PARAM_LAST] =
     {
-        {"room size"}, {"damp"}, {"width"}, {"level"}
+        {"room size", 0, 0},
+        {"damp", 0, 0},
+        {"width", 0, 0},
+        {"level", 0, 0}
     };
 
     FLUID_ENTRY_COMMAND(data);
@@ -3553,7 +3556,7 @@ enum
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
-    int arg, was_running;
+    int arg = 0, was_running;
     int seek = -1;  /* current seek position in tick */
 
     /* commands name table */

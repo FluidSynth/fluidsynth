@@ -233,11 +233,11 @@ static int process_pdta(SFData *sf, int size);
 static int load_phdr(SFData *sf, unsigned int size);
 static int load_pbag(SFData *sf, int size);
 static int load_pmod(SFData *sf, int size);
-static int load_pgen(SFData *sf, int size);
+extern int load_pgen(SFData *sf, int size);
 static int load_ihdr(SFData *sf, unsigned int size);
 static int load_ibag(SFData *sf, int size);
 static int load_imod(SFData *sf, int size);
-static int load_igen(SFData *sf, int size);
+extern int load_igen(SFData *sf, int size);
 static int load_shdr(SFData *sf, unsigned int size);
 
 static int chunkid(uint32_t id);
@@ -247,11 +247,6 @@ static int preset_compare_func(void *a, void *b);
 static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
 static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
-
-
-static void delete_preset(SFPreset *preset);
-static void delete_inst(SFInst *inst);
-static void delete_zone(SFZone *zone);
 
 static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data);
 static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24);
@@ -1283,7 +1278,7 @@ static int load_pmod(SFData *sf, int size)
  * if a generator follows an instrument discard it
  * if a duplicate generator exists replace previous one
  * ------------------------------------------------------------------- */
-static int load_pgen(SFData *sf, int size)
+int load_pgen(SFData *sf, int size)
 {
     fluid_list_t *dup;
     fluid_list_t *preset_list;
@@ -1784,7 +1779,7 @@ static int load_imod(SFData *sf, int size)
 }
 
 /* load instrument generators (see load_pgen for loading rules) */
-static int load_igen(SFData *sf, int size)
+int load_igen(SFData *sf, int size)
 {
     fluid_list_t *dup;
     fluid_list_t *inst_list;
@@ -2042,7 +2037,7 @@ static int load_shdr(SFData *sf, unsigned int size)
     return TRUE;
 }
 
-static void delete_preset(SFPreset *preset)
+void delete_preset(SFPreset *preset)
 {
     fluid_list_t *entry;
     SFZone *zone;
@@ -2066,7 +2061,7 @@ static void delete_preset(SFPreset *preset)
     FLUID_FREE(preset);
 }
 
-static void delete_inst(SFInst *inst)
+void delete_inst(SFInst *inst)
 {
     fluid_list_t *entry;
     SFZone *zone;
@@ -2092,7 +2087,7 @@ static void delete_inst(SFInst *inst)
 
 
 /* Free all elements of a zone (Preset or Instrument) */
-static void delete_zone(SFZone *zone)
+void delete_zone(SFZone *zone)
 {
     fluid_list_t *entry;
 
