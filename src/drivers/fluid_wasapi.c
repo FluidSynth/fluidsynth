@@ -142,6 +142,17 @@ typedef struct
     IAudioClient *aucl;
     IAudioRenderClient *arcl;
 
+    double sample_rate;
+    int periods, period_size;
+    fluid_long_long_t buffer_duration_reftime;
+    fluid_long_long_t periods_reftime;
+    fluid_long_long_t latency_reftime;
+    int audio_channels;
+    int sample_size;
+    char *dname;
+    int exclusive;
+    unsigned short sample_format;
+
 } fluid_wasapi_audio_driver_t;
 
 fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
@@ -152,23 +163,6 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings, 
 fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
     fluid_wasapi_audio_driver_t *dev = NULL;
-    double sample_rate;
-    int periods, period_size;
-    fluid_long_long_t buffer_duration_reftime;
-    fluid_long_long_t periods_reftime;
-    fluid_long_long_t latency_reftime;
-    int audio_channels;
-    int sample_size;
-    int i;
-    char *dname = NULL;
-    DWORD flags = 0;
-    //GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
-    WAVEFORMATEXTENSIBLE wfx;
-    WAVEFORMATEXTENSIBLE *rwfx = NULL;
-    AUDCLNT_SHAREMODE share_mode;
-    IMMDeviceEnumerator *denum = NULL;
-    IMMDevice *mmdev = NULL;
-    HRESULT ret;
     OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
 
     if(!VerifyVersionInfoW(&vi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
@@ -181,43 +175,6 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         return NULL;
     }
 
-    /* Retrieve the settings */
-    fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-    fluid_settings_getint(settings, "audio.periods", &periods);
-    fluid_settings_getint(settings, "audio.period-size", &period_size);
-    fluid_settings_getint(settings, "synth.audio-channels", &audio_channels);
-
-    if(audio_channels > FLUID_WASAPI_MAX_OUTPUTS)
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: channel configuration with more than one stereo pair is not supported.");
-        return NULL;
-    }
-
-    /* Clear format structure */
-    ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
-
-    if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
-    {
-        sample_size = sizeof(int16_t);
-        wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
-    }
-    else
-    {
-        sample_size = sizeof(float);
-        wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-    }
-
-    wfx.Format.nChannels  = 2;
-    wfx.Format.wBitsPerSample  = sample_size * 8;
-    wfx.Format.nBlockAlign     = sample_size * wfx.Format.nChannels;
-    wfx.Format.nSamplesPerSec  = (DWORD)sample_rate;
-    wfx.Format.nAvgBytesPerSec = (DWORD)sample_rate * wfx.Format.nBlockAlign;
-    //wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    //wfx.Format.cbSize = 22;
-    //wfx.SubFormat = guid_float;
-    //wfx.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
-    //wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
-
     dev = FLUID_NEW(fluid_wasapi_audio_driver_t);
 
     if(dev == NULL)
@@ -228,180 +185,44 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     FLUID_MEMSET(dev, 0, sizeof(fluid_wasapi_audio_driver_t));
 
-    dev->func = func;
-    dev->user_pointer = data;
-    dev->buffer_duration = periods * period_size / sample_rate;
-    dev->channels_count = audio_channels * 2;
-    dev->float_samples = (wfx.Format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT);
-    buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
-    periods_reftime = (fluid_long_long_t)(period_size / sample_rate * 1e7 + .5);
+    /* Retrieve the settings */
 
-    ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    fluid_settings_getnum(settings, "synth.sample-rate", &dev->sample_rate);
+    fluid_settings_getint(settings, "audio.periods", &dev->periods);
+    fluid_settings_getint(settings, "audio.period-size", &dev->period_size);
+    fluid_settings_getint(settings, "synth.audio-channels", &dev->audio_channels);
+    fluid_settings_getint(settings, "audio.wasapi.exclusive-mode", &dev->exclusive);
 
-    if(FAILED(ret))
+    if(dev->audio_channels > FLUID_WASAPI_MAX_OUTPUTS)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
+        FLUID_LOG(FLUID_ERR, "wasapi: channel configuration with more than one stereo pair is not supported.");
         goto cleanup;
     }
 
-    ret = CoCreateInstance(
-              &_CLSID_MMDeviceEnumerator, NULL,
-              CLSCTX_ALL, &_IID_IMMDeviceEnumerator,
-              (void **)&denum);
-
-    if(FAILED(ret))
+    if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
-        goto cleanup;
-    }
-
-    if(fluid_settings_dupstr(settings, "audio.wasapi.device", &dname) == FLUID_OK)
-    {
-        mmdev = fluid_wasapi_find_device(denum, dname);
-
-        if(mmdev == NULL)
-        {
-            FLUID_FREE(dname);
-            goto cleanup;
-        }
+        dev->sample_size = sizeof(int16_t);
+        dev->sample_format = WAVE_FORMAT_PCM;
     }
     else
+    {
+        dev->sample_size = sizeof(float);
+        dev->sample_format = WAVE_FORMAT_IEEE_FLOAT;
+    }
+
+    if(fluid_settings_dupstr(settings, "audio.wasapi.device", &dev->dname) != FLUID_OK)
     {
         FLUID_LOG(FLUID_ERR, "wasapi: out of memory.");
         goto cleanup;
     }
 
-    FLUID_FREE(dname);
-
-    ret = IMMDevice_Activate(mmdev,
-                             &_IID_IAudioClient,
-                             CLSCTX_ALL, NULL,
-                             (void **)&dev->aucl);
-
-    if(FAILED(ret))
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot activate audio client. 0x%x", (unsigned)ret);
-        goto cleanup;
-    }
-
-    share_mode = AUDCLNT_SHAREMODE_SHARED;
-
-    if(fluid_settings_getint(settings, "audio.wasapi.exclusive-mode", &i) == FLUID_OK)
-    {
-        if(i)
-        {
-            share_mode = AUDCLNT_SHAREMODE_EXCLUSIVE;
-        }
-    }
-
-    if(share_mode == AUDCLNT_SHAREMODE_SHARED)
-    {
-        FLUID_LOG(FLUID_DBG, "wasapi: using shared mode.");
-        periods_reftime = 0;
-    }
-    else
-    {
-        FLUID_LOG(FLUID_DBG, "wasapi: using exclusive mode.");
-    }
-
-    ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode, (const WAVEFORMATEX *)&wfx, (WAVEFORMATEX **)&rwfx);
-
-    if(FAILED(ret))
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: device doesn't support the mode we want. 0x%x", (unsigned)ret);
-        goto cleanup;
-    }
-    else if(ret == S_FALSE)
-    {
-        //rwfx is non-null only in this case
-        FLUID_LOG(FLUID_INFO, "wasapi: requested mode cannot be fully satisfied.");
-
-        if(rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) // needs resampling
-        {
-            flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
-            vi.dwMinorVersion = 1;
-
-            if(VerifyVersionInfoW(&vi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
-                                  VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
-                                          VER_MAJORVERSION, VER_GREATER_EQUAL),
-                                          VER_MINORVERSION, VER_GREATER_EQUAL),
-                                          VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
-                //IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set
-            {
-                flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
-            }
-        }
-
-        CoTaskMemFree(rwfx);
-    }
-
-    ret = IAudioClient_Initialize(dev->aucl, share_mode, flags,
-                                  buffer_duration_reftime, periods_reftime, (WAVEFORMATEX *)&wfx, &GUID_NULL);
-
-    if(FAILED(ret))
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to initialize audio client. 0x%x", (unsigned)ret);
-
-        if(ret == AUDCLNT_E_INVALID_DEVICE_PERIOD)
-        {
-            fluid_long_long_t defp, minp;
-            FLUID_LOG(FLUID_ERR, "wasapi: the device period size is invalid.");
-
-            if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, &minp)))
-            {
-                int defpf = (int)(defp / 1e7 * sample_rate);
-                int minpf = (int)(minp / 1e7 * sample_rate);
-                FLUID_LOG(FLUID_ERR, "wasapi: minimum period is %d, default period is %d. selected %d.", minpf, defpf, period_size);
-            }
-        }
-
-        goto cleanup;
-    }
-
-    ret = IAudioClient_GetBufferSize(dev->aucl, &dev->nframes);
-
-    if(FAILED(ret))
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio buffer size. 0x%x", (unsigned)ret);
-        goto cleanup;
-    }
-
-    FLUID_LOG(FLUID_DBG, "wasapi: requested %d frames of buffers, got %u.", periods * period_size, dev->nframes);
-    dev->buffer_duration = dev->nframes / sample_rate;
-
-    dev->drybuf = FLUID_ARRAY(float *, audio_channels * 2);
-
-    if(dev->drybuf == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: out of memory");
-        goto cleanup;
-    }
-
-    FLUID_MEMSET(dev->drybuf, 0, sizeof(float *) * audio_channels * 2);
-
-    for(i = 0; i < audio_channels * 2; ++i)
-    {
-        dev->drybuf[i] = FLUID_ARRAY(float, dev->nframes);
-
-        if(dev->drybuf[i] == NULL)
-        {
-            FLUID_LOG(FLUID_ERR, "wasapi: out of memory");
-            goto cleanup;
-        }
-    }
-
-    ret = IAudioClient_GetService(dev->aucl, &_IID_IAudioRenderClient, (void **)&dev->arcl);
-
-    if(FAILED(ret))
-    {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio render device. 0x%x", (unsigned)ret);
-        goto cleanup;
-    }
-
-    if(SUCCEEDED(IAudioClient_GetStreamLatency(dev->aucl, &latency_reftime)))
-    {
-        FLUID_LOG(FLUID_DBG, "wasapi: latency: %fms.", latency_reftime / 1e4);
-    }
+    dev->func = func;
+    dev->user_pointer = data;
+    dev->buffer_duration = dev->periods * dev->period_size / dev->sample_rate;
+    dev->channels_count = dev->audio_channels * 2;
+    dev->float_samples = (dev->sample_format == WAVE_FORMAT_IEEE_FLOAT);
+    dev->buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
+    dev->periods_reftime = (fluid_long_long_t)( dev->period_size / dev->sample_rate * 1e7 + .5);
 
     dev->quit_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -419,21 +240,9 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         goto cleanup;
     }
 
-    IMMDevice_Release(mmdev);
-    IMMDeviceEnumerator_Release(denum);
     return &dev->driver;
 
 cleanup:
-
-    if(mmdev != NULL)
-    {
-        IMMDevice_Release(mmdev);
-    }
-
-    if(denum != NULL)
-    {
-        IMMDeviceEnumerator_Release(denum);
-    }
 
     delete_fluid_wasapi_audio_driver(&dev->driver);
     return NULL;
@@ -464,19 +273,6 @@ void delete_fluid_wasapi_audio_driver(fluid_audio_driver_t *p)
         CloseHandle(dev->quit_ev);
     }
 
-    if(dev->aucl != NULL)
-    {
-        IAudioClient_Stop(dev->aucl);
-        IAudioClient_Release(dev->aucl);
-    }
-
-    if(dev->arcl != NULL)
-    {
-        IAudioRenderClient_Release(dev->arcl);
-    }
-
-    CoUninitialize();
-
     if(dev->drybuf)
     {
         for(i = 0; i < dev->channels_count; ++i)
@@ -484,6 +280,8 @@ void delete_fluid_wasapi_audio_driver(fluid_audio_driver_t *p)
             FLUID_FREE(dev->drybuf[i]);
         }
     }
+
+    FLUID_FREE(dev->dname);
 
     FLUID_FREE(dev->drybuf);
 
@@ -509,10 +307,183 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     int channels_incr[2] = {2, 2};
     BYTE *pbuf;
     HRESULT ret;
+    IMMDeviceEnumerator *denum = NULL;
+    IMMDevice *mmdev = NULL;
+    DWORD flags = 0;
+    WAVEFORMATEXTENSIBLE wfx;
+    WAVEFORMATEXTENSIBLE *rwfx = NULL;
+    AUDCLNT_SHAREMODE share_mode;
+    OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
+    int needs_com_uninit = FALSE;
 
     if(time_to_sleep < 1)
     {
         time_to_sleep = 1;
+    }
+
+    /* Clear format structure */
+    ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
+
+    wfx.Format.nChannels  = 2;
+    wfx.Format.wBitsPerSample  = dev->sample_size * 8;
+    wfx.Format.nBlockAlign     = dev->sample_size * wfx.Format.nChannels;
+    wfx.Format.nSamplesPerSec  = (DWORD) dev->sample_rate;
+    wfx.Format.nAvgBytesPerSec = (DWORD) dev->sample_rate * wfx.Format.nBlockAlign;
+    wfx.Format.wFormatTag      = dev->sample_format;
+    //wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    //wfx.Format.cbSize = 22;
+    //wfx.SubFormat = guid_float;
+    //wfx.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+    //wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
+
+    ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
+        goto cleanup;
+    }
+
+    needs_com_uninit = TRUE;
+
+    ret = CoCreateInstance(
+              &_CLSID_MMDeviceEnumerator, NULL,
+              CLSCTX_ALL, &_IID_IMMDeviceEnumerator,
+              (void **)&denum);
+
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
+        goto cleanup;
+    }
+
+    mmdev = fluid_wasapi_find_device(denum, dev->dname);
+
+    if(mmdev == NULL)
+    {
+        goto cleanup;
+    }
+
+    ret = IMMDevice_Activate(mmdev,
+                             &_IID_IAudioClient,
+                             CLSCTX_ALL, NULL,
+                             (void **)&dev->aucl);
+
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: cannot activate audio client. 0x%x", (unsigned)ret);
+        goto cleanup;
+    }
+
+
+    if(dev->exclusive)
+    {
+        share_mode = AUDCLNT_SHAREMODE_EXCLUSIVE;
+        FLUID_LOG(FLUID_DBG, "wasapi: using exclusive mode.");
+    }
+    else
+    {
+        share_mode = AUDCLNT_SHAREMODE_SHARED;
+        FLUID_LOG(FLUID_DBG, "wasapi: using shared mode.");
+        dev->periods_reftime = 0;
+    }
+
+    ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode, (const WAVEFORMATEX *)&wfx, (WAVEFORMATEX **)&rwfx);
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: device doesn't support the mode we want. 0x%x", (unsigned)ret);
+        goto cleanup;
+    }
+    else if(ret == S_FALSE)
+    {
+        //rwfx is non-null only in this case
+        FLUID_LOG(FLUID_INFO, "wasapi: requested mode cannot be fully satisfied.");
+
+        if(rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) // needs resampling
+        {
+            flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
+            vi.dwMinorVersion = 1;
+
+            if(VerifyVersionInfoW(&vi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
+                                  VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
+                                          VER_MAJORVERSION, VER_GREATER_EQUAL),
+                                          VER_MINORVERSION, VER_GREATER_EQUAL),
+                                          VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
+                //IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set
+            {
+                flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+            }
+        }
+
+        CoTaskMemFree(rwfx);
+    }
+
+    ret = IAudioClient_Initialize(dev->aucl, share_mode, flags,
+                                  dev->buffer_duration_reftime, dev->periods_reftime, (WAVEFORMATEX *)&wfx, &GUID_NULL);
+
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: failed to initialize audio client. 0x%x", (unsigned)ret);
+
+        if(ret == AUDCLNT_E_INVALID_DEVICE_PERIOD)
+        {
+            fluid_long_long_t defp, minp;
+            FLUID_LOG(FLUID_ERR, "wasapi: the device period size is invalid.");
+
+            if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, &minp)))
+            {
+                int defpf = (int)(defp / 1e7 * dev->sample_rate);
+                int minpf = (int)(minp / 1e7 * dev->sample_rate);
+                FLUID_LOG(FLUID_ERR, "wasapi: minimum period is %d, default period is %d. selected %d.", minpf, defpf, dev->period_size);
+            }
+        }
+
+        goto cleanup;
+    }
+
+    ret = IAudioClient_GetBufferSize(dev->aucl, &dev->nframes);
+
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio buffer size. 0x%x", (unsigned)ret);
+        goto cleanup;
+    }
+
+    FLUID_LOG(FLUID_DBG, "wasapi: requested %d frames of buffers, got %u.", dev->periods * dev->period_size, dev->nframes);
+    dev->buffer_duration = dev->nframes / dev->sample_rate;
+
+    dev->drybuf = FLUID_ARRAY(float *, dev->audio_channels * 2);
+
+    if(dev->drybuf == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: out of memory");
+        goto cleanup;
+    }
+
+    FLUID_MEMSET(dev->drybuf, 0, sizeof(float *) * dev->audio_channels * 2);
+
+    for(int i = 0; i < dev->audio_channels * 2; ++i)
+    {
+        dev->drybuf[i] = FLUID_ARRAY(float, dev->nframes);
+
+        if(dev->drybuf[i] == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "wasapi: out of memory");
+            goto cleanup;
+        }
+    }
+
+    ret = IAudioClient_GetService(dev->aucl, &_IID_IAudioRenderClient, (void **)&dev->arcl);
+
+    if(FAILED(ret))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio render device. 0x%x", (unsigned)ret);
+        goto cleanup;
+    }
+
+    if(SUCCEEDED(IAudioClient_GetStreamLatency(dev->aucl, &dev->latency_reftime)))
+    {
+        FLUID_LOG(FLUID_DBG, "wasapi: latency: %fms.", dev->latency_reftime / 1e4);
     }
 
     ret = IAudioClient_Start(dev->aucl);
@@ -520,7 +491,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: failed to start audio client. 0x%x", (unsigned)ret);
-        return 0;
+        goto cleanup;
     }
 
     for(;;)
@@ -530,7 +501,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
         if(FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: cannot get buffer padding. 0x%x", (unsigned)ret);
-            return 0;
+            goto cleanup;
         }
 
         len = dev->nframes - pos;
@@ -546,7 +517,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
         if(FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: cannot get buffer. 0x%x", (unsigned)ret);
-            return 0;
+            goto cleanup;
         }
 
         channels_out[0] = channels_out[1] = (void *)pbuf;
@@ -559,13 +530,41 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
         if(FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: failed to release buffer. 0x%x", (unsigned)ret);
-            return 0;
+            goto cleanup;
         }
 
         if(WaitForSingleObject(dev->quit_ev, time_to_sleep) == WAIT_OBJECT_0)
         {
             break;
         }
+    }
+
+cleanup:
+
+    if(dev->aucl != NULL)
+    {
+        IAudioClient_Stop(dev->aucl);
+        IAudioClient_Release(dev->aucl);
+    }
+
+    if(dev->arcl != NULL)
+    {
+        IAudioRenderClient_Release(dev->arcl);
+    }
+
+    if(mmdev != NULL)
+    {
+        IMMDevice_Release(mmdev);
+    }
+
+    if(denum != NULL)
+    {
+        IMMDeviceEnumerator_Release(denum);
+    }
+
+    if (needs_com_uninit)
+    {
+        CoUninitialize();
     }
 
     return 0;
@@ -617,13 +616,22 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     IMMDeviceCollection *dcoll = NULL;
     UINT cnt, i;
     HRESULT ret;
+    int com_was_initialized = FALSE;
 
     ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
-        goto cleanup;
+        if (ret == RPC_E_CHANGED_MODE)
+        {
+            com_was_initialized = TRUE;
+            FLUID_LOG(FLUID_DBG, "wasapi: COM was already initialized");
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
+            goto cleanup2;
+        }
     }
 
     ret = CoCreateInstance(
@@ -634,7 +642,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
-        goto cleanup;
+        goto cleanup1;
     }
 
     ret = IMMDeviceEnumerator_EnumAudioEndpoints(
@@ -644,7 +652,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot enumerate audio devices. 0x%x", (unsigned)ret);
-        goto cleanup;
+        goto cleanup1;
     }
 
     ret = IMMDeviceCollection_GetCount(dcoll, &cnt);
@@ -652,7 +660,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get device count. 0x%x", (unsigned)ret);
-        goto cleanup;
+        goto cleanup1;
     }
 
     for(i = 0; i < cnt; ++i)
@@ -672,7 +680,15 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
         IMMDevice_Release(dev);
     }
 
-cleanup:
+
+cleanup1:
+
+    if (!com_was_initialized)
+    {
+        CoUninitialize();
+    }
+
+cleanup2:
 
     if(dcoll != NULL)
     {
@@ -683,8 +699,6 @@ cleanup:
     {
         IMMDeviceEnumerator_Release(denum);
     }
-
-    CoUninitialize();
 }
 
 static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
