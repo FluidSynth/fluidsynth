@@ -108,7 +108,6 @@ static const fluid_mdriver_definition_t fluid_midi_drivers[] =
 void fluid_midi_driver_settings(fluid_settings_t *settings)
 {
     unsigned int i;
-    const char *def_name = NULL;
 
     fluid_settings_register_int(settings, "midi.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
 
@@ -119,12 +118,6 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
     {
-        /* Select the default driver */
-        if (def_name == NULL)
-        {
-            def_name = fluid_midi_drivers[i].name;
-        }
-    
         /* Add the driver to the list of options */
         fluid_settings_add_option(settings, "midi.driver", fluid_midi_drivers[i].name);
 
@@ -134,11 +127,7 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
         }
     }
 
-    /* Set the default driver, if any */
-    if(def_name != NULL)
-    {
-        fluid_settings_setstr(settings, "midi.driver", def_name);
-    }
+    fluid_settings_setstr(settings, "midi.driver", "auto");
 }
 
 /**

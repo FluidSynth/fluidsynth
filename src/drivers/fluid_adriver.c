@@ -214,7 +214,6 @@ static uint8_t fluid_adriver_disable_mask[(FLUID_N_ELEMENTS(fluid_audio_drivers)
 void fluid_audio_driver_settings(fluid_settings_t *settings)
 {
     unsigned int i;
-    const char *def_name = NULL;
 
     fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
     fluid_settings_add_option(settings, "audio.sample-format", "16bits");
@@ -238,12 +237,6 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
-        /* Select the default driver */
-        if (def_name == NULL)
-        {
-            def_name = fluid_audio_drivers[i].name;
-        }
-
         /* Add the driver to the list of options */
         fluid_settings_add_option(settings, "audio.driver", fluid_audio_drivers[i].name);
 
@@ -254,11 +247,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
         }
     }
 
-    /* Set the default driver, if any */
-    if(def_name != NULL)
-    {
-        fluid_settings_setstr(settings, "audio.driver", def_name);
-    }
+    fluid_settings_setstr(settings, "audio.driver", "auto");
 }
 
 static fluid_audio_driver_t *
