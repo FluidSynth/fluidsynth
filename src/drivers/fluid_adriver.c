@@ -251,47 +251,91 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
     }
 }
 
-static const fluid_audriver_definition_t *
-find_fluid_audio_driver(fluid_settings_t *settings)
+static fluid_audio_driver_t *
+create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
+        fluid_audio_func_t func, void *data)
 {
     unsigned int i;
-    char *name;
-    char *allnames;
+    char *valid_options;
+    char *selected_option;
+    fluid_audio_driver_t *driver = NULL;
+    const fluid_audriver_definition_t *def;
+    int auto_select = fluid_settings_str_equal(settings, "audio.driver", "auto");
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
-        /* If this driver is de-activated, just ignore it */
         if(!IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i))
         {
             continue;
         }
 
-        if(fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name))
+        def = &fluid_audio_drivers[i];
+
+        if (!auto_select && !fluid_settings_str_equal(settings, "audio.driver", def->name))
         {
-            FLUID_LOG(FLUID_DBG, "Using '%s' audio driver", fluid_audio_drivers[i].name);
-            return &fluid_audio_drivers[i];
+            continue;
         }
-    }
 
-    fluid_settings_dupstr(settings, "audio.driver", &name);        /* ++ alloc name */
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver '%s'.", name ? name : "NULL");
+        FLUID_LOG(FLUID_DBG, "Trying '%s' audio driver", def->name);
 
-    allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
-    if(allnames != NULL)
-    {
-        if(allnames[0] != '\0')
+        if (func == NULL)
         {
-            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
+            driver = (*def->new)(settings, synth);
         }
         else
         {
-            FLUID_LOG(FLUID_INFO, "No audio drivers available.");
+            if (def->new2 == NULL)
+            {
+                FLUID_LOG(FLUID_DBG, "'%s' does not support callback mode", def->name);
+                driver = NULL;
+            }
+            else
+            {
+                driver = (*def->new2)(settings, func, data);
+            }
         }
 
-        FLUID_FREE(allnames);
+        if (driver)
+        {
+            driver->define = def;
+            return driver;
+        }
+
+        FLUID_LOG(FLUID_DBG, "'%s' failed to start", def->name);
+
+        if (auto_select)
+        {
+            continue;
+        }
+
+        break;
     }
 
-    FLUID_FREE(name);
+    valid_options = fluid_settings_option_concat(settings, "audio.driver", NULL);
+    if (valid_options == NULL || valid_options[0] == '\0')
+    {
+        FLUID_FREE(valid_options);
+        FLUID_LOG(FLUID_ERR, "No audio drivers available.");
+        return NULL;
+    }
+
+    if (auto_select)
+    {
+        FLUID_LOG(FLUID_ERR,
+                "Couldn't auto-select an audio driver, tried %s",
+                valid_options);
+    }
+    else
+    {
+        fluid_settings_dupstr(settings, "audio.driver", &selected_option);
+        FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver '%s'.",
+                selected_option ? selected_option : "NULL");
+        FLUID_FREE(selected_option);
+
+        FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", valid_options);
+    }
+
+    FLUID_FREE(valid_options);
 
     return NULL;
 }
@@ -318,21 +362,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
 fluid_audio_driver_t *
 new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-    const fluid_audriver_definition_t *def = find_fluid_audio_driver(settings);
-
-    if(def)
-    {
-        fluid_audio_driver_t *driver = (*def->new)(settings, synth);
-
-        if(driver)
-        {
-            driver->define = def;
-        }
-
-        return driver;
-    }
-
-    return NULL;
+    return create_fluid_audio_driver(settings, synth, NULL, NULL);
 }
 
 /**
@@ -362,30 +392,7 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 fluid_audio_driver_t *
 new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
-    const fluid_audriver_definition_t *def = find_fluid_audio_driver(settings);
-
-    if(def)
-    {
-        fluid_audio_driver_t *driver = NULL;
-
-        if(def->new2 == NULL)
-        {
-            FLUID_LOG(FLUID_DBG, "Callback mode unsupported on '%s' audio driver", def->name);
-        }
-        else
-        {
-            driver = (*def->new2)(settings, func, data);
-
-            if(driver)
-            {
-                driver->define = def;
-            }
-        }
-
-        return driver;
-    }
-
-    return NULL;
+    return create_fluid_audio_driver(settings, NULL, func, data);
 }
 
 /**
