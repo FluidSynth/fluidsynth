@@ -55,7 +55,7 @@ Fixed fluid_sndmgr_double_to_fix(long double theLD);
 int
 start_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
                                 fluid_sndmgr_audio_driver_t *dev,
-                                int buffer_size)
+                                int buffer_size, int flags)
 {
     int i;
     SndDoubleBufferHeader2 *doubleHeader = NULL;
@@ -63,6 +63,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
     OSErr err;
     SndChannelPtr channel = NULL;
     double sample_rate;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
 
@@ -74,7 +75,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
 
     if((err != noErr) || (channel == NULL))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to allocate a sound channel (error %i)", err);
+        FLUID_LOG(err_level, "Failed to allocate a sound channel (error %i)", err);
         return err;
     }
 
@@ -133,7 +134,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
 
     if(err != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to start the sound driver (error %i)", err);
+        FLUID_LOG(err_level, "Failed to start the sound driver (error %i)", err);
         return err;
     }
 
@@ -152,11 +153,12 @@ new_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
 {
     fluid_sndmgr_audio_driver_t *dev = NULL;
     int period_size, periods, buffer_size;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* check the format */
     if(!fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
-        FLUID_LOG(FLUID_ERR, "Unhandled sample format");
+        FLUID_LOG(err_level, "Unhandled sample format");
         return NULL;
     }
 
@@ -180,7 +182,7 @@ new_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
     dev->data = (void *)synth;
     dev->callback = NULL;
 
-    if(start_fluid_sndmgr_audio_driver(settings, dev, buffer_size) != 0)
+    if(start_fluid_sndmgr_audio_driver(settings, dev, buffer_size, flags) != 0)
     {
         delete_fluid_sndmgr_audio_driver((fluid_audio_driver_t *)dev);
         return NULL;
@@ -233,7 +235,7 @@ new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings,
     dev->data = data;
     dev->callback = func;
 
-    if(start_fluid_sndmgr_audio_driver(settings, dev, buffer_size) != 0)
+    if(start_fluid_sndmgr_audio_driver(settings, dev, buffer_size, flags) != 0)
     {
         goto error_recovery;
     }
