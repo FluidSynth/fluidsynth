@@ -289,6 +289,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
     WAVEFORMATEXTENSIBLE wfx;
     char dev_name[MAXPNAMELEN];
     MMRESULT errCode;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* Retrieve the settings */
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
@@ -329,7 +330,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
     }
     else
     {
-        FLUID_LOG(FLUID_ERR, "Unhandled sample format");
+        FLUID_LOG(err_level, "Unhandled sample format");
         return NULL;
     }
 
@@ -341,7 +342,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
 
     if(audio_channels > WAVEOUT_MAX_STEREO_CHANNELS)
     {
-        FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
+        FLUID_LOG(err_level, "Channels number %d exceed internal limit %d",
                   wfx.Format.nChannels, WAVEOUT_MAX_STEREO_CHANNELS * 2);
         return NULL;
     }
@@ -465,7 +466,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
 
         if(dev->hQuit == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create quit event: '%s'", fluid_get_windows_error());
+            FLUID_LOG(err_level, "Failed to create quit event: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -481,7 +482,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
 
         if(dev->hThread == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create waveOut thread: '%s'", fluid_get_windows_error());
+            FLUID_LOG(err_level, "Failed to create waveOut thread: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -494,7 +495,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
 
         if(errCode != MMSYSERR_NOERROR)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device: '%s'", fluid_waveout_error(errCode));
+            FLUID_LOG(err_level, "Failed to open waveOut device: '%s'", fluid_waveout_error(errCode));
             break;
         }
 
