@@ -264,13 +264,17 @@ void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
  * the driver fails and return NULL.
  */
 fluid_audio_driver_t *
-new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_waveout_audio_driver(fluid_settings_t *settings,
+                               fluid_synth_t *synth,
+                               int flags)
 {
-    return new_fluid_waveout_audio_driver2(settings, NULL, synth);
+    return new_fluid_waveout_audio_driver2(settings, NULL, synth, flags);
 }
 
 fluid_audio_driver_t *
-new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
+new_fluid_waveout_audio_driver2(fluid_settings_t *settings,
+                                fluid_audio_func_t func, void *data,
+                                int flags)
 {
     fluid_waveout_audio_driver_t *dev = NULL;
     fluid_audio_channels_callback_t write_ptr;

@@ -144,14 +144,16 @@ void fluid_alsa_audio_driver_settings(fluid_settings_t *settings)
 
 fluid_audio_driver_t *
 new_fluid_alsa_audio_driver(fluid_settings_t *settings,
-                            fluid_synth_t *synth)
+                            fluid_synth_t *synth,
+                            int flags)
 {
-    return new_fluid_alsa_audio_driver2(settings, NULL, synth);
+    return new_fluid_alsa_audio_driver2(settings, NULL, synth, flags);
 }
 
 fluid_audio_driver_t *
 new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
-                             fluid_audio_func_t func, void *data)
+                             fluid_audio_func_t func, void *data,
+                             int flags)
 {
     fluid_alsa_audio_driver_t *dev;
     double sample_rate;
@@ -638,7 +640,8 @@ void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
 fluid_midi_driver_t *
 new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings,
                               handle_midi_event_func_t handler,
-                              void *data)
+                              void *data,
+                              int flags)
 {
     int i, err;
     fluid_alsa_rawmidi_driver_t *dev;
@@ -978,7 +981,8 @@ static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_s
  */
 fluid_midi_driver_t *
 new_fluid_alsa_seq_driver(fluid_settings_t *settings,
-                          handle_midi_event_func_t handler, void *data)
+                          handle_midi_event_func_t handler, void *data,
+                          int flags)
 {
     int i, err;
     fluid_alsa_seq_driver_t *dev;

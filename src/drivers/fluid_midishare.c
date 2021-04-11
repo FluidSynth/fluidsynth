@@ -81,8 +81,8 @@ static void fluid_midishare_close_appl(fluid_midishare_midi_driver_t *dev);
  */
 fluid_midi_driver_t *
 new_fluid_midishare_midi_driver(fluid_settings_t *settings,
-                                handle_midi_event_func_t handler,
-                                void *data)
+                                handle_midi_event_func_t handler, void *data,
+                                int flags)
 {
     fluid_midishare_midi_driver_t *dev;
     int i;

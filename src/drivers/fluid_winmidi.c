@@ -463,7 +463,8 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
  */
 fluid_midi_driver_t *
 new_fluid_winmidi_driver(fluid_settings_t *settings,
-                         handle_midi_event_func_t handler, void *data)
+                         handle_midi_event_func_t handler, void *data,
+                         int flags)
 {
     fluid_winmidi_driver_t *dev;
     MMRESULT res;

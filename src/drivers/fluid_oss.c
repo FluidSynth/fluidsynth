@@ -111,7 +111,9 @@ fluid_oss_audio_driver_settings(fluid_settings_t *settings)
  * new_fluid_oss_audio_driver
  */
 fluid_audio_driver_t *
-new_fluid_oss_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_oss_audio_driver(fluid_settings_t *settings,
+                           fluid_synth_t *synth,
+                           int flags)
 {
     fluid_oss_audio_driver_t *dev = NULL;
     int channels, sr, sample_size = 0, oss_format;
@@ -284,7 +286,9 @@ error_recovery:
 }
 
 fluid_audio_driver_t *
-new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
+new_fluid_oss_audio_driver2(fluid_settings_t *settings,
+                            fluid_audio_func_t func, void *data,
+                            int flags)
 {
     fluid_oss_audio_driver_t *dev = NULL;
     int channels, sr;
@@ -601,7 +605,8 @@ void fluid_oss_midi_driver_settings(fluid_settings_t *settings)
  */
 fluid_midi_driver_t *
 new_fluid_oss_midi_driver(fluid_settings_t *settings,
-                          handle_midi_event_func_t handler, void *data)
+                          handle_midi_event_func_t handler, void *data,
+                          int flags)
 {
     fluid_oss_midi_driver_t *dev;
     int realtime_prio = 0;

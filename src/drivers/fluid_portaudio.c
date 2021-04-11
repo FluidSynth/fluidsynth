@@ -193,7 +193,9 @@ fluid_portaudio_driver_settings(fluid_settings_t *settings)
  * @return pointer to the driver on success, NULL otherwise.
  */
 fluid_audio_driver_t *
-new_fluid_portaudio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_portaudio_driver(fluid_settings_t *settings,
+                           fluid_synth_t *synth,
+                           int flags)
 {
     fluid_portaudio_driver_t *dev = NULL;
     PaStreamParameters outputParams;

@@ -85,7 +85,9 @@ void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings)
  * new_fluid_sdl2_audio_driver
  */
 fluid_audio_driver_t *
-new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_sdl2_audio_driver(fluid_settings_t *settings,
+                            fluid_synth_t *synth,
+                            int flags)
 {
     fluid_sdl2_audio_driver_t *dev = NULL;
     fluid_audio_callback_t write_ptr;

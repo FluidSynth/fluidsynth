@@ -71,7 +71,9 @@ void fluid_dart_audio_driver_settings(fluid_settings_t *settings)
 
 
 fluid_audio_driver_t *
-new_fluid_dart_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_dart_audio_driver(fluid_settings_t *settings,
+                            fluid_synth_t *synth,
+                            int flags)
 {
     fluid_dart_audio_driver_t *dev;
     double sample_rate;

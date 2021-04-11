@@ -74,7 +74,9 @@ void fluid_opensles_audio_driver_settings(fluid_settings_t *settings)
  * new_fluid_opensles_audio_driver
  */
 fluid_audio_driver_t *
-new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_opensles_audio_driver(fluid_settings_t *settings,
+                                fluid_synth_t *synth,
+                                int flags)
 {
     SLresult result;
     fluid_opensles_audio_driver_t *dev;

@@ -161,7 +161,9 @@ static oboe::SampleRateConversionQuality get_srate_conversion_quality(fluid_sett
  * new_fluid_oboe_audio_driver
  */
 fluid_audio_driver_t *
-new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_oboe_audio_driver(fluid_settings_t *settings,
+                            fluid_synth_t *synth,
+                            int flags)
 {
     fluid_oboe_audio_driver_t *dev = nullptr;
 

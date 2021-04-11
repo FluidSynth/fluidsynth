@@ -146,7 +146,9 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
  * This implementation used the 16bit format.
  */
 fluid_audio_driver_t *
-new_fluid_sndmgr_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+new_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
+                              fluid_synth_t *synth,
+                              int flags)
 {
     fluid_sndmgr_audio_driver_t *dev = NULL;
     int period_size, periods, buffer_size;
@@ -194,7 +196,9 @@ new_fluid_sndmgr_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
  * conversion from float to 16bits in the driver.
  */
 fluid_audio_driver_t *
-new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
+new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings,
+                               fluid_audio_func_t func, void *data,
+                               int flags)
 {
     fluid_sndmgr_audio_driver_t *dev = NULL;
     int period_size, periods, buffer_size;

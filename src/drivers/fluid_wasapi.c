@@ -144,12 +144,22 @@ typedef struct
 
 } fluid_wasapi_audio_driver_t;
 
-fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
+fluid_audio_driver_t *
+new_fluid_wasapi_audio_driver(fluid_settings_t *settings,
+                              fluid_synth_t *synth,
+                              int flags)
 {
-    return new_fluid_wasapi_audio_driver2(settings, (fluid_audio_func_t)fluid_synth_process, synth);
+    // FIXME: remove explicit cast to fluid_audio_func_t
+    return new_fluid_wasapi_audio_driver2(
+            settings,
+            (fluid_audio_func_t)fluid_synth_process, synth,
+            flags);
 }
 
-fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
+fluid_audio_driver_t *
+new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
+                               fluid_audio_func_t func, void *data,
+                               int flags)
 {
     fluid_wasapi_audio_driver_t *dev = NULL;
     double sample_rate;

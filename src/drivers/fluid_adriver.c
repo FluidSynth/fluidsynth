@@ -29,12 +29,14 @@
 struct _fluid_audriver_definition_t
 {
     const char *name;
-    fluid_audio_driver_t *(*new)(fluid_settings_t *settings, fluid_synth_t *synth);
+    fluid_audio_driver_t *(*new)(fluid_settings_t *settings, fluid_synth_t *synth, int probe);
     fluid_audio_driver_t *(*new2)(fluid_settings_t *settings,
                                   fluid_audio_func_t func,
-                                  void *data);
+                                  void *data,
+                                  int probe);
     void (*free)(fluid_audio_driver_t *driver);
     void (*settings)(fluid_settings_t *settings);
+    int flags;
 };
 
 /* Available audio drivers, listed in order of preference */
@@ -46,7 +48,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_jack_audio_driver,
         new_fluid_jack_audio_driver2,
         delete_fluid_jack_audio_driver,
-        fluid_jack_audio_driver_settings
+        fluid_jack_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -56,7 +59,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_alsa_audio_driver,
         new_fluid_alsa_audio_driver2,
         delete_fluid_alsa_audio_driver,
-        fluid_alsa_audio_driver_settings
+        fluid_alsa_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -66,7 +70,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_pulse_audio_driver,
         new_fluid_pulse_audio_driver2,
         delete_fluid_pulse_audio_driver,
-        fluid_pulse_audio_driver_settings
+        fluid_pulse_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -76,17 +81,19 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_oss_audio_driver,
         new_fluid_oss_audio_driver2,
         delete_fluid_oss_audio_driver,
-        fluid_oss_audio_driver_settings
+        fluid_oss_audio_driver_settings,
+        0,
     },
 #endif
 
 #if JACK_SUPPORT
     {
         "jack",
-        new_fluid_jack_audio_driver_server,
-        new_fluid_jack_audio_driver_server2,
+        new_fluid_jack_audio_driver,
+        new_fluid_jack_audio_driver2,
         delete_fluid_jack_audio_driver,
-        fluid_jack_audio_driver_settings
+        fluid_jack_audio_driver_settings,
+        FLUID_AUDRIVER_START_SERVER,
     },
 #endif
 
@@ -96,7 +103,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_oboe_audio_driver,
         NULL,
         delete_fluid_oboe_audio_driver,
-        fluid_oboe_audio_driver_settings
+        fluid_oboe_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -106,7 +114,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_opensles_audio_driver,
         NULL,
         delete_fluid_opensles_audio_driver,
-        fluid_opensles_audio_driver_settings
+        fluid_opensles_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -116,7 +125,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_core_audio_driver,
         new_fluid_core_audio_driver2,
         delete_fluid_core_audio_driver,
-        fluid_core_audio_driver_settings
+        fluid_core_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -126,7 +136,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_dsound_audio_driver,
         new_fluid_dsound_audio_driver2,
         delete_fluid_dsound_audio_driver,
-        fluid_dsound_audio_driver_settings
+        fluid_dsound_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -136,7 +147,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_wasapi_audio_driver,
         new_fluid_wasapi_audio_driver2,
         delete_fluid_wasapi_audio_driver,
-        fluid_wasapi_audio_driver_settings
+        fluid_wasapi_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -146,7 +158,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_waveout_audio_driver,
         new_fluid_waveout_audio_driver2,
         delete_fluid_waveout_audio_driver,
-        fluid_waveout_audio_driver_settings
+        fluid_waveout_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -156,7 +169,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_sndmgr_audio_driver,
         new_fluid_sndmgr_audio_driver2,
         delete_fluid_sndmgr_audio_driver,
-        NULL
+        NULL,
+        0,
     },
 #endif
 
@@ -166,7 +180,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_portaudio_driver,
         NULL,
         delete_fluid_portaudio_driver,
-        fluid_portaudio_driver_settings
+        fluid_portaudio_driver_settings,
+        0,
     },
 #endif
 
@@ -176,7 +191,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_dart_audio_driver,
         NULL,
         delete_fluid_dart_audio_driver,
-        fluid_dart_audio_driver_settings
+        fluid_dart_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -186,7 +202,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_sdl2_audio_driver,
         NULL,
         delete_fluid_sdl2_audio_driver,
-        fluid_sdl2_audio_driver_settings
+        fluid_sdl2_audio_driver_settings,
+        0,
     },
 #endif
 
@@ -196,11 +213,12 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_file_audio_driver,
         NULL,
         delete_fluid_file_audio_driver,
-        NULL
+        NULL,
+        0,
     },
 #endif
     /* NULL terminator to avoid zero size array if no driver available */
-    { NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, 0 }
 };
 
 #define ENABLE_AUDIO_DRIVER(_drv, _idx) \
@@ -260,6 +278,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
     fluid_audio_driver_t *driver = NULL;
     const fluid_audriver_definition_t *def;
     int auto_select = fluid_settings_str_equal(settings, "audio.driver", "auto");
+    int flags;
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
@@ -277,9 +296,15 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
 
         FLUID_LOG(FLUID_DBG, "Trying '%s' audio driver", def->name);
 
+        flags = def->flags;
+        if (auto_select)
+        {
+            flags |= FLUID_AUDRIVER_PROBE;
+        }
+
         if (func == NULL)
         {
-            driver = (*def->new)(settings, synth);
+            driver = (*def->new)(settings, synth, flags);
         }
         else
         {
@@ -290,7 +315,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
             }
             else
             {
-                driver = (*def->new2)(settings, func, data);
+                driver = (*def->new2)(settings, func, data, flags);
             }
         }
 
