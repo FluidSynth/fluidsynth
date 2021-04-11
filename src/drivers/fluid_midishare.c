@@ -86,6 +86,7 @@ new_fluid_midishare_midi_driver(fluid_settings_t *settings,
 {
     fluid_midishare_midi_driver_t *dev;
     int i;
+    int err_level = (flags & FLUID_MDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -112,6 +113,7 @@ new_fluid_midishare_midi_driver(fluid_settings_t *settings,
 
     if(!fluid_midishare_open_driver(dev))
     {
+        FLUID_LOG(err_level, "Can not open MidiShare Application client");
         goto error_recovery;
     }
 
@@ -119,6 +121,7 @@ new_fluid_midishare_midi_driver(fluid_settings_t *settings,
 
     if(!fluid_midishare_open_appl(dev))
     {
+        FLUID_LOG(err_level, "Can not open MidiShare Driver client");
         goto error_recovery;
     }
 
@@ -130,7 +133,7 @@ new_fluid_midishare_midi_driver(fluid_settings_t *settings,
 
     if(dev->filter == 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can not allocate MidiShare filter");
+        FLUID_LOG(err_level, "Can not allocate MidiShare filter");
         goto error_recovery;
     }
 
@@ -360,7 +363,6 @@ static int fluid_midishare_open_driver(fluid_midishare_midi_driver_t *dev)
 
     if(dev->refnum < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can not open MidiShare Application client");
         return 0;
     }
 
@@ -373,7 +375,6 @@ static int fluid_midishare_open_driver(fluid_midishare_midi_driver_t *dev)
 
     if(dev->refnum < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can not open MidiShare Application client");
         return 0;
     }
 
@@ -407,7 +408,6 @@ static int fluid_midishare_open_appl(fluid_midishare_midi_driver_t *dev)
 
     if(dev->refnum < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can not open MidiShare Driver client");
         return 0;
     }
 
@@ -419,7 +419,6 @@ static int fluid_midishare_open_appl(fluid_midishare_midi_driver_t *dev)
 
     if(dev->refnum < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can not open MidiShare Driver client");
         return 0;
     }
 
