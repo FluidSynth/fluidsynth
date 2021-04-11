@@ -203,6 +203,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
     double sample_rate;  /* intended sample rate */
     int period_size;     /* intended buffer size */
     PaError err;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_portaudio_driver_t);
 
@@ -216,7 +217,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
 
     if(err != paNoError)
     {
-        FLUID_LOG(FLUID_ERR, "Error initializing PortAudio driver: %s",
+        FLUID_LOG(err_level, "Error initializing PortAudio driver: %s",
                   Pa_GetErrorText(err));
         FLUID_FREE(dev);
         return NULL;
@@ -247,7 +248,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
 
         if(numDevices < 0)
         {
-            FLUID_LOG(FLUID_ERR, "PortAudio returned unexpected device count %d", numDevices);
+            FLUID_LOG(err_level, "PortAudio returned unexpected device count %d", numDevices);
             goto error_recovery;
         }
 
@@ -282,7 +283,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
 
         if(i == numDevices)
         {
-            FLUID_LOG(FLUID_ERR, "PortAudio device '%s' was not found", device);
+            FLUID_LOG(err_level, "PortAudio device '%s' was not found", device);
             goto error_recovery;
         }
     }
@@ -307,7 +308,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
     }
     else
     {
-        FLUID_LOG(FLUID_ERR, "Unknown sample format");
+        FLUID_LOG(err_level, "Unknown sample format");
         goto error_recovery;
     }
 
@@ -325,7 +326,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
 
     if(err != paNoError)
     {
-        FLUID_LOG(FLUID_ERR, "Error opening PortAudio stream: %s",
+        FLUID_LOG(err_level, "Error opening PortAudio stream: %s",
                   Pa_GetErrorText(err));
         goto error_recovery;
     }
@@ -334,7 +335,7 @@ new_fluid_portaudio_driver(fluid_settings_t *settings,
 
     if(err != paNoError)
     {
-        FLUID_LOG(FLUID_ERR, "Error starting PortAudio stream: %s",
+        FLUID_LOG(err_level, "Error starting PortAudio stream: %s",
                   Pa_GetErrorText(err));
         goto error_recovery;
     }
