@@ -124,6 +124,7 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings,
     int realtime_prio = 0;
     char *devname = NULL;
     int format;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_oss_audio_driver_t);
 
@@ -191,13 +192,13 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings,
 
     if(stat(devname, &devstat) == -1)
     {
-        FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", devname);
+        FLUID_LOG(err_level, "Device <%s> does not exists", devname);
         goto error_recovery;
     }
 
     if((devstat.st_mode & S_IFCHR) != S_IFCHR)
     {
-        FLUID_LOG(FLUID_ERR, "Device <%s> is not a device file", devname);
+        FLUID_LOG(err_level, "Device <%s> is not a device file", devname);
         goto error_recovery;
     }
 
@@ -205,14 +206,14 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings,
 
     if(dev->dspfd == -1)
     {
-        FLUID_LOG(FLUID_ERR, "Device <%s> could not be opened for writing: %s",
+        FLUID_LOG(err_level, "Device <%s> could not be opened for writing: %s",
                   devname, strerror(errno));
         goto error_recovery;
     }
 
     if(fluid_oss_set_queue_size(dev, sample_size, 2, queuesize, period_size) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set device buffer size");
+        FLUID_LOG(err_level, "Can't set device buffer size");
         goto error_recovery;
     }
 
@@ -220,13 +221,13 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings,
 
     if(ioctl(dev->dspfd, SNDCTL_DSP_SETFMT, &oss_format) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample format");
+        FLUID_LOG(err_level, "Can't set the sample format");
         goto error_recovery;
     }
 
     if(oss_format != format)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample format");
+        FLUID_LOG(err_level, "Can't set the sample format");
         goto error_recovery;
     }
 
@@ -234,13 +235,13 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings,
 
     if(ioctl(dev->dspfd, SOUND_PCM_WRITE_CHANNELS, &channels) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the number of channels");
+        FLUID_LOG(err_level, "Can't set the number of channels");
         goto error_recovery;
     }
 
     if(channels != 2)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the number of channels");
+        FLUID_LOG(err_level, "Can't set the number of channels");
         goto error_recovery;
     }
 
@@ -248,14 +249,14 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings,
 
     if(ioctl(dev->dspfd, SNDCTL_DSP_SPEED, &sr) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample rate");
+        FLUID_LOG(err_level, "Can't set the sample rate");
         goto error_recovery;
     }
 
     if((sr < 0.95 * sample_rate) ||
             (sr > 1.05 * sample_rate))
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample rate");
+        FLUID_LOG(err_level, "Can't set the sample rate");
         goto error_recovery;
     }
 
@@ -299,6 +300,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
     char *devname = NULL;
     int realtime_prio = 0;
     int format;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_oss_audio_driver_t);
 
@@ -339,13 +341,13 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
 
     if(stat(devname, &devstat) == -1)
     {
-        FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", devname);
+        FLUID_LOG(err_level, "Device <%s> does not exists", devname);
         goto error_recovery;
     }
 
     if((devstat.st_mode & S_IFCHR) != S_IFCHR)
     {
-        FLUID_LOG(FLUID_ERR, "Device <%s> is not a device file", devname);
+        FLUID_LOG(err_level, "Device <%s> is not a device file", devname);
         goto error_recovery;
     }
 
@@ -353,7 +355,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
 
     if(dev->dspfd == -1)
     {
-        FLUID_LOG(FLUID_ERR, "Device <%s> could not be opened for writing: %s",
+        FLUID_LOG(err_level, "Device <%s> could not be opened for writing: %s",
                   devname, strerror(errno));
         goto error_recovery;
     }
@@ -361,7 +363,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
 
     if(fluid_oss_set_queue_size(dev, 16, 2, queuesize, period_size) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set device buffer size");
+        FLUID_LOG(err_level, "Can't set device buffer size");
         goto error_recovery;
     }
 
@@ -369,13 +371,13 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
 
     if(ioctl(dev->dspfd, SNDCTL_DSP_SETFMT, &format) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample format");
+        FLUID_LOG(err_level, "Can't set the sample format");
         goto error_recovery;
     }
 
     if(format != AFMT_S16_LE)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample format");
+        FLUID_LOG(err_level, "Can't set the sample format");
         goto error_recovery;
     }
 
@@ -383,13 +385,13 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
 
     if(ioctl(dev->dspfd, SOUND_PCM_WRITE_CHANNELS, &channels) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the number of channels");
+        FLUID_LOG(err_level, "Can't set the number of channels");
         goto error_recovery;
     }
 
     if(channels != 2)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the number of channels");
+        FLUID_LOG(err_level, "Can't set the number of channels");
         goto error_recovery;
     }
 
@@ -397,14 +399,14 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings,
 
     if(ioctl(dev->dspfd, SNDCTL_DSP_SPEED, &sr) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample rate");
+        FLUID_LOG(err_level, "Can't set the sample rate");
         goto error_recovery;
     }
 
     if((sr < 0.95 * sample_rate) ||
             (sr > 1.05 * sample_rate))
     {
-        FLUID_LOG(FLUID_ERR, "Can't set the sample rate");
+        FLUID_LOG(err_level, "Can't set the sample rate");
         goto error_recovery;
     }
 
@@ -611,6 +613,7 @@ new_fluid_oss_midi_driver(fluid_settings_t *settings,
     fluid_oss_midi_driver_t *dev;
     int realtime_prio = 0;
     char *device = NULL;
+    int err_level = (flags & FLUID_MDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -670,7 +673,7 @@ new_fluid_oss_midi_driver(fluid_settings_t *settings,
 
     if(fcntl(dev->fd, F_SETFL, O_NONBLOCK) == -1)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set OSS MIDI device to non-blocking: %s",
+        FLUID_LOG(err_level, "Failed to set OSS MIDI device to non-blocking: %s",
                   strerror(errno));
         goto error_recovery;
     }
