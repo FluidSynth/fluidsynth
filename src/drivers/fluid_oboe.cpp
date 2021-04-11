@@ -166,6 +166,7 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings,
                             int flags)
 {
     fluid_oboe_audio_driver_t *dev = nullptr;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     try
     {
@@ -211,7 +212,7 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings,
 
         if(result != Result::OK)
         {
-            FLUID_LOG(FLUID_ERR, "Unable to open Oboe audio stream");
+            FLUID_LOG(err_level, "Unable to open Oboe audio stream");
             goto error_recovery;
         }
 
@@ -223,7 +224,7 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings,
 
         if(result != Result::OK)
         {
-            FLUID_LOG(FLUID_ERR, "Unable to start Oboe audio stream");
+            FLUID_LOG(err_level, "Unable to start Oboe audio stream");
             goto error_recovery;
         }
 
@@ -235,11 +236,11 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings,
     }
     catch(const std::exception &e)
     {
-        FLUID_LOG(FLUID_ERR, "oboe: std::exception caught: %s", e.what());
+        FLUID_LOG(err_level, "oboe: std::exception caught: %s", e.what());
     }
     catch(...)
     {
-        FLUID_LOG(FLUID_ERR, "Unexpected Oboe driver initialization error");
+        FLUID_LOG(err_level, "Unexpected Oboe driver initialization error");
     }
 
 error_recovery:
