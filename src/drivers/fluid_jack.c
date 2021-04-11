@@ -109,12 +109,15 @@ fluid_jack_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.jack.server", "", 0);
 }
 
-static void fluid_jack_error(const char *msg)
+static void fluid_jack_log_error(const char *msg)
 {
     FLUID_LOG(FLUID_ERR, "jack: %s", msg);
 }
 
-static void fluid_jack_silent_error(const char *msg) {}
+static void fluid_jack_log_debug(const char *msg)
+{
+    FLUID_LOG(FLUID_DBG, "jack: %s", msg);
+}
 
 /*
  * Connect all midi input ports to all terminal midi output ports
@@ -160,6 +163,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
     char *server = NULL;
     char *client_name;
     char name[64];
+    int err_level;
 
     if(fluid_settings_dupstr(settings, isaudio ? "audio.jack.server"          /* ++ alloc server name */
                              : "midi.jack.server", &server) != FLUID_OK)
@@ -169,7 +173,16 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
 
     fluid_mutex_lock(last_client_mutex);      /* ++ lock last_client */
 
-    jack_set_error_function(fluid_jack_error);
+    if (flags & FLUID_AUDRIVER_PROBE)
+    {
+        jack_set_error_function(fluid_jack_log_debug);
+        err_level = FLUID_DBG;
+    }
+    else
+    {
+        jack_set_error_function(fluid_jack_log_error);
+        err_level = FLUID_ERR;
+    }
 
     /* If the last client uses the same server and is not the same type (audio or MIDI),
      * then re-use the client. */
@@ -195,6 +208,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
         }
         else
         {
+            FLUID_LOG(err_level, "Failed to create Jack audio port");
             // do not free client_ref and do not goto error_recovery
             // client_ref is being used by another audio or midi driver. Freeing it here will lead to a double free.
             client_ref = NULL;
@@ -253,15 +267,13 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
         }
         else
         {
-            jack_set_error_function(fluid_jack_silent_error);
             client_ref->client = jack_client_open(name, JackNoStartServer, NULL);
-            jack_set_error_function(fluid_jack_error);
         }
     }
 
     if(!client_ref->client)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to connect to Jack server.");
+        FLUID_LOG(err_level, "Failed to connect to Jack server.");
         goto error_recovery;
     }
 
@@ -274,13 +286,14 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver, int
     /* Register ports */
     if(fluid_jack_client_register_ports(driver, isaudio, client_ref->client, settings) != FLUID_OK)
     {
+        FLUID_LOG(err_level, "Failed to create Jack MIDI port");
         goto error_recovery;
     }
 
     /* tell the JACK server that we are ready to roll */
     if(jack_activate(client_ref->client))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to activate Jack client");
+        FLUID_LOG(err_level, "Failed to activate Jack client");
         goto error_recovery;
     }
 
@@ -375,7 +388,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
             if(dev->midi_port[i] == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to create Jack MIDI port '%s'", name);
+                FLUID_LOG(FLUID_DBG, "Failed to create Jack MIDI port '%s'", name);
                 FLUID_FREE(dev->midi_port);
                 dev->midi_port = NULL;
                 return FLUID_FAILED;
@@ -415,7 +428,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
         if(dev->output_ports[0] == NULL || dev->output_ports[1] == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port '%s'",
+            FLUID_LOG(FLUID_DBG, "Failed to create Jack audio port '%s'",
                       (dev->output_ports[0] == NULL ? (dev->output_ports[1] == NULL ? "left & right" : "left") : "right"));
             goto error_recovery;
         }
@@ -449,7 +462,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
             if((dev->output_ports[2 * i]
                     = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port '%s'", name);
+                FLUID_LOG(FLUID_DBG, "Failed to create Jack audio port '%s'", name);
                 goto error_recovery;
             }
 
@@ -458,7 +471,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
             if((dev->output_ports[2 * i + 1]
                     = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port '%s'", name);
+                FLUID_LOG(FLUID_DBG, "Failed to create Jack audio port '%s'", name);
                 goto error_recovery;
             }
         }
@@ -492,7 +505,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
             if((dev->fx_ports[2 * i]
                     = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to create Jack fx audio port '%s'", name);
+                FLUID_LOG(FLUID_DBG, "Failed to create Jack fx audio port '%s'", name);
                 goto error_recovery;
             }
 
@@ -501,7 +514,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
             if((dev->fx_ports[2 * i + 1]
                     = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to create Jack fx audio port '%s'", name);
+                FLUID_LOG(FLUID_DBG, "Failed to create Jack fx audio port '%s'", name);
                 goto error_recovery;
             }
         }
