@@ -331,6 +331,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     AUDCLNT_SHAREMODE share_mode;
     OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
     int needs_com_uninit = FALSE;
+    int i;
 
     if(time_to_sleep < 1)
     {
@@ -478,7 +479,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
     FLUID_MEMSET(dev->drybuf, 0, sizeof(float *) * dev->audio_channels * 2);
 
-    for(int i = 0; i < dev->audio_channels * 2; ++i)
+    for(i = 0; i < dev->audio_channels * 2; ++i)
     {
         dev->drybuf[i] = FLUID_ARRAY(float, dev->nframes);
 
