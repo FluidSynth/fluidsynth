@@ -171,7 +171,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     int sample_size;
     int i;
     char *dname = NULL;
-    DWORD flags = 0;
+    DWORD stream_flags = 0;
     //GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
     WAVEFORMATEXTENSIBLE wfx;
     WAVEFORMATEXTENSIBLE *rwfx = NULL;
@@ -329,7 +329,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
         if(rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) // needs resampling
         {
-            flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
+            stream_flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
             vi.dwMinorVersion = 1;
 
             if(VerifyVersionInfoW(&vi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
@@ -339,14 +339,14 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
                                           VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
                 //IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set
             {
-                flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+                stream_flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
             }
         }
 
         CoTaskMemFree(rwfx);
     }
 
-    ret = IAudioClient_Initialize(dev->aucl, share_mode, flags,
+    ret = IAudioClient_Initialize(dev->aucl, share_mode, stream_flags,
                                   buffer_duration_reftime, periods_reftime, (WAVEFORMATEX *)&wfx, &GUID_NULL);
 
     if(FAILED(ret))
