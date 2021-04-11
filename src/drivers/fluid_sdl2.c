@@ -96,11 +96,12 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings,
     SDL_AudioSpec aspec, rspec;
     char *device;
     const char *dev_name;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* Check if SDL library has been started */
     if(!SDL_WasInit(SDL_INIT_AUDIO))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create SDL2 audio driver, because the audio subsystem of SDL2 is not initialized.");
+        FLUID_LOG(err_level, "Failed to create SDL2 audio driver, because the audio subsystem of SDL2 is not initialized.");
         return NULL;
     }
 
@@ -118,7 +119,7 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings,
         /* According to documentation, it MUST be a power of two */
         if((period_size & (period_size - 1)) != 0)
         {
-            FLUID_LOG(FLUID_ERR, "\"audio.period-size\" must be a power of 2 for SDL2");
+            FLUID_LOG(err_level, "\"audio.period-size\" must be a power of 2 for SDL2");
             return NULL;
         }
     }
@@ -149,7 +150,7 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings,
     }
     else
     {
-        FLUID_LOG(FLUID_ERR, "Unhandled sample format");
+        FLUID_LOG(err_level, "Unhandled sample format");
         return NULL;
     }
 
@@ -219,7 +220,7 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings,
 
         if(!dev->devid)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to open audio device");
+            FLUID_LOG(err_level, "Failed to open audio device");
             break;
         }
 
