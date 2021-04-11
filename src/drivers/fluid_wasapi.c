@@ -135,6 +135,7 @@ typedef struct
     int channels_count;
     int float_samples;
 
+    HANDLE start_ev;
     HANDLE thread;
     DWORD thread_id;
     HANDLE quit_ev;
@@ -232,6 +233,14 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         goto cleanup;
     }
 
+    dev->start_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    if(dev->start_ev == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: failed to create start event.");
+        goto cleanup;
+    }
+
     dev->thread = CreateThread(NULL, 0, fluid_wasapi_audio_run, (void *)dev, 0, &dev->thread_id);
 
     if(dev->thread == NULL)
@@ -240,7 +249,9 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         goto cleanup;
     }
 
-    return &dev->driver;
+    if (WaitForMultipleObjects(2, &dev->start_ev, FALSE, 200) == WAIT_OBJECT_0) {
+        return &dev->driver;
+    }
 
 cleanup:
 
@@ -271,6 +282,11 @@ void delete_fluid_wasapi_audio_driver(fluid_audio_driver_t *p)
     if(dev->quit_ev != NULL)
     {
         CloseHandle(dev->quit_ev);
+    }
+
+    if(dev->start_ev != NULL)
+    {
+        CloseHandle(dev->start_ev);
     }
 
     if(dev->drybuf)
@@ -494,6 +510,9 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
         goto cleanup;
     }
 
+    /* Signal the success of the driver initialization */
+    SetEvent(dev->start_ev);
+
     for(;;)
     {
         ret = IAudioClient_GetCurrentPadding(dev->aucl, &pos);
@@ -630,7 +649,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
         else
         {
             FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
-            goto cleanup2;
+            return;
         }
     }
 
@@ -642,7 +661,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
-        goto cleanup1;
+        goto cleanup;
     }
 
     ret = IMMDeviceEnumerator_EnumAudioEndpoints(
@@ -652,7 +671,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot enumerate audio devices. 0x%x", (unsigned)ret);
-        goto cleanup1;
+        goto cleanup;
     }
 
     ret = IMMDeviceCollection_GetCount(dcoll, &cnt);
@@ -660,7 +679,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get device count. 0x%x", (unsigned)ret);
-        goto cleanup1;
+        goto cleanup;
     }
 
     for(i = 0; i < cnt; ++i)
@@ -680,15 +699,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
         IMMDevice_Release(dev);
     }
 
-
-cleanup1:
-
-    if (!com_was_initialized)
-    {
-        CoUninitialize();
-    }
-
-cleanup2:
+cleanup:
 
     if(dcoll != NULL)
     {
@@ -698,6 +709,11 @@ cleanup2:
     if(denum != NULL)
     {
         IMMDeviceEnumerator_Release(denum);
+    }
+
+    if (!com_was_initialized)
+    {
+        CoUninitialize();
     }
 }
 
