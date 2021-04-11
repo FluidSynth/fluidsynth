@@ -82,6 +82,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
     MCI_AMP_OPEN_PARMS AmpOpenParms;
     int i;
     ULONG rc;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_dart_audio_driver_t);
 
@@ -100,7 +101,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
     /* check the format */
     if(!fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
-        FLUID_LOG(FLUID_ERR, "Unhandled sample format");
+        FLUID_LOG(err_level, "Unhandled sample format");
         goto error_recovery;
     }
 
@@ -115,7 +116,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
 
         if(rc != 0)
         {
-            FLUID_LOG(FLUID_ERR, "Cannot load MDM.DLL for DART due to %s", szFailedName);
+            FLUID_LOG(err_level, "Cannot load MDM.DLL for DART due to %s", szFailedName);
             goto error_recovery;
         }
 
@@ -123,7 +124,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
 
         if(rc != 0)
         {
-            FLUID_LOG(FLUID_ERR, "Cannot find mciSendCommand() in MDM.DLL");
+            FLUID_LOG(err_level, "Cannot find mciSendCommand() in MDM.DLL");
             DosFreeModule(m_hmodMDM);
             m_hmodMDM = NULLHANDLE;
             goto error_recovery;
@@ -142,7 +143,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
 
     if(rc != MCIERR_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Cannot open DART, rc = %lu", rc);
+        FLUID_LOG(err_level, "Cannot open DART, rc = %lu", rc);
         goto error_recovery;
     }
 
@@ -168,7 +169,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
 
     if(rc != MCIERR_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Cannot setup DART, rc = %lu", rc);
+        FLUID_LOG(err_level, "Cannot setup DART, rc = %lu", rc);
         goto error_recovery;
     }
 
@@ -185,7 +186,7 @@ new_fluid_dart_audio_driver(fluid_settings_t *settings,
 
     if((USHORT)rc != MCIERR_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Cannot allocate memory for DART, rc = %lu", rc);
+        FLUID_LOG(err_level, "Cannot allocate memory for DART, rc = %lu", rc);
         goto error_recovery;
     }
 
