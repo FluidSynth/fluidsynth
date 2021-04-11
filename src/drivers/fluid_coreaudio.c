@@ -174,6 +174,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
     OSStatus status;
     UInt32 size;
     int i;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_core_audio_driver_t);
 
@@ -200,7 +201,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(comp == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to get the default audio device");
+        FLUID_LOG(err_level, "Failed to get the default audio device");
         goto error_recovery;
     }
 
@@ -208,7 +209,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(status != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to open the default audio device. Status=%ld\n", (long int)status);
+        FLUID_LOG(err_level, "Failed to open the default audio device. Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
@@ -225,7 +226,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(status != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Error setting the audio callback. Status=%ld\n", (long int)status);
+        FLUID_LOG(err_level, "Error setting the audio callback. Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
@@ -269,7 +270,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
                             if(status != noErr)
                             {
-                                FLUID_LOG(FLUID_ERR, "Error setting the selected output device. Status=%ld\n", (long int)status);
+                                FLUID_LOG(err_level, "Error setting the selected output device. Status=%ld\n", (long int)status);
                                 goto error_recovery;
                             }
                         }
@@ -311,7 +312,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(status != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Error setting the audio format. Status=%ld\n", (long int)status);
+        FLUID_LOG(err_level, "Error setting the audio format. Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
@@ -324,7 +325,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(status != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set the MaximumFramesPerSlice. Status=%ld\n", (long int)status);
+        FLUID_LOG(err_level, "Failed to set the MaximumFramesPerSlice. Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
@@ -344,7 +345,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(status != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Error calling AudioUnitInitialize(). Status=%ld\n", (long int)status);
+        FLUID_LOG(err_level, "Error calling AudioUnitInitialize(). Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
@@ -353,7 +354,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings,
 
     if(status != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Error calling AudioOutputUnitStart(). Status=%ld\n", (long int)status);
+        FLUID_LOG(err_level, "Error calling AudioOutputUnitStart(). Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
