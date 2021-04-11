@@ -472,6 +472,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     int max_devices;  /* maximum number of devices to handle */
     char strError[MAXERRORLENGTH];
     char dev_name[MAXPNAMELEN];
+    int err_level = (flags & FLUID_MDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -493,7 +494,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     /* check if any device has be found	*/
     if(!max_devices)
     {
-        FLUID_LOG(FLUID_ERR, "Device \"%s\" does not exists", dev_name);
+        FLUID_LOG(err_level, "Device \"%s\" does not exists", dev_name);
         return NULL;
     }
 
@@ -528,7 +529,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
         if(res != MMSYSERR_NOERROR)
         {
-            FLUID_LOG(FLUID_ERR, "Couldn't open MIDI input: %s (error %d)",
+            FLUID_LOG(err_level, "Couldn't open MIDI input: %s (error %d)",
                       fluid_winmidi_input_error(strError, res), res);
             goto error_recovery;
         }
@@ -574,7 +575,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
     if(dev->hThread == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create SYSEX buffer processing thread");
+        FLUID_LOG(err_level, "Failed to create SYSEX buffer processing thread");
         goto error_recovery;
     }
 
@@ -583,7 +584,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     {
         if(midiInStart(dev->dev_infos[i].hmidiin) != MMSYSERR_NOERROR)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to start the MIDI input. MIDI input not available.");
+            FLUID_LOG(err_level, "Failed to start the MIDI input. MIDI input not available.");
             goto error_recovery;
         }
     }
