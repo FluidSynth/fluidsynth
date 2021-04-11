@@ -160,6 +160,11 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
     int probe = fluid_settings_str_equal(settings, "midi.driver", "auto");
     int flags;
 
+    if (probe)
+    {
+        FLUID_LOG(FLUID_INFO, "Trying to auto-select a MIDI driver");
+    }
+
     for(def = fluid_midi_drivers; def->name != NULL; def++)
     {
         if(!probe && !fluid_settings_str_equal(settings, "midi.driver", def->name))
@@ -179,6 +184,10 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
 
         if(driver)
         {
+            if (probe)
+            {
+                FLUID_LOG(FLUID_INFO, "Using '%s' MIDI driver", def->name);
+            }
             driver->define = def;
             return driver;
         }

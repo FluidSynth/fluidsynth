@@ -277,8 +277,13 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
     char *selected_option = NULL;
     fluid_audio_driver_t *driver = NULL;
     const fluid_audriver_definition_t *def;
-    int auto_select = fluid_settings_str_equal(settings, "audio.driver", "auto");
+    int probe = fluid_settings_str_equal(settings, "audio.driver", "auto");
     int flags;
+
+    if (probe)
+    {
+        FLUID_LOG(FLUID_INFO, "Trying to auto-select an audio driver");
+    }
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
@@ -289,7 +294,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
 
         def = &fluid_audio_drivers[i];
 
-        if (!auto_select && !fluid_settings_str_equal(settings, "audio.driver", def->name))
+        if (!probe && !fluid_settings_str_equal(settings, "audio.driver", def->name))
         {
             continue;
         }
@@ -297,7 +302,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
         FLUID_LOG(FLUID_DBG, "Trying '%s' audio driver", def->name);
 
         flags = def->flags;
-        if (auto_select)
+        if (probe)
         {
             flags |= FLUID_AUDRIVER_PROBE;
         }
@@ -321,13 +326,17 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
 
         if (driver)
         {
+            if (probe)
+            {
+                FLUID_LOG(FLUID_INFO, "Using '%s' audio driver", def->name);
+            }
             driver->define = def;
             return driver;
         }
 
         FLUID_LOG(FLUID_DBG, "'%s' audio driver failed to start", def->name);
 
-        if (auto_select)
+        if (probe)
         {
             continue;
         }
@@ -343,7 +352,7 @@ create_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth,
         return NULL;
     }
 
-    if (auto_select)
+    if (probe)
     {
         FLUID_LOG(FLUID_ERR,
                 "Couldn't auto-select an audio driver, tried %s",
