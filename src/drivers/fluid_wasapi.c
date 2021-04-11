@@ -180,6 +180,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     IMMDevice *mmdev = NULL;
     HRESULT ret;
     OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     if(!VerifyVersionInfoW(&vi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
                            VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
@@ -187,7 +188,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
                                    VER_MINORVERSION, VER_GREATER_EQUAL),
                                    VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: this driver requires Windows Vista or newer.");
+        FLUID_LOG(err_level, "wasapi: this driver requires Windows Vista or newer.");
         return NULL;
     }
 
@@ -199,7 +200,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(audio_channels > FLUID_WASAPI_MAX_OUTPUTS)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: channel configuration with more than one stereo pair is not supported.");
+        FLUID_LOG(err_level, "wasapi: channel configuration with more than one stereo pair is not supported.");
         return NULL;
     }
 
@@ -250,7 +251,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
@@ -261,7 +262,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
@@ -290,7 +291,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot activate audio client. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: cannot activate audio client. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
@@ -318,7 +319,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: device doesn't support the mode we want. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: device doesn't support the mode we want. 0x%x", (unsigned)ret);
         goto cleanup;
     }
     else if(ret == S_FALSE)
@@ -350,18 +351,18 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to initialize audio client. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: failed to initialize audio client. 0x%x", (unsigned)ret);
 
         if(ret == AUDCLNT_E_INVALID_DEVICE_PERIOD)
         {
             fluid_long_long_t defp, minp;
-            FLUID_LOG(FLUID_ERR, "wasapi: the device period size is invalid.");
+            FLUID_LOG(err_level, "wasapi: the device period size is invalid.");
 
             if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, &minp)))
             {
                 int defpf = (int)(defp / 1e7 * sample_rate);
                 int minpf = (int)(minp / 1e7 * sample_rate);
-                FLUID_LOG(FLUID_ERR, "wasapi: minimum period is %d, default period is %d. selected %d.", minpf, defpf, period_size);
+                FLUID_LOG(err_level, "wasapi: minimum period is %d, default period is %d. selected %d.", minpf, defpf, period_size);
             }
         }
 
@@ -372,7 +373,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio buffer size. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: cannot get audio buffer size. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
@@ -404,7 +405,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(FAILED(ret))
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio render device. 0x%x", (unsigned)ret);
+        FLUID_LOG(err_level, "wasapi: cannot get audio render device. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
@@ -417,7 +418,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(dev->quit_ev == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to create quit event.");
+        FLUID_LOG(err_level, "wasapi: failed to create quit event.");
         goto cleanup;
     }
 
@@ -425,7 +426,7 @@ new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(dev->thread == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to create audio thread.");
+        FLUID_LOG(err_level, "wasapi: failed to create audio thread.");
         goto cleanup;
     }
 
