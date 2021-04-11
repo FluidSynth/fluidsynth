@@ -165,6 +165,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
     snd_pcm_sw_params_t *swparams = NULL;
     snd_pcm_uframes_t uframes;
     unsigned int tmp;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_alsa_audio_driver_t);
 
@@ -193,13 +194,13 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
     {
         if(err == -EBUSY)
         {
-            FLUID_LOG(FLUID_ERR, "The \"%s\" audio device is used by another application",
+            FLUID_LOG(err_level, "The \"%s\" audio device is used by another application",
                       device ? device : "default");
             goto error_recovery;
         }
         else
         {
-            FLUID_LOG(FLUID_ERR, "Failed to open the \"%s\" audio device",
+            FLUID_LOG(err_level, "Failed to open the \"%s\" audio device",
                       device ? device : "default");
             goto error_recovery;
         }
@@ -232,7 +233,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
         if((err = snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2)) < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to set the channels: %s",
+            FLUID_LOG(err_level, "Failed to set the channels: %s",
                       snd_strerror(err));
             goto error_recovery;
         }
@@ -241,7 +242,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
         if((err = snd_pcm_hw_params_set_rate_near(dev->pcm, hwparams, &tmp, NULL)) < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to set the sample rate: %s",
+            FLUID_LOG(err_level, "Failed to set the sample rate: %s",
                       snd_strerror(err));
             goto error_recovery;
         }
@@ -258,7 +259,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
         if(snd_pcm_hw_params_set_period_size_near(dev->pcm, hwparams, &uframes, &dir) < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to set the period size");
+            FLUID_LOG(err_level, "Failed to set the period size");
             goto error_recovery;
         }
 
@@ -274,7 +275,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
         if(snd_pcm_hw_params_set_periods_near(dev->pcm, hwparams, &tmp, &dir) < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to set the number of periods");
+            FLUID_LOG(err_level, "Failed to set the number of periods");
             goto error_recovery;
         }
 
@@ -295,7 +296,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
     if(fluid_alsa_formats[i].name == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to find an audio format supported by alsa");
+        FLUID_LOG(err_level, "Failed to find an audio format supported by alsa");
         goto error_recovery;
     }
 
@@ -319,7 +320,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
     if(snd_pcm_nonblock(dev->pcm, 0) != 0)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
+        FLUID_LOG(err_level, "Failed to set the audio device to blocking mode");
         goto error_recovery;
     }
 
@@ -328,7 +329,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
 
     if(!dev->thread)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to start the alsa-audio thread.");
+        FLUID_LOG(err_level, "Failed to start the alsa-audio thread.");
         goto error_recovery;
     }
 
