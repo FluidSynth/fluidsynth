@@ -94,6 +94,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     float *left = NULL,
            *right = NULL,
             *buf = NULL;
+    int err_level = (flags & FLUID_AUDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     dev = FLUID_NEW(fluid_pulse_audio_driver_t);
 
@@ -159,11 +160,9 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
 
     if(!dev->pa_handle)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection");
+        FLUID_LOG(err_level, "Failed to create PulseAudio connection");
         goto error_recovery;
     }
-
-    FLUID_LOG(FLUID_INFO, "Using PulseAudio driver");
 
     if(func != NULL)
     {
