@@ -110,6 +110,7 @@ new_fluid_coremidi_driver(fluid_settings_t *settings,
     char *id;
     CFStringRef str_portname;
     CFStringRef str_clientname;
+    int err_level = (flags & FLUID_MDRIVER_PROBE) ? FLUID_DBG : FLUID_ERR;
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -180,7 +181,7 @@ new_fluid_coremidi_driver(fluid_settings_t *settings,
 
     if(result != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create the MIDI input client");
+        FLUID_LOG(err_level, "Failed to create the MIDI input client");
         goto error_recovery;
     }
 
@@ -192,7 +193,7 @@ new_fluid_coremidi_driver(fluid_settings_t *settings,
 
     if(result != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create the MIDI input port. MIDI input not available.");
+        FLUID_LOG(err_level, "Failed to create the MIDI input port. MIDI input not available.");
         goto error_recovery;
     }
 
@@ -204,7 +205,7 @@ new_fluid_coremidi_driver(fluid_settings_t *settings,
 
     if(result != noErr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create input port.");
+        FLUID_LOG(err_level, "Failed to create input port.");
         goto error_recovery;
     }
 
