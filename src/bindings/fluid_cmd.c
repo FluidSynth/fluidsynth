@@ -214,7 +214,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
-        "reverb [group] [0|1|on|off] Turn all or one reverb group on or off"
+        "reverb [group] 0|1|on|off   Turn all or one reverb group on or off"
     },
     /* chorus commands */
     {
@@ -235,7 +235,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
-        "chorus [group] [0|1|on|off] Turn all or one chorus group on or off"
+        "chorus [group] 0|1|on|off   Turn all or one chorus group on or off"
     },
     {
         "gain", "general", fluid_handle_gain,
