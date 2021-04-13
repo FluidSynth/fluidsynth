@@ -163,6 +163,8 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings, 
 
 fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
+    DWORD ret;
+    HANDLE wait_handles[2];
     fluid_wasapi_audio_driver_t *dev = NULL;
     OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
 
@@ -241,7 +243,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         goto cleanup;
     }
 
-    dev->thread = CreateThread(NULL, 0, fluid_wasapi_audio_run, (void *)dev, 0, &dev->thread_id);
+    dev->thread = CreateThread(NULL, 0, fluid_wasapi_audio_run, dev, 0, &dev->thread_id);
 
     if(dev->thread == NULL)
     {
@@ -249,8 +251,21 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         goto cleanup;
     }
 
-    if (WaitForMultipleObjects(2, &dev->start_ev, FALSE, 200) == WAIT_OBJECT_0) {
-        return &dev->driver;
+    /* start event must be first */
+    wait_handles[0] = dev->start_ev;
+    wait_handles[1] = dev->thread;
+    ret = WaitForMultipleObjects(FLUID_N_ELEMENTS(wait_handles), wait_handles, FALSE, 1000);
+    switch (ret)
+    {
+        case WAIT_OBJECT_0:
+            return &dev->driver;
+
+        case WAIT_TIMEOUT:
+            FLUID_LOG(FLUID_WARN, "wasapi: initialization timeout!");
+            break;
+
+        default:
+            break;
     }
 
 cleanup:
@@ -353,6 +368,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     //wfx.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
     //wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
 
+    /* initialize COM in a worker thread to avoid a potential double initialization in the callers thread */
     ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     if(FAILED(ret))
