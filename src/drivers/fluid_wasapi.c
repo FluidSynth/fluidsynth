@@ -102,13 +102,6 @@ static const IID   _IID_IAudioRenderClient =
 
 #define FLUID_WASAPI_MAX_OUTPUTS 1
 
-/* Please do not change the order of the HANDLE array */
-#define FLUID_WASAPI_START 0
-#define FLUID_WASAPI_THREAD 1
-#define FLUID_WASAPI_QUIT 2
-#define FLUID_WASAPI_LAST_HANDLE FLUID_WASAPI_QUIT
-#define FLUID_WASAPI_MAX_HANDLES FLUID_WASAPI_LAST_HANDLE + 1
-
 typedef void(*fluid_wasapi_devenum_callback_t)(IMMDevice *, void *);
 
 static DWORD WINAPI fluid_wasapi_audio_run(void *p);
@@ -142,8 +135,10 @@ typedef struct
     int channels_count;
     int float_samples;
 
+    HANDLE start_ev;
+    HANDLE thread;
     DWORD thread_id;
-    HANDLE handles[FLUID_WASAPI_MAX_HANDLES];
+    HANDLE quit_ev;
 
     IAudioClient *aucl;
     IAudioRenderClient *arcl;
@@ -168,7 +163,6 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings, 
 
 fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
-    DWORD ret = 0;
     fluid_wasapi_audio_driver_t *dev = NULL;
     OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
 
@@ -231,41 +225,32 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     dev->buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
     dev->periods_reftime = (fluid_long_long_t)( dev->period_size / dev->sample_rate * 1e7 + .5);
 
-    dev->handles[FLUID_WASAPI_QUIT] = CreateEvent(NULL, FALSE, FALSE, NULL);
+    dev->quit_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    if(dev->handles[FLUID_WASAPI_QUIT] == NULL)
+    if(dev->quit_ev == NULL)
     {
         FLUID_LOG(FLUID_ERR, "wasapi: failed to create quit event.");
         goto cleanup;
     }
 
-    dev->handles[FLUID_WASAPI_START] = CreateEvent(NULL, FALSE, FALSE, NULL);
+    dev->start_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    if(dev->handles[FLUID_WASAPI_START] == NULL)
+    if(dev->start_ev == NULL)
     {
         FLUID_LOG(FLUID_ERR, "wasapi: failed to create start event.");
         goto cleanup;
     }
 
-    dev->handles[FLUID_WASAPI_THREAD] = CreateThread(NULL, 0, fluid_wasapi_audio_run, (void *)dev, 0, &dev->thread_id);
+    dev->thread = CreateThread(NULL, 0, fluid_wasapi_audio_run, (void *)dev, 0, &dev->thread_id);
 
-    if(dev->handles[FLUID_WASAPI_THREAD] == NULL)
+    if(dev->thread == NULL)
     {
         FLUID_LOG(FLUID_ERR, "wasapi: failed to create audio thread.");
         goto cleanup;
     }
 
-    ret = WaitForMultipleObjects(2, (HANDLE *)&dev->handles, FALSE, 1000);
-    switch (ret) {
-        case WAIT_OBJECT_0:
-            return &dev->driver;
-
-        case WAIT_TIMEOUT:
-            FLUID_LOG(FLUID_WARN, "wasapi: initialization timeout!");
-            break;
-
-        default:
-            break;
+    if (WaitForMultipleObjects(2, &dev->start_ev, FALSE, 200) == WAIT_OBJECT_0) {
+        return &dev->driver;
     }
 
 cleanup:
@@ -281,27 +266,27 @@ void delete_fluid_wasapi_audio_driver(fluid_audio_driver_t *p)
 
     fluid_return_if_fail(dev != NULL);
 
-    if(dev->handles[FLUID_WASAPI_THREAD] != NULL)
+    if(dev->thread != NULL)
     {
-        SetEvent(dev->handles[FLUID_WASAPI_QUIT]);
+        SetEvent(dev->quit_ev);
 
-        if(WaitForSingleObject(dev->handles[FLUID_WASAPI_THREAD], 2000) != WAIT_OBJECT_0)
+        if(WaitForSingleObject(dev->thread, 2000) != WAIT_OBJECT_0)
         {
             FLUID_LOG(FLUID_WARN, "wasapi: couldn't join the audio thread. killing it.");
-            TerminateThread(dev->handles[FLUID_WASAPI_THREAD], 0);
+            TerminateThread(dev->thread, 0);
         }
 
-        CloseHandle(dev->handles[FLUID_WASAPI_THREAD]);
+        CloseHandle(dev->thread);
     }
 
-    if(dev->handles[FLUID_WASAPI_QUIT] != NULL)
+    if(dev->quit_ev != NULL)
     {
-        CloseHandle(dev->handles[FLUID_WASAPI_QUIT]);
+        CloseHandle(dev->quit_ev);
     }
 
-    if(dev->handles[FLUID_WASAPI_START] != NULL)
+    if(dev->start_ev != NULL)
     {
-        CloseHandle(dev->handles[FLUID_WASAPI_START]);
+        CloseHandle(dev->start_ev);
     }
 
     if(dev->drybuf)
@@ -527,7 +512,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     }
 
     /* Signal the success of the driver initialization */
-    SetEvent(dev->handles[FLUID_WASAPI_START]);
+    SetEvent(dev->start_ev);
 
     for(;;)
     {
@@ -568,7 +553,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
             goto cleanup;
         }
 
-        if(WaitForSingleObject(dev->handles[FLUID_WASAPI_QUIT], time_to_sleep) == WAIT_OBJECT_0)
+        if(WaitForSingleObject(dev->quit_ev, time_to_sleep) == WAIT_OBJECT_0)
         {
             break;
         }
