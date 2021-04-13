@@ -279,15 +279,15 @@ error_recovery:
 }
 
 /**
- * Convenience wrapper for free() that satisfies at least C90 requirements.
+ * Wrapper for free() that satisfies at least C90 requirements.
  *
  * @param ptr Pointer to memory region that should be freed
  *
- * Especially useful when using fluidsynth with programming languages that do not
- * provide malloc() and free().
- *
  * @note Only use this function when the API documentation explicitly says so. Otherwise use
  * adequate \c delete_fluid_* functions.
+ *
+ * @warning Calling ::free() on memory that is advised to be freed with fluid_free() results in undefined behaviour!
+ * (cf.: "Potential Errors Passing CRT Objects Across DLL Boundaries" found in MS Docs)
  *
  * @since 2.0.7
  */
