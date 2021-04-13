@@ -225,7 +225,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     dev->channels_count = dev->audio_channels * 2;
     dev->float_samples = (dev->sample_format == WAVE_FORMAT_IEEE_FLOAT);
     dev->buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
-    dev->periods_reftime = (fluid_long_long_t)( dev->period_size / dev->sample_rate * 1e7 + .5);
+    dev->periods_reftime = (fluid_long_long_t)(dev->period_size / dev->sample_rate * 1e7 + .5);
 
     dev->quit_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -255,17 +255,18 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     wait_handles[0] = dev->start_ev;
     wait_handles[1] = dev->thread;
     ret = WaitForMultipleObjects(FLUID_N_ELEMENTS(wait_handles), wait_handles, FALSE, 1000);
-    switch (ret)
+
+    switch(ret)
     {
-        case WAIT_OBJECT_0:
-            return &dev->driver;
+    case WAIT_OBJECT_0:
+        return &dev->driver;
 
-        case WAIT_TIMEOUT:
-            FLUID_LOG(FLUID_WARN, "wasapi: initialization timeout!");
-            break;
+    case WAIT_TIMEOUT:
+        FLUID_LOG(FLUID_WARN, "wasapi: initialization timeout!");
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
 cleanup:
@@ -422,6 +423,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     }
 
     ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode, (const WAVEFORMATEX *)&wfx, (WAVEFORMATEX **)&rwfx);
+
     if(FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: device doesn't support the mode we want. 0x%x", (unsigned)ret);
@@ -598,7 +600,7 @@ cleanup:
         IMMDeviceEnumerator_Release(denum);
     }
 
-    if (needs_com_uninit)
+    if(needs_com_uninit)
     {
         CoUninitialize();
     }
@@ -658,7 +660,7 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
 
     if(FAILED(ret))
     {
-        if (ret == RPC_E_CHANGED_MODE)
+        if(ret == RPC_E_CHANGED_MODE)
         {
             com_was_initialized = TRUE;
             FLUID_LOG(FLUID_DBG, "wasapi: COM was already initialized");
@@ -728,7 +730,7 @@ cleanup:
         IMMDeviceEnumerator_Release(denum);
     }
 
-    if (!com_was_initialized)
+    if(!com_was_initialized)
     {
         CoUninitialize();
     }
