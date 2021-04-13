@@ -13,14 +13,14 @@ jobs:
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-prefix: "fluidsynth"
-        imageName: 'vs2017-win2016'
+        imageName: 'windows-2019'
       XP_x64:
         platform: x64
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         artifact-prefix: "fluidsynth"
-        imageName: 'vs2017-win2016'
+        imageName: 'windows-2019'
   pool:
     vmImage: $(imageName)
   steps:
@@ -157,7 +157,7 @@ jobs:
         mingw-url: $(mingw-url-x64)
         artifact-prefix: "fluidsynth-mingw"
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2019'
   steps:
     - task: DownloadBuildArtifacts@0
       inputs:
