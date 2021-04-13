@@ -231,7 +231,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(dev->quit_ev == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to create quit event.");
+        FLUID_LOG(FLUID_ERR, "wasapi: failed to create quit event: '%s'", fluid_get_windows_error());
         goto cleanup;
     }
 
@@ -239,7 +239,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(dev->start_ev == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to create start event.");
+        FLUID_LOG(FLUID_ERR, "wasapi: failed to create start event: '%s'", fluid_get_windows_error());
         goto cleanup;
     }
 
@@ -247,7 +247,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
 
     if(dev->thread == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "wasapi: failed to create audio thread.");
+        FLUID_LOG(FLUID_ERR, "wasapi: failed to create audio thread: '%s'", fluid_get_windows_error());
         goto cleanup;
     }
 
