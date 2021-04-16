@@ -89,8 +89,15 @@ static const IID   _IID_IAudioRenderClient =
  *    audio.periods still determines the buffer size, but has no direct impact on
  *    the latency (at least according to Microsoft). The valid range for
  *    audio.period-size may vary depending on the driver and sample rate.
+ *  - In shared mode, audio.period-size is completely ignored. Instead, a value
+ *    provided by the audio driver is used. In theory this means the latency in
+ *    shared mode is out of fluidsynth's control, but you may still increase
+ *    audio.periods for a larger buffer to fix buffer underruns in case there
+ *    are any.
  *  - The sample rate and sample format of fluidsynth must be supported by the
- *    audio device in exclusive mode. Otherwise driver creation will fail.
+ *    audio device in exclusive mode. Otherwise driver creation will fail. Use
+ *    `fluidsynth ---query-audio-devices` to find out the modes supported by
+ *    the soundcards installed on the system.
  *  - In shared mode, if the sample rate of the synth doesn't match what is
  *    configured in the 'advanced' tab of the audio device properties dialog,
  *    Windows will automatically resample the output (obviously). Windows
@@ -331,7 +338,7 @@ void fluid_wasapi_audio_driver_settings(fluid_settings_t *settings)
 static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 {
     fluid_wasapi_audio_driver_t *dev = (fluid_wasapi_audio_driver_t *)p;
-    DWORD time_to_sleep = dev->buffer_duration * 1000 / 2;
+    DWORD time_to_sleep;
     UINT32 pos;
     DWORD len;
     void *channels_out[2];
@@ -348,11 +355,6 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
     int needs_com_uninit = FALSE;
     int i;
-
-    if(time_to_sleep < 1)
-    {
-        time_to_sleep = 1;
-    }
 
     /* Clear format structure */
     ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
@@ -417,9 +419,19 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     }
     else
     {
+        fluid_long_long_t defp;
         share_mode = AUDCLNT_SHAREMODE_SHARED;
         FLUID_LOG(FLUID_DBG, "wasapi: using shared mode.");
         dev->periods_reftime = 0;
+
+        //use default period size of the device
+        if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, NULL)))
+        {
+            dev->period_size = (int)(defp / 1e7 * dev->sample_rate);
+            dev->buffer_duration = dev->periods * dev->period_size / dev->sample_rate;
+            dev->buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
+            FLUID_LOG(FLUID_DBG, "wasapi: using device period size: %d", dev->period_size);
+        }
     }
 
     ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode, (const WAVEFORMATEX *)&wfx, (WAVEFORMATEX **)&rwfx);
@@ -486,6 +498,11 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
     FLUID_LOG(FLUID_DBG, "wasapi: requested %d frames of buffers, got %u.", dev->periods * dev->period_size, dev->nframes);
     dev->buffer_duration = dev->nframes / dev->sample_rate;
+    time_to_sleep = dev->buffer_duration * 1000 / 2;
+    if(time_to_sleep < 1)
+    {
+        time_to_sleep = 1;
+    }
 
     dev->drybuf = FLUID_ARRAY(float *, dev->audio_channels * 2);
 
@@ -779,7 +796,7 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
 {
     fluid_wasapi_finddev_data_t *d = (fluid_wasapi_finddev_data_t *)data;
     int nsz;
-    char *name;
+    char *name = NULL;
     wchar_t *id = NULL;
     IPropertyStore *prop = NULL;
     PROPVARIANT var;
