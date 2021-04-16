@@ -20,6 +20,11 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
+
+if(POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW)
+endif()
+
 project ( FluidSynth C CXX )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
@@ -288,30 +293,10 @@ if ( WIN32 )
 
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
-  if  ( MSVC )
-    # statically link in the CRT library to avoid a bunch of runtime DLL dependencies and allow 
-    # the CI windows builds to be run under WinXP
-    foreach ( flag_var
-        CMAKE_C_FLAGS
-        CMAKE_C_FLAGS_DEBUG
-        CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL
-        CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        )
-      if ( ${flag_var} MATCHES "/MD" )
-        string ( REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}" )
-      endif ( ${flag_var} MATCHES "/MD" )
-    endforeach ( flag_var )
-
-  else ( MSVC )
+  if  ( NOT MSVC )
     # only set debug postfix if not MSVS building
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
-  endif ( MSVC )
+  endif ( NOT MSVC )
 
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
