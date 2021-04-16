@@ -635,6 +635,8 @@ static int fluid_wasapi_write_processed_channels(void *data, int len,
     fluid_wasapi_audio_driver_t *drv = (fluid_wasapi_audio_driver_t *) data;
     float *optr[FLUID_WASAPI_MAX_OUTPUTS * 2];
     int16_t *ioptr[FLUID_WASAPI_MAX_OUTPUTS * 2];
+    int efx_nch = 0;
+    float **efx_buf = NULL;
 
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
@@ -643,7 +645,12 @@ static int fluid_wasapi_write_processed_channels(void *data, int len,
         ioptr[ch] = (int16_t *)channels_out[ch] + channels_off[ch];
     }
 
-    ret = drv->func(drv->user_pointer, len, 0, NULL, drv->channels_count, drv->drybuf);
+    if(drv->func == (fluid_audio_func_t)fluid_synth_process)
+    {
+        efx_nch = drv->channels_count;
+        efx_buf = drv->drybuf;
+    }
+    ret = drv->func(drv->user_pointer, len, efx_nch, efx_buf, drv->channels_count, drv->drybuf);
 
     for(ch = 0; ch < drv->channels_count; ++ch)
     {
