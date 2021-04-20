@@ -51,31 +51,26 @@ static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
                                void *channels_out[], int channels_off[],
                                int channels_incr[]);
 
-/* speakers mapping */
+/* Speakers mapping */
 const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
 {
     /* 1 stereo output */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT
-    },
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
+
     /* 2 stereo outputs */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
-    },
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
+    SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
+
     /* 3 stereo outputs */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
-    },
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
+    SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+    SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
+
     /* 4 stereo outputs */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
-        SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT
-    }
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
+    SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+    SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
+    SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT
 };
 
 typedef struct
