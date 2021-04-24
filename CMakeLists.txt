@@ -693,9 +693,10 @@ set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
 set(TEST_SOUNDFONT_UTF8 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
-# Check for C99 float math
-
+# Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES ${LIBFLUID_LIBS} )
+
+# Check for C99 float math
 
 unset ( HAVE_SINF CACHE )
 CHECK_SYMBOL_EXISTS ( sinf "math.h" HAVE_SINF )
