@@ -55,6 +55,8 @@ want to deactivate the use of the shell, start FluidSynth with the \-i
 option: 'fluidsynth \-ni soundfont.sf2 midifile1.mid midifile2.mid'.
 .PP
 Run fluidsynth with the \-\-help option to check for changes in the list of options.
+.PP
+Since version 2.2.1 fluidsynth automatically probes for an available audio and midi driver, if none was explicitly specified. During auto-probing, error messages from the drivers will not be printed, unless \-\-verbose was given. Error messages will be restored, when explicitly specifying a driver with the \-a or \-m options respectively.
 .SH OPTIONS
 \fBfluidsynth\fP accepts the following options:
 
