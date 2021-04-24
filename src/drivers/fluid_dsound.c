@@ -53,7 +53,7 @@ static char *fluid_win32_error(HRESULT hr);
 /* Maximum number of stereo outputs */
 #define DSOUND_MAX_STEREO_CHANNELS 4
 /* Speakers mapping */
-const static DWORD channel_mask_speakers[DSOUND_MAX_STEREO_CHANNELS] =
+static const DWORD channel_mask_speakers[DSOUND_MAX_STEREO_CHANNELS] =
 {
     /* 1 stereo output */
     SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
