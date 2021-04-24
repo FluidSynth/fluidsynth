@@ -364,16 +364,6 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
   endif ( enable-framework )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
-
-unset ( HAVE_INETNTOP CACHE )
-unset ( IPV6_SUPPORT CACHE )
-CHECK_FUNCTION_EXISTS ( "inet_ntop" HAVE_INETNTOP )
-if ( enable-ipv6 )
-  if ( HAVE_INETNTOP )
-    set ( IPV6_SUPPORT 1 )
-  endif ( HAVE_INETNTOP )
-endif ( enable-ipv6 )
-
 unset ( NETWORK_SUPPORT )
 if ( enable-network )
     set ( NETWORK_SUPPORT 1 )
@@ -694,7 +684,7 @@ set(TEST_SOUNDFONT_UTF8 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWav
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
 # Make sure to link against libm before checking for math functions below
-set ( CMAKE_REQUIRED_LIBRARIES ${LIBFLUID_LIBS} )
+set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
 
 # Check for C99 float math
 
@@ -733,6 +723,20 @@ CHECK_SYMBOL_EXISTS ( logf "math.h" HAVE_LOGF )
 if ( HAVE_LOGF )
   set ( HAVE_LOGF 1 )
 endif ( HAVE_LOGF )
+
+unset ( HAVE_INETNTOP CACHE )
+unset ( IPV6_SUPPORT CACHE )
+if ( WIN32 )
+  CHECK_SYMBOL_EXISTS ( inet_ntop "ws2tcpip.h" HAVE_INETNTOP )
+else ( WIN32 )
+  CHECK_SYMBOL_EXISTS ( inet_ntop "arpa/inet.h" HAVE_INETNTOP )
+endif ( WIN32 )
+if ( enable-ipv6 )
+  if ( HAVE_INETNTOP )
+    set ( IPV6_SUPPORT 1 )
+  endif ( HAVE_INETNTOP )
+endif ( enable-ipv6 )
+
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
