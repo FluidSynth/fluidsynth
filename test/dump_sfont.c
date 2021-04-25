@@ -12,7 +12,7 @@ static void dump_preset(fluid_preset_t *preset);
 static void dump_inst_zone(fluid_inst_zone_t *zone);
 static void dump_inst(fluid_inst_t *inst);
 static void dump_defsfont(fluid_defsfont_t *defsfont);
-static int inst_compare_func(void *a, void *b);
+static int inst_compare_func(const void *a, const void *b);
 static fluid_list_t *collect_preset_insts(fluid_preset_t *preset, fluid_list_t *inst_list);
 
 #define FMT_BUFSIZE (4096)
@@ -288,7 +288,7 @@ static void dump_inst(fluid_inst_t *inst)
     }
 }
 
-static int inst_compare_func(void *a, void *b)
+static int inst_compare_func(const void *a, const void *b)
 {
     const fluid_inst_t *inst_a = a;
     const fluid_inst_t *inst_b = b;
@@ -355,7 +355,7 @@ static void dump_defsfont(fluid_defsfont_t *defsfont)
         inst_list = collect_preset_insts(preset, inst_list);
     }
 
-    inst_list = fluid_list_sort(inst_list, (fluid_compare_func_t)inst_compare_func);
+    inst_list = fluid_list_sort(inst_list, inst_compare_func);
 
     fmt("instruments:");
     for (list = inst_list; list; list = fluid_list_next(list))

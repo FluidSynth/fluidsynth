@@ -243,7 +243,7 @@ static int load_shdr(SFData *sf, unsigned int size);
 static int chunkid(uint32_t id);
 static int read_listchunk(SFData *sf, SFChunk *chunk);
 static int pdtahelper(SFData *sf, unsigned int expid, unsigned int reclen, SFChunk *chunk, int *size);
-static int preset_compare_func(void *a, void *b);
+static int preset_compare_func(const void *a, const void *b);
 static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
 static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
@@ -623,7 +623,7 @@ static int load_body(SFData *sf)
     }
 
     /* sort preset list by bank, preset # */
-    sf->preset = fluid_list_sort(sf->preset, (fluid_compare_func_t)preset_compare_func);
+    sf->preset = fluid_list_sort(sf->preset, preset_compare_func);
 
     return TRUE;
 }
@@ -2120,12 +2120,12 @@ void delete_zone(SFZone *zone)
 }
 
 /* preset sort function, first by bank, then by preset # */
-static int preset_compare_func(void *a, void *b)
+static int preset_compare_func(const void *a, const void *b)
 {
     int aval, bval;
 
-    aval = (int)(((SFPreset *)a)->bank) << 16 | ((SFPreset *)a)->prenum;
-    bval = (int)(((SFPreset *)b)->bank) << 16 | ((SFPreset *)b)->prenum;
+    aval = (int)(((const SFPreset *)a)->bank) << 16 | ((const SFPreset *)a)->prenum;
+    bval = (int)(((const SFPreset *)b)->bank) << 16 | ((const SFPreset *)b)->prenum;
 
     return (aval - bval);
 }
