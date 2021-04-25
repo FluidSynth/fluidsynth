@@ -49,7 +49,7 @@ fluid_long_long_t default_ftell(void *handle)
     #define PRIi64 "%I64d"
 #else
     #define PRIi64 "%lld"
-#neif
+#endif
 
 int safe_fread(void *buf, fluid_long_long_t count, void *fd)
 {
