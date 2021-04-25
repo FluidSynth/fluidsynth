@@ -21,6 +21,10 @@
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
 
+if(POLICY CMP0075)
+  cmake_policy(SET CMP0075 NEW)
+endif()
+
 if(POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW)
 endif()
@@ -156,7 +160,7 @@ include ( DefaultDirs )
 include ( CheckCCompilerFlag )
 include ( CheckSTDC )
 include ( CheckIncludeFile )
-include ( CheckFunctionExists )
+include ( CheckSymbolExists )
 include ( CheckTypeSize )
 check_include_file ( string.h HAVE_STRING_H )
 check_include_file ( stdlib.h HAVE_STDLIB_H )
@@ -358,16 +362,6 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
-
-
-unset ( HAVE_INETNTOP CACHE )
-unset ( IPV6_SUPPORT CACHE )
-CHECK_FUNCTION_EXISTS ( "inet_ntop" HAVE_INETNTOP )
-if ( enable-ipv6 )
-  if ( HAVE_INETNTOP )
-    set ( IPV6_SUPPORT 1 )
-  endif ( HAVE_INETNTOP )
-endif ( enable-ipv6 )
 
 unset ( NETWORK_SUPPORT )
 if ( enable-network )
@@ -688,43 +682,60 @@ set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
 set(TEST_SOUNDFONT_UTF8 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
+# Make sure to link against libm before checking for math functions below
+set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
+
 # Check for C99 float math
 
 unset ( HAVE_SINF CACHE )
-CHECK_FUNCTION_EXISTS ( "sinf" HAVE_SINF )
+CHECK_SYMBOL_EXISTS ( sinf "math.h" HAVE_SINF )
 if ( HAVE_SINF )
   set ( HAVE_SINF 1 )
 endif ( HAVE_SINF )
 
 unset ( HAVE_COSF CACHE )
-CHECK_FUNCTION_EXISTS ( "cosf" HAVE_COSF )
+CHECK_SYMBOL_EXISTS ( cosf "math.h" HAVE_COSF )
 if ( HAVE_COSF )
   set ( HAVE_COSF 1 )
 endif ( HAVE_COSF )
 
 unset ( HAVE_FABSF CACHE )
-CHECK_FUNCTION_EXISTS ( "fabsf" HAVE_FABSF )
+CHECK_SYMBOL_EXISTS ( fabsf "math.h" HAVE_FABSF )
 if ( HAVE_FABSF )
   set ( HAVE_FABSF 1 )
 endif ( HAVE_FABSF )
 
 unset ( HAVE_POWF CACHE )
-CHECK_FUNCTION_EXISTS ( "powf" HAVE_POWF )
+CHECK_SYMBOL_EXISTS ( powf "math.h" HAVE_POWF )
 if ( HAVE_POWF )
   set ( HAVE_POWF 1 )
 endif ( HAVE_POWF )
 
 unset ( HAVE_SQRTF CACHE )
-CHECK_FUNCTION_EXISTS ( "sqrtf" HAVE_SQRTF )
+CHECK_SYMBOL_EXISTS ( sqrtf "math.h" HAVE_SQRTF )
 if ( HAVE_SQRTF )
   set ( HAVE_SQRTF 1 )
 endif ( HAVE_SQRTF )
 
 unset ( HAVE_LOGF CACHE )
-CHECK_FUNCTION_EXISTS ( "logf" HAVE_LOGF )
+CHECK_SYMBOL_EXISTS ( logf "math.h" HAVE_LOGF )
 if ( HAVE_LOGF )
   set ( HAVE_LOGF 1 )
 endif ( HAVE_LOGF )
+
+unset ( HAVE_INETNTOP CACHE )
+unset ( IPV6_SUPPORT CACHE )
+if ( WIN32 )
+  CHECK_SYMBOL_EXISTS ( inet_ntop "ws2tcpip.h" HAVE_INETNTOP )
+else ( WIN32 )
+  CHECK_SYMBOL_EXISTS ( inet_ntop "arpa/inet.h" HAVE_INETNTOP )
+endif ( WIN32 )
+if ( enable-ipv6 )
+  if ( HAVE_INETNTOP )
+    set ( IPV6_SUPPORT 1 )
+  endif ( HAVE_INETNTOP )
+endif ( enable-ipv6 )
+
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
