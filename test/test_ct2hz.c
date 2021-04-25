@@ -9,7 +9,7 @@ int float_eq(fluid_real_t x, fluid_real_t y)
 {
     static const float EPS = 1e-5;
     FLUID_LOG(FLUID_INFO, "Comparing %.9f and %.9f", x, y);
-    return fabs(x-y) < EPS;
+    return FLUID_FABS(x-y) < EPS;
 }
 
 int main(void)
