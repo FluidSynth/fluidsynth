@@ -52,7 +52,7 @@ static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
                                int channels_incr[]);
 
 /* Speakers mapping */
-const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
+static const DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
 {
     /* 1 stereo output */
     SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
