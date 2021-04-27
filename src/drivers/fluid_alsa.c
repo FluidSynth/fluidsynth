@@ -686,7 +686,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings,
     if((err = snd_rawmidi_open(&dev->rawmidi_in, NULL, device ? device : "default",
                                SND_RAWMIDI_NONBLOCK)) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "Error opening ALSA raw MIDI port");
+        FLUID_LOG(FLUID_ERR, "Error opening ALSA raw MIDI port: %s", snd_strerror(err));
         goto error_recovery;
     }
 

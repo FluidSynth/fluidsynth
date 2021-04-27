@@ -26,7 +26,7 @@
 
 static int fluid_midi_event_length(unsigned char event);
 static int fluid_isasciistring(char *s);
-static long fluid_getlength(unsigned char *s);
+static long fluid_getlength(const unsigned char *s);
 
 
 /* Read the entire contents of a file into memory, allocating enough memory
@@ -420,7 +420,7 @@ fluid_isasciistring(char *s)
  * fluid_getlength
  */
 long
-fluid_getlength(unsigned char *s)
+fluid_getlength(const unsigned char *s)
 {
     long i = 0;
     i = s[3] | (s[2] << 8) | (s[1] << 16) | (s[0] << 24);

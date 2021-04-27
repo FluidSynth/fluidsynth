@@ -963,6 +963,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
 
             /* Clears profile data */
             if(clear_data == 0)
+            {
                 for(i = 0; i < FLUID_PROFILE_NBR; i++)
                 {
                     fluid_profile_data[i].min = 1e10;/* min sets to max value */
@@ -972,6 +973,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
                     fluid_profile_data[i].n_voices = 0; /* voices number */
                     fluid_profile_data[i].n_samples = 0;/* audio samples number */
                 }
+            }
 
             fluid_profile_status = PROFILE_START;	/* starts profiling */
         }

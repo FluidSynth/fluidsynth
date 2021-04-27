@@ -233,11 +233,9 @@ static int process_pdta(SFData *sf, int size);
 static int load_phdr(SFData *sf, unsigned int size);
 static int load_pbag(SFData *sf, int size);
 static int load_pmod(SFData *sf, int size);
-extern int load_pgen(SFData *sf, int size);
 static int load_ihdr(SFData *sf, unsigned int size);
 static int load_ibag(SFData *sf, int size);
 static int load_imod(SFData *sf, int size);
-extern int load_igen(SFData *sf, int size);
 static int load_shdr(SFData *sf, unsigned int size);
 
 static int chunkid(uint32_t id);
