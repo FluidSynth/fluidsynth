@@ -28,6 +28,7 @@
 #if DSOUND_SUPPORT
 
 
+#include <initguid.h>
 #include <mmsystem.h>
 #include <dsound.h>
 #include <mmreg.h>
@@ -43,6 +44,12 @@ static int fluid_dsound_write_processed_channels(fluid_synth_t *data, int len,
                                int channels_incr[]);
 
 static char *fluid_win32_error(HRESULT hr);
+
+/* Helper macro for declaring GUIDs for formats */
+#define FLUID_GUID(_name, _v) DEFINE_GUID(_name, _v)
+
+FLUID_GUID(guid_format_float, DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT));
+FLUID_GUID(guid_format_pcm,   DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM));
 
 /**
 * The driver handle multiple channels.
@@ -227,22 +234,20 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     {
         if(fluid_settings_str_equal(settings, "audio.sample-format", "float"))
         {
-            GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
             FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
             dev->write = fluid_synth_write_float_channels;
             /* sample container size in bits: 32 bits */
             format.Format.wBitsPerSample = 8 * sizeof(float);
-            format.SubFormat = guid_float;
+            format.SubFormat = guid_format_float;
             format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
         }
         else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
         {
-            GUID guid_pcm = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM)};
             FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
             dev->write = fluid_synth_write_s16_channels;
             /* sample container size in bits: 16bits */
             format.Format.wBitsPerSample = 8 * sizeof(short);
-            format.SubFormat = guid_pcm;
+            format.SubFormat = guid_format_pcm;
             format.Format.wFormatTag = WAVE_FORMAT_PCM;
         }
         else
@@ -253,12 +258,11 @@ new_fluid_dsound_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t fu
     }
     else
     {
-        GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
         FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
         dev->write = fluid_dsound_write_processed_channels;
         /* sample container size in bits: 32 bits */
         format.Format.wBitsPerSample = 8 * sizeof(float);
-        format.SubFormat = guid_float;
+        format.SubFormat = guid_format_float;
         format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
         dev->drybuf = FLUID_ARRAY(float*, audio_channels * 2);
         if(dev->drybuf == NULL)
