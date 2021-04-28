@@ -26,7 +26,6 @@
 #if WAVEOUT_SUPPORT
 
 #include <mmsystem.h>
-
 #include <mmreg.h>
 
 /* Those two includes are required on Windows 9x/ME */
@@ -300,22 +299,20 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     /* check the format */
     if(fluid_settings_str_equal(settings, "audio.sample-format", "float") || func)
     {
-        GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
         FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
 
         sample_size = sizeof(float);
         write_ptr = func ? fluid_waveout_write_processed_channels : fluid_synth_write_float_channels;
-        wfx.SubFormat = guid_float;
+        wfx.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
         wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     }
     else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
-        GUID guid_pcm = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM)};
         FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
 
         sample_size = sizeof(short);
         write_ptr = fluid_synth_write_s16_channels;
-        wfx.SubFormat = guid_pcm;
+        wfx.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
         wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
     }
     else
