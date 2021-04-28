@@ -25,8 +25,8 @@
 
 #if WAVEOUT_SUPPORT
 
+#include <initguid.h>
 #include <mmsystem.h>
-
 #include <mmreg.h>
 
 /* Those two includes are required on Windows 9x/ME */
@@ -50,6 +50,12 @@ static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[]);
+
+/* Helper macro for declaring GUIDs for formats */
+#define FLUID_GUID(_name, _v) DEFINE_GUID(_name, _v)
+
+FLUID_GUID(guid_format_float, DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT));
+FLUID_GUID(guid_format_pcm,   DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM));
 
 /* Speakers mapping */
 static const DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
@@ -300,22 +306,20 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     /* check the format */
     if(fluid_settings_str_equal(settings, "audio.sample-format", "float") || func)
     {
-        GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
         FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
 
         sample_size = sizeof(float);
         write_ptr = func ? fluid_waveout_write_processed_channels : fluid_synth_write_float_channels;
-        wfx.SubFormat = guid_float;
+        wfx.SubFormat = guid_format_float;
         wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     }
     else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
-        GUID guid_pcm = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM)};
         FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
 
         sample_size = sizeof(short);
         write_ptr = fluid_synth_write_s16_channels;
-        wfx.SubFormat = guid_pcm;
+        wfx.SubFormat = guid_format_pcm;
         wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
     }
     else
