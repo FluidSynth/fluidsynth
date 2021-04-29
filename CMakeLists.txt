@@ -276,7 +276,7 @@ if ( WIN32 )
   endif ( enable-network )
 
   if ( enable-dsound AND HAVE_DSOUND_H )
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound" )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound;ksuser" )
     set ( DSOUND_SUPPORT 1 )
   endif ()
 
@@ -286,7 +286,7 @@ if ( WIN32 )
   endif ()
 
   if ( enable-waveout AND HAVE_MMSYSTEM_H )
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm" )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm;ksuser" )
     set ( WAVEOUT_SUPPORT 1 )
   endif ()
 
