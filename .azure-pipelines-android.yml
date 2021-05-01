@@ -108,7 +108,7 @@ jobs:
         echo "##vso[task.setvariable variable=ANDROID_TARGET_API]$ANDROID_TARGET_API"
 
         # the --target to be used by autotools
-        if [ -z "${ANDROID_TARGET_ABI}" ]
+        if [ -z ${ANDROID_TARGET_ABI} ]
         then
           export TARGET="${ARCH}"
         else
@@ -164,8 +164,10 @@ jobs:
 
         #    $ $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${ANDROID_API}-clang++ src.cpp
 
+        echo $TARGET
+
         pushd libiconv-${ICONV_VERSION}
-        ./configure --host=${TARGET} --prefix=${PREFIX} --disable-rpath
+        ./configure --host=$TARGET --prefix=${PREFIX} --disable-rpath
         make -j$((`nproc`+1))
         make install
         popd
