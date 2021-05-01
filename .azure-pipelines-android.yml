@@ -73,6 +73,12 @@ jobs:
 
   steps:
     - script: |
+        set -ex
+        sudo apt-get install gettext
+      displayName: 'apt-get install'
+
+    - script: |
+        set -ex
         mkdir -p $(DEV)
       displayName: 'mkdir $(DEV)'
 
@@ -203,7 +209,7 @@ jobs:
         make -j$((`nproc`+1))
         make install
         popd
-      displayName: 'Compile everything'
+      displayName: 'Compile glib'
       workingDirectory: $(DEV)
 
     - script: |
