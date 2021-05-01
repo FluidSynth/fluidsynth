@@ -126,9 +126,9 @@ jobs:
         # the --target to be used by autotools
         if [ -z ${ANDROID_TARGET_ABI} ]
         then
-          export TARGET="${ARCH}-none-linux"
+          export TARGET="${ARCH}"
         else
-          export TARGET="${ARCH}-none-linux-${ANDROID_TARGET_ABI}"
+          export TARGET="${ARCH}-${ANDROID_TARGET_ABI}"
         fi
         echo "##vso[task.setvariable variable=TARGET]$TARGET"
 
@@ -145,7 +145,7 @@ jobs:
         echo "##vso[task.setvariable variable=CC]$CC"
         export CXX=${ANDROID_TARGET_API}-clang++
         echo "##vso[task.setvariable variable=CXX]$CXX"
-        export LD=${ANDROID_TARGET}-ld
+        export LD=ld.lld
         echo "##vso[task.setvariable variable=LD]$LD"
         export STRIP=${ANDROID_TARGET}-strip
         echo "##vso[task.setvariable variable=STRIP]$STRIP"
