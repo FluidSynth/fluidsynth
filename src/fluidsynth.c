@@ -586,7 +586,9 @@ int main(int argc, char **argv)
             break;
 
         case 'j':
+#if JACK_SUPPORT
             fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
+#endif
             fluid_settings_setint(settings, "midi.autoconnect", 1);
             break;
 
@@ -1075,7 +1077,7 @@ int main(int argc, char **argv)
 
         if(adriver == NULL)
         {
-            fprintf(stderr, "Failed to create the audio driver\n");
+            fprintf(stderr, "Failed to create the audio driver. Giving up.\n");
             goto cleanup;
         }
 

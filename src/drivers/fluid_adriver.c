@@ -281,11 +281,11 @@ find_fluid_audio_driver(fluid_settings_t *settings)
     {
         if(allnames[0] != '\0')
         {
-            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
+            FLUID_LOG(FLUID_INFO, "This build of fluidsynth supports the following audio drivers: %s", allnames);
         }
         else
         {
-            FLUID_LOG(FLUID_INFO, "No audio drivers available.");
+            FLUID_LOG(FLUID_INFO, "This build of fluidsynth doesn't support any audio drivers.");
         }
 
         FLUID_FREE(allnames);
