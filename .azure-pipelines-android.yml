@@ -138,39 +138,19 @@ jobs:
       displayName: 'Set environment variables'
 
     - script: |
-        # Android cross-compile environment setup script for Glib
-        # Author  : Zengwen Yuan
-        # Date    : 2016-07-16
-        # License : Creative Commons Attribution-ShareAlike 4.0
-        # http://zwyuan.github.io/2016/07/17/cross-compile-glib-for-android/
-        #
-        # Modified by Tom Moebert to provide an Android cross compilation toolchain for fluidsynth 2.0
-        # Date: 2018-09-06
-
         set -ex
-
-        # Create a standalone toolchain first, see https://developer.android.com/ndk/guides/standalone_toolchain
-        #${NDK}/build/tools/make_standalone_toolchain.py --arch ${ANDROID_ARCH} --api ${ANDROID_API} --stl=libc++ --install-dir=${NDK_TOOLCHAIN}
-
-        #WARNING:__main__:make_standalone_toolchain.py is no longer necessary. The
-        #$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin directory contains target-specific scripts that perform
-        #the same task. For example, instead of:
-
-        #    $ python $NDK/build/tools/make_standalone_toolchain.py \
-        #        --arch arm --api 28 --install-dir toolchain
-        #    $ toolchain/bin/clang++ src.cpp
-
-        #Instead use:
-
-        #    $ $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${ANDROID_API}-clang++ src.cpp
-
-        echo $TARGET
 
         pushd libiconv-${ICONV_VERSION}
         ./configure --host=$TARGET --prefix=${PREFIX} --disable-rpath
         make -j$((`nproc`+1))
         make install
         popd
+  
+      displayName: 'Compile libiconv'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
 
         pushd libffi-${FFI_VERSION}
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
@@ -180,14 +160,24 @@ jobs:
         make -j$((`nproc`+1))
         make install
         popd
+      displayName: 'Compile libffi'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
 
         pushd gettext-${GETTEXT_VERSION}
         ./configure --host=${TARGET}  --prefix=${PREFIX} --disable-rpath --disable-libasprintf --disable-java --disable-native-java --disable-openmp --disable-curses
         make -j$((`nproc`+1))
         make install
         popd
+      displayName: 'Compile gettext'
+      workingDirectory: $(DEV)
 
-        pushd glib-${GLIB_VERSION}
+    - script: |
+        set -ex
+
+        pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
         cat << EOF > android.cache
         glib_cv_long_long_format=ll
         glib_cv_stack_grows=no
@@ -213,6 +203,11 @@ jobs:
         make -j$((`nproc`+1))
         make install
         popd
+      displayName: 'Compile everything'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
 
         pushd oboe-${OBOE_VERSION}
         mkdir -p build
@@ -245,11 +240,16 @@ jobs:
 
         popd
         popd
+      displayName: 'Compile Oboe'
+      workingDirectory: $(DEV)
 
-        FLUIDSYNTH_VERSION=2.1.5
-        #wget https://github.com/FluidSynth/fluidsynth/archive/v${FLUIDSYNTH_VERSION}.tar.gz
-        #tar zxvf v${FLUIDSYNTH_VERSION}.tar.gz
-        pushd fluidsynth-${FLUIDSYNTH_VERSION}
+    - script: |
+        ls -Rg $(PREFIX)
+      displayName: 'Show compiled files'
+
+    - script: |
+        set -ex
+
         mkdir -p build
         pushd build
         cmake -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make \
@@ -262,6 +262,7 @@ jobs:
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -Denable-libsndfile=0 \
             -Denable-opensles=1 \
+            -Denable-floats=1 \
             -Denable-oboe=1 \
             -Denable-dbus=0 \
             -Denable-oss=0 ..
@@ -271,9 +272,6 @@ jobs:
         #sed -i s,'^CMAKE_C_FLAGS:STRING=.*','CMAKE_C_FLAGS:STRING=-fPIE -fPIC -I/usr/include -Werror=implicit-function-declaration',g src/gentables/CMakeCache.txt
         #make -j$((`nproc`+1))
 
-
         make install
         popd
-        popd
-      displayName: 'Compile everything'
-      workingDirectory: $(DEV)
+      displayName: 'Compile fluidsynth'
