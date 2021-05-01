@@ -8,6 +8,7 @@ variables:
   GLIB_EXTRAVERSION: '3'
   OBOE_VERSION: '1.5.0'
   SNDFILE_VERSION: '1.0.31'
+  INSTPATCH_VERSION: '1.1.6'
   
   # Android NDK sources and standalone toolchain is put here
   DEV: '$(System.DefaultWorkingDirectory)/android-build-root'
@@ -98,11 +99,14 @@ jobs:
         wget http://ftp.gnome.org/pub/gnome/sources/glib/${GLIB_VERSION}/glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
         tar xvf glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
 
-        wget https://github.com/google/oboe/archive/${OBOE_VERSION}.tar.gz
-        tar zxvf ${OBOE_VERSION}.tar.gz
+        wget -O oboe-${OBOE_VERSION}.tar.gz https://github.com/google/oboe/archive/${OBOE_VERSION}.tar.gz
+        tar zxvf oboe-${OBOE_VERSION}.tar.gz
 
         wget https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VERSION}/libsndfile-${SNDFILE_VERSION}.tar.bz2
         tar jxvf libsndfile-${SNDFILE_VERSION}.tar.bz2
+
+        wget -O libinstpatch-${INSTPATCH_VERSION}.tar.gz https://github.com/swami/libinstpatch/archive/refs/tags/v${INSTPATCH_VERSION}.tar.gz
+        tar zxvf libinstpatch-${INSTPATCH_VERSION}.tar.gz
 
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
@@ -265,6 +269,30 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
+        set -ex
+
+        pushd libinstpatch-${INSTPATCH_VERSION}
+        mkdir -p build
+        pushd build
+
+        cmake -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make \
+            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
+            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
+            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
+            -DANDROID_TOOLCHAIN=${CC} \
+            -DANDROID_NDK=${NDK} \
+            -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+            -DCMAKE_VERBOSE_MAKEFILE=1 \
+            ..
+        make -j$((`nproc`+1))
+        make install
+
+        popd
+        popd
+      displayName: 'Compile libinstpatch'
+      workingDirectory: $(DEV)
+
+    - script: |
         ls -Rg $(PREFIX)
       displayName: 'Show compiled files'
 
@@ -281,7 +309,6 @@ jobs:
             -DANDROID_NDK=${NDK} \
             -DCMAKE_INSTALL_PREFIX=${PREFIX} \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -Denable-libsndfile=0 \
             -Denable-opensles=1 \
             -Denable-floats=1 \
             -Denable-oboe=1 \
