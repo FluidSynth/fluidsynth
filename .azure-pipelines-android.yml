@@ -7,6 +7,7 @@ variables:
   GLIB_VERSION: '2.58'
   GLIB_EXTRAVERSION: '3'
   OBOE_VERSION: '1.5.0'
+  SNDFILE_VERSION: '1.28.0'
   
   # Android NDK sources and standalone toolchain is put here
   DEV: '$(System.DefaultWorkingDirectory)/android-build-root'
@@ -74,7 +75,7 @@ jobs:
   steps:
     - script: |
         set -ex
-        sudo apt-get install gettext
+        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev
       displayName: 'apt-get install'
 
     - script: |
@@ -99,6 +100,9 @@ jobs:
 
         wget https://github.com/google/oboe/archive/${OBOE_VERSION}.tar.gz
         tar zxvf ${OBOE_VERSION}.tar.gz
+
+        wget https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VERSION}/libsndfile-${SNDFILE_VERSION}.tar.bz2
+        tar zxvf libsndfile-${SNDFILE_VERSION}.tar.gz
 
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
@@ -210,6 +214,17 @@ jobs:
         make install
         popd
       displayName: 'Compile glib'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
+
+        pushd libsndfile-${SNDFILE_VERSION}
+        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --enable-static --disable-rpath
+        make -j$((`nproc`+1))
+        make install
+        popd
+      displayName: 'Compile libsndfile'
       workingDirectory: $(DEV)
 
     - script: |
