@@ -4,7 +4,8 @@ variables:
   FFI_VERSION: '3.3'
   GETTEXT_VERSION: '0.21'
   #need to switch to meson build system to use a more recent version 
-  GLIB_VERSION: '2.58.3'
+  GLIB_VERSION: '2.58'
+  GLIB_EXTRAVERSION: '3'
   OBOE_VERSION: '1.5.0'
   
   # Android NDK sources and standalone toolchain is put here
@@ -88,8 +89,8 @@ jobs:
         tar zxvf gettext-${GETTEXT_VERSION}.tar.gz
 
         wget http://ftp.gnome.org/pub/gnome/sources/glib/${GLIB_VERSION}/glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
-        tar xvf glib-${GLIB_VERSION}.tar.xz
-        
+        tar xvf glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
+
         wget https://github.com/google/oboe/archive/${OBOE_VERSION}.tar.gz
         tar zxvf ${OBOE_VERSION}.tar.gz
 
