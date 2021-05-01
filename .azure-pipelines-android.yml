@@ -102,7 +102,7 @@ jobs:
         tar zxvf ${OBOE_VERSION}.tar.gz
 
         wget https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VERSION}/libsndfile-${SNDFILE_VERSION}.tar.bz2
-        tar zxvf libsndfile-${SNDFILE_VERSION}.tar.gz
+        tar jxvf libsndfile-${SNDFILE_VERSION}.tar.bz2
 
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
