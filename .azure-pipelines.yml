@@ -82,7 +82,7 @@ jobs:
 
 - job: Windows10
   variables:
-    CFLAGS: '/D _WIN32_WINNT=0x0A00'
+    CFLAGS: '/D WINVER=0x0A00 /D _WIN32_WINNT=0x0A00'
     toolset: v142
     gtk-bundle: $(gtk-bundle-x64)
     libsndfile-url: $(libsndfile-url-x64)
@@ -122,7 +122,6 @@ jobs:
     - script: |
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
-        echo %CFLAGS%
         mkdir build && cd build || exit -1
         cmake -Werror=dev -A x64 -T $(toolset) -DCMAKE_BUILD_TYPE=$(CMAKE_CONFIG) -DCMAKE_VERBOSE_MAKEFILE=1 $(CMAKE_FLAGS) -DNO_GUI=1 .. || exit -1
         cmake --build . --config $(CMAKE_CONFIG) || exit -1
