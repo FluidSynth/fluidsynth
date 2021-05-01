@@ -51,22 +51,22 @@ jobs:
         ARCH: 'arm'
         ANDROID_ARCH: 'armv7a'
         ANDROID_ABI_CMAKE: 'armeabi-v7a'
-        ANDROID_TARGET_ABI: 'eabi'
+        ANDROID_TARGET_ABI: "eabi"
       AARCH64:
         ARCH: 'aarch64'
         ANDROID_ARCH: 'aarch64'
         ANDROID_ABI_CMAKE: 'arm64-v8a'
-        ANDROID_TARGET_ABI: ''
+        ANDROID_TARGET_ABI:
       i686:
         ARCH: 'i686'
         ANDROID_ARCH: 'i686'
         ANDROID_ABI_CMAKE: 'x86'
-        ANDROID_TARGET_ABI: ''
+        ANDROID_TARGET_ABI:
       x86_64:
         ARCH: 'x86_64'
         ANDROID_ARCH: 'x86_64'
         ANDROID_ABI_CMAKE: 'x86_64'
-        ANDROID_TARGET_ABI: ''
+        ANDROID_TARGET_ABI:
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -108,6 +108,13 @@ jobs:
         echo "##vso[task.setvariable variable=ANDROID_TARGET_API]$ANDROID_TARGET_API"
 
         # the --target to be used by autotools
+         if [ -z "${ANDROID_TARGET_ABI}" ]
+         then
+           export TARGET="${ARCH}"
+         else
+           export TARGET="${ARCH}-${ANDROID_TARGET_ABI}"
+         fi
+
         export TARGET=${ARCH}-eabi
         echo "##vso[task.setvariable variable=TARGET]$TARGET"
 
