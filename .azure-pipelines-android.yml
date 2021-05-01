@@ -172,7 +172,7 @@ jobs:
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
         sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
-        ./configure --host=${TARGET} --prefix=${PREFIX} --enable-static
+        ./configure --host=${TARGET} --prefix=${PREFIX} --disable-static --enable-shared
         make -j$((`nproc`+1))
         make install
         popd
@@ -215,7 +215,7 @@ jobs:
 
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
-        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --disable-dependency-tracking --cache-file=android.cache --enable-included-printf --enable-static --with-pcre=no --enable-libmount=no --with-libiconv=gnu
+        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --disable-dependency-tracking --cache-file=android.cache --enable-included-printf --disable-static --enable-shared --with-pcre=no --enable-libmount=no --with-libiconv=gnu
         make -j$((`nproc`+1))
         make install
         popd
@@ -226,7 +226,7 @@ jobs:
         set -ex
 
         pushd libsndfile-${SNDFILE_VERSION}
-        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --enable-static
+        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --disable-static --enable-shared
         make -j$((`nproc`+1))
         make install
         popd
@@ -244,12 +244,12 @@ jobs:
             -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_PLATFORM=android-${ANDROID_API} \
-            -DBUILD_SHARED_LIBS=0 .. \
+            -DBUILD_SHARED_LIBS=1 .. \
             -DCMAKE_VERBOSE_MAKEFILE=1
         make -j$((`nproc`+1))
         # need to manually install oboe as it doesn't provide an install target
-        ${RANLIB} liboboe.a
-        cp liboboe.a* ${PREFIX}/lib/
+        #${RANLIB} liboboe.a
+        cp liboboe.* ${PREFIX}/lib/
         cp -ur ../include/oboe ${PREFIX}/include
         # create a custom pkgconfig file for oboe to allow fluidsynth to find it
         cat << EOF > ${PKG_CONFIG_PATH}/oboe-1.0.pc
@@ -324,8 +324,12 @@ jobs:
       condition: always()
 
     - script: |
+        set -ex
         mkdir -p $(Build.ArtifactStagingDirectory)/$(ARCH)
-        cp -a $(PREFIX)/lib/* $(Build.ArtifactStagingDirectory)/$(ARCH)
+        cd $(Build.ArtifactStagingDirectory)/$(ARCH)
+        cp -a $(PREFIX)/lib/* .
+        ls -Rg .
+        rm -rf *.dll *.alias *gettext* libtextstyle.* *.a *.la
       displayName: 'Collecting artifacts'
           
     - task: PublishBuildArtifacts@1
