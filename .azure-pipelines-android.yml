@@ -226,7 +226,7 @@ jobs:
         set -ex
 
         pushd libsndfile-${SNDFILE_VERSION}
-        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --enable-static --disable-rpath
+        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --enable-static
         make -j$((`nproc`+1))
         make install
         popd
@@ -305,7 +305,7 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
-            -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) \
+            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -Denable-opensles=1 \
             -Denable-floats=1 \
@@ -324,11 +324,13 @@ jobs:
       condition: always()
 
     - script: |
-        true
+        mkdir -p $(Build.ArtifactStagingDirectory)/$(ARCH)
+        cp -a $(PREFIX)/lib/* $(Build.ArtifactStagingDirectory)/$(ARCH)
       displayName: 'Collecting artifacts'
           
     - task: PublishBuildArtifacts@1
+      displayName: 'Publishing Artefacts for Android API$(ANDROID_API) $(ARCH)'
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: '$(ARTIFACT_NAME)-$(ARCH)'
+        ArtifactName: '$(ARTIFACT_NAME)'
         publishLocation: 'Container'
