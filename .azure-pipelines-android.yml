@@ -98,7 +98,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        set -ex
+        set -e
 
         # The cross-compile toolchain we use
         export ANDROID_TARGET=${ARCH}-linux-android${ANDROID_TARGET_ABI}
@@ -115,8 +115,6 @@ jobs:
           export TARGET="${ARCH}-${ANDROID_TARGET_ABI}"
         fi
         echo "##vso[task.setvariable variable=TARGET]$TARGET"
-        echo "task.setvariable variable=TARGET]${TARGET}"
-        echo "task.setvariable variable=TARGET]$TARGET"
 
         # Add the standalone toolchain to the search path.
         export PATH=$PATH:${PREFIX}/bin:${PREFIX}/lib:${PREFIX}/include:${NDK_TOOLCHAIN}/bin
