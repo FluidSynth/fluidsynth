@@ -9,7 +9,7 @@ variables:
   OBOE_VERSION: '1.5.0'
   SNDFILE_VERSION: '1.0.31'
   INSTPATCH_VERSION: '1.1.6'
-  
+
   # Android NDK sources and standalone toolchain is put here
   DEV: '$(System.DefaultWorkingDirectory)/android-build-root'
 
@@ -44,6 +44,8 @@ variables:
   CXXFLAGS: $(CFLAGS)
   CPPFLAGS: $(CXXFLAGS)
   LDFLAGS: "-pie -Wl,-rpath-link=-I$(NDK_TOOLCHAIN)/sysroot/usr/lib -L$(NDK_TOOLCHAIN)/sysroot/usr/lib -L$(PREFIX)/lib -L$(NDK_TOOLCHAIN)/lib"
+
+  ARTIFACT_NAME: 'fluidsynth-android$(ANDROID_API)'
 
 jobs:
 - job: Android
@@ -293,10 +295,6 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        ls -Rg $(PREFIX)
-      displayName: 'Show compiled files'
-
-    - script: |
         set -ex
 
         mkdir -p build
@@ -307,7 +305,7 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
-            -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+            -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -Denable-opensles=1 \
             -Denable-floats=1 \
@@ -316,10 +314,21 @@ jobs:
             -Denable-oss=0 ..
         make -j$((`nproc`+1))
 
-        #correcting src/gentables/CMakeCache.txt
-        #sed -i s,'^CMAKE_C_FLAGS:STRING=.*','CMAKE_C_FLAGS:STRING=-fPIE -fPIC -I/usr/include -Werror=implicit-function-declaration',g src/gentables/CMakeCache.txt
-        #make -j$((`nproc`+1))
-
         make install
         popd
       displayName: 'Compile fluidsynth'
+
+    - script: |
+        ls -Rg $(PREFIX)
+      displayName: 'Show cross-compiled files in $(PREFIX)'
+      condition: always()
+
+    - script: |
+        true
+      displayName: 'Collecting artifacts'
+          
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: '$(ARTIFACT_NAME)-$(ARCH)'
+        publishLocation: 'Container'
