@@ -59,11 +59,11 @@ jobs:
     ANDROID_API: '23'
 
     # The cross-compile toolchain we use
-    ANDROID_TARGET: '${{ARCH}}-linux-android${{ANDROID_TARGET_ABI}}'
-    ANDROID_TARGET_API: '${{ANDROID_ARCH}}-linux-android${{ANDROID_TARGET_ABI}}${{ANDROID_API}}'
+    ANDROID_TARGET: '$(ARCH)-linux-android$(ANDROID_TARGET_ABI)'
+    ANDROID_TARGET_API: '$(ANDROID_ARCH)-linux-android$(ANDROID_TARGET_ABI)$(ANDROID_API)'
 
     # the --target to be used by autotools
-    TARGET: '${{ARCH}}-eabi'
+    TARGET: '$(ARCH)-eabi'
 
     # Tell configure what tools to use.
     AR: '${{ANDROID_TARGET}}-ar'
