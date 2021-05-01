@@ -4,17 +4,19 @@
 # https://docs.microsoft.com/azure/devops/pipelines/apps/c-cpp/gcc
 
 jobs:
-- job: Windows
+- job: WindowsXP
+  variables:
+    CFLAGS: '/D WINVER=0x0501 /D _WIN32_WINNT=0x0501'
   strategy:
     matrix:
-      XP_x86:
+      x86:
         platform: Win32
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-prefix: "fluidsynth"
         imageName: 'windows-2019'
-      XP_x64:
+      x64:
         platform: x64
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
@@ -55,7 +57,6 @@ jobs:
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
         pkg-config --list-all
-        SET CFLAGS="/D _WIN32_WINNT=0x0501"
         mkdir build && cd build || exit -1
         cmake -Werror=dev -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
         cmake --build . --config Release || exit -1
@@ -82,7 +83,9 @@ jobs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
           artifactName: $(artifact-prefix)-$(platform)
 
-- job: WindowsCI
+- job: Windows10
+  variables:
+    CFLAGS: '/D WINVER=0x0A00 /D _WIN32_WINNT=0x0A00'
   strategy:
     matrix:
       default:
@@ -129,6 +132,7 @@ jobs:
     - script: |
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
+        SET CFLAGS="/D WINVER=0x0A00 /D _WIN32_WINNT=0x0A00"
         mkdir build && cd build || exit -1
         cmake -Werror=dev -A x64 -DCMAKE_BUILD_TYPE=$(CMAKE_CONFIG) -DCMAKE_VERBOSE_MAKEFILE=1 $(CMAKE_FLAGS) -DNO_GUI=1 .. || exit -1
         cmake --build . --config $(CMAKE_CONFIG) || exit -1
@@ -141,6 +145,8 @@ jobs:
       displayName: 'Execute Unittests'
 
 - job: WindowsMinGW
+  variables:
+    CFLAGS: '/D WINVER=0x0A00 /D _WIN32_WINNT=0x0A00'
   strategy:
     matrix:
       x86:
