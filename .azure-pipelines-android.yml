@@ -1,9 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-name: $(Build.BuildId)
 
 variables:
   ICONV_VERSION: '1.16'
@@ -14,10 +8,12 @@ variables:
   OBOE_VERSION: '1.5.0'
   
   # Android NDK sources and standalone toolchain is put here
-  DEV: '$(System.DefaultWorkingDirectory)'
+  DEV: '$(System.DefaultWorkingDirectory)/android-build-root'
 
-  # This is a symlink pointing to the real Android NDK r10e
-  NDK: '$(DEV)/android-ndk'
+  # This is a symlink pointing to the real Android NDK
+  # Must be the same as $ANDROID_NDK_HOME see:
+  # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md
+  NDK: '/usr/local/lib/android/sdk/ndk-bundle'
 
   # All the built binaries, libs and their headers will be installed here
   PREFIX: '$(DEV)/opt/android'
@@ -76,6 +72,12 @@ jobs:
 
   steps:
     - script: |
+        mkdir -p $(DEV)
+      displayName: 'mkdir $(DEV)'
+
+    - script: |
+        set -ex
+
         wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz
         tar zxvf libiconv-${ICONV_VERSION}.tar.gz
 
@@ -92,12 +94,10 @@ jobs:
         tar zxvf ${OBOE_VERSION}.tar.gz
 
       displayName: 'Download Dependencies'
+      workingDirectory: $(DEV)
 
     - script: |
-        # The path of standalone NDK toolchain
-        # Refer to https://developer.android.com/ndk/guides/standalone_toolchain.html
-        export NDK_TOOLCHAIN=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/
-        echo "##vso[task.setvariable variable=NDK_TOOLCHAIN]$NDK_TOOLCHAIN"
+        set -ex
 
         # The cross-compile toolchain we use
         export ANDROID_TARGET=${ARCH}-linux-android${ANDROID_TARGET_ABI}
@@ -116,14 +116,19 @@ jobs:
 
         # Tell configure what tools to use.
         export AR=${ANDROID_TARGET}-ar
+        echo "##vso[task.setvariable variable=AR]$AR"
         export AS=${ANDROID_TARGET_API}-clang
+        echo "##vso[task.setvariable variable=AS]$AS"
         export CC=${ANDROID_TARGET_API}-clang
+        echo "##vso[task.setvariable variable=CC]$CC"
         export CXX=${ANDROID_TARGET_API}-clang++
+        echo "##vso[task.setvariable variable=CXX]$CXX"
         export LD=${ANDROID_TARGET}-ld
+        echo "##vso[task.setvariable variable=LD]$LD"
         export STRIP=${ANDROID_TARGET}-strip
+        echo "##vso[task.setvariable variable=STRIP]$STRIP"
         export RANLIB=${ANDROID_TARGET}-ranlib
-
-
+        echo "##vso[task.setvariable variable=RANLIB]$RANLIB"
       displayName: 'Set environment variables'
 
     - script: |
@@ -137,9 +142,6 @@ jobs:
         # Date: 2018-09-06
 
         set -ex
-
-        echo $ANDROID_TARGET_API
-        echo $(ANDROID_TARGET_API)
 
         # Create a standalone toolchain first, see https://developer.android.com/ndk/guides/standalone_toolchain
         #${NDK}/build/tools/make_standalone_toolchain.py --arch ${ANDROID_ARCH} --api ${ANDROID_API} --stl=libc++ --install-dir=${NDK_TOOLCHAIN}
@@ -158,7 +160,7 @@ jobs:
 
         pushd libiconv-${ICONV_VERSION}
         ./configure --host=${TARGET} --prefix=${PREFIX} --disable-rpath
-        make -j4
+        make -j$((`nproc`+1))
         make install
         popd
 
@@ -167,13 +169,13 @@ jobs:
         sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
         sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
         ./configure --host=${TARGET} --prefix=${PREFIX} --enable-static
-        make -j4
+        make -j$((`nproc`+1))
         make install
         popd
 
         pushd gettext-${GETTEXT_VERSION}
         ./configure --host=${TARGET}  --prefix=${PREFIX} --disable-rpath --disable-libasprintf --disable-java --disable-native-java --disable-openmp --disable-curses
-        make -j4
+        make -j$((`nproc`+1))
         make install
         popd
 
@@ -200,7 +202,7 @@ jobs:
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
         ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --disable-dependency-tracking --cache-file=android.cache --enable-included-printf --enable-static --with-pcre=no --enable-libmount=no --with-libiconv=gnu
-        make -j4
+        make -j$((`nproc`+1))
         make install
         popd
 
@@ -214,7 +216,7 @@ jobs:
             -DANDROID_PLATFORM=android-${ANDROID_API} \
             -DBUILD_SHARED_LIBS=0 .. \
             -DCMAKE_VERBOSE_MAKEFILE=1
-        make -j4
+        make -j$((`nproc`+1))
         # need to manually install oboe as it doesn't provide an install target
         ${RANLIB} liboboe.a
         cp liboboe.a* ${PREFIX}/lib/
@@ -255,14 +257,15 @@ jobs:
             -Denable-oboe=1 \
             -Denable-dbus=0 \
             -Denable-oss=0 ..
-        make -j4
+        make -j$((`nproc`+1))
 
         #correcting src/gentables/CMakeCache.txt
         #sed -i s,'^CMAKE_C_FLAGS:STRING=.*','CMAKE_C_FLAGS:STRING=-fPIE -fPIC -I/usr/include -Werror=implicit-function-declaration',g src/gentables/CMakeCache.txt
-        #make -j4
+        #make -j$((`nproc`+1))
 
 
         make install
         popd
         popd
       displayName: 'Compile everything'
+      workingDirectory: $(DEV)
