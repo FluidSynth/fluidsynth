@@ -318,6 +318,7 @@ jobs:
     - script: |
         set -ex
         pushd build
+        ls -Rg .
         make -j$((`nproc`+1)) check
         popd
       displayName: 'Execute fluidsynth unit test'
@@ -326,6 +327,7 @@ jobs:
     - script: |
         set -ex
         pushd build
+        ldd test/test_sfont_loading || true
         make install
         popd
       displayName: 'Install fluidsynth'
