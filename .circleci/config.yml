@@ -30,6 +30,7 @@ jobs:
           working_directory: doc/android
           command: |
             export TERM=dumb
+            export VERBOSE=1
             echo Starting `nproc` parallel jobs
             make -f Makefile.android prepare
       - run:
@@ -52,6 +53,7 @@ jobs:
           working_directory: doc/android
           command: |
             ls -R
+            mv ./external/cerbero/build/logs dist/
       - run:
           name: Zip FluidSynth Android Distribution
           working_directory: doc/android
