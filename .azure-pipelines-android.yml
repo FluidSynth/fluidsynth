@@ -92,7 +92,7 @@ jobs:
         wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz
         tar zxvf libiconv-${ICONV_VERSION}.tar.gz
 
-        wget ftp://sourceware.org/pub/libffi/libffi-${FFI_VERSION}.tar.gz
+        wget -O libffi-${FFI_VERSION}.tar.gz https://github.com/libffi/libffi/archive/refs/heads/master.tar.gz
         tar zxvf libffi-${FFI_VERSION}.tar.gz
 
         wget http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz
@@ -171,7 +171,7 @@ jobs:
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
         sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
-        autoreconf -v -i
+        NOCONFIGURE=true autoreconf -v -i
         ./configure --host=${TARGET} --prefix=${PREFIX} --enable-shared
         make -j$((`nproc`+1))
         make install
