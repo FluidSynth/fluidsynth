@@ -124,7 +124,7 @@ jobs:
         echo "##vso[task.setvariable variable=ANDROID_TARGET_API]$ANDROID_TARGET_API"
 
         # the --target to be used by autotools
-        export TARGET="${ARCH}-linux-android"
+        export TARGET="${ARCH}-none-linux"
         if [ -n ${ANDROID_TARGET_ABI} ]
         then
           export TARGET="${TARGET}-${ANDROID_TARGET_ABI}"
