@@ -2,7 +2,7 @@
 variables:
   ICONV_VERSION: '1.16'
   FFI_VERSION: '3.3'
-  GETTEXT_VERSION: '0.19.8.1'
+  GETTEXT_VERSION: '0.20.2'
   #need to switch to meson build system to use a more recent version 
   GLIB_VERSION: '2.58'
   GLIB_EXTRAVERSION: '3'
@@ -83,7 +83,7 @@ jobs:
   steps:
     - script: |
         set -ex
-        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev autogen automake autoconf libtool pkg-config autotools-dev build-essential
+        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev autogen automake autoconf libtool pkg-config autotools-dev build-essential meson ninja
       displayName: 'apt-get install'
 
     - script: |
@@ -191,6 +191,31 @@ jobs:
     - script: |
         set -ex
 
+        pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
+        meson \
+          --prefix=${PREFIX} \
+          --libdir=lib \
+          -Ddebug=false \
+          --default-library=both \
+          -Doptimization=s \
+          --backend=ninja \
+          --wrap-mode=nodownload \
+          -Dinternal_pcre=true \
+          -Dlibmount=false \
+          -Ddtrace=false \
+          -Diconv=auto \
+          -Dxattr=false \
+          -Dgtk_doc=false
+        ninja
+        popd
+      displayName: 'Compile glib (meson)'
+      workingDirectory: $(DEV)
+      enabled: 'true'
+      continueOnError: 'true'
+
+    - script: |
+        set -ex
+
         pushd gettext-${GETTEXT_VERSION}
         ./configure \
           --host=${AUTOTOOLS_TARGET} \
@@ -249,31 +274,6 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
-
-    - script: |
-        set -ex
-
-        pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
-        meson \
-          --prefix=${PREFIX} \
-          --libdir=lib \
-          -Ddebug=false \
-          --default-library=both \
-          -Doptimization=s \
-          --backend=ninja \
-          --wrap-mode=nodownload \
-          --cross-file _builddir/meson-cross-file.txt \
-          --native-file _builddir/meson-native-file.txt \
-          -Dinternal_pcre=true \
-          -Dlibmount=false \
-          -Ddtrace=false \
-          -Diconv=auto \
-          -Dxattr=false \
-          -Dgtk_doc=false
-        popd
-      displayName: 'Compile glib (meson)'
-      workingDirectory: $(DEV)
-      enabled: 'false'
 
     - script: |
         set -ex
