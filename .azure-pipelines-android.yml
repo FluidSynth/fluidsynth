@@ -63,7 +63,7 @@ jobs:
         ANDROID_ARCH: 'aarch64'
         ANDROID_ABI_CMAKE: 'arm64-v8a'
         ANDROID_TARGET_ABI:
-        AUTOTOOLS_TARGET: "$(ARCH)"
+        AUTOTOOLS_TARGET: "$(ARCH)-linux-android"
       i686:
         ARCH: 'i686'
         ANDROID_ARCH: 'i686'
