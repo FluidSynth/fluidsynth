@@ -198,6 +198,7 @@ jobs:
         popd
       displayName: 'Compile gettext'
       workingDirectory: $(DEV)
+      enabled: 'false'
 
     - script: |
         set -ex
@@ -224,7 +225,17 @@ jobs:
 
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
-        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --disable-dependency-tracking --cache-file=android.cache --enable-included-printf --disable-static --enable-shared --with-pcre=no --enable-libmount=no --with-libiconv=gnu
+        ./configure \
+          --host=${ANDROID_TARGET} \
+          --prefix=${PREFIX} \
+          --disable-dependency-tracking \
+          --cache-file=android.cache \
+          --enable-included-printf \
+          --disable-static \
+          --enable-shared \
+          --with-pcre=no \
+          --enable-libmount=no \
+          --with-libiconv=gnu
         make -j$((`nproc`+1))
         make install
         popd
