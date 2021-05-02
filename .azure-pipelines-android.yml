@@ -2,7 +2,7 @@
 variables:
   ICONV_VERSION: '1.16'
   FFI_VERSION: '3.3'
-  GETTEXT_VERSION: '0.21'
+  GETTEXT_VERSION: '0.19.8.1'
   #need to switch to meson build system to use a more recent version 
   GLIB_VERSION: '2.58'
   GLIB_EXTRAVERSION: '3'
@@ -192,13 +192,21 @@ jobs:
         set -ex
 
         pushd gettext-${GETTEXT_VERSION}
-        ./configure --host=${AUTOTOOLS_TARGET}  --prefix=${PREFIX} --disable-rpath --disable-libasprintf --disable-java --disable-native-java --disable-openmp --disable-curses
+        ./configure \
+          --host=${AUTOTOOLS_TARGET} \
+          --prefix=${PREFIX} \
+          --disable-rpath \
+          --disable-libasprintf \
+          --disable-java \
+          --disable-native-java \
+          --disable-openmp \
+          --disable-curses \
+          --enable-shared
         make -j$((`nproc`+1))
         make install
         popd
       displayName: 'Compile gettext'
       workingDirectory: $(DEV)
-      enabled: 'false'
 
     - script: |
         set -ex
@@ -241,6 +249,31 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
+
+        pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
+        meson \
+          --prefix=${PREFIX} \
+          --libdir=lib \
+          -Ddebug=false \
+          --default-library=both \
+          -Doptimization=s \
+          --backend=ninja \
+          --wrap-mode=nodownload \
+          --cross-file _builddir/meson-cross-file.txt \
+          --native-file _builddir/meson-native-file.txt \
+          -Dinternal_pcre=true \
+          -Dlibmount=false \
+          -Ddtrace=false \
+          -Diconv=auto \
+          -Dxattr=false \
+          -Dgtk_doc=false
+        popd
+      displayName: 'Compile glib (meson)'
+      workingDirectory: $(DEV)
+      enabled: 'false'
 
     - script: |
         set -ex
