@@ -153,7 +153,7 @@ jobs:
         set -ex
 
         pushd libiconv-${ICONV_VERSION}
-        ./configure --host=$TARGET --prefix=${PREFIX} --disable-rpath --enable-shared
+        ./configure --host=${AUTOTOOLS_TARGET} --prefix=${PREFIX} --disable-rpath --enable-shared
         make -j$((`nproc`+1))
         make install
         popd
@@ -170,7 +170,7 @@ jobs:
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         #sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
         #sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
-        ./configure --host=${TARGET} --prefix=${PREFIX} --enable-shared
+        ./configure --host=${AUTOTOOLS_TARGET} --prefix=${PREFIX} --enable-shared
         make -j$((`nproc`+1))
         make install
         popd
@@ -181,7 +181,7 @@ jobs:
         set -ex
 
         pushd gettext-${GETTEXT_VERSION}
-        ./configure --host=${TARGET}  --prefix=${PREFIX} --disable-rpath --disable-libasprintf --disable-java --disable-native-java --disable-openmp --disable-curses
+        ./configure --host=${AUTOTOOLS_TARGET}  --prefix=${PREFIX} --disable-rpath --disable-libasprintf --disable-java --disable-native-java --disable-openmp --disable-curses
         make -j$((`nproc`+1))
         make install
         popd
