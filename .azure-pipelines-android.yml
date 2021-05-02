@@ -124,11 +124,10 @@ jobs:
         echo "##vso[task.setvariable variable=ANDROID_TARGET_API]$ANDROID_TARGET_API"
 
         # the --target to be used by autotools
-        if [ -z ${ANDROID_TARGET_ABI} ]
+        export TARGET="${ARCH}-linux-android"
+        if [ -n ${ANDROID_TARGET_ABI} ]
         then
-          export TARGET="${ARCH}"
-        else
-          export TARGET="${ARCH}-${ANDROID_TARGET_ABI}"
+          export TARGET="${TARGET}-${ANDROID_TARGET_ABI}"
         fi
         echo "##vso[task.setvariable variable=TARGET]$TARGET"
 
@@ -314,16 +313,23 @@ jobs:
             -Denable-oss=0 ..
         make -j$((`nproc`+1))
 
-        make install
         popd
       displayName: 'Compile fluidsynth'
 
     - script: |
+        set -ex
         pushd build
-        make check
+        make -j$((`nproc`+1)) check
         popd
       displayName: 'Execute fluidsynth unit test'
       condition: and(succeeded(), in(variables['ARCH'], 'x86_64', 'i686'))
+
+    - script: |
+        set -ex
+        pushd build
+        make install
+        popd
+      displayName: 'Install fluidsynth'
 
     - script: |
         ls -Rg $(PREFIX)
