@@ -69,13 +69,13 @@ jobs:
         ANDROID_ARCH: 'i686'
         ANDROID_ABI_CMAKE: 'x86'
         ANDROID_TARGET_ABI:
-        AUTOTOOLS_TARGET: "$(ARCH)"
+        AUTOTOOLS_TARGET: "$(ARCH)-linux-android"
       x86_64:
         ARCH: 'x86_64'
         ANDROID_ARCH: 'x86_64'
         ANDROID_ABI_CMAKE: 'x86_64'
         ANDROID_TARGET_ABI:
-        AUTOTOOLS_TARGET: "$(ARCH)"
+        AUTOTOOLS_TARGET: "$(ARCH)-linux-android"
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -317,6 +317,7 @@ jobs:
 
     - script: |
         set -ex
+        find . -name test_sample_cache
         pushd build
         ls -Rg .
         make -j$((`nproc`+1)) check
@@ -327,7 +328,6 @@ jobs:
     - script: |
         set -ex
         pushd build
-        ldd test/test_sfont_loading || true
         make install
         popd
       displayName: 'Install fluidsynth'
