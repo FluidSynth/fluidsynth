@@ -167,7 +167,7 @@ jobs:
     - script: |
         set -ex
 
-#        pushd libffi-${FFI_VERSION}
+        # pushd libffi-${FFI_VERSION}
         pushd libffi-master
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
