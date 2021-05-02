@@ -56,21 +56,26 @@ jobs:
         ANDROID_ARCH: 'armv7a'
         ANDROID_ABI_CMAKE: 'armeabi-v7a'
         ANDROID_TARGET_ABI: "eabi"
+        # the --target to be used by autotools
+        AUTOTOOLS_TARGET: "$(ARCH)-none-linux-$(ANDROID_TARGET_ABI)"
       AARCH64:
         ARCH: 'aarch64'
         ANDROID_ARCH: 'aarch64'
         ANDROID_ABI_CMAKE: 'arm64-v8a'
         ANDROID_TARGET_ABI:
+        AUTOTOOLS_TARGET: "$(ARCH)"
       i686:
         ARCH: 'i686'
         ANDROID_ARCH: 'i686'
         ANDROID_ABI_CMAKE: 'x86'
         ANDROID_TARGET_ABI:
+        AUTOTOOLS_TARGET: "$(ARCH)"
       x86_64:
         ARCH: 'x86_64'
         ANDROID_ARCH: 'x86_64'
         ANDROID_ABI_CMAKE: 'x86_64'
         ANDROID_TARGET_ABI:
+        AUTOTOOLS_TARGET: "$(ARCH)"
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -122,14 +127,6 @@ jobs:
 
         export ANDROID_TARGET_API=${ANDROID_ARCH}-linux-android${ANDROID_TARGET_ABI}${ANDROID_API}
         echo "##vso[task.setvariable variable=ANDROID_TARGET_API]$ANDROID_TARGET_API"
-
-        # the --target to be used by autotools
-        export TARGET="${ARCH}-none-linux"
-        if [ -n ${ANDROID_TARGET_ABI} ]
-        then
-          export TARGET="${TARGET}-${ANDROID_TARGET_ABI}"
-        fi
-        echo "##vso[task.setvariable variable=TARGET]$TARGET"
 
         # Add the standalone toolchain to the search path.
         export PATH=$PATH:${PREFIX}/bin:${PREFIX}/lib:${PREFIX}/include:${NDK_TOOLCHAIN}/bin
