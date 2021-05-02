@@ -78,7 +78,7 @@ jobs:
   steps:
     - script: |
         set -ex
-        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev
+        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev autogen automake autoconf libtool
       displayName: 'apt-get install'
 
     - script: |
