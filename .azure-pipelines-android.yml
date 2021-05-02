@@ -78,7 +78,7 @@ jobs:
   steps:
     - script: |
         set -ex
-        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev autogen automake autoconf libtool
+        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev autogen automake autoconf libtool pkg-config
       displayName: 'apt-get install'
 
     - script: |
@@ -156,7 +156,6 @@ jobs:
         set -ex
 
         pushd libiconv-${ICONV_VERSION}
-        autoreconf -fi
         ./configure --host=$TARGET --prefix=${PREFIX} --disable-rpath --enable-shared
         make -j$((`nproc`+1))
         make install
