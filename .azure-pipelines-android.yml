@@ -57,7 +57,7 @@ jobs:
         ANDROID_ABI_CMAKE: 'armeabi-v7a'
         ANDROID_TARGET_ABI: "eabi"
         # the --target to be used by autotools
-        AUTOTOOLS_TARGET: "$(ARCH)-none-linux-$(ANDROID_TARGET_ABI)"
+        AUTOTOOLS_TARGET: "$(ARCH)-linux-android$(ANDROID_TARGET_ABI) "
       AARCH64:
         ARCH: 'aarch64'
         ANDROID_ARCH: 'aarch64'
@@ -69,13 +69,13 @@ jobs:
         ANDROID_ARCH: 'i686'
         ANDROID_ABI_CMAKE: 'x86'
         ANDROID_TARGET_ABI:
-        AUTOTOOLS_TARGET: "$(ARCH)-linux-android"
+        AUTOTOOLS_TARGET: "$(ARCH)-pc-linux-android"
       x86_64:
         ARCH: 'x86_64'
         ANDROID_ARCH: 'x86_64'
         ANDROID_ABI_CMAKE: 'x86_64'
         ANDROID_TARGET_ABI:
-        AUTOTOOLS_TARGET: "$(ARCH)-linux-android"
+        AUTOTOOLS_TARGET: "$(ARCH)-pc-linux-android"
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -153,7 +153,18 @@ jobs:
         set -ex
 
         pushd libiconv-${ICONV_VERSION}
-        ./configure --host=${AUTOTOOLS_TARGET} --prefix=${PREFIX} --disable-rpath --enable-shared
+        ./configure \
+           --host=${AUTOTOOLS_TARGET} \
+           --prefix=${PREFIX} \
+           --disable-rpath \
+           --enable-static \
+           --enable-shared \
+           --with-pic  \
+           --disable-maintainer-mode  \
+           --disable-silent-rules  \
+           --disable-gtk-doc \
+           --disable-introspection \
+           --disable-nls
         make -j$((`nproc`+1))
         make install
         popd
@@ -224,7 +235,14 @@ jobs:
         set -ex
 
         pushd libsndfile-${SNDFILE_VERSION}
-        ./configure --host=${ANDROID_TARGET} --prefix=${PREFIX} --disable-static --enable-shared
+        ./configure \
+          --host=${ANDROID_TARGET} \
+          --prefix=${PREFIX} \
+          --disable-static \
+          --enable-shared \
+          --enable-external-libs \
+          --with-pic \
+          --disable-silent-rules
         make -j$((`nproc`+1))
         make install
         popd
