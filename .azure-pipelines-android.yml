@@ -417,7 +417,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        set -ex
+        set -e
 
         pushd oboe-${OBOE_VERSION}
         mkdir -p build
