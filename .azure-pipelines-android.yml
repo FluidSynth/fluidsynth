@@ -240,7 +240,6 @@ jobs:
         popd
       displayName: 'Compile gettext'
       continueOnError: 'true'
-      enabled: 'false'
       workingDirectory: $(DEV)
 
     - script: |
@@ -282,10 +281,7 @@ jobs:
           --enable-shared \
           --with-pic  \
           --disable-maintainer-mode \
-          --disable-silent-rules  \
-          --disable-gtk-doc \
-          --disable-introspection \
-          --disable-nls
+          --disable-silent-rules
         make -j$((`nproc`+1))
         make install
         popd
