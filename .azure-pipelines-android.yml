@@ -448,7 +448,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        set -ex
+        set -e
 
         pushd libinstpatch-${INSTPATCH_VERSION}
         mkdir -p build
@@ -466,7 +466,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        set -ex
+        set -e
 
         mkdir -p build
         pushd build
