@@ -205,7 +205,9 @@ jobs:
           -Ddtrace=false \
           -Diconv=auto \
           -Dxattr=false \
-          -Dgtk_doc=false
+          -Dgtk_doc=false \
+          _builddir \
+          .
         ninja
         popd
       displayName: 'Compile glib (meson)'
@@ -238,6 +240,7 @@ jobs:
         popd
       displayName: 'Compile gettext'
       continueOnError: 'true'
+      enabled: 'true'
       workingDirectory: $(DEV)
 
     - script: |
@@ -392,10 +395,11 @@ jobs:
 
     - script: |
         set -ex
-        find . -name test_sample_cache
         pushd build
-        ls -Rg .
         make -j$((`nproc`+1)) check
+        find . -name test_sample_cache
+        ls -Rg .
+        ldd test/test_sample_cache
         popd
       displayName: 'Execute fluidsynth unit test'
       condition: and(succeeded(), in(variables['ARCH'], 'x86_64', 'i686'))
