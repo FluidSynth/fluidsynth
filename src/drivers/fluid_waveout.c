@@ -32,9 +32,6 @@
 #include <ks.h>
 #include <ksmedia.h>
 
-/* Number of driver buffers in the chain */
-#define NB_SOUND_BUFFERS    4
-
 /**
 * The driver handle multiple channels.
 * Actually the number maximum of channels is limited to  2 * WAVEOUT_MAX_STEREO_CHANNELS.
@@ -82,7 +79,7 @@ typedef struct
     float **drybuf;
 
     HWAVEOUT hWaveOut;
-    WAVEHDR  waveHeader[NB_SOUND_BUFFERS];
+    WAVEHDR *waveHeader;
 
     int periods; /* numbers of internal driver buffers */
     int num_frames;
@@ -286,13 +283,6 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     fluid_settings_getint(settings, "audio.period-size", &period_size);
     fluid_settings_getint(settings, "synth.audio-channels", &audio_channels);
 
-    if(periods > NB_SOUND_BUFFERS)
-    {
-        FLUID_LOG(FLUID_INFO, "audio.periods %d exceeds internal limit %d",
-                              periods, NB_SOUND_BUFFERS);
-        return NULL;
-    }
-
     /* Clear format structure */
     ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
 
@@ -359,12 +349,17 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     lenBuffer = wfx.Format.nBlockAlign * period_size;
     /* create and clear the driver data */
     dev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(fluid_waveout_audio_driver_t) + lenBuffer * periods);
+                    sizeof(fluid_waveout_audio_driver_t) +
+                    lenBuffer * periods +
+                    sizeof(WAVEHDR) * periods);
     if(dev == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+
+    /* Assign extra memory to WAVEHDR */
+    dev->waveHeader = (WAVEHDR *)((uintptr_t)(dev + 1) + lenBuffer * periods);
 
     /* Save copy of synth */
     dev->synth = data;
