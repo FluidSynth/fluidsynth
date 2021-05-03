@@ -168,7 +168,7 @@ jobs:
           --host=${AUTOTOOLS_TARGET} \
           --prefix=${PREFIX} \
           --disable-rpath \
-          --enable-static \
+          --disable-static \
           --enable-shared \
           --with-pic \
           --disable-maintainer-mode \
@@ -192,7 +192,7 @@ jobs:
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         #sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
         #sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
-        ./configure --host=${AUTOTOOLS_TARGET} --prefix=${PREFIX} --enable-shared
+        ./configure --host=${AUTOTOOLS_TARGET} --prefix=${PREFIX} --enable-shared --disable-static
         make -j$((`nproc`+1))
         make install
         popd
@@ -308,7 +308,7 @@ jobs:
           --disable-native-java \
           --disable-openmp \
           --disable-curses \
-          --enable-static \
+          --disable-static \
           --enable-shared \
           --with-pic  \
           --disable-maintainer-mode \
@@ -372,7 +372,7 @@ jobs:
           --enable-libmount=no \
           --enable-xattr=no \
           --with-libiconv=gnu \
-          --enable-static \
+          --disable-static \
           --enable-shared \
           --with-pic \
           --disable-maintainer-mode \
