@@ -284,7 +284,8 @@ jobs:
           --disable-maintainer-mode \
           --disable-silent-rules  \
           --disable-gtk-doc \
-          --disable-introspection
+          --disable-introspection \
+          --disable-nls
         make -j$((`nproc`+1))
         make install
         popd
