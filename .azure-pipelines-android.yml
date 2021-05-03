@@ -245,7 +245,7 @@ jobs:
 
         meson \
           --cross-file cross-file.txt \
-          --native-file native-file.txt
+          --native-file native-file.txt \
           --prefix=${PREFIX} \
           --libdir=lib \
           -Ddebug=false \
