@@ -193,7 +193,7 @@ jobs:
 
     - script: |
         set -ex
-        export PKGCFG=`where pkg-config`
+        export PKGCFG=`which pkg-config`
         pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
 
         cat << EOF > cross-file.txt
@@ -241,6 +241,18 @@ jobs:
 
         cat native-file.txt
         cat cross-file.txt
+
+        unset AR
+        unset AS
+        unset CC
+        unset CFLAGS
+        unset CPPFLAGS
+        unset CPP
+        unset CXXFLAGS
+        unset CXX
+        unset LDFLAGS
+        unset LD
+        unset STRIP
 
         meson \
           --cross-file cross-file.txt \
