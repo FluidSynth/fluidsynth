@@ -162,9 +162,9 @@ jobs:
           --disable-rpath \
           --enable-static \
           --enable-shared \
-          --with-pic  \
-          --disable-maintainer-mode  \
-          --disable-silent-rules  \
+          --with-pic \
+          --disable-maintainer-mode \
+          --disable-silent-rules \
           --disable-gtk-doc \
           --disable-introspection \
           --disable-nls
@@ -235,7 +235,7 @@ jobs:
           --enable-shared \
           --with-pic  \
           --disable-maintainer-mode \
-          --disable-silent-rules  \
+          --disable-silent-rules \
           --disable-gtk-doc \
           --disable-introspection
         make -j$((`nproc`+1))
@@ -282,7 +282,7 @@ jobs:
           --with-libiconv=gnu \
           --enable-static \
           --enable-shared \
-          --with-pic  \
+          --with-pic \
           --disable-maintainer-mode \
           --disable-silent-rules
         make -j$((`nproc`+1))
@@ -395,12 +395,10 @@ jobs:
 
     - script: |
         set -x
-        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$(PREFIX)/lib:$(NDK_TOOLCHAIN)/sysroot/usr/lib:$(NDK_TOOLCHAIN)/lib
+        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$(PREFIX)/lib:$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)
         pushd build
         make -j$((`nproc`+1)) check
-        find . -name test_sample_cache
         ldd test/test_sample_cache
-        ls -Rg .
         popd
       displayName: 'Execute fluidsynth unit test'
       condition: and(succeeded(), in(variables['ARCH'], 'x86_64', 'i686'))
