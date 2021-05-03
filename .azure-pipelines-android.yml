@@ -337,9 +337,19 @@ jobs:
         ac_cv_func_realloc_works=yes
         EOF
 
-        pkg-config --libs libffi
-
-        cat ${PKG_CONFIG_PATH}/libffi.pc
+        # Unfortunately, libffi is not linked against libgobject when compiling for aarch64, leading to the following error:
+        #
+        # /bin/bash ../libtool  --tag=CC   --mode=link aarch64-linux-android23-clang -Wall -Wstrict-prototypes -Wno-bad-function-cast -Werror=declaration-after-statement -Werror=missing-prototypes -Werror=implicit-function-declaration -Werror=pointer-arith -Werror=init-self -Werror=format=2 -Werror=missing-include-dirs -fPIE -fPIC -I/home/vsts/work/1/s/android-build-root/opt/android/include --sysroot=/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot -I/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot/include -Werror=implicit-function-declaration -fno-integrated-as -fno-strict-aliasing  -pie -Wl,-rpath-link=-I/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot/usr/lib -L/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot/usr/lib -L/home/vsts/work/1/s/android-build-root/opt/android/lib -L/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//lib -o gobject-query gobject-query.o ./libgobject-2.0.la ../glib/libglib-2.0.la -lintl -liconv  
+        # libtool: link: aarch64-linux-android23-clang -Wall -Wstrict-prototypes -Wno-bad-function-cast -Werror=declaration-after-statement -Werror=missing-prototypes -Werror=implicit-function-declaration -Werror=pointer-arith -Werror=init-self -Werror=format=2 -Werror=missing-include-dirs -fPIE -fPIC -I/home/vsts/work/1/s/android-build-root/opt/android/include --sysroot=/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot -I/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot/include -Werror=implicit-function-declaration -fno-integrated-as -fno-strict-aliasing -pie -Wl,-rpath-link=-I/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot/usr/lib -o .libs/gobject-query gobject-query.o  -L/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//sysroot/usr/lib -L/home/vsts/work/1/s/android-build-root/opt/android/lib -L/usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//lib ./.libs/libgobject-2.0.so ../glib/.libs/libglib-2.0.so /home/vsts/work/1/s/android-build-root/opt/android/lib/libintl.so /home/vsts/work/1/s/android-build-root/opt/android/lib/libiconv.so -pthread -L/home/vsts/work/1/s/android-build-root/opt/android/lib
+        # /usr/local/lib/android/sdk/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64//bin/../lib/gcc/aarch64-linux-android/4.9.x/../../../../aarch64-linux-android/bin/ld: warning: libffi.so, needed by ./.libs/libgobject-2.0.so, not found (try using -rpath or -rpath-link)
+        # ./.libs/libgobject-2.0.so: undefined reference to `ffi_type_sint32@LIBFFI_BASE_8.0'
+        # ./.libs/libgobject-2.0.so: undefined reference to `ffi_prep_cif@LIBFFI_BASE_8.0'
+        #
+        # So, just add it to LDFLAGS to make sure it's always linked.
+        FFILIB=`pkg-config --libs libffi`
+        echo ${FFILIB}
+        export LDFLAGS=${LDFLAGS}:${FFILIB}
+        unset FFILIB
 
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
