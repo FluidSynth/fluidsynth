@@ -135,6 +135,9 @@ jobs:
         # Add the standalone toolchain to the search path.
         export PATH=$PATH:${PREFIX}/bin:${PREFIX}/lib:${PREFIX}/include:${NDK_TOOLCHAIN}/bin
         echo "##vso[task.setvariable variable=PATH]$PATH"
+        
+        export LDFLAGS="$LDFLAGS $(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)"
+        echo "##vso[task.setvariable variable=LDFLAGS]$LDFLAGS"
 
         # Tell configure what tools to use.
         export AR=${ANDROID_TARGET}-ar
@@ -350,7 +353,7 @@ jobs:
         # libz.so is also missing...
         FFILIB=`pkg-config --libs libffi`
         echo ${FFILIB}
-        export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
+        export LDFLAGS="${LDFLAGS} ${FFILIB}"
         unset FFILIB
 
         chmod a-x android.cache
