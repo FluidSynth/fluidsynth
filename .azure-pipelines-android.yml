@@ -215,7 +215,7 @@ jobs:
         popd
       displayName: 'Compile glib (meson)'
       workingDirectory: $(DEV)
-      enabled: 'true'
+      enabled: 'false'
       continueOnError: 'true'
 
     - script: |
@@ -402,6 +402,7 @@ jobs:
         popd
       displayName: 'Execute fluidsynth unit test'
       condition: and(succeeded(), in(variables['ARCH'], 'x86_64', 'i686'))
+      enabled: 'false'
 
     - script: |
         set -ex
