@@ -271,6 +271,7 @@ jobs:
         cat _builddir/meson-logs/meson-log.txt
         popd
       displayName: 'Meson LOG'
+      workingDirectory: $(DEV)
       condition: failed()
 
     - script: |
