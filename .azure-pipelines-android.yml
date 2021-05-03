@@ -214,13 +214,14 @@ jobs:
 
         [built-in options]
         c_std = 'c11'
-        prefix = \'${PREFIX}\'
         c_args = ['-fPIC','-I/home/git/work/ndk/builddir/out/include']
         cpp_args = ['-fPIC','-I/home/git/work/ndk/builddir/out/include']
         c_link_args = ['-fPIE','-L/home/git/work/ndk/builddir/out/lib']
 
         pkg_config_path = \'${PKG_CONFIG_PATH}\'
         EOF
+
+        cat cross-file.txt
 
         meson \
           --cross-file cross-file.txt \
