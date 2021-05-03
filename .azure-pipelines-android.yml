@@ -327,7 +327,6 @@ jobs:
         make install
         popd
       displayName: 'Compile gettext'
-      continueOnError: 'true'
       workingDirectory: $(DEV)
 
     - script: |
