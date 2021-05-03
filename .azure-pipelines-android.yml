@@ -240,7 +240,7 @@ jobs:
         popd
       displayName: 'Compile gettext'
       continueOnError: 'true'
-      enabled: 'true'
+      enabled: 'false'
       workingDirectory: $(DEV)
 
     - script: |
@@ -394,7 +394,7 @@ jobs:
       displayName: 'Compile fluidsynth'
 
     - script: |
-        set -ex
+        set -e
         pushd build
         make -j$((`nproc`+1)) check
         find . -name test_sample_cache
