@@ -445,7 +445,7 @@ jobs:
         mkdir -p build
         pushd build
 
-        echo LDFLAGS
+        echo $LDFLAGS
         cmake -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make \
             -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
             -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
