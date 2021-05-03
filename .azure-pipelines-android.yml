@@ -43,7 +43,6 @@ variables:
   CFLAGS: "-fPIE -fPIC -I$(PREFIX)/include --sysroot=$(NDK_TOOLCHAIN)/sysroot -I$(NDK_TOOLCHAIN)/sysroot/include -Werror=implicit-function-declaration -fno-integrated-as"
   CXXFLAGS: $(CFLAGS)
   CPPFLAGS: $(CXXFLAGS)
-  LDFLAGS: "-pie -Wl,-rpath-link=-I$(NDK_TOOLCHAIN)/sysroot/usr/lib -L$(NDK_TOOLCHAIN)/sysroot/usr/lib -L$(PREFIX)/lib -L$(NDK_TOOLCHAIN)/lib"
 
   ARTIFACT_NAME: 'fluidsynth-android$(ANDROID_API)'
 
@@ -136,7 +135,10 @@ jobs:
         export PATH=$PATH:${PREFIX}/bin:${PREFIX}/lib:${PREFIX}/include:${NDK_TOOLCHAIN}/bin
         echo "##vso[task.setvariable variable=PATH]$PATH"
         
-        export LDFLAGS="$LDFLAGS -L$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)"
+        LIBPATH1=$(NDK_TOOLCHAIN)/sysroot/usr/lib
+        LIBPATH2=$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)
+
+        export LDFLAGS="-pie -Wl,-rpath-link=-I${LIBPATH1} -L${LIBPATH1} -L$(PREFIX)/lib -L$(NDK_TOOLCHAIN)/lib -Wl,-rpath-link=-I${LIBPATH2} -L${LIBPATH2}"
         echo "##vso[task.setvariable variable=LDFLAGS]$LDFLAGS"
 
         # Tell configure what tools to use.
@@ -351,10 +353,10 @@ jobs:
         #
         # So, just add it to LDFLAGS to make sure it's always linked.
         # libz.so is also missing...
-        FFILIB=`pkg-config --libs libffi`
-        echo ${FFILIB}
-        export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
-        unset FFILIB
+        #FFILIB=`pkg-config --libs libffi`
+        #echo ${FFILIB}
+        #export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
+        #unset FFILIB
 
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
