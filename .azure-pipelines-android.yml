@@ -218,7 +218,7 @@ jobs:
         cpp_args = ['-fPIC','-I/home/git/work/ndk/builddir/out/include']
         c_link_args = ['-fPIE','-L/home/git/work/ndk/builddir/out/lib']
 
-        pkg_config_path = \'${PKG_CONFIG_PATH}\'
+        pkg_config_path = '${PKG_CONFIG_PATH}'
         EOF
 
         cat cross-file.txt
