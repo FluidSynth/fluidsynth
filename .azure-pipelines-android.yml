@@ -157,6 +157,19 @@ jobs:
         echo "##vso[task.setvariable variable=STRIP]$STRIP"
         export RANLIB=${ANDROID_TARGET}-ranlib
         echo "##vso[task.setvariable variable=RANLIB]$RANLIB"
+
+        export ANDROID_CMAKE_FLAGS="-DCMAKE_MAKE_PROGRAM=make
+            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake
+            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API}
+            -DANDROID_ABI=${ANDROID_ABI_CMAKE}
+            -DANDROID_TOOLCHAIN=${CC}
+            -DANDROID_NDK=${NDK}
+            -DANDROID_LINKER_FLAGS="${LDFLAGS}"
+            -DANDROID_COMPILER_FLAGS="${CFLAGS}"
+            -DCMAKE_INSTALL_PREFIX=$(PREFIX)
+            -DCMAKE_VERBOSE_MAKEFILE=1"
+        echo "##vso[task.setvariable variable=ANDROID_CMAKE_FLAGS]$ANDROID_CMAKE_FLAGS"
+
       displayName: 'Set environment variables'
 
     - script: |
@@ -407,13 +420,7 @@ jobs:
         pushd oboe-${OBOE_VERSION}
         mkdir -p build
         pushd build
-        cmake -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_PLATFORM=android-${ANDROID_API} \
-            -DBUILD_SHARED_LIBS=1 .. \
-            -DCMAKE_VERBOSE_MAKEFILE=1
+        cmake -G "Unix Makefiles" ${ANDROID_CMAKE_FLAGS} -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         # need to manually install oboe as it doesn't provide an install target
         #${RANLIB} liboboe.a
@@ -446,17 +453,7 @@ jobs:
         pushd build
 
         echo $LDFLAGS
-        cmake -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
-            -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            ..
+        cmake -G "Unix Makefiles" ${ANDROID_CMAKE_FLAGS} ..
         cat CMakeCache.txt
         make -j$((`nproc`+1))
         make install
@@ -471,16 +468,7 @@ jobs:
 
         mkdir -p build
         pushd build
-        cmake -G "Unix Makefiles" -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_LINKER_FLAGS=${LDFLAGS} \
-            -DANDROID_COMPILER_FLAGS=${CFLAGS} \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
+        cmake -G "Unix Makefiles" ${ANDROID_CMAKE_FLAGS} \
             -Denable-opensles=1 \
             -Denable-floats=1 \
             -Denable-oboe=1 \
