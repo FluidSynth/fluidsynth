@@ -1,7 +1,8 @@
 
 variables:
   ICONV_VERSION: '1.16'
-  FFI_VERSION: '3.3'
+  # Use recent master libffi, because 3.3 is broken: checking host system type... Invalid configuration `arm-none-linux-eabi': machine `arm-none-linux' not recognized
+  FFI_VERSION: 'dd5bd03075149d7cf8441875c1a344e8beb57dde'
   GETTEXT_VERSION: '0.21'
   #need to switch to meson build system to use a more recent version 
   GLIB_VERSION: '2.58'
@@ -100,7 +101,7 @@ jobs:
         wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz
         tar zxvf libiconv-${ICONV_VERSION}.tar.gz
 
-        wget ftp://sourceware.org/pub/libffi/libffi-${FFI_VERSION}.tar.gz
+        wget -O libffi-${FFI_VERSION}.tar.gz https://github.com/libffi/libffi/archive/${FFI_VERSION}.tar.gz
         tar zxvf libffi-${FFI_VERSION}.tar.gz
 
         wget http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz
@@ -187,7 +188,6 @@ jobs:
         set -ex
 
         pushd libffi-${FFI_VERSION}
-        #pushd libffi-master
         NOCONFIGURE=true autoreconf -v -i
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         #sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
