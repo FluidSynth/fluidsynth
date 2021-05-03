@@ -193,7 +193,7 @@ jobs:
 
     - script: |
         set -ex
-
+        export PKGCFG=`where pkg-config`
         pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
 
         cat << EOF > cross-file.txt
@@ -204,13 +204,12 @@ jobs:
         endian = 'little'
 
         [binaries]
-        c = 'arm-linux-androideabi-gcc'
-        cpp = 'arm-linux-androideabi-g++'
-        ar = 'arm-linux-androideabi-ar'
-        ld = 'arm-linux-androideabi-ld'
-        objcopy = 'arm-linux-androideabi-objcopy'
-        strip = 'arm-linux-androideabi-strip'
-        pkgconfig = '/usr/bin/pkg-config'
+        c = '${CC}'
+        cpp = '${CXX}'
+        ar = '${AR}'
+        ld = '${LD}'
+        strip = '${STRIP}'
+        pkgconfig = '${PKGCFG}'
 
         [built-in options]
         c_std = 'c11'
