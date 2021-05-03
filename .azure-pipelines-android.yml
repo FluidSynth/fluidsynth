@@ -135,10 +135,11 @@ jobs:
         export PATH=$PATH:${PREFIX}/bin:${PREFIX}/lib:${PREFIX}/include:${NDK_TOOLCHAIN}/bin
         echo "##vso[task.setvariable variable=PATH]$PATH"
         
+        LIBPATH0=$(PREFIX)/lib
         LIBPATH1=$(NDK_TOOLCHAIN)/sysroot/usr/lib
         LIBPATH2=$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)
 
-        export LDFLAGS="-pie -Wl,-rpath-link=-I${LIBPATH1} -L${LIBPATH1} -L$(PREFIX)/lib -L$(NDK_TOOLCHAIN)/lib -Wl,-rpath-link=-I${LIBPATH2} -L${LIBPATH2}"
+        export LDFLAGS="-pie -Wl,-rpath-link=-I${LIBPATH1} -L${LIBPATH1} -L$(PREFIX)/lib -L$(NDK_TOOLCHAIN)/lib -Wl,-rpath-link=-I${LIBPATH2} -L${LIBPATH2} -Wl,-rpath-link=-I${LIBPATH0} -L${LIBPATH0}"
         echo "##vso[task.setvariable variable=LDFLAGS]$LDFLAGS"
 
         # Tell configure what tools to use.
