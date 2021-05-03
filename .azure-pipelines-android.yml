@@ -169,19 +169,13 @@ jobs:
             -DANDROID_COMPILER_FLAGS=\"${CFLAGS}\" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1"
-        echo $ANDROID_CMAKE_FLAGS
         echo "##vso[task.setvariable variable=ANDROID_CMAKE_FLAGS]${ANDROID_CMAKE_FLAGS}"
-        echo ====
         echo ${ANDROID_CMAKE_FLAGS}
-        
 
       displayName: 'Set environment variables'
 
     - script: |
         set -ex
-        echo ${ANDROID_CMAKE_FLAGS}
-        echo =====
-        echo $(ANDROID_CMAKE_FLAGS)
 
         pushd libiconv-${ICONV_VERSION}
         ./configure \
