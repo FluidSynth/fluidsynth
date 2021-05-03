@@ -221,10 +221,31 @@ jobs:
         pkg_config_path = '${PKG_CONFIG_PATH}'
         EOF
 
+        cat << EOF > native-file.txt
+        [host_machine]
+        system = 'linux'
+        cpu_family = 'x86_64'
+        cpu = 'x86_64'
+        endian = 'little'
+
+        [properties]
+
+        [binaries]
+        c = ['false']
+        cpp = ['false']
+        objc = ['false']
+        objcpp = ['false']
+        ar = ['false']
+        pkgconfig = ['false']
+        cmake = ['false']
+        EOF
+
+        cat native-file.txt
         cat cross-file.txt
 
         meson \
           --cross-file cross-file.txt \
+          --native-file native-file.txt
           --prefix=${PREFIX} \
           --libdir=lib \
           -Ddebug=false \
