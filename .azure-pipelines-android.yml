@@ -4,8 +4,8 @@ variables:
   FFI_VERSION: '3.3'
   GETTEXT_VERSION: '0.21'
   #need to switch to meson build system to use a more recent version 
-  GLIB_VERSION: '2.58'
-  GLIB_EXTRAVERSION: '3'
+  GLIB_VERSION: '2.62'
+  GLIB_EXTRAVERSION: '6'
   OBOE_VERSION: '1.5.0'
   SNDFILE_VERSION: '1.0.31'
   INSTPATCH_VERSION: '1.1.6'
@@ -215,7 +215,7 @@ jobs:
         popd
       displayName: 'Compile glib (meson)'
       workingDirectory: $(DEV)
-      enabled: 'false'
+      enabled: 'true'
       continueOnError: 'true'
 
     - script: |
@@ -290,6 +290,7 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
+      enabled: 'false'
 
     - script: |
         set -ex
