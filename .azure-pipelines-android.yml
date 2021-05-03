@@ -353,7 +353,7 @@ jobs:
         # libz.so is also missing...
         FFILIB=`pkg-config --libs libffi`
         echo ${FFILIB}
-        export LDFLAGS="${LDFLAGS} ${FFILIB}"
+        export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
         unset FFILIB
 
         chmod a-x android.cache
