@@ -242,17 +242,17 @@ jobs:
         cat native-file.txt
         cat cross-file.txt
 
-        unset AR
-        unset AS
-        unset CC
-        unset CFLAGS
-        unset CPPFLAGS
-        unset CPP
-        unset CXXFLAGS
-        unset CXX
-        unset LDFLAGS
-        unset LD
-        unset STRIP
+        unexport AR
+        unexport AS
+        unexport CC
+        unexport CFLAGS
+        unexport CPPFLAGS
+        unexport CPP
+        unexport CXXFLAGS
+        unexport CXX
+        unexport LDFLAGS
+        unexport LD
+        unexport STRIP
 
         meson \
           --cross-file cross-file.txt \
