@@ -267,6 +267,13 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
+        pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
+        cat _builddir/meson-logs/meson-log.txt
+        popd
+      displayName: 'Meson LOG'
+      condition: failed()
+
+    - script: |
         set -ex
 
         pushd gettext-${GETTEXT_VERSION}
