@@ -394,31 +394,6 @@ jobs:
     - script: |
         set -ex
 
-        pushd libvorbis-${VORBIS_VERSION}
-        mkdir -p build
-        pushd build
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DBUILD_SHARED_LIBS=1 ..
-        make -j$((`nproc`+1))
-        make install
-        popd
-        popd
-      displayName: 'Compile libvorbis'
-      workingDirectory: $(DEV)
-
-    - script: |
-        set -ex
-
         pushd libogg-${OGG_VERSION}
         mkdir -p build
         pushd build
@@ -439,6 +414,33 @@ jobs:
         popd
         popd
       displayName: 'Compile libogg'
+      continueOnError: 'true'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
+
+        pushd libvorbis-${VORBIS_VERSION}
+        mkdir -p build
+        pushd build
+        cmake -G "Unix Makefiles" \
+            -DCMAKE_MAKE_PROGRAM=make \
+            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
+            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
+            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
+            -DANDROID_TOOLCHAIN=${CC} \
+            -DANDROID_NDK=${NDK} \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
+            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
+            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+            -DCMAKE_VERBOSE_MAKEFILE=1 \
+            -DBUILD_SHARED_LIBS=1 ..
+        make -j$((`nproc`+1))
+        make install
+        popd
+        popd
+      displayName: 'Compile libvorbis'
+      continueOnError: 'true'
       workingDirectory: $(DEV)
 
     - script: |
