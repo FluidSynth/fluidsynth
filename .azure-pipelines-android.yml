@@ -158,7 +158,7 @@ jobs:
         export RANLIB=${ANDROID_TARGET}-ranlib
         echo "##vso[task.setvariable variable=RANLIB]$RANLIB"
 
-        export ANDROID_CMAKE_FLAGS="-G \"Unix Makefiles\" 
+        export ANDROID_CMAKE_FLAGS="-G \"Unix Makefiles\"
             -DCMAKE_MAKE_PROGRAM=make
             -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake
             -DANDROID_NATIVE_API_LEVEL=${ANDROID_API}
@@ -170,16 +170,18 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$(PREFIX)
             -DCMAKE_VERBOSE_MAKEFILE=1"
         echo $ANDROID_CMAKE_FLAGS
-        echo "##vso[task.setvariable variable=ANDROID_CMAKE_FLAGS]$ANDROID_CMAKE_FLAGS"
-        
+        echo "##vso[task.setvariable variable=ANDROID_CMAKE_FLAGS]${ANDROID_CMAKE_FLAGS}"
+        echo ====
         echo ${ANDROID_CMAKE_FLAGS}
         
-        echo $(ANDROID_CMAKE_FLAGS)
 
       displayName: 'Set environment variables'
 
     - script: |
         set -ex
+        echo ${ANDROID_CMAKE_FLAGS}
+        echo =====
+        echo $(ANDROID_CMAKE_FLAGS)
 
         pushd libiconv-${ICONV_VERSION}
         ./configure \
