@@ -86,7 +86,7 @@ jobs:
   steps:
     - script: |
         set -ex
-        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext zlib1g-dev autogen automake autoconf libtool pkg-config autotools-dev build-essential meson ninja-build
+        sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext cmake zlib1g-dev autogen automake autoconf libtool pkg-config autotools-dev build-essential meson ninja-build
       displayName: 'apt-get install'
 
     - script: |
@@ -455,6 +455,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=${PREFIX} \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             ..
+        cat CMakeCache.txt
         make -j$((`nproc`+1))
         make install
 
@@ -481,6 +482,7 @@ jobs:
             -Denable-oboe=1 \
             -Denable-dbus=0 \
             -Denable-oss=0 ..
+        cat CMakeCache.txt
         make -j$((`nproc`+1))
 
         popd
