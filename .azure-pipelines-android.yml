@@ -4,8 +4,8 @@ variables:
   FFI_VERSION: '3.3'
   GETTEXT_VERSION: '0.21'
   #need to switch to meson build system to use a more recent version 
-  GLIB_VERSION: '2.62'
-  GLIB_EXTRAVERSION: '6'
+  GLIB_VERSION: '2.58'
+  GLIB_EXTRAVERSION: '3'
   OBOE_VERSION: '1.5.0'
   SNDFILE_VERSION: '1.0.31'
   INSTPATCH_VERSION: '1.1.6'
@@ -242,17 +242,17 @@ jobs:
         cat native-file.txt
         cat cross-file.txt
 
-        unexport AR
-        unexport AS
-        unexport CC
-        unexport CFLAGS
-        unexport CPPFLAGS
-        unexport CPP
-        unexport CXXFLAGS
-        unexport CXX
-        unexport LDFLAGS
-        unexport LD
-        unexport STRIP
+        unset AR
+        unset AS
+        unset CC
+        unset CFLAGS
+        unset CPPFLAGS
+        unset CPP
+        unset CXXFLAGS
+        unset CXX
+        unset LDFLAGS
+        unset LD
+        unset STRIP
 
         meson \
           --cross-file cross-file.txt \
@@ -276,6 +276,7 @@ jobs:
         popd
       displayName: 'Compile glib (meson)'
       workingDirectory: $(DEV)
+      enabled: 'false'
 
     - script: |
         pushd glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}
@@ -284,6 +285,7 @@ jobs:
       displayName: 'Meson LOG'
       workingDirectory: $(DEV)
       condition: failed()
+      enabled: 'false'
 
     - script: |
         set -ex
@@ -357,7 +359,7 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
-      enabled: 'false'
+      enabled: 'true'
 
     - script: |
         set -ex
