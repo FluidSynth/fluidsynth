@@ -57,7 +57,8 @@ jobs:
         ANDROID_ABI_CMAKE: 'armeabi-v7a'
         ANDROID_TARGET_ABI: "eabi"
         # the --target to be used by autotools
-        AUTOTOOLS_TARGET: "$(ARCH)-linux-android$(ANDROID_TARGET_ABI) "
+        #AUTOTOOLS_TARGET: "$(ARCH)-linux-android$(ANDROID_TARGET_ABI)"
+        AUTOTOOLS_TARGET: "$(ARCH)-none-linux-$(ANDROID_TARGET_ABI)"
       AARCH64:
         ARCH: 'aarch64'
         ANDROID_ARCH: 'aarch64'
