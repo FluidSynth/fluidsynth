@@ -337,6 +337,10 @@ jobs:
         ac_cv_func_realloc_works=yes
         EOF
 
+        pkg-config --libs libffi
+
+        cat ${PKG_CONFIG_PATH}/libffi.pc
+
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
         ./configure \
