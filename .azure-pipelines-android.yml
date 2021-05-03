@@ -347,9 +347,10 @@ jobs:
         # ./.libs/libgobject-2.0.so: undefined reference to `ffi_prep_cif@LIBFFI_BASE_8.0'
         #
         # So, just add it to LDFLAGS to make sure it's always linked.
+        # libz.so is also missing...
         FFILIB=`pkg-config --libs libffi`
         echo ${FFILIB}
-        export LDFLAGS=${LDFLAGS}:${FFILIB}
+        export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
         unset FFILIB
 
         chmod a-x android.cache
