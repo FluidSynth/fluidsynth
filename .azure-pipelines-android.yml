@@ -354,10 +354,10 @@ jobs:
         #
         # So, just add it to LDFLAGS to make sure it's always linked.
         # libz.so is also missing...
-        #FFILIB=`pkg-config --libs libffi`
-        #echo ${FFILIB}
-        #export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
-        #unset FFILIB
+        FFILIB=`pkg-config --libs libffi`
+        echo ${FFILIB}
+        export LDFLAGS="${LDFLAGS} ${FFILIB} -lz"
+        unset FFILIB
 
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
