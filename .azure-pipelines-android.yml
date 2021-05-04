@@ -434,50 +434,8 @@ jobs:
 
         cat << EOF > cmake/FindOgg.cmake
 
-        if(OGG_INCLUDE_DIR)
-          # Already in cache, be silent
-          set(OGG_FIND_QUIETLY TRUE)
-        endif()
-
         find_package(PkgConfig)
-        pkg_check_modules(PC_OGG ogg)
-
-        set(OGG_VERSION_STRING \${PC_OGG_VERSION})
-
-        find_path(OGG_INCLUDE_DIR ogg/ogg.h
-            HINTS
-                \${PC_OGG_INCLUDE_DIRS}
-        )
-        # MSVC built ogg may be named ogg_static.
-        # The provided project files name the library with the lib prefix.
-        find_library(OGG_LIBRARY
-            NAMES
-                ogg
-                ogg_static
-                libogg
-                libogg_static
-            HINTS
-                \${PC_OGG_LIBRARY_DIRS}
-        )
-
-        message(STATUS \${OGG_VERSION_STRING})
-        message(STATUS \${PC_OGG_INCLUDE_DIRS})
-        message(STATUS \${PC_OGG_INCLUDEDIR})
-        message(STATUS \${PC_OGG_LIBDIR})
-        message(STATUS \${PC_OGG_LIBRARY_DIRS})
-        message(STATUS \${OGG_LIBRARY})
-        message(STATUS \${OGG_INCLUDE_DIR})
-
-        # Handle the QUIETLY and REQUIRED arguments and set OGG_FOUND
-        # to TRUE if all listed variables are TRUE.
-        include(FindPackageHandleStandardArgs)
-        find_package_handle_standard_args(Ogg
-            REQUIRED_VARS
-                OGG_LIBRARY
-                OGG_INCLUDE_DIR
-            VERSION_VAR
-                OGG_VERSION_STRING
-        )
+        pkg_check_modules(OGG ogg)
 
         if(OGG_FOUND)
             set(OGG_LIBRARIES \${OGG_LIBRARY})
@@ -487,7 +445,8 @@ jobs:
             add_library(Ogg::ogg UNKNOWN IMPORTED)
                 set_target_properties(Ogg::ogg PROPERTIES
                     INTERFACE_INCLUDE_DIRECTORIES "\${OGG_INCLUDE_DIRS}"
-                    IMPORTED_LOCATION "\${OGG_LIBRARIES}"
+                    LINK_LIBRARIES "\${OGG_LIBRARIES}"
+                    LINK_DIRECTORIES "\${OGG_LIBRARY_DIRS}"
                 )
           endif()
         endif()
