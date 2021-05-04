@@ -460,7 +460,7 @@ jobs:
             -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
             -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake" \
+            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake;$(PREFIX)/lib/cmake/Ogg" \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DOGG_ROOT=$(PREFIX) \
             -DBUILD_SHARED_LIBS=1 ..
@@ -488,7 +488,7 @@ jobs:
             -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
             -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake" \
+            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake;$(PREFIX)/lib/cmake/Ogg" \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
