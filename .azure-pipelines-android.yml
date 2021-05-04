@@ -446,9 +446,9 @@ jobs:
 
         find_path(OGG_INCLUDE_DIR ogg/ogg.h
             HINTS
-                \${PC_OGG_INCLUDEDIR}
                 \${PC_OGG_INCLUDE_DIRS}
-                \${OGG_ROOT}
+            PATH_SUFFIXES
+                include
         )
         # MSVC built ogg may be named ogg_static.
         # The provided project files name the library with the lib prefix.
@@ -459,9 +459,9 @@ jobs:
                 libogg
                 libogg_static
             HINTS
-                \${PC_OGG_LIBDIR}
                 \${PC_OGG_LIBRARY_DIRS}
-                \${OGG_ROOT}
+            PATH_SUFFIXES
+                lib
         )
 
         message(STATUS \${OGG_VERSION_STRING})
