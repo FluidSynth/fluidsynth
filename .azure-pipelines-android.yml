@@ -432,6 +432,7 @@ jobs:
         message(STATUS "asdf: \${PC_OGG_LINK_LIBRARIES}")
         message(STATUS "inc: \${PC_OGG_INCLUDE_DIRS}")
         message(STATUS "lib: \${PC_OGG_LIBRARIES}")
+        message(STATUS "ldir: \${PC_OGG_LIBRARY_DIRS}")
         if(PC_OGG_FOUND)
             if(NOT TARGET Ogg::ogg)
             add_library(Ogg::ogg UNKNOWN IMPORTED)
