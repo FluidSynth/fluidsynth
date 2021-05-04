@@ -501,10 +501,7 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake;$(PREFIX)/lib/cmake/Ogg" \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
@@ -519,6 +516,7 @@ jobs:
         set -ex
 
         pushd flac-${FLAC_VERSION}
+        NOCONFIGURE=true ./autogen.sh
         ./configure \
           --host=${ANDROID_TARGET} \
           --prefix=${PREFIX} \
