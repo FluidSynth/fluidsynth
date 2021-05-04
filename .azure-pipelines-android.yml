@@ -89,6 +89,14 @@ jobs:
 
   steps:
     - script: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      displayName: 'Add apt-get repositories'
+
+    - script: |
+        sudo apt-get update -y
+      displayName: 'Update apt'
+
+    - script: |
         set -ex
         sudo -E apt-get -yq --no-install-suggests --no-install-recommends install gettext cmake zlib1g-dev autogen automake autoconf libtool pkg-config autotools-dev build-essential meson ninja-build
       displayName: 'apt-get install'
@@ -501,7 +509,10 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
+            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake;$(PREFIX)/lib/cmake/Ogg" \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
