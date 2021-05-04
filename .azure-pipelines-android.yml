@@ -429,7 +429,9 @@ jobs:
         cat << EOF > cmake/FindOgg.cmake
         find_package(PkgConfig)
         pkg_check_modules(PC_OGG REQUIRED ogg)
-        message(STATUS \${PC_OGG_LINK_LIBRARIES})
+        message(STATUS "asdf: \${PC_OGG_LINK_LIBRARIES}")
+        message(STATUS "inc: \${PC_OGG_INCLUDE_DIRS}")
+        message(STATUS "lib: \${PC_OGG_LIBRARIES}")
         if(PC_OGG_FOUND)
             if(NOT TARGET Ogg::ogg)
             add_library(Ogg::ogg UNKNOWN IMPORTED)
@@ -438,6 +440,9 @@ jobs:
                     IMPORTED_LOCATION "\${PC_OGG_LINK_LIBRARIES}"
                 )
             endif()
+
+            set(OGG_INCLUDE_DIR PC_OGG_INCLUDE_DIRS)
+            set(OGG_LIBRARY PC_OGG_LIBRARIES)
         endif()
 
         mark_as_advanced(OGG_INCLUDE_DIR OGG_LIBRARY)
@@ -482,6 +487,7 @@ jobs:
             -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
             -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+            -DCMAKE_MODULE_PATH="$(PREFIX)/lib/cmake" \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
