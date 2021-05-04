@@ -12,6 +12,7 @@ variables:
   INSTPATCH_VERSION: '1.1.6'
   VORBIS_VERSION: '1.3.7'
   OGG_VERSION: '1.3.4'
+  FLAC_VERSION: '1.3.3'
 
   # Android NDK sources and standalone toolchain is put here
   DEV: '$(System.DefaultWorkingDirectory)/android-build-root'
@@ -126,6 +127,9 @@ jobs:
 
         wget https://github.com/xiph/ogg/releases/download/v${OGG_VERSION}/libogg-${OGG_VERSION}.tar.gz
         tar zxvf libogg-${OGG_VERSION}.tar.gz
+
+        wget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/tags/${FLAC_VERSION}.tar.gz
+        tar xvf flac-${FLAC_VERSION}.tar.gz
 
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
@@ -420,6 +424,8 @@ jobs:
     - script: |
         set -ex
 
+        pkg-config --libs ogg
+
         pushd libvorbis-${VORBIS_VERSION}
         mkdir -p build
         pushd build
@@ -441,6 +447,32 @@ jobs:
         popd
         popd
       displayName: 'Compile libvorbis'
+      continueOnError: 'true'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
+
+        pushd flac-${FLAC_VERSION}
+        mkdir -p build
+        pushd build
+        cmake -G "Unix Makefiles" \
+            -DCMAKE_MAKE_PROGRAM=make \
+            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
+            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
+            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
+            -DANDROID_TOOLCHAIN=${CC} \
+            -DANDROID_NDK=${NDK} \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
+            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
+            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+            -DCMAKE_VERBOSE_MAKEFILE=1 \
+            -DBUILD_SHARED_LIBS=1 ..
+        make -j$((`nproc`+1))
+        make install
+        popd
+        popd
+      displayName: 'Compile FLAC'
       continueOnError: 'true'
       workingDirectory: $(DEV)
 
