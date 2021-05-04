@@ -110,35 +110,62 @@ jobs:
         set -ex
 
         wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz
-        tar zxvf libiconv-${ICONV_VERSION}.tar.gz
+        tar zxf libiconv-${ICONV_VERSION}.tar.gz
 
         wget -O libffi-${FFI_VERSION}.tar.gz https://github.com/libffi/libffi/archive/${FFI_VERSION}.tar.gz
-        tar zxvf libffi-${FFI_VERSION}.tar.gz
+        tar zxf libffi-${FFI_VERSION}.tar.gz
 
         wget http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz
-        tar zxvf gettext-${GETTEXT_VERSION}.tar.gz
+        tar zxf gettext-${GETTEXT_VERSION}.tar.gz
 
         wget http://ftp.gnome.org/pub/gnome/sources/glib/${GLIB_VERSION}/glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
-        tar xvf glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
+        tar xf glib-${GLIB_VERSION}.${GLIB_EXTRAVERSION}.tar.xz
 
         wget -O oboe-${OBOE_VERSION}.tar.gz https://github.com/google/oboe/archive/${OBOE_VERSION}.tar.gz
-        tar zxvf oboe-${OBOE_VERSION}.tar.gz
+        tar zxf oboe-${OBOE_VERSION}.tar.gz
 
         wget https://github.com/libsndfile/libsndfile/releases/download/${SNDFILE_VERSION}/libsndfile-${SNDFILE_VERSION}.tar.bz2
-        tar jxvf libsndfile-${SNDFILE_VERSION}.tar.bz2
+        tar jxf libsndfile-${SNDFILE_VERSION}.tar.bz2
 
         wget -O libinstpatch-${INSTPATCH_VERSION}.tar.gz https://github.com/swami/libinstpatch/archive/refs/tags/v${INSTPATCH_VERSION}.tar.gz
-        tar zxvf libinstpatch-${INSTPATCH_VERSION}.tar.gz
+        tar zxf libinstpatch-${INSTPATCH_VERSION}.tar.gz
 
         wget https://github.com/xiph/vorbis/releases/download/v${VORBIS_VERSION}/libvorbis-${VORBIS_VERSION}.tar.gz
-        tar zxvf libvorbis-${VORBIS_VERSION}.tar.gz
+        tar zxf libvorbis-${VORBIS_VERSION}.tar.gz
 
         wget https://github.com/xiph/ogg/releases/download/v${OGG_VERSION}/libogg-${OGG_VERSION}.tar.gz
-        tar zxvf libogg-${OGG_VERSION}.tar.gz
+        tar zxf libogg-${OGG_VERSION}.tar.gz
 
         wget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/tags/${FLAC_VERSION}.tar.gz
-        tar xvf flac-${FLAC_VERSION}.tar.gz
+        tar xf flac-${FLAC_VERSION}.tar.gz
 
+
+        cat << EOF > FindOgg.cmake
+        find_package(PkgConfig)
+        pkg_check_modules(PC_OGG REQUIRED ogg)
+        message(STATUS "asdf: \${PC_OGG_LINK_LIBRARIES}")
+        message(STATUS "inc: \${PC_OGG_INCLUDE_DIRS}")
+        message(STATUS "lib: \${PC_OGG_LIBRARIES}")
+        message(STATUS "ldir: \${PC_OGG_LIBRARY_DIRS}")
+        if(PC_OGG_FOUND)
+            if(NOT TARGET Ogg::ogg)
+            add_library(Ogg::ogg UNKNOWN IMPORTED)
+                set_target_properties(Ogg::ogg PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "\${PC_OGG_INCLUDE_DIRS}"
+                    IMPORTED_LOCATION "\${PC_OGG_LIBRARY_DIRS}/libogg.so"
+                )
+            endif()
+            
+            set(OGG_INCLUDE_DIR PC_OGG_INCLUDE_DIRS)
+            set(OGG_LIBRARY PC_OGG_LIBRARIES)
+        endif()
+
+        mark_as_advanced(OGG_INCLUDE_DIR OGG_LIBRARY)
+        EOF
+
+        cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake
+        cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
+        cat FindOgg.cmake
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
 
@@ -448,30 +475,6 @@ jobs:
         set -ex
 
         pushd libvorbis-${VORBIS_VERSION}
-
-        cat << EOF > cmake/FindOgg.cmake
-        find_package(PkgConfig)
-        pkg_check_modules(PC_OGG REQUIRED ogg)
-        message(STATUS "asdf: \${PC_OGG_LINK_LIBRARIES}")
-        message(STATUS "inc: \${PC_OGG_INCLUDE_DIRS}")
-        message(STATUS "lib: \${PC_OGG_LIBRARIES}")
-        message(STATUS "ldir: \${PC_OGG_LIBRARY_DIRS}")
-        if(PC_OGG_FOUND)
-            if(NOT TARGET Ogg::ogg)
-            add_library(Ogg::ogg UNKNOWN IMPORTED)
-                set_target_properties(Ogg::ogg PROPERTIES
-                    INTERFACE_INCLUDE_DIRECTORIES "\${PC_OGG_INCLUDE_DIRS}"
-                    IMPORTED_LOCATION "\${PC_OGG_LIBRARY_DIRS}/libogg.so"
-                )
-            endif()
-            
-            set(OGG_INCLUDE_DIR PC_OGG_INCLUDE_DIRS)
-            set(OGG_LIBRARY PC_OGG_LIBRARIES)
-        endif()
-
-        mark_as_advanced(OGG_INCLUDE_DIR OGG_LIBRARY)
-        EOF
-        
         mkdir -p build
         pushd build
         cmake -G "Unix Makefiles" \
@@ -519,27 +522,7 @@ jobs:
         make install
         popd
         popd
-      displayName: 'Compile FLAC (cmake)'
-      continueOnError: 'true'
-      workingDirectory: $(DEV)
-
-    - script: |
-        set -ex
-
-        pushd flac-${FLAC_VERSION}
-        NOCONFIGURE=true ./autogen.sh
-        ./configure \
-          --host=${ANDROID_TARGET} \
-          --prefix=${PREFIX} \
-          --disable-static \
-          --enable-shared \
-          --enable-external-libs \
-          --with-pic \
-          --disable-silent-rules
-        make -j$((`nproc`+1))
-        make install
-        popd
-      displayName: 'Compile FLAC (autotools)'
+      displayName: 'Compile FLAC'
       continueOnError: 'true'
       workingDirectory: $(DEV)
 
