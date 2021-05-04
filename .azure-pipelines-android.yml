@@ -399,6 +399,20 @@ jobs:
         set -ex
 
         pushd libogg-${OGG_VERSION}
+
+        cat << EOF > ogg.pc.in
+        prefix=@prefix@
+        exec_prefix=\${prefix}
+        libdir=\${exec_prefix}/lib
+        includedir=\${prefix}/include
+
+        Name: ogg
+        Description: ogg is a library for manipulating ogg bitstreams
+        Version: @VERSION@
+        Libs: -L\${libdir} -logg
+        Cflags: -I\${includedir}
+        EOF
+
         mkdir -p build
         pushd build
         cmake -G "Unix Makefiles" \
