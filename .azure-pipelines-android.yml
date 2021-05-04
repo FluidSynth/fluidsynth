@@ -511,7 +511,26 @@ jobs:
         make install
         popd
         popd
-      displayName: 'Compile FLAC'
+      displayName: 'Compile FLAC (cmake)'
+      continueOnError: 'true'
+      workingDirectory: $(DEV)
+
+    - script: |
+        set -ex
+
+        pushd flac-${FLAC_VERSION}
+        ./configure \
+          --host=${ANDROID_TARGET} \
+          --prefix=${PREFIX} \
+          --disable-static \
+          --enable-shared \
+          --enable-external-libs \
+          --with-pic \
+          --disable-silent-rules
+        make -j$((`nproc`+1))
+        make install
+        popd
+      displayName: 'Compile FLAC (autotools)'
       continueOnError: 'true'
       workingDirectory: $(DEV)
 
