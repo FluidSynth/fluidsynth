@@ -412,6 +412,7 @@ jobs:
         Libs: -L\${libdir} -logg
         Cflags: -I\${includedir}
         EOF
+        cat ogg.pc.in
 
         mkdir -p build
         pushd build
