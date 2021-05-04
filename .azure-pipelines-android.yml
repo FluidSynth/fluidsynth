@@ -424,7 +424,11 @@ jobs:
     - script: |
         set -ex
 
+        echo $PKG_CONFIG_PATH
         pkg-config --libs ogg
+        echo $?
+        pkg-config --libs glib-2.0
+        pkg-config --list-all
 
         pushd libvorbis-${VORBIS_VERSION}
         mkdir -p build
