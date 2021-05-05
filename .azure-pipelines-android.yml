@@ -575,6 +575,7 @@ jobs:
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
+            --debug-output --trace \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
