@@ -474,7 +474,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        set -e
+        set -ex
 
         pushd libvorbis-${VORBIS_VERSION}
         mkdir -p build
@@ -518,7 +518,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
-        set -e
+        set -ex
 
         pushd flac-${FLAC_VERSION}
         mkdir -p build
