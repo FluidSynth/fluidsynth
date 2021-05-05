@@ -153,7 +153,8 @@ jobs:
         key: '$(ARCH) | $(DEV)/*.tar.gz'
         path: '$(PREFIX)'
         cacheHitVar: 'CACHE_RESTORED'
-      displayName: 'Cache fluidsynth dependency libraries' 
+      displayName: 'Cache fluidsynth dependency libraries'
+      enabled: 'false'
 
     - script: |
         set -e
@@ -439,6 +440,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_STAGING_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
+            -DINSTALL_DOCS=0 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
@@ -519,6 +521,11 @@ jobs:
             -DCMAKE_C_STANDARD=99 \
             -DCMAKE_C_STANDARD_REQUIRED=1 \
             -DWITH_ASM=0 \
+            -DBUILD_CXXLIBS=0 \
+            -DBUILD_PROGRAMS=0 \
+            -DBUILD_EXAMPLES=0 \
+            -DBUILD_DOCS=0 \
+            -DINSTALL_MANPAGES=0 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
@@ -556,6 +563,8 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_STAGING_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
+            -DBUILD_PROGRAMS=0 \
+            -DBUILD_EXAMPLES=0 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
