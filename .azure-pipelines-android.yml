@@ -522,8 +522,8 @@ jobs:
         mkdir -p build
         pushd build
 
-        # flac uses c99 macros, but doesnt specify a standard, so we need to do it explicitly
-        # on i686, they invoke yasm with -fstack-protector-strong flag... turn off asm optimizations
+        # flac uses c99 macros, but doesnt specify a standard, so we need to do it explicitly.
+        # On i686, they invoke yasm with -fstack-protector-strong flag... turn off asm optimizations.
         cmake -G "Unix Makefiles" \
             -DCMAKE_MAKE_PROGRAM=make \
             -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
@@ -560,18 +560,35 @@ jobs:
         set -ex
 
         pushd libsndfile-${SNDFILE_VERSION}
-        ./configure \
-          --host=${ANDROID_TARGET} \
-          --prefix=${PREFIX} \
-          --disable-static \
-          --enable-shared \
-          --enable-external-libs \
-          --with-pic \
-          --disable-silent-rules
+        mkdir -p build
+        pushd build
+        cmake -G "Unix Makefiles" \
+            -DCMAKE_MAKE_PROGRAM=make \
+            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
+            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
+            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
+            -DANDROID_TOOLCHAIN=${CC} \
+            -DANDROID_NDK=${NDK} \
+            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
+            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
+            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
+            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+            -DCMAKE_VERBOSE_MAKEFILE=1 \
+            -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
         popd
+        popd
       displayName: 'Compile libsndfile'
+      workingDirectory: $(DEV)
+
+    - script: |
+        ls -la libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/
+        cat libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/CMakeError.log
+        true
+      displayName: 'libsndfile Cmake Error Log'
+      condition: always()
       workingDirectory: $(DEV)
 
     - script: |
