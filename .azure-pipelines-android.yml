@@ -146,32 +146,6 @@ jobs:
         wget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/heads/master.tar.gz
         tar xf flac-${FLAC_VERSION}.tar.gz
 
-        # Although pkg-config successfully finds OGG, find_library() and find_path() do not find the lib and header :(
-        # So just replace it with our own simplified version:
-        cat << EOF > FindOgg.cmake
-        find_package(PkgConfig)
-        pkg_check_modules(PC_OGG REQUIRED ogg)
-        if(PC_OGG_FOUND)
-            if(NOT TARGET Ogg::ogg)
-            add_library(Ogg::ogg UNKNOWN IMPORTED)
-                set_target_properties(Ogg::ogg PROPERTIES
-                    INTERFACE_INCLUDE_DIRECTORIES "\${PC_OGG_INCLUDE_DIRS}"
-                    IMPORTED_LOCATION "\${PC_OGG_LIBRARY_DIRS}/libogg.so"
-                )
-            endif()
-            
-            set(OGG_INCLUDE_DIR PC_OGG_INCLUDE_DIRS)
-            set(OGG_LIBRARY PC_OGG_LIBRARIES)
-        endif()
-
-        mark_as_advanced(OGG_INCLUDE_DIR OGG_LIBRARY)
-        EOF
-
-        #cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/
-        #cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
-        #cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
-        cat FindOgg.cmake
-
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
 
@@ -439,21 +413,6 @@ jobs:
         set -ex
 
         pushd libogg-${OGG_VERSION}
-
-        cat << EOF > ogg.pc.in
-        prefix=@prefix@
-        exec_prefix=\${prefix}
-        libdir=\${exec_prefix}/lib
-        includedir=\${prefix}/include
-
-        Name: ogg
-        Description: ogg is a library for manipulating ogg bitstreams
-        Version: @VERSION@
-        Libs: -L\${libdir} -logg
-        Cflags: -I\${includedir}
-        EOF
-        cat ogg.pc.in
-
         mkdir -p build
         pushd build
         cmake -G "Unix Makefiles" \
@@ -584,7 +543,6 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_STAGING_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
-            --debug-find \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
@@ -596,7 +554,6 @@ jobs:
     - script: |
         ls -la libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/
         cat libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/CMakeError.log
-        cat libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/CMakeOutput.log
         true
       displayName: 'libsndfile Cmake Error Log'
       condition: always()
@@ -653,8 +610,6 @@ jobs:
         pushd libinstpatch-${INSTPATCH_VERSION}
         mkdir -p build
         pushd build
-
-        echo $LDFLAGS
         cmake -G "Unix Makefiles" \
             -DCMAKE_MAKE_PROGRAM=make \
             -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
