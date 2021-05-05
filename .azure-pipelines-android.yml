@@ -715,3 +715,11 @@ jobs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: '$(ARTIFACT_NAME)'
         publishLocation: 'Container'
+
+    - script: |
+        set -ex
+        # as very last step before creating the pipeline cache, remove fluidsynth
+        pushd build
+        make uninstall
+        popd
+      displayName: 'Uninstall fluidsynth'
