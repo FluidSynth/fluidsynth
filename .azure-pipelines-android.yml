@@ -502,6 +502,18 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
+        cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeError.log
+      displayName: 'Error log'
+      condition: failed()
+      workingDirectory: $(DEV)
+
+    - script: |
+        cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeOutput.log
+      displayName: 'Output log'
+      condition: failed()
+      workingDirectory: $(DEV)
+
+    - script: |
         set -ex
 
         pushd flac-${FLAC_VERSION}
@@ -526,6 +538,18 @@ jobs:
         popd
       displayName: 'Compile FLAC'
       continueOnError: 'true'
+      workingDirectory: $(DEV)
+
+    - script: |
+        cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeError.log
+      displayName: 'Error log'
+      condition: failed()
+      workingDirectory: $(DEV)
+
+    - script: |
+        cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeOutput.log
+      displayName: 'Output log'
+      condition: failed()
       workingDirectory: $(DEV)
 
     - script: |
