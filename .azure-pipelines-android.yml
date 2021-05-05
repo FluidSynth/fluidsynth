@@ -44,7 +44,7 @@ variables:
   # Tell configure what flags Android requires.
   # Using C99 for all compilations by default. Turn Wimplicit-function-declaration into errors. Else autotools will be fooled when checking for available functions (that in fact are NOT available) and compilation will fail later on.
   # Also disable clangs integrated assembler, as the hand written assembly of libffi is not recognized by it, cf. https://crbug.com/801303
-  CFLAGS: "-fPIE -fPIC -I$(PREFIX)/include --sysroot=$(NDK_TOOLCHAIN)/sysroot -I$(NDK_TOOLCHAIN)/sysroot/include -Werror=implicit-function-declaration -fno-integrated-as"
+  CFLAGS: "-fPIE -fPIC -I$(PREFIX)/include --sysroot=$(NDK_TOOLCHAIN)/sysroot -I$(NDK_TOOLCHAIN)/sysroot/usr/include -Werror=implicit-function-declaration -fno-integrated-as"
   CXXFLAGS: $(CFLAGS)
   CPPFLAGS: $(CXXFLAGS)
 
@@ -188,7 +188,7 @@ jobs:
         LIBPATH1=$(NDK_TOOLCHAIN)/sysroot/usr/lib
         LIBPATH2=$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)
 
-        export LDFLAGS="-pie -Wl,-rpath-link=${LIBPATH1} -L${LIBPATH1} -L$(PREFIX)/lib -L$(NDK_TOOLCHAIN)/lib -Wl,-rpath-link=${LIBPATH2} -L${LIBPATH2} -Wl,-rpath-link=${LIBPATH0} -L${LIBPATH0}"
+        export LDFLAGS="-pie -Wl,-rpath-link=${LIBPATH1} -L${LIBPATH1} -L$(PREFIX)/lib -Wl,-rpath-link=${LIBPATH2} -L${LIBPATH2} -Wl,-rpath-link=${LIBPATH0} -L${LIBPATH0}"
         echo "##vso[task.setvariable variable=LDFLAGS]$LDFLAGS"
 
         # Tell configure what tools to use.
