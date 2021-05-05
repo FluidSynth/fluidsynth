@@ -139,7 +139,6 @@ jobs:
         wget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/tags/${FLAC_VERSION}.tar.gz
         tar xf flac-${FLAC_VERSION}.tar.gz
 
-
         # Although pkg-config successfully finds OGG, find_library() and find_path() do not find the lib and header :(
         # So just replace it with our own simplified version:
         cat << EOF > FindOgg.cmake
@@ -165,6 +164,12 @@ jobs:
         cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
         cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
         cat FindOgg.cmake
+
+        # patch for fixing compilation error in flac
+        wget https://github.com/xiph/flac/commit/9c0d6fd8a1c8d9f4ae8f848d537b94ec998fbcee.patch
+        cd flac-${FLAC_VERSION}
+        cat ../9c0d6fd8a1c8d9f4ae8f848d537b94ec998fbcee.patch | patch -p1
+
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
 
@@ -506,7 +511,6 @@ jobs:
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DOGG_ROOT=$(PREFIX) \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
