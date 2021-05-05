@@ -12,7 +12,7 @@ variables:
   INSTPATCH_VERSION: '1.1.6'
   VORBIS_VERSION: '1.3.7'
   OGG_VERSION: '1.3.4'
-  FLAC_VERSION: '1.3.3'
+  FLAC_VERSION: 'master'
 
   # Android NDK sources and standalone toolchain is put here
   DEV: '$(System.DefaultWorkingDirectory)/android-build-root'
@@ -136,7 +136,9 @@ jobs:
         wget https://github.com/xiph/ogg/releases/download/v${OGG_VERSION}/libogg-${OGG_VERSION}.tar.gz
         tar zxf libogg-${OGG_VERSION}.tar.gz
 
-        wget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/tags/${FLAC_VERSION}.tar.gz
+        flac 1.3.3 is completely broken: pkgconfig is incorrectly installed, compilation failure, etc.
+        # wget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/${FLAC_VERSION}.tar.gz
+        eget -O flac-${FLAC_VERSION}.tar.gz https://github.com/xiph/flac/archive/refs/heads/master.zip
         tar xf flac-${FLAC_VERSION}.tar.gz
 
         # Although pkg-config successfully finds OGG, find_library() and find_path() do not find the lib and header :(
@@ -164,17 +166,6 @@ jobs:
         cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
         cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
         cat FindOgg.cmake
-
-        # patch for fixing compilation error in flac
-        wget https://github.com/xiph/flac/commit/9c0d6fd8a1c8d9f4ae8f848d537b94ec998fbcee.patch
-        # patch needed for the next patch
-        wget https://github.com/xiph/flac/commit/acadefddac6b6a3a67d7628432c4b1380fbc2044.patch
-        # patch to fix broken pkgconfig install dir
-        wget https://github.com/xiph/flac/commit/7a35c528495b6d8a51e87e007f6810b5553101bc.patch
-        cd flac-${FLAC_VERSION}
-        cat ../9c0d6fd8a1c8d9f4ae8f848d537b94ec998fbcee.patch | patch -p1
-        cat ../acadefddac6b6a3a67d7628432c4b1380fbc2044.patch | patch -p1
-        cat ../7a35c528495b6d8a51e87e007f6810b5553101bc.patch | patch -p1
 
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
