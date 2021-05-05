@@ -470,24 +470,15 @@ jobs:
         popd
         popd
       displayName: 'Compile libogg'
-      continueOnError: 'true'
       workingDirectory: $(DEV)
 
     - script: |
         ls -la libogg-${OGG_VERSION}/build/CMakeFiles/
         cat libogg-${OGG_VERSION}/build/CMakeFiles/CMakeError.log
-      displayName: 'Error log'
+        true
+      displayName: 'OGG Cmake Error Log'
       condition: always()
-      continueOnError: 'true'
       workingDirectory: $(DEV)
-
-    - script: |
-        cat libogg-${OGG_VERSION}/build/CMakeFiles/CMakeOutput.log
-      displayName: 'Output log'
-      condition: always()
-      continueOnError: 'true'
-      workingDirectory: $(DEV)
-
 
     - script: |
         set -ex
@@ -519,16 +510,9 @@ jobs:
     - script: |
         ls -la libvorbis-${VORBIS_VERSION}/build/CMakeFiles/
         cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeError.log
-      displayName: 'Error log'
+        true
+      displayName: 'Vorbis Cmake Error Log'
       condition: always()
-      continueOnError: 'true'
-      workingDirectory: $(DEV)
-
-    - script: |
-        cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeOutput.log
-      displayName: 'Output log'
-      condition: always()
-      continueOnError: 'true'
       workingDirectory: $(DEV)
 
     - script: |
@@ -560,22 +544,14 @@ jobs:
         popd
         popd
       displayName: 'Compile FLAC'
-      continueOnError: 'true'
       workingDirectory: $(DEV)
 
     - script: |
         ls -la flac-${FLAC_VERSION}/build/CMakeFiles/
         cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeError.log
-      displayName: 'Error log'
+        true
+      displayName: 'FLAC Cmake Error Log'
       condition: always()
-      continueOnError: 'true'
-      workingDirectory: $(DEV)
-
-    - script: |
-        cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeOutput.log
-      displayName: 'Output log'
-      condition: always()
-      continueOnError: 'true'
       workingDirectory: $(DEV)
 
     - script: |
