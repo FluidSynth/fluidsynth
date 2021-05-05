@@ -536,7 +536,7 @@ jobs:
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
-# flac uses c99 macros, but doesnt specify a standard...
+            # flac uses c99 macros, but doesnt specify a standard...
             -DCMAKE_C_STANDARD=99 \
             -DCMAKE_C_STANDARD_REQUIRED=1 \
             -DBUILD_SHARED_LIBS=1 ..
