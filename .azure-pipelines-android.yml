@@ -171,7 +171,7 @@ jobs:
         wget https://github.com/xiph/flac/commit/7a35c528495b6d8a51e87e007f6810b5553101bc.patch
         cd flac-${FLAC_VERSION}
         cat ../9c0d6fd8a1c8d9f4ae8f848d537b94ec998fbcee.patch | patch -p1
-        cat ../7a35c528495b6d8a51e87e007f6810b5553101bc.patch | patch -p1
+        cat ../7a35c528495b6d8a51e87e007f6810b5553101bc.patch | patch -p1 -F10
 
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
