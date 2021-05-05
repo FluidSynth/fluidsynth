@@ -367,6 +367,7 @@ jobs:
         make install
         popd
       displayName: 'Compile gettext'
+      enabled: 'false'
       workingDirectory: $(DEV)
 
     - script: |
@@ -429,7 +430,7 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
-      enabled: 'true'
+      enabled: 'false'
 
     - script: |
         set -ex
