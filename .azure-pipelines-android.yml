@@ -503,13 +503,13 @@ jobs:
     - script: |
         cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeError.log
       displayName: 'Error log'
-      condition: failed()
+      condition: always()
       workingDirectory: $(DEV)
 
     - script: |
         cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeOutput.log
       displayName: 'Output log'
-      condition: failed()
+      condition: always()
       workingDirectory: $(DEV)
 
     - script: |
@@ -541,13 +541,13 @@ jobs:
     - script: |
         cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeError.log
       displayName: 'Error log'
-      condition: failed()
+      condition: always()
       workingDirectory: $(DEV)
 
     - script: |
         cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeOutput.log
       displayName: 'Output log'
-      condition: failed()
+      condition: always()
       workingDirectory: $(DEV)
 
     - script: |
