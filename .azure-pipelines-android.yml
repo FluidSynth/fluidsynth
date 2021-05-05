@@ -39,7 +39,7 @@ variables:
   # it's probably a bug of gettext, if posix_spawn is not available it replaces it with its own implementation. Autotools of gettext set HAVE_POSIX_SPAWN==0 (which is correct) but for some reason REPLACE_POSIX_SPAWN==0 (which is wrong, as it should be 1).
   # 
   # NOTE: With NDK r21d and updated packages everything is fine using api 23. Using api 28 makes the generated library not compatible with android 8 and below devices (missing some symbols in system libraries)
-  ANDROID_API: '23'
+  ANDROID_API: '24'
 
   # Tell configure what flags Android requires.
   # Using C99 for all compilations by default. Turn Wimplicit-function-declaration into errors. Else autotools will be fooled when checking for available functions (that in fact are NOT available) and compilation will fail later on.
