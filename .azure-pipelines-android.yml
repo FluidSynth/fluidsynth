@@ -535,6 +535,7 @@ jobs:
             -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
             -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
             -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
+            -DCMAKE_REQUIRED_INCLUDES="$(NDK_TOOLCHAIN)/sysroot/usr/include" \
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
