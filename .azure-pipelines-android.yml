@@ -140,13 +140,11 @@ jobs:
         tar xf flac-${FLAC_VERSION}.tar.gz
 
 
+        # Although pkg-config successfully finds OGG, find_library() and find_path() do not find the lib and header :(
+        # So just replace it with our own simplified version:
         cat << EOF > FindOgg.cmake
         find_package(PkgConfig)
         pkg_check_modules(PC_OGG REQUIRED ogg)
-        message(STATUS "asdf: \${PC_OGG_LINK_LIBRARIES}")
-        message(STATUS "inc: \${PC_OGG_INCLUDE_DIRS}")
-        message(STATUS "lib: \${PC_OGG_LIBRARIES}")
-        message(STATUS "ldir: \${PC_OGG_LIBRARY_DIRS}")
         if(PC_OGG_FOUND)
             if(NOT TARGET Ogg::ogg)
             add_library(Ogg::ogg UNKNOWN IMPORTED)
@@ -163,9 +161,9 @@ jobs:
         mark_as_advanced(OGG_INCLUDE_DIR OGG_LIBRARY)
         EOF
 
-        #cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/
-        #cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
-        #cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
+        cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/
+        cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
+        cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
         cat FindOgg.cmake
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
