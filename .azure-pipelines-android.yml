@@ -89,7 +89,12 @@ jobs:
 
   steps:
     - script: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        set -e
+
+        sudo apt remove --purge --auto-remove cmake
+        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+        sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+
       displayName: 'Add apt-get repositories'
 
     - script: |
@@ -575,7 +580,7 @@ jobs:
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
-            --debug-output --trace \
+            --debug-find \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
