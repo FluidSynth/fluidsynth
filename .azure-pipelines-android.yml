@@ -539,7 +539,7 @@ jobs:
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DCMAKE_C_STANDARD=99 \
             -DCMAKE_C_STANDARD_REQUIRED=1 \
-            -WITH_ASM=0 \
+            -DWITH_ASM=0 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
@@ -586,6 +586,7 @@ jobs:
     - script: |
         ls -la libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/
         cat libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/CMakeError.log
+        cat libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/CMakeOutput.log
         true
       displayName: 'libsndfile Cmake Error Log'
       condition: always()
