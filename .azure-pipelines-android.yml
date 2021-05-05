@@ -523,6 +523,8 @@ jobs:
         pushd flac-${FLAC_VERSION}
         mkdir -p build
         pushd build
+
+        # flac uses c99 macros, but doesnt specify a standard, so we need to do it explicitly
         cmake -G "Unix Makefiles" \
             -DCMAKE_MAKE_PROGRAM=make \
             -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
@@ -536,7 +538,6 @@ jobs:
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
-            # flac uses c99 macros, but doesnt specify a standard...
             -DCMAKE_C_STANDARD=99 \
             -DCMAKE_C_STANDARD_REQUIRED=1 \
             -DBUILD_SHARED_LIBS=1 ..
