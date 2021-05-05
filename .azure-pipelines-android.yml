@@ -1,3 +1,11 @@
+parameters:
+- name: SkipCache
+  displayName: Skip Cache
+  type: string
+  default: 'false'
+  values:
+  - 'true'
+  - 'false'
 
 variables:
   ICONV_VERSION: '1.16'
