@@ -532,11 +532,11 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
+            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
+            -DCMAKE_REQUIRED_FLAGS="${CFLAGS// /;}" \
             -DCMAKE_REQUIRED_INCLUDES="$(NDK_TOOLCHAIN)/sysroot/usr/include" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
+            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DCMAKE_C_STANDARD=99 \
