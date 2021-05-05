@@ -1,11 +1,11 @@
 parameters:
-- name: SkipCache
-  displayName: Skip Cache
-  type: string
-  default: 'false'
+- name: UseCache
+  displayName: Use Dependency Cache
+  type: boolean
+  default: true
   values:
-  - 'true'
-  - 'false'
+  - true
+  - false
 
 variables:
   ICONV_VERSION: '1.16'
@@ -162,7 +162,7 @@ jobs:
         path: '$(PREFIX)'
         cacheHitVar: 'CACHE_RESTORED'
       displayName: 'Cache fluidsynth dependency libraries'
-      enabled: 'false'
+      condition: ${{ parameters.useCache }}
 
     - script: |
         set -e
