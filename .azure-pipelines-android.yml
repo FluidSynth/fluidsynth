@@ -149,6 +149,12 @@ jobs:
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
 
+    - task: Cache@2
+      inputs:
+        key: '$(ARCH) | $(DEV)/*.tar.gz'
+        path: '$(PREFIX)'
+        cacheHitVar: 'CACHE_RESTORED'
+
     - script: |
         set -e
 
@@ -210,6 +216,7 @@ jobs:
   
       displayName: 'Compile libiconv'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         set -ex
@@ -225,6 +232,7 @@ jobs:
         popd
       displayName: 'Compile libffi'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         set -ex
@@ -347,6 +355,7 @@ jobs:
         popd
       displayName: 'Compile gettext'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         set -ex
@@ -408,6 +417,7 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         set -ex
@@ -436,6 +446,7 @@ jobs:
         popd
       displayName: 'Compile libogg'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         ls -la libogg-${OGG_VERSION}/build/CMakeFiles/
@@ -472,6 +483,7 @@ jobs:
         popd
       displayName: 'Compile libvorbis'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         ls -la libvorbis-${VORBIS_VERSION}/build/CMakeFiles/
@@ -514,6 +526,7 @@ jobs:
         popd
       displayName: 'Compile FLAC'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         ls -la flac-${FLAC_VERSION}/build/CMakeFiles/
@@ -550,6 +563,7 @@ jobs:
         popd
       displayName: 'Compile libsndfile'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         ls -la libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/
@@ -603,6 +617,7 @@ jobs:
         popd
       displayName: 'Compile Oboe'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         set -ex
@@ -631,6 +646,7 @@ jobs:
         popd
       displayName: 'Compile libinstpatch'
       workingDirectory: $(DEV)
+      condition: ne(variables.CACHE_RESTORED, 'true')
 
     - script: |
         set -ex
