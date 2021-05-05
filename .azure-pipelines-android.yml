@@ -365,7 +365,6 @@ jobs:
         make install
         popd
       displayName: 'Compile gettext'
-      enabled: 'false'
       workingDirectory: $(DEV)
 
     - script: |
@@ -428,7 +427,6 @@ jobs:
         popd
       displayName: 'Compile glib'
       workingDirectory: $(DEV)
-      enabled: 'false'
 
     - script: |
         set -ex
@@ -472,6 +470,22 @@ jobs:
       displayName: 'Compile libogg'
       continueOnError: 'true'
       workingDirectory: $(DEV)
+
+    - script: |
+        ls -la libogg-${OGG_VERSION}/build/CMakeFiles/
+        cat libogg-${OGG_VERSION}/build/CMakeFiles/CMakeError.log
+      displayName: 'Error log'
+      condition: always()
+      continueOnError: 'true'
+      workingDirectory: $(DEV)
+
+    - script: |
+        cat libogg-${OGG_VERSION}/build/CMakeFiles/CMakeOutput.log
+      displayName: 'Output log'
+      condition: always()
+      continueOnError: 'true'
+      workingDirectory: $(DEV)
+
 
     - script: |
         set -ex
