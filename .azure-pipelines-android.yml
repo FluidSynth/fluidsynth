@@ -523,6 +523,7 @@ jobs:
         pushd build
 
         # flac uses c99 macros, but doesnt specify a standard, so we need to do it explicitly
+        # on i686, they invoke yasm with -fstack-protector-strong flag... turn off asm optimizations
         cmake -G "Unix Makefiles" \
             -DCMAKE_MAKE_PROGRAM=make \
             -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
@@ -538,6 +539,7 @@ jobs:
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DCMAKE_C_STANDARD=99 \
             -DCMAKE_C_STANDARD_REQUIRED=1 \
+            -WITH_ASM=0 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
