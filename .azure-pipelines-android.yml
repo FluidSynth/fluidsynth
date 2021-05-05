@@ -163,9 +163,9 @@ jobs:
         mark_as_advanced(OGG_INCLUDE_DIR OGG_LIBRARY)
         EOF
 
-        cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/
-        cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
-        cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
+        #cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/
+        #cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake/FindOGG.cmake
+        #cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
         cat FindOgg.cmake
       displayName: 'Download Dependencies'
       workingDirectory: $(DEV)
