@@ -42,7 +42,7 @@ variables:
   ANDROID_API: '24'
 
   # Tell configure what flags Android requires.
-  # Using C99 for all compilations by default. Turn Wimplicit-function-declaration into errors. Else autotools will be fooled when checking for available functions (that in fact are NOT available) and compilation will fail later on.
+  # Turn Wimplicit-function-declaration into errors. Else autotools will be fooled when checking for available functions (that in fact are NOT available) and compilation will fail later on.
   # Also disable clangs integrated assembler, as the hand written assembly of libffi is not recognized by it, cf. https://crbug.com/801303
   CFLAGS: "-fPIE -fPIC -I$(PREFIX)/include --sysroot=$(NDK_TOOLCHAIN)/sysroot -I$(NDK_TOOLCHAIN)/sysroot/usr/include -Werror=implicit-function-declaration -fno-integrated-as"
   CXXFLAGS: $(CFLAGS)
