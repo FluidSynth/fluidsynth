@@ -164,6 +164,7 @@ jobs:
         EOF
 
         cp -f FindOgg.cmake flac-${FLAC_VERSION}/cmake
+        cp -f FindOGG.cmake flac-${FLAC_VERSION}/cmake
         cp -f FindOgg.cmake libvorbis-${VORBIS_VERSION}/cmake
         cat FindOgg.cmake
       displayName: 'Download Dependencies'
