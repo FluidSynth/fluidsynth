@@ -38,7 +38,7 @@ variables:
   # when compiling with clang use at least 28 as this makes sure that android provides the posix_spawn functions, so the compilation of gettext will (should) work out of the box
   # it's probably a bug of gettext, if posix_spawn is not available it replaces it with its own implementation. Autotools of gettext set HAVE_POSIX_SPAWN==0 (which is correct) but for some reason REPLACE_POSIX_SPAWN==0 (which is wrong, as it should be 1).
   # 
-  # NOTE: With NDK r21d and updated packages everything is fine using api 23. Using api 28 makes the generated library not compatible with android 8 and below devices (missing some symbols in system libraries)
+  # NOTE: API 24 is required because it provides fseeko() and ftello() required by libflac
   ANDROID_API: '24'
 
   # Tell configure what flags Android requires.
@@ -528,8 +528,10 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
             -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
+            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
+            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DBUILD_SHARED_LIBS=1 ..
