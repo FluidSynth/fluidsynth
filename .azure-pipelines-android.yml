@@ -486,8 +486,10 @@ jobs:
             -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
             -DANDROID_TOOLCHAIN=${CC} \
             -DANDROID_NDK=${NDK} \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
             -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
+            -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
+            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
+            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
             -DOGG_ROOT=$(PREFIX) \
@@ -534,6 +536,8 @@ jobs:
             -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
             -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
             -DCMAKE_VERBOSE_MAKEFILE=1 \
+            -DCMAKE_C_STANDARD=99 \ # flac uses c99 macros, but doesnt specify a standard...
+            -DCMAKE_C_STANDARD_REQUIRED=1 \
             -DBUILD_SHARED_LIBS=1 ..
         make -j$((`nproc`+1))
         make install
