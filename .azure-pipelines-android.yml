@@ -501,6 +501,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
+        ls -la libvorbis-${VORBIS_VERSION}/build/CMakeFiles/
         cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeError.log
       displayName: 'Error log'
       condition: always()
@@ -541,6 +542,7 @@ jobs:
       workingDirectory: $(DEV)
 
     - script: |
+        ls -la flac-${FLAC_VERSION}/build/CMakeFiles/
         cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeError.log
       displayName: 'Error log'
       condition: always()
