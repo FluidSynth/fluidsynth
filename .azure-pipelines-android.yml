@@ -189,8 +189,9 @@ jobs:
         LIBPATH0=$(PREFIX)/lib
         LIBPATH1=$(NDK_TOOLCHAIN)/sysroot/usr/lib
         LIBPATH2=$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)/$(ANDROID_API)
+        LIBPATH3=$(NDK_TOOLCHAIN)/sysroot/usr/lib/$(ARCH)-linux-android$(ANDROID_TARGET_ABI)
 
-        export LDFLAGS="-pie -Wl,-rpath-link=${LIBPATH1} -L${LIBPATH1} -L$(PREFIX)/lib -Wl,-rpath-link=${LIBPATH2} -L${LIBPATH2} -Wl,-rpath-link=${LIBPATH0} -L${LIBPATH0}"
+        export LDFLAGS="-pie -Wl,-rpath-link=${LIBPATH1} -L${LIBPATH1} -Wl,-rpath-link=${LIBPATH2} -L${LIBPATH2} -Wl,-rpath-link=${LIBPATH3} -L${LIBPATH3} -Wl,-rpath-link=${LIBPATH0} -L${LIBPATH0}"
         echo "##vso[task.setvariable variable=LDFLAGS]$LDFLAGS"
 
         # Tell configure what tools to use.
@@ -510,6 +511,8 @@ jobs:
         Libs: -L\${libdir} -loboe -landroid -llog
         Cflags: -I\${includedir}
         EOF
+
+        cat ${PKG_CONFIG_PATH}/oboe-1.0.pc
 
       displayName: 'Create fake oboe.pc'
       workingDirectory: $(DEV)
