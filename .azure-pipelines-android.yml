@@ -560,9 +560,31 @@ jobs:
         cd $(Build.ArtifactStagingDirectory)/$(ARCH)
         cp -a $(PREFIX)/lib/* .
         ls -Rg .
-        rm -rf *.dll *.alias *gettext* libtextstyle.* *.a *.la
+        rm -rf *.dll *.alias gettext/ libtextstyle.* *.a *.la
       displayName: 'Collecting artifacts'
-          
+    
+    - script: |
+        set -ex
+        ls libFLAC.so
+        ls libcharset.so
+        ls libffi.so
+        ls libgio-2.0.so
+        ls libglib-2.0.so.so
+        ls libgmodule-2.0.so
+        ls libgobject-2.0.so
+        ls libgthread-2.0.so
+        ls libiconv.so
+        ls libinstpatch.so
+        ls libintl.so
+        ls liboboe.so
+        ls libogg.so
+        ls libsndfile.so
+        ls libvorbis.so
+        ls libvorbisenc.so
+        ls libvorbisfile.so
+      displayName: 'Verify all libs exist'
+      workingDirectory: '$(PREFIX)/lib'
+
     - task: PublishBuildArtifacts@1
       displayName: 'Publishing Artefacts for Android API$(ANDROID_API) $(ARCH)'
       inputs:
