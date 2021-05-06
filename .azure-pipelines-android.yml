@@ -436,35 +436,10 @@ jobs:
       workingDirectory: $(DEV)
       condition: ne(variables.CACHE_RESTORED, 'true')
 
-    - script: |
-        set -ex
-
-        pushd libogg-${OGG_VERSION}
-        mkdir -p build
-        pushd build
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_STAGING_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DINSTALL_DOCS=0 \
-            -DBUILD_SHARED_LIBS=1 ..
-        make -j$((`nproc`+1))
-        make install
-        popd
-        popd
-      displayName: 'Compile libogg'
-      workingDirectory: $(DEV)
-      condition: ne(variables.CACHE_RESTORED, 'true')
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'libogg-$(OGG_VERSION)'
+        cmakeArgs: '-DINSTALL_DOCS=0'
 
     - script: |
         ls -la libogg-${OGG_VERSION}/build/CMakeFiles/
@@ -474,34 +449,9 @@ jobs:
       condition: always()
       workingDirectory: $(DEV)
 
-    - script: |
-        set -ex
-
-        pushd libvorbis-${VORBIS_VERSION}
-        mkdir -p build
-        pushd build
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_STAGING_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DBUILD_SHARED_LIBS=1 ..
-        make -j$((`nproc`+1))
-        make install
-        popd
-        popd
-      displayName: 'Compile libvorbis'
-      workingDirectory: $(DEV)
-      condition: ne(variables.CACHE_RESTORED, 'true')
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'libvorbis-$(VORBIS_VERSION)'
 
     - script: |
         ls -la libvorbis-${VORBIS_VERSION}/build/CMakeFiles/
@@ -511,45 +461,12 @@ jobs:
       condition: always()
       workingDirectory: $(DEV)
 
-    - script: |
-        set -ex
-
-        pushd flac-${FLAC_VERSION}
-        mkdir -p build
-        pushd build
-
-        # flac uses c99 macros, but doesnt specify a standard, so we need to do it explicitly.
-        # On i686, they invoke yasm with -fstack-protector-strong flag... turn off asm optimizations.
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_STAGING_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DCMAKE_C_STANDARD=99 \
-            -DCMAKE_C_STANDARD_REQUIRED=1 \
-            -DWITH_ASM=0 \
-            -DBUILD_CXXLIBS=0 \
-            -DBUILD_PROGRAMS=0 \
-            -DBUILD_EXAMPLES=0 \
-            -DBUILD_DOCS=0 \
-            -DINSTALL_MANPAGES=0 \
-            -DBUILD_SHARED_LIBS=1 ..
-        make -j$((`nproc`+1))
-        make install
-        popd
-        popd
-      displayName: 'Compile FLAC'
-      workingDirectory: $(DEV)
-      condition: ne(variables.CACHE_RESTORED, 'true')
+    # flac uses c99 macros, but doesnt specify a standard, so we need to do it explicitly.
+    # On i686, they invoke yasm with -fstack-protector-strong flag... turn off asm optimizations.
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'flac-$(FLAC_VERSION)'
+        cmakeArgs: '-DCMAKE_C_STANDARD=99 -DCMAKE_C_STANDARD_REQUIRED=1 -DWITH_ASM=0 -DBUILD_CXXLIBS=0 -DBUILD_PROGRAMS=0 -DBUILD_EXAMPLES=0 -DBUILD_DOCS=0 -DINSTALL_MANPAGES=0'
 
     - script: |
         ls -la flac-${FLAC_VERSION}/build/CMakeFiles/
@@ -559,36 +476,10 @@ jobs:
       condition: always()
       workingDirectory: $(DEV)
 
-    - script: |
-        set -ex
-
-        pushd libsndfile-${SNDFILE_VERSION}
-        mkdir -p build
-        pushd build
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_STAGING_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DBUILD_PROGRAMS=0 \
-            -DBUILD_EXAMPLES=0 \
-            -DBUILD_SHARED_LIBS=1 ..
-        make -j$((`nproc`+1))
-        make install
-        popd
-        popd
-      displayName: 'Compile libsndfile'
-      workingDirectory: $(DEV)
-      condition: ne(variables.CACHE_RESTORED, 'true')
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'libsndfile-$(SNDFILE_VERSION)'
+        cmakeArgs: '-DBUILD_PROGRAMS=0 -DBUILD_EXAMPLES=0'
 
     - script: |
         ls -la libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/
@@ -602,28 +493,13 @@ jobs:
         set -ex
 
         pushd oboe-${OBOE_VERSION}
-        mkdir -p build
         pushd build
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_STAGING_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 \
-            -DBUILD_SHARED_LIBS=1 ..
-        make -j$((`nproc`+1))
+
         # need to manually install oboe as it doesn't provide an install target
         #${RANLIB} liboboe.a
         cp liboboe.* ${PREFIX}/lib/
         cp -ur ../include/oboe ${PREFIX}/include
+
         # create a custom pkgconfig file for oboe to allow fluidsynth to find it
         cat << EOF > ${PKG_CONFIG_PATH}/oboe-1.0.pc
         prefix=${PREFIX}
@@ -640,38 +516,18 @@ jobs:
 
         popd
         popd
-      displayName: 'Compile Oboe'
+      displayName: 'Manually Install Oboe'
       workingDirectory: $(DEV)
       condition: ne(variables.CACHE_RESTORED, 'true')
 
-    - script: |
-        set -ex
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'oboe-$(OBOE_VERSION)'
+        installCommand: ''
 
-        pushd libinstpatch-${INSTPATCH_VERSION}
-        mkdir -p build
-        pushd build
-        cmake -G "Unix Makefiles" \
-            -DCMAKE_MAKE_PROGRAM=make \
-            -DCMAKE_TOOLCHAIN_FILE=${NDK}/build/cmake/android.toolchain.cmake \
-            -DANDROID_NATIVE_API_LEVEL=${ANDROID_API} \
-            -DANDROID_ABI=${ANDROID_ABI_CMAKE} \
-            -DANDROID_TOOLCHAIN=${CC} \
-            -DANDROID_NDK=${NDK} \
-            -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
-            -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
-            -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-            -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
-            -DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-            -DCMAKE_STAGING_PREFIX=$(PREFIX) \
-            -DCMAKE_VERBOSE_MAKEFILE=1 ..
-        make -j$((`nproc`+1))
-        make install
-
-        popd
-        popd
-      displayName: 'Compile libinstpatch'
-      workingDirectory: $(DEV)
-      condition: ne(variables.CACHE_RESTORED, 'true')
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'libinstpatch-$(INSTPATCH_VERSION)'
 
     - template: .azure/cmake-android.yml
       parameters:
