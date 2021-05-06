@@ -445,7 +445,7 @@ jobs:
         ls -la libogg-${OGG_VERSION}/build/CMakeFiles/
         cat libogg-${OGG_VERSION}/build/CMakeFiles/CMakeError.log
         true
-      displayName: 'OGG Cmake Error Log'
+      displayName: 'Print OGG Cmake Error Log'
       condition: always()
       workingDirectory: $(DEV)
 
@@ -457,7 +457,7 @@ jobs:
         ls -la libvorbis-${VORBIS_VERSION}/build/CMakeFiles/
         cat libvorbis-${VORBIS_VERSION}/build/CMakeFiles/CMakeError.log
         true
-      displayName: 'Vorbis Cmake Error Log'
+      displayName: 'Print Vorbis Cmake Error Log'
       condition: always()
       workingDirectory: $(DEV)
 
@@ -472,7 +472,7 @@ jobs:
         ls -la flac-${FLAC_VERSION}/build/CMakeFiles/
         cat flac-${FLAC_VERSION}/build/CMakeFiles/CMakeError.log
         true
-      displayName: 'FLAC Cmake Error Log'
+      displayName: 'Print FLAC Cmake Error Log'
       condition: always()
       workingDirectory: $(DEV)
 
@@ -485,7 +485,7 @@ jobs:
         ls -la libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/
         cat libsndfile-${SNDFILE_VERSION}/build/CMakeFiles/CMakeError.log
         true
-      displayName: 'libsndfile Cmake Error Log'
+      displayName: 'Print libsndfile Cmake Error Log'
       condition: always()
       workingDirectory: $(DEV)
 
