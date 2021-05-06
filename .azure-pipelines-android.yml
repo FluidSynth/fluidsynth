@@ -507,7 +507,7 @@ jobs:
         Name: Oboe
         Description: Oboe library
         Version: ${OBOE_VERSION}
-        Libs: -L\${libdir} -loboe -landroid -llog -lstdc++
+        Libs: -L\${libdir} -loboe -landroid -llog
         Cflags: -I\${includedir}
         EOF
 
