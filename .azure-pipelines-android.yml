@@ -570,7 +570,7 @@ jobs:
         ls libffi.so
         ls libfluidsynth.so
         ls libgio-2.0.so
-        ls libglib-2.0.so.so
+        ls libglib-2.0.so
         ls libgmodule-2.0.so
         ls libgobject-2.0.so
         ls libgthread-2.0.so
