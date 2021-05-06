@@ -529,12 +529,14 @@ jobs:
       parameters:
         sourceDir: 'libinstpatch-$(INSTPATCH_VERSION)'
 
+    # finally, compile fluidsynth
     - template: .azure/cmake-android.yml
       parameters:
         workDir: '$(System.DefaultWorkingDirectory)'
         sourceDir: '.'
         condition: succeeded()
         cmakeArgs: '-Denable-opensles=1 -Denable-floats=1 -Denable-oboe=1 -Denable-dbus=0 -Denable-oss=0'
+        installCommand: ''
 
     - script: |
         set -x
