@@ -489,16 +489,13 @@ jobs:
       condition: always()
       workingDirectory: $(DEV)
 
+    - template: .azure/cmake-android.yml
+      parameters:
+        sourceDir: 'oboe-$(OBOE_VERSION)'
+        installCommand: 'cp liboboe.* ${PREFIX}/lib/ && cp -ur ../include/oboe ${PREFIX}/include'
+  
     - script: |
         set -ex
-
-        pushd oboe-${OBOE_VERSION}
-        pushd build
-
-        # need to manually install oboe as it doesn't provide an install target
-        #${RANLIB} liboboe.a
-        cp liboboe.* ${PREFIX}/lib/
-        cp -ur ../include/oboe ${PREFIX}/include
 
         # create a custom pkgconfig file for oboe to allow fluidsynth to find it
         cat << EOF > ${PKG_CONFIG_PATH}/oboe-1.0.pc
@@ -514,16 +511,9 @@ jobs:
         Cflags: -I\${includedir}
         EOF
 
-        popd
-        popd
-      displayName: 'Manually Install Oboe'
+      displayName: 'Create fake oboe.pc'
       workingDirectory: $(DEV)
       condition: ne(variables.CACHE_RESTORED, 'true')
-
-    - template: .azure/cmake-android.yml
-      parameters:
-        sourceDir: 'oboe-$(OBOE_VERSION)'
-        installCommand: ''
 
     - template: .azure/cmake-android.yml
       parameters:
