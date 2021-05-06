@@ -166,7 +166,7 @@ jobs:
 
     - task: Cache@2
       inputs:
-        key: '$(ARCH) | $(DEV)/*.tar.gz'
+        key: '$(ARCH) | $(DEV)/*.tar.gz | cacheVersion1'
         path: '$(PREFIX)'
         cacheHitVar: 'CACHE_RESTORED'
       displayName: 'Cache fluidsynth dependency libraries'
