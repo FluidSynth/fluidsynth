@@ -575,7 +575,7 @@ jobs:
         ls libgobject-2.0.so
         ls libgthread-2.0.so
         ls libiconv.so
-        ls libinstpatch.so
+        ls libinstpatch-1.0.so
         ls libintl.so
         ls liboboe.so
         ls libogg.so
