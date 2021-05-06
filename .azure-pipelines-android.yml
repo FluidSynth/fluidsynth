@@ -7,6 +7,14 @@ parameters:
   - true
   - false
 
+schedules:
+- cron: "0 12 * * 0"
+  displayName: 'Weekly Sunday build without caching'
+  branches:
+    include:
+    - master
+  always: true
+
 variables:
   ICONV_VERSION: '1.16'
   # Use recent master libffi, because 3.3 is broken: checking host system type... Invalid configuration `arm-none-linux-eabi': machine `arm-none-linux' not recognized
@@ -162,7 +170,7 @@ jobs:
         path: '$(PREFIX)'
         cacheHitVar: 'CACHE_RESTORED'
       displayName: 'Cache fluidsynth dependency libraries'
-      condition: ${{ parameters.useCache }}
+      condition: and(not(in(variables['Build.Reason'], 'Schedule')), ${{ parameters.useCache }})
 
     - script: |
         set -e
