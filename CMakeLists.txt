@@ -263,6 +263,32 @@ unset ( MINGW32 CACHE )
 if ( WIN32 )
   include ( CheckIncludeFiles )
 
+  # We have to set _WIN32_WINNT to make sure CMake gets correct results when probing for functions.
+  # windows-version is supposed to be non-official variable that can be used to tweak the Windows target version.
+  # Its value defaults to the Windows Version we are compiling for.
+  if ( NOT windows-version )
+    if(${CMAKE_SYSTEM_VERSION} EQUAL 10) # Windows 10
+        set ( windows-version "0x0A00" )
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.3) # Windows 8.1
+        set ( windows-version "0x0603" )
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.2) # Windows 8
+        set ( windows-version "0x0602" )
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.1) # Windows 7
+        set ( windows-version "0x0601" )
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.0) # Windows Vista
+        set ( windows-version "0x0600" )
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 5.1) # Windows XP
+        set ( windows-version "0x0501" )
+    else()
+        set ( windows-version "0x0400" )
+    endif()
+  endif ()
+  message ( STATUS "Targetting Windows Version ${windows-version} )
+  add_definitions ( -D _WIN32_WINNT=${windows-version} )
+  add_definitions ( -D WINVER=${windows-version} )
+  list ( APPEND CMAKE_REQUIRED_DEFINITIONS "WINVER=${windows-version}" )
+  list ( APPEND CMAKE_REQUIRED_DEFINITIONS "_WIN32_WINNT=${windows-version}" )
+
   # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
