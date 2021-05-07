@@ -1720,7 +1720,9 @@ err:
 /**
  * Delete a MIDI player instance.
  * @param player MIDI player instance
- * @warning Do not call while the \p synth renders audio, i.e. an audio driver is running or any other synthesizer thread calls fluid_synth_process() or fluid_synth_nwrite_float() or fluid_synth_write_*() !
+ * @warning Do not call when the synthesizer associated to this \p player renders audio,
+ * i.e. an audio driver is running or any other synthesizer thread concurrently calls
+ * fluid_synth_process() or fluid_synth_nwrite_float() or fluid_synth_write_*() !
  */
 void
 delete_fluid_player(fluid_player_t *player)
@@ -2435,6 +2437,9 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
  * Wait for a MIDI player until the playback has been stopped.
  * @param player MIDI player instance
  * @return Always #FLUID_OK
+ *
+ * @warning The player may still be used by a concurrently running synth context. Hence it is
+ * not safe to immediately delete the player afterwards. Also refer to delete_fluid_player().
  */
 int
 fluid_player_join(fluid_player_t *player)
