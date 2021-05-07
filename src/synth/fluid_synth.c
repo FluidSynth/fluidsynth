@@ -70,6 +70,10 @@ static int fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data,
         int len, char *response,
         int *response_len, int avail_response,
         int *handled, int dryrun);
+static int fluid_synth_sysex_xg(fluid_synth_t *synth, const char *data,
+        int len, char *response,
+        int *response_len, int avail_response,
+        int *handled, int dryrun);
 int fluid_synth_all_notes_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_all_sounds_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_system_reset_LOCAL(fluid_synth_t *synth);
@@ -2012,9 +2016,29 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         FLUID_API_RETURN(result);
     }
 
+    /* GM or GM2 system on */
+    if(data[0] == MIDI_SYSEX_UNIV_NON_REALTIME
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_GM_ID)
+    {
+        if(handled)
+        {
+            *handled = TRUE;
+        }
+        if(!dryrun && (data[3] == MIDI_SYSEX_GM_ON
+                || data[3] == MIDI_SYSEX_GM2_ON))
+        {
+            int result;
+            synth->bank_select = FLUID_BANK_STYLE_GM;
+            fluid_synth_api_enter(synth);
+            result = fluid_synth_system_reset_LOCAL(synth);
+            FLUID_API_RETURN(result);
+        }
+        return FLUID_OK;
+    }
+
     /* GS DT1 message */
-    if((synth->bank_select == FLUID_BANK_STYLE_GS)
-            && data[0] == MIDI_SYSEX_MANUF_ROLAND
+    if(data[0] == MIDI_SYSEX_MANUF_ROLAND
             && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_GS_ID
             && data[3] == MIDI_SYSEX_GS_DT1)
@@ -2024,6 +2048,19 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
                                           response_len, avail_response,
                                           handled, dryrun);
+        FLUID_API_RETURN(result);
+    }
+
+    /* XG message */
+    if(data[0] == MIDI_SYSEX_MANUF_YAMAHA
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_XG_ID)
+    {
+        int result;
+        fluid_synth_api_enter(synth);
+        result = fluid_synth_sysex_xg(synth, data, len, response,
+                                      response_len, avail_response,
+                                      handled, dryrun);
         FLUID_API_RETURN(result);
     }
 
@@ -2348,6 +2385,36 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         return FLUID_FAILED;
     }
 
+    if (addr == 0x40007F) // Mode set
+    {
+        if (len_data > 1 || (data[7] != 0 && data[7] != 0x7f))
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            if (data[7] == 0)
+            {
+                synth->bank_select = FLUID_BANK_STYLE_GS;
+            }
+            else
+            {
+                synth->bank_select = FLUID_BANK_STYLE_GM;
+            }
+            return fluid_synth_system_reset_LOCAL(synth);
+        }
+        return FLUID_OK;
+    }
+
+    if (synth->bank_select != FLUID_BANK_STYLE_GS)
+    {
+        return FLUID_OK; // Silently ignore all other messages
+    }
+
     if ((addr & 0xFFF0FF) == 0x401015) // Use for rhythm part
     {
         if (len_data > 1 || data[7] > 0x02)
@@ -2372,6 +2439,51 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         }
         return FLUID_OK;
     }
+
+    //silently ignore
+    return FLUID_OK;
+}
+
+/* Handler for XG messages */
+static int
+fluid_synth_sysex_xg(fluid_synth_t *synth, const char *data, int len,
+                              char *response, int *response_len, int avail_response,
+                              int *handled, int dryrun)
+{
+    int addr;
+    int len_data;
+
+    if(len < 7) // at least one byte of data should be transmitted
+    {
+        return FLUID_FAILED;
+    }
+    len_data = len - 6;
+    addr = (data[3] << 16) | (data[4] << 8) | data[5];
+
+    if (addr == 0x00007E // Reset
+            || addr == 0x00007F) // Reset to factory
+    {
+        if (len_data > 1 || data[6] != 0)
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            synth->bank_select = FLUID_BANK_STYLE_XG;
+            return fluid_synth_system_reset_LOCAL(synth);
+        }
+        return FLUID_OK;
+    }
+
+    /* No other messages handled yet
+    if (synth->bank_select != FLUID_BANK_STYLE_XG)
+    {
+        return FLUID_OK; // Silently ignore all other messages
+    }*/
 
     //silently ignore
     return FLUID_OK;
