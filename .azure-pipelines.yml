@@ -4,25 +4,23 @@
 # https://docs.microsoft.com/azure/devops/pipelines/apps/c-cpp/gcc
 
 jobs:
-- job: Windows
+- job: WindowsXP
+  variables:
+    toolset: v141_xp
   strategy:
     matrix:
-      XP_x86:
+      x86:
         platform: Win32
-        toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-prefix: "fluidsynth"
-        imageName: 'windows-2019'
-      XP_x64:
+      x64:
         platform: x64
-        toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         artifact-prefix: "fluidsynth"
-        imageName: 'windows-2019'
   pool:
-    vmImage: $(imageName)
+    vmImage: 'windows-2019'
   steps:
     - task: DownloadBuildArtifacts@0
       inputs:
@@ -56,7 +54,7 @@ jobs:
         SET "PATH=d:\deps\bin;%PATH%"
         pkg-config --list-all
         mkdir build && cd build || exit -1
-        cmake -Werror=dev -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
+        cmake -Werror=dev -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 -Dwindows-version=0x0501 .. || exit -1
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
@@ -81,34 +79,28 @@ jobs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
           artifactName: $(artifact-prefix)-$(platform)
 
-- job: WindowsCI
+- job: Windows10
+  variables:
+    toolset: v142
+    gtk-bundle: $(gtk-bundle-x64)
+    libsndfile-url: $(libsndfile-url-x64)
   strategy:
     matrix:
       default:
         CMAKE_FLAGS: 
         CMAKE_CONFIG: Release
-        gtk-bundle: $(gtk-bundle-x64)
-        libsndfile-url: $(libsndfile-url-x64)
       debug_prof:
         CMAKE_FLAGS: -Denable-profiling=1 -Denable-trap-on-fpe=1 -Denable-fpe-check=1
         CMAKE_CONFIG: Debug
-        gtk-bundle: $(gtk-bundle-x64)
-        libsndfile-url: $(libsndfile-url-x64)
       no_network:
         CMAKE_FLAGS: -Denable-network=0
         CMAKE_CONFIG: Release
-        gtk-bundle: $(gtk-bundle-x64)
-        libsndfile-url: $(libsndfile-url-x64)
       static_lib:
         CMAKE_FLAGS: -DBUILD_SHARED_LIBS=0
         CMAKE_CONFIG: Release
-        gtk-bundle: $(gtk-bundle-x64)
-        libsndfile-url: $(libsndfile-url-x64)
       minimal:
         CMAKE_FLAGS: -Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-dbus=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-libsndfile=0 -Denable-floats=1
         CMAKE_CONFIG: Release
-        gtk-bundle: $(gtk-bundle-x64)
-        libsndfile-url: $(libsndfile-url-x64)
   pool:
     vmImage: 'windows-2019'
   steps:
@@ -129,7 +121,7 @@ jobs:
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
         mkdir build && cd build || exit -1
-        cmake -Werror=dev -A x64 -DCMAKE_BUILD_TYPE=$(CMAKE_CONFIG) -DCMAKE_VERBOSE_MAKEFILE=1 $(CMAKE_FLAGS) -DNO_GUI=1 .. || exit -1
+        cmake -Werror=dev -A x64 -T $(toolset) -DCMAKE_BUILD_TYPE=$(CMAKE_CONFIG) -DCMAKE_VERBOSE_MAKEFILE=1 $(CMAKE_FLAGS) -DNO_GUI=1 -Dwindows-version=0x0A00 .. || exit -1
         cmake --build . --config $(CMAKE_CONFIG) || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
@@ -140,6 +132,8 @@ jobs:
       displayName: 'Execute Unittests'
 
 - job: WindowsMinGW
+  variables:
+    artifact-prefix: "fluidsynth-mingw"
   strategy:
     matrix:
       x86:
@@ -148,14 +142,12 @@ jobs:
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         mingw-url: $(mingw-url-x86)
-        artifact-prefix: "fluidsynth-mingw"
       x64:
         CMAKE_FLAGS: 
         platform: x64
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         mingw-url: $(mingw-url-x64)
-        artifact-prefix: "fluidsynth-mingw"
   pool:
     vmImage: 'windows-2019'
   steps:
