@@ -46,7 +46,6 @@ jobs:
         key: $(VCPKG_DIR)\downloads\glib* | "$(platform)"
         path: "$(VCPKG_DIR)"
         cacheHitVar: CACHE_RESTORED
-      enabled: 'false'
     - script: |
         @ECHO ON
         vcpkg install glib:$(platform)-windows
@@ -56,14 +55,14 @@ jobs:
         @ECHO ON
         mkdir build
         cd build
-        cmake -Werror=dev -G "$(generator)" -A "$(cmake_platform)" -T "$(toolset)" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
+        cmake -Werror=dev -G "$(generator)" -A "$(cmake_platform)" -T "$(toolset)" -Denable-pkgconfig=0  -Denable-jack=0 -Denable-pulseaudio=0 -Denable-ladspa=0 -Denable-dbus=0 -Denable-readline=0 -Denable-sdl2=0 -Denable-libinstpatch=0 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit -1
         REM build libfluidsynth and fluidsynth exec
-        cmake --build . --config $(configuration) || exit -1
+        cmake --build . --config $(configuration) --parallel 3 || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
         @ECHO ON
         REM build and exec unittests, unless when cross-compiling
-        if not "%platform%"=="ARM" ( cmake --build build --config $(configuration) --target check )
+        if not "%platform%"=="ARM" ( cmake --build build --config $(configuration) --target check --parallel 3 )
       displayName: 'Execute Unittests'
     - script: |
         @ECHO ON
