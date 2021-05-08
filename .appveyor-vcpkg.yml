@@ -46,6 +46,7 @@ jobs:
         key: $(VCPKG_DIR)\downloads\glib* | "$(platform)"
         path: "$(VCPKG_DIR)"
         cacheHitVar: CACHE_RESTORED
+      enabled: 'false'
     - script: |
         @ECHO ON
         vcpkg install glib:$(platform)-windows
