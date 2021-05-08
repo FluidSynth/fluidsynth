@@ -40,16 +40,6 @@ struct _fluid_audriver_definition_t
 /* Available audio drivers, listed in order of preference */
 static const fluid_audriver_definition_t fluid_audio_drivers[] =
 {
-#if JACK_SUPPORT
-    {
-        "jack",
-        new_fluid_jack_audio_driver,
-        new_fluid_jack_audio_driver2,
-        delete_fluid_jack_audio_driver,
-        fluid_jack_audio_driver_settings
-    },
-#endif
-
 #if ALSA_SUPPORT
     {
         "alsa",
@@ -57,6 +47,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_alsa_audio_driver2,
         delete_fluid_alsa_audio_driver,
         fluid_alsa_audio_driver_settings
+    },
+#endif
+
+#if JACK_SUPPORT
+    {
+        "jack",
+        new_fluid_jack_audio_driver,
+        new_fluid_jack_audio_driver2,
+        delete_fluid_jack_audio_driver,
+        fluid_jack_audio_driver_settings
     },
 #endif
 
