@@ -9,8 +9,6 @@ jobs:
   workspace:
     clean: all
   strategy:
-    # The vcpkg jobs take quite long to complete. Limit to 1 concurrent job as we only have a total number of 10 concurrent jobs.
-    maxParallel: 1
     matrix:
       ARM:
         platform: 'ARM'
