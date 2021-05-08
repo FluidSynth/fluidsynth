@@ -29,8 +29,8 @@ jobs:
         @ECHO ON
         echo $(generator)
         echo $(toolset)
-        choco upgrade ninja -y
-        ninja --version
+        REM choco upgrade ninja -y
+        REM ninja --version
         cmake --version
         REM manually update vcpkg
         REM cd "$(VCPKG_DIR)" || exit -1
