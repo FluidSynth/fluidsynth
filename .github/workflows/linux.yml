@@ -1,6 +1,14 @@
 name: FluidSynth Linux
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/sonarcloud.yml'
+      - '.cirrus.yml'
+      - 'README.md'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
