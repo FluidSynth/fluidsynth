@@ -271,8 +271,7 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == GEN_REVERBSEND);
-    TEST_ASSERT(gen->amount.range.lo == 50);
-    TEST_ASSERT(gen->amount.range.hi == 0);
+    TEST_ASSERT(gen->amount.uword == 50);
 
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 1));
     TEST_ASSERT(gen != NULL);
