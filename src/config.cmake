@@ -212,7 +212,9 @@
 #cmakedefine TEST_SOUNDFONT "@TEST_SOUNDFONT@"
 
 /* Soundfont to load for UTF-8 unit testing */
-#cmakedefine TEST_SOUNDFONT_UTF8 "@TEST_SOUNDFONT_UTF8@"
+#cmakedefine TEST_SOUNDFONT_UTF8_1 "@TEST_SOUNDFONT_UTF8_1@"
+#cmakedefine TEST_SOUNDFONT_UTF8_2 "@TEST_SOUNDFONT_UTF8_2@"
+#cmakedefine TEST_MIDI_UTF8 "@TEST_MIDI_UTF8@"
 
 /* SF3 Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT_SF3 "@TEST_SOUNDFONT_SF3@"
