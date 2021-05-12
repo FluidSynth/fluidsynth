@@ -201,8 +201,7 @@ static void bad_test_duplicate_gen(int (*load_func)(SFData *sf, int size), SFDat
     gen = fluid_list_get(fluid_list_nth(zone->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == GEN_COARSETUNE);
-    TEST_ASSERT(gen->amount.range.lo == 10);
-    TEST_ASSERT(gen->amount.range.hi == 0);
+    TEST_ASSERT(gen->amount.sword == 10);
 
     gen = fluid_list_get(fluid_list_nth(zone->gen, 1));
     TEST_ASSERT(gen == NULL);
@@ -257,7 +256,7 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     {
         // zone 1
         GEN_REVERBSEND, 0, 50, 0,
-        GEN_VOLENVRELEASE, 0, 206, 249,
+        GEN_VOLENVRELEASE, 0, 0xCE, 0xF9,
         // zone 2
         GEN_KEYRANGE, 0, 0, 35,
         GEN_OVERRIDEROOTKEY, 0, 43, 0,
@@ -272,14 +271,12 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == GEN_REVERBSEND);
-    TEST_ASSERT(gen->amount.range.lo == 50);
-    TEST_ASSERT(gen->amount.range.hi == 0);
+    TEST_ASSERT(gen->amount.uword == 50);
 
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 1));
     TEST_ASSERT(gen != NULL);
     TEST_ASSERT(gen->id == GEN_VOLENVRELEASE);
-    TEST_ASSERT(gen->amount.range.lo == 206);
-    TEST_ASSERT(gen->amount.range.hi == 249);
+    TEST_ASSERT(gen->amount.uword == 0xF9CE);
 
     gen = fluid_list_get(fluid_list_nth(zone1->gen, 2));
     TEST_ASSERT(gen == NULL);
