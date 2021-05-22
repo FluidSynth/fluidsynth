@@ -700,20 +700,20 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         chan = rule->chan_add + (int)((fluid_real_t)event->channel * rule->chan_mul
                      + (fluid_real_t)0.5);
 
-        /* We skip the rule if chan is out of range */
+        /* We skip the event if chan is out of range */
         if((chan < 0) || (chan >= router->nr_midi_channels))
         {
-           continue;
+           continue; /* go to next rule */
         }
 
         /* Par 1 scaling / offset */
         par1 = rule->par1_add + (int)((fluid_real_t)event_par1 * rule->par1_mul
                      + (fluid_real_t)0.5);
 
-        /* We skip the rule if par1 is out of range */
+        /* We skip the event if par1 is out of range */
         if((par1 < 0) || (par1 > par1_max))
         {
-           continue;
+           continue; /* go to next rule */
         }
 
         /* Par 2 scaling / offset, if applicable */
@@ -722,10 +722,10 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
             par2 = rule->par2_add + (int)((fluid_real_t)event_par2 * rule->par2_mul
                          + (fluid_real_t)0.5);
 
-            /* We skip the rule if par2 is out of range */
+            /* We skip the event if par2 is out of range */
             if((par2 < 0) || (par2 > par2_max))
             {
-                continue;
+                continue; /* go to next rule */
             }
         }
         else
