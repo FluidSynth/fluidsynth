@@ -703,7 +703,8 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         /* We skip the event if chan is out of range */
         if((chan < 0) || (chan >= router->nr_midi_channels))
         {
-           continue; /* go to next rule */
+            ret_val = FLUID_FAILED;
+            continue; /* go to next rule */
         }
 
         /* Par 1 scaling / offset */
@@ -713,7 +714,8 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         /* We skip the event if par1 is out of range */
         if((par1 < 0) || (par1 > par1_max))
         {
-           continue; /* go to next rule */
+            ret_val = FLUID_FAILED;
+            continue; /* go to next rule */
         }
 
         /* Par 2 scaling / offset, if applicable */
@@ -725,6 +727,7 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
             /* We skip the event if par2 is out of range */
             if((par2 < 0) || (par2 > par2_max))
             {
+                ret_val = FLUID_FAILED;
                 continue; /* go to next rule */
             }
         }
