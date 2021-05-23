@@ -564,9 +564,10 @@ fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int m
  * - To get full benefice of the rule the value is clamped and the event passed to the output.
  * - To avoid MIDI messages conflicts at the output, the event is ignored
  *   (i.e not passed to the output).
- * chan value: event is ignored regardless of the event type
- * par1: event is ignored for PROG_CHANGE or CONTROL_CHANGE type, par1 is clamped otherwise.
- * par2: par2 is clamped regardless of the event type.
+ * chan out of range: event is ignored regardless of the event type.
+ * par1 out of range: event is ignored for PROG_CHANGE or CONTROL_CHANGE type,
+ *                    par1 is clamped otherwise.
+ * par2 out of range: par2 is clamped regardless of the event type.
  */
 int
 fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
@@ -739,7 +740,7 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
             continue; /* go to next rule */
         }
 
-        /* Par 1 scaling / offset */
+        /* par 1 scaling / offset */
         par1 = rule->par1_add + (int)((fluid_real_t)event_par1 * rule->par1_mul
                      + (fluid_real_t)0.5);
 
@@ -754,7 +755,7 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         }
         else
         {
-            /* Par1 range clamping */
+            /* par1 range clamping */
             if(par1 < 0)
             {
                 par1 = 0;
@@ -765,13 +766,13 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
             }
         }
 
-        /* Par 2 scaling / offset, if applicable */
+        /* par 2 scaling / offset, if applicable */
         if(event_has_par2)
         {
             par2 = rule->par2_add + (int)((fluid_real_t)event_par2 * rule->par2_mul
                          + (fluid_real_t)0.5);
 
-            /* Par2 range clamping */
+            /* par2 range clamping */
             if(par2 < 0)
             {
                 par2 = 0;
