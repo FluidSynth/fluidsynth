@@ -558,16 +558,16 @@ fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int m
  * - get rid of aftertouch
  * - ...
  *
- * Note: Each input event have values (chan, par1, par2) that could be changed by a rule.
- * After a rule had been applied on any value and the value is out of range, the event
- * can be ignored or the value can be clamped depending of the type of the event:
+ * @note Each input event has values (ch, par1, par2) that could be changed by a rule.
+ * After a rule has been applied on any value and the value is out of range, the event
+ * can be either ignored or the value can be clamped depending on the type of the event:
  * - To get full benefice of the rule the value is clamped and the event passed to the output.
  * - To avoid MIDI messages conflicts at the output, the event is ignored
  *   (i.e not passed to the output).
- * chan out of range: event is ignored regardless of the event type.
- * par1 out of range: event is ignored for PROG_CHANGE or CONTROL_CHANGE type,
- *                    par1 is clamped otherwise.
- * par2 out of range: par2 is clamped regardless of the event type.
+ *   - ch out of range: event is ignored regardless of the event type.
+ *   - par1 out of range: event is ignored for PROG_CHANGE or CONTROL_CHANGE type,
+ *     par1 is clamped otherwise.
+ *   - par2 out of range: par2 is clamped regardless of the event type.
  */
 int
 fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
