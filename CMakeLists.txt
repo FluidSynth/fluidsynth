@@ -267,17 +267,17 @@ if ( WIN32 )
   # windows-version is supposed to be non-official variable that can be used to tweak the Windows target version.
   # Its value defaults to the Windows Version we are compiling for.
   if ( NOT windows-version )
-    if(${CMAKE_SYSTEM_VERSION} EQUAL 10) # Windows 10
+    if(CMAKE_SYSTEM_VERSION EQUAL 10) # Windows 10
         set ( windows-version "0x0A00" )
-    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.3) # Windows 8.1
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.3) # Windows 8.1
         set ( windows-version "0x0603" )
-    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.2) # Windows 8
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.2) # Windows 8
         set ( windows-version "0x0602" )
-    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.1) # Windows 7
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.1) # Windows 7
         set ( windows-version "0x0601" )
-    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.0) # Windows Vista
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.0) # Windows Vista
         set ( windows-version "0x0600" )
-    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 5.1) # Windows XP
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 5.1) # Windows XP
         set ( windows-version "0x0501" )
     else()
         set ( windows-version "0x0400" )
