@@ -383,6 +383,9 @@ add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
 )
 
+set_target_properties ( fluidsynth
+    PROPERTIES IMPORT_PREFIX "" )
+
 if ( FLUID_CPPFLAGS )
   set_target_properties ( fluidsynth
     PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
