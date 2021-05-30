@@ -415,7 +415,7 @@ fluid_utime(void)
 
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
     /* use high precision monotonic clock if available (g_monotonic_time().
-     * For Winfdows, if this clock is actually implemented as low prec. clock
+     * For Windows, if this clock is actually implemented as low prec. clock
      * (i.e. in case glib is too old), high precision performance counter are
      * used instead.
      * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
