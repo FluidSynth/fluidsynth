@@ -2,11 +2,11 @@
 
 source ./build-env.sh
 
-if [ -z $parameters_installCommand ] ; then
+if [ -z "$parameters_installCommand" ] ; then
 parameters_installCommand="make install"
 fi
 
-if [ -z $parameters_workDir ] ; then
+if [ -z "$parameters_workDir" ] ; then
 parameters_workDir=$DEV
 fi
 
@@ -34,17 +34,17 @@ source ./build-env.sh
         -DANDROID_TOOLCHAIN=$CC \
         -DANDROID_NDK=$NDK \
         -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
-        -DANDROID_LINKER_FLAGS=${LDFLAGS} \
+        -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
         -DANDROID_STL="c++_shared" \
         -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-        -DCMAKE_REQUIRED_LINK_OPTIONS=${LDFLAGS} \
+        -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
         -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_STAGING_PREFIX=$PREFIX \
         -DBUILD_SHARED_LIBS=1 \
         -DLIB_SUFFIX="" \
         $parameters_cmakeArgs ..
         #-DCMAKE_VERBOSE_MAKEFILE=1 \
-    make -j$((`nproc`+1))
+    make -j$((`nproc`+1)) || (popd && popd && exit 1)
     $parameters_installCommand
     popd
     popd
