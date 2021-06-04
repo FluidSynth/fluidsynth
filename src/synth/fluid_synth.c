@@ -6819,8 +6819,9 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 synth->storeid = fluid_voice_get_id(voice);
             }
 
-            /* Force the voice into release stage (pedaling is ignored) */
-            fluid_voice_release(voice);
+            /* Force the voice into release stage except if pedaling
+               (sostenuto or sustain) is active */
+            fluid_voice_noteoff(voice);
         }
     }
 }
