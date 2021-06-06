@@ -33,13 +33,13 @@ source ./build-env.sh
         -DANDROID_ABI=$ANDROID_ABI_CMAKE \
         -DANDROID_TOOLCHAIN=$CC \
         -DANDROID_NDK=$NDK \
-        -DANDROID_COMPILER_FLAGS="${CFLAGS}" \
-        -DANDROID_LINKER_FLAGS="${LDFLAGS}" \
+        -DANDROID_COMPILER_FLAGS="${CFLAGS// /;}" \
+        -DANDROID_LINKER_FLAGS="${LDFLAGS// /;}" \
         -DANDROID_STL="c++_shared" \
         -DCMAKE_REQUIRED_FLAGS="${CFLAGS}" \
-        -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS}" \
-        -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_STAGING_PREFIX=$PREFIX \
+        -DCMAKE_REQUIRED_LINK_OPTIONS="${LDFLAGS// /;}" \
+        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_STAGING_PREFIX=${PREFIX} \
         -DBUILD_SHARED_LIBS=1 \
         -DLIB_SUFFIX="" \
         $parameters_cmakeArgs ..

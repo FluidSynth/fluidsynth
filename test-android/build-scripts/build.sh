@@ -47,9 +47,10 @@
         ./configure \
           --host=$AUTOTOOLS_TARGET \
           --prefix=$PREFIX \
+          --libdir=$LIBPATH0 \
           --disable-rpath \
-          --disable-static \
-          --enable-shared \
+          --enable-static \
+          --disable-shared \
           --with-pic \
           --disable-maintainer-mode \
           --disable-silent-rules \
@@ -69,7 +70,7 @@
         # install headers into the conventional ${PREFIX}/include rather than ${PREFIX}/lib/libffi-3.2.1/include.
         #sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' -i include/Makefile.in
         #sed -e '/^includedir/ s/=.*$/=@includedir@/' -e 's/^Cflags: -I${includedir}/Cflags:/' -i libffi.pc.in
-        LDFLAGS="$LDFLAGS -Wl,-soname,libffi.so" ./configure --host=$AUTOTOOLS_TARGET --prefix=$PREFIX --enable-shared --disable-static
+        LDFLAGS="$LDFLAGS -Wl,-soname,libffi.so" ./configure --host=$AUTOTOOLS_TARGET --prefix=$PREFIX --enable-static --disable-shared --libdir=$LIBPATH0
         make -j$((`nproc`+1)) || exit 1
         make install || exit 1
         popd
@@ -83,21 +84,22 @@
         ./configure \
           --host=$AUTOTOOLS_TARGET \
           --prefix=$PREFIX \
+          --libdir=$LIBPATH0 \
           --disable-rpath \
           --disable-libasprintf \
           --disable-java \
           --disable-native-java \
           --disable-openmp \
           --disable-curses \
-          --disable-static \
-          --enable-shared \
+          --enable-static \
+          --disable-shared \
           --with-pic  \
           --disable-maintainer-mode \
           --disable-silent-rules \
           --disable-gtk-doc \
           --disable-introspection
-        make -j$((`nproc`+1)) || echo "Failed to build gettext(-tools), but it is expected. We continue build..."
-        make install || echo "Failed to build gettext(-tools), but it is expected. We continue build..."
+        make -j$((`nproc`+1))
+        make install
         popd
 
 # glib
@@ -146,6 +148,7 @@ EOF
         ./configure \
           --host=$ANDROID_TARGET \
           --prefix=$PREFIX \
+          --libdir=$LIBPATH0 \
           --disable-dependency-tracking \
           --cache-file=android.cache \
           --enable-included-printf \
