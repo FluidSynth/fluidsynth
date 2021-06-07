@@ -24,7 +24,9 @@ export DIST=$PWD/build-artifacts
 # This is a symlink pointing to the real Android NDK
 # Must be the same as $ANDROID_NDK_HOME see:
 # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md
+if [ -z "$NDK" ]; then
 export NDK=~/Android/Sdk/ndk/21.3.6528147
+fi
 
 # All the built binaries, libs and their headers will be installed here
 export PREFIX=$DEV/opt/android
