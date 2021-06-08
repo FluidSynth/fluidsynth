@@ -142,10 +142,18 @@ fluid_event_timer(fluid_event_t *evt, void *data)
  * @param channel MIDI channel number
  * @param key MIDI note number (0-127)
  * @param vel MIDI velocity value (0-127)
+ * @note Since fluidsynth 2.2.2, this function will give you a #FLUID_SEQ_NOTEOFF when
+ * called with @p vel being zero.
  */
 void
 fluid_event_noteon(fluid_event_t *evt, int channel, short key, short vel)
 {
+    if(vel == 0)
+    {
+        fluid_event_noteoff(evt, channel, key);
+        return;
+    }
+
     evt->type = FLUID_SEQ_NOTEON;
     evt->channel = channel;
     evt->key = key;
