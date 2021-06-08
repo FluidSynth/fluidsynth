@@ -82,7 +82,8 @@
         set -ex
         pushd $DEV/gettext-$GETTEXT_VERSION
         ./configure \
-          --host=$AUTOTOOLS_TARGET \
+          --host=x86_64-pc-linux \
+          --target=$AUTOTOOLS_TARGET \
           --prefix=$PREFIX \
           --libdir=$LIBPATH0 \
           --disable-rpath \
