@@ -147,8 +147,7 @@ EOF
         chmod a-x android.cache
         NOCONFIGURE=true ./autogen.sh
         ./configure \
-          --host=x86_64-pc-linux \
-          --target=$ANDROID_TARGET \
+          --host=$ANDROID_TARGET \
           --prefix=$PREFIX \
           --libdir=$LIBPATH0 \
           --disable-dependency-tracking \
