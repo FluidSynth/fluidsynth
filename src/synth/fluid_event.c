@@ -184,10 +184,11 @@ fluid_event_noteoff(fluid_event_t *evt, int channel, short key)
  * @param evt Sequencer event structure
  * @param channel MIDI channel number
  * @param key MIDI note number (0-127)
- * @param vel MIDI velocity value (0-127)
- * @param duration Duration of note in the time scale used by the sequencer (by default milliseconds)
+ * @param vel MIDI velocity value (1-127)
+ * @param duration Duration of note in the time scale used by the sequencer
  *
  * @note The application should decide whether to use only Notes with duration, or separate NoteOn and NoteOff events.
+ * @warning Calling this function with @p vel or @p duration being zero results in undefined behavior!
  */
 void
 fluid_event_note(fluid_event_t *evt, int channel, short key, short vel, unsigned int duration)
