@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+.idea
+
+app/src/main/cpp/include/
+app/src/main/cpp/tests/
+app/src/main/jniLibs/
+

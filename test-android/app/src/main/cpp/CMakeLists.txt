@@ -16,6 +16,14 @@ set (TEST_SRC_DIR ../../../../../test)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
+AUX_SOURCE_DIRECTORY(tests TEST_SRC_FILES)
+FILE(GLOB LINKED_OBJ_FILES ../../../../../build_${CMAKE_ANDROID_ARCH_ABI}/src/CMakeFiles/libfluidsynth-OBJ.dir/**/*.o)
+
+message("-----------------------TEST_SRC_FILES---------------------------")
+message("${TEST_SRC_FILES}")
+message("-----------------------LINKED_OBJ_FILES---------------------------")
+message("${LINKED_OBJ_FILES}")
+
 add_library( # Sets the name of the library.
              native-lib
 
@@ -23,41 +31,9 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-            ../../../../../test/test_bug_635.c
+             ${TEST_SRC_FILES}
+             ${LINKED_OBJ_FILES}
         )
-if (FALSE)
-    add_library( # Sets the name of the library.
-            native-lib
-
-            # Sets the library as a shared library.
-            SHARED
-
-            # Provides a relative path to your source file(s).
-            ../../../../../test/test_bug_635.c
-            ../../../../../test/test_ct2hz.c
-            #../../../../../test/test_jack_obtaining_synth.c
-            ../../../../../test/test_pointer_alignment.c
-            ../../../../../test/test_preset_pinning.c
-            ../../../../../test/test_preset_sample_loading.c
-            ../../../../../test/test_sample_cache.c
-            ../../../../../test/test_sample_rate_change.c
-            ../../../../../test/test_sample_validate.c
-            ../../../../../test/test_seqbind_unregister.c
-            ../../../../../test/test_seq_event_queue_remove.c
-            ../../../../../test/test_seq_event_queue_sort.c
-            ../../../../../test/test_seq_evt_order.c
-            ../../../../../test/test_seq_scale.c
-            ../../../../../test/test_settings_unregister_callback.c
-            ../../../../../test/test_sf3_sfont_loading.c
-            ../../../../../test/test_sfont_loading.c
-            ../../../../../test/test_sfont_unloading.c
-            ../../../../../test/test_sfont_zone.c
-            ../../../../../test/test_snprintf.c
-            ../../../../../test/test_synth_chorus_reverb.c
-            ../../../../../test/test_synth_process.c
-            ../../../../../test/test_utf8_open.c
-        )
-endif()
 
 target_include_directories(native-lib
         PRIVATE
@@ -68,11 +44,13 @@ target_include_directories(native-lib
         ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/lib/glib-2.0/include
         ../../../../../src
         ../../../../../src/bindings
+        ../../../../../src/drivers
         ../../../../../src/midi
         ../../../../../src/rvoice
         ../../../../../src/sfloader
         ../../../../../src/synth
         ../../../../../src/utils
+        ../../../../../test
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -99,5 +77,11 @@ target_link_directories(native-lib
 
 target_link_libraries(native-lib
         ${log-lib}
-        fluidsynth
+        c++
+        gobject-2.0
+        glib-2.0
+        sndfile
+        instpatch-1.0
+        OpenSLES
+        oboe
         )
