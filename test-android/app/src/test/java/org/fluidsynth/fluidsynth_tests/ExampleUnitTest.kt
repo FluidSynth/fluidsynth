@@ -1,4 +1,4 @@
-package org.androidaudioplugin.fluidsynth_tests
+package org.fluidsynth.fluidsynth_tests
 
 import org.junit.Test
 

@@ -24,7 +24,7 @@ int bug_635_main();
 
 int run_all_fluidsynth_tests() {
     int ret = 0; 
-    ret += preset_pinning_main();
+    //ret += preset_pinning_main();
     ret += seq_event_queue_remove_main();
     ret += seq_scale_main();
     ret += jack_obtaining_synth_main();

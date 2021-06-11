@@ -33,7 +33,7 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              ${LINKED_OBJ_FILES}
 
-        tests/test_preset_pinning.c
+        #tests/test_preset_pinning.c
         tests/test_seq_event_queue_remove.c
         tests/test_seq_scale.c
         tests/test_jack_obtaining_synth.c
