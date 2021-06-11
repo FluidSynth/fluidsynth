@@ -33,14 +33,14 @@ struct _fluid_ringbuffer_t
     fluid_atomic_int_t count;            /**< Current count of elements */
     int in;               /**< Index in queue to store next pushed element */
     int out;              /**< Index in queue of next popped element */
-    int elementsize;          /**< Size of each element */
+    size_t elementsize;          /**< Size of each element */
     void *userdata;
 };
 
 typedef struct _fluid_ringbuffer_t fluid_ringbuffer_t;
 
 
-fluid_ringbuffer_t *new_fluid_ringbuffer(int count, int elementsize);
+fluid_ringbuffer_t *new_fluid_ringbuffer(int count, size_t elementsize);
 void delete_fluid_ringbuffer(fluid_ringbuffer_t *queue);
 
 /**
