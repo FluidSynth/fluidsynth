@@ -47,7 +47,7 @@ extern "C" {
  * @param data User defined data registered with the client
  *
  * @note @p time may not be of the same tick value as the scheduled event! In fact, depending on
- * the sequencer's scale and the synth's sample-rate, @p time may a few ticks too late. Although this
+ * the sequencer's scale and the synth's sample-rate, @p time may be a few ticks too late. Although this
  * itself is inaudible, it is important to consider,
  * when you use this callback for enqueuing additional events over and over again with
  * fluid_sequencer_send_at(): If you enqueue new events with a relative tick value you might introduce
