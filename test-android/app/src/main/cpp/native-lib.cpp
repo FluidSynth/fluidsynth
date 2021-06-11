@@ -1,14 +1,9 @@
 #include <jni.h>
 #include <string>
+#include <jni.h>
 
 extern "C" int run_all_fluidsynth_tests();
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_org_fluidsynth_fluidsynthtests_MainActivity_stringFromJNI(
-        JNIEnv* env,
-        jobject /* this */) {
+extern "C" JNIEXPORT void JNICALL Java_org_fluidsynth_fluidsynthtests_TestRunner_00024Companion_runTests(JNIEnv* env, jobject thiz) {
     run_all_fluidsynth_tests();
-
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
 }
