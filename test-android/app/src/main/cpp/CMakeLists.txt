@@ -31,8 +31,34 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             ${TEST_SRC_FILES}
              ${LINKED_OBJ_FILES}
+
+        tests/test_preset_pinning.c
+        tests/test_seq_event_queue_remove.c
+        tests/test_seq_scale.c
+        tests/test_jack_obtaining_synth.c
+        tests/test_settings_unregister_callback.c
+        tests/test_pointer_alignment.c
+        tests/test_sfont_zone.c
+        tests/test_utf8_open.c
+        tests/test_seqbind_unregister.c
+        tests/test_sf3_sfont_loading.c
+        tests/test_sample_cache.c
+        tests/test_synth_process.c
+        tests/test_ct2hz.c
+        tests/test_seq_evt_order.c
+        tests/test_snprintf.c
+        tests/test_seq_event_queue_sort.c
+        tests/test_sfont_loading.c
+        tests/test_preset_sample_loading.c
+        tests/test_sfont_unloading.c
+        tests/test_sample_rate_change.c
+        tests/test_sample_validate.c
+        tests/test_synth_chorus_reverb.c
+        tests/test_bug_635.c
+
+             run_all_tests.c
+             native-lib.cpp
         )
 
 target_include_directories(native-lib
@@ -77,7 +103,7 @@ target_link_directories(native-lib
 
 target_link_libraries(native-lib
         ${log-lib}
-        c++
+        c++_shared
         gobject-2.0
         glib-2.0
         sndfile

@@ -1,9 +1,8 @@
-package org.fluidsynth.fluidsynth_tests
+package org.fluidsynth.fluidsynthtests
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.TextView
-import org.fluidsynth.fluidsynth_tests.databinding.ActivityMainBinding
+import org.fluidsynth.fluidsynthtests.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
