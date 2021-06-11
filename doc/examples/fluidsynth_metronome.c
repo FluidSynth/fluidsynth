@@ -61,7 +61,8 @@ schedule_timer_event(void)
 void
 schedule_pattern(void)
 {
-    int i, note_time;
+    unsigned int i;
+    int note_time;
     note_time = time_marker;
 
     for(i = 0; i < pattern_size; ++i)
