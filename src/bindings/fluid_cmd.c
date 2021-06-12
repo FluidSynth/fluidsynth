@@ -419,6 +419,78 @@ static const fluid_cmd_t fluid_commands[] =
 #endif
 };
 
+int fluid_parse_argv (const char *cmdline, int argc, char **argv)
+{
+    const char *str = cmdline;
+    char       *out;
+    int         cnt;
+    char        ch;
+
+    /* Adjust pointers if it is not in dignostic mode */
+    out = (argv != NULL && argc > 0) ? (char *)(argv + argc) : NULL;
+
+    /* Number of arguments found */
+    cnt = 0;
+
+    /* Loop for arguments */
+    for (;;)
+    {
+        ch = *str++;
+        if (ch == '\0')
+            break;
+
+        /* Ignore separators */
+        if (ch ==' ' || ch == '\t')
+            continue;
+
+        /* New argument found */
+        if (out)
+        {
+            /* Something wrong happened here */
+            if (cnt >= argc)
+                return -1;
+
+            argv[cnt] = out;
+        }
+
+        cnt++;
+
+        /* Check if it is a quoted arg */
+        if (ch == '"')
+        {
+            /* Copy it as is */
+            while ((ch = *str++) != '\0')
+            {
+                if (ch != '"')
+                {
+                    if (out)
+                        *out++ = ch;
+                } else
+                    break;
+            }
+        } else
+        /* Simple arg: copy until a separator is not found */
+        {
+            do {
+                if (out)
+                    *out++ = ch;
+
+                ch = *str++;
+            } while (ch != '\0' && ch !=' ' && ch != '\t');
+        }
+
+        /* Close the argument */
+        if (out)
+            *out++ = '\0';
+
+        /* if last chr is 0 then finish */
+        if (ch == '\0')
+            break;
+    }
+
+    return cnt;
+}
+
 /**
  * Process a string command.
  *
@@ -433,22 +505,34 @@ static const fluid_cmd_t fluid_commands[] =
 int
 fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out)
 {
-    int result, num_tokens = 0;
-    char **tokens = NULL;
+    int result, num_tokens;
+    char** tokens;
 
     if(cmd[0] == '#' || cmd[0] == '\0')
     {
         return 1;
     }
 
-    if(!g_shell_parse_argv(cmd, &num_tokens, &tokens, NULL))
+    /* First pass: count the argumens */
+    num_tokens = fluid_parse_argv(cmd, 0, NULL);
+    if (num_tokens == 0)
+        return 0;
+
+    /* Allocate space for arguments */
+    tokens = (char **)FLUID_MALLOC((sizeof(char *) + 1) * num_tokens + strlen(cmd));
+    if (tokens == NULL)
     {
-        fluid_ostream_printf(out, "Error parsing command\n");
+        fluid_ostream_printf(out, "fluid_command: out of memory\n");
         return FLUID_FAILED;
     }
 
+    /* Second pass: separate the arguments */
+    fluid_parse_argv(cmd, num_tokens, tokens);
+
+    /* Finally, execute the command and free memory */
     result = fluid_cmd_handler_handle(handler, num_tokens, &tokens[0], out);
-    g_strfreev(tokens);
+
+    FLUID_FREE(tokens);
 
     return result;
 }
