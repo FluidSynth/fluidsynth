@@ -355,7 +355,7 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
     FLUID_STRCPY(cpy_dev_name, dev_name); /* fluid_strtok() will overwrite */
     next_idx = cpy_dev_name;
 
-    while(cur_idx = fluid_strtok(&next_idx, " ;"))
+    while(NULL != (cur_idx = fluid_strtok(&next_idx, " ;")))
     {
         /* try to convert current ascii index */
         char *end_idx = cur_idx;

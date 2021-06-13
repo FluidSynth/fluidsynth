@@ -279,15 +279,15 @@ error_recovery:
 }
 
 /**
- * Convenience wrapper for free() that satisfies at least C90 requirements.
+ * Wrapper for free() that satisfies at least C90 requirements.
  *
  * @param ptr Pointer to memory region that should be freed
  *
- * Especially useful when using fluidsynth with programming languages that do not
- * provide malloc() and free().
- *
  * @note Only use this function when the API documentation explicitly says so. Otherwise use
  * adequate \c delete_fluid_* functions.
+ *
+ * @warning Calling ::free() on memory that is advised to be freed with fluid_free() results in undefined behaviour!
+ * (cf.: "Potential Errors Passing CRT Objects Across DLL Boundaries" found in MS Docs)
  *
  * @since 2.0.7
  */
@@ -415,7 +415,7 @@ fluid_utime(void)
 
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
     /* use high precision monotonic clock if available (g_monotonic_time().
-     * For Winfdows, if this clock is actually implemented as low prec. clock
+     * For Windows, if this clock is actually implemented as low prec. clock
      * (i.e. in case glib is too old), high precision performance counter are
      * used instead.
      * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
@@ -963,6 +963,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
 
             /* Clears profile data */
             if(clear_data == 0)
+            {
                 for(i = 0; i < FLUID_PROFILE_NBR; i++)
                 {
                     fluid_profile_data[i].min = 1e10;/* min sets to max value */
@@ -972,6 +973,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
                     fluid_profile_data[i].n_voices = 0; /* voices number */
                     fluid_profile_data[i].n_samples = 0;/* audio samples number */
                 }
+            }
 
             fluid_profile_status = PROFILE_START;	/* starts profiling */
         }

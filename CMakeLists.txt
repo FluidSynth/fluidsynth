@@ -20,6 +20,15 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
+
+if(POLICY CMP0075)
+  cmake_policy(SET CMP0075 NEW)
+endif()
+
+if(POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW)
+endif()
+
 project ( FluidSynth C CXX )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
@@ -29,7 +38,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 2 )
-set ( FLUIDSYNTH_VERSION_MICRO 0 )
+set ( FLUIDSYNTH_VERSION_MICRO 1 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +53,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 0 )
-set ( LIB_VERSION_REVISION 0 )
+set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -151,7 +160,7 @@ include ( DefaultDirs )
 include ( CheckCCompilerFlag )
 include ( CheckSTDC )
 include ( CheckIncludeFile )
-include ( CheckFunctionExists )
+include ( CheckSymbolExists )
 include ( CheckTypeSize )
 check_include_file ( string.h HAVE_STRING_H )
 check_include_file ( stdlib.h HAVE_STDLIB_H )
@@ -254,6 +263,32 @@ unset ( MINGW32 CACHE )
 if ( WIN32 )
   include ( CheckIncludeFiles )
 
+  # We have to set _WIN32_WINNT to make sure CMake gets correct results when probing for functions.
+  # windows-version is supposed to be non-official variable that can be used to tweak the Windows target version.
+  # Its value defaults to the Windows Version we are compiling for.
+  if ( NOT windows-version )
+    if(CMAKE_SYSTEM_VERSION EQUAL 10) # Windows 10
+        set ( windows-version "0x0A00" )
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.3) # Windows 8.1
+        set ( windows-version "0x0603" )
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.2) # Windows 8
+        set ( windows-version "0x0602" )
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.1) # Windows 7
+        set ( windows-version "0x0601" )
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.0) # Windows Vista
+        set ( windows-version "0x0600" )
+    elseif(CMAKE_SYSTEM_VERSION EQUAL 5.1) # Windows XP
+        set ( windows-version "0x0501" )
+    else()
+        set ( windows-version "0x0400" )
+    endif()
+  endif ()
+  message ( STATUS "Targetting Windows Version ${windows-version}" )
+  add_definitions ( -D _WIN32_WINNT=${windows-version} )
+  add_definitions ( -D WINVER=${windows-version} )
+  list ( APPEND CMAKE_REQUIRED_DEFINITIONS "-DWINVER=${windows-version}" )
+  list ( APPEND CMAKE_REQUIRED_DEFINITIONS "-D_WIN32_WINNT=${windows-version}" )
+
   # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
@@ -267,7 +302,7 @@ if ( WIN32 )
   endif ( enable-network )
 
   if ( enable-dsound AND HAVE_DSOUND_H )
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound" )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound;ksuser" )
     set ( DSOUND_SUPPORT 1 )
   endif ()
 
@@ -277,7 +312,7 @@ if ( WIN32 )
   endif ()
 
   if ( enable-waveout AND HAVE_MMSYSTEM_H )
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm" )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm;ksuser" )
     set ( WAVEOUT_SUPPORT 1 )
   endif ()
 
@@ -288,30 +323,10 @@ if ( WIN32 )
 
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
-  if  ( MSVC )
-    # statically link in the CRT library to avoid a bunch of runtime DLL dependencies and allow 
-    # the CI windows builds to be run under WinXP
-    foreach ( flag_var
-        CMAKE_C_FLAGS
-        CMAKE_C_FLAGS_DEBUG
-        CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL
-        CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        )
-      if ( ${flag_var} MATCHES "/MD" )
-        string ( REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}" )
-      endif ( ${flag_var} MATCHES "/MD" )
-    endforeach ( flag_var )
-
-  else ( MSVC )
+  if  ( NOT MSVC )
     # only set debug postfix if not MSVS building
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
-  endif ( MSVC )
+  endif ( NOT MSVC )
 
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
@@ -373,16 +388,6 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
-
-
-unset ( HAVE_INETNTOP CACHE )
-unset ( IPV6_SUPPORT CACHE )
-CHECK_FUNCTION_EXISTS ( "inet_ntop" HAVE_INETNTOP )
-if ( enable-ipv6 )
-  if ( HAVE_INETNTOP )
-    set ( IPV6_SUPPORT 1 )
-  endif ( HAVE_INETNTOP )
-endif ( enable-ipv6 )
 
 unset ( NETWORK_SUPPORT )
 if ( enable-network )
@@ -522,8 +527,17 @@ else(NOT enable-pkgconfig)
     pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 )
     set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
     if ( LIBSNDFILE_SUPPORT )
-        pkg_check_modules ( LIBSNDFILE_VORBIS sndfile>=1.0.18 )
-        set ( LIBSNDFILE_HASVORBIS ${LIBSNDFILE_VORBIS_FOUND} )
+        message (DEBUG "LIBSNDFILE_STATIC_LIBRARIES: ${LIBSNDFILE_STATIC_LIBRARIES}")
+        message (DEBUG "LIBSNDFILE_STATIC_LINK_LIBRARIES: ${LIBSNDFILE_STATIC_LINK_LIBRARIES}")
+        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS: ${LIBSNDFILE_STATIC_LDFLAGS}")
+        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS_OTHER: ${LIBSNDFILE_STATIC_LDFLAGS_OTHER}")
+        if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
+             LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
+             LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
+          set ( LIBSNDFILE_HASVORBIS 1 )
+        else ()
+          message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
+        endif ()
     endif ( LIBSNDFILE_SUPPORT )
     else ( enable-libsndfile )
     unset_pkg_config ( LIBSNDFILE )
@@ -700,46 +714,65 @@ endif()
 
 # manipulate some variables to setup a proper test env
 set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
-set(TEST_SOUNDFONT_UTF8 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
+set(TEST_SOUNDFONT_UTF8_1 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
+set(TEST_SOUNDFONT_UTF8_2 "${CMAKE_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2")
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
+set(TEST_MIDI_UTF8 "${CMAKE_SOURCE_DIR}/test/èmpty.mid")
+
+# Make sure to link against libm before checking for math functions below
+set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
 
 # Check for C99 float math
 
 unset ( HAVE_SINF CACHE )
-CHECK_FUNCTION_EXISTS ( "sinf" HAVE_SINF )
+CHECK_SYMBOL_EXISTS ( sinf "math.h" HAVE_SINF )
 if ( HAVE_SINF )
   set ( HAVE_SINF 1 )
 endif ( HAVE_SINF )
 
 unset ( HAVE_COSF CACHE )
-CHECK_FUNCTION_EXISTS ( "cosf" HAVE_COSF )
+CHECK_SYMBOL_EXISTS ( cosf "math.h" HAVE_COSF )
 if ( HAVE_COSF )
   set ( HAVE_COSF 1 )
 endif ( HAVE_COSF )
 
 unset ( HAVE_FABSF CACHE )
-CHECK_FUNCTION_EXISTS ( "fabsf" HAVE_FABSF )
+CHECK_SYMBOL_EXISTS ( fabsf "math.h" HAVE_FABSF )
 if ( HAVE_FABSF )
   set ( HAVE_FABSF 1 )
 endif ( HAVE_FABSF )
 
 unset ( HAVE_POWF CACHE )
-CHECK_FUNCTION_EXISTS ( "powf" HAVE_POWF )
+CHECK_SYMBOL_EXISTS ( powf "math.h" HAVE_POWF )
 if ( HAVE_POWF )
   set ( HAVE_POWF 1 )
 endif ( HAVE_POWF )
 
 unset ( HAVE_SQRTF CACHE )
-CHECK_FUNCTION_EXISTS ( "sqrtf" HAVE_SQRTF )
+CHECK_SYMBOL_EXISTS ( sqrtf "math.h" HAVE_SQRTF )
 if ( HAVE_SQRTF )
   set ( HAVE_SQRTF 1 )
 endif ( HAVE_SQRTF )
 
 unset ( HAVE_LOGF CACHE )
-CHECK_FUNCTION_EXISTS ( "logf" HAVE_LOGF )
+CHECK_SYMBOL_EXISTS ( logf "math.h" HAVE_LOGF )
 if ( HAVE_LOGF )
   set ( HAVE_LOGF 1 )
 endif ( HAVE_LOGF )
+
+unset ( HAVE_INETNTOP CACHE )
+unset ( IPV6_SUPPORT CACHE )
+if ( WIN32 )
+  CHECK_SYMBOL_EXISTS ( inet_ntop "ws2tcpip.h" HAVE_INETNTOP )
+else ( WIN32 )
+  CHECK_SYMBOL_EXISTS ( inet_ntop "arpa/inet.h" HAVE_INETNTOP )
+endif ( WIN32 )
+if ( enable-ipv6 )
+  if ( HAVE_INETNTOP )
+    set ( IPV6_SUPPORT 1 )
+  endif ( HAVE_INETNTOP )
+endif ( enable-ipv6 )
+
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake

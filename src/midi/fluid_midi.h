@@ -178,6 +178,7 @@ enum midi_meta_event
 enum midi_sysex_manuf
 {
     MIDI_SYSEX_MANUF_ROLAND       = 0x41,         /**< Roland manufacturer ID */
+    MIDI_SYSEX_MANUF_YAMAHA       = 0x43,
     MIDI_SYSEX_UNIV_NON_REALTIME  = 0x7E,         /**< Universal non realtime message */
     MIDI_SYSEX_UNIV_REALTIME      = 0x7F          /**< Universal realtime message */
 };
@@ -188,6 +189,7 @@ enum midi_sysex_manuf
 #define MIDI_SYSEX_MIDI_TUNING_ID       0x08    /**< Sysex sub-ID #1 for MIDI tuning messages */
 #define MIDI_SYSEX_GM_ID                0x09    /**< Sysex sub-ID #1 for General MIDI messages */
 #define MIDI_SYSEX_GS_ID                0x42    /**< Model ID (GS) serving as sub-ID #1 for GS messages*/
+#define MIDI_SYSEX_XG_ID                0x4C    /**< Model ID (XG) serving as sub-ID #1 for XG messages*/
 
 /**
  * SYSEX tuning message IDs.
@@ -209,6 +211,7 @@ enum midi_sysex_tuning_msg_id
 /* General MIDI sub-ID #2 */
 #define MIDI_SYSEX_GM_ON                0x01    /**< Enable GM mode */
 #define MIDI_SYSEX_GM_OFF               0x02    /**< Disable GM mode */
+#define MIDI_SYSEX_GM2_ON               0x03    /**< Enable GM2 mode */
 #define MIDI_SYSEX_GS_DT1               0x12    /**< GS DT1 command */
 
 enum fluid_driver_status

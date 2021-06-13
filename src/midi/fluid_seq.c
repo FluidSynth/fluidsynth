@@ -469,6 +469,8 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
  *  - Otherwise the order is undefined.
  * \n
  * Or mathematically: #FLUID_SEQ_SYSTEMRESET < #FLUID_SEQ_UNREGISTERING < ... < (#FLUID_SEQ_NOTEON && #FLUID_SEQ_NOTE)
+ *
+ * @warning Be careful with relative ticks when sending many events! See #fluid_event_callback_t for details.
  */
 int
 fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,

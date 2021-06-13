@@ -387,7 +387,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>driver</name>
             <type>str</type>
-            <def>jack (Linux),<br />
+            <def>alsa (Linux),<br />
                   dsound (Windows),<br />
                   sndman (MacOS9),<br />
                   coreaudio (Mac OS X),<br />

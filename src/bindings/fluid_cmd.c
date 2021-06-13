@@ -214,7 +214,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
-        "reverb [0|1|on|off]         Turn all reverb groups on or off"
+        "reverb [group] 0|1|on|off   Turn all or one reverb group on or off"
     },
     /* chorus commands */
     {
@@ -235,7 +235,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
-        "chorus [0|1|on|off]         Turn all chorus groups on or off"
+        "chorus [group] 0|1|on|off   Turn all or one chorus group on or off"
     },
     {
         "gain", "general", fluid_handle_gain,
@@ -1241,7 +1241,10 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     /* name and min/max values table */
     static struct value values[FLUID_REVERB_PARAM_LAST] =
     {
-        {"room size"}, {"damp"}, {"width"}, {"level"}
+        {"room size", 0, 0},
+        {"damp", 0, 0},
+        {"width", 0, 0},
+        {"level", 0, 0}
     };
 
     FLUID_ENTRY_COMMAND(data);
@@ -1335,7 +1338,7 @@ enum rev_chor_on_cde
 };
 
 /* Purpose:
- * Set all reverb/chorus units on or off
+ * Set one or all reverb/chorus units on or off
  */
 static int
 fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostream_t out,
@@ -1383,7 +1386,10 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
 }
 
 /* Purpose:
- * Set all reverb units on
+ * Response to: reverb [fx group] on command.
+ * Examples:
+ * reverb off ,disable all reverb groups.
+ * reverb 1 on ,enable reverb group at index 1.
  */
 int
 fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1513,7 +1519,10 @@ fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 }
 
 /* Purpose:
- * Set all chorus units on
+ * Response to: chorus [fx group] on command.
+ * Examples:
+ * chorus off ,disable all chorus groups.
+ * chorus 1 on ,enable chorus group at index 1.
  */
 int
 fluid_handle_chorus(void *data, int ac, char **av, fluid_ostream_t out)
@@ -3553,7 +3562,7 @@ enum
 int fluid_handle_player_cde(void *data, int ac, char **av, fluid_ostream_t out, int cmd)
 {
     FLUID_ENTRY_COMMAND(data);
-    int arg, was_running;
+    int arg = 0, was_running;
     int seek = -1;  /* current seek position in tick */
 
     /* commands name table */

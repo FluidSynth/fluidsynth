@@ -351,7 +351,7 @@ int main(int argc, char **argv)
     int audio_channels = 0;
     int dump = 0;
     int fast_render = 0;
-    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:qR:r:sT:Vvz:";
+    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 #ifdef HAVE_LASH
     int connect_lash = 1;
     int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
@@ -586,7 +586,9 @@ int main(int argc, char **argv)
             break;
 
         case 'j':
+#if JACK_SUPPORT
             fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
+#endif
             fluid_settings_setint(settings, "midi.autoconnect", 1);
             break;
 
@@ -1075,7 +1077,7 @@ int main(int argc, char **argv)
 
         if(adriver == NULL)
         {
-            fprintf(stderr, "Failed to create the audio driver\n");
+            fprintf(stderr, "Failed to create the audio driver. Giving up.\n");
             goto cleanup;
         }
 
@@ -1203,10 +1205,6 @@ print_help(fluid_settings_t *settings)
            "    Number of audio buffers\n");
     printf(" -C, --chorus\n"
            "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
-#ifdef WASAPI_SUPPORT
-    printf(" -D, --query-audio-devices\n"
-           "    Probe all available soundcards for supported modes, sample-rates and sample-formats.\n");
-#endif
     printf(" -d, --dump\n"
            "    Dump incoming and outgoing MIDI events to stdout\n");
     printf(" -E, --audio-file-endian\n"
@@ -1244,6 +1242,10 @@ print_help(fluid_settings_t *settings)
            "    Audio file format for fast rendering or aufile driver (\"help\" for list)\n");
     printf(" -p, --portname=[label]\n"
            "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
+#ifdef WASAPI_SUPPORT
+    printf(" -Q, --query-audio-devices\n"
+           "    Probe all available soundcards for supported modes, sample-rates and sample-formats.\n");
+#endif
     printf(" -q, --quiet\n"
            "    Do not print welcome message or other informational output\n"
            "    (Windows only: also suppress all log messages lower than PANIC\n");

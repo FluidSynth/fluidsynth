@@ -26,15 +26,11 @@
 #if WAVEOUT_SUPPORT
 
 #include <mmsystem.h>
-
 #include <mmreg.h>
 
 /* Those two includes are required on Windows 9x/ME */
 #include <ks.h>
 #include <ksmedia.h>
-
-/* Number of driver buffers in the chain */
-#define NB_SOUND_BUFFERS    4
 
 /**
 * The driver handle multiple channels.
@@ -51,31 +47,26 @@ static int fluid_waveout_write_processed_channels(fluid_synth_t *data, int len,
                                void *channels_out[], int channels_off[],
                                int channels_incr[]);
 
-/* speakers mapping */
-const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
+/* Speakers mapping */
+static const DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
 {
     /* 1 stereo output */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT
-    },
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
+
     /* 2 stereo outputs */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
-    },
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
+    SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
+
     /* 3 stereo outputs */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
-    },
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
+    SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+    SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT,
+
     /* 4 stereo outputs */
-    {
-        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
-        SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT
-    }
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
+    SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+    SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
+    SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT
 };
 
 typedef struct
@@ -88,7 +79,7 @@ typedef struct
     float **drybuf;
 
     HWAVEOUT hWaveOut;
-    WAVEHDR  waveHeader[NB_SOUND_BUFFERS];
+    WAVEHDR *waveHeader;
 
     int periods; /* numbers of internal driver buffers */
     int num_frames;
@@ -292,35 +283,26 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     fluid_settings_getint(settings, "audio.period-size", &period_size);
     fluid_settings_getint(settings, "synth.audio-channels", &audio_channels);
 
-    if(periods > NB_SOUND_BUFFERS)
-    {
-        FLUID_LOG(FLUID_INFO, "audio.periods %d exceeds internal limit %d",
-                              periods, NB_SOUND_BUFFERS);
-        return NULL;
-    }
-
     /* Clear format structure */
     ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
 
     /* check the format */
     if(fluid_settings_str_equal(settings, "audio.sample-format", "float") || func)
     {
-        GUID guid_float = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_IEEE_FLOAT)};
         FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
 
         sample_size = sizeof(float);
         write_ptr = func ? fluid_waveout_write_processed_channels : fluid_synth_write_float_channels;
-        wfx.SubFormat = guid_float;
+        wfx.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
         wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     }
     else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
-        GUID guid_pcm = {DEFINE_WAVEFORMATEX_GUID(WAVE_FORMAT_PCM)};
         FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
 
         sample_size = sizeof(short);
         write_ptr = fluid_synth_write_s16_channels;
-        wfx.SubFormat = guid_pcm;
+        wfx.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
         wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
     }
     else
@@ -367,12 +349,17 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     lenBuffer = wfx.Format.nBlockAlign * period_size;
     /* create and clear the driver data */
     dev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(fluid_waveout_audio_driver_t) + lenBuffer * periods);
+                    sizeof(fluid_waveout_audio_driver_t) +
+                    lenBuffer * periods +
+                    sizeof(WAVEHDR) * periods);
     if(dev == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+
+    /* Assign extra memory to WAVEHDR */
+    dev->waveHeader = (WAVEHDR *)((uintptr_t)(dev + 1) + lenBuffer * periods);
 
     /* Save copy of synth */
     dev->synth = data;

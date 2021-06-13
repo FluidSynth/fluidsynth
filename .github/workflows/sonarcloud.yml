@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/linux.yml'
+      - '.cirrus.yml'
+      - 'README.md'
   pull_request:
       types: [opened, synchronize, reopened]
-      
+
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   # Use Debug build for better code coverage results

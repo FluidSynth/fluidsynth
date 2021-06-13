@@ -25,8 +25,11 @@ Below is a form that shall help getting relevant information for features togeth
 Feel free to edit or remove inapplicable/unneeded parts.
 -->
 
-### Related discussion on the mailing list
-_Features should be discussed by the community. Historically, our community lives at the mailing list. Bring up your ideas there, before opening tickets. In case you already did that, provide a link to the thread._
+### Related discussion
+_Feature requests should be discussed by the community, either on the mailing
+list or via a GitHub Discussion. Please bring up your ideas there before
+opening tickets. In case you already did that, please provide a link to the
+thread._
 
 ### Is your feature request related to a problem?
 _A clear and concise description of what the problem is._

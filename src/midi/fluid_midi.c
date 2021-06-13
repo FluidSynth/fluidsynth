@@ -26,7 +26,7 @@
 
 static int fluid_midi_event_length(unsigned char event);
 static int fluid_isasciistring(char *s);
-static long fluid_getlength(unsigned char *s);
+static long fluid_getlength(const unsigned char *s);
 
 
 /* Read the entire contents of a file into memory, allocating enough memory
@@ -420,7 +420,7 @@ fluid_isasciistring(char *s)
  * fluid_getlength
  */
 long
-fluid_getlength(unsigned char *s)
+fluid_getlength(const unsigned char *s)
 {
     long i = 0;
     i = s[3] | (s[2] << 8) | (s[1] << 16) | (s[0] << 24);
@@ -1720,7 +1720,9 @@ err:
 /**
  * Delete a MIDI player instance.
  * @param player MIDI player instance
- * @warning Do not call while the \p synth renders audio, i.e. an audio driver is running or any other synthesizer thread calls fluid_synth_process() or fluid_synth_nwrite_float() or fluid_synth_write_*() !
+ * @warning Do not call when the synthesizer associated to this \p player renders audio,
+ * i.e. an audio driver is running or any other synthesizer thread concurrently calls
+ * fluid_synth_process() or fluid_synth_nwrite_float() or fluid_synth_write_*() !
  */
 void
 delete_fluid_player(fluid_player_t *player)
@@ -2087,7 +2089,6 @@ fluid_player_callback(void *data, unsigned int msec)
     if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
     {
         fluid_synth_all_notes_off(synth, -1);
-        fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_STOPPING, FLUID_PLAYER_DONE);
         return 1;
     }
     do
@@ -2156,6 +2157,7 @@ fluid_player_callback(void *data, unsigned int msec)
     }
     while(loadnextfile);
 
+    /* do not update the status if the player has been stopped already */
     fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_PLAYING, status);
 
     return 1;
@@ -2195,8 +2197,7 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_READY, FLUID_PLAYER_STOPPING);
-    fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_PLAYING, FLUID_PLAYER_STOPPING);
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
@@ -2436,6 +2437,9 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
  * Wait for a MIDI player until the playback has been stopped.
  * @param player MIDI player instance
  * @return Always #FLUID_OK
+ *
+ * @warning The player may still be used by a concurrently running synth context. Hence it is
+ * not safe to immediately delete the player afterwards. Also refer to delete_fluid_player().
  */
 int
 fluid_player_join(fluid_player_t *player)
