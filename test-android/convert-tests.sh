@@ -13,6 +13,7 @@ DISABLED_TESTS=(\
     )
 
 rm -f test-names.txt
+mkdir -p app/src/main/cpp/tests/
 
 for f in `grep -lR "int main(void)" ../test/ | sort` ; do
     export TESTMAINNAME=`echo $f | sed -e "s/\.\.\/test\/test_\(.*\).c$/\1/"`

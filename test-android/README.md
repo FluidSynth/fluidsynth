@@ -13,8 +13,8 @@ The application was based on Android Studio 4.2 (when it was created).
 Here is a brief task list to generate, build, and run Android tests:
 
 - run `./convert-tests.sh` to generate runnable tests.
-- run `./download.sh` to download fluidsynth dependency archives to build from sources as Android dependencies.
-- run `./build-scripts/build-all-archs.sh` to build fluidsynth native libraries for Android.
+- run `build-scripts/download.sh` to download fluidsynth dependency archives to build from sources as Android dependencies.
+- run `build-scripts/build-all-archs.sh` to build fluidsynth native libraries for Android.
 - copy `build-scripts/build-artifacts/lib` contents into `app/src/main/jniLibs`.
 - run `./gradlew connectedCheck` to build and run Android tests.
 
@@ -34,7 +34,7 @@ It will end up with `build-scripts/build-artifacts/` that contains a `include` d
 
 Once you have finished building fluidsynth for Android. there will be `$(topdir)/build_(ABI)` directories. While you want to build the Android tester app, you cannot remove them because those intermediate files (OBJ files) are referenced by this app's `CMakeLists.txt`.
 
-(4) The `lib` part from the above has to be copied into `app/src/main/jniLibs`. There should be `armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64` subdirectories. (Note that the locations are different between local builds and Azure DevOps.)
+(4) The `lib` part from the above has to be copied into `app/src/main/jniLibs`. There should be `armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64` subdirectories.
 
 (5) After all the steps above are done, the Android tester app is ready to build and run. You can either open this directory as a project on Android Studio, or run `./gradlew build` to build the app, or run `./gradlew connectedCheck` to build and run the tests on a connected Android target (emulator or device). You can also run the tests by simply launching the MainActivity as it run there before showing the UI.
 
