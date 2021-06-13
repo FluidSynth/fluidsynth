@@ -351,7 +351,7 @@ int main(int argc, char **argv)
     int audio_channels = 0;
     int dump = 0;
     int fast_render = 0;
-    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:qR:r:sT:Vvz:";
+    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 #ifdef HAVE_LASH
     int connect_lash = 1;
     int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
