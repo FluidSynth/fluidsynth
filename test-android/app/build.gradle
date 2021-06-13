@@ -20,6 +20,9 @@ android {
                 cppFlags ''
                 arguments '-DANDROID_STL=c++_shared'
             }
+
+            if (project.hasProperty('customAbiFilters'))
+                ndk.abiFilters "$customAbiFilters"
         }
     }
 
