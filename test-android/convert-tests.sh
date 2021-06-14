@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -ex
+
 DISABLED_TESTS=(\
     preset_pinning \
     utf8_open \
@@ -16,7 +18,7 @@ rm -f test-names.txt
 mkdir -p app/src/main/cpp/tests/
 
 for f in `grep -lR "int main(void)" ../test/ | sort` ; do
-    export TESTMAINNAME=`echo $f | sed -e "s/\.\.\/test\/test_\(.*\).c$/\1/"`
+    export TESTMAINNAME=`echo $f | sed -E "s/\.\.\/test\/test_\(.*\).c$/\1/"`
     echo $TESTMAINNAME >> test-names.txt
     export OUTPUTFILE=app/src/main/cpp/tests/test_${TESTMAINNAME}.c
     sed -e "s/int main(void)/int "$TESTMAINNAME"_main(void)/" $f > $OUTPUTFILE ;
