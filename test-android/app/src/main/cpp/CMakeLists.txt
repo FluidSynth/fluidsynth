@@ -30,6 +30,8 @@ add_library( # Sets the name of the library.
              # Sets the library as a shared library.
              SHARED
 
+             $<TARGET_OBJECTS:libfluidsynth-OBJ>
+ 
         tests/test_preset_pinning.c
         tests/test_seq_event_queue_remove.c
         tests/test_seq_scale.c
