@@ -63,20 +63,10 @@ add_library( # Sets the name of the library.
 
 target_include_directories(native-lib
         PRIVATE
-        ../../../../../build_${CMAKE_ANDROID_ARCH_ABI}
-        ../../../../build-scripts/build-artifacts/include
-        ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/include
-        ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/include/glib-2.0
-        ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/lib/glib-2.0/include
-        ../../../../../src
-        ../../../../../src/bindings
-        ../../../../../src/drivers
-        ../../../../../src/midi
-        ../../../../../src/rvoice
-        ../../../../../src/sfloader
-        ../../../../../src/synth
-        ../../../../../src/utils
-        ../../../../../test
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include> # include auto generated headers
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> # include "normal" public (sub-)headers
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src> # include private headers
+        $<TARGET_PROPERTY:libfluidsynth,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
         )
 
 # Searches for a specified prebuilt library and stores the path as a
