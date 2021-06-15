@@ -30,9 +30,6 @@ add_library( # Sets the name of the library.
              # Sets the library as a shared library.
              SHARED
 
-             # Provides a relative path to your source file(s).
-             ${LINKED_OBJ_FILES}
-
         tests/test_preset_pinning.c
         tests/test_seq_event_queue_remove.c
         tests/test_seq_scale.c
@@ -92,6 +89,7 @@ target_link_directories(native-lib
         ../jniLibs/${CMAKE_ANDROID_ARCH_ABI})
 
 target_link_libraries(native-lib
+        $<TARGET_PROPERTY:libfluidsynth,INTERFACE_LINK_LIBRARIES>
         ${log-lib}
         c++_shared
         gobject-2.0
@@ -101,3 +99,12 @@ target_link_libraries(native-lib
         OpenSLES
         oboe
         )
+
+set_target_properties(native-lib PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+if ( FLUID_CPPFLAGS )
+    set_target_properties ( native-lib PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
+endif ( FLUID_CPPFLAGS )
+
+add_custom_target ( check-android )
+add_dependencies ( check-android native-lib )
