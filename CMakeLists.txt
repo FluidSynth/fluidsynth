@@ -799,6 +799,9 @@ ENABLE_TESTING()
 # Process subdirectories
 add_subdirectory ( src )
 add_subdirectory ( test )
+if ( ANDROID )
+  add_subdirectory ( test-android/app/src/main/cpp )
+endif (ANDROID)
 add_subdirectory ( doc )
 
 # pkg-config support
