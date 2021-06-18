@@ -706,8 +706,9 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
 
         # currently no need to link against openMP runtime lib(s). If need be, uncomment below.
-        #  set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
-        #  set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
+        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
+        set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
+	include_directories ( ${OpenMP_C_INCLUDE_DIR} )
         set ( HAVE_OPENMP 1 )
     endif()
 endif()
