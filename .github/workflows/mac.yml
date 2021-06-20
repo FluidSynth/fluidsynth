@@ -20,9 +20,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: 'macOS-10.14'
-          - os: 'macOS-10.15'
-          - os: 'macOS-11.0'
+          - os: 'macos-10.15'
+          - os: 'macos-11'
     steps:
       - uses: actions/checkout@v2
 
