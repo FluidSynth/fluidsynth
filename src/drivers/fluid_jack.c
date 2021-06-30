@@ -639,7 +639,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
             }
 
             o = 0;
-            for(i = 0; jack_ports[i] && i < 2 * dev->num_fx_ports; ++i)
+            for(i = 0; i < 2 * dev->num_fx_ports; ++i)
             {
                 err = jack_connect(client, jack_port_name(dev->fx_ports[i]), jack_ports[o++]);
 
