@@ -27,6 +27,7 @@
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_samplecache.h"
+#include "fluid_chan.h"
 
 /* EMU8k/10k hardware applies this factor to initial attenuation generator values set at preset and
  * instrument level in a soundfont. We apply this factor when loading the generator values to stay
@@ -867,6 +868,25 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
     fluid_voice_zone_t *voice_zone;
     fluid_list_t *list;
     fluid_voice_t *voice;
+    int tuned_key;
+
+    /* For detuned channels it might be better to use another key for Soundfont sample selection
+     * giving better approximations for the pitch than the original key.
+     * Example: play key 60 on 6370 Hz => use tuned key 64 for sample selection
+     *
+     * This feature is only enabled for melodic channels.
+     * For drum channels we always select Soundfont samples by key numbers.
+     */
+
+    if(synth->channel[chan]->channel_type == CHANNEL_TYPE_MELODIC)
+    {
+        tuned_key = (int)(fluid_channel_get_key_pitch(synth->channel[chan], key) / 100.0 + 0.5);
+    }
+    else
+    {
+        tuned_key = key;
+    }
+
     int i;
 
     global_preset_zone = fluid_defpreset_get_global_zone(defpreset);
@@ -879,7 +899,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
         /* check if the note falls into the key and velocity range of this
            preset */
-        if(fluid_zone_inside_range(&preset_zone->range, key, vel))
+        if(fluid_zone_inside_range(&preset_zone->range, tuned_key, vel))
         {
 
             inst = fluid_preset_zone_get_inst(preset_zone);
@@ -894,7 +914,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                    the key and velocity range of this  instrument zone.
                    An instrument zone must be ignored when its voice is already running
                    played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
-                if(fluid_zone_inside_range(&voice_zone->range, key, vel))
+                if(fluid_zone_inside_range(&voice_zone->range, tuned_key, vel))
                 {
 
                     inst_zone = voice_zone->inst_zone;
