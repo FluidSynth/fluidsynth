@@ -385,7 +385,6 @@ fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key)
 {
     if(chan->tuning)
     {
-        printf("COARSE %f\n", fluid_channel_get_gen(chan, GEN_COARSETUNE));
         return fluid_tuning_get_pitch(chan->tuning, key)
             + 100.0f * fluid_channel_get_gen(chan, GEN_COARSETUNE)
             + fluid_channel_get_gen(chan, GEN_FINETUNE);
