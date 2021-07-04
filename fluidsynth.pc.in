@@ -7,4 +7,5 @@ Name: FluidSynth
 Description: Software SoundFont synth
 Version: @VERSION@
 Libs: -L${libdir} -lfluidsynth
+Libs.private: @LIBS_PRIVATE_JOINED@ @LIBS_PRIVATE_WITH_PATH_JOINED@
 Cflags: -I${includedir}
