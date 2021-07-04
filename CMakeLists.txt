@@ -711,6 +711,9 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
         set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
         set ( HAVE_OPENMP 1 )
     endif()
+        message ( STATUS "OpenMP_C_FLAGS: ${OpenMP_C_FLAGS}")
+        message ( STATUS "OpenMP_C_LIBRARIES: ${OpenMP_C_LIBRARIES}")
+        message ( STATUS "OpenMP_C_LIB_NAMES: ${OpenMP_C_LIB_NAMES}")
 endif()
 
 # manipulate some variables to setup a proper test env
