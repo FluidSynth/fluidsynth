@@ -391,7 +391,7 @@ fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key)
     }
     else
     {
-        return key * 100.0;
+        return key * 100.0f;
     }
 }
 

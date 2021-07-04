@@ -683,7 +683,7 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
      * The time is cut in half.
      */
 
-    keysteps = 60.0 - fluid_channel_get_key_pitch(voice->channel, fluid_voice_get_actual_key(voice)) / 100.0;
+    keysteps = 60.0f - fluid_channel_get_key_pitch(voice->channel, fluid_voice_get_actual_key(voice)) / 100.0f;
     timecents = fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * keysteps;
 
     /* Range checking */

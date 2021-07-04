@@ -869,6 +869,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
     fluid_list_t *list;
     fluid_voice_t *voice;
     int tuned_key;
+    int i;
 
     /* For detuned channels it might be better to use another key for Soundfont sample selection
      * giving better approximations for the pitch than the original key.
@@ -880,14 +881,12 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
     if(synth->channel[chan]->channel_type == CHANNEL_TYPE_MELODIC)
     {
-        tuned_key = (int)(fluid_channel_get_key_pitch(synth->channel[chan], key) / 100.0 + 0.5);
+        tuned_key = (int)(fluid_channel_get_key_pitch(synth->channel[chan], key) / 100.0f + 0.5f);
     }
     else
     {
         tuned_key = key;
     }
-
-    int i;
 
     global_preset_zone = fluid_defpreset_get_global_zone(defpreset);
 
