@@ -816,40 +816,23 @@ else ()
   set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 endif ()
 
-set ( LIBS_PRIVATE
-    ${GLIB_LIBRARIES}
-    ${GMODULE_LIBRARIES}
-    ${LASH_LIBRARIES}
-    ${JACK_LIBRARIES}
-    ${ALSA_LIBRARIES}
-    ${PULSE_LIBRARIES}
-    ${PORTAUDIO_LIBRARIES}
-    ${LIBSNDFILE_LIBRARIES}
-    ${SDL2_LIBRARIES}
-    ${DBUS_LIBRARIES}
-    ${READLINE_LIBS}
-    ${DART_LIBS}
-    ${COREAUDIO_LIBS}
-    ${COREMIDI_LIBS}
-    ${WINDOWS_LIBS}
-    ${MidiShare_LIBS}
-    ${OpenSLES_LIBS}
-    ${OBOE_LIBS}
-    ${LIBFLUID_LIBS}
-    ${LIBINSTPATCH_LIBRARIES}
-    )
+# retrieve all the private libs we depend on
+get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
 # make a copy
 set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
+
 # this matches any path and any -l entry
 set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-l.*$)" )
 # remove all entries from the list which are specified by path and which already have -l
 list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
 # include only entries specifed by path
 list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
+
 # prepend the linker flag to all entries except the ones that already have it
 list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
 list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
 list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
