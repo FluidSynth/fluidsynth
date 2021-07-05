@@ -1263,6 +1263,7 @@ fluid_timer_join(fluid_timer_t *timer)
 int
 fluid_timer_is_running(const fluid_timer_t *timer)
 {
+    // for unit test usage only
     return timer->callback != NULL;
 }
 
