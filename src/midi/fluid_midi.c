@@ -2448,6 +2448,13 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 int
 fluid_player_join(fluid_player_t *player)
 {
+    if(player->use_system_timer)
+    {
+        if(!fluid_timer_is_running(player->system_timer)) /* player has finished */
+        {
+            return FLUID_OK;
+        }
+    }
     while(fluid_player_get_status(player) != FLUID_PLAYER_DONE)
     {
         fluid_msleep(10);
