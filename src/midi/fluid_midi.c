@@ -2088,7 +2088,11 @@ fluid_player_callback(void *data, unsigned int msec)
 
     if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
     {
-        fluid_synth_all_notes_off(synth, -1);
+        if (fluid_player_get_status(player) == FLUID_PLAYER_STOPPING)
+        {
+            fluid_synth_all_notes_off(synth, -1);
+            fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
+        }
         return 1;
     }
     do
@@ -2197,7 +2201,7 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_STOPPING);
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
