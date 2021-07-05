@@ -1577,12 +1577,12 @@ fluid_track_send_events(fluid_track_t *track,
             return;
         }
 
-        /* 		printf("track=%02d\tticks=%05u\ttrack=%05u\tdtime=%05u\tnext=%05u\n", */
-        /* 		       track->num, */
-        /* 		       ticks, */
-        /* 		       track->ticks, */
-        /* 		       event->dtime, */
-        /* 		       track->ticks + event->dtime); */
+        /*         printf("track=%02d\tticks=%05u\ttrack=%05u\tdtime=%05u\tnext=%05u\n", */
+        /*                track->num, */
+        /*                ticks, */
+        /*                track->ticks, */
+        /*                event->dtime, */
+        /*                track->ticks + event->dtime); */
 
         if(track->ticks + event->dtime > ticks)
         {
@@ -1651,6 +1651,7 @@ new_fluid_player(fluid_synth_t *synth)
     }
 
     fluid_atomic_int_set(&player->status, FLUID_PLAYER_READY);
+    fluid_atomic_int_set(&player->stopping, 0);
     player->loop = 1;
     player->ntracks = 0;
 
@@ -1786,9 +1787,9 @@ fluid_player_reset(fluid_player_t *player)
         }
     }
 
-    /*	player->current_file = NULL; */
-    /*	player->status = FLUID_PLAYER_READY; */
-    /*	player->loop = 1; */
+    /*    player->current_file = NULL; */
+    /*    player->status = FLUID_PLAYER_READY; */
+    /*    player->loop = 1; */
     player->ntracks = 0;
     player->division = 0;
     player->miditempo = 500000;
@@ -2088,10 +2089,10 @@ fluid_player_callback(void *data, unsigned int msec)
 
     if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
     {
-        if (fluid_player_get_status(player) == FLUID_PLAYER_STOPPING)
+        if(fluid_atomic_int_get(&player->stopping))
         {
             fluid_synth_all_notes_off(synth, -1);
-            fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
+            fluid_atomic_int_set(&player->stopping, 0);
         }
         return 1;
     }
@@ -2201,7 +2202,8 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    fluid_atomic_int_set(&player->status, FLUID_PLAYER_STOPPING);
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
+    fluid_atomic_int_set(&player->stopping, 1);
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
