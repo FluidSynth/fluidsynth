@@ -711,10 +711,6 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
         set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
         set ( HAVE_OPENMP 1 )
     endif()
-        message ( STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
-        message ( STATUS "OpenMP_C_FLAGS: ${OpenMP_C_FLAGS}")
-        message ( STATUS "OpenMP_C_LIBRARIES: ${OpenMP_C_LIBRARIES}")
-        message ( STATUS "OpenMP_C_LIB_NAMES: ${OpenMP_C_LIB_NAMES}")
 endif()
 
 # manipulate some variables to setup a proper test env
@@ -826,8 +822,8 @@ if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
     # make a copy
     set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
 
-    # this matches any path and any -l entry
-    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-l.*$)" )
+    # this matches any path and any flag entries (starting with '-')
+    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
     # remove all entries from the list which are specified by path and which already have -l
     list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
     # include only entries specifed by path
