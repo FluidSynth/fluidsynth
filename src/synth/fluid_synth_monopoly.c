@@ -79,7 +79,7 @@
  Each MIDI channel have a legato detector.
 
  Note:
-  Portamento is a feature independant of the legato detector. So
+  Portamento is a feature independent of the legato detector. So
   portamento isn't part of the lagato detector. However portamento
   (when enabled) is triggered at noteOn (like legato). Like in legato
   situation it is usual to have a portamento from a note 'fromkey' to another

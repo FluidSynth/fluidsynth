@@ -2285,7 +2285,7 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
 }
 
 /**
- * update the MIDI player internal deltatime dependant of actual tempo.
+ * update the MIDI player internal deltatime dependent of actual tempo.
  * @param player MIDI player instance
  */
 static void fluid_player_update_tempo(fluid_player_t *player)

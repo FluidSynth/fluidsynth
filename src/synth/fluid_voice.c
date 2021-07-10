@@ -475,7 +475,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 }
 
 /* Useful to return the nominal pitch of a key */
-/* The nominal pitch is dependant of voice->root_pitch,tuning, and
+/* The nominal pitch is dependent of voice->root_pitch,tuning, and
    GEN_SCALETUNE generator.
    This is useful to set the value of GEN_PITCH generator on noteOn.
    This is useful to get the beginning/ending pitch for portamento.

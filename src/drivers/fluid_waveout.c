@@ -344,7 +344,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
     }
 
     /* allocate the internal waveout buffers:
-      The length of a single buffer in bytes is dependant of period_size.
+      The length of a single buffer in bytes is dependent of period_size.
     */
     lenBuffer = wfx.Format.nBlockAlign * period_size;
     /* create and clear the driver data */
@@ -394,7 +394,7 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
         FLUID_MEMSET(dev->drybuf, 0, sizeof(float*) * audio_channels * 2);
         for(i = 0; i < audio_channels * 2; ++i)
         {
-            /* The length of a single buffer drybuf[i] is dependant of period_size */
+            /* The length of a single buffer drybuf[i] is dependent of period_size */
             dev->drybuf[i] = FLUID_ARRAY(float, period_size);
             if(dev->drybuf[i] == NULL)
             {
