@@ -32,7 +32,7 @@ The API contains the functions to query the type, the current value, the
 default value, the range and the "hints" of a setting. The range is the minimum
 and maximum value of the setting. The hints gives additional information about
 a setting. For example, whether a string represents a filename. Or whether a
-number should be interpreted on on a logarithmic scale. Check the settings.h
+number should be interpreted on a logarithmic scale. Check the settings.h
 API documentation for a description of all functions.
 
 */

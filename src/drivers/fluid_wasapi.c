@@ -73,7 +73,7 @@ static const IID   _IID_IAudioRenderClient =
  *
  * Current limitations:
  *  - Only one stereo audio output.
- *  - If audio.sample-format is "16bits", a convertion from float
+ *  - If audio.sample-format is "16bits", a conversion from float
  *    without dithering is used.
  *
  * Available settings:

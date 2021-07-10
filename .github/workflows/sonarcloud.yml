@@ -85,7 +85,7 @@ jobs:
        ls -la ${{ github.workspace }}/build
        ls -la ${{ github.workspace }}/build/coverage
 
-# The offical sonarsource/sonarcloud-github-action@v1.5 action does not work properly.
+# The official sonarsource/sonarcloud-github-action@v1.5 action does not work properly.
 # It keeps complaining that the build-wrapper.json cannot be found.
 # Hence, use a third party action to download and add sonar-scanner to PATH and then run it manually.
     - name: Setup sonarqube
