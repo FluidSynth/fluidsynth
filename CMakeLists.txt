@@ -412,7 +412,7 @@ if ( enable-profiling )
     
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
     
-    if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+    if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
         find_program( CLANG_TIDY
                     NAMES "clang-tidy"
                     DOC "Path to clang-tidy executable" )
@@ -422,7 +422,7 @@ if ( enable-profiling )
             execute_process ( COMMAND ${CLANG_TIDY} "--version" )
             set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
         endif ( CLANG_TIDY )
-    endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+    endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
 
 endif ( enable-profiling )
 
@@ -815,6 +815,30 @@ if ( IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}" )
 else ()
   set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 endif ()
+
+if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
+    # retrieve all the private libs we depend on
+    get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
+    # make a copy
+    set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
+
+    # this matches any path and any flag entries (starting with '-')
+    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
+    # remove all entries from the list which are specified by path and which already have -l
+    list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
+    # include only entries specifed by path
+    list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
+
+    # prepend the linker flag to all entries except the ones that already have it
+    list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
+    list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
+    list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+else ()
+    set ( LIBS_PRIVATE "" )
+    set ( LIBS_PRIVATE_WITH_PATH "" )
+    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
+endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
+
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
