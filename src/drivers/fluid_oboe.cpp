@@ -140,6 +140,7 @@ void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings,   SRCQ_SET, "Best");
 
     fluid_settings_register_str(settings, RECOVERY_MODE, "Reconnect", 0);
+    fluid_settings_add_option(settings, RECOVERY_MODE, "Reconnect");
     fluid_settings_add_option(settings, RECOVERY_MODE, "Stop");
 }
 
@@ -302,11 +303,12 @@ void
 OboeAudioStreamErrorCallback::onErrorAfterClose(AudioStream *stream, Result result)
 {
     if (dev->error_recovery_mode == 1) { // Stop
-        FLUID_LOG(FLUID_INFO, "Oboe driver encountered an error (such as earphone unplugged). Stopped.");
+        FLUID_LOG(FLUID_ERR, "Oboe driver encountered an error (such as earphone unplugged). Stopped.");
+        dev->stream.reset();
         return;
     }
     else
-        FLUID_LOG(FLUID_INFO, "Oboe driver encountered an error (such as earphone unplugged). Recovering...");
+        FLUID_LOG(FLUID_WARN, "Oboe driver encountered an error (such as earphone unplugged). Recovering...");
 
     result = fluid_oboe_connect_or_reconnect(dev);
 
