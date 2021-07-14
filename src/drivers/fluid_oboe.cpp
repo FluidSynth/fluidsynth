@@ -116,7 +116,7 @@ constexpr char OBOE_ID[] = "audio.oboe.id";
 constexpr char SHARING_MODE[] = "audio.oboe.sharing-mode";
 constexpr char PERF_MODE[] = "audio.oboe.performance-mode";
 constexpr char SRCQ_SET[] = "audio.oboe.sample-rate-conversion-quality";
-constexpr char RECOVERY_MODE[] = "audio.oboe.audio-error-recovery-mode";
+constexpr char RECOVERY_MODE[] = "audio.oboe.error-recovery-mode";
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
 {
