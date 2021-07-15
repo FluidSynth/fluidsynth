@@ -103,11 +103,12 @@ private:
     void *user_data;
 };
 
-class OboeAudioStreamErrorCallback : public AudioStreamErrorCallback {
-    fluid_oboe_audio_driver_t* dev;
+class OboeAudioStreamErrorCallback : public AudioStreamErrorCallback
+{
+    fluid_oboe_audio_driver_t *dev;
 
 public:
-    OboeAudioStreamErrorCallback(fluid_oboe_audio_driver_t* dev) : dev(dev) {}
+    OboeAudioStreamErrorCallback(fluid_oboe_audio_driver_t *dev) : dev(dev) {}
 
     void onErrorAfterClose(AudioStream *stream, Result result);
 };
@@ -302,17 +303,21 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
 void
 OboeAudioStreamErrorCallback::onErrorAfterClose(AudioStream *stream, Result result)
 {
-    if (dev->error_recovery_mode == 1) { // Stop
+    if(dev->error_recovery_mode == 1)    // Stop
+    {
         FLUID_LOG(FLUID_ERR, "Oboe driver encountered an error (such as earphone unplugged). Stopped.");
         dev->stream.reset();
         return;
     }
     else
+    {
         FLUID_LOG(FLUID_WARN, "Oboe driver encountered an error (such as earphone unplugged). Recovering...");
+    }
 
     result = fluid_oboe_connect_or_reconnect(dev);
 
-    if(result != Result::OK) {
+    if(result != Result::OK)
+    {
         FLUID_LOG(FLUID_ERR, "Unable to reconnect Oboe audio stream");
         return; // cannot do anything further
     }
@@ -324,7 +329,7 @@ OboeAudioStreamErrorCallback::onErrorAfterClose(AudioStream *stream, Result resu
     {
         FLUID_LOG(FLUID_ERR, "Unable to restart Oboe audio stream");
         return; // cannot do anything further
-    }        
+    }
 }
 
 #endif // OBOE_SUPPORT
