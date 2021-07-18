@@ -30,7 +30,7 @@ if(POLICY CMP0091)
 endif()
 
 project ( FluidSynth C CXX )
-set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
