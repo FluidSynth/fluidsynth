@@ -856,6 +856,29 @@ configure_file ( fluidsynth.pc.in
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
 	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
 
+# Exported targets for cmake: find_package(FluidSynth)
+# when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
+# to use the build directory directly set the FluidSynth_DIR variable instead.
+
+# targets in the build directory
+export(EXPORT FluidSynthTargets
+   FILE "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthTargets.cmake"
+   NAMESPACE FluidSynth::
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    FluidSynthConfigVersion.cmake
+    VERSION ${LIB_VERSION_INFO}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfigVersion.cmake"
+    DESTINATION ${LIB_INSTALL_DIR}/cmake/fluidsynth
+)
+
 # Extra targets for Unix build environments
 if ( UNIX )
     # RPM spec
