@@ -774,6 +774,18 @@ if ( enable-ipv6 )
   endif ( HAVE_INETNTOP )
 endif ( enable-ipv6 )
 
+unset ( HAVE_SOCKLEN_T CACHE )
+set ( CMAKE_EXTRA_INCLUDE_FILES_SAVE ${CMAKE_EXTRA_INCLUDE_FILES} )
+if ( WIN32 )
+  set ( CMAKE_EXTRA_INCLUDE_FILES "winsock2.h;ws2tcpip.h" )
+else ( WIN32 )
+  set ( CMAKE_EXTRA_INCLUDE_FILES sys/socket.h )
+endif ( WIN32 )
+check_type_size ( socklen_t SOCKLEN_T )
+set ( CMAKE_EXTRA_INCLUDE_FILES ${CMAKE_EXTRA_INCLUDE_FILES_SAVE} )
+if ( HAVE_SOCKLEN_T )
+  set ( HAVE_SOCKLEN_T 1 )
+endif ( HAVE_SOCKLEN_T )
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
