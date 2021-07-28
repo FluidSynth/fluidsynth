@@ -816,7 +816,7 @@ else ()
   set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 endif ()
 
-if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
+if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
     # retrieve all the private libs we depend on
     get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
     # make a copy
@@ -837,7 +837,7 @@ else ()
     set ( LIBS_PRIVATE "" )
     set ( LIBS_PRIVATE_WITH_PATH "" )
     message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
-endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
+endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
