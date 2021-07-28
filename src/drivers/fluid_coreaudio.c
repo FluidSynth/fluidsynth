@@ -187,14 +187,22 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     dev->data = data;
 
     // Open the default output unit
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    ComponentDescription desc;
+#else
     AudioComponentDescription desc;
+#endif
     desc.componentType = kAudioUnitType_Output;
     desc.componentSubType = kAudioUnitSubType_HALOutput; //kAudioUnitSubType_DefaultOutput;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    Component comp = FindNextComponent(NULL, &desc);
+#else
     AudioComponent comp = AudioComponentFindNext(NULL, &desc);
+#endif
 
     if(comp == NULL)
     {
@@ -202,7 +210,11 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         goto error_recovery;
     }
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    status = OpenAComponent(comp, &dev->outputUnit);
+#else
     status = AudioComponentInstanceNew(comp, &dev->outputUnit);
+#endif
 
     if(status != noErr)
     {
@@ -372,7 +384,11 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t *p)
     fluid_core_audio_driver_t *dev = (fluid_core_audio_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    CloseComponent(dev->outputUnit);
+#else
     AudioComponentInstanceDispose(dev->outputUnit);
+#endif
 
     if(dev->buffers[0])
     {
