@@ -33,18 +33,14 @@ jobs:
           - CC: "clang-8"
             CXX: "clang++-8"
             CMAKE_FLAGS: ""
-          - CC: "clang-9"
-            CXX: "clang++-9"
-            CMAKE_FLAGS: ""
           - CC: "clang-10"
             CXX: "clang++-10"
-            CMAKE_FLAGS: ""
-          - CC: "clang-11"
-            CXX: "clang++-11"
             CMAKE_FLAGS: ""
           - CC: "clang-12"
             CXX: "clang++-12"
             CMAKE_FLAGS: ""
+# clang9 is covered by openSUSE Leap 15.2
+# clang11 is covered by openSUSE Leap 15.3
 
     steps:
     - uses: actions/checkout@v2
