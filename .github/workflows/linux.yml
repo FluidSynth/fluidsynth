@@ -25,26 +25,22 @@ jobs:
       matrix:
         CC: [""]
         CXX: [""]
-        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0","-Denable-ubsan=1 -Denable-debug=1"]
+        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0","-Denable-ubsan=1 -Denable-debug=1", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"]
         include:
-          - CC: "gcc-7"
-            CXX: "g++-7"
-            CMAKE_FLAGS: ""
-          - CC: "gcc-8"
-            CXX: "g++-8"
-            CMAKE_FLAGS: "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
           - CC: "clang-7"
             CXX: "clang++-7"
             CMAKE_FLAGS: ""
           - CC: "clang-8"
             CXX: "clang++-8"
             CMAKE_FLAGS: ""
-          - CC: "clang-9"
-            CXX: "clang++-9"
-            CMAKE_FLAGS: ""
           - CC: "clang-10"
             CXX: "clang++-10"
             CMAKE_FLAGS: ""
+          - CC: "clang-12"
+            CXX: "clang++-12"
+            CMAKE_FLAGS: ""
+# clang9 is covered by openSUSE Leap 15.2
+# clang11 is covered by openSUSE Leap 15.3
 
     steps:
     - uses: actions/checkout@v2
