@@ -873,6 +873,10 @@ write_basic_package_version_file(
     COMPATIBILITY SameMinorVersion
 )
 
+# Here, configure_file() is used instead of the more orthodox macro
+# configure_package_config_file() because the latter does not
+# support generating a config.cmake file for both the installed
+# package and for using the build directory directly.
 configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfig.cmake"
               "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfigVersion.cmake"
