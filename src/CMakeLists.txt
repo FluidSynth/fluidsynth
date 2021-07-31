@@ -348,7 +348,7 @@ else ( MACOSX_FRAMEWORK )
   )
 endif ( MACOSX_FRAMEWORK )
 
-target_link_libraries ( libfluidsynth PRIVATE
+target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
     ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
@@ -391,7 +391,7 @@ if ( FLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
 endif ( FLUID_CPPFLAGS )
 
-target_link_libraries ( fluidsynth PRIVATE
+target_link_libraries ( fluidsynth
     libfluidsynth
     ${SYSTEMD_LIBRARIES}
     ${FLUID_LIBS}
