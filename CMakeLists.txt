@@ -869,8 +869,8 @@ export(EXPORT FluidSynthTargets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     FluidSynthConfigVersion.cmake
-    VERSION ${LIB_VERSION_INFO}
-    COMPATIBILITY SameMajorVersion
+    VERSION ${VERSION}
+    COMPATIBILITY SameMinorVersion
 )
 
 configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)

@@ -348,7 +348,7 @@ else ( MACOSX_FRAMEWORK )
   )
 endif ( MACOSX_FRAMEWORK )
 
-target_link_libraries ( libfluidsynth
+target_link_libraries ( libfluidsynth PRIVATE
     ${GLIB_LIBRARIES}
     ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
@@ -391,10 +391,12 @@ if ( FLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
 endif ( FLUID_CPPFLAGS )
 
-target_link_libraries ( fluidsynth
+target_link_libraries ( fluidsynth PRIVATE
     libfluidsynth
     ${SYSTEMD_LIBRARIES}
     ${FLUID_LIBS}
+    ${GLIB_LIBRARIES} # because g_file_test()
+    ${SDL2_LIBRARIES} # because SDL_Init() etc.
 )
 
 if ( MACOSX_FRAMEWORK )
@@ -420,7 +422,7 @@ endif ( MACOSX_FRAMEWORK )
 # build_interface: for the libfluidsynth target when imported from the build directory.
 # install_interface: for the target when imported from the installed directory.
 target_include_directories(libfluidsynth PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/;${CMAKE_SOURCE_DIR}/include/fluidsynth/;${CMAKE_BINARY_DIR}/include/;${CMAKE_BINARY_DIR}/include/fluidsynth/>"
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/;${PROJECT_BINARY_DIR}/include/>"
     "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>"
 )
 

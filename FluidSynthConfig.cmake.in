@@ -6,6 +6,5 @@
 # define variables for configuration options:
 # set(network-enabled @enable-network@)
 
-# finally, include the targets/version files
+# finally, include the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/FluidSynthTargets.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/FluidSynthConfigVersion.cmake")
