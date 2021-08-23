@@ -1325,13 +1325,16 @@ static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
      * are private to this effect, so we can safely remove them here. Nodes connected
      * to audio ports might be connected to other effects as well, so we simply remove
      * any pointers to them from the effect. */
-    for(i = 0; i < effect->desc->PortCount; i++)
+    if(effect->desc != NULL)
     {
-        node = (fluid_ladspa_node_t *) effect->port_nodes[i];
-
-        if(node && node->type & FLUID_LADSPA_NODE_CONTROL)
+        for(i = 0; i < effect->desc->PortCount; i++)
         {
-            delete_fluid_ladspa_node(node);
+            node = (fluid_ladspa_node_t *) effect->port_nodes[i];
+
+            if(node && node->type & FLUID_LADSPA_NODE_CONTROL)
+            {
+                delete_fluid_ladspa_node(node);
+            }
         }
     }
 
