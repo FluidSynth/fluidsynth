@@ -1320,6 +1320,12 @@ static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
     fluid_ladspa_node_t *node;
 
     fluid_return_if_fail(effect != NULL);
+    
+    if(effect->lib == NULL)
+    {
+        FLUID_FREE(effect);
+        return;
+    }
 
     /* Control nodes are created automatically when the effect is instantiated and
      * are private to this effect, so we can safely remove them here. Nodes connected
@@ -1342,10 +1348,7 @@ static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
         effect->desc->cleanup(effect->handle);
     }
 
-    if(effect->lib != NULL)
-    {
-        fluid_module_close(effect->lib);
-    }
+    fluid_module_close(effect->lib);
 
     FLUID_FREE(effect->name);
     FLUID_FREE(effect);
