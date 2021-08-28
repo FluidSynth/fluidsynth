@@ -133,6 +133,7 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files devel
 %{_libdir}/lib*.so
+%dir %{_libdir}/cmake/%{name}
 %{_libdir}/cmake/%{name}/*.cmake
 %{_libdir}/pkgconfig/*.pc
 %{_includedir}/*
