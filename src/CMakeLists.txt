@@ -395,16 +395,20 @@ target_link_libraries ( fluidsynth
     libfluidsynth
     ${SYSTEMD_LIBRARIES}
     ${FLUID_LIBS}
+    ${GLIB_LIBRARIES} # because g_file_test()
+    ${SDL2_LIBRARIES} # because SDL_Init() etc.
 )
 
 if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
+    EXPORT FluidSynthTargets
     RUNTIME DESTINATION ${BIN_INSTALL_DIR}
     FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
     ARCHIVE DESTINATION ${FRAMEWORK_INSTALL_DIR}
 )
 else ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
+    EXPORT FluidSynthTargets
     RUNTIME DESTINATION ${BIN_INSTALL_DIR}
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
@@ -412,6 +416,22 @@ else ( MACOSX_FRAMEWORK )
 )
    install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
+
+# Exported targets.
+
+# build_interface: for the libfluidsynth target when imported from the build directory.
+# install_interface: for the target when imported from the installed directory.
+target_include_directories(libfluidsynth PUBLIC
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/;${PROJECT_BINARY_DIR}/include/>"
+    "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>"
+)
+
+# installation of the exported targets
+install(EXPORT FluidSynthTargets
+        FILE FluidSynthTargets.cmake
+        NAMESPACE FluidSynth::
+        DESTINATION ${LIB_INSTALL_DIR}/cmake/fluidsynth
+)
 
 # ******* Auto Generated Lookup Tables ******
 
