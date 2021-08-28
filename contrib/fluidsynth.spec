@@ -133,8 +133,10 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files devel
 %{_libdir}/lib*.so
-%{_includedir}/*
+%dir %{_libdir}/cmake/%{name}
+%{_libdir}/cmake/%{name}/*.cmake
 %{_libdir}/pkgconfig/*.pc
+%{_includedir}/*
 
 %files -n libfluidsynth3
 %{_libdir}/lib*.so.*
