@@ -858,10 +858,6 @@ install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
 
 # Extra targets for Unix build environments
 if ( UNIX )
-    # RPM spec
-    configure_file ( fluidsynth.spec.in
-        ${CMAKE_BINARY_DIR}/fluidsynth.spec IMMEDIATE @ONLY )
-
     if ( DEFINED FLUID_DAEMON_ENV_FILE)
         configure_file ( fluidsynth.service.in
         ${CMAKE_BINARY_DIR}/fluidsynth.service @ONLY )
