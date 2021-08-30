@@ -856,35 +856,12 @@ configure_file ( fluidsynth.pc.in
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
 	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
 
-# Exported targets for cmake: find_package(FluidSynth)
-# when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
-# to use the build directory directly set the FluidSynth_DIR variable instead.
-
-# targets in the build directory
-export(EXPORT FluidSynthTargets
-   FILE "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthTargets.cmake"
-   NAMESPACE FluidSynth::
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    FluidSynthConfigVersion.cmake
-    VERSION ${VERSION}
-    COMPATIBILITY SameMinorVersion
-)
-
-# Here, configure_file() is used instead of the more orthodox macro
-# configure_package_config_file() because the latter does not
-# support generating a config.cmake file for both the installed
-# package and for using the build directory directly.
-configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfig.cmake"
-              "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfigVersion.cmake"
-    DESTINATION ${LIB_INSTALL_DIR}/cmake/fluidsynth
-)
-
 # Extra targets for Unix build environments
 if ( UNIX )
+    # RPM spec
+    configure_file ( fluidsynth.spec.in
+        ${CMAKE_BINARY_DIR}/fluidsynth.spec IMMEDIATE @ONLY )
+
     if ( DEFINED FLUID_DAEMON_ENV_FILE)
         configure_file ( fluidsynth.service.in
         ${CMAKE_BINARY_DIR}/fluidsynth.service @ONLY )
