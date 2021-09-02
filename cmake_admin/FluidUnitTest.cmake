@@ -8,7 +8,7 @@ macro ( ADD_FLUID_TEST _test )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_test} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    TARGET_LINK_LIBRARIES(${_test} $<TARGET_PROPERTY:libfluidsynth,INTERFACE_LINK_LIBRARIES>)
+    TARGET_LINK_LIBRARIES(${_test} $<TARGET_PROPERTY:libfluidsynth-OBJ,INTERFACE_LINK_LIBRARIES>)
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}
@@ -40,7 +40,7 @@ macro ( ADD_FLUID_TEST_UTIL _util )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_util} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    TARGET_LINK_LIBRARIES(${_util} $<TARGET_PROPERTY:libfluidsynth,INTERFACE_LINK_LIBRARIES>)
+    TARGET_LINK_LIBRARIES(${_util} $<TARGET_PROPERTY:libfluidsynth-OBJ,INTERFACE_LINK_LIBRARIES>)
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_util}

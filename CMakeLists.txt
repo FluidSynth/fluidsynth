@@ -19,13 +19,16 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
+cmake_minimum_required ( VERSION 3.13.5 )
+# 3.1 because of CMAKE_C_STANDARD
+# 3.11 because COMPATIBILITY SameMinorVersion in CMakePackageConfigHelpers
+# 3.13.5 because it is the latest supported in Windows XP
 
-if(POLICY CMP0075)
+if(POLICY CMP0075) # CMake version 3.13.5 warns when the policy is not set or value is OLD
   cmake_policy(SET CMP0075 NEW)
 endif()
 
-if(POLICY CMP0091)
+if(POLICY CMP0091) # new in CMake 3.15, defaults to OLD
   cmake_policy(SET CMP0091 NEW)
 endif()
 
@@ -149,7 +152,7 @@ if ( NOT OS2 )
 endif ( NOT OS2 )
 
 # enforce visibility control for all types of cmake targets
-if ( POLICY CMP0063 )
+if ( POLICY CMP0063 ) # since version 3.3, CMake version 3.21.2 warns when the policy is not set and uses OLD behavior.
   cmake_policy ( SET CMP0063 NEW )
 endif ( POLICY CMP0063 )
 
@@ -828,9 +831,9 @@ else ()
   set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 endif ()
 
-if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
+if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
     # retrieve all the private libs we depend on
-    get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
+    get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
     # make a copy
     set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
 
@@ -848,8 +851,8 @@ if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12
 else ()
     set ( LIBS_PRIVATE "" )
     set ( LIBS_PRIVATE_WITH_PATH "" )
-    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
-endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
+    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.5 or newer." )
+endif ()
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
@@ -866,7 +869,7 @@ export(EXPORT FluidSynthTargets
    NAMESPACE FluidSynth::
 )
 
-include(CMakePackageConfigHelpers)
+include(CMakePackageConfigHelpers) # SameMinorVersion requires CMake 3.11
 write_basic_package_version_file(
     FluidSynthConfigVersion.cmake
     VERSION ${VERSION}
