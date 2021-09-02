@@ -376,7 +376,8 @@ target_link_libraries ( libfluidsynth-OBJ INTERFACE
 )
 
 # Here are applied/linked the OBJECT library dependencies
-target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
+get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
+target_link_libraries ( libfluidsynth PRIVATE ${LIBS_PRIVATE} )
 
 # ************ CLI program ************
 
