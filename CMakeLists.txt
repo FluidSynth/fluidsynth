@@ -115,20 +115,6 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
-# Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
-if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "64" )
-else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "" )
-endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-else ()
-  set ( _init_lib_suffix "" )
-endif()
-set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
-      "library directory name suffix (32/64/nothing)" )
-mark_as_advanced ( LIB_SUFFIX )
-
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
@@ -156,7 +142,7 @@ if ( POLICY CMP0063 ) # since version 3.3, CMake version 3.21.2 warns when the p
   cmake_policy ( SET CMP0063 NEW )
 endif ( POLICY CMP0063 )
 
-# Default install directory names
+# Default install directory names, some provided by GNUInstallDirs
 include ( DefaultDirs )
 
 # Basic C library checks
@@ -373,7 +359,7 @@ unset ( MACOSX_FRAMEWORK CACHE )
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR} )
+        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -835,20 +821,20 @@ add_subdirectory ( doc )
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-if ( IS_ABSOLUTE "${LIB_INSTALL_DIR}" )
-  set ( libdir "${LIB_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}" )
+  set ( libdir "${CMAKE_INSTALL_LIBDIR}" )
 else ()
-  set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
+  set ( libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}" )
 endif ()
-if ( IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}" )
-  set ( includedir "${INCLUDE_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}" )
+  set ( includedir "${CMAKE_INSTALL_INCLUDEDIR}" )
 else ()
-  set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+  set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
 endif ()
 
 generate_pkgconfig_spec(fluidsynth.pc.in ${CMAKE_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
 
 # Exported targets for cmake: find_package(FluidSynth)
 # when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
@@ -874,7 +860,7 @@ write_basic_package_version_file(
 configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfig.cmake"
               "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfigVersion.cmake"
-    DESTINATION ${LIB_INSTALL_DIR}/cmake/fluidsynth
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
 )
 
 # Extra targets for Unix build environments

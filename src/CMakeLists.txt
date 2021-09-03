@@ -485,19 +485,19 @@ endif()
 if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     EXPORT FluidSynthTargets
-    RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
     ARCHIVE DESTINATION ${FRAMEWORK_INSTALL_DIR}
 )
 else ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     EXPORT FluidSynthTargets
-    RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-    PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/fluidsynth 
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fluidsynth
 )
-   install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
+   install ( FILES ${public_main_HEADER} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
 endif ( MACOSX_FRAMEWORK )
 
 # Exported targets.
@@ -506,14 +506,14 @@ endif ( MACOSX_FRAMEWORK )
 # install_interface: for the target when imported from the installed directory.
 target_include_directories(libfluidsynth PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/;${PROJECT_BINARY_DIR}/include/>"
-    "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
 # installation of the exported targets
 install(EXPORT FluidSynthTargets
         FILE FluidSynthTargets.cmake
         NAMESPACE FluidSynth::
-        DESTINATION ${LIB_INSTALL_DIR}/cmake/fluidsynth
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
 )
 
 # ******* Auto Generated Lookup Tables ******
