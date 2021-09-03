@@ -19,7 +19,7 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-cmake_minimum_required ( VERSION 3.13.5 )
+cmake_minimum_required ( VERSION 3.13 )
 # 3.1 because of CMAKE_C_STANDARD
 # 3.11 because COMPATIBILITY SameMinorVersion in CMakePackageConfigHelpers
 # 3.13.5 because it is the latest supported in Windows XP
@@ -415,17 +415,15 @@ if ( enable-profiling )
     
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
     
-    if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
-        find_program( CLANG_TIDY
-                    NAMES "clang-tidy"
-                    DOC "Path to clang-tidy executable" )
+    find_program( CLANG_TIDY
+                NAMES "clang-tidy"
+                DOC "Path to clang-tidy executable" )
 
-        if ( CLANG_TIDY )
-            message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
-            execute_process ( COMMAND ${CLANG_TIDY} "--version" )
-            set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
-        endif ( CLANG_TIDY )
-    endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
+    if ( CLANG_TIDY )
+        message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
+        execute_process ( COMMAND ${CLANG_TIDY} "--version" )
+        set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
+    endif ( CLANG_TIDY )
 
 endif ( enable-profiling )
 
@@ -831,28 +829,22 @@ else ()
   set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 endif ()
 
-if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.12.0" )
-    # retrieve all the private libs we depend on
-    get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
-    # make a copy
-    set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
+# retrieve all the private libs we depend on
+get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
+# make a copy
+set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
 
-    # this matches any path and any flag entries (starting with '-')
-    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
-    # remove all entries from the list which are specified by path and which already have -l
-    list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
-    # include only entries specifed by path
-    list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
+# this matches any path and any flag entries (starting with '-')
+set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
+# remove all entries from the list which are specified by path and which already have -l
+list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
+# include only entries specifed by path
+list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
 
-    # prepend the linker flag to all entries except the ones that already have it
-    list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
-    list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
-    list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
-else ()
-    set ( LIBS_PRIVATE "" )
-    set ( LIBS_PRIVATE_WITH_PATH "" )
-    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.5 or newer." )
-endif ()
+# prepend the linker flag to all entries except the ones that already have it
+list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
+list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
+list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
