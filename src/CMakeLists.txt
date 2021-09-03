@@ -348,7 +348,11 @@ else ( MACOSX_FRAMEWORK )
   )
 endif ( MACOSX_FRAMEWORK )
 
-target_link_libraries ( libfluidsynth PRIVATE
+# Since CMake 3.12, OBJECT libraries can be linked to with target_link_libraries().
+# See https://cmake.org/cmake/help/latest/command/target_link_libraries.html#linking-object-libraries
+# Object Libraries may "link" to other libraries to get usage requirements,
+# but since they do not have a link step nothing is done with their object files.
+target_link_libraries ( libfluidsynth-OBJ INTERFACE
     ${GLIB_LIBRARIES}
     ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
@@ -370,6 +374,10 @@ target_link_libraries ( libfluidsynth PRIVATE
     ${LIBFLUID_LIBS}
     ${LIBINSTPATCH_LIBRARIES}
 )
+
+# Here are applied/linked the OBJECT library dependencies
+get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
+target_link_libraries ( libfluidsynth PRIVATE ${LIBS_PRIVATE} )
 
 # ************ CLI program ************
 
