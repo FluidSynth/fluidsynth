@@ -1,5 +1,5 @@
 macro ( ADD_FLUID_TEST _test )
-    ADD_EXECUTABLE(${_test} ${_test}.c $<TARGET_OBJECTS:libfluidsynth-OBJ> )
+    add_executable( ${_test} ${_test}.c )
 
     # only build this unit test when explicitly requested by "make check"
     set_target_properties(${_test} PROPERTIES EXCLUDE_FROM_ALL TRUE)
@@ -8,7 +8,7 @@ macro ( ADD_FLUID_TEST _test )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_test} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    TARGET_LINK_LIBRARIES(${_test} $<TARGET_PROPERTY:libfluidsynth-OBJ,INTERFACE_LINK_LIBRARIES>)
+    target_link_libraries( ${_test} libfluidsynth-OBJ )
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}
@@ -28,7 +28,7 @@ macro ( ADD_FLUID_TEST _test )
 endmacro ( ADD_FLUID_TEST )
 
 macro ( ADD_FLUID_TEST_UTIL _util )
-    ADD_EXECUTABLE(${_util} ${_util}.c $<TARGET_OBJECTS:libfluidsynth-OBJ> )
+    add_executable( ${_util} ${_util}.c )
 
     # only build this unit test when explicitly requested by "make check"
     set_target_properties(${_util} PROPERTIES EXCLUDE_FROM_ALL TRUE)
@@ -40,7 +40,7 @@ macro ( ADD_FLUID_TEST_UTIL _util )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_util} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    TARGET_LINK_LIBRARIES(${_util} $<TARGET_PROPERTY:libfluidsynth-OBJ,INTERFACE_LINK_LIBRARIES>)
+    target_link_libraries( ${_util} libfluidsynth-OBJ )
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_util}

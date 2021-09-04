@@ -375,9 +375,14 @@ target_link_libraries ( libfluidsynth-OBJ INTERFACE
     ${LIBINSTPATCH_LIBRARIES}
 )
 
+# This doesn't install any object file at all
+# it is only a trick for exporting targets
+install( TARGETS libfluidsynth-OBJ
+    EXPORT FluidSynthTargets
+    OBJECTS )
+
 # Here are applied/linked the OBJECT library dependencies
-get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
-target_link_libraries ( libfluidsynth PRIVATE ${LIBS_PRIVATE} )
+target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
 
 # ************ CLI program ************
 
