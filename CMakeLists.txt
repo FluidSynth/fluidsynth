@@ -526,6 +526,7 @@ else(NOT enable-pkgconfig)
     endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
 
     include ( UnsetPkgConfig )
+    include ( PkgConfigHelpers )
 
     # Optional features
     unset ( LIBSNDFILE_SUPPORT CACHE )
@@ -545,10 +546,11 @@ else(NOT enable-pkgconfig)
         else ()
           message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
         endif ()
+        sanitize_target_dirs(PkgConfig::LIBSNDFILE)
     endif ( LIBSNDFILE_SUPPORT )
     else ( enable-libsndfile )
-    unset_pkg_config ( LIBSNDFILE )
-    unset_pkg_config ( LIBSNDFILE_VORBIS )
+        unset_pkg_config ( LIBSNDFILE )
+        unset_pkg_config ( LIBSNDFILE_VORBIS )
     endif ( enable-libsndfile )
 
     unset ( PULSE_SUPPORT CACHE )
@@ -571,6 +573,9 @@ else(NOT enable-pkgconfig)
     if ( enable-portaudio )
         pkg_check_modules ( PORTAUDIO portaudio-2.0>=19 IMPORTED_TARGET )
         set ( PORTAUDIO_SUPPORT ${PORTAUDIO_FOUND} )
+        if (PORTAUDIO_SUPPORT)
+            sanitize_target_dirs(PkgConfig::PORTAUDIO)
+        endif()
     else ( enable-portaudio )
         unset_pkg_config ( PORTAUDIO )
     endif ( enable-portaudio )
@@ -579,6 +584,9 @@ else(NOT enable-pkgconfig)
     if ( enable-jack )
         pkg_check_modules ( JACK jack IMPORTED_TARGET )
         set ( JACK_SUPPORT ${JACK_FOUND} )
+        if (JACK_SUPPORT)
+            sanitize_target_dirs(PkgConfig::JACK)
+        endif()
     else ( enable-jack )
         unset_pkg_config ( JACK )
     endif ( enable-jack )
@@ -589,6 +597,7 @@ else(NOT enable-pkgconfig)
         if ( LASH_FOUND )
             set ( LASH_SUPPORT 1 )
             add_definitions ( -DHAVE_LASH )
+            sanitize_target_dirs(PkgConfig::LASH)
         endif ( LASH_FOUND )
     else ( enable-lash )
         unset_pkg_config ( LASH )
@@ -624,6 +633,9 @@ else(NOT enable-pkgconfig)
     if ( enable-libinstpatch )
         pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 IMPORTED_TARGET )
         set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
+        if (LIBINSTPATCH_SUPPORT)
+            sanitize_target_dirs(PkgConfig::LIBINSTPATCH)
+        endif()
     endif ( enable-libinstpatch )
 
     unset ( SDL2_SUPPORT CACHE )
@@ -810,25 +822,7 @@ else ()
   set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 endif ()
 
-# retrieve all the private libs we depend on
-get_target_property ( LIBS_PRIVATE libfluidsynth-OBJ INTERFACE_LINK_LIBRARIES)
-# make a copy
-set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
-
-# this matches any path and any flag entries (starting with '-')
-set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
-# remove all entries from the list which are specified by path and which already have -l
-list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
-# include only entries specifed by path
-list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
-
-# prepend the linker flag to all entries except the ones that already have it
-list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
-list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
-list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
-
-configure_file ( fluidsynth.pc.in
-	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
+generate_pkgconfig_spec(fluidsynth.pc.in ${CMAKE_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
 	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
 
