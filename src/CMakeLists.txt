@@ -465,6 +465,10 @@ if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT ) # because SDL_Init() etc.
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::SDL2 )
 endif()
 
+if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::LIBINSTPATCH )
+endif()
+
 if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     EXPORT FluidSynthTargets
