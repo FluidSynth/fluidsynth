@@ -443,8 +443,13 @@ endif ( FLUID_CPPFLAGS )
 target_include_directories ( fluidsynth PRIVATE
     ${CMAKE_BINARY_DIR}
     ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src/utils
     ${CMAKE_SOURCE_DIR}/src/bindings
+    ${CMAKE_SOURCE_DIR}/src/midi
+    ${CMAKE_SOURCE_DIR}/src/rvoice
+    ${CMAKE_SOURCE_DIR}/src/sfloader
+    ${CMAKE_SOURCE_DIR}/src/synth
+    ${CMAKE_SOURCE_DIR}/src/utils
+    ${CMAKE_SOURCE_DIR}/src/
     ${CMAKE_SOURCE_DIR}/include
 )
 
@@ -467,6 +472,10 @@ endif()
 
 if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::LIBINSTPATCH )
+endif()
+
+if ( TARGET PkgConfig::LASH AND LASH_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::LASH )
 endif()
 
 if ( MACOSX_FRAMEWORK )
