@@ -1,0 +1,68 @@
+macro(sanitize_target_dirs target)
+    if (TARGET ${target})
+        #message(DEBUG "sanitize_target(${target})")
+        set(_cleandirs)
+        get_target_property(_dirs ${target} INTERFACE_INCLUDE_DIRECTORIES)
+        if(_dirs)
+            foreach(_d ${_dirs})
+                if(EXISTS ${_d})
+                    list(APPEND _cleandirs ${_d})
+                endif()
+            endforeach()
+            set_property(TARGET ${target}
+                PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${_cleandirs})
+        endif()
+        set(_cleandirs)
+        get_target_property(_dirs ${target} INTERFACE_LINK_DIRECTORIES)
+        if(_dirs)
+            foreach(_d ${_dirs})
+                if(EXISTS ${_d})
+                    list(APPEND _cleandirs ${_d})
+                endif()
+            endforeach()
+            set_property(TARGET ${target}
+                PROPERTY INTERFACE_LINK_DIRECTORIES ${_cleandirs})
+        endif()
+    endif()
+endmacro(sanitize_target_dirs)
+
+macro(generate_pkgconfig_spec template outfile target)
+    #message(DEBUG "generate_pkgconfig_spec: ${outfile} from template: ${template}")
+    if (TARGET ${target})
+        # retrieve all the private libs we depend on
+        get_target_property (_libs ${target} INTERFACE_LINK_LIBRARIES)
+        set(_cleanlibs)
+        foreach(_lib ${_libs})
+            if (TARGET ${_lib})
+                get_target_property(_tlibs ${_lib} INTERFACE_LINK_LIBRARIES)
+                foreach(_clib ${_tlibs})
+                    get_filename_component(_name "${_clib}" NAME)
+                    string(REGEX REPLACE "^lib" "" _clib ${_name})
+                    string(REGEX REPLACE ".so$" "" _clib ${_clib})
+                    list(APPEND _cleanlibs ${_clib})
+                endforeach()
+            else()
+                list(APPEND _cleanlibs ${_lib})
+            endif()
+        endforeach()
+        list(REMOVE_DUPLICATES _cleanlibs)
+        set (LIBS_PRIVATE ${_cleanlibs})
+        # make a copy
+        set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
+
+        # this matches any path and any flag entries (starting with '-')
+        set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
+        # remove all entries from the list which are specified by path and which already have -l
+        list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
+        # include only entries specifed by path
+        list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
+
+        # prepend the linker flag to all entries except the ones that already have it
+        list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
+        list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
+        list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+
+        configure_file ( ${template} ${outfile} IMMEDIATE @ONLY)
+    endif()
+
+endmacro(generate_pkgconfig_spec)
