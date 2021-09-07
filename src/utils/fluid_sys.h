@@ -205,7 +205,10 @@ char *fluid_strtok(char **str, char *delim);
 #define INCL_DOS
 #include <os2.h>
 
+/* Define socklen_t if not provided */
+#if !HAVE_SOCKLEN_T
 typedef int socklen_t;
+#endif
 #endif
 
 /**

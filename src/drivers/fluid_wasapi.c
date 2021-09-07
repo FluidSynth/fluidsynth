@@ -73,7 +73,7 @@ static const IID   _IID_IAudioRenderClient =
  *
  * Current limitations:
  *  - Only one stereo audio output.
- *  - If audio.sample-format is "16bits", a convertion from float
+ *  - If audio.sample-format is "16bits", a conversion from float
  *    without dithering is used.
  *
  * Available settings:
@@ -261,7 +261,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     /* start event must be first */
     wait_handles[0] = dev->start_ev;
     wait_handles[1] = dev->thread;
-    ret = WaitForMultipleObjects(FLUID_N_ELEMENTS(wait_handles), wait_handles, FALSE, 1000);
+    ret = WaitForMultipleObjects(FLUID_N_ELEMENTS(wait_handles), wait_handles, FALSE, 2000);
 
     switch(ret)
     {

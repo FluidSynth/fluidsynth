@@ -200,7 +200,7 @@ enum midi_sysex_tuning_msg_id
     MIDI_SYSEX_TUNING_BULK_DUMP           = 0x01, /**< Bulk tuning dump response (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE           = 0x02, /**< Tuning note change message (realtime) */
     MIDI_SYSEX_TUNING_BULK_DUMP_REQ_BANK  = 0x03, /**< Bulk tuning dump request (with bank, non-realtime) */
-    MIDI_SYSEX_TUNING_BULK_DUMP_BANK      = 0x04, /**< Bulk tuning dump resonse (with bank, non-realtime) */
+    MIDI_SYSEX_TUNING_BULK_DUMP_BANK      = 0x04, /**< Bulk tuning dump response (with bank, non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_1BYTE   = 0x05, /**< Octave tuning dump using 1 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_2BYTE   = 0x06, /**< Octave tuning dump using 2 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE_BANK      = 0x07, /**< Tuning note change message (with bank, realtime/non-realtime) */
@@ -285,6 +285,7 @@ typedef struct
 struct _fluid_player_t
 {
     fluid_atomic_int_t status;
+    fluid_atomic_int_t stopping; /* Flag for sending all_notes_off when player is stopped */
     int ntracks;
     fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
     fluid_synth_t *synth;
@@ -309,7 +310,7 @@ struct _fluid_player_t
        0, the player is driven by external tempo (exttempo)
     */
     int sync_mode;
-    /* miditempo: internal tempo comming from MIDI file tempo change events
+    /* miditempo: internal tempo coming from MIDI file tempo change events
       (in micro seconds per quarter note)
     */
     int miditempo;     /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */

@@ -375,6 +375,27 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont,
 }
 
 /**
+ * Compute the pitch for a key after applying Fluidsynth's tuning functionality
+ * and channel coarse/fine tunings.
+ * @param chan fluid_channel_t
+ * @param key MIDI note number (0-127)
+ * @return the pitch of the key
+ */
+fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key)
+{
+    if(chan->tuning)
+    {
+        return fluid_tuning_get_pitch(chan->tuning, key)
+            + 100.0f * fluid_channel_get_gen(chan, GEN_COARSETUNE)
+            + fluid_channel_get_gen(chan, GEN_FINETUNE);
+    }
+    else
+    {
+        return key * 100.0f;
+    }
+}
+
+/**
  * Updates legato/ staccato playing state
  * The function is called:
  * - on noteon before adding a note into the monolist.

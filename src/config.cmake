@@ -262,4 +262,7 @@
 /* Define to 1 if you have the logf() function. */
 #cmakedefine HAVE_LOGF @HAVE_LOGF@
 
+/* Define to 1 if you have the socklen_t type. */
+#cmakedefine HAVE_SOCKLEN_T @HAVE_SOCKLEN_T@
+
 #endif /* CONFIG_H */

@@ -145,7 +145,7 @@ FLUIDSYNTH_API int fluid_midi_event_get_lyrics(fluid_midi_event_t *evt,
  * @defgroup midi_router MIDI Router
  * @ingroup midi_input
  *
- * Rule based tranformation and filtering of MIDI events.
+ * Rule based transformation and filtering of MIDI events.
  *
  * @{
  */

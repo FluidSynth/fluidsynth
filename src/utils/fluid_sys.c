@@ -1760,7 +1760,7 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #ifdef WIN32
     // On Windows, long is only a 32 bit integer. Thus ftell() does not support to handle files >2GiB.
     // We should use _ftelli64() in this case, however its availability depends on MS CRT and might not be
-    // availble on WindowsXP, Win98, etc.
+    // available on WindowsXP, Win98, etc.
     //
     // The web recommends to fallback to _telli64() in this case. However, it's return value differs from
     // _ftelli64() on Win10: https://github.com/FluidSynth/fluidsynth/pull/629#issuecomment-602238436

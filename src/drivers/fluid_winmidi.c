@@ -29,11 +29,11 @@
  * pointers to a queue and re-add them in a separate thread.  Lame-o API! :(
  *
  * Multiple/single devices handling capabilities:
- * This driver is able to handle multiple devices chosen by the user trough
+ * This driver is able to handle multiple devices chosen by the user through
  * the settings midi.winmidi.device.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
- * Then the driver is able receive MIDI messages comming from distinct devices
+ * Then the driver is able receive MIDI messages coming from distinct devices
  * and forward these messages on distinct MIDI channels set.
  * 1.1)For example, if the user chooses 2 devices at index 0 and 1, the user
  * must specify this by putting the name "0;1" in midi.winmidi.device setting.
@@ -95,8 +95,8 @@ struct fluid_winmidi_driver
     HANDLE hThread;
     DWORD  dwThread;
 
-    /* devices informations table */
-    int dev_count;   /* device informations count in dev_infos[] table */
+    /* devices information table */
+    int dev_count;   /* device information count in dev_infos[] table */
     device_infos_t dev_infos[1];
 };
 
@@ -205,7 +205,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
  * build a device name prefixed by its index. The format of the returned
  * name is: dev_idx:dev_name
  * The name returned is convenient for midi.winmidi.device setting.
- * It allows the user to identify a device index through its name or vise
+ * It allows the user to identify a device index through its name or vice
  * versa. This allows the user to specify a multi device name using a list of
  * devices index (see fluid_winmidi_midi_driver_settings()).
  *
@@ -350,7 +350,7 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
 
     /* look for a multi device naming */
     /* multi devices name "x;[y;..]". parse devices index: x;y;..
-       Each ascii index are separated by a semicolon caracter.
+       Each ascii index are separated by a semicolon character.
     */
     FLUID_STRCPY(cpy_dev_name, dev_name); /* fluid_strtok() will overwrite */
     next_idx = cpy_dev_name;
@@ -496,7 +496,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         return NULL;
     }
 
-    /* allocation of driver structure size dependant of max_devices */
+    /* allocation of driver structure size dependent of max_devices */
     i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos_t);
     dev = FLUID_MALLOC(i);
 

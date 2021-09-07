@@ -560,7 +560,7 @@ fluid_sequencer_get_tick(fluid_sequencer_t *seq)
  * the events are adjusted accordingly.
  *
  * @note May only be called from a sequencer callback or initially when no event dispatching happens.
- * Otherwise it will mess up your event timing, because you have zero contol over which events are
+ * Otherwise it will mess up your event timing, because you have zero control over which events are
  * affected by the scale change.
  */
 void
@@ -624,7 +624,7 @@ fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 
 /**
  * @internal
- * only used privately by fluid_seqbind and only from sequencer callback, thus lock aquire is not needed.
+ * only used privately by fluid_seqbind and only from sequencer callback, thus lock acquire is not needed.
  */
 void fluid_sequencer_invalidate_note(fluid_sequencer_t *seq, fluid_seq_id_t dest, fluid_note_id_t id)
 {

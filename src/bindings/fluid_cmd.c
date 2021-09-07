@@ -1137,7 +1137,7 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
 /*
   The function is useful for reverb and chorus commands which have
   1 or 2 parameters.
-  The function checks that there is 1 or 2 aguments.
+  The function checks that there is 1 or 2 arguments.
   When there is 2 parameters it checks the first argument that must be
   an fx group index in the range[0..synth->effects_groups-1].
 
@@ -1159,7 +1159,7 @@ static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
         return -2;
     }
 
-    /* check optionnal first argument which is a fx group index */
+    /* check optional first argument which is a fx group index */
     fx_group = -1;
 
     if(ac > 1)

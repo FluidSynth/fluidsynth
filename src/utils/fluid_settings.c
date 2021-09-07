@@ -1210,7 +1210,7 @@ fluid_settings_str_equal(fluid_settings_t *settings, const char *name, const cha
  * @param settings a settings object
  * @param name a setting's name
  * @param def the default string value of the setting if it exists
- * @return FLUID_OK if a default vaule exists, FLUID_FAILED otherwise
+ * @return FLUID_OK if a default value exists, FLUID_FAILED otherwise
  *
  * @note The returned string is not owned by the caller and should not be modified or freed.
  */

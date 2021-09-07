@@ -591,6 +591,15 @@ and commit the results. Refresh with the following command:
             </desc>
         </setting>
         <setting>
+            <name>oboe.error-recovery-mode</name>
+            <type>str</type>
+            <def>Reconnect</def>
+            <vals>Reconnect, Stop</vals>
+            <desc>
+                Sets the error recovery mode when audio device error such as earphone disconnection occurred. It reconnects by default (same as OpenSLES behavior), but can be stopped if Stop is specified.
+            </desc>
+        </setting>
+        <setting>
             <name>oss.device</name>
             <type>str</type>
             <def>/dev/dsp</def>
