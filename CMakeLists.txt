@@ -191,6 +191,7 @@ if ( NOT HAVE_LONG_LONG AND NOT MSVC)
     message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
 endif ()
 
+include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables() 
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -525,8 +526,7 @@ else(NOT enable-pkgconfig)
         message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
     endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
 
-    include ( UnsetPkgConfig )
-    include ( PkgConfigHelpers )
+    include ( PkgConfigHelpers ) # has unset_pkg_config()
 
     # Optional features
     unset ( LIBSNDFILE_SUPPORT CACHE )
@@ -535,10 +535,11 @@ else(NOT enable-pkgconfig)
     pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 IMPORTED_TARGET )
     set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
     if ( LIBSNDFILE_SUPPORT )
-        message (DEBUG "LIBSNDFILE_STATIC_LIBRARIES: ${LIBSNDFILE_STATIC_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LINK_LIBRARIES: ${LIBSNDFILE_STATIC_LINK_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS: ${LIBSNDFILE_STATIC_LDFLAGS}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS_OTHER: ${LIBSNDFILE_STATIC_LDFLAGS_OTHER}")
+        #[[ cmake_print_variables (
+	    LIBSNDFILE_STATIC_LIBRARIES 
+            LIBSNDFILE_STATIC_LINK_LIBRARIES 
+            LIBSNDFILE_STATIC_LDFLAGS 
+            LIBSNDFILE_STATIC_LDFLAGS_OTHER )  ]]
         if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
              LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
              LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
@@ -546,6 +547,12 @@ else(NOT enable-pkgconfig)
         else ()
           message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
         endif ()
+        #[[ cmake_print_properties( TARGETS PkgConfig::LIBSNDFILE
+            PROPERTIES 
+               INTERFACE_COMPILE_OPTIONS
+               INTERFACE_INCLUDE_DIRECTORIES
+               INTERFACE_LINK_OPTIONS
+               INTERFACE_LINK_LIBRARIES )  ]]
         sanitize_target_dirs(PkgConfig::LIBSNDFILE)
     endif ( LIBSNDFILE_SUPPORT )
     else ( enable-libsndfile )
@@ -634,6 +641,13 @@ else(NOT enable-pkgconfig)
         pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 IMPORTED_TARGET )
         set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
         if (LIBINSTPATCH_SUPPORT)
+            #[[ cmake_print_properties( TARGETS PkgConfig::LIBINSTPATCH
+                PROPERTIES
+                   INTERFACE_COMPILE_OPTIONS
+                   INTERFACE_INCLUDE_DIRECTORIES
+                   INTERFACE_LINK_DIRECTORIES
+                   INTERFACE_LINK_OPTIONS
+                   INTERFACE_LINK_LIBRARIES ) ]]
             sanitize_target_dirs(PkgConfig::LIBINSTPATCH)
         endif()
     endif ( enable-libinstpatch )
@@ -716,10 +730,20 @@ if ( enable-threads )
 endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
-find_package ( OpenMP 4.0 QUIET )
+find_package ( OpenMP QUIET )
 if ( OpenMP_FOUND OR OpenMP_C_FOUND )
-    message(STATUS "Found OpenMP ${OpenMP_C_VERSION} ${OpenMP_C_SPEC_DATE}")
-    set ( HAVE_OPENMP 1 )
+    message(STATUS "Found OpenMP version: ${OpenMP_C_VERSION} date: ${OpenMP_C_SPEC_DATE}")
+    if ( TARGET OpenMP::OpenMP_C AND (( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" )) )
+        #[[ cmake_print_properties( TARGETS OpenMP::OpenMP_C
+            PROPERTIES 
+               INTERFACE_COMPILE_OPTIONS
+               INTERFACE_INCLUDE_DIRECTORIES
+               INTERFACE_LINK_OPTIONS
+               INTERFACE_LINK_LIBRARIES ) ]]
+   	set ( HAVE_OPENMP 1 )
+    else()
+        message(STATUS "  OpenMP version is not supported. Feature disabled.")
+    endif()
 endif()
 
 # manipulate some variables to setup a proper test env
