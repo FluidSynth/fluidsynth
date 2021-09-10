@@ -331,7 +331,7 @@ target_link_libraries ( libfluidsynth-OBJ PUBLIC
     ${LIBFLUID_LIBS}
 )
 
-if ( TARGET OpenMP::OpenMP_C )
+if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
 endif()
 
@@ -457,6 +457,10 @@ target_link_libraries ( fluidsynth PRIVATE
     libfluidsynth
     ${FLUID_LIBS}
 )
+
+if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
+    target_link_libraries ( fluidsynth PRIVATE OpenMP::OpenMP_C )
+endif()
 
 if ( TARGET PkgConfig::SYSTEMD AND SYSTEMD_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::SYSTEMD )
