@@ -1,6 +1,6 @@
 # FluidSynth LADSPA Interface
 
-The [LADSPA](http://ladspa.org/) (Linux Audio Developer's Simple Plugin API)
+The [LADSPA](https://ladspa.org/) (Linux Audio Developer's Simple Plugin API)
 binding can be used to route the FluidSynth audio output through any number of
 LADSPA plugins. Please note that even though the "L" in LADSPA stands for
 "Linux", it can also be used on different platforms, for example Windows or
@@ -461,7 +461,7 @@ then you also need to increase the `synth.audio-channels` setting.
 LADSPA is a very simple plugin architecture and only requires the ladspa.h
 header file as compile-time dependency. To build FluidSynth on non-Linux
 platform with LADSPA support, download the ladspa.h file from
-http://www.ladspa.org and place it somewhere in your compiler include path. Then
+https://www.ladspa.org and place it somewhere in your compiler include path. Then
 configure and build LADSPA as you normally would.
 
 All information in the above documentation is valid for all other platforms as
@@ -476,7 +476,7 @@ ladspa_effect /path/to/ladspa/plugin.so
 ```
 
 Audacity provides a large number of precompiled LADSPA plugins for Windows and
-MacOS: http://www.audacityteam.org/download/plug-ins/
+MacOS: https://www.audacityteam.org/download/plug-ins/
 
 To get the `analyseplugin` and `listplugins` commands on Windows, you can either
 compile them yourself using the LADSPA-SDK source code from ladspa.org or install

@@ -147,7 +147,7 @@ struct _fluid_sample_t
 {
     char name[21];                /**< Sample name */
 
-    /* The following for sample pointers store the original pointers from the Soundfont
+    /* The following four sample pointers store the original pointers from the Soundfont
      * file. They are never changed after loading and are used to re-create the
      * actual sample pointers after a sample has been unloaded and loaded again. The
      * actual sample pointers get modified during loading for SF3 (compressed) samples

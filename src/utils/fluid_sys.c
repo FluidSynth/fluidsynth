@@ -60,6 +60,10 @@ typedef struct
 struct _fluid_timer_t
 {
     long msec;
+
+    // Pointer to a function to be executed by the timer.
+    // This field is set to NULL once the timer is finished to indicate completion.
+    // This allows for timed waits, rather than waiting forever as fluid_timer_join() does.
     fluid_timer_callback_t callback;
     void *data;
     fluid_thread_t *thread;
@@ -218,15 +222,72 @@ void* fluid_alloc(size_t len)
 }
 
 /**
- * Convenience wrapper for free() that satisfies at least C90 requirements.
+ * Open a file with a UTF-8 string, even in Windows
+ * @param filename The name of the file to open
+ * @param mode The mode to open the file in
+ */
+FILE *fluid_fopen(const char *filename, const char *mode)
+{
+#if defined(WIN32)
+    wchar_t *wpath = NULL, *wmode = NULL;
+    FILE *file = NULL;
+    int length;
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0)) == 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to perform MultiByteToWideChar() conversion for filename '%s'. Error was: '%s'", filename, fluid_get_windows_error());
+        errno = EINVAL;
+        goto error_recovery;
+    }
+    
+    wpath = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wpath == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "Out of memory.");
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wpath, length);
+
+    if ((length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, NULL, 0)) == 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to perform MultiByteToWideChar() conversion for mode '%s'. Error was: '%s'", mode, fluid_get_windows_error());
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    wmode = FLUID_MALLOC(length * sizeof(wchar_t));
+    if (wmode == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "Out of memory.");
+        errno = EINVAL;
+        goto error_recovery;
+    }
+
+    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, wmode, length);
+
+    file = _wfopen(wpath, wmode);
+
+error_recovery:
+    FLUID_FREE(wpath);
+    FLUID_FREE(wmode);
+
+    return file;
+#else
+    return fopen(filename, mode);
+#endif
+}
+
+/**
+ * Wrapper for free() that satisfies at least C90 requirements.
  *
  * @param ptr Pointer to memory region that should be freed
  *
- * Especially useful when using fluidsynth with programming languages that do not
- * provide malloc() and free().
- *
  * @note Only use this function when the API documentation explicitly says so. Otherwise use
  * adequate \c delete_fluid_* functions.
+ *
+ * @warning Calling ::free() on memory that is advised to be freed with fluid_free() results in undefined behaviour!
+ * (cf.: "Potential Errors Passing CRT Objects Across DLL Boundaries" found in MS Docs)
  *
  * @since 2.0.7
  */
@@ -354,7 +415,7 @@ fluid_utime(void)
 
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
     /* use high precision monotonic clock if available (g_monotonic_time().
-     * For Winfdows, if this clock is actually implemented as low prec. clock
+     * For Windows, if this clock is actually implemented as low prec. clock
      * (i.e. in case glib is too old), high precision performance counter are
      * used instead.
      * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
@@ -449,7 +510,7 @@ fluid_thread_self_set_prio(int prio_level)
  *               Floating point exceptions
  *
  *  The floating point exception functions were taken from Ircam's
- *  jMax source code. http://www.ircam.fr/jmax
+ *  jMax source code. https://www.ircam.fr/jmax
  *
  *  FIXME: check in config for i386 machine
  *
@@ -902,6 +963,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
 
             /* Clears profile data */
             if(clear_data == 0)
+            {
                 for(i = 0; i < FLUID_PROFILE_NBR; i++)
                 {
                     fluid_profile_data[i].min = 1e10;/* min sets to max value */
@@ -911,6 +973,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
                     fluid_profile_data[i].n_voices = 0; /* voices number */
                     fluid_profile_data[i].n_samples = 0;/* audio samples number */
                 }
+            }
 
             fluid_profile_status = PROFILE_START;	/* starts profiling */
         }
@@ -1103,6 +1166,7 @@ fluid_timer_run(void *data)
     }
 
     FLUID_LOG(FLUID_DBG, "Timer thread finished");
+    timer->callback = NULL;
 
     if(timer->auto_destroy)
     {
@@ -1194,6 +1258,19 @@ fluid_timer_join(fluid_timer_t *timer)
     }
 
     return FLUID_OK;
+}
+
+int
+fluid_timer_is_running(const fluid_timer_t *timer)
+{
+    // for unit test usage only
+    return timer->callback != NULL;
+}
+
+long fluid_timer_get_interval(const fluid_timer_t * timer)
+{
+    // for unit test usage only
+    return timer->msec;
 }
 
 
@@ -1683,7 +1760,7 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #ifdef WIN32
     // On Windows, long is only a 32 bit integer. Thus ftell() does not support to handle files >2GiB.
     // We should use _ftelli64() in this case, however its availability depends on MS CRT and might not be
-    // availble on WindowsXP, Win98, etc.
+    // available on WindowsXP, Win98, etc.
     //
     // The web recommends to fallback to _telli64() in this case. However, it's return value differs from
     // _ftelli64() on Win10: https://github.com/FluidSynth/fluidsynth/pull/629#issuecomment-602238436

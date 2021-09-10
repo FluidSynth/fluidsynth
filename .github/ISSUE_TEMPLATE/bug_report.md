@@ -13,10 +13,13 @@ Else it might be closed without further notice.
 If you have a question look into our wiki
 ( https://github.com/FluidSynth/fluidsynth/wiki )
 or the developer resources
-( http://www.fluidsynth.org/api/ )
+( https://www.fluidsynth.org/api/ )
 
-If you still have a question, need support or want to discuss ideas, contact our mailing list:
+If you still have a question, need support or want to discuss ideas, contact our mailing list
 https://lists.nongnu.org/mailman/listinfo/fluid-dev
+
+or start a GitHub Discussion:
+https://github.com/FluidSynth/fluidsynth/discussions
 
 Below is a form that shall help getting relevant information for bugs together.
 We strongly recommend to use it! Feel free to edit or remove inapplicable/unneeded parts.

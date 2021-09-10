@@ -172,11 +172,11 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
     {
         if(allnames[0] != '\0')
         {
-            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
+            FLUID_LOG(FLUID_INFO, "This build of fluidsynth supports the following MIDI drivers: %s", allnames);
         }
         else
         {
-            FLUID_LOG(FLUID_INFO, "No MIDI drivers available.");
+            FLUID_LOG(FLUID_INFO, "This build of fluidsynth doesn't support any MIDI drivers.");
         }
 
         FLUID_FREE(allnames);

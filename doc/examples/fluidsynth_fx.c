@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
     /* Fill in the data of the effects unit */
     fx_data.synth = synth;
-    fx_data.gain = atof(argv[2]);
+    fx_data.gain = (float)atof(argv[2]);
 
     /* Create the audio driver. As soon as the audio driver is
      * created, the synthesizer can be played. */

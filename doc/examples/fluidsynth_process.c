@@ -21,7 +21,7 @@ int main()
         // array of buffers used to setup channel mapping
         float *dry[1 * 2], *fx[1 * 2];
 
-        // first make sure to zero out the sample buffers everytime before calling fluid_synth_process()
+        // first make sure to zero out the sample buffers every time before calling fluid_synth_process()
         memset(left, 0, sizeof(left));
         memset(right, 0, sizeof(right));
 

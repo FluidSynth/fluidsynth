@@ -210,8 +210,8 @@
 -----------------------------------------------------------------------------*/
 /* SCALE_WET_WIDTH is a compensation weight factor to get an output
    amplitude (wet) rather independent of the width setting.
-    0: the output amplitude is fully dependant on the width setting.
-   >0: the output amplitude is less dependant on the width setting.
+    0: the output amplitude is fully dependent on the width setting.
+   >0: the output amplitude is less dependent on the width setting.
    With a SCALE_WET_WIDTH of 0.2 the output amplitude is rather
    independent of width setting (see fluid_revmodel_update()).
  */
@@ -363,7 +363,7 @@ static void set_fdn_delay_lpf(fdn_delay_lpf *lpf,
 /*-----------------------------------------------------------------------------
  Delay line :
  The delay line is composed of the line plus an absorbent low pass filter
- to get frequency dependant reverb time.
+ to get frequency dependent reverb time.
 -----------------------------------------------------------------------------*/
 typedef struct
 {
@@ -928,7 +928,7 @@ static void initialize_mod_delay_lines(fluid_late *late, fluid_real_t sample_rat
     int i;
     fluid_real_t mod_depth, length_factor;
 
-    /* update delay line parameter dependant of sample rate */
+    /* update delay line parameter dependent of sample rate */
     late->samplerate = sample_rate;
 
     /* compute mod_depth, length factor */

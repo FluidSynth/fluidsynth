@@ -11,7 +11,7 @@ void callback_stable_sort(unsigned int time, fluid_event_t *event, fluid_sequenc
 {
     static const int expected_type_order[] =
     { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING
-      /* technically, FLUID_SEQ_NOTEOFF and FLUID_SEQ_NOTEON are to follow, but we've already unregisted */  };
+      /* technically, FLUID_SEQ_NOTEOFF and FLUID_SEQ_NOTEON are to follow, but we've already unregistered */  };
 
     TEST_ASSERT(fluid_event_get_type(event) == expected_type_order[order++]);
 }

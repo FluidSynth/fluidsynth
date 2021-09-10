@@ -39,7 +39,7 @@
  * only be one producer thread and one consumer thread.
  */
 fluid_ringbuffer_t *
-new_fluid_ringbuffer(int count, int elementsize)
+new_fluid_ringbuffer(int count, size_t elementsize)
 {
     fluid_ringbuffer_t *queue;
 

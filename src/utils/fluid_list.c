@@ -300,11 +300,11 @@ fluid_list_t *fluid_list_insert_at(fluid_list_t *list, int n, void *data)
 /* Compare function to sort strings alphabetically,
  * for use with fluid_list_sort(). */
 int
-fluid_list_str_compare_func(void *a, void *b)
+fluid_list_str_compare_func(const void *a, const void *b)
 {
     if(a && b)
     {
-        return FLUID_STRCMP((char *)a, (char *)b);
+        return FLUID_STRCMP(a, b);
     }
 
     if(!a && !b)
@@ -318,4 +318,20 @@ fluid_list_str_compare_func(void *a, void *b)
     }
 
     return 1;
+}
+
+int fluid_list_idx(fluid_list_t *list, void *data)
+{
+    int i = 0;
+
+    while(list)
+    {
+        if (list->data == data)
+        {
+            return i;
+        }
+        list = list->next;
+    }
+
+    return -1;
 }

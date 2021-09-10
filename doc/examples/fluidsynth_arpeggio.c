@@ -71,7 +71,8 @@ schedule_timer_event(void)
 void
 schedule_pattern(void)
 {
-    int i, note_time, note_duration;
+    unsigned int i;
+    int note_time, note_duration;
     note_time = time_marker;
     note_duration = duration / pattern_size;
 
@@ -135,7 +136,7 @@ main(int argc, char *argv[])
             {
                 n = atoi(argv[2]);
 
-                if((n > 1) && (n <= pattern_size))
+                if((n > 1) && (n <= (int)pattern_size))
                 {
                     pattern_size = n;
                 }

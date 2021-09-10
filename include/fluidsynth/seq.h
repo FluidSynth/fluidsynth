@@ -45,6 +45,14 @@ extern "C" {
  * @param event The event being received
  * @param seq The sequencer instance
  * @param data User defined data registered with the client
+ *
+ * @note @p time may not be of the same tick value as the scheduled event! In fact, depending on
+ * the sequencer's scale and the synth's sample-rate, @p time may be a few ticks too late. Although this
+ * itself is inaudible, it is important to consider,
+ * when you use this callback for enqueuing additional events over and over again with
+ * fluid_sequencer_send_at(): If you enqueue new events with a relative tick value you might introduce
+ * a timing error, which causes your sequence to sound e.g. slower than it's supposed to be. If this is
+ * your use-case, make sure to enqueue events with an absolute tick value.
  */
 typedef void (*fluid_event_callback_t)(unsigned int time, fluid_event_t *event,
                                        fluid_sequencer_t *seq, void *data);

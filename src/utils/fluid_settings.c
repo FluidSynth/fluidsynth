@@ -546,6 +546,7 @@ fluid_settings_register_str(fluid_settings_t *settings, const char *name, const 
         if(node->type == FLUID_STR_TYPE)
         {
             fluid_str_setting_t *setting = &node->str;
+            FLUID_FREE(setting->def);
             setting->def = def ? FLUID_STRDUP(def) : NULL;
             setting->hints = hints;
             retval = FLUID_OK;
@@ -909,6 +910,10 @@ fluid_settings_get_hints(fluid_settings_t *settings, const char *name, int *hint
  * @param settings a settings object
  * @param name a setting's name
  * @return TRUE if the setting is changeable in real-time, FALSE otherwise
+ *
+ * @note Before using this function, make sure the @p settings object has already been used to create
+ * a synthesizer, a MIDI driver, an audio driver, a MIDI player, or a command handler (depending on
+ * which settings you want to query).
  */
 int
 fluid_settings_is_realtime(fluid_settings_t *settings, const char *name)
@@ -1205,9 +1210,9 @@ fluid_settings_str_equal(fluid_settings_t *settings, const char *name, const cha
  * @param settings a settings object
  * @param name a setting's name
  * @param def the default string value of the setting if it exists
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return FLUID_OK if a default value exists, FLUID_FAILED otherwise
  *
- * @note The returned string is* not owned by the caller and should not be modified or freed.
+ * @note The returned string is not owned by the caller and should not be modified or freed.
  */
 int
 fluid_settings_getstr_default(fluid_settings_t *settings, const char *name, char **def)

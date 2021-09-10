@@ -7,7 +7,7 @@ execute the following command in this doc/ directory:
 $ make doxygen
 
 The latest generated API HTML docs can also be found at:
-http://www.fluidsynth.org/api/
+https://www.fluidsynth.org/api/
 
 Even more documentation references are provided on our wiki page:
 https://github.com/FluidSynth/fluidsynth/wiki/Documentation

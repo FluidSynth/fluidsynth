@@ -178,6 +178,7 @@ enum midi_meta_event
 enum midi_sysex_manuf
 {
     MIDI_SYSEX_MANUF_ROLAND       = 0x41,         /**< Roland manufacturer ID */
+    MIDI_SYSEX_MANUF_YAMAHA       = 0x43,
     MIDI_SYSEX_UNIV_NON_REALTIME  = 0x7E,         /**< Universal non realtime message */
     MIDI_SYSEX_UNIV_REALTIME      = 0x7F          /**< Universal realtime message */
 };
@@ -187,6 +188,8 @@ enum midi_sysex_manuf
 /* SYSEX sub-ID #1 which follows device ID */
 #define MIDI_SYSEX_MIDI_TUNING_ID       0x08    /**< Sysex sub-ID #1 for MIDI tuning messages */
 #define MIDI_SYSEX_GM_ID                0x09    /**< Sysex sub-ID #1 for General MIDI messages */
+#define MIDI_SYSEX_GS_ID                0x42    /**< Model ID (GS) serving as sub-ID #1 for GS messages*/
+#define MIDI_SYSEX_XG_ID                0x4C    /**< Model ID (XG) serving as sub-ID #1 for XG messages*/
 
 /**
  * SYSEX tuning message IDs.
@@ -197,7 +200,7 @@ enum midi_sysex_tuning_msg_id
     MIDI_SYSEX_TUNING_BULK_DUMP           = 0x01, /**< Bulk tuning dump response (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE           = 0x02, /**< Tuning note change message (realtime) */
     MIDI_SYSEX_TUNING_BULK_DUMP_REQ_BANK  = 0x03, /**< Bulk tuning dump request (with bank, non-realtime) */
-    MIDI_SYSEX_TUNING_BULK_DUMP_BANK      = 0x04, /**< Bulk tuning dump resonse (with bank, non-realtime) */
+    MIDI_SYSEX_TUNING_BULK_DUMP_BANK      = 0x04, /**< Bulk tuning dump response (with bank, non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_1BYTE   = 0x05, /**< Octave tuning dump using 1 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_2BYTE   = 0x06, /**< Octave tuning dump using 2 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE_BANK      = 0x07, /**< Tuning note change message (with bank, realtime/non-realtime) */
@@ -208,6 +211,8 @@ enum midi_sysex_tuning_msg_id
 /* General MIDI sub-ID #2 */
 #define MIDI_SYSEX_GM_ON                0x01    /**< Enable GM mode */
 #define MIDI_SYSEX_GM_OFF               0x02    /**< Disable GM mode */
+#define MIDI_SYSEX_GM2_ON               0x03    /**< Enable GM2 mode */
+#define MIDI_SYSEX_GS_DT1               0x12    /**< GS DT1 command */
 
 enum fluid_driver_status
 {
@@ -267,12 +272,20 @@ typedef struct
     size_t buffer_len;  /** Number of bytes in buffer; 0 if filename */
 } fluid_playlist_item;
 
+/* range of tempo values */
+#define MIN_TEMPO_VALUE (1.0f)
+#define MAX_TEMPO_VALUE (60000000.0f)
+/* range of tempo multiplier values */
+#define MIN_TEMPO_MULTIPLIER (0.001f)
+#define MAX_TEMPO_MULTIPLIER (1000.0f)
+
 /*
  * fluid_player
  */
 struct _fluid_player_t
 {
     fluid_atomic_int_t status;
+    fluid_atomic_int_t stopping; /* Flag for sending all_notes_off when player is stopped */
     int ntracks;
     fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
     fluid_synth_t *synth;
@@ -283,21 +296,35 @@ struct _fluid_player_t
     fluid_list_t *playlist; /* List of fluid_playlist_item* objects */
     fluid_list_t *currentfile; /* points to an item in files, or NULL if not playing */
 
-    char send_program_change; /* should we ignore the program changes? */
     char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
     char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
     fluid_atomic_int_t seek_ticks; /* new position in tempo ticks (midi ticks) for seeking */
     int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
     int cur_ticks;            /* the number of tempo ticks passed */
+    int last_callback_ticks;  /* the last tick number that was passed to player->tick_callback */
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
     int cur_msec;             /* the current time */
-    int miditempo;            /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
-    double deltatime;         /* milliseconds per midi tick. depends on set-tempo */
+    /* sync mode: indicates the tempo mode the player is driven by (see fluid_player_set_tempo()):
+       1, the player is driven by internal tempo (miditempo). This is the default.
+       0, the player is driven by external tempo (exttempo)
+    */
+    int sync_mode;
+    /* miditempo: internal tempo coming from MIDI file tempo change events
+      (in micro seconds per quarter note)
+    */
+    int miditempo;     /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
+    /* exttempo: external tempo set by fluid_player_set_tempo() (in micro seconds per quarter note) */
+    int exttempo;
+    /* multempo: tempo multiplier set by fluid_player_set_tempo() */
+    float multempo;
+    float deltatime;   /* milliseconds per midi tick. depends on current tempo mode (see sync_mode) */
     unsigned int division;
 
     handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */
     void *playback_userdata; /* pointer to user-defined data passed to playback_callback function */
+    handle_midi_tick_func_t tick_callback; /* function fired on each tick change */
+    void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
 };
 
 void fluid_player_settings(fluid_settings_t *settings);

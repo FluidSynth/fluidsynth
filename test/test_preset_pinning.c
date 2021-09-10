@@ -29,14 +29,14 @@ int main(void)
     TEST_ASSERT(count_loaded_samples(synth, id) == 123);
     TEST_ASSERT(fluid_samplecache_count_entries() == 1);
 
-    /* Attempt to pin and unpin an exising preset should succeed (but have no effect) */
+    /* Attempt to pin and unpin an existing preset should succeed (but have no effect) */
     TEST_ASSERT(fluid_synth_pin_preset(synth, id, 0, 42) == FLUID_OK);
     TEST_ASSERT(count_loaded_samples(synth, id) == 123);
 
     TEST_ASSERT(fluid_synth_unpin_preset(synth, id, 0, 42) == FLUID_OK);
     TEST_ASSERT(count_loaded_samples(synth, id) == 123);
 
-    /* Attempt to pin and unpin a non-existant preset should fail */
+    /* Attempt to pin and unpin a non-existent preset should fail */
     TEST_ASSERT(fluid_synth_pin_preset(synth, id, 42, 42) == FLUID_FAILED);
     TEST_ASSERT(count_loaded_samples(synth, id) == 123);
 

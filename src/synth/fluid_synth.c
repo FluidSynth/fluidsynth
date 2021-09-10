@@ -66,6 +66,14 @@ static int fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data,
         int len, char *response,
         int *response_len, int avail_response,
         int *handled, int dryrun);
+static int fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data,
+        int len, char *response,
+        int *response_len, int avail_response,
+        int *handled, int dryrun);
+static int fluid_synth_sysex_xg(fluid_synth_t *synth, const char *data,
+        int len, char *response,
+        int *response_len, int avail_response,
+        int *handled, int dryrun);
 int fluid_synth_all_notes_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_all_sounds_off_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_system_reset_LOCAL(fluid_synth_t *synth);
@@ -283,7 +291,7 @@ fluid_synth_init(void)
 {
 #ifdef TRAP_ON_FPE
     /* Turn on floating point exception traps */
-    feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
+    feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
 #endif
 
     init_dither();
@@ -540,7 +548,6 @@ fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_c
     }
 
     fluid_sample_timer_reset(synth, result);
-    result->isfinished = 0;
     result->data = data;
     result->callback = callback;
     result->next = synth->sample_timers;
@@ -572,6 +579,7 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
 void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer)
 {
     timer->starttick = fluid_synth_get_ticks(synth);
+    timer->isfinished = 0;
 }
 
 /***************************************************************
@@ -602,10 +610,15 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * @note The @p settings parameter is used directly and should freed after
- * the synth has been deleted. Further note that you may modify FluidSettings of the
+ * @note The @p settings parameter is used directly, but the synth does not take ownership of it.
+ * Hence, the caller is responsible for freeing it, when no longer needed.
+ * Further note that you may modify FluidSettings of the
  * @p settings instance. However, only those FluidSettings marked as 'realtime' will
  * affect the synth immediately. See the \ref fluidsettings for more details.
+ *
+ * @warning The @p settings object should only be used by a single synth at a time. I.e. creating
+ * multiple synth instances with a single @p settings object causes undefined behavior. Once the
+ * "single synth" has been deleted, you may use the @p settings object again for another synth.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
@@ -1014,6 +1027,50 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
+    /* unregister all real-time settings callback, to avoid a use-after-free when changing those settings after
+     * this synth has been deleted*/
+
+    fluid_settings_callback_num(synth->settings, "synth.gain",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.polyphony",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.device-id",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.percussion",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.sustained",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.released",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.age",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.volume",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.overflow.important",
+                                NULL, NULL);
+    fluid_settings_callback_str(synth->settings, "synth.overflow.important-channels",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.room-size",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.damp",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.width",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.reverb.level",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.reverb.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.active",
+                                NULL, NULL);
+    fluid_settings_callback_int(synth->settings, "synth.chorus.nr",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.level",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.depth",
+                                NULL, NULL);
+    fluid_settings_callback_num(synth->settings, "synth.chorus.speed",
+                                NULL, NULL);
+
     /* turn off all voices, needed to unload SoundFont data */
     if(synth->voice != NULL)
     {
@@ -1026,6 +1083,12 @@ delete_fluid_synth(fluid_synth_t *synth)
                 continue;
             }
 
+            /* WARNING: A this point we must ensure that the reference counter
+               of any soundfont sample owned by any rvoice belonging to the voice
+               are correctly decremented. This is the contrary part to
+               to fluid_voice_init() where the sample's reference counter is
+               incremented.
+            */
             fluid_voice_unlock_rvoice(voice);
             fluid_voice_overflow_rvoice_finished(voice);
 
@@ -1078,6 +1141,18 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     delete_fluid_list(synth->loaders);
 
+    /* wait for and delete all the lazy sfont unloading timers */
+
+    for(list = synth->fonts_to_be_unloaded; list; list = fluid_list_next(list))
+    {
+        fluid_timer_t* timer = fluid_list_get(list);
+        // explicitly join to wait for the unload really to happen
+        fluid_timer_join(timer);
+        // delete_fluid_timer alone would stop the timer, even if it had not unloaded the soundfont yet
+        delete_fluid_timer(timer);
+    }
+
+    delete_fluid_list(synth->fonts_to_be_unloaded);
 
     if(synth->channel != NULL)
     {
@@ -1898,6 +1973,7 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  * Non-realtime:    0xF0 0x7E <DeviceId> [BODY] 0xF7
  * Realtime:        0xF0 0x7F <DeviceId> [BODY] 0xF7
  * Tuning messages: 0xF0 0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
+ * GS DT1 messages: 0xF0 0x41 <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
  */
 int
 fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
@@ -1937,6 +2013,54 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                                                response_len, avail_response,
                                                handled, dryrun);
 
+        FLUID_API_RETURN(result);
+    }
+
+    /* GM or GM2 system on */
+    if(data[0] == MIDI_SYSEX_UNIV_NON_REALTIME
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_GM_ID)
+    {
+        if(handled)
+        {
+            *handled = TRUE;
+        }
+        if(!dryrun && (data[3] == MIDI_SYSEX_GM_ON
+                || data[3] == MIDI_SYSEX_GM2_ON))
+        {
+            int result;
+            synth->bank_select = FLUID_BANK_STYLE_GM;
+            fluid_synth_api_enter(synth);
+            result = fluid_synth_system_reset_LOCAL(synth);
+            FLUID_API_RETURN(result);
+        }
+        return FLUID_OK;
+    }
+
+    /* GS DT1 message */
+    if(data[0] == MIDI_SYSEX_MANUF_ROLAND
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_GS_ID
+            && data[3] == MIDI_SYSEX_GS_DT1)
+    {
+        int result;
+        fluid_synth_api_enter(synth);
+        result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
+                                          response_len, avail_response,
+                                          handled, dryrun);
+        FLUID_API_RETURN(result);
+    }
+
+    /* XG message */
+    if(data[0] == MIDI_SYSEX_MANUF_YAMAHA
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && data[2] == MIDI_SYSEX_XG_ID)
+    {
+        int result;
+        fluid_synth_api_enter(synth);
+        result = fluid_synth_sysex_xg(synth, data, len, response,
+                                      response_len, avail_response,
+                                      handled, dryrun);
         FLUID_API_RETURN(result);
     }
 
@@ -2232,6 +2356,136 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
         break;
     }
 
+    return FLUID_OK;
+}
+
+/* Handler for GS DT1 messages */
+static int
+fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
+                              char *response, int *response_len, int avail_response,
+                              int *handled, int dryrun)
+{
+    int addr;
+    int len_data;
+    int checksum = 0, i;
+
+    if(len < 9) // at least one byte of data should be transmitted
+    {
+        return FLUID_FAILED;
+    }
+    len_data = len - 8;
+    addr = (data[4] << 16) | (data[5] << 8) | data[6];
+
+    for (i = 4; i < len - 1; ++i)
+    {
+        checksum += data[i];
+    }
+    if (0x80 - (checksum & 0x7F) != data[len - 1])
+    {
+        return FLUID_FAILED;
+    }
+
+    if (addr == 0x40007F) // Mode set
+    {
+        if (len_data > 1 || (data[7] != 0 && data[7] != 0x7f))
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            if (data[7] == 0)
+            {
+                synth->bank_select = FLUID_BANK_STYLE_GS;
+            }
+            else
+            {
+                synth->bank_select = FLUID_BANK_STYLE_GM;
+            }
+            return fluid_synth_system_reset_LOCAL(synth);
+        }
+        return FLUID_OK;
+    }
+
+    if (synth->bank_select != FLUID_BANK_STYLE_GS)
+    {
+        return FLUID_OK; // Silently ignore all other messages
+    }
+
+    if ((addr & 0xFFF0FF) == 0x401015) // Use for rhythm part
+    {
+        if (len_data > 1 || data[7] > 0x02)
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            int chan = (addr >> 8) & 0x0F;
+            //See the Patch Part parameters section in SC-88Pro/8850 owner's manual
+            chan = chan >= 0x0a ? chan : (chan == 0 ? 9 : chan - 1);
+            synth->channel[chan]->channel_type =
+                data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+
+            //Roland synths seem to "remember" the last instrument a channel
+            //used in the selected mode. This behavior is not replicated here.
+            fluid_synth_program_change(synth, chan, 0);
+        }
+        return FLUID_OK;
+    }
+
+    //silently ignore
+    return FLUID_OK;
+}
+
+/* Handler for XG messages */
+static int
+fluid_synth_sysex_xg(fluid_synth_t *synth, const char *data, int len,
+                              char *response, int *response_len, int avail_response,
+                              int *handled, int dryrun)
+{
+    int addr;
+    int len_data;
+
+    if(len < 7) // at least one byte of data should be transmitted
+    {
+        return FLUID_FAILED;
+    }
+    len_data = len - 6;
+    addr = (data[3] << 16) | (data[4] << 8) | data[5];
+
+    if (addr == 0x00007E // Reset
+            || addr == 0x00007F) // Reset to factory
+    {
+        if (len_data > 1 || data[6] != 0)
+        {
+            return FLUID_FAILED;
+        }
+        if (handled)
+        {
+            *handled = TRUE;
+        }
+        if (!dryrun)
+        {
+            synth->bank_select = FLUID_BANK_STYLE_XG;
+            return fluid_synth_system_reset_LOCAL(synth);
+        }
+        return FLUID_OK;
+    }
+
+    /* No other messages handled yet
+    if (synth->bank_select != FLUID_BANK_STYLE_XG)
+    {
+        return FLUID_OK; // Silently ignore all other messages
+    }*/
+
+    //silently ignore
     return FLUID_OK;
 }
 
@@ -3176,6 +3430,21 @@ fluid_synth_update_presets(fluid_synth_t *synth)
     }
 }
 
+static void
+fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
+{
+    int i;
+    fluid_clip(sample_rate, 8000.0f, 96000.0f);
+    synth->sample_rate = sample_rate;
+
+    synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
+
+    for(i = 0; i < synth->polyphony; i++)
+    {
+        fluid_voice_set_output_rate(synth->voice[i], sample_rate);
+    }
+}
+
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
  * @warning This function is broken-by-design! Don't use it! Instead, specify the sample-rate when creating the synth.
@@ -3206,21 +3475,31 @@ fluid_synth_update_presets(fluid_synth_t *synth)
 void
 fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate)
 {
-    int i;
     fluid_return_if_fail(synth != NULL);
     fluid_synth_api_enter(synth);
-    fluid_clip(sample_rate, 8000.0f, 96000.0f);
-    synth->sample_rate = sample_rate;
 
-    synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
-
-    for(i = 0; i < synth->polyphony; i++)
-    {
-        fluid_voice_set_output_rate(synth->voice[i], sample_rate);
-    }
+    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
 
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate,
-                             0, sample_rate);
+                             0, synth->sample_rate);
+    fluid_synth_api_exit(synth);
+}
+
+// internal sample rate change function for the jack driver
+// executes immediately, therefore, make sure no rendering call is running!
+void
+fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate)
+{
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_return_if_fail(synth != NULL);
+    fluid_synth_api_enter(synth);
+    
+    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
+
+    param[0].i = 0;
+    param[1].real = synth->sample_rate;
+    fluid_rvoice_mixer_set_samplerate(synth->eventhandler->mixer, param);
+    
     fluid_synth_api_exit(synth);
 }
 
@@ -3721,7 +4000,7 @@ static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
  * Zero value is permitted, the function does nothing and return FLUID_OK.
  *
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
  * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
  *
@@ -4553,7 +4832,21 @@ fluid_synth_check_finished_voices(fluid_synth_t *synth)
             }
             else if(synth->voice[j]->overflow_rvoice == fv)
             {
+                /* Unlock the overflow_rvoice of the voice.
+                   Decrement the reference count of the sample owned by this
+                   rvoice.
+                */
                 fluid_voice_overflow_rvoice_finished(synth->voice[j]);
+
+                /* Decrement synth active voice count. Must not be incorporated
+                   in fluid_voice_overflow_rvoice_finished() because
+                   fluid_voice_overflow_rvoice_finished() is called also
+                   at synth destruction and in this case the variable should be
+                   accessed via voice->channel->synth->active_voice_count.
+                   And for certain voices which are not playing, the field
+                   voice->channel is NULL.
+                */
+                synth->active_voice_count--;
                 break;
             }
         }
@@ -5009,6 +5302,10 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, #FLUID_FAILED on error
+ * 
+ * @note Since FluidSynth 2.2.0 @c filename is treated as an UTF8 encoded string on Windows. FluidSynth will convert it
+ * to wide-char internally and then pass it to <code>_wfopen()</code>. Before FluidSynth 2.2.0, @c filename was treated as ANSI string
+ * on Windows. All other platforms directly pass it to <code>fopen()</code> without any conversion (usually, UTF8 is accepted).
  */
 int
 fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets)
@@ -5057,11 +5354,25 @@ fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets
 }
 
 /**
- * Unload a SoundFont.
+ * Schedule a SoundFont for unloading.
+ *
+ * If the SoundFont isn't used anymore by any playing voices, it will be unloaded immediately.
+ *
+ * If any samples of the given SoundFont are still required by active voices,
+ * the SoundFont will be unloaded in a lazy manner, once those voices have finished synthesizing.
+ * If you call delete_fluid_synth(), all voices will be destroyed and the SoundFont
+ * will be unloaded in any case.
+ * Once this function returned, fluid_synth_sfcount() and similar functions will behave as if
+ * the SoundFont has already been unloaded, even though the lazy-unloading is still pending.
+ *
+ * @note This lazy-unloading mechanism was broken between FluidSynth 1.1.4 and 2.1.5 . As a
+ * consequence, SoundFonts scheduled for lazy-unloading may be never freed under certain
+ * conditions. Calling delete_fluid_synth() does not recover this situation either.
+ *
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
- * @return #FLUID_OK on success, #FLUID_FAILED on error
+ * @return #FLUID_OK if the given @p id was found, #FLUID_FAILED otherwise.
  */
 int
 fluid_synth_sfunload(fluid_synth_t *synth, int id, int reset_presets)
@@ -5122,7 +5433,8 @@ fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont)
         } /* spin off a timer thread to unload the sfont later (SoundFont loader blocked unload) */
         else
         {
-            new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, TRUE, FALSE);
+            fluid_timer_t* timer = new_fluid_timer(100, fluid_synth_sfunload_callback, sfont, TRUE, FALSE, FALSE);
+            synth->fonts_to_be_unloaded = fluid_list_prepend(synth->fonts_to_be_unloaded, timer);
         }
     }
 }
@@ -5480,7 +5792,7 @@ fluid_synth_set_reverb_on(fluid_synth_t *synth, int on)
  * @param synth FluidSynth instance
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
- *  parameter common to all fx groups is fetched.
+ *  parameter will be applied to all fx groups.
  * @param on TRUE to enable reverb, FALSE to disable
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
@@ -5722,7 +6034,10 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
 
     /* check if reverb value is in max min range */
     fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
-    fluid_return_val_if_fail( min <= value &&  value <= max, FLUID_FAILED);
+    if(value  < min || value > max)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
 
     /* set the value */
     values[param] = value;
@@ -5951,7 +6266,7 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  * @param synth FluidSynth instance
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
- *  parameter common to all fx groups is fetched.
+ *  parameter will be applied to all fx groups.
  * @param on TRUE to enable chorus, FALSE to disable
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
@@ -6118,7 +6433,7 @@ fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int fx_group, double le
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
  *  parameter will be applied to all groups.
- * @param speed Lfo speed to set. Must be in the range indicated by \settings{synth_chorus_speed}
+ * @param speed Lfo speed to set. Must be in the range indicated by \setting{synth_chorus_speed}
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int
@@ -6133,7 +6448,7 @@ fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int fx_group, double sp
  * @param fx_group Index of the fx group.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
  *  parameter will be applied to all groups.
- * @depth_ms, lfo depth to set. Must be in the range indicated by synth.chorus.depth
+ * @param depth_ms lfo depth to set. Must be in the range indicated by \setting{synth_chorus_depth}
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int
@@ -6207,14 +6522,20 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
         {
             fluid_settings_getint_range(synth->settings, name[param], &min, &max);
         }
-        fluid_return_val_if_fail(min <= (int)value && (int)value <= max, FLUID_FAILED);
+        if((int)value  < min || (int)value > max)
+        {
+            FLUID_API_RETURN(FLUID_FAILED);
+        }
     }
     else /* float value */
     {
         double min;
         double max;
         fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
-        fluid_return_val_if_fail(min <= value &&  value <= max, FLUID_FAILED);
+        if(value  < min || value > max)
+        {
+            FLUID_API_RETURN(FLUID_FAILED);
+        }
     }
 
     /* set the value */
@@ -6388,7 +6709,7 @@ fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fx_group, double *s
  * @param fx_group Index of the fx group from which lfo depth to fetch.
  *  Must be in the range <code>-1 to (fluid_synth_count_effects_groups()-1)</code>. If -1 the
  *  parameter common to all fx groups is fetched.
- * @param depth valid pointer on value to return.
+ * @param depth_ms valid pointer on value to return.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
@@ -6498,8 +6819,9 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 synth->storeid = fluid_voice_get_id(voice);
             }
 
-            /* Force the voice into release stage (pedaling is ignored) */
-            fluid_voice_release(voice);
+            /* Force the voice into release stage except if pedaling
+               (sostenuto or sustain) is active */
+            fluid_voice_noteoff(voice);
         }
     }
 }

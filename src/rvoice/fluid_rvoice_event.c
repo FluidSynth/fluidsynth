@@ -88,7 +88,7 @@ static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *han
     if(event == NULL)
     {
         fluid_atomic_int_add(&handler->queue_stored, -1);
-        FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
+        FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing synth.polyphony!");
         return FLUID_FAILED; // Buffer full...
     }
 

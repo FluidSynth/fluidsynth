@@ -142,10 +142,18 @@ fluid_event_timer(fluid_event_t *evt, void *data)
  * @param channel MIDI channel number
  * @param key MIDI note number (0-127)
  * @param vel MIDI velocity value (0-127)
+ * @note Since fluidsynth 2.2.2, this function will give you a #FLUID_SEQ_NOTEOFF when
+ * called with @p vel being zero.
  */
 void
 fluid_event_noteon(fluid_event_t *evt, int channel, short key, short vel)
 {
+    if(vel == 0)
+    {
+        fluid_event_noteoff(evt, channel, key);
+        return;
+    }
+
     evt->type = FLUID_SEQ_NOTEON;
     evt->channel = channel;
     evt->key = key;
@@ -176,10 +184,11 @@ fluid_event_noteoff(fluid_event_t *evt, int channel, short key)
  * @param evt Sequencer event structure
  * @param channel MIDI channel number
  * @param key MIDI note number (0-127)
- * @param vel MIDI velocity value (0-127)
- * @param duration Duration of note in the time scale used by the sequencer (by default milliseconds)
+ * @param vel MIDI velocity value (1-127)
+ * @param duration Duration of note in the time scale used by the sequencer
  *
  * @note The application should decide whether to use only Notes with duration, or separate NoteOn and NoteOff events.
+ * @warning Calling this function with @p vel or @p duration being zero results in undefined behavior!
  */
 void
 fluid_event_note(fluid_event_t *evt, int channel, short key, short vel, unsigned int duration)
@@ -480,6 +489,20 @@ fluid_event_unregistering(fluid_event_t *evt)
 }
 
 /**
+ * Set a sequencer event to be a scale change event.
+ * Useful for scheduling tempo changes.
+ * @param evt Sequencer event structure
+ * @param new_scale The new time scale to apply to the sequencer, see fluid_sequencer_set_time_scale()
+ * @since 2.2.0
+ */
+void
+fluid_event_scale(fluid_event_t *evt, double new_scale)
+{
+    evt->type = FLUID_SEQ_SCALE;
+    evt->scale = new_scale;
+}
+
+/**
  * Set a sequencer event to be a channel-wide aftertouch event.
  * @param evt Sequencer event structure
  * @param channel MIDI channel number
@@ -743,4 +766,16 @@ unsigned int
 fluid_event_get_sfont_id(fluid_event_t *evt)
 {
     return evt->duration;
+}
+
+/**
+ * Gets time scale field from a sequencer event structure.
+ * @param evt Sequencer event structure
+ * @return SoundFont identifier value.
+ *
+ * Used by the #FLUID_SEQ_SCALE event type.
+ */
+double fluid_event_get_scale(fluid_event_t *evt)
+{
+    return evt->scale;
 }

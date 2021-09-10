@@ -18,7 +18,7 @@
  http://www.geocities.com/SiliconValley/Campus/8645/index.html
  http://members.nbci.com/silicon39/
  http://www.mp3.com/silicon39
- http://analoguesque.x10host.com/
+ https://analoguesque.x10host.com/
 
 
  Update 2020-10-31:
@@ -52,7 +52,7 @@
         Regards
         Tom
 
-        http://www.fluidsynth.org/
+        https://www.fluidsynth.org/
 
  
     On Sat, Oct 31, 2020 Ian Wilson replied:

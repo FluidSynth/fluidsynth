@@ -79,6 +79,12 @@ else ( SDL2_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  no\n" )
 endif ( SDL2_SUPPORT )
 
+if ( WASAPI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WASAPI:                yes\n" )
+else ( WASAPI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WASAPI:                no\n" )
+endif ( WASAPI_SUPPORT )
+
 if ( WAVEOUT_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WaveOut:               yes\n" )
 else ( WAVEOUT_SUPPORT )
@@ -227,6 +233,12 @@ if ( ENABLE_UBSAN )
 else ( ENABLE_UBSAN )
   set ( DEVEL_REPORT "${DEVEL_REPORT}  UBSan (debug):         no\n" )
 endif ( ENABLE_UBSAN )
+
+if ( ENABLE_COVERAGE )
+  set ( DEVEL_REPORT "${DEVEL_REPORT}  Coverage:              yes\n" )
+else ( ENABLE_COVERAGE )
+  set ( DEVEL_REPORT "${DEVEL_REPORT}  Coverage:              no\n" )
+endif ( ENABLE_COVERAGE )
 
 message( STATUS 
         "\n**************************************************************\n"

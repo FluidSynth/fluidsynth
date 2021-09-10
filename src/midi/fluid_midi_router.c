@@ -536,7 +536,10 @@ fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int m
  *   this function can be used as a callback for other subsystems
  *   (new_fluid_midi_driver() for example).
  * @param event MIDI event to handle
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @return #FLUID_OK if all rules were applied successfully, #FLUID_FAILED if
+ *  an error occurred while applying a rule or (since 2.2.2) the event was
+ *  ignored because a parameter was out-of-range after the rule had been applied.
+ *  See the note below.
  *
  * Purpose: The midi router is called for each event, that is received
  * via the 'physical' midi input. Each event can trigger an arbitrary number
@@ -554,6 +557,17 @@ fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int m
  * - velocity switching ("v <=100: Angel Choir; V > 100: Hell's Bells")
  * - get rid of aftertouch
  * - ...
+ *
+ * @note Each input event has values (ch, par1, par2) that could be changed by a rule.
+ * After a rule has been applied on any value and the value is out of range, the event
+ * can be either ignored or the value can be clamped depending on the type of the event:
+ * - To get full benefice of the rule the value is clamped and the event passed to the output.
+ * - To avoid MIDI messages conflicts at the output, the event is ignored
+ *   (i.e not passed to the output).
+ *   - ch out of range: event is ignored regardless of the event type.
+ *   - par1 out of range: event is ignored for PROG_CHANGE or CONTROL_CHANGE type,
+ *     par1 is clamped otherwise.
+ *   - par2 out of range: par2 is clamped regardless of the event type.
  */
 int
 fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
@@ -561,6 +575,9 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
     fluid_midi_router_t *router = (fluid_midi_router_t *)data;
     fluid_midi_router_rule_t **rulep, *rule, *next_rule, *prev_rule = NULL;
     int event_has_par2 = 0; /* Flag, indicates that current event needs two parameters */
+    int is_par1_ignored = 0; /* Flag, indicates that current event should be
+                                ignored/clamped when par1 is getting out of range
+                                value after the rule had been applied:1:ignored, 0:clamped */
     int par1_max = 127;     /* Range limit for par1 */
     int par2_max = 127;     /* Range limit for par2 */
     int ret_val = FLUID_OK;
@@ -585,34 +602,50 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
     /* Depending on the event type, choose the correct list of rules. */
     switch(event->type)
     {
+    /* For NOTE_ON event, par1(pitch) and par2(velocity) will be clamped if
+       they are out of range after the rule had been applied */
     case NOTE_ON:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_NOTE];
         event_has_par2 = 1;
         break;
 
+    /* For NOTE_OFF event, par1(pitch) and par2(velocity) will be clamped if
+       they are out of range after the rule had been applied */
     case NOTE_OFF:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_NOTE];
         event_has_par2 = 1;
         break;
 
+    /* CONTROL_CHANGE event will be ignored if par1 (ctrl num) is out
+       of range after the rule had been applied */
     case CONTROL_CHANGE:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_CC];
         event_has_par2 = 1;
+        is_par1_ignored = 1;
         break;
 
+    /* PROGRAM_CHANGE event will be ignored if par1 (program num) is out
+       of range after the rule had been applied */
     case PROGRAM_CHANGE:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_PROG_CHANGE];
+        is_par1_ignored = 1;
         break;
 
+    /* For PITCH_BEND event, par1(bend value) will be clamped if
+       it is out of range after the rule had been applied */
     case PITCH_BEND:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_PITCH_BEND];
         par1_max = 16383;
         break;
 
+    /* For CHANNEL_PRESSURE event, par1(pressure value) will be clamped if
+       it is out of range after the rule had been applied */
     case CHANNEL_PRESSURE:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE];
         break;
 
+    /* For KEY_PRESSURE event, par1(pitch) and par2(pressure value) will be
+       clamped if they are out of range after the rule had been applied */
     case KEY_PRESSURE:
         rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE];
         event_has_par2 = 1;
@@ -700,44 +733,46 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         chan = rule->chan_add + (int)((fluid_real_t)event->channel * rule->chan_mul
                      + (fluid_real_t)0.5);
 
-        /* Par 1 scaling / offset */
+        /* We ignore the event if chan is out of range */
+        if((chan < 0) || (chan >= router->nr_midi_channels))
+        {
+            ret_val = FLUID_FAILED;
+            continue; /* go to next rule */
+        }
+
+        /* par 1 scaling / offset */
         par1 = rule->par1_add + (int)((fluid_real_t)event_par1 * rule->par1_mul
                      + (fluid_real_t)0.5);
 
-        /* Par 2 scaling / offset, if applicable */
+        if(is_par1_ignored)
+        {
+            /* We ignore the event if par1 is out of range */
+            if((par1 < 0) || (par1 > par1_max))
+            {
+                ret_val = FLUID_FAILED;
+                continue; /* go to next rule */
+            }
+        }
+        else
+        {
+            /* par1 range clamping */
+            if(par1 < 0)
+            {
+                par1 = 0;
+            }
+            else if(par1 > par1_max)
+            {
+                par1 = par1_max;
+            }
+        }
+
+        /* par 2 scaling / offset, if applicable */
         if(event_has_par2)
         {
             par2 = rule->par2_add + (int)((fluid_real_t)event_par2 * rule->par2_mul
                          + (fluid_real_t)0.5);
-        }
-        else
-        {
-            par2 = 0;
-        }
 
-        /* Channel range limiting */
-        if(chan < 0)
-        {
-            chan = 0;
-        }
-        else if(chan >= router->nr_midi_channels)
-        {
-            chan = router->nr_midi_channels - 1;
-        }
-
-        /* Par1 range limiting */
-        if(par1 < 0)
-        {
-            par1 = 0;
-        }
-        else if(par1 > par1_max)
-        {
-            par1 = par1_max;
-        }
-
-        /* Par2 range limiting */
-        if(event_has_par2)
-        {
+            /* par2 range clamping */
             if(par2 < 0)
             {
                 par2 = 0;
@@ -746,6 +781,10 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
             {
                 par2 = par2_max;
             }
+        }
+        else
+        {
+            par2 = 0;
         }
 
         /* At this point we have to create an event of event->type on 'chan' with par1 (maybe par2).

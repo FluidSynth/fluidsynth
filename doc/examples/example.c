@@ -19,6 +19,8 @@
 #if defined(WIN32)
 #include <windows.h>
 #define sleep(_t) Sleep(_t * 1000)
+#include <process.h>
+#define getpid _getpid
 #else
 #include <stdlib.h>
 #include <unistd.h>

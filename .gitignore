@@ -38,3 +38,4 @@ install_manifest.txt
 
 # ProjectFiles
 *.pro.user*
+*.user

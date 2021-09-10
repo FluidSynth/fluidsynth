@@ -174,6 +174,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t *voice)
     voice->can_access_rvoice = voice->can_access_overflow_rvoice;
     voice->overflow_rvoice = rtemp;
     voice->can_access_overflow_rvoice = ctemp;
+    voice->overflow_sample = voice->sample;
 }
 
 static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t output_rate)
@@ -242,6 +243,7 @@ new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate)
     voice->eventhandler = handler;
     voice->channel = NULL;
     voice->sample = NULL;
+    voice->overflow_sample = NULL;
     voice->output_rate = output_rate;
 
     /* Initialize both the rvoice and overflow_rvoice */
@@ -321,12 +323,13 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     voice->has_noteoff = 0;
     UPDATE_RVOICE0(fluid_rvoice_reset);
 
-    /* Increment the reference count of the sample to prevent the
-       unloading of the soundfont while this voice is playing,
-       once for us and once for the rvoice. */
+    /*
+       We increment the reference count of the sample to indicate that this
+       sample is about to be owned by the rvoice. This will prevent the
+       unloading of the soundfont while this rvoice is playing.
+    */
     fluid_sample_incr_ref(sample);
     fluid_rvoice_eventhandler_push_ptr(voice->eventhandler, fluid_rvoice_set_sample, voice->rvoice, sample);
-    fluid_sample_incr_ref(sample);
     voice->sample = sample;
 
     i = fluid_channel_get_interp_method(channel);
@@ -472,7 +475,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 }
 
 /* Useful to return the nominal pitch of a key */
-/* The nominal pitch is dependant of voice->root_pitch,tuning, and
+/* The nominal pitch is dependent of voice->root_pitch,tuning, and
    GEN_SCALETUNE generator.
    This is useful to set the value of GEN_PITCH generator on noteOn.
    This is useful to get the beginning/ending pitch for portamento.
@@ -667,6 +670,7 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
      * GEN_KEYTOVOLENVDECAY, GEN_KEYTOMODENVHOLD, GEN_KEYTOMODENVDECAY
      */
 
+    fluid_real_t keysteps;
     fluid_real_t timecents;
     fluid_real_t seconds;
     int buffers;
@@ -678,7 +682,9 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
      * will cause (60-72)*100=-1200 timecents of time variation.
      * The time is cut in half.
      */
-    timecents = (fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * (fluid_real_t)(60 - fluid_voice_get_actual_key(voice)));
+
+    keysteps = 60.0f - fluid_channel_get_key_pitch(voice->channel, fluid_voice_get_actual_key(voice)) / 100.0f;
+    timecents = fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * keysteps;
 
     /* Range checking */
     if(is_decay)
@@ -1413,12 +1419,20 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
 }
 
 /*
- * Called by fluid_synth when the overflow rvoice can be reclaimed.
+ * Unlock the overflow rvoice of the voice.
+ * Decrement the reference count of the sample owned by this rvoice.
+ *
+ * Called by fluid_synth when the overflow rvoice has finished by itself.
+ * Must be called also explicitly at synth destruction to ensure that
+ * the soundfont be unloaded successfully.
  */
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t *voice)
 {
     voice->can_access_overflow_rvoice = 1;
-    fluid_voice_sample_unref(&voice->overflow_rvoice->dsp.sample);
+
+    /* Decrement the reference count of the sample to indicate
+       that this sample isn't owned by the rvoice anymore */
+    fluid_voice_sample_unref(&voice->overflow_sample);
 }
 
 /*
@@ -1446,16 +1460,13 @@ fluid_voice_stop(fluid_voice_t *voice)
 
     voice->chan = NO_CHANNEL;
 
-    if(voice->can_access_rvoice)
-    {
-        fluid_voice_sample_unref(&voice->rvoice->dsp.sample);
-    }
+    /* Decrement the reference count of the sample, to indicate
+       that this sample isn't owned by the rvoice anymore.
+    */
+    fluid_voice_sample_unref(&voice->sample);
 
     voice->status = FLUID_VOICE_OFF;
     voice->has_noteoff = 1;
-
-    /* Decrement the reference count of the sample. */
-    fluid_voice_sample_unref(&voice->sample);
 
     /* Decrement voice count */
     voice->channel->synth->active_voice_count--;
@@ -1574,11 +1585,14 @@ unsigned int fluid_voice_get_id(const fluid_voice_t *voice)
 /**
  * Check if a voice is producing sound.
  *
+ * Like fluid_voice_is_on() this will return TRUE once a call to 
+ * fluid_synth_start_voice() has been made. Contrary to fluid_voice_is_on(),
+ * this might also return TRUE after the voice received a noteoff event, as it may
+ * still be playing in release phase, or because it has been sustained or
+ * sostenuto'ed.
+ *
  * @param voice Voice instance
  * @return TRUE if playing, FALSE otherwise
- *
- * This might also return TRUE after the voice received a noteoff event, as it may
- * still be  playing in release phase.
  */
 int fluid_voice_is_playing(const fluid_voice_t *voice)
 {
@@ -1591,10 +1605,12 @@ int fluid_voice_is_playing(const fluid_voice_t *voice)
 /**
  * Check if a voice is ON.
  *
+ * A voice is in ON state as soon as a call to fluid_synth_start_voice() has been made
+ * (which is typically done in a fluid_preset_t's noteon function).
+ * A voice stays ON as long as it has not received a noteoff event.
+ *
  * @param voice Voice instance
  * @return TRUE if on, FALSE otherwise
- *
- * A voice is ON if it has not yet received a noteoff event.
  *
  * @since 1.1.7
  */

@@ -84,7 +84,7 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         // |     NOTEON    |  0   |   0   |   0  |   0  |   1    | 0  |
         // |       X       |  0   |   0   |   0  |   0  |   1    | 1  |
         //
-        // The values in the diagonal (i.e. comparision with itself) must be true to make them become false after leaving this
+        // The values in the diagonal (i.e. comparison with itself) must be true to make them become false after leaving this
         // function in order to satisfy the irreflexive requirement, i.e. assert(!(a < a))
 
         leftIsBeforeRight =

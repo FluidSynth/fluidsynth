@@ -12,7 +12,7 @@ int main(void)
     fluid_event_set_time(evt1, 1);
     fluid_event_set_time(evt2, 1);
 
-    // double negation below, because we want to check for leftIsBeforeRight, however, event_compare() returns !leftIsBeforeRight
+    // Note that event_compare() returns !leftIsBeforeRight
 
     TEST_ASSERT( !event_compare_for_test(evt1, evt1));
     TEST_ASSERT( !event_compare_for_test(evt2, evt2));
@@ -28,10 +28,24 @@ int main(void)
     TEST_ASSERT(!!event_compare_for_test(evt1, evt2));
     TEST_ASSERT( !event_compare_for_test(evt2, evt1));
 
-    fluid_event_noteon(evt1, 0, 0, 0);
+    fluid_event_noteon(evt1, 0, 0, 60);
     fluid_event_noteoff(evt2, 0, 0);
 
     TEST_ASSERT(!!event_compare_for_test(evt1, evt2));
+    TEST_ASSERT( !event_compare_for_test(evt2, evt1));
+
+    // make sure noteons with vel=0 are handled like noteoffs
+    fluid_event_noteon(evt1, 0, 0, 60);
+    fluid_event_noteon(evt2, 0, 0, 0);
+
+    TEST_ASSERT(!!event_compare_for_test(evt1, evt2));
+    TEST_ASSERT( !event_compare_for_test(evt2, evt1));
+
+    // two noteoffs
+    fluid_event_noteon(evt1, 0, 0, 0);
+    fluid_event_noteoff(evt2, 0, 0);
+
+    TEST_ASSERT( !event_compare_for_test(evt1, evt2));
     TEST_ASSERT( !event_compare_for_test(evt2, evt1));
 
     fluid_event_unregistering(evt1);

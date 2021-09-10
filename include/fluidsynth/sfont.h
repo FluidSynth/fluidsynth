@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup soundfonts SountFonts
+ * @defgroup soundfonts SoundFonts
  *
  * SoundFont related functions
  *
