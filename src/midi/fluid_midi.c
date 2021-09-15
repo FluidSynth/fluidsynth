@@ -2121,7 +2121,7 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            fluid_synth_all_sounds_off(synth, -1); /* avoid hanging notes */
+            fluid_synth_all_notes_off(synth, -1); /* avoid hanging notes */
         }
 
         for(i = 0; i < player->ntracks; i++)
