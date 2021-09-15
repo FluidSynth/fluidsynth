@@ -1660,6 +1660,11 @@ new_fluid_player(fluid_synth_t *synth)
         player->track[i] = NULL;
     }
 
+    for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
+    {
+        player->notesoff_channels[i] = -1;
+    }
+
     player->synth = synth;
     player->system_timer = NULL;
     player->sample_timer = NULL;
@@ -2091,7 +2096,14 @@ fluid_player_callback(void *data, unsigned int msec)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-            fluid_synth_all_notes_off(synth, -1);
+            for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
+            {
+                fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
+                if(player->notesoff_channels[i] < 0)
+                {
+                    break;
+                }
+            }
             fluid_atomic_int_set(&player->stopping, 0);
         }
         return 1;
@@ -2121,7 +2133,14 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            fluid_synth_all_notes_off(synth, -1); /* avoid hanging notes */
+            for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
+            {
+                fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
+                if(player->notesoff_channels[i] < 0)
+                {
+                    break;
+                }
+            }
         }
 
         for(i = 0; i < player->ntracks; i++)
@@ -2437,6 +2456,32 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
     }
 
     return fluid_player_set_midi_tempo(player, 60000000L / bpm);
+}
+
+/**
+ * Set the specific channels on which to send notes_off when seeking or stopping the player.
+ * Setting a value of -1 will affect all channels (the default).
+ *
+ * @param player MIDI player instance
+ * @param channels array of channel numbers
+ * @param nchan length of the channels array
+ * @returns #FLUID_OK
+ *
+ * @since 2.2.4
+ */
+int fluid_player_set_notesoff_channels(fluid_player_t *player, int *channels, int nchan)
+{
+    int i;
+    for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
+    {
+        if(i == nchan)
+        {
+            player->notesoff_channels[i] = -2;
+            break;
+        }
+        player->notesoff_channels[i] = channels[i];
+    }
+    return FLUID_OK;
 }
 
 /**
