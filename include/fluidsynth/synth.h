@@ -98,6 +98,7 @@ FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t *synth);
 
 FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t *synth, int chan);
+FLUIDSYNTH_API int fluid_synth_all_notes_release(fluid_synth_t *synth, int chan);
 
 FLUIDSYNTH_API int fluid_synth_set_gen(fluid_synth_t *synth, int chan,
                                        int param, float value);
