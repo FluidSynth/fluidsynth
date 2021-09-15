@@ -2490,7 +2490,8 @@ fluid_synth_sysex_xg(fluid_synth_t *synth, const char *data, int len,
 }
 
 /**
- * Turn off all voices that are playing on the given MIDI channel, by putting them into release phase.
+ * Turn off all voices that are playing on the given MIDI channel, by putting them into release phase,
+ * pending their status in SUSTAIN or SOSTENUTO state.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
@@ -2582,6 +2583,32 @@ fluid_synth_all_sounds_off_LOCAL(fluid_synth_t *synth, int chan)
         if(fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == fluid_voice_get_channel(voice))))
         {
             fluid_voice_off(voice);
+        }
+    }
+
+    return FLUID_OK;
+}
+
+/**
+ * Turn off all voices that are playing on the given MIDI channel, by putting them into release phase
+ * regardless of their status in SUSTAIN or SOSTENUTO state.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_all_notes_release(fluid_synth_t *synth, int chan)
+{
+    fluid_voice_t *voice;
+    int i;
+
+    for(i = 0; i < synth->polyphony; i++)
+    {
+        voice = synth->voice[i];
+
+        if(fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == fluid_voice_get_channel(voice))))
+        {
+            fluid_voice_release(voice);
         }
     }
 
