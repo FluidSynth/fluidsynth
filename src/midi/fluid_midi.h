@@ -39,6 +39,7 @@ fluid_midi_event_t *fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigne
 
 
 #define MAX_NUMBER_OF_TRACKS 128
+#define MAX_NUMBER_OF_CHANNELS 256
 
 enum fluid_midi_event_type
 {
@@ -299,6 +300,7 @@ struct _fluid_player_t
     char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
     char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
     fluid_atomic_int_t seek_ticks; /* new position in tempo ticks (midi ticks) for seeking */
+    int notesoff_channels[MAX_NUMBER_OF_CHANNELS]; /* channels to send notes_off when stopping or seeking */
     int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
     int cur_ticks;            /* the number of tempo ticks passed */
     int last_callback_ticks;  /* the last tick number that was passed to player->tick_callback */
