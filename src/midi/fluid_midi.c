@@ -2096,7 +2096,7 @@ fluid_player_callback(void *data, unsigned int msec)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-            for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
+            for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
             {
                 fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
                 if(player->notesoff_channels[i] < 0)
@@ -2133,7 +2133,7 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
+            for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
             {
                 fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
                 if(player->notesoff_channels[i] < 0)
