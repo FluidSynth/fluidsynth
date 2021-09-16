@@ -88,6 +88,7 @@ option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-sdl2 "compile SDL2 audio support (if it is available)" on )
 option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
+option ( enable-pipewire "compile PipeWire support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
@@ -595,6 +596,14 @@ else(NOT enable-pkgconfig)
     unset_pkg_config ( JACK )
     endif ( enable-jack )
 
+    unset ( PIPEWIRE_SUPPORT CACHE )
+    if ( enable-pipewire )
+    pkg_check_modules ( PIPEWIRE libpipewire-0.3 )
+    set ( PIPEWIRE_SUPPORT ${PIPEWIRE_FOUND} )
+    else ( enable-pipewire )
+    unset_pkg_config ( PIPEWIRE )
+    endif ( enable-pipewire )
+
     unset ( LASH_SUPPORT CACHE )
     if ( enable-lash )
     pkg_check_modules ( LASH lash-1.0>=0.3 )
@@ -830,6 +839,7 @@ link_directories (
     ${GLIB_LIBRARY_DIRS}
     ${LASH_LIBRARY_DIRS}
     ${JACK_LIBRARY_DIRS}
+    ${PIPEWIRE_LIBRARY_DIRS}
     ${ALSA_LIBRARY_DIRS}
     ${PULSE_LIBRARY_DIRS}
     ${PORTAUDIO_LIBRARY_DIRS}

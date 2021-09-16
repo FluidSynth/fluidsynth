@@ -31,6 +31,12 @@ else ( JACK_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  JACK:                  no\n" )
 endif ( JACK_SUPPORT )
 
+if ( PIPEWIRE_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PipeWire:              yes\n" )
+else ( PIPEWIRE_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PipeWire:              no\n" )
+endif ( PIPEWIRE_SUPPORT )
+
 if ( MIDISHARE_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  MidiShare:             yes\n" )
 else ( MIDISHARE_SUPPORT )
