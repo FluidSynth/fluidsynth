@@ -2098,7 +2098,7 @@ fluid_player_callback(void *data, unsigned int msec)
         {
             for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
             {
-                fluid_synth_all_notes_release(synth, player->notesoff_channels[i]);
+                fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
                 if(player->notesoff_channels[i] < 0)
                 {
                     break;
@@ -2135,7 +2135,7 @@ fluid_player_callback(void *data, unsigned int msec)
         {
             for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
             {
-                fluid_synth_all_notes_release(synth, player->notesoff_channels[i]);
+                fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
                 if(player->notesoff_channels[i] < 0)
                 {
                     break;
