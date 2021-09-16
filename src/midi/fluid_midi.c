@@ -1604,6 +1604,10 @@ fluid_track_send_events(fluid_track_t *track,
             if(player->playback_callback)
             {
                 player->playback_callback(player->playback_userdata, event);
+				if(event->type == NOTE_ON && !player->channel_isplaying[event->channel])
+				{
+					player->channel_isplaying[event->channel] = 1;
+				}
             }
         }
 
@@ -1630,6 +1634,15 @@ fluid_player_handle_reset_synth(void *data, const char *name, int value)
     fluid_return_if_fail(player != NULL);
 
     player->reset_synth_between_songs = value;
+}
+
+static void
+fluid_player_handle_global_mute(void *data, const char *name, int value)
+{
+    fluid_player_t *player = data;
+    fluid_return_if_fail(player != NULL);
+
+    player->send_global_sounds_off = value;
 }
 
 /**
@@ -1660,9 +1673,9 @@ new_fluid_player(fluid_synth_t *synth)
         player->track[i] = NULL;
     }
 
-    for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
+    for(i = 0; i < synth->midi_channels; i++)
     {
-        player->notesoff_channels[i] = -1;
+        player->channel_isplaying[i] = 0;
     }
 
     player->synth = synth;
@@ -1716,6 +1729,12 @@ new_fluid_player(fluid_synth_t *synth)
     fluid_settings_callback_int(synth->settings, "player.reset-synth",
                                 fluid_player_handle_reset_synth, player);
 
+    fluid_settings_getint(synth->settings, "player.global-mute", &i);
+    fluid_player_handle_global_mute(player, NULL, i);
+
+    fluid_settings_callback_int(synth->settings, "player.global-mute",
+                                fluid_player_handle_global_mute, player);
+
     return player;
 
 err:
@@ -1739,6 +1758,8 @@ delete_fluid_player(fluid_player_t *player)
     fluid_return_if_fail(player != NULL);
 
     fluid_settings_callback_int(player->synth->settings, "player.reset-synth",
+                                NULL, NULL);
+    fluid_settings_callback_int(player->synth->settings, "player.global-mute",
                                 NULL, NULL);
 
     fluid_player_stop(player);
@@ -1775,6 +1796,10 @@ fluid_player_settings(fluid_settings_t *settings)
 
     /* Selects whether the player should reset the synth between songs, or not. */
     fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1, FLUID_HINT_TOGGLED);
+
+    /* Selects whether the player should call sounds_off on all channels when seeking/stopping,
+	   or send an ALL_SOUNDS_OFF message on only those channels touched by the player. */
+    fluid_settings_register_int(settings, "player.global-mute", 1, 0, 1, FLUID_HINT_TOGGLED);
 }
 
 
@@ -2085,25 +2110,37 @@ fluid_player_callback(void *data, unsigned int msec)
     int i;
     int loadnextfile;
     int status = FLUID_PLAYER_DONE;
+	fluid_midi_event_t mute_event;
     fluid_player_t *player;
     fluid_synth_t *synth;
     player = (fluid_player_t *) data;
     synth = player->synth;
 
     loadnextfile = player->currentfile == NULL ? 1 : 0;
+	
+	fluid_midi_event_set_type(&mute_event, CONTROL_CHANGE);
+	mute_event.param1 = ALL_SOUND_OFF;
+	mute_event.param2 = 1;
 
     if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-            for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
-            {
-                fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
-                if(player->notesoff_channels[i] < 0)
-                {
-                    break;
-                }
-            }
+			if(player->send_global_sounds_off)
+			{
+				fluid_synth_all_sounds_off(synth, -1);
+			}
+			else
+			{
+				for(i = 0; i < synth->midi_channels; i++)
+				{
+					if(player->channel_isplaying[i])
+					{
+						fluid_midi_event_set_channel(&mute_event, i);
+						player->playback_callback(player->playback_userdata, &mute_event);
+					}
+				}
+			}
             fluid_atomic_int_set(&player->stopping, 0);
         }
         return 1;
@@ -2133,14 +2170,21 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
-            {
-                fluid_synth_all_notes_off(synth, player->notesoff_channels[i]);
-                if(player->notesoff_channels[i] < 0)
-                {
-                    break;
-                }
-            }
+			if(player->send_global_sounds_off)
+			{
+				fluid_synth_all_sounds_off(synth, -1);
+			}
+			else
+			{
+				for(i = 0; i < synth->midi_channels; i++)
+				{
+					if(player->channel_isplaying[i])
+					{
+						fluid_midi_event_set_channel(&mute_event, i);
+						player->playback_callback(player->playback_userdata, &mute_event);
+					}
+				}
+			}
         }
 
         for(i = 0; i < player->ntracks; i++)
@@ -2456,32 +2500,6 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
     }
 
     return fluid_player_set_midi_tempo(player, 60000000L / bpm);
-}
-
-/**
- * Set the specific channels on which to send notes_off when seeking or stopping the player.
- * Setting a value of -1 will affect all channels (the default).
- *
- * @param player MIDI player instance
- * @param channels array of channel numbers
- * @param nchan length of the channels array
- * @returns #FLUID_OK
- *
- * @since 2.2.4
- */
-int fluid_player_set_notesoff_channels(fluid_player_t *player, int *channels, int nchan)
-{
-    int i;
-    for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
-    {
-        if(i == nchan)
-        {
-            player->notesoff_channels[i] = -2;
-            break;
-        }
-        player->notesoff_channels[i] = channels[i];
-    }
-    return FLUID_OK;
 }
 
 /**

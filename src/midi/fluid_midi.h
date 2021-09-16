@@ -300,7 +300,6 @@ struct _fluid_player_t
     char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
     char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
     fluid_atomic_int_t seek_ticks; /* new position in tempo ticks (midi ticks) for seeking */
-    int notesoff_channels[MAX_NUMBER_OF_CHANNELS]; /* channels to send notes_off when stopping or seeking */
     int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
     int cur_ticks;            /* the number of tempo ticks passed */
     int last_callback_ticks;  /* the last tick number that was passed to player->tick_callback */
@@ -327,6 +326,9 @@ struct _fluid_player_t
     void *playback_userdata; /* pointer to user-defined data passed to playback_callback function */
     handle_midi_tick_func_t tick_callback; /* function fired on each tick change */
     void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
+
+    int channel_isplaying[MAX_NUMBER_OF_CHANNELS]; /* flags indicating channels on which notes have played */
+    int send_global_sounds_off; /* 0 sends ALL_SOUNDS_OFF only on channels flagged by channel_isplaying when seeking/stopping */
 };
 
 void fluid_player_settings(fluid_settings_t *settings);
