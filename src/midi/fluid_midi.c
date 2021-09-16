@@ -1604,10 +1604,10 @@ fluid_track_send_events(fluid_track_t *track,
             if(player->playback_callback)
             {
                 player->playback_callback(player->playback_userdata, event);
-				if(event->type == NOTE_ON && !player->channel_isplaying[event->channel])
-				{
-					player->channel_isplaying[event->channel] = 1;
-				}
+                if(event->type == NOTE_ON && !player->channel_isplaying[event->channel])
+                {
+                    player->channel_isplaying[event->channel] = 1;
+                }
             }
         }
 
@@ -1798,7 +1798,7 @@ fluid_player_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1, FLUID_HINT_TOGGLED);
 
     /* Selects whether the player should call sounds_off on all channels when seeking/stopping,
-	   or send an ALL_SOUNDS_OFF message on only those channels touched by the player. */
+       or send an ALL_SOUNDS_OFF message on only those channels touched by the player. */
     fluid_settings_register_int(settings, "player.global-mute", 1, 0, 1, FLUID_HINT_TOGGLED);
 }
 
@@ -2110,37 +2110,37 @@ fluid_player_callback(void *data, unsigned int msec)
     int i;
     int loadnextfile;
     int status = FLUID_PLAYER_DONE;
-	fluid_midi_event_t mute_event;
+    fluid_midi_event_t mute_event;
     fluid_player_t *player;
     fluid_synth_t *synth;
     player = (fluid_player_t *) data;
     synth = player->synth;
 
     loadnextfile = player->currentfile == NULL ? 1 : 0;
-	
-	fluid_midi_event_set_type(&mute_event, CONTROL_CHANGE);
-	mute_event.param1 = ALL_SOUND_OFF;
-	mute_event.param2 = 1;
+    
+    fluid_midi_event_set_type(&mute_event, CONTROL_CHANGE);
+    mute_event.param1 = ALL_SOUND_OFF;
+    mute_event.param2 = 1;
 
     if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-			if(player->send_global_sounds_off)
-			{
-				fluid_synth_all_sounds_off(synth, -1);
-			}
-			else
-			{
-				for(i = 0; i < synth->midi_channels; i++)
-				{
-					if(player->channel_isplaying[i])
-					{
-						fluid_midi_event_set_channel(&mute_event, i);
-						player->playback_callback(player->playback_userdata, &mute_event);
-					}
-				}
-			}
+            if(player->send_global_sounds_off)
+            {
+                fluid_synth_all_sounds_off(synth, -1);
+            }
+            else
+            {
+                for(i = 0; i < synth->midi_channels; i++)
+                {
+                    if(player->channel_isplaying[i])
+                    {
+                        fluid_midi_event_set_channel(&mute_event, i);
+                        player->playback_callback(player->playback_userdata, &mute_event);
+                    }
+                }
+            }
             fluid_atomic_int_set(&player->stopping, 0);
         }
         return 1;
@@ -2170,21 +2170,21 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-			if(player->send_global_sounds_off)
-			{
-				fluid_synth_all_sounds_off(synth, -1);
-			}
-			else
-			{
-				for(i = 0; i < synth->midi_channels; i++)
-				{
-					if(player->channel_isplaying[i])
-					{
-						fluid_midi_event_set_channel(&mute_event, i);
-						player->playback_callback(player->playback_userdata, &mute_event);
-					}
-				}
-			}
+            if(player->send_global_sounds_off)
+            {
+                fluid_synth_all_sounds_off(synth, -1);
+            }
+            else
+            {
+                for(i = 0; i < synth->midi_channels; i++)
+                {
+                    if(player->channel_isplaying[i])
+                    {
+                        fluid_midi_event_set_channel(&mute_event, i);
+                        player->playback_callback(player->playback_userdata, &mute_event);
+                    }
+                }
+            }
         }
 
         for(i = 0; i < player->ntracks; i++)
