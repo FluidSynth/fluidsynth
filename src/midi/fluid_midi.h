@@ -328,7 +328,6 @@ struct _fluid_player_t
     void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
 
     int channel_isplaying[MAX_NUMBER_OF_CHANNELS]; /* flags indicating channels on which notes have played */
-    int send_global_sounds_off; /* 0 sends ALL_SOUNDS_OFF only on channels flagged by channel_isplaying when seeking/stopping */
 };
 
 void fluid_player_settings(fluid_settings_t *settings);

@@ -1636,15 +1636,6 @@ fluid_player_handle_reset_synth(void *data, const char *name, int value)
     player->reset_synth_between_songs = value;
 }
 
-static void
-fluid_player_handle_global_mute(void *data, const char *name, int value)
-{
-    fluid_player_t *player = data;
-    fluid_return_if_fail(player != NULL);
-
-    player->send_global_sounds_off = value;
-}
-
 /**
  * Create a new MIDI player.
  * @param synth Fluid synthesizer instance to create player for
@@ -1729,12 +1720,6 @@ new_fluid_player(fluid_synth_t *synth)
     fluid_settings_callback_int(synth->settings, "player.reset-synth",
                                 fluid_player_handle_reset_synth, player);
 
-    fluid_settings_getint(synth->settings, "player.global-mute", &i);
-    fluid_player_handle_global_mute(player, NULL, i);
-
-    fluid_settings_callback_int(synth->settings, "player.global-mute",
-                                fluid_player_handle_global_mute, player);
-
     return player;
 
 err:
@@ -1758,8 +1743,6 @@ delete_fluid_player(fluid_player_t *player)
     fluid_return_if_fail(player != NULL);
 
     fluid_settings_callback_int(player->synth->settings, "player.reset-synth",
-                                NULL, NULL);
-    fluid_settings_callback_int(player->synth->settings, "player.global-mute",
                                 NULL, NULL);
 
     fluid_player_stop(player);
@@ -1796,10 +1779,6 @@ fluid_player_settings(fluid_settings_t *settings)
 
     /* Selects whether the player should reset the synth between songs, or not. */
     fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1, FLUID_HINT_TOGGLED);
-
-    /* Selects whether the player should call sounds_off on all channels when seeking/stopping,
-       or send an ALL_SOUNDS_OFF message on only those channels touched by the player. */
-    fluid_settings_register_int(settings, "player.global-mute", 1, 0, 1, FLUID_HINT_TOGGLED);
 }
 
 
@@ -2126,21 +2105,14 @@ fluid_player_callback(void *data, unsigned int msec)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-            if(player->send_global_sounds_off)
-            {
-                fluid_synth_all_sounds_off(synth, -1);
-            }
-            else
-            {
-                for(i = 0; i < synth->midi_channels; i++)
-                {
-                    if(player->channel_isplaying[i])
-                    {
-                        fluid_midi_event_set_channel(&mute_event, i);
-                        player->playback_callback(player->playback_userdata, &mute_event);
-                    }
-                }
-            }
+			for(i = 0; i < synth->midi_channels; i++)
+			{
+				if(player->channel_isplaying[i])
+				{
+					fluid_midi_event_set_channel(&mute_event, i);
+					player->playback_callback(player->playback_userdata, &mute_event);
+				}
+			}
             fluid_atomic_int_set(&player->stopping, 0);
         }
         return 1;
@@ -2170,21 +2142,14 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            if(player->send_global_sounds_off)
-            {
-                fluid_synth_all_sounds_off(synth, -1);
-            }
-            else
-            {
-                for(i = 0; i < synth->midi_channels; i++)
-                {
-                    if(player->channel_isplaying[i])
-                    {
-                        fluid_midi_event_set_channel(&mute_event, i);
-                        player->playback_callback(player->playback_userdata, &mute_event);
-                    }
-                }
-            }
+			for(i = 0; i < synth->midi_channels; i++)
+			{
+				if(player->channel_isplaying[i])
+				{
+					fluid_midi_event_set_channel(&mute_event, i);
+					player->playback_callback(player->playback_userdata, &mute_event);
+				}
+			}
         }
 
         for(i = 0; i < player->ntracks; i++)
