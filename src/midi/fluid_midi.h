@@ -327,7 +327,7 @@ struct _fluid_player_t
     handle_midi_tick_func_t tick_callback; /* function fired on each tick change */
     void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
 
-    int channel_isplaying[MAX_NUMBER_OF_CHANNELS]; /* flags indicating channels on which notes have played */
+    fluid_list_t *channels_playing; /* list of channels the player has touched */
 };
 
 void fluid_player_settings(fluid_settings_t *settings);
@@ -350,7 +350,7 @@ typedef struct
     unsigned int smpte_fps;
     unsigned int smpte_res;
     unsigned int division;       /* If uses_SMPTE == 0 then division is
-				  ticks per beat (quarter-note) */
+                  ticks per beat (quarter-note) */
     double tempo;                /* Beats per second (SI rules =) */
     int tracklen;
     int trackpos;
