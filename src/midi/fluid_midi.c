@@ -2105,14 +2105,14 @@ fluid_player_callback(void *data, unsigned int msec)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-			for(i = 0; i < synth->midi_channels; i++)
-			{
-				if(player->channel_isplaying[i])
-				{
-					fluid_midi_event_set_channel(&mute_event, i);
-					player->playback_callback(player->playback_userdata, &mute_event);
-				}
-			}
+            for(i = 0; i < synth->midi_channels; i++)
+            {
+                if(player->channel_isplaying[i])
+                {
+                    fluid_midi_event_set_channel(&mute_event, i);
+                    player->playback_callback(player->playback_userdata, &mute_event);
+                }
+            }
             fluid_atomic_int_set(&player->stopping, 0);
         }
         return 1;
@@ -2142,14 +2142,14 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-			for(i = 0; i < synth->midi_channels; i++)
-			{
-				if(player->channel_isplaying[i])
-				{
-					fluid_midi_event_set_channel(&mute_event, i);
-					player->playback_callback(player->playback_userdata, &mute_event);
-				}
-			}
+            for(i = 0; i < synth->midi_channels; i++)
+            {
+                if(player->channel_isplaying[i])
+                {
+                    fluid_midi_event_set_channel(&mute_event, i);
+                    player->playback_callback(player->playback_userdata, &mute_event);
+                }
+            }
         }
 
         for(i = 0; i < player->ntracks; i++)
