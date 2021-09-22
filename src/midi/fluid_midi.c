@@ -1555,8 +1555,6 @@ fluid_track_send_events(fluid_track_t *track,
                        )
 {
     fluid_midi_event_t *event;
-	fluid_list_t *chlist;
-	int i;
     int seeking = seek_ticks >= 0;
 
     if(seeking)
@@ -1606,22 +1604,9 @@ fluid_track_send_events(fluid_track_t *track,
             if(player->playback_callback)
             {
                 player->playback_callback(player->playback_userdata, event);
-				i = -1;
-				for(chlist = player->channels_playing; chlist; chlist = fluid_list_next(chlist))
-				{
-					i = * (int *) fluid_list_get(chlist);
-					//printf("event->channel=%d, i=%d\n", event->channel, i);
-					if(event->channel == i)
-					{
-						break;
-					}
-					i = -1;
-				}
-				if(i < 0)
-				{
-					i = event->channel;
-                    player->channels_playing = fluid_list_append(player->channels_playing, &i);
-					//printf("adding %d, length is %d\n", i, fluid_list_size(player->channels_playing));
+                if(fluid_list_idx(player->channels_playing, &event->channel) < 0)
+                {
+                    player->channels_playing = fluid_list_append(player->channels_playing, &event->channel);
                 }
             }
         }
@@ -2103,7 +2088,7 @@ fluid_player_callback(void *data, unsigned int msec)
     fluid_midi_event_t mute_event;
     fluid_player_t *player;
     fluid_synth_t *synth;
-    fluid_list_t *chlist;
+    fluid_list_t *ch;
     player = (fluid_player_t *) data;
     synth = player->synth;
 
@@ -2117,10 +2102,9 @@ fluid_player_callback(void *data, unsigned int msec)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-            for(chlist = player->channels_playing; chlist; chlist = fluid_list_next(chlist))
+            for(ch = player->channels_playing; ch; ch = ch->next)
             {
-				i = * (int *) fluid_list_get(chlist);
-                fluid_midi_event_set_channel(&mute_event, i);
+                fluid_midi_event_set_channel(&mute_event, *(int*)ch->data);
                 player->playback_callback(player->playback_userdata, &mute_event);
             }
             fluid_atomic_int_set(&player->stopping, 0);
@@ -2152,12 +2136,10 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            for(chlist = player->channels_playing; chlist; chlist = fluid_list_next(chlist))
+            for(ch = player->channels_playing; ch; ch = ch->next)
             {
-				i = * (int *) fluid_list_get(chlist);
-                fluid_midi_event_set_channel(&mute_event, i);
+                fluid_midi_event_set_channel(&mute_event, *(int*)ch->data);
                 player->playback_callback(player->playback_userdata, &mute_event);
-				//printf("muting channel %d\n", i);
             }
         }
 
