@@ -896,14 +896,25 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-        if(fluid_is_midifile(argv[i]))
+#if defined(WIN32)
+        int u16_count = MultiByteToWideChar(CP_ACP, 0, argv[i], -1, NULL, 0);
+        char *u16_buf = malloc((size_t)u16_count * 2);
+        u16_count = MultiByteToWideChar(CP_ACP, 0, argv[i], -1, (LPWSTR)u16_buf, u16_count);
+        int u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)u16_buf, u16_count, NULL, 0, NULL, NULL);
+        char *u8_path = malloc(u8_byte_count);
+        u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)u16_buf, u16_count, u8_path, u8_byte_count, NULL, NULL);
+        free(u16_buf);
+#else
+        const char *u8_path = argv[i];
+#endif
+        if(fluid_is_midifile(u8_path))
         {
             continue;
         }
 
-        if(fluid_is_soundfont(argv[i]))
+        if(fluid_is_soundfont(u8_path))
         {
-            if(fluid_synth_sfload(synth, argv[i], 1) == -1)
+            if(fluid_synth_sfload(synth, u8_path, 1) == -1)
             {
                 fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
             }
@@ -912,6 +923,9 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
+#if defined(WIN32)
+        free(u8_path);
+#endif
     }
 
     /* Try to load the default soundfont, if no soundfont specified */
