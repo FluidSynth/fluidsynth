@@ -896,16 +896,24 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-#if defined(WIN32)
-        int u16_count = MultiByteToWideChar(CP_ACP, 0, argv[i], -1, NULL, 0);
-        char *u16_buf = malloc((size_t)u16_count * 2);
-        u16_count = MultiByteToWideChar(CP_ACP, 0, argv[i], -1, (LPWSTR)u16_buf, u16_count);
-        int u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)u16_buf, u16_count, NULL, 0, NULL, NULL);
-        char *u8_path = malloc(u8_byte_count);
-        u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, (LPWSTR)u16_buf, u16_count, u8_path, u8_byte_count, NULL, NULL);
-        free(u16_buf);
-#else
         const char *u8_path = argv[i];
+#if defined(WIN32)
+        /* try to convert ANSI encoding path to UTF8 encoding path */
+        char *u8_buf = NULL;
+        int u16_count = MultiByteToWideChar(CP_ACP, 0, argv[i], -1, NULL, 0);
+        LPWSTR u16_buf = (LPWSTR)malloc((size_t)u16_count * 2);
+        if (u16_buf != NULL)
+        {
+            u16_count = MultiByteToWideChar(CP_ACP, 0, argv[i], -1, u16_buf, u16_count);
+            int u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, NULL, 0, NULL, NULL);
+            u8_buf = malloc(u8_byte_count);
+            if (u8_buf != NULL)
+            {
+                WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, u8_buf, u8_byte_count, NULL, NULL);
+                u8_path = u8_buf;
+            }
+            FLUID_FREE(u16_buf);
+        }
 #endif
         if(fluid_is_midifile(u8_path))
         {
@@ -924,7 +932,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
 #if defined(WIN32)
-        free(u8_path);
+        FLUID_FREE(u8_buf);
 #endif
     }
 
