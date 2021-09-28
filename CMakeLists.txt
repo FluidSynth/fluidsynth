@@ -90,6 +90,7 @@ option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optiona
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
+option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
@@ -698,7 +699,7 @@ endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
 find_package ( OpenMP QUIET )
-if ( OpenMP_FOUND OR OpenMP_C_FOUND )
+if (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
     message(STATUS "Found OpenMP ${OpenMP_C_SPEC_DATE}")
     # require at least OMP 4.0
     if ( ( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" ) )
