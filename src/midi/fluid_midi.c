@@ -1604,9 +1604,9 @@ fluid_track_send_events(fluid_track_t *track,
             if(player->playback_callback)
             {
                 player->playback_callback(player->playback_userdata, event);
-                if(event->type == NOTE_ON && !player->channel_isplaying[event->channel])
+                if(event->type == NOTE_ON && event->param2 != 0 && !player->channel_isplaying[event->channel])
                 {
-                    player->channel_isplaying[event->channel] = 1;
+                    player->channel_isplaying[event->channel] = TRUE;
                 }
             }
         }
@@ -1662,11 +1662,6 @@ new_fluid_player(fluid_synth_t *synth)
     for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
     {
         player->track[i] = NULL;
-    }
-
-    for(i = 0; i < synth->midi_channels; i++)
-    {
-        player->channel_isplaying[i] = 0;
     }
 
     player->synth = synth;
@@ -1794,6 +1789,11 @@ fluid_player_reset(fluid_player_t *player)
             delete_fluid_track(player->track[i]);
             player->track[i] = NULL;
         }
+    }
+
+    for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
+    {
+        player->channel_isplaying[i] = FALSE;
     }
 
     /*    player->current_file = NULL; */
