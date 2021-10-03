@@ -156,46 +156,6 @@ print_pretty_int(int i)
     }
 }
 
-
-#ifdef WIN32
-/* Function using win32 api to convert ANSI encoding string to UTF8 encoding string */
-static char*
-win32_ansi_to_utf8(const char* ansi_null_terminated_string)
-{
-    LPWSTR u16_buf = NULL;
-    char *u8_buf = NULL;
-    fluid_return_val_if_fail(ansi_null_terminated_string != NULL, NULL);
-    do
-    {
-        int u16_count, u8_byte_count;
-        u16_count = MultiByteToWideChar(CP_ACP, 0, ansi_null_terminated_string, -1, NULL, 0);
-        if (u16_count == 0)
-        {
-            fprintf(stderr, "Failed to convert ANSI string to wide char string\n");
-            break;
-        }
-        u16_buf = FLUID_ARRAY(WCHAR, u16_count);
-        if (u16_buf == NULL)
-        {
-            fprintf(stderr, "Out of memory\n");
-            break;
-        }
-        u16_count = MultiByteToWideChar(CP_ACP, 0, ansi_null_terminated_string, -1, u16_buf, u16_count);
-        u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, NULL, 0, NULL, NULL);
-
-        u8_buf = FLUID_ARRAY(char, u8_byte_count);
-        if (u8_buf == NULL)
-        {
-            fprintf(stderr, "Out of memory\n");
-            break;
-        }
-        WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, u8_buf, u8_byte_count, NULL, NULL);
-    } while (0);
-    FLUID_FREE(u16_buf);
-    return u8_buf;
-}
-#endif
-
 typedef struct
 {
     int count;            /* Total count of options */
@@ -939,7 +899,7 @@ int main(int argc, char **argv)
         const char *u8_path = argv[i];
 #if defined(WIN32)
         /* try to convert ANSI encoding path to UTF8 encoding path */
-        char *u8_buf = win32_ansi_to_utf8(argv[i]);
+        char *u8_buf = fluid_win32_ansi_to_utf8(argv[i]);
         if (u8_buf == NULL)
         {
             // error msg. already printed

@@ -169,6 +169,7 @@ typedef gintptr  intptr_t;
 
 #ifdef WIN32
 char* fluid_get_windows_error(void);
+char* fluid_win32_ansi_to_utf8(const char* ansi_null_terminated_string);
 #endif
 
 #define FLUID_INLINE              inline
