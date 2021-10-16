@@ -92,6 +92,11 @@ option ( enable-readline "compile readline lib line editing (if it is available)
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 
+# Options for build components
+option ( build-bins "build binary programs" on )
+option ( build-docs "build docs" on )
+option ( build-tests "build tests" on )
+
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
     option ( enable-lash "compile LASH support (if it is available)" on )
@@ -812,8 +817,12 @@ ENABLE_TESTING()
 
 # Process subdirectories
 add_subdirectory ( src )
-add_subdirectory ( test )
-add_subdirectory ( doc )
+if ( build-tests )
+    add_subdirectory ( test )
+endif ()
+if ( build-docs )
+    add_subdirectory ( doc )
+endif ()
 
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
