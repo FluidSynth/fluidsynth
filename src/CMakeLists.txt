@@ -366,7 +366,7 @@ target_link_libraries ( libfluidsynth
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
     ${OpenSLES_LIBS}
-    ${OBOE_LIBS}
+    ${OBOE_LIBRARIES}
     ${LIBFLUID_LIBS}
     ${LIBINSTPATCH_LIBRARIES}
 )
