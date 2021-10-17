@@ -39,6 +39,7 @@ fluid_midi_event_t *fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigne
 
 
 #define MAX_NUMBER_OF_TRACKS 128
+#define MAX_NUMBER_OF_CHANNELS 16
 
 enum fluid_midi_event_type
 {
@@ -325,6 +326,8 @@ struct _fluid_player_t
     void *playback_userdata; /* pointer to user-defined data passed to playback_callback function */
     handle_midi_tick_func_t tick_callback; /* function fired on each tick change */
     void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
+
+    int channel_isplaying[MAX_NUMBER_OF_CHANNELS]; /* flags indicating channels on which notes have played */
 };
 
 void fluid_player_settings(fluid_settings_t *settings);
