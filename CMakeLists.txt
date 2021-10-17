@@ -62,7 +62,6 @@ set ( LIB_VERSION_INFO
 
 # Options disabled by default
 option ( enable-coverage "enable gcov code coverage" off )
-option ( enable-debug "enable debugging (default=no)" off )
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
 option ( enable-portaudio "compile PortAudio support" off )
@@ -431,11 +430,6 @@ if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( ENABLE_FPECHECK 1 )
     set ( FPE_CHECK 1 )
 endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
-
-if ( enable-debug )
-    set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
-          "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
-endif ( enable-debug )
 
 if ( NOT CMAKE_BUILD_TYPE )
     set ( CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
