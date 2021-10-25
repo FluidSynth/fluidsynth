@@ -60,7 +60,7 @@ typedef float fluid_real_t;
 typedef double fluid_real_t;
 #endif
 
-#if defined(SUPPORTS_VLA)
+#if SUPPORTS_VLA
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
 #else
