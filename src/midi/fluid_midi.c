@@ -2215,6 +2215,11 @@ fluid_player_play(fluid_player_t *player)
         fluid_sample_timer_reset(player->synth, player->sample_timer);
     }
 
+	if(player->currentfile == NULL && player->loop == 0)
+	{
+		player->loop = 1;
+	}
+	
     fluid_atomic_int_set(&player->status, FLUID_PLAYER_PLAYING);
 
     return FLUID_OK;
