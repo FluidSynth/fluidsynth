@@ -2,11 +2,14 @@
 #ifndef _FLUID_MAKE_TABLES_H
 #define _FLUID_MAKE_TABLES_H
 
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES // Enable M_LN10 and M_PI constants under VisualStudio
+#endif
+#include <math.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
-
 
 #define EMIT_ARRAY(__fp__, __arr__) emit_array(__fp__, #__arr__, __arr__, sizeof(__arr__)/sizeof(*__arr__))
 
