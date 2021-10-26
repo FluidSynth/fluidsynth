@@ -24,7 +24,7 @@
 #define _GNU_SOURCE
 #endif
 
-#if defined(HAVE_GETOPT_H)
+#if HAVE_GETOPT_H
 #include <getopt.h>
 #define GETOPT_SUPPORT 1
 #endif
