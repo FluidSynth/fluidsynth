@@ -45,6 +45,11 @@
 #include <string.h>
 #endif
 
+#if HAVE_WINDOWS_H
+#  ifndef WIN32
+#    define WIN32 1
+#  endif
+#endif
 
 #include "fluidsynth.h"
 
