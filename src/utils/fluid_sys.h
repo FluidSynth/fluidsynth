@@ -710,7 +710,7 @@ enum
     sample data.
  */
 
-#if defined(HAVE_SYS_MMAN_H) && !defined(__OS2__)
+#if HAVE_SYS_MMAN_H && !defined(__OS2__)
 #define fluid_mlock(_p,_n)      mlock(_p, _n)
 #define fluid_munlock(_p,_n)    munlock(_p,_n)
 #else
