@@ -32,9 +32,9 @@
 
 #if OSS_SUPPORT
 
-#if defined(HAVE_SYS_SOUNDCARD_H)
+#if HAVE_SYS_SOUNDCARD_H
 #include <sys/soundcard.h>
-#elif defined(HAVE_LINUX_SOUNDCARD_H)
+#elif HAVE_LINUX_SOUNDCARD_H
 #include <linux/soundcard.h>
 #else
 #include <machine/soundcard.h>
