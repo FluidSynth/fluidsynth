@@ -2200,6 +2200,9 @@ fluid_player_callback(void *data, unsigned int msec)
  * Activates play mode for a MIDI player if not already playing.
  * @param player MIDI player instance
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * If the list of files added to the player has completed its requested number of loops,
+ * the playlist will be restarted from the beginning with a loop count of 1.
  */
 int
 fluid_player_play(fluid_player_t *player)
@@ -2215,6 +2218,7 @@ fluid_player_play(fluid_player_t *player)
         fluid_sample_timer_reset(player->synth, player->sample_timer);
     }
 
+	/* If we're at the end of the playlist and there are no loops left, loop once */
 	if(player->currentfile == NULL && player->loop == 0)
 	{
 		player->loop = 1;
@@ -2224,6 +2228,7 @@ fluid_player_play(fluid_player_t *player)
 
     return FLUID_OK;
 }
+
 /**
  * Pauses the MIDI playback.
  *
