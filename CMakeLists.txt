@@ -879,13 +879,13 @@ if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12
     list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
     list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
     list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+
+    list ( JOIN PC_REQUIRES_PRIV " " PC_REQUIRES_PRIV_JOINED )
 else ()
     set ( LIBS_PRIVATE "" )
     set ( LIBS_PRIVATE_WITH_PATH "" )
     message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
 endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
-
-list ( JOIN PC_REQUIRES_PRIV " " PC_REQUIRES_PRIV_JOINED )
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
