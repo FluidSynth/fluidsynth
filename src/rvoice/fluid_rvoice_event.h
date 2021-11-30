@@ -46,18 +46,30 @@ struct _fluid_rvoice_eventhandler_t
     fluid_atomic_int_t queue_stored; /**< Extras pushed but not flushed */
     fluid_ringbuffer_t *finished_voices; /**< return queue from handler, list of fluid_rvoice_t* */
     fluid_rvoice_mixer_t *mixer;
+
+    int idle_blocks_threshold;
+    int idle_blocks;
+
+    int idle;
+    fluid_cond_t *pending_events;
+    fluid_cond_mutex_t *pending_events_m;
 };
 
 fluid_rvoice_eventhandler_t *new_fluid_rvoice_eventhandler(
     int queuesize, int finished_voices_size, int bufs,
-    int fx_bufs, int fx_units, fluid_real_t sample_rate_max, fluid_real_t sample_rate, int, int);
+    int fx_bufs, int fx_units, fluid_real_t sample_rate_max, fluid_real_t sample_rate, int, int, int);
 
 void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t *);
 
 int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t *);
 int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t *);
+int fluid_rvoice_eventhandler_pending_events(fluid_rvoice_eventhandler_t *handler);
 void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler,
         fluid_rvoice_t *rvoice);
+
+int  fluid_rvoice_eventhandler_is_idle(fluid_rvoice_eventhandler_t *handler);
+void fluid_rvoice_eventhandler_update_idle_state(fluid_rvoice_eventhandler_t *handler, int blockcount);
+void fluid_rvoice_eventhandler_wait_for_events(fluid_rvoice_eventhandler_t *handler);
 
 static FLUID_INLINE void
 fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t *handler)

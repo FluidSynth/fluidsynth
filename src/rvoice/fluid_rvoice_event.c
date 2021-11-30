@@ -27,6 +27,9 @@
 
 static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *handler, const fluid_rvoice_event_t *src_event);
 
+static void fluid_rvoice_eventhandler_notify_pending_events(fluid_rvoice_eventhandler_t *handler);
+static FLUID_INLINE int fluid_rvoice_eventhandler_has_pending_events(fluid_rvoice_eventhandler_t *handler);
+
 static FLUID_INLINE void
 fluid_rvoice_event_dispatch(fluid_rvoice_event_t *event)
 {
@@ -94,6 +97,8 @@ static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *han
 
     FLUID_MEMCPY(event, src_event, sizeof(*event));
 
+    fluid_rvoice_eventhandler_notify_pending_events(handler);
+
     return FLUID_OK;
 }
 
@@ -116,7 +121,7 @@ fluid_rvoice_eventhandler_t *
 new_fluid_rvoice_eventhandler(int queuesize,
                               int finished_voices_size, int bufs, int fx_bufs, int fx_units,
                               fluid_real_t sample_rate_max, fluid_real_t sample_rate,
-                              int extra_threads, int prio)
+                              int extra_threads, int prio, int idle_blocks_threshold)
 {
     fluid_rvoice_eventhandler_t *eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
 
@@ -155,6 +160,16 @@ new_fluid_rvoice_eventhandler(int queuesize,
         goto error_recovery;
     }
 
+    eventhandler->idle_blocks_threshold = idle_blocks_threshold;
+    eventhandler->idle_blocks = 0;
+    eventhandler->idle = 0;
+    eventhandler->pending_events = new_fluid_cond();
+    eventhandler->pending_events_m = new_fluid_cond_mutex();
+    if (!eventhandler->pending_events || !eventhandler->pending_events_m)
+    {
+        goto error_recovery;
+    }
+
     return eventhandler;
 
 error_recovery:
@@ -166,6 +181,14 @@ int
 fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t *handler)
 {
     return fluid_ringbuffer_get_count(handler->queue);
+}
+
+
+static FLUID_INLINE int
+fluid_rvoice_eventhandler_has_pending_events(fluid_rvoice_eventhandler_t *handler)
+{
+    return (fluid_ringbuffer_get_count(handler->queue) > 0 ||
+            handler->queue_stored > 0);
 }
 
 
@@ -189,11 +212,79 @@ fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t *handler)
     return result;
 }
 
+void fluid_rvoice_eventhandler_update_idle_state(
+        fluid_rvoice_eventhandler_t *handler, int blockcount)
+{
+    fluid_return_if_fail(handler->idle_blocks_threshold > 0);
+
+    if (fluid_rvoice_mixer_get_active_voices(handler->mixer) ||
+            fluid_rvoice_eventhandler_has_pending_events(handler))
+    {
+        handler->idle_blocks = 0;
+        return;
+    }
+
+    if (handler->idle_blocks < handler->idle_blocks_threshold)
+    {
+        handler->idle_blocks += blockcount;
+
+        if (handler->idle_blocks >= handler->idle_blocks_threshold)
+        {
+            handler->idle_blocks = 0;
+            fluid_cond_mutex_lock(handler->pending_events_m);
+            handler->idle = TRUE;
+            fluid_cond_mutex_unlock(handler->pending_events_m);
+        }
+    }
+}
+
+int fluid_rvoice_eventhandler_is_idle(fluid_rvoice_eventhandler_t *handler)
+{
+    int idle;
+
+    fluid_return_val_if_fail(handler->idle_blocks_threshold > 0, FALSE);
+
+    fluid_cond_mutex_lock(handler->pending_events_m);
+    idle = handler->idle || fluid_rvoice_eventhandler_has_pending_events(handler);
+    fluid_cond_mutex_unlock(handler->pending_events_m);
+    return idle;
+}
+
+void fluid_rvoice_eventhandler_wait_for_events(fluid_rvoice_eventhandler_t *handler)
+{
+    fluid_return_if_fail(handler->idle_blocks_threshold > 0);
+
+    fluid_cond_mutex_lock(handler->pending_events_m);
+    if (handler->idle && !fluid_rvoice_eventhandler_has_pending_events(handler)) {
+        fluid_cond_wait(handler->pending_events, handler->pending_events_m);
+    }
+    fluid_cond_mutex_unlock(handler->pending_events_m);
+}
+
+static void fluid_rvoice_eventhandler_notify_pending_events(fluid_rvoice_eventhandler_t *handler)
+{
+    fluid_return_if_fail(handler->idle_blocks_threshold > 0);
+
+    fluid_cond_mutex_lock(handler->pending_events_m);
+    if (handler->idle) {
+        handler->idle = FALSE;
+        fluid_cond_signal(handler->pending_events);
+    }
+    fluid_cond_mutex_unlock(handler->pending_events_m);
+}
 
 void
 delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t *handler)
 {
     fluid_return_if_fail(handler != NULL);
+
+    if (handler->pending_events_m) {
+        delete_fluid_cond_mutex(handler->pending_events_m);
+    }
+
+    if (handler->pending_events) {
+        delete_fluid_cond(handler->pending_events);
+    }
 
     delete_fluid_rvoice_mixer(handler->mixer);
     delete_fluid_ringbuffer(handler->queue);

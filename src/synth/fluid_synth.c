@@ -4921,6 +4921,9 @@ fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount)
         };
     };
 #endif
+
+    fluid_rvoice_eventhandler_update_idle_state(synth->eventhandler, blockcount);
+
     fluid_check_fpe("??? Remainder of synth_one_block ???");
     fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref,
                   fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
@@ -8409,4 +8412,14 @@ int fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan,
     }
 
     FLUID_API_RETURN(FLUID_OK);
+}
+
+int fluid_synth_is_idle(fluid_synth_t *synth)
+{
+    return fluid_rvoice_eventhandler_is_idle(synth->eventhandler);
+}
+
+void fluid_synth_idle_wait(fluid_synth_t *synth)
+{
+    fluid_rvoice_eventhandler_wait_for_events(synth->eventhandler);
 }

@@ -251,6 +251,11 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
 void fluid_synth_settings(fluid_settings_t *settings);
 void fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate);
 
+/*
+ * idle state / auto-suspend handling
+ */
+int fluid_synth_is_idle(fluid_synth_t *synth);
+void fluid_synth_idle_wait(fluid_synth_t *synth);
 
 /* extern declared in fluid_synth_monopoly.c */
 
