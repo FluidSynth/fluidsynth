@@ -42,6 +42,11 @@ typedef struct
 {
     fluid_audio_driver_t driver;
     pa_simple *pa_handle;
+    pa_sample_spec pa_samplespec;
+    pa_buffer_attr pa_bufattr;
+    char *pa_server;
+    char *pa_device;
+
     fluid_audio_func_t callback;
     void *data;
     int buffer_size;
@@ -75,20 +80,57 @@ new_fluid_pulse_audio_driver(fluid_settings_t *settings,
     return new_fluid_pulse_audio_driver2(settings, NULL, synth);
 }
 
+
+static int fluid_pulse_audio_connect(fluid_pulse_audio_driver_t *dev)
+{
+    int err;
+
+    fluid_return_val_if_fail(dev, FLUID_FAILED);
+    fluid_return_val_if_fail(dev->pa_handle == NULL, FLUID_FAILED);
+
+    dev->pa_handle = pa_simple_new(dev->pa_server, "FluidSynth", PA_STREAM_PLAYBACK,
+                                   dev->pa_device, "FluidSynth output", &dev->pa_samplespec,
+                                   NULL, /* pa_channel_map */
+                                   &dev->pa_bufattr,
+                                   &err);
+
+    if(!dev->pa_handle)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection");
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+static int fluid_pulse_audio_disconnect(fluid_pulse_audio_driver_t *dev)
+{
+    int err;
+
+    fluid_return_val_if_fail(dev, FLUID_FAILED);
+    fluid_return_val_if_fail(dev->pa_handle != NULL, FLUID_FAILED);
+
+    if (pa_simple_drain(dev->pa_handle, &err) < 0)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to drain PulseAudio buffers");
+        return FLUID_FAILED;
+    }
+
+    pa_simple_free(dev->pa_handle);
+    dev->pa_handle = NULL;
+
+    return FLUID_OK;
+}
+
 fluid_audio_driver_t *
 new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
                               fluid_audio_func_t func, void *data)
 {
     fluid_pulse_audio_driver_t *dev;
-    pa_sample_spec samplespec;
-    pa_buffer_attr bufattr;
     double sample_rate;
     int period_size, period_bytes, adjust_latency;
-    char *server = NULL;
-    char *device = NULL;
     char *media_role = NULL;
     int realtime_prio = 0;
-    int err;
     float *left = NULL,
            *right = NULL,
             *buf = NULL;
@@ -105,8 +147,8 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
 
     fluid_settings_getint(settings, "audio.period-size", &period_size);
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-    fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */
-    fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);  /* ++ alloc device string */
+    fluid_settings_dupstr(settings, "audio.pulseaudio.server", &dev->pa_server);  /* ++ alloc server string */
+    fluid_settings_dupstr(settings, "audio.pulseaudio.device", &dev->pa_device);  /* ++ alloc device string */
     fluid_settings_dupstr(settings, "audio.pulseaudio.media-role", &media_role);  /* ++ alloc media-role string */
     fluid_settings_getint(settings, "audio.realtime-prio", &realtime_prio);
     fluid_settings_getint(settings, "audio.pulseaudio.adjust-latency", &adjust_latency);
@@ -121,16 +163,16 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
         FLUID_FREE(media_role);       /* -- free media_role string */
     }
 
-    if(server && FLUID_STRCMP(server, "default") == 0)
+    if(dev->pa_server && FLUID_STRCMP(dev->pa_server, "default") == 0)
     {
-        FLUID_FREE(server);         /* -- free server string */
-        server = NULL;
+        FLUID_FREE(dev->pa_server);         /* -- free server string */
+        dev->pa_server = NULL;
     }
 
-    if(device && FLUID_STRCMP(device, "default") == 0)
+    if(dev->pa_device && FLUID_STRCMP(dev->pa_device, "default") == 0)
     {
-        FLUID_FREE(device);         /* -- free device string */
-        device = NULL;
+        FLUID_FREE(dev->pa_device);         /* -- free device string */
+        dev->pa_device = NULL;
     }
 
     dev->data = data;
@@ -138,26 +180,19 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     dev->cont = 1;
     dev->buffer_size = period_size;
 
-    samplespec.format = PA_SAMPLE_FLOAT32NE;
-    samplespec.channels = 2;
-    samplespec.rate = sample_rate;
+    dev->pa_samplespec.format = PA_SAMPLE_FLOAT32NE;
+    dev->pa_samplespec.channels = 2;
+    dev->pa_samplespec.rate = sample_rate;
 
     period_bytes = period_size * sizeof(float) * 2;
-    bufattr.maxlength = adjust_latency ? -1 : period_bytes;
-    bufattr.tlength = period_bytes;
-    bufattr.minreq = -1;
-    bufattr.prebuf = -1;    /* Just initialize to same value as tlength */
-    bufattr.fragsize = -1;  /* Not used */
+    dev->pa_bufattr.maxlength = adjust_latency ? -1 : period_bytes;
+    dev->pa_bufattr.tlength = period_bytes;
+    dev->pa_bufattr.minreq = -1;
+    dev->pa_bufattr.prebuf = -1;    /* Just initialize to same value as tlength */
+    dev->pa_bufattr.fragsize = -1;  /* Not used */
 
-    dev->pa_handle = pa_simple_new(server, "FluidSynth", PA_STREAM_PLAYBACK,
-                                   device, "FluidSynth output", &samplespec,
-                                   NULL, /* pa_channel_map */
-                                   &bufattr,
-                                   &err);
-
-    if(!dev->pa_handle)
+    if (fluid_pulse_audio_connect(dev) == FLUID_FAILED)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection");
         goto error_recovery;
     }
 
@@ -195,14 +230,9 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
         goto error_recovery;
     }
 
-    FLUID_FREE(server);    /* -- free server string */
-    FLUID_FREE(device);    /* -- free device string */
-
     return (fluid_audio_driver_t *) dev;
 
 error_recovery:
-    FLUID_FREE(server);    /* -- free server string */
-    FLUID_FREE(device);    /* -- free device string */
     FLUID_FREE(left);
     FLUID_FREE(right);
     FLUID_FREE(buf);
@@ -229,6 +259,8 @@ void delete_fluid_pulse_audio_driver(fluid_audio_driver_t *p)
         pa_simple_free(dev->pa_handle);
     }
 
+    FLUID_FREE(dev->pa_server);
+    FLUID_FREE(dev->pa_device);
     FLUID_FREE(dev->left);
     FLUID_FREE(dev->right);
     FLUID_FREE(dev->buf);
@@ -260,13 +292,15 @@ fluid_pulse_audio_run(void *d)
 
         if (fluid_synth_is_idle(synth)) {
             fluid_log(FLUID_ERR, "pausing pa playback\n"); // FIXME: remove debug output
-            if(pa_simple_drain(dev->pa_handle, &err) < 0)
+            if (fluid_pulse_audio_disconnect(dev) == FLUID_FAILED)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to stop the audio device");
                 break;
             }
             fluid_synth_idle_wait(synth);
             fluid_log(FLUID_ERR, "resuming pa playback\n"); // FIXME: remove debug output
+            if (fluid_pulse_audio_connect(dev) == FLUID_FAILED) {
+                break;
+            }
             continue;
         }
 
