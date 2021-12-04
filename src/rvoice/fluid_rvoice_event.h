@@ -63,7 +63,6 @@ void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t *);
 
 int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t *);
 int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t *);
-int fluid_rvoice_eventhandler_pending_events(fluid_rvoice_eventhandler_t *handler);
 void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler,
         fluid_rvoice_t *rvoice);
 
