@@ -241,6 +241,7 @@ static fluid_thread_return_t
 fluid_pulse_audio_run(void *d)
 {
     fluid_pulse_audio_driver_t *dev = (fluid_pulse_audio_driver_t *) d;
+    fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
     float *buf = dev->buf;
     int buffer_size;
     int err;
@@ -249,14 +250,26 @@ fluid_pulse_audio_run(void *d)
 
     while(dev->cont)
     {
-        fluid_synth_write_float(dev->data, buffer_size, buf, 0, 2, buf, 1, 2);
-
+        fluid_synth_write_float(synth, buffer_size, buf, 0, 2, buf, 1, 2);
         if(pa_simple_write(dev->pa_handle, buf,
                            buffer_size * sizeof(float) * 2, &err) < 0)
         {
             FLUID_LOG(FLUID_ERR, "Error writing to PulseAudio connection.");
             break;
         }
+
+        if (fluid_synth_is_idle(synth)) {
+            fluid_log(FLUID_ERR, "pausing pa playback\n"); // FIXME: remove debug output
+            if(pa_simple_drain(dev->pa_handle, &err) < 0)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to stop the audio device");
+                break;
+            }
+            fluid_synth_idle_wait(synth);
+            fluid_log(FLUID_ERR, "resuming pa playback\n"); // FIXME: remove debug output
+            continue;
+        }
+
     }	/* while (dev->cont) */
 
     return FLUID_THREAD_RETURN_VALUE;
