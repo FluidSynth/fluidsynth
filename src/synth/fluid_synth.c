@@ -255,6 +255,8 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
 
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
+
+    fluid_settings_register_int(settings, "synth.idle-timeout", 0, 0, 65535, 0);
 }
 
 /**
@@ -627,6 +629,7 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_sfloader_t *loader;
     char *important_channels;
     int i, prio_level = 0;
+    int idle_blocks_threshold = 0;
     int with_ladspa = 0;
     double sample_rate_min, sample_rate_max;
 
@@ -816,13 +819,18 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_settings_getint(synth->settings, "audio.realtime-prio", &prio_level);
     }
 
+    fluid_settings_getint(settings, "synth.idle-timeout", &synth->idle_timeout);
+    if (synth->idle_timeout > 0) {
+        idle_blocks_threshold = (synth->sample_rate / FLUID_BUFSIZE) * synth->idle_timeout;
+    }
+
     /* Allocate event queue for rvoice mixer */
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
     synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64,
                           synth->polyphony, synth->audio_groups,
                           synth->effects_channels, synth->effects_groups,
                           (fluid_real_t)sample_rate_max, synth->sample_rate,
-                          synth->cores - 1, prio_level);
+                          synth->cores - 1, prio_level, idle_blocks_threshold);
 
     if(synth->eventhandler == NULL)
     {
@@ -4767,6 +4775,7 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
     fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
                         fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
                         len);
+
     return FLUID_OK;
 }
 

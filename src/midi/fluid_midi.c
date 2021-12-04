@@ -1687,7 +1687,8 @@ new_fluid_player(fluid_synth_t *synth)
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
     fluid_player_set_tick_callback(player, NULL, NULL);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
-                               "player.timing-source", "system");
+                               "player.timing-source", "system") || synth->idle_timeout;
+
     if(player->use_system_timer)
     {
         player->system_timer = new_fluid_timer((int) player->deltatime,
