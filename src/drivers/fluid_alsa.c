@@ -607,6 +607,23 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d)
                     offset += n;    /* no error occurred */
                 }
             }	/* while (offset < buffer_size) */
+
+            if (fluid_synth_is_idle(synth)) {
+                fluid_log(FLUID_ERR, "pausing rendering\n"); // FIXME: remove debug output
+                if(snd_pcm_drain(dev->pcm) != 0)
+                {
+                    FLUID_LOG(FLUID_ERR, "Failed to stop the audio device");
+                    goto error_recovery;
+                }
+                fluid_synth_idle_wait(synth);
+                fluid_log(FLUID_ERR, "resuming rendering\n"); // FIXME: remove debug output
+                if(snd_pcm_prepare(dev->pcm) != 0)
+                {
+                    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+                    goto error_recovery;
+                }
+                continue;
+            }
         }	/* while (dev->cont) */
     }
 
