@@ -324,10 +324,13 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
         FLUID_LOG(FLUID_ERR, "Software setup failed.");
     }
 
-    if(snd_pcm_nonblock(dev->pcm, 0) != 0)
+    if (fluid_alsa_formats[i].access != SND_PCM_ACCESS_MMAP_INTERLEAVED)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
-        goto error_recovery;
+        if(snd_pcm_nonblock(dev->pcm, 0) != 0)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
+            goto error_recovery;
+        }
     }
 
     /* Create the audio thread */
@@ -654,12 +657,6 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16_mmap(void *d)
     short *buf;
     int ret;
 
-    if(snd_pcm_start(dev->pcm) != 0)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to start the audio device");
-        goto error_recovery;
-    }
-
     /* use separate loops depending on if callback supplied or not */
     if(dev->callback)
     {
@@ -670,12 +667,24 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16_mmap(void *d)
     {
         fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
         int avail;
+        int first = 1;
 
         while(dev->cont)
         {
             avail = snd_pcm_avail_update(dev->pcm);
 
             if (avail < dev->buffer_size) {
+                if (first)
+                {
+                    ret = snd_pcm_start(dev->pcm);
+                    if(ret != 0)
+                    {
+                        FLUID_LOG(FLUID_ERR, "Failed to start the audio device: %s (%d)", snd_strerror(ret), ret);
+                        goto error_recovery;
+                    }
+                    first = 0;
+                }
+
                 if (snd_pcm_wait(dev->pcm, -1) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, "Failed to wait for next");
