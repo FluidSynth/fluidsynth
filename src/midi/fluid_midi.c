@@ -1687,7 +1687,15 @@ new_fluid_player(fluid_synth_t *synth)
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
     fluid_player_set_tick_callback(player, NULL, NULL);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
-                               "player.timing-source", "system") || synth->idle_timeout;
+                               "player.timing-source", "system");
+
+    if (synth->idle_timeout && !player->use_system_timer)
+    {
+        fluid_log(FLUID_ERR,
+                "MIDI players with sample timers are incompatible with idle-timeout "
+                "handling, use system timers (player.timing-source=system) instead");
+        goto err;
+    }
 
     if(player->use_system_timer)
     {

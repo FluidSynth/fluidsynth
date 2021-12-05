@@ -115,6 +115,15 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
     fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
 
+    if (synth->idle_timeout && !fluid_sequencer_get_use_system_timer(seq))
+    {
+        fluid_log(FLUID_ERR,
+                "Sequencers with sample timers are incompatible with idle-timeout "
+                "handling, use system timers instead.");
+        return FLUID_FAILED;
+
+    }
+
     seqbind = FLUID_NEW(fluid_seqbind_t);
 
     if(seqbind == NULL)
