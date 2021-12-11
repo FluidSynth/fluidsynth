@@ -66,7 +66,8 @@ static void fluid_pipewire_event_process(void *data)
     float *dest;
 
     pwb = pw_stream_dequeue_buffer(drv->pw_stream);
-    if (!pwb)
+
+    if(!pwb)
     {
         FLUID_LOG(FLUID_WARN, "No buffers!");
         return;
@@ -74,7 +75,8 @@ static void fluid_pipewire_event_process(void *data)
 
     buf = pwb->buffer;
     dest = buf->datas[0].data;
-    if (!dest)
+
+    if(!dest)
     {
         return;
     }
@@ -98,7 +100,8 @@ static void fluid_pipewire_event_process2(void *data)
     int i;
 
     pwb = pw_stream_dequeue_buffer(drv->pw_stream);
-    if (!pwb)
+
+    if(!pwb)
     {
         FLUID_LOG(FLUID_WARN, "No buffers!");
         return;
@@ -106,7 +109,8 @@ static void fluid_pipewire_event_process2(void *data)
 
     buf = pwb->buffer;
     dest = buf->datas[0].data;
-    if (!dest)
+
+    if(!dest)
     {
         return;
     }
@@ -117,7 +121,7 @@ static void fluid_pipewire_event_process2(void *data)
     (*drv->user_callback)(drv->data, drv->buffer_period, 0, NULL, NUM_CHANNELS, channels);
 
     /* Interleave the floating point data */
-    for (i = 0; i < drv->buffer_period; i++)
+    for(i = 0; i < drv->buffer_period; i++)
     {
         dest[i * 2] = drv->lbuf[i];
         dest[i * 2 + 1] = drv->rbuf[i];
@@ -152,11 +156,13 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     const struct spa_pod *params[1];
 
     drv = FLUID_NEW(fluid_pipewire_audio_driver_t);
-    if (!drv)
+
+    if(!drv)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+
     FLUID_MEMSET(drv, 0, sizeof(*drv));
 
     fluid_settings_getint(settings, "audio.period-size", &period_size);
@@ -171,58 +177,66 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     drv->buffer_period = period_size;
 
     drv->events = FLUID_NEW(struct pw_stream_events);
-    if (!drv->events)
+
+    if(!drv->events)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         goto driver_cleanup;
     }
+
     FLUID_MEMSET(drv->events, 0, sizeof(*drv->events));
     drv->events->version = PW_VERSION_STREAM_EVENTS;
     drv->events->process = func ? fluid_pipewire_event_process2 : fluid_pipewire_event_process;
 
     drv->pw_loop = pw_thread_loop_new("fluid_pipewire", NULL);
-    if (!drv->pw_loop)
+
+    if(!drv->pw_loop)
     {
         FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire loop");
         goto driver_cleanup;
     }
 
     drv->pw_stream = pw_stream_new_simple(
-    pw_thread_loop_get_loop(drv->pw_loop),
-    "FluidSynth",
-    pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL),
-    drv->events,
-    drv);
-    if (!drv->pw_stream)
+                         pw_thread_loop_get_loop(drv->pw_loop),
+                         "FluidSynth",
+                         pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL),
+                         drv->events,
+                         drv);
+
+    if(!drv->pw_stream)
     {
         FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire stream");
         goto driver_cleanup;
     }
 
-    buffer = FLUID_ARRAY(float, NUM_CHANNELS *period_size);
-    if (!buffer)
+    buffer = FLUID_ARRAY(float, NUM_CHANNELS * period_size);
+
+    if(!buffer)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         goto driver_cleanup;
     }
+
     buffer_length = period_size * sizeof(float) * NUM_CHANNELS;
 
     drv->builder = FLUID_NEW(struct spa_pod_builder);
-    if (!drv->builder)
+
+    if(!drv->builder)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         goto driver_cleanup;
     }
+
     FLUID_MEMSET(drv->builder, 0, sizeof(*drv->builder));
     drv->builder->data = buffer;
     drv->builder->size = buffer_length;
 
-    if (func)
+    if(func)
     {
         drv->lbuf = FLUID_ARRAY(float, period_size);
         drv->rbuf = FLUID_ARRAY(float, period_size);
 
-        if (!drv->lbuf || !drv->rbuf)
+        if(!drv->lbuf || !drv->rbuf)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             goto driver_cleanup;
@@ -232,20 +246,22 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     params[0] = spa_format_audio_raw_build(drv->builder,
                                            SPA_PARAM_EnumFormat,
                                            &SPA_AUDIO_INFO_RAW_INIT(.format = SPA_AUDIO_FORMAT_F32,
-                                                                    .channels = 2,
-                                                                    .rate = sample_rate));
+                                                   .channels = 2,
+                                                   .rate = sample_rate));
 
     pw_flags = PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS;
     pw_flags |= realtime_prio ? PW_STREAM_FLAG_RT_PROCESS : 0;
     res = pw_stream_connect(drv->pw_stream, PW_DIRECTION_OUTPUT, PW_ID_ANY, pw_flags, params, 1);
-    if (res < 0)
+
+    if(res < 0)
     {
         FLUID_LOG(FLUID_ERR, "PipeWire stream connection failed");
         goto driver_cleanup;
     }
 
     res = pw_thread_loop_start(drv->pw_loop);
-    if (res != 0)
+
+    if(res != 0)
     {
         FLUID_LOG(FLUID_ERR, "Failed starting PipeWire loop");
         goto driver_cleanup;
@@ -273,12 +289,12 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
     fluid_pipewire_audio_driver_t *drv = (fluid_pipewire_audio_driver_t *)p;
     fluid_return_if_fail(drv);
 
-    if (drv->pw_stream)
+    if(drv->pw_stream)
     {
         pw_stream_destroy(drv->pw_stream);
     }
 
-    if (drv->pw_loop)
+    if(drv->pw_loop)
     {
         pw_thread_loop_destroy(drv->pw_loop);
     }
@@ -286,10 +302,11 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
     FLUID_FREE(drv->lbuf);
     FLUID_FREE(drv->rbuf);
 
-    if (drv->builder)
+    if(drv->builder)
     {
         FLUID_FREE(drv->builder->data);
     }
+
     FLUID_FREE(drv->builder);
 
     FLUID_FREE(drv->events);
