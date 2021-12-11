@@ -174,7 +174,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     if (!drv->events)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
-        goto driver cleanup;
+        goto driver_cleanup;
     }
     FLUID_MEMSET(drv->events, 0, sizeof(*drv->events));
     drv->events->version = PW_VERSION_STREAM_EVENTS;
