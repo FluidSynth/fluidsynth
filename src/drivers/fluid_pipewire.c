@@ -253,16 +253,16 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
 
     FLUID_LOG(FLUID_INFO, "Using PipeWire audio driver");
 
-    free(media_role);
-    free(media_type);
-    free(media_category);
+    FLUID_FREE(media_role);
+    FLUID_FREE(media_type);
+    FLUID_FREE(media_category);
 
     return (fluid_audio_driver_t *)drv;
 
 driver_cleanup:
-    free(media_role);
-    free(media_type);
-    free(media_category);
+    FLUID_FREE(media_role);
+    FLUID_FREE(media_type);
+    FLUID_FREE(media_category);
 
     delete_fluid_pipewire_audio_driver((fluid_audio_driver_t *)drv);
     return NULL;
