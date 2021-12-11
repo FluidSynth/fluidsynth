@@ -75,6 +75,11 @@ if ( JACK_SUPPORT )
   include_directories ( ${JACK_INCLUDE_DIRS} )
 endif ( JACK_SUPPORT )
 
+if ( PIPEWIRE_SUPPORT )
+  set ( fluid_pipewire_SOURCES drivers/fluid_pipewire.c )
+  include_directories ( SYSTEM ${PIPEWIRE_INCLUDE_DIRS} )
+endif ( PIPEWIRE_SUPPORT )
+
 if ( PORTAUDIO_SUPPORT )
   set ( fluid_portaudio_SOURCES drivers/fluid_portaudio.c )
   include_directories ( ${PORTAUDIO_INCLUDE_DIRS} )
@@ -277,6 +282,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_dart_SOURCES}
     ${fluid_dbus_SOURCES}
     ${fluid_jack_SOURCES}
+    ${fluid_pipewire_SOURCES}
     ${fluid_lash_SOURCES}
     ${fluid_midishare_SOURCES}
     ${fluid_opensles_SOURCES}
@@ -353,6 +359,7 @@ target_link_libraries ( libfluidsynth
     ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
     ${JACK_LIBRARIES}
+    ${PIPEWIRE_LIBRARIES}
     ${ALSA_LIBRARIES}
     ${PULSE_LIBRARIES}
     ${PORTAUDIO_LIBRARIES}
