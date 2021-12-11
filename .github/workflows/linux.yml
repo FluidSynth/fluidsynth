@@ -53,7 +53,7 @@ jobs:
       run: sudo apt-get update -y
 
     - name: Install Dependencies
-      run: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libsystemd-dev libinstpatch-dev libreadline-dev g++-7 g++-8 clang-7 clang-8 clang-9 clang-10 clang-tidy-10
+      run: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libpipewire-0.3-dev libdbus-1-dev libsystemd-dev libinstpatch-dev libreadline-dev g++-7 g++-8 clang-7 clang-8 clang-9 clang-10 clang-tidy-10
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
