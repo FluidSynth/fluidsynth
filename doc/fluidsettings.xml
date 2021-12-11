@@ -14,11 +14,6 @@ https://stackoverflow.com/a/6251757
 Developers:
  - Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
  - Real-time settings can be marked with <realtime>SOME OPTIONAL TEXT</realtime>.
-
-ATTENTION: if you change anything in this file, make sure you also refresh
-the doxygen/fluidsettings.txt file (used by fluidsynth.org API doc build)
-and commit the results. Refresh with the following command:
-    xsltproc -o doxygen/fluidsettings.txt doxygen/fluidsettings.xsl fluidsettings.xml
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
