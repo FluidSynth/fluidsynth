@@ -57,6 +57,8 @@ macro ( generate_pkgconfig_spec template outfile target )
         list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
         list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
         list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+        
+        list ( JOIN PC_REQUIRES_PRIV " " PC_REQUIRES_PRIV_JOINED )
 
         configure_file ( ${template} ${outfile} IMMEDIATE @ONLY)
     endif()
