@@ -45,6 +45,11 @@ if ( JACK_SUPPORT )
   set ( fluid_jack_SOURCES drivers/fluid_jack.c )
 endif ( JACK_SUPPORT )
 
+if ( PIPEWIRE_SUPPORT )
+  set ( fluid_pipewire_SOURCES drivers/fluid_pipewire.c )
+  include_directories ( SYSTEM ${PIPEWIRE_INCLUDE_DIRS} )
+endif ( PIPEWIRE_SUPPORT )
+
 if ( PORTAUDIO_SUPPORT )
   set ( fluid_portaudio_SOURCES drivers/fluid_portaudio.c )
 endif ( PORTAUDIO_SUPPORT )
@@ -232,6 +237,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_dart_SOURCES}
     ${fluid_dbus_SOURCES}
     ${fluid_jack_SOURCES}
+    ${fluid_pipewire_SOURCES}
     ${fluid_lash_SOURCES}
     ${fluid_midishare_SOURCES}
     ${fluid_opensles_SOURCES}
@@ -322,6 +328,7 @@ endif ( MACOSX_FRAMEWORK )
 # Object Libraries may "link" to other libraries to get usage requirements,
 # but since they do not have a link step nothing is done with their object files.
 target_link_libraries ( libfluidsynth-OBJ PUBLIC
+    ${PIPEWIRE_LIBRARIES}
     ${DART_LIBS}
     ${COREAUDIO_LIBS}
     ${COREMIDI_LIBS}

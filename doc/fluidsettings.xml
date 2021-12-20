@@ -14,11 +14,6 @@ https://stackoverflow.com/a/6251757
 Developers:
  - Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
  - Real-time settings can be marked with <realtime>SOME OPTIONAL TEXT</realtime>.
-
-ATTENTION: if you change anything in this file, make sure you also refresh
-the doxygen/fluidsettings.txt file (used by fluidsynth.org API doc build)
-and commit the results. Refresh with the following command:
-    xsltproc -o doxygen/fluidsettings.txt doxygen/fluidsettings.xsl fluidsettings.xml
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
@@ -605,6 +600,30 @@ and commit the results. Refresh with the following command:
             <def>/dev/dsp</def>
             <desc>
                 Device to use for OSS audio output.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-category</name>
+            <type>str</type>
+            <def>Playback</def>
+            <desc>
+                The media category to use. This value will be passed to <code>PW_KEY_MEDIA_CATEGORY</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-role</name>
+            <type>str</type>
+            <def>Music</def>
+            <desc>
+                The media role to use. This value will be passed to <code>PW_KEY_MEDIA_ROLE</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-type</name>
+            <type>str</type>
+            <def>Audio</def>
+            <desc>
+                The media type to use. This value will be passed to <code>PW_KEY_MEDIA_TYPE</code>, see Pipewire documentation for valid values.
             </desc>
         </setting>
         <setting>

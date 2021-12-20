@@ -41,7 +41,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 2 )
-set ( FLUIDSYNTH_VERSION_MICRO 3 )
+set ( FLUIDSYNTH_VERSION_MICRO 4 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -56,7 +56,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 0 )
-set ( LIB_VERSION_REVISION 3 )
+set ( LIB_VERSION_REVISION 4 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -89,6 +89,7 @@ option ( enable-waveout "compile Windows WaveOut support (if it is available)" o
 option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-sdl2 "compile SDL2 audio support (if it is available)" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
+option ( enable-pipewire "compile PipeWire support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
@@ -563,6 +564,14 @@ else ( enable-jack )
     unset_pkg_config ( JACK )
 endif ( enable-jack )
 
+unset ( PIPEWIRE_SUPPORT CACHE )
+if ( enable-pipewire )
+    pkg_check_modules ( PIPEWIRE libpipewire-0.3 )
+    set ( PIPEWIRE_SUPPORT ${PIPEWIRE_FOUND} )
+else ( enable-pipewire )
+    unset_pkg_config ( PIPEWIRE )
+endif ( enable-pipewire )
+
 unset ( LASH_SUPPORT CACHE )
 if ( enable-lash )
     pkg_check_modules ( LASH lash-1.0>=0.3 IMPORTED_TARGET )
@@ -823,8 +832,6 @@ else ()
 endif ()
 
 generate_pkgconfig_spec(fluidsynth.pc.in ${CMAKE_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
-
-list ( JOIN PC_REQUIRES_PRIV " " PC_REQUIRES_PRIV_JOINED )
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )

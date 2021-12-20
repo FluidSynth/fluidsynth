@@ -138,6 +138,14 @@ void fluid_jack_audio_driver_settings(fluid_settings_t *settings);
 int fluid_jack_obtain_synth(fluid_settings_t *settings, fluid_synth_t **synth);
 #endif
 
+#if PIPEWIRE_SUPPORT
+fluid_audio_driver_t *new_fluid_pipewire_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
+fluid_audio_driver_t *new_fluid_pipewire_audio_driver2(fluid_settings_t *settings,
+        fluid_audio_func_t func, void *data);
+void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p);
+void fluid_pipewire_audio_driver_settings(fluid_settings_t *settings);
+#endif
+
 #if SNDMAN_SUPPORT
 fluid_audio_driver_t *new_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);
