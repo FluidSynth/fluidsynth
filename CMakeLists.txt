@@ -122,6 +122,7 @@ set(CMAKE_C_STANDARD 90)
 set(CMAKE_CXX_STANDARD 98)
 
 # whether to use gnu extensions
+set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
