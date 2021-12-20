@@ -328,7 +328,6 @@ endif ( MACOSX_FRAMEWORK )
 # Object Libraries may "link" to other libraries to get usage requirements,
 # but since they do not have a link step nothing is done with their object files.
 target_link_libraries ( libfluidsynth-OBJ PUBLIC
-    ${PIPEWIRE_LIBRARIES}
     ${DART_LIBS}
     ${COREAUDIO_LIBS}
     ${COREMIDI_LIBS}
@@ -371,6 +370,10 @@ endif()
 
 if ( TARGET PkgConfig::JACK AND JACK_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::JACK )
+endif()
+
+if ( TARGET PkgConfig::PIPEWIRE AND PIPEWIRE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PIPEWIRE )
 endif()
 
 if ( TARGET PkgConfig::LASH AND LASH_SUPPORT )
