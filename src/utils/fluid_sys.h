@@ -157,9 +157,7 @@ typedef gintptr  intptr_t;
 #include <gmodule.h>
 #endif
 
-#ifdef GLIB_SUPPORT
 #include <glib/gstdio.h>
-#endif
 
 /**
  * Macro used for safely accessing a message from a GError and using a default
@@ -184,12 +182,10 @@ char* fluid_get_windows_error(void);
 #define FLUID_INT_TO_POINTER(x)   ((void *)(intptr_t)(x))
 
 /* Endian detection */
-#ifdef GLIB_SUPPORT
 #define FLUID_IS_BIG_ENDIAN       (G_BYTE_ORDER == G_BIG_ENDIAN)
 
 #define FLUID_LE32TOH(x)          GINT32_FROM_LE(x)
 #define FLUID_LE16TOH(x)          GINT16_FROM_LE(x)
-#endif
 
 #if FLUID_IS_BIG_ENDIAN
 #define FLUID_FOURCC(_a, _b, _c, _d) \
@@ -204,15 +200,12 @@ char* fluid_get_windows_error(void);
  */
 char *fluid_strtok(char **str, char *delim);
 
-#ifdef GLIB_SUPPORT
 #define FLUID_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
 #define FLUID_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
 #define fluid_file_test(path, flags) g_file_test(path, flags)
 
 #define fluid_shell_parse_argv(command_line, argcp, argvp) g_shell_parse_argv(command_line, argcp, argvp, NULL)
 #define fluid_strfreev g_strfreev
-
-#endif
 
 #if defined(__OS2__)
 #define INCL_DOS
@@ -251,7 +244,6 @@ int fluid_timer_stop(fluid_timer_t *timer);
 int fluid_timer_is_running(const fluid_timer_t *timer);
 long fluid_timer_get_interval(const fluid_timer_t * timer);
 
-#ifdef GLIB_SUPPORT
 // Macros to use for pre-processor if statements to test which Glib thread API we have (pre or post 2.32)
 #define NEW_GLIB_THREAD_API   GLIB_CHECK_VERSION(2,32,0)
 #define OLD_GLIB_THREAD_API  !GLIB_CHECK_VERSION(2,32,0)
@@ -405,7 +397,6 @@ typedef GStaticPrivate fluid_private_t;
 #define fluid_atomic_int_compare_and_exchange(_pi, _old, _new) \
   g_atomic_int_compare_and_exchange(_pi, _old, _new)
 
-#ifdef GLIB_SUPPORT
 #if GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 30)
 #define fluid_atomic_int_exchange_and_add(_pi, _add) \
   g_atomic_int_add(_pi, _add)
@@ -422,8 +413,6 @@ typedef GStaticPrivate fluid_private_t;
 #define fluid_atomic_pointer_set(_pp, val)      g_atomic_pointer_set(_pp, val)
 #define fluid_atomic_pointer_compare_and_exchange(_pp, _old, _new) \
   g_atomic_pointer_compare_and_exchange(_pp, _old, _new)
-#endif
-#endif
 
 static FLUID_INLINE void
 fluid_atomic_float_set(fluid_atomic_float_t *fptr, float val)
@@ -445,7 +434,7 @@ fluid_atomic_float_get(fluid_atomic_float_t *fptr)
 
 
 /* Threads */
-#ifdef GLIB_SUPPORT
+
 /* other thread implementations might change this for their needs */
 typedef void *fluid_thread_return_t;
 /* static return value for thread functions which requires a return value */
@@ -463,7 +452,6 @@ fluid_thread_t *new_fluid_thread(const char *name, fluid_thread_func_t func, voi
 void delete_fluid_thread(fluid_thread_t *thread);
 void fluid_thread_self_set_prio(int prio_level);
 int fluid_thread_join(fluid_thread_t *thread);
-#endif
 
 /* Dynamic Module Loading, currently only used by LADSPA subsystem */
 #ifdef LADSPA
@@ -502,25 +490,23 @@ fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 /* File access */
-#ifdef GLIB_SUPPORT
-    #define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
-    #if !GLIB_CHECK_VERSION(2, 26, 0)
-        /* GStatBuf has not been introduced yet, manually typedef to what they had at that time:
-        * https://github.com/GNOME/glib/blob/e7763678b56e3be073cc55d707a6e92fc2055ee0/glib/gstdio.h#L98-L115
-        */
-        #if defined(WIN32) || HAVE_WINDOWS_H // somehow reliably mock G_OS_WIN32??
-            // Any effort from our side to reliably mock GStatBuf on Windows is in vain. E.g. glib-2.16 is broken as it uses struct stat rather than struct _stat32 on Win x86.
-            // Disable it (the user has been warned by cmake).
-            #undef fluid_stat
-            #define fluid_stat(_filename, _statbuf)  (-1)
-            typedef struct _fluid_stat_buf_t{int st_mtime;} fluid_stat_buf_t;
-        #else
-            /* posix, OS/2, etc. */
-            typedef struct stat fluid_stat_buf_t;
-        #endif
+#define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
+#if !GLIB_CHECK_VERSION(2, 26, 0)
+    /* GStatBuf has not been introduced yet, manually typedef to what they had at that time:
+     * https://github.com/GNOME/glib/blob/e7763678b56e3be073cc55d707a6e92fc2055ee0/glib/gstdio.h#L98-L115
+     */
+    #if defined(WIN32) || HAVE_WINDOWS_H // somehow reliably mock G_OS_WIN32??
+        // Any effort from our side to reliably mock GStatBuf on Windows is in vain. E.g. glib-2.16 is broken as it uses struct stat rather than struct _stat32 on Win x86.
+        // Disable it (the user has been warned by cmake).
+        #undef fluid_stat
+        #define fluid_stat(_filename, _statbuf)  (-1)
+        typedef struct _fluid_stat_buf_t{int st_mtime;} fluid_stat_buf_t;
     #else
-    typedef GStatBuf fluid_stat_buf_t;
+        /* posix, OS/2, etc. */
+        typedef struct stat fluid_stat_buf_t;
     #endif
+#else
+typedef GStatBuf fluid_stat_buf_t;
 #endif
 
 FILE* fluid_file_open(const char* filename, const char** errMsg);

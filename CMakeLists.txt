@@ -90,7 +90,6 @@ option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optiona
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
-option ( enable-glib "enable use of glib (only disable if you are providing your own glib alternative)" on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
@@ -395,11 +394,6 @@ if ( enable-network )
     set ( NETWORK_SUPPORT 1 )
 endif ( enable-network )
 
-unset ( GLIB_SUPPORT )
-if ( enable-glib )
-    set ( GLIB_SUPPORT 1 )
-endif ( enable-glib )
-
 unset ( WITH_FLOAT CACHE )
 if ( enable-floats )
     set ( WITH_FLOAT 1 )
@@ -495,38 +489,35 @@ endif(ASTYLE)
 
 if(NOT enable-pkgconfig)
 
-    if(enable-glib)
-        FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
-        FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
-        FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
-        FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
+    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
+    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
+    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
+    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
 
-        IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
-                GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
-                GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
-                GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
-                message( WARNING "Not sure if I found GLIB, continuing anyway.")
-        ENDIF()
+    IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
+            GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
+            GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
+            GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
+            message( WARNING "Not sure if I found GLIB, continuing anyway.")
+    ENDIF()
 
-        SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
-        SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
+    SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
+    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
 
-        message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
-        message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
-    endif(enable-glib)
+    message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
+    message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
+
 else(NOT enable-pkgconfig)
 
     find_package ( PkgConfig REQUIRED )
 
-    if (enable-glib)
-      # Mandatory libraries: glib and gthread
-      pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
+    # Mandatory libraries: glib and gthread
+    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
 
-      if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
-          message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
-      endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
-    endif(enable-glib)
-  
+    if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
+    endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+
     include ( UnsetPkgConfig )
 
     # Optional features

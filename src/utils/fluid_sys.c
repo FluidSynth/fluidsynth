@@ -376,12 +376,10 @@ char *fluid_strtok(char **str, char *delim)
  * Suspend the execution of the current thread for the specified amount of time.
  * @param milliseconds to wait.
  */
-#ifdef GLIB_SUPPORT
 void fluid_msleep(unsigned int msecs)
 {
     g_usleep(msecs * 1000);
 }
-#endif
 
 /**
  * Get time in milliseconds to be used in relative timing operations.
@@ -410,7 +408,6 @@ unsigned int fluid_curtime(void)
  * If glib version is too old and in the case of Windows the function
  * uses high precision performance counter instead of g_getmonotic_time().
  */
-#ifdef GLIB_SUPPORT
 double
 fluid_utime(void)
 {
@@ -449,7 +446,6 @@ fluid_utime(void)
 
     return utime;
 }
-#endif
 
 
 
@@ -1016,7 +1012,6 @@ new_fluid_cond(void)
 
 #endif
 
-#ifdef GLIB_SUPPORT
 static gpointer
 fluid_thread_high_prio(gpointer data)
 {
@@ -1109,7 +1104,6 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
 
     return thread;
 }
-#endif
 
 /**
  * Frees data associated with a thread (does not actually stop thread).
@@ -1126,7 +1120,6 @@ delete_fluid_thread(fluid_thread_t *thread)
  * @param thread Thread to join
  * @return FLUID_OK
  */
-#ifdef GLIB_SUPPORT
 int
 fluid_thread_join(fluid_thread_t *thread)
 {
@@ -1134,7 +1127,6 @@ fluid_thread_join(fluid_thread_t *thread)
 
     return FLUID_OK;
 }
-#endif
 
 
 static fluid_thread_return_t

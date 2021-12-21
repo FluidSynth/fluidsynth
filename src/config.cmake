@@ -139,9 +139,6 @@
 /* Define to enable network support */
 #cmakedefine NETWORK_SUPPORT @NETWORK_SUPPORT@
 
-/* Define to enable glib support */
-#cmakedefine GLIB_SUPPORT @GLIB_SUPPORT@
-
 /* Defined when fluidsynth is build in an automated environment, where no MSVC++ Runtime Debug Assertion dialogs should pop up */
 #cmakedefine NO_GUI @NO_GUI@
 

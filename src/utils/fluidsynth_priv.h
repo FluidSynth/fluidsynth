@@ -31,12 +31,7 @@
 
 #include "config.h"
 
-#ifdef GLIB_SUPPORT
 #include <glib.h>
-#else
-// Provide your own implementation of glib functionality
-#include "glib_replacement.h"
-#endif
 
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
@@ -68,10 +63,11 @@ typedef double fluid_real_t;
 #if defined(SUPPORTS_VLA)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
-#elif defined(GLIB_SUPPORT)
+#else
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
-    _type* _name = g_newa(_type, (_len))
+     _type* _name = g_newa(_type, (_len))
 #endif
+
 
 /** Atomic types  */
 typedef int fluid_atomic_int_t;
@@ -294,10 +290,8 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_ASSERT(a)
 #endif
 
-#ifdef GLIB_SUPPORT
 #define FLUID_LIKELY G_LIKELY
 #define FLUID_UNLIKELY G_UNLIKELY
-#endif
 
 /* Misc */
 #if defined(__INTEL_COMPILER)
