@@ -123,6 +123,17 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     char *devname = NULL;
     int format;
 
+    FLUID_LOG(FLUID_WARN,
+              "\n\n"
+              "================= OSS audio driver has been deprecated! ==================\n"
+              "You're using the OSS driver. This driver is old, unmaintained and believed\n"
+              "to be unused. If you still need it, pls. let us know by posting to our\n"
+              "mailing list at fluid-dev@nongnu.org - otherwise this driver might be removed\n"
+              "in a future release of FluidSynth!\n"
+              "================= OSS audio driver has been deprecated! ==================\n"
+              "\n"
+    );
+
     dev = FLUID_NEW(fluid_oss_audio_driver_t);
 
     if(dev == NULL)
@@ -295,6 +306,17 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func,
     char *devname = NULL;
     int realtime_prio = 0;
     int format;
+
+    FLUID_LOG(FLUID_WARN,
+              "\n\n"
+              "================= OSS audio driver has been deprecated! ==================\n"
+              "You're using the OSS driver. This driver is old, unmaintained and believed\n"
+              "to be unused. If you still need it, pls. let us know by posting to our\n"
+              "mailing list at fluid-dev@nongnu.org - otherwise this driver might be removed\n"
+              "in a future release of FluidSynth!\n"
+              "================= OSS audio driver has been deprecated! ==================\n"
+              "\n"
+    );
 
     dev = FLUID_NEW(fluid_oss_audio_driver_t);
 
@@ -606,6 +628,17 @@ new_fluid_oss_midi_driver(fluid_settings_t *settings,
     fluid_oss_midi_driver_t *dev;
     int realtime_prio = 0;
     char *device = NULL;
+
+    FLUID_LOG(FLUID_WARN,
+              "\n\n"
+              "================= OSS MIDI driver has been deprecated! ==================\n"
+              "You're using the OSS driver. This driver is old, unmaintained and believed\n"
+              "to be unused. If you still need it, pls. let us know by posting to our\n"
+              "mailing list at fluid-dev@nongnu.org - otherwise this driver might be removed\n"
+              "in a future release of FluidSynth!\n"
+              "================= OSS MIDI driver has been deprecated! ==================\n"
+              "\n"
+    );
 
     /* not much use doing anything */
     if(handler == NULL)
