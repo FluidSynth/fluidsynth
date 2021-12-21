@@ -32,6 +32,7 @@
 #include "fluid_midi.h"
 #include "fluid_event.h"
 #include "fluid_seqbind_notes.h"
+#include "fluid_seq.h"
 
 /***************************************************************
 *
@@ -47,8 +48,6 @@ struct _fluid_seqbind_t
     void* note_container;
 };
 typedef struct _fluid_seqbind_t fluid_seqbind_t;
-
-extern void fluid_sequencer_invalidate_note(fluid_sequencer_t *seq, fluid_seq_id_t dest, fluid_note_id_t id);
 
 int fluid_seqbind_timer_callback(void *data, unsigned int msec);
 void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data);
@@ -338,7 +337,7 @@ static fluid_seq_id_t get_fluidsynth_dest(fluid_sequencer_t *seq)
 {
     int i;
     fluid_seq_id_t id;
-    char *name;
+    const char *name;
     int j = fluid_sequencer_count_clients(seq);
 
     for(i = 0; i < j; i++)

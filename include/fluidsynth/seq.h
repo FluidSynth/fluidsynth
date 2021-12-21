@@ -71,7 +71,7 @@ fluid_seq_id_t fluid_sequencer_register_client(fluid_sequencer_t *seq, const cha
 FLUIDSYNTH_API void fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id);
 FLUIDSYNTH_API int fluid_sequencer_count_clients(fluid_sequencer_t *seq);
 FLUIDSYNTH_API fluid_seq_id_t fluid_sequencer_get_client_id(fluid_sequencer_t *seq, int index);
-FLUIDSYNTH_API char *fluid_sequencer_get_client_name(fluid_sequencer_t *seq, fluid_seq_id_t id);
+FLUIDSYNTH_API const char *fluid_sequencer_get_client_name(fluid_sequencer_t *seq, fluid_seq_id_t id);
 FLUIDSYNTH_API int fluid_sequencer_client_is_dest(fluid_sequencer_t *seq, fluid_seq_id_t id);
 FLUIDSYNTH_API void fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec);
 FLUIDSYNTH_API void fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt);

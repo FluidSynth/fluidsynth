@@ -132,7 +132,7 @@ mark_as_advanced ( LIB_SUFFIX )
 set(CMAKE_C_STANDARD 90)
 
 # the default C++ standard to use for all targets
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 11)
 
 # whether to use gnu extensions
 set(CMAKE_CXX_EXTENSIONS OFF)
