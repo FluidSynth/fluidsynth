@@ -29,9 +29,9 @@
 #ifndef _FLUIDSYNTH_PRIV_H
 #define _FLUIDSYNTH_PRIV_H
 
-#include <glib.h>
-
 #include "config.h"
+
+#include <glib.h>
 
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
