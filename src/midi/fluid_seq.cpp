@@ -40,6 +40,8 @@ extern "C" {
 }
 #endif
 
+#include "fluid_cxx_wrapper.hpp"
+
 #include <mutex>
 #include <vector>
 #include <atomic>
@@ -137,7 +139,7 @@ struct _fluid_sequencer_t
         return (id);
     }
     
-    void unregister_client(fluid_seq_id_t id)
+    int unregister_client(fluid_seq_id_t id)
     {
         fluid_event_t evt;
         unsigned int now = this->get_tick();
@@ -156,7 +158,7 @@ struct _fluid_sequencer_t
         if(result == this->clients.end())
         {
             // provided client id is not in the list, probably already deleted
-            return;
+            return FLUID_FAILED;
         }
 
         // client found, remove it from the list to avoid recursive call when calling callback
@@ -169,6 +171,7 @@ struct _fluid_sequencer_t
             (client_to_remove->callback)(now, &evt, this, client_to_remove->data);
         }
         
+        return FLUID_OK;
         // client_to_remove will be automatically deleted here
     }
     
@@ -206,7 +209,7 @@ struct _fluid_sequencer_t
         return (*result)->callback != nullptr;
     }
     
-    void send_now(fluid_event_t *evt)
+    int send_now(fluid_event_t *evt)
     {
         fluid_seq_id_t destID = fluid_event_get_dest(evt);
 
@@ -219,7 +222,7 @@ struct _fluid_sequencer_t
         if(result == this->clients.end())
         {
             // provided client id is not in the list
-            return;
+            return FLUID_FAILED;
         }
 
         auto& dest = (*result);
@@ -234,6 +237,7 @@ struct _fluid_sequencer_t
                 (dest->callback)(this->get_tick(), evt, this, dest->data);
             }
         }
+        return FLUID_OK;
     }
     
     int send_at(fluid_event_t *evt, unsigned int time, int absolute)
@@ -266,32 +270,36 @@ struct _fluid_sequencer_t
         return this->start_ticks + now;
     }
     
-    void set_time_scale(double scale)
+    int set_time_scale(double scale)
     {
         if(scale != scale)
         {
             FLUID_LOG(FLUID_WARN, "sequencer: scale NaN\n");
-            return;
+            return FLUID_FAILED;
         }
 
         if(scale <= 0)
         {
             FLUID_LOG(FLUID_WARN, "sequencer: scale <= 0 : %f\n", scale);
-            return;
+            return FLUID_FAILED;
         }
 
         this->scale = scale;
         this->startMs = this->currentMs;
         this->start_ticks = this->cur_ticks;
+        
+        return FLUID_OK;
     }
     
-    void process(unsigned int msec)
+    int process(unsigned int msec)
     {
         this->currentMs = msec;
         this->cur_ticks = this->get_tick(msec);
 
         std::lock_guard<std::recursive_mutex> l(this->mutex);
         fluid_seq_queue_process(this->queue, this, this->cur_ticks);
+        
+        return FLUID_OK;
     }
 };
 
@@ -329,7 +337,11 @@ new_fluid_sequencer(void)
 fluid_sequencer_t *
 new_fluid_sequencer2(int use_system_timer)
 {
-    return new _fluid_sequencer_t(use_system_timer);
+    return guardedCall([&]
+    {
+        return new _fluid_sequencer_t(use_system_timer);
+    },
+    nullptr);
 }
 
 /**
@@ -384,7 +396,11 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
                                 fluid_event_callback_t callback, void *data)
 {
     fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
-    return seq->register_client(name, callback, data);
+    return guardedCall([&]
+    {
+        return seq->register_client(name, callback, data);
+    },
+    FLUID_FAILED);
 }
 
 /**
@@ -399,7 +415,11 @@ void
 fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
     fluid_return_if_fail(seq != NULL);
-    seq->unregister_client(id);
+    (void)guardedCall([&]
+    {
+        return seq->unregister_client(id);
+    },
+    FLUID_FAILED);
 }
 
 /**
@@ -442,7 +462,11 @@ const char *
 fluid_sequencer_get_client_name(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
     fluid_return_val_if_fail(seq != NULL, NULL);
-    return seq->get_client_name(id);
+    return guardedCall([&]
+    {
+        return seq->get_client_name(id);
+    },
+    nullptr);
 }
 
 /**
@@ -455,8 +479,12 @@ fluid_sequencer_get_client_name(fluid_sequencer_t *seq, fluid_seq_id_t id)
 int
 fluid_sequencer_client_is_dest(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
-    fluid_return_val_if_fail(seq != NULL, FALSE);
-    return seq->client_is_dest(id);
+    fluid_return_val_if_fail(seq != NULL, false);
+    return guardedCall([&]
+    {
+        return seq->client_is_dest(id);
+    },
+    false);
 }
 
 /**
@@ -471,7 +499,11 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
     fluid_return_if_fail(seq != NULL);
     fluid_return_if_fail(evt != NULL);
 
-    seq->send_now(evt);
+    (void)guardedCall([&]
+    {
+        return seq->send_now(evt);
+    },
+    FLUID_FAILED);
 }
 
 
@@ -504,7 +536,11 @@ fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
     fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(evt != NULL, FLUID_FAILED);
 
-    return seq->send_at(evt, time, absolute);
+    return guardedCall([&]
+    {
+        return seq->send_at(evt, time, absolute);
+    },
+    FLUID_FAILED);
 }
 
 /**
@@ -541,7 +577,11 @@ unsigned int
 fluid_sequencer_get_tick(fluid_sequencer_t *seq)
 {
     fluid_return_val_if_fail(seq != NULL, 0u);
-    return seq->get_tick();
+    return guardedCall([&]
+    {
+        return seq->get_tick();
+    },
+    0u);
 }
 
 /**
@@ -562,7 +602,11 @@ void
 fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
 {
     fluid_return_if_fail(seq != NULL);
-    seq->set_time_scale(scale);
+    (void)guardedCall([&]
+    {
+        return seq->set_time_scale(scale);
+    },
+    FLUID_FAILED);
 }
 
 /**
@@ -594,7 +638,11 @@ void
 fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 {
     fluid_return_if_fail(seq != NULL);
-    seq->process(msec);
+    (void)guardedCall([&]
+    {
+        return seq->process(msec);
+    },
+    FLUID_FAILED);
 }
 
 

@@ -156,6 +156,7 @@ set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c
     utils/fluid_conv.h
+    utils/fluid_cxx_wrapper.hpp
     utils/fluid_hash.c
     utils/fluid_hash.h
     utils/fluid_list.c
