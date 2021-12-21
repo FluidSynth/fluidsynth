@@ -116,9 +116,9 @@ struct _fluid_sequencer_t
     ~_fluid_sequencer_t()
     {
         /* cleanup clients */
-        for(auto& client : this->clients)
+        while(!this->clients.empty())
         {
-            this->unregister_client(client->id);
+            this->unregister_client(this->clients.back()->id);
         }
         delete_fluid_seq_queue(this->queue);
     }
