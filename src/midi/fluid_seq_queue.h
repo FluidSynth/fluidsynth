@@ -22,13 +22,12 @@
 #define _FLUID_SEQ_QUE_H
 
 #include "fluidsynth.h"
+#include "fluid_event.h"
+#include "fluid_seqbind_notes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "fluid_event.h"
-#include "fluid_seqbind_notes.h"
 
 void* new_fluid_seq_queue(int nbEvents);
 void delete_fluid_seq_queue(void *queue);

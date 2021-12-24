@@ -24,6 +24,14 @@
 #include "fluidsynth.h"
 #include "fluid_event.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void fluid_sequencer_invalidate_note(fluid_sequencer_t *seq, fluid_seq_id_t dest, fluid_note_id_t id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_SEQ_H */

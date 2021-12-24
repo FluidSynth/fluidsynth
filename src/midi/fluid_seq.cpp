@@ -27,18 +27,11 @@
   http://www.infiniteCD.org/
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "fluid_seq.h"
 #include "fluid_event.h"
 #include "fluid_seq_queue.h"
 #include "fluid_sys.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 #include "fluid_cxx_wrapper.hpp"
 
