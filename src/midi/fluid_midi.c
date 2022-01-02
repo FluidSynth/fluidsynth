@@ -488,7 +488,7 @@ fluid_midi_file_read_track(fluid_midi_file *mf, fluid_player_t *player, int num)
         if(fluid_isasciistring((char *) id) == 0)
         {
             FLUID_LOG(FLUID_ERR,
-                      "An non-ascii track header found, corrupt file");
+                      "A non-ascii track header found, corrupt file");
             return FLUID_FAILED;
 
         }
