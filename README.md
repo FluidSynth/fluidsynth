@@ -8,8 +8,6 @@
 | <img src="https://www.microsoft.com/windows/favicon.ico" height="25" alt=""> **Windows (vcpkg)** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.vcpkg?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=6&branchName=master) |
 | <img src="https://www.apple.com/favicon.ico" height="30" alt=""> **MacOSX** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.macOS?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=5&branchName=master) |
 | <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.Android?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=4&branchName=master) |
-| <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** (legacy Cerbero) | [![CircleCI](https://circleci.com/gh/FluidSynth/fluidsynth/tree/master.svg?style=shield)](https://circleci.com/gh/FluidSynth/fluidsynth) |
-
 
 
 #### FluidSynth is a cross-platform, real-time software synthesizer based on the Soundfont 2 specification.
