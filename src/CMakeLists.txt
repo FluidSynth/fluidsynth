@@ -19,42 +19,14 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-include_directories (
-    ${CMAKE_BINARY_DIR}
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/drivers
-    ${CMAKE_SOURCE_DIR}/src/synth
-    ${CMAKE_SOURCE_DIR}/src/rvoice
-    ${CMAKE_SOURCE_DIR}/src/midi
-    ${CMAKE_SOURCE_DIR}/src/utils
-    ${CMAKE_SOURCE_DIR}/src/sfloader
-    ${CMAKE_SOURCE_DIR}/src/bindings
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_BINARY_DIR}/include
-)
-
-include_directories (
-    SYSTEM
-    ${GLIB_INCLUDE_DIRS}
-    ${PTHREADS_INCLUDE_DIR}
-    ${SDL2_INCLUDE_DIR}
-    ${LIBINSTPATCH_INCLUDE_DIRS}
-)
-
 # ************ library ************
-
-if ( READLINE_SUPPORT )
-  include_directories ( ${READLINE_INCLUDE_DIR} )
-endif ( READLINE_SUPPORT )
 
 if ( PULSE_SUPPORT )
   set ( fluid_pulse_SOURCES drivers/fluid_pulse.c )
-  include_directories ( ${PULSE_INCLUDE_DIRS} )
 endif ( PULSE_SUPPORT )
 
 if ( ALSA_SUPPORT )
   set ( fluid_alsa_SOURCES drivers/fluid_alsa.c )
-  include_directories ( ${ALSA_INCLUDE_DIRS} )
 endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
@@ -67,12 +39,10 @@ endif ( COREMIDI_SUPPORT )
 
 if ( DBUS_SUPPORT )
   set ( fluid_dbus_SOURCES bindings/fluid_rtkit.c bindings/fluid_rtkit.h )
-  include_directories ( ${DBUS_INCLUDE_DIRS} )
 endif ( DBUS_SUPPORT )
 
 if ( JACK_SUPPORT )
   set ( fluid_jack_SOURCES drivers/fluid_jack.c )
-  include_directories ( ${JACK_INCLUDE_DIRS} )
 endif ( JACK_SUPPORT )
 
 if ( PIPEWIRE_SUPPORT )
@@ -82,7 +52,6 @@ endif ( PIPEWIRE_SUPPORT )
 
 if ( PORTAUDIO_SUPPORT )
   set ( fluid_portaudio_SOURCES drivers/fluid_portaudio.c )
-  include_directories ( ${PORTAUDIO_INCLUDE_DIRS} )
 endif ( PORTAUDIO_SUPPORT )
 
 if ( DSOUND_SUPPORT )
@@ -103,7 +72,6 @@ endif ( WINMIDI_SUPPORT )
 
 if ( SDL2_SUPPORT )
   set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
-  include_directories ( ${SDL2_INCLUDE_DIRS} )
 endif ( SDL2_SUPPORT )
 
 if ( OSS_SUPPORT )
@@ -112,25 +80,14 @@ endif ( OSS_SUPPORT )
 
 if ( LASH_SUPPORT )
   set ( fluid_lash_SOURCES bindings/fluid_lash.c bindings/fluid_lash.h )
-  include_directories ( ${LASH_INCLUDE_DIRS})
 endif ( LASH_SUPPORT )
-
-if ( SYSTEMD_SUPPORT )
-  include_directories ( ${SYSTEMD_INCLUDE_DIRS})
-endif ( SYSTEMD_SUPPORT )
 
 if ( DART_SUPPORT )
   set ( fluid_dart_SOURCES drivers/fluid_dart.c )
-  include_directories ( ${DART_INCLUDE_DIRS} )
 endif ( DART_SUPPORT )
-
-if ( LIBSNDFILE_SUPPORT )
-  include_directories ( ${LIBSNDFILE_INCLUDE_DIRS} )
-endif ( LIBSNDFILE_SUPPORT )
 
 if ( MIDISHARE_SUPPORT )
   set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
-  include_directories ( ${MidiShare_INCLUDE_DIRS} )
 endif ( MIDISHARE_SUPPORT )
 
 if ( AUFILE_SUPPORT )
@@ -143,12 +100,10 @@ endif ( LIBINSTPATCH_SUPPORT )
 
 if ( OPENSLES_SUPPORT )
   set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
-  include_directories ( ${OpenSLES_INCLUDE_DIRS} )
 endif ( OPENSLES_SUPPORT )
 
 if ( OBOE_SUPPORT )
   set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
-  include_directories ( ${OBOE_INCLUDE_DIRS} )
 endif ( OBOE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
@@ -302,6 +257,20 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${VersionFilesOutputVariable}
 )
 
+target_include_directories ( libfluidsynth-OBJ PRIVATE
+    ${CMAKE_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/drivers
+    ${CMAKE_SOURCE_DIR}/src/synth
+    ${CMAKE_SOURCE_DIR}/src/rvoice
+    ${CMAKE_SOURCE_DIR}/src/midi
+    ${CMAKE_SOURCE_DIR}/src/utils
+    ${CMAKE_SOURCE_DIR}/src/sfloader
+    ${CMAKE_SOURCE_DIR}/src/bindings
+    ${CMAKE_SOURCE_DIR}/include
+)
+
 if ( LIBFLUID_CPPFLAGS )
   set_target_properties ( libfluidsynth-OBJ
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
@@ -354,29 +323,112 @@ else ( MACOSX_FRAMEWORK )
   )
 endif ( MACOSX_FRAMEWORK )
 
-target_link_libraries ( libfluidsynth
-    ${GLIB_LIBRARIES}
-    ${GMODULE_LIBRARIES}
-    ${LASH_LIBRARIES}
-    ${JACK_LIBRARIES}
-    ${PIPEWIRE_LIBRARIES}
-    ${ALSA_LIBRARIES}
-    ${PULSE_LIBRARIES}
-    ${PORTAUDIO_LIBRARIES}
-    ${LIBSNDFILE_LIBRARIES}
-    ${SDL2_LIBRARIES}
-    ${DBUS_LIBRARIES}
-    ${READLINE_LIBS}
+# Since CMake 3.12, OBJECT libraries can be linked to with target_link_libraries().
+# See https://cmake.org/cmake/help/latest/command/target_link_libraries.html#linking-object-libraries
+# Object Libraries may "link" to other libraries to get usage requirements,
+# but since they do not have a link step nothing is done with their object files.
+target_link_libraries ( libfluidsynth-OBJ PUBLIC
     ${DART_LIBS}
     ${COREAUDIO_LIBS}
     ${COREMIDI_LIBS}
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
     ${OpenSLES_LIBS}
-    ${OBOE_LIBRARIES}
     ${LIBFLUID_LIBS}
-    ${LIBINSTPATCH_LIBRARIES}
 )
+
+if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
+endif()
+
+if ( TARGET PkgConfig::GLIB )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::GLIB )
+else()
+    target_include_directories ( libfluidsynth-OBJ PUBLIC ${GLIB_INCLUDE_DIRS} )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${GLIB_LIBRARIES} )
+endif()
+
+if ( TARGET PkgConfig::LIBSNDFILE AND LIBSNDFILE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LIBSNDFILE )
+endif()
+
+if ( TARGET PkgConfig::PULSE AND PULSE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PULSE )
+endif()
+
+if ( ALSA_SUPPORT )
+    if ( TARGET PkgConfig::ALSA )
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::ALSA )
+    else()
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC ALSA::ALSA )
+    endif()
+endif()
+
+if ( TARGET PkgConfig::PORTAUDIO AND PORTAUDIO_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PORTAUDIO )
+endif()
+
+if ( TARGET PkgConfig::JACK AND JACK_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::JACK )
+endif()
+
+if ( TARGET PkgConfig::PIPEWIRE AND PIPEWIRE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PIPEWIRE )
+endif()
+
+if ( TARGET PkgConfig::LASH AND LASH_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LASH )
+endif()
+
+if ( TARGET PkgConfig::DBUS AND DBUS_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::DBUS )
+endif()
+
+if ( TARGET PkgConfig::GMODULE AND LADSPA_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::GMODULE )
+endif()
+
+if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LIBINSTPATCH )
+endif()
+
+if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::SDL2 )
+endif()
+
+if ( TARGET PkgConfig::OBOE AND OBOE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::OBOE )
+endif()
+
+if ( WITH_READLINE )
+    if ( TARGET PkgConfig::READLINE )
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::READLINE )
+    else()
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC ${READLINE_LIBRARIES} )
+        target_include_directories ( libfluidsynth-OBJ PUBLIC ${READLINE_INCLUDE_DIR} )
+    endif()
+endif()
+
+if ( DART_SUPPORT )
+    target_include_directories ( libfluidsynth-OBJ PUBLIC ${DART_INCLUDE_DIRS} )
+endif ( DART_SUPPORT )
+
+if ( MIDISHARE_SUPPORT )
+    target_include_directories ( libfluidsynth-OBJ PUBLIC ${MidiShare_INCLUDE_DIRS} )
+endif ( MIDISHARE_SUPPORT )
+
+if ( OPENSLES_SUPPORT )
+    target_include_directories ( libfluidsynth-OBJ PUBLIC ${OpenSLES_INCLUDE_DIRS} )
+endif ( OPENSLES_SUPPORT )
+
+# This doesn't install any object file at all!
+# it is only a trick for exporting targets
+install( TARGETS libfluidsynth-OBJ
+    EXPORT FluidSynthTargets
+    OBJECTS )
+
+# Here are applied/linked the OBJECT library dependencies
+target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
 
 # ************ CLI program ************
 
@@ -398,27 +450,81 @@ if ( FLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
 endif ( FLUID_CPPFLAGS )
 
-target_link_libraries ( fluidsynth
+target_include_directories ( fluidsynth PRIVATE
+    ${CMAKE_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src/bindings
+    ${CMAKE_SOURCE_DIR}/src/midi
+    ${CMAKE_SOURCE_DIR}/src/rvoice
+    ${CMAKE_SOURCE_DIR}/src/sfloader
+    ${CMAKE_SOURCE_DIR}/src/synth
+    ${CMAKE_SOURCE_DIR}/src/utils
+    ${CMAKE_SOURCE_DIR}/src/
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries ( fluidsynth PRIVATE
     libfluidsynth
-    ${SYSTEMD_LIBRARIES}
     ${FLUID_LIBS}
 )
 
+if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
+    target_link_libraries ( fluidsynth PRIVATE OpenMP::OpenMP_C )
+endif()
+
+if ( TARGET PkgConfig::SYSTEMD AND SYSTEMD_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::SYSTEMD )
+endif()
+
+if ( TARGET PkgConfig::GLIB ) # because g_file_test()
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::GLIB )
+endif()
+
+if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT ) # because SDL_Init() etc.
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::SDL2 )
+endif()
+
+if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::LIBINSTPATCH )
+endif()
+
+if ( TARGET PkgConfig::LASH AND LASH_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::LASH )
+endif()
+
 if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
-    RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+    EXPORT FluidSynthTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
     ARCHIVE DESTINATION ${FRAMEWORK_INSTALL_DIR}
 )
 else ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
-    RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-    PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/fluidsynth 
+    EXPORT FluidSynthTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fluidsynth
 )
-   install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
+   install ( FILES ${public_main_HEADER} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
 endif ( MACOSX_FRAMEWORK )
+
+# Exported targets.
+
+# build_interface: for the libfluidsynth target when imported from the build directory.
+# install_interface: for the target when imported from the installed directory.
+target_include_directories(libfluidsynth PUBLIC
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/;${PROJECT_BINARY_DIR}/include/>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+
+# installation of the exported targets
+install(EXPORT FluidSynthTargets
+        FILE FluidSynthTargets.cmake
+        NAMESPACE FluidSynth::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
+)
 
 # ******* Auto Generated Lookup Tables ******
 

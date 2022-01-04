@@ -19,13 +19,16 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
+cmake_minimum_required ( VERSION 3.13 )
+# 3.1 because of CMAKE_C_STANDARD
+# 3.11 because COMPATIBILITY SameMinorVersion in CMakePackageConfigHelpers
+# 3.13.5 because it is the latest supported in Windows XP
 
-if(POLICY CMP0075)
+if(POLICY CMP0075) # CMake version 3.13.5 warns when the policy is not set or value is OLD
   cmake_policy(SET CMP0075 NEW)
 endif()
 
-if(POLICY CMP0091)
+if(POLICY CMP0091) # new in CMake 3.15, defaults to OLD
   cmake_policy(SET CMP0091 NEW)
 endif()
 
@@ -59,7 +62,6 @@ set ( LIB_VERSION_INFO
 
 # Options disabled by default
 option ( enable-coverage "enable gcov code coverage" off )
-option ( enable-debug "enable debugging (default=no)" off )
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
 option ( enable-portaudio "compile PortAudio support" off )
@@ -86,7 +88,6 @@ option ( enable-wasapi "compile Windows WASAPI support (if it is available)" on 
 option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
 option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-sdl2 "compile SDL2 audio support (if it is available)" on )
-option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-pipewire "compile PipeWire support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
@@ -114,20 +115,6 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
-# Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
-if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "64" )
-else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "" )
-endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-else ()
-  set ( _init_lib_suffix "" )
-endif()
-set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
-      "library directory name suffix (32/64/nothing)" )
-mark_as_advanced ( LIB_SUFFIX )
-
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
@@ -135,6 +122,7 @@ set(CMAKE_C_STANDARD 90)
 set(CMAKE_CXX_STANDARD 98)
 
 # whether to use gnu extensions
+set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
@@ -151,11 +139,11 @@ if ( NOT OS2 )
 endif ( NOT OS2 )
 
 # enforce visibility control for all types of cmake targets
-if ( POLICY CMP0063 )
+if ( POLICY CMP0063 ) # since version 3.3, CMake version 3.21.2 warns when the policy is not set and uses OLD behavior.
   cmake_policy ( SET CMP0063 NEW )
 endif ( POLICY CMP0063 )
 
-# Default install directory names
+# Default install directory names, some provided by GNUInstallDirs
 include ( DefaultDirs )
 
 # Basic C library checks
@@ -190,6 +178,7 @@ if ( NOT HAVE_LONG_LONG AND NOT MSVC)
     message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
 endif ()
 
+include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables() 
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -375,7 +364,7 @@ unset ( MACOSX_FRAMEWORK CACHE )
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR} )
+        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -418,17 +407,15 @@ if ( enable-profiling )
     
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
     
-    if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
-        find_program( CLANG_TIDY
-                    NAMES "clang-tidy"
-                    DOC "Path to clang-tidy executable" )
+    find_program( CLANG_TIDY
+                NAMES "clang-tidy"
+                DOC "Path to clang-tidy executable" )
 
-        if ( CLANG_TIDY )
-            message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
-            execute_process ( COMMAND ${CLANG_TIDY} "--version" )
-            set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
-        endif ( CLANG_TIDY )
-    endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
+    if ( CLANG_TIDY )
+        message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
+        execute_process ( COMMAND ${CLANG_TIDY} "--version" )
+        set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
+    endif ( CLANG_TIDY )
 
 endif ( enable-profiling )
 
@@ -445,11 +432,6 @@ if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( ENABLE_FPECHECK 1 )
     set ( FPE_CHECK 1 )
 endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
-
-if ( enable-debug )
-    set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
-          "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
-endif ( enable-debug )
 
 if ( NOT CMAKE_BUILD_TYPE )
     set ( CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
@@ -493,210 +475,207 @@ if ( ASTYLE )
     )
 endif(ASTYLE)
 
-if(NOT enable-pkgconfig)
+find_package ( PkgConfig REQUIRED )
 
-    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
-    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
-    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
-    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
+# Mandatory libraries: glib and gthread
+pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 IMPORTED_TARGET )
+list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
 
-    IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
-            GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
-            GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
-            GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
-            message( WARNING "Not sure if I found GLIB, continuing anyway.")
-    ENDIF()
+if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+    message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
+endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
 
-    SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
-    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
+include ( PkgConfigHelpers ) # has unset_pkg_config()
 
-    message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
-    message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
-
-else(NOT enable-pkgconfig)
-
-    find_package ( PkgConfig REQUIRED )
-
-    # Mandatory libraries: glib and gthread
-    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
-    list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
-
-    if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
-        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
-    endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
-
-    include ( UnsetPkgConfig )
-
-    # Optional features
-    unset ( LIBSNDFILE_SUPPORT CACHE )
-    unset ( LIBSNDFILE_HASVORBIS CACHE )
-    if ( enable-libsndfile )
-    pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 )
-    set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
-    if ( LIBSNDFILE_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "sndfile")
-        message (DEBUG "LIBSNDFILE_STATIC_LIBRARIES: ${LIBSNDFILE_STATIC_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LINK_LIBRARIES: ${LIBSNDFILE_STATIC_LINK_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS: ${LIBSNDFILE_STATIC_LDFLAGS}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS_OTHER: ${LIBSNDFILE_STATIC_LDFLAGS_OTHER}")
-        if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
-             LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
-             LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
-          set ( LIBSNDFILE_HASVORBIS 1 )
-        else ()
-          message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
-        endif ()
-    endif ( LIBSNDFILE_SUPPORT )
-    else ( enable-libsndfile )
+# Optional features
+unset ( LIBSNDFILE_SUPPORT CACHE )
+unset ( LIBSNDFILE_HASVORBIS CACHE )
+if ( enable-libsndfile )
+pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 IMPORTED_TARGET )
+set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
+if ( LIBSNDFILE_SUPPORT )
+    #[[ cmake_print_variables (
+    LIBSNDFILE_STATIC_LIBRARIES 
+        LIBSNDFILE_STATIC_LINK_LIBRARIES 
+        LIBSNDFILE_STATIC_LDFLAGS 
+        LIBSNDFILE_STATIC_LDFLAGS_OTHER )  ]]
+    list( APPEND PC_REQUIRES_PRIV "sndfile")
+    if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
+            LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
+            LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
+        set ( LIBSNDFILE_HASVORBIS 1 )
+    else ()
+        message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
+    endif ()
+    #[[ cmake_print_properties( TARGETS PkgConfig::LIBSNDFILE
+        PROPERTIES 
+            INTERFACE_COMPILE_OPTIONS
+            INTERFACE_INCLUDE_DIRECTORIES
+            INTERFACE_LINK_OPTIONS
+            INTERFACE_LINK_LIBRARIES )  ]]
+    sanitize_target_dirs(PkgConfig::LIBSNDFILE)
+endif ( LIBSNDFILE_SUPPORT )
+else ( enable-libsndfile )
     unset_pkg_config ( LIBSNDFILE )
     unset_pkg_config ( LIBSNDFILE_VORBIS )
-    endif ( enable-libsndfile )
+endif ( enable-libsndfile )
 
-    unset ( PULSE_SUPPORT CACHE )
-    if ( enable-pulseaudio )
-    pkg_check_modules ( PULSE libpulse-simple>=0.9.8 )
+unset ( PULSE_SUPPORT CACHE )
+if ( enable-pulseaudio )
+    pkg_check_modules ( PULSE libpulse-simple>=0.9.8 IMPORTED_TARGET )
     set ( PULSE_SUPPORT ${PULSE_FOUND} )
     if ( PULSE_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "libpulse-simple")
+        list( APPEND PC_REQUIRES_PRIV "libpulse-simple")
     endif ( PULSE_SUPPORT )
-    else ( enable-pulseaudio )
+else ( enable-pulseaudio )
     unset_pkg_config ( PULSE )
-    endif ( enable-pulseaudio )
+endif ( enable-pulseaudio )
 
-    unset ( ALSA_SUPPORT CACHE )
-    if ( enable-alsa )
-    pkg_check_modules ( ALSA alsa>=0.9.1 )
+unset ( ALSA_SUPPORT CACHE )
+if ( enable-alsa )
+    pkg_check_modules ( ALSA alsa>=0.9.1 IMPORTED_TARGET )
     set ( ALSA_SUPPORT ${ALSA_FOUND} )
     if ( ALSA_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "alsa")
+        list( APPEND PC_REQUIRES_PRIV "alsa")
     endif ( ALSA_SUPPORT )
-    else ( enable-alsa )
+else ( enable-alsa )
     unset_pkg_config ( ALSA )
-    endif ( enable-alsa )
+endif ( enable-alsa )
 
-    unset ( PORTAUDIO_SUPPORT CACHE )
-    if ( enable-portaudio )
-    pkg_check_modules ( PORTAUDIO portaudio-2.0>=19 )
+unset ( PORTAUDIO_SUPPORT CACHE )
+if ( enable-portaudio )
+    pkg_check_modules ( PORTAUDIO portaudio-2.0>=19 IMPORTED_TARGET )
     set ( PORTAUDIO_SUPPORT ${PORTAUDIO_FOUND} )
     if ( PORTAUDIO_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "portaudio-2.0")
+        list( APPEND PC_REQUIRES_PRIV "portaudio-2.0")
     endif ()
-    else ( enable-portaudio )
+else ( enable-portaudio )
     unset_pkg_config ( PORTAUDIO )
-    endif ( enable-portaudio )
+endif ( enable-portaudio )
 
-    unset ( JACK_SUPPORT CACHE )
-    if ( enable-jack )
-    pkg_check_modules ( JACK jack )
+unset ( JACK_SUPPORT CACHE )
+if ( enable-jack )
+    pkg_check_modules ( JACK jack IMPORTED_TARGET )
     set ( JACK_SUPPORT ${JACK_FOUND} )
-    if ( JACK_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "jack")
-    endif ()
-    else ( enable-jack )
+    if (JACK_SUPPORT)
+        sanitize_target_dirs(PkgConfig::JACK)
+        list( APPEND PC_REQUIRES_PRIV "jack")
+    endif()
+else ( enable-jack )
     unset_pkg_config ( JACK )
-    endif ( enable-jack )
+endif ( enable-jack )
 
-    unset ( PIPEWIRE_SUPPORT CACHE )
-    if ( enable-pipewire )
-    pkg_check_modules ( PIPEWIRE libpipewire-0.3 )
+unset ( PIPEWIRE_SUPPORT CACHE )
+if ( enable-pipewire )
+    pkg_check_modules ( PIPEWIRE libpipewire-0.3 IMPORTED_TARGET )
     set ( PIPEWIRE_SUPPORT ${PIPEWIRE_FOUND} )
-    else ( enable-pipewire )
+    if ( PIPEWIRE_SUPPORT )
+        list( APPEND PC_REQUIRES_PRIV "libpipewire-0.3")
+    endif()
+else ( enable-pipewire )
     unset_pkg_config ( PIPEWIRE )
-    endif ( enable-pipewire )
+endif ( enable-pipewire )
 
-    unset ( LASH_SUPPORT CACHE )
-    if ( enable-lash )
-    pkg_check_modules ( LASH lash-1.0>=0.3 )
+unset ( LASH_SUPPORT CACHE )
+if ( enable-lash )
+    pkg_check_modules ( LASH lash-1.0>=0.3 IMPORTED_TARGET )
     if ( LASH_FOUND )
         set ( LASH_SUPPORT 1 )
         add_definitions ( -DHAVE_LASH )
+        sanitize_target_dirs(PkgConfig::LASH)
         list( APPEND PC_REQUIRES_PRIV "lash-1.0")
     endif ( LASH_FOUND )
-    else ( enable-lash )
+else ( enable-lash )
     unset_pkg_config ( LASH )
     remove_definitions( -DHAVE_LASH )
-    endif ( enable-lash )
+endif ( enable-lash )
 
-    unset ( SYSTEMD_SUPPORT CACHE )
-    if ( enable-systemd )
-        pkg_check_modules ( SYSTEMD libsystemd )
-        set ( SYSTEMD_SUPPORT ${SYSTEMD_FOUND} )
-        if ( SYSTEMD_SUPPORT )
-          list( APPEND PC_REQUIRES_PRIV "libsystemd")
-        endif ( SYSTEMD_SUPPORT )
-    else ( enable-systemd )
-        unset_pkg_config ( SYSTEMD )
-    endif ( enable-systemd )
+unset ( SYSTEMD_SUPPORT CACHE )
+if ( enable-systemd )
+    pkg_check_modules ( SYSTEMD libsystemd IMPORTED_TARGET )
+    set ( SYSTEMD_SUPPORT ${SYSTEMD_FOUND} )
+    if ( SYSTEMD_SUPPORT )
+        list( APPEND PC_REQUIRES_PRIV "libsystemd")
+    endif ( SYSTEMD_SUPPORT )
+else ( enable-systemd )
+    unset_pkg_config ( SYSTEMD )
+endif ( enable-systemd )
 
-    unset ( DBUS_SUPPORT CACHE )
-    if ( enable-dbus )
-    pkg_check_modules ( DBUS dbus-1>=1.0.0 )
-    set ( DBUS_SUPPORT ${DBUS_FOUND} )
-    if ( DBUS_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "dbus-1")
-    endif ()
-    else ( enable-dbus )
+unset ( DBUS_SUPPORT CACHE )
+if ( enable-dbus )
+pkg_check_modules ( DBUS dbus-1>=1.0.0 IMPORTED_TARGET )
+set ( DBUS_SUPPORT ${DBUS_FOUND} )
+if ( DBUS_SUPPORT )
+    list( APPEND PC_REQUIRES_PRIV "dbus-1")
+endif ()
+else ( enable-dbus )
     unset_pkg_config ( DBUS )
-    endif ( enable-dbus )
+endif ( enable-dbus )
 
-    unset ( LADSPA_SUPPORT CACHE )
-    if ( enable-ladspa )
-    check_include_file ( ladspa.h LADSPA_SUPPORT )
-    if ( LADSPA_SUPPORT )
-        pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 )
-        set ( LADSPA 1 )
-        list( APPEND PC_REQUIRES_PRIV "gmodule-2.0")
-    endif ( LADSPA_SUPPORT )
-    endif ( enable-ladspa )
+unset ( LADSPA_SUPPORT CACHE )
+if ( enable-ladspa )
+check_include_file ( ladspa.h LADSPA_SUPPORT )
+if ( LADSPA_SUPPORT )
+    pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 IMPORTED_TARGET )
+    set ( LADSPA 1 )
+    list( APPEND PC_REQUIRES_PRIV "gmodule-2.0")
+endif ( LADSPA_SUPPORT )
+endif ( enable-ladspa )
 
-    unset ( LIBINSTPATCH_SUPPORT CACHE )
-    if ( enable-libinstpatch )
-        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 )
-        set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
-        if ( LIBINSTPATCH_SUPPORT )
-          list( APPEND PC_REQUIRES_PRIV "libinstpatch-1.0")
-        endif (LIBINSTPATCH_SUPPORT )
-    endif ( enable-libinstpatch )
+unset ( LIBINSTPATCH_SUPPORT CACHE )
+if ( enable-libinstpatch )
+    pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 IMPORTED_TARGET )
+    set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
+    if ( LIBINSTPATCH_SUPPORT )
+        list( APPEND PC_REQUIRES_PRIV "libinstpatch-1.0")
+        #[[ cmake_print_properties( TARGETS PkgConfig::LIBINSTPATCH
+            PROPERTIES
+                INTERFACE_COMPILE_OPTIONS
+                INTERFACE_INCLUDE_DIRECTORIES
+                INTERFACE_LINK_DIRECTORIES
+                INTERFACE_LINK_OPTIONS
+                INTERFACE_LINK_LIBRARIES ) ]]
+        sanitize_target_dirs(PkgConfig::LIBINSTPATCH)
+    endif (LIBINSTPATCH_SUPPORT )
+endif ( enable-libinstpatch )
 
-    unset ( SDL2_SUPPORT CACHE )
-    if ( enable-sdl2 )
-        pkg_check_modules ( SDL2 sdl2 )
-        set ( SDL2_SUPPORT ${SDL2_FOUND} )
-        if ( SDL2_SUPPORT )
-          list( APPEND PC_REQUIRES_PRIV "sdl2")
-        endif ( SDL2_SUPPORT )
-    else ( enable-sdl2 )
-        unset_pkg_config ( SDL2 )
-    endif ( enable-sdl2 )
+unset ( SDL2_SUPPORT CACHE )
+if ( enable-sdl2 )
+    pkg_check_modules ( SDL2 sdl2 IMPORTED_TARGET )
+    set ( SDL2_SUPPORT ${SDL2_FOUND} )
+    if ( SDL2_SUPPORT )
+        list( APPEND PC_REQUIRES_PRIV "sdl2")
+    endif ( SDL2_SUPPORT )
+else ( enable-sdl2 )
+    unset_pkg_config ( SDL2 )
+endif ( enable-sdl2 )
 
-    unset ( OBOE_SUPPORT CACHE )
-    if ( enable-oboe )
-      pkg_check_modules ( OBOE oboe-1.0 )
-      if ( OBOE_FOUND )
-        set(CMAKE_CXX_STANDARD 14)
-        set(CMAKE_CXX_STANDARD_REQUIRED ON)
-        set ( OBOE_SUPPORT 1 )
-        list( APPEND PC_REQUIRES_PRIV "oboe-1.0")
-      endif ( OBOE_FOUND )
-    endif ( enable-oboe )
+unset ( OBOE_SUPPORT CACHE )
+if ( enable-oboe )
+    pkg_check_modules ( OBOE oboe-1.0 IMPORTED_TARGET )
+    if ( OBOE_FOUND )
+    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set ( OBOE_SUPPORT 1 )
+    list( APPEND PC_REQUIRES_PRIV "oboe-1.0")
+    endif ( OBOE_FOUND )
+endif ( enable-oboe )
 
-    unset ( WITH_READLINE CACHE )
-    unset ( READLINE_LIBS CACHE )
-    if ( enable-readline )
-    pkg_check_modules ( READLINE readline )
-    if ( READLINE_FOUND )
-        list( APPEND PC_REQUIRES_PRIV "readline")
-    else ( READLINE_FOUND )
-        find_package ( READLINE )
-        set ( READLINE_FOUND ${HAVE_READLINE} )
-    endif ( READLINE_FOUND )
-    if ( READLINE_FOUND )
-        set ( WITH_READLINE 1 )
-        set ( READLINE_LIBS ${READLINE_LIBRARIES} )
-    endif ( READLINE_FOUND )
-    endif ( enable-readline )
-
-endif(NOT enable-pkgconfig)
+unset ( WITH_READLINE CACHE )
+unset ( READLINE_LIBS CACHE )
+if ( enable-readline )
+pkg_check_modules ( READLINE readline QUIET IMPORTED_TARGET )
+if ( READLINE_FOUND )
+    list( APPEND PC_REQUIRES_PRIV "readline")
+else ( READLINE_FOUND )
+    find_package ( READLINE )
+    set ( READLINE_FOUND ${HAVE_READLINE} )
+endif ( READLINE_FOUND )
+if ( READLINE_FOUND )
+    set ( WITH_READLINE 1 )
+    set ( READLINE_LIBS ${READLINE_LIBRARIES} )
+endif ( READLINE_FOUND )
+endif ( enable-readline )
 
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )
@@ -741,18 +720,18 @@ endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
 find_package ( OpenMP QUIET )
-if (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
-    message(STATUS "Found OpenMP ${OpenMP_C_SPEC_DATE}")
-    # require at least OMP 4.0
-    if ( ( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" ) )
-        set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-
-        # include dir and library link seems to be required for Xcode 12.5 (issue #917)
-        include_directories ( SYSTEM ${OpenMP_C_INCLUDE_DIRS} )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
-        set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
-        set ( HAVE_OPENMP 1 )
+if ( OpenMP_FOUND OR OpenMP_C_FOUND )
+    message(STATUS "Found OpenMP version: ${OpenMP_C_VERSION} date: ${OpenMP_C_SPEC_DATE}")
+    if ( TARGET OpenMP::OpenMP_C AND (( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" )) )
+        #[[ cmake_print_properties( TARGETS OpenMP::OpenMP_C
+            PROPERTIES 
+               INTERFACE_COMPILE_OPTIONS
+               INTERFACE_INCLUDE_DIRECTORIES
+               INTERFACE_LINK_OPTIONS
+               INTERFACE_LINK_LIBRARIES ) ]]
+   	set ( HAVE_OPENMP 1 )
+    else()
+        message(STATUS "  OpenMP version is not supported. Feature disabled.")
     endif()
 endif()
 
@@ -834,22 +813,6 @@ endif ( HAVE_SOCKLEN_T )
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 
-# Setup linker directories NOW, as the command will apply only to targets created after it has been called.
-link_directories (
-    ${GLIB_LIBRARY_DIRS}
-    ${LASH_LIBRARY_DIRS}
-    ${JACK_LIBRARY_DIRS}
-    ${PIPEWIRE_LIBRARY_DIRS}
-    ${ALSA_LIBRARY_DIRS}
-    ${PULSE_LIBRARY_DIRS}
-    ${PORTAUDIO_LIBRARY_DIRS}
-    ${LIBSNDFILE_LIBRARY_DIRS}
-    ${DBUS_LIBRARY_DIRS}
-    ${SDL2_LIBRARY_DIRS}
-    ${OBOE_LIBRARY_DIRS}
-    ${LIBINSTPATCH_LIBRARY_DIRS}
-)
-
 # required to allow ctest to be called from top-level build directory
 ENABLE_TESTING()
 
@@ -861,46 +824,45 @@ add_subdirectory ( doc )
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-if ( IS_ABSOLUTE "${LIB_INSTALL_DIR}" )
-  set ( libdir "${LIB_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}" )
+  set ( libdir "${CMAKE_INSTALL_LIBDIR}" )
 else ()
-  set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
+  set ( libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}" )
 endif ()
-if ( IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}" )
-  set ( includedir "${INCLUDE_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}" )
+  set ( includedir "${CMAKE_INSTALL_INCLUDEDIR}" )
 else ()
-  set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+  set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
 endif ()
 
-if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
-    # retrieve all the private libs we depend on
-    get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
-    # make a copy
-    set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
+generate_pkgconfig_spec(fluidsynth.pc.in ${CMAKE_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 
-    # this matches any path and any flag entries (starting with '-')
-    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
-    # remove all entries from the list which are specified by path and which already have -l
-    list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
-    # include only entries specifed by path
-    list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
+# Exported targets for cmake: find_package(FluidSynth)
+# when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
+# to use the build directory directly set the FluidSynth_DIR variable instead.
 
-    # prepend the linker flag to all entries except the ones that already have it
-    list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
-    list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
-    list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+# targets in the build directory
+export(EXPORT FluidSynthTargets
+   FILE "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthTargets.cmake"
+   NAMESPACE FluidSynth::
+)
 
-    list ( JOIN PC_REQUIRES_PRIV " " PC_REQUIRES_PRIV_JOINED )
-else ()
-    set ( LIBS_PRIVATE "" )
-    set ( LIBS_PRIVATE_WITH_PATH "" )
-    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
-endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
+include(CMakePackageConfigHelpers) # SameMinorVersion requires CMake 3.11
+write_basic_package_version_file(
+    FluidSynthConfigVersion.cmake
+    VERSION ${VERSION}
+    COMPATIBILITY SameMinorVersion
+)
 
-configure_file ( fluidsynth.pc.in
-	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
-install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
+# Here, configure_file() is used instead of the more orthodox macro
+# configure_package_config_file() because the latter does not
+# support generating a config.cmake file for both the installed
+# package and for using the build directory directly.
+configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/FluidSynthConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
+)
 
 # Extra targets for Unix build environments
 if ( UNIX )
