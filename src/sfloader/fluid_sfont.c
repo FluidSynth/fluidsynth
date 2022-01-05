@@ -793,7 +793,7 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
          * ensure that those two pointers are within the sampledata by setting
          * them to 0. Don't report the modification, as this change has no audible
          * effect. */
-        sample->loopstart = sample->loopend = 0;
+        sample->loopstart = sample->loopend = sample->start;
         return FALSE;
     }
     else if(sample->loopstart > sample->loopend)
