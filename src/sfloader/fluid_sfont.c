@@ -789,12 +789,19 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
     if(sample->loopstart == sample->loopend)
     {
         /* Some SoundFonts disable loops by setting loopstart = loopend. While
-         * technically invalid, we decided to accept those samples anyway. Just
-         * ensure that those two pointers are within the sampledata by setting
-         * them to 0. Don't report the modification, as this change has no audible
-         * effect. */
-        sample->loopstart = sample->loopend = sample->start;
-        return FALSE;
+         * technically invalid, we decided to accept those samples anyway.
+         * Before fluidsynth 2.2.5 we've set those indices to zero, as this
+         * change was believed to be inaudible. This turned out to be an
+         * incorrect assumption, as the loop points may still be modified by
+         * loop offset modulators afterwards.
+         */
+        if(sample->loopstart != sample->start)
+        {
+            // Many soundfonts set loopstart == loopend == sample->start to disabled to loop.
+            // Only report cases where it's not equal to the sample->start, to avoid spam.
+            FLUID_LOG(FLUID_DBG, "Sample '%s': zero length loop detected: loopstart == loopend == '%d', sample start '%d', using it anyway",
+                    sample->name, sample->loopstart, sample->start);
+        }
     }
     else if(sample->loopstart > sample->loopend)
     {
