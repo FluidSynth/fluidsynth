@@ -35,6 +35,7 @@
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
 #include <sys/poll.h>
+#include <math.h>
 
 #include "fluid_lash.h"
 
@@ -919,6 +920,13 @@ static void fluid_alsa_seq_autoconnect_port_info(fluid_alsa_seq_driver_t *dev, s
     }
 
     FLUID_LOG(FLUID_INFO, "Connection of %s succeeded", pname);
+
+    /* Calculate the next port to be auto-connected. When all ports have been connected
+     * in sequence, start again from port 0 for the next auto-connection. */
+    dev->autoconn_dest.port++;
+    if (dev->autoconn_dest.port >= dev->port_count) {
+        dev->autoconn_dest.port  = 0;
+    }
 }
 
 // Autoconnect a single client port (by id) to autoconnect_dest if it has right type/capabilities
@@ -939,16 +947,19 @@ static void fluid_alsa_seq_autoconnect_port(fluid_alsa_seq_driver_t *dev, int cl
     fluid_alsa_seq_autoconnect_port_info(dev, pinfo);
 }
 
-// Connect available ALSA MIDI inputs to the provided port_info
-static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_seq_port_info_t *dest_pinfo)
+// Connect available ALSA MIDI inputs
+static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev)
 {
     int err;
     snd_seq_t *seq = dev->seq_handle;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
 
-    // subscribe to future new clients/ports showing up
-    if((err = snd_seq_connect_from(seq, snd_seq_port_info_get_port(dest_pinfo),
+    /* Subscribe to system:announce for future new clients/ports showing up.
+     * This subscription is made to the first port, and does not rotate
+     * dev->autoconn_dest, because this subscription never provides
+     * MIDI channel messages, only system (ALSA) messages. */
+    if((err = snd_seq_connect_from(seq, dev->autoconn_dest.port,
                                    SND_SEQ_CLIENT_SYSTEM, SND_SEQ_PORT_SYSTEM_ANNOUNCE)) < 0)
     {
         FLUID_LOG(FLUID_ERR, "snd_seq_connect_from() failed: %s", snd_strerror(err));
@@ -956,8 +967,6 @@ static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_s
 
     snd_seq_client_info_alloca(&cinfo);
     snd_seq_port_info_alloca(&pinfo);
-
-    dev->autoconn_dest = *snd_seq_port_info_get_addr(dest_pinfo);
 
     snd_seq_client_info_set_client(cinfo, -1);
 
@@ -1100,7 +1109,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
     FLUID_MEMSET(port_info, 0, snd_seq_port_info_sizeof());
 
     fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
-    dev->port_count = midi_channels / 16;
+    dev->port_count = ceil(midi_channels / 16);
 
     snd_seq_port_info_set_capability(port_info,
                                      SND_SEQ_PORT_CAP_WRITE |
@@ -1140,7 +1149,10 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
 
     if(dev->autoconn_inputs)
     {
-        fluid_alsa_seq_autoconnect(dev, port_info);
+        /* The next port to be auto-connected, starting by port 0 */
+        dev->autoconn_dest = *snd_seq_port_info_get_addr(port_info);
+        dev->autoconn_dest.port = 0;
+        fluid_alsa_seq_autoconnect(dev);
     }
 
     /* tell the lash server our client id */
