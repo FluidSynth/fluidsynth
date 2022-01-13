@@ -630,7 +630,62 @@ error_recovery:
 
 void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
 {
+    int card = -1;
+    int err = 0;
+
     fluid_settings_register_str(settings, "midi.alsa.device", "default", 0);
+    fluid_settings_add_option(settings, "midi.alsa.device", "default");
+
+    /* Enumeration of ALSA Raw MIDI devices */
+    err = snd_card_next(&card);
+    while ((err == 0) && (card >= 0)) {
+        int device = -1;
+        snd_ctl_t *ctl;
+        char card_name[32];
+
+        sprintf(card_name, "hw:%d", card);
+        err = snd_ctl_open(&ctl, card_name, 0);
+        if (err == 0) {
+            for (;;) {
+                int num_subs;
+                int subdevice;
+                char newoption[64];
+                snd_rawmidi_info_t *info;
+                const char *name;
+                const char *sub_name;
+
+                err = snd_ctl_rawmidi_next_device(ctl, &device);
+                if ((err < 0) || (device < 0))
+                    break;
+                snd_rawmidi_info_alloca(&info);
+                snd_rawmidi_info_set_device(info, device);
+                snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
+                err = snd_ctl_rawmidi_info(ctl, info);
+                if (err == 0)
+                    num_subs = snd_rawmidi_info_get_subdevices_count(info);
+                else
+                    break;
+                for (subdevice = 0; subdevice < num_subs; ++subdevice) {
+                    snd_rawmidi_info_set_subdevice(info, subdevice);
+                    err = snd_ctl_rawmidi_info(ctl, info);
+                    if (err == 0) {
+                        name = snd_rawmidi_info_get_name(info);
+                        sub_name = snd_rawmidi_info_get_subdevice_name(info);
+                        if (subdevice == 0 && sub_name[0] == '\0') {
+                            sprintf(newoption, "hw:%d,%d    %s", card, device, name);
+                            fluid_settings_add_option(settings, "midi.alsa.device", newoption);
+                            break;
+                        } else {
+                            sprintf(newoption, "hw:%d,%d,%d  %s", card, device, subdevice, sub_name);
+                            fluid_settings_add_option(settings, "midi.alsa.device", newoption);
+                        }
+                    }
+                }
+            }
+        }
+        snd_ctl_close(ctl);
+        err = snd_card_next(&card);
+    }
 }
 
 /*
