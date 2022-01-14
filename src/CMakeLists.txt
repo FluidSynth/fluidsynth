@@ -303,11 +303,15 @@ endif ( LIBFLUID_CPPFLAGS )
 
 # note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
-add_library ( libfluidsynth $<TARGET_OBJECTS:libfluidsynth-OBJ> )
+add_library ( libfluidsynth
+    $<TARGET_OBJECTS:libfluidsynth-OBJ>
+    ${public_main_HEADER}
+    ${public_HEADERS}
+)
 
 if ( MACOSX_FRAMEWORK )
-     set_property ( SOURCE ${public_HEADERS}
-         PROPERTY MACOSX_PACKAGE_LOCATION Headers/fluidsynth
+    set_source_files_properties ( ${public_HEADERS}
+         PROPERTIES MACOSX_PACKAGE_LOCATION Headers/fluidsynth
      )
     set_target_properties ( libfluidsynth
       PROPERTIES
