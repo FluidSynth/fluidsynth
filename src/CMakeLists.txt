@@ -301,8 +301,10 @@ if ( LIBFLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS )
 
-# note: by default this target creates a shared object (or dll). To build a
+# Note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
+# Further note: The headers must be explicitly added here to have CMake install
+# them correctly in case of MACOSX_FRAMEWORK
 add_library ( libfluidsynth
     $<TARGET_OBJECTS:libfluidsynth-OBJ>
     ${public_main_HEADER}
