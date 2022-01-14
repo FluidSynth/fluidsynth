@@ -155,6 +155,8 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     float *buffer = NULL;
     const struct spa_pod *params[1];
 
+    pw_init(NULL, NULL);
+
     drv = FLUID_NEW(fluid_pipewire_audio_driver_t);
 
     if(!drv)
