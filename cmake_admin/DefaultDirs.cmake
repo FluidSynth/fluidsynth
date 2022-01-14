@@ -11,15 +11,20 @@ else ( WIN32 )
 endif ( WIN32 )
 mark_as_advanced (DEFAULT_SOUNDFONT)
 
+set(FRAMEWORK_INSTALL_PREFIX "")
+if ( CMAKE_VERSION VERSION_GREATER "3.7.0" AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+  set(FRAMEWORK_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+endif()
+
 # BUNDLE_INSTALL_DIR - Mac only: the directory for application bundles 
 set (BUNDLE_INSTALL_DIR "Applications" CACHE STRING
      "The install dir for application bundles")
 mark_as_advanced (BUNDLE_INSTALL_DIR)
-     
+
 # FRAMEWORK_INSTALL_DIR - Mac only: the directory for framework bundles
 set (FRAMEWORK_INSTALL_DIR "Library/Frameworks" CACHE STRING
      "The install dir for framework bundles")
-mark_as_advanced (FRAMEWORK_INSTALL_DIR) 
+mark_as_advanced (FRAMEWORK_INSTALL_DIR)
 
 # BIN_INSTALL_DIR - the directory where executables will be installed
 set (BIN_INSTALL_DIR "bin" CACHE STRING "The install dir for executables")
