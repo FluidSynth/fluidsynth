@@ -69,7 +69,7 @@
  * or use the multi device naming "0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
  *
- 3)If the setting "midi.autoconnect" is enabled and the device name is "default",
+ * 3)If the setting "midi.autoconnect" is enabled and the device name is "default",
  * then all the available devices are opened, applying the appropriate channel
  * mappings to each device (the first device is mapped to the 16 first channels
  * (0-15), the second one to the next 16 channels (16-31), and so on with the limit

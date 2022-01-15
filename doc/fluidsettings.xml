@@ -678,7 +678,7 @@ and commit the results. Refresh with the following command:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                If 1 (TRUE), automatically connects FluidSynth to available MIDI input ports. alsa_seq, coremidi and jack are currently the only drivers making use of this.
+                If 1 (TRUE), automatically connects FluidSynth to available MIDI input ports. alsa_seq, coremidi, jack and winmidi are currently the only drivers making use of this.
             </desc>
         </setting>
         <setting>
@@ -750,7 +750,7 @@ and commit the results. Refresh with the following command:
             <name>winmidi.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels).</desc>
+            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels). Using name "default" with midi.autoconnect set to 1 is equivalent to use all available devices.</desc>
         </setting>
     </midi>
     
