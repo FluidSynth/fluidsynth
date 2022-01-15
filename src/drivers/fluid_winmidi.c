@@ -514,7 +514,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     fluid_settings_getint(settings, "midi.autoconnect", &autoconnect);
-    if ((autoconnect) && (strcmp(dev_name, "default") == 0))
+    if ((autoconnect) && (FLUID_STRCASECMP(dev_name, "default") == 0))
     {
         fluid_settings_getint(settings, "synth.midi-channels", &synth_midi_channels);
         max_devices = midiInGetNumDevs(); /* get number of real devices installed */
