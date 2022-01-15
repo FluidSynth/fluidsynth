@@ -28,28 +28,40 @@
  * on the Internet.  Some MIDI devices will deadlock.  Therefore we add MIDIHDR
  * pointers to a queue and re-add them in a separate thread.  Lame-o API! :(
  *
- * Multiple/single devices handling capabilities:
- * This driver is able to handle multiple devices chosen by the user trough
- * the settings midi.winmidi.device.
+ * 1)Multiple/single devices handling capabilities:
+ * This driver is able to handle multiple MIDI input devices chosen by the
+ * user trough the settings midi.winmidi.device.
+ * The driver makes an aggregation of the devices on separate MIDI channels
+ * to ensure no MIDI channels conflicts.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
  * Then the driver is able receive MIDI messages comming from distinct devices
  * and forward these messages on distinct MIDI channels set.
  * 1.1)For example, if the user chooses 2 devices at index 0 and 1, the user
  * must specify this by putting the name "0;1" in midi.winmidi.device setting.
- * We get a fictif device composed of real devices (0,1). This fictif device
+ * We get a fictive device composed of real devices (0,1). This fictive device
  * behaves like a device with 32 MIDI channels whose messages are forwarded to
  * driver output as this:
  * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
- * - MIDI messages from real device 1 are output to MIDI channels set 15 to 31.
+ * - MIDI messages from real device 1 are output to MIDI channels set 16 to 31.
  *
  * 1.2)Now another example with the name "1;0". The driver will forward
  * MIDI messages as this:
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
- * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
+ * - MIDI messages from real device 0 are output to MIDI channels set 16 to 31.
  * So, the device order specified in the setting allows the user to choose the
  * MIDI channel set associated with this real device at the driver output
  * according this formula: output_channel = input_channel + device_order * 16.
+ *
+ * Note the driver ignores the setting synth.midi-channels which default value
+ * for this setting is 16, in which case the second MIDI device will not be hear
+ * on the fluid synth instance.
+ * a) You have to rise the setting synth.midi-channels to accept the number
+ * of MIDI channels provided by the MIDI driver.
+ * b) You can also keep the default value of 16 for synth.midi-channels
+ * and have your application connected between the MIDI driver and the fluid synth.
+ * This way your application is able to map any MIDI channel from the driver to
+ * any synths that could be a fluid synth and hardware synth(s).
  *
  * 2)Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
