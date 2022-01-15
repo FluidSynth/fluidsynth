@@ -69,6 +69,19 @@
  * or use the multi device naming "0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
  *
+ 3)If the setting "midi.autoconnect" is enabled and the device name is "default",
+ * then all the available devices are opened, applying the appropriate channel
+ * mappings to each device (the first device is mapped to the 16 first channels
+ * (0-15), the second one to the next 16 channels (16-31), and so on with the limit
+ * of the synth.midi-channels setting. After arriving to the channels limit, the
+ * mapping restarts with the channels 0-15.
+ * This makes all MIDI devices audible on the synth instance. However with more than
+ * 1 MIDI devices and the default value of synth.midi-channels of 16 then MIDI
+ * channels conflicts are possible if MIDI devices transmit on the same MIDI channel.
+
+ * If the device name other than "default" is specified, then midi.autoconnect
+ * and synth.midi-channels settings are ignored (see 1).
+ *
  */
 
 #include "fluidsynth_priv.h"
@@ -481,6 +494,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     MMRESULT res;
     int i, j;
     int max_devices;  /* maximum number of devices to handle */
+    int autoconnect = 0;
+    int synth_midi_channels = 16;
     char strError[MAXERRORLENGTH];
     char dev_name[MAXPNAMELEN];
 
@@ -498,8 +513,18 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         FLUID_STRCPY(dev_name, "default");
     }
 
-    /* parse device name, get the maximum number of devices to handle */
-    max_devices = fluid_winmidi_parse_device_name(NULL, dev_name);
+    fluid_settings_getint(settings, "midi.autoconnect", &autoconnect);
+    if ((autoconnect) && (strcmp(dev_name, "default") == 0))
+    {
+        fluid_settings_getint(settings, "synth.midi-channels", &synth_midi_channels);
+        max_devices = midiInGetNumDevs(); /* get number of real devices installed */
+    }
+    else
+    {
+        autoconnect = 0; /* disable autoconnect */
+        /* parse device name to get the number of devices to handle */
+        max_devices = fluid_winmidi_parse_device_name(NULL, dev_name);
+    }
 
     /* check if any device has be found	*/
     if(!max_devices)
@@ -519,8 +544,15 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
     FLUID_MEMSET(dev, 0, i); /* reset structure members */
 
-    /* parse device name, get devices index  */
-    fluid_winmidi_parse_device_name(dev, dev_name);
+    if(autoconnect)
+    {
+        dev->dev_count = max_devices;  /* device count for autoconnect */
+    }
+    else
+    {
+        /* parse device name, get devices index and device count into dev */
+        fluid_winmidi_parse_device_name(dev, dev_name);
+    }
 
     dev->driver.handler = handler;
     dev->driver.data = data;
@@ -532,6 +564,13 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev_infos->dev = dev;            /* driver structure */
         dev_infos->midi_num = i;         /* device order number */
         dev_infos->channel_map = i * 16; /* map from input to output */
+        if(autoconnect)
+        {
+            /* set device index and channel mapping for autoconnect */
+            dev_infos->dev_idx = i;
+            dev_infos->channel_map %= synth_midi_channels;
+        }
+
         FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
         res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
