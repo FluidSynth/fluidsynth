@@ -42,6 +42,10 @@
 #include <SDL.h>
 #endif
 
+#if PIPEWIRE_SUPPORT
+#include <pipewire/pipewire.h>
+#endif
+
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
@@ -400,7 +404,6 @@ int main(int argc, char **argv)
 #endif
 
 #if SDL2_SUPPORT
-
     if(SDL_Init(SDL_INIT_AUDIO) != 0)
     {
         fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
@@ -409,7 +412,11 @@ int main(int argc, char **argv)
     {
         atexit(SDL_Quit);
     }
+#endif
 
+#if PIPEWIRE_SUPPORT
+    pw_init(&argc, &argv);
+    atexit(pw_deinit);
 #endif
 
     /* create the settings */

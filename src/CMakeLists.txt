@@ -484,6 +484,10 @@ if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT ) # because SDL_Init() etc.
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::SDL2 )
 endif()
 
+if ( TARGET PkgConfig::PIPEWIRE AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::PIPEWIRE )
+endif()
+
 if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::LIBINSTPATCH )
 endif()
