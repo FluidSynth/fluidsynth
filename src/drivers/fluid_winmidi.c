@@ -31,8 +31,9 @@
  * 1)Multiple/single devices handling capabilities:
  * This driver is able to handle multiple MIDI input devices chosen by the
  * user trough the settings midi.winmidi.device.
- * The driver makes an aggregation of the devices on separate MIDI channels
- * to ensure no MIDI channels conflicts.
+ *
+ * If midi.winmidi.mergebox is set to 0 the driver makes an aggregation of the
+ * devices on separate MIDI channels to ensure no MIDI channels conflicts.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
  * Then the driver is able receive MIDI messages comming from distinct devices
@@ -53,15 +54,25 @@
  * MIDI channel set associated with this real device at the driver output
  * according this formula: output_channel = input_channel + device_order * 16.
  *
- * Note the driver ignores the setting synth.midi-channels which default value
- * for this setting is 16, in which case the second MIDI device will not be hear
- * on the fluid synth instance.
- * a) You have to rise the setting synth.midi-channels to accept the number
- * of MIDI channels provided by the MIDI driver.
+ * Note that the driver ignores the synth.midi-channels setting which default
+ * value for this setting is 16,in which case the second MIDI device will not
+ * be hear on the fluid synth instance.
+ * a) You can augment the synth.midi-channels setting value to accept the number
+ * of MIDI channels provided by the MIDI driver, or
  * b) You can also keep the default value of 16 for synth.midi-channels
- * and have your application connected between the MIDI driver and the fluid synth.
+ * and have your application connected between the MIDI driver and the synths.
  * This way your application is able to map any MIDI channel from the driver to
- * any synths that could be a fluid synth and hardware synth(s).
+ * any synths that could be a fluid synth and hardware synth(s) as well.
+ *
+ * If midi.winmidi.mergebox is set to 1 (default value). The driver map the device
+ * according the limit of the synth.midi-channels setting.
+ * For example, if the user chooses 2 devices at index 0 and 1 and a default value
+ * of 16 for synth.midi-channels setting:
+ * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
+ * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
+ * Device 1 MIDI channels are merged with device 0 MIDI channel. This could lead
+ * to possible MIDI channels conflicts if both MIDI devices transmit at the same
+ * on the same MIDI channels.
  *
  * 2)Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
@@ -80,7 +91,7 @@
  * channels conflicts are possible if MIDI devices transmit on the same MIDI channel.
 
  * If the device name other than "default" is specified, then midi.autoconnect
- * and synth.midi-channels settings are ignored (see 1).
+ * and synth.midi-channels settings are ignored (see 1, 2).
  *
  */
 
@@ -291,6 +302,8 @@ void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
 
     /* register midi.winmidi.device */
     fluid_settings_register_str(settings, "midi.winmidi.device", "default", 0);
+    /* register midi.winmidi.mergebox (default value 1) */
+    fluid_settings_register_int(settings, "midi.winmidi.mergebox", 1, 0, 1, FLUID_HINT_TOGGLED);
     num = midiInGetNumDevs();
 
     if(num > 0)
@@ -495,6 +508,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     int i, j;
     int max_devices;  /* maximum number of devices to handle */
     int autoconnect = 0;
+    int mergebox = 1;
     int synth_midi_channels = 16;
     char strError[MAXERRORLENGTH];
     char dev_name[MAXPNAMELEN];
@@ -514,6 +528,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     fluid_settings_getint(settings, "midi.autoconnect", &autoconnect);
+    fluid_settings_getint(settings, "midi.winmidi.mergebox", &mergebox);
     fluid_settings_getint(settings, "synth.midi-channels", &synth_midi_channels);
     if ((autoconnect) && (FLUID_STRCASECMP(dev_name, "default") == 0))
     {
@@ -564,11 +579,15 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev_infos->dev = dev;            /* driver structure */
         dev_infos->midi_num = i;         /* device order number */
         dev_infos->channel_map = i * 16; /* map from input to output */
-        if(autoconnect)
+        if(autoconnect || mergebox)
         {
-            /* set device index and channel mapping for autoconnect */
-            dev_infos->dev_idx = i;
+            /* set channel mapping for autoconnect or mergebox behaviour */
             dev_infos->channel_map %= synth_midi_channels;
+            if(autoconnect)
+            {
+                /* set device index for autoconnect */
+                dev_infos->dev_idx = i;
+            }
         }
 
         FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
