@@ -752,6 +752,21 @@ and commit the results. Refresh with the following command:
             <def>default</def>
             <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels). Using name "default" with midi.autoconnect set to 1 is equivalent to use all available devices.</desc>
         </setting>
+        <setting>
+            <name>winmidi.mergebox</name>
+            <type>bool</type>
+            <def>1 (TRUE) The driver map the device MIDI channels according the limit of the synth.midi-channels settings.<br />
+                          For example, if the user chooses 2 devices at index 0 and 1 and a default value of 16 for synth.midi-channels:<br />
+                          - MIDI messages from device 0 are mapped to MIDI channels set 0 to 15.<br />
+                          - MIDI messages from device 1 are also mapped to MIDI channels set 0 to 15.<br />
+                          Device 1 MIDI channels are merged with device 0 MIDI channels. This could lead to possible MIDI channels conflicts if both devices transmit at the same time on the same MIDI channel.</def>
+            <desc>
+                If 0 (FALSE), The driver makes an aggregation of the devices on separate MIDI channels to ensure no MIDI channel conflict.<br />
+                          For example, if the user chooses 2 devices at index 0 and 1:<br />
+                          - MIDI messages from device 0 are mapped to MIDI channels set 0 to 15.<br />
+                          - MIDI messages from device 1 are mapped to MIDI channels set 16 to 31.<br />
+            </desc>
+        </setting>
     </midi>
     
     <player label="MIDI player settings">

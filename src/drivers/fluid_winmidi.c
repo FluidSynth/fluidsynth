@@ -33,7 +33,7 @@
  * user trough the settings midi.winmidi.device.
  *
  * If midi.winmidi.mergebox is set to 0 the driver makes an aggregation of the
- * devices on separate MIDI channels to ensure no MIDI channels conflicts.
+ * devices on separate MIDI channels to ensure no MIDI channel conflict.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
  * Then the driver is able receive MIDI messages comming from distinct devices
@@ -43,13 +43,13 @@
  * We get a fictive device composed of real devices (0,1). This fictive device
  * behaves like a device with 32 MIDI channels whose messages are forwarded to
  * driver output as this:
- * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
- * - MIDI messages from real device 1 are output to MIDI channels set 16 to 31.
+ * - MIDI messages from real device 0 are mapped to MIDI channels set 0 to 15.
+ * - MIDI messages from real device 1 are mapped to MIDI channels set 16 to 31.
  *
  * 1.2)Now another example with the name "1;0". The driver will forward
  * MIDI messages as this:
- * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
- * - MIDI messages from real device 0 are output to MIDI channels set 16 to 31.
+ * - MIDI messages from real device 1 are mapped to MIDI channels set 0 to 15.
+ * - MIDI messages from real device 0 are mapped to MIDI channels set 16 to 31.
  * So, the device order specified in the setting allows the user to choose the
  * MIDI channel set associated with this real device at the driver output
  * according this formula: output_channel = input_channel + device_order * 16.
@@ -65,14 +65,14 @@
  * any synths that could be a fluid synth and hardware synth(s) as well.
  *
  * If midi.winmidi.mergebox is set to 1 (default value). The driver map the device
- * according the limit of the synth.midi-channels setting.
+ * MIDI channels according the limit of the synth.midi-channels setting.
  * For example, if the user chooses 2 devices at index 0 and 1 and a default value
  * of 16 for synth.midi-channels setting:
  * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
  * Device 1 MIDI channels are merged with device 0 MIDI channel. This could lead
  * to possible MIDI channels conflicts if both MIDI devices transmit at the same
- * on the same MIDI channels.
+ * time on the same MIDI channel.
  *
  * 2)Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
