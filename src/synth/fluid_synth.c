@@ -2371,6 +2371,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
 
     if(len < 9) // at least one byte of data should be transmitted
     {
+        FLUID_LOG(FLUID_INFO, "SysEx DT1: message too short, dropping it.");
         return FLUID_FAILED;
     }
     len_data = len - 8;
@@ -2380,8 +2381,10 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         checksum += data[i];
     }
-    if (0x80 - (checksum & 0x7F) != data[len - 1])
+    checksum = 0x80 - (checksum & 0x7F);
+    if (checksum != data[len - 1])
     {
+        FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;
     }
 
@@ -2389,6 +2392,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         if (len_data > 1 || (data[7] != 0 && data[7] != 0x7f))
         {
+            FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping invalid mode set message");
             return FLUID_FAILED;
         }
         if (handled)
@@ -2419,6 +2423,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         if (len_data > 1 || data[7] > 0x02)
         {
+            FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping invalid rhythm part message");
             return FLUID_FAILED;
         }
         if (handled)
@@ -2433,6 +2438,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
             synth->channel[chan]->channel_type =
                 data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
 
+            FLUID_LOG(FLUID_DBG, "SysEx DT1: setting MIDI channel %d to type %d", chan, (int)synth->channel[chan]->channel_type);
             //Roland synths seem to "remember" the last instrument a channel
             //used in the selected mode. This behavior is not replicated here.
             fluid_synth_program_change(synth, chan, 0);
