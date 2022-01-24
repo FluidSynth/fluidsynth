@@ -276,13 +276,19 @@ if ( LIBFLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS )
 
-# note: by default this target creates a shared object (or dll). To build a
+# Note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
-add_library ( libfluidsynth $<TARGET_OBJECTS:libfluidsynth-OBJ> )
+# Further note: The headers must be explicitly added here to have CMake install
+# them correctly in case of MACOSX_FRAMEWORK
+add_library ( libfluidsynth
+    $<TARGET_OBJECTS:libfluidsynth-OBJ>
+    ${public_main_HEADER}
+    ${public_HEADERS}
+)
 
 if ( MACOSX_FRAMEWORK )
-     set_property ( SOURCE ${public_HEADERS}
-         PROPERTY MACOSX_PACKAGE_LOCATION Headers/fluidsynth
+    set_source_files_properties ( ${public_HEADERS}
+         PROPERTIES MACOSX_PACKAGE_LOCATION Headers/fluidsynth
      )
     set_target_properties ( libfluidsynth
       PROPERTIES
@@ -496,8 +502,8 @@ if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     EXPORT FluidSynthTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
-    ARCHIVE DESTINATION ${FRAMEWORK_INSTALL_DIR}
+    FRAMEWORK DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}"
+    ARCHIVE DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}"
 )
 else ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth

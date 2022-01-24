@@ -93,6 +93,11 @@ jobs:
       # Execute tests defined by the CMake configuration.
       run: make -j`nproc` check
 
+    - name: Demo
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      run: make -j`nproc` demo
+
     - name: Install
       working-directory: ${{github.workspace}}/build
       run: make install
