@@ -485,6 +485,8 @@ delete_fluid_oss_audio_driver(fluid_audio_driver_t *p)
     }
 
     FLUID_FREE(dev->buffer);
+    FLUID_FREE(dev->buffers[0]);
+    FLUID_FREE(dev->buffers[1]);
     FLUID_FREE(dev);
 }
 
