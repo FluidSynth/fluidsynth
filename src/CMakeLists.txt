@@ -106,7 +106,7 @@ if ( OBOE_SUPPORT )
   set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
 endif ( OBOE_SUPPORT )
 
-set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
+set ( config_SOURCES ${FLUIDSYNTH_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c
@@ -183,32 +183,32 @@ set ( libfluidsynth_SOURCES
 )
 
 set ( public_HEADERS
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/ladspa.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/log.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/midi.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/misc.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/mod.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/seq.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/seqbind.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/settings.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/sfont.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/shell.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/synth.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/types.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/voice.h
-    ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/audio.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/event.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/gen.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/ladspa.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/log.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/midi.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/misc.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/mod.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/seq.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/seqbind.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/settings.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/sfont.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/shell.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/synth.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/types.h
+    ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/voice.h
+    ${FLUIDSYNTH_BINARY_DIR}/include/fluidsynth/version.h
 )
 
 set ( public_main_HEADER
-    ${CMAKE_BINARY_DIR}/include/fluidsynth.h
+    ${FLUIDSYNTH_BINARY_DIR}/include/fluidsynth.h
 )
 
-configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in 
-                 ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h )
-configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
+configure_file ( ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth/version.h.in 
+                 ${FLUIDSYNTH_BINARY_DIR}/include/fluidsynth/version.h )
+configure_file ( ${FLUIDSYNTH_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
 if ( WIN32 )
@@ -258,17 +258,17 @@ add_library ( libfluidsynth-OBJ OBJECT
 )
 
 target_include_directories ( libfluidsynth-OBJ PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/drivers
-    ${CMAKE_SOURCE_DIR}/src/synth
-    ${CMAKE_SOURCE_DIR}/src/rvoice
-    ${CMAKE_SOURCE_DIR}/src/midi
-    ${CMAKE_SOURCE_DIR}/src/utils
-    ${CMAKE_SOURCE_DIR}/src/sfloader
-    ${CMAKE_SOURCE_DIR}/src/bindings
-    ${CMAKE_SOURCE_DIR}/include
+    ${FLUIDSYNTH_BINARY_DIR}
+    ${FLUIDSYNTH_BINARY_DIR}/include
+    ${FLUIDSYNTH_SOURCE_DIR}/src
+    ${FLUIDSYNTH_SOURCE_DIR}/src/drivers
+    ${FLUIDSYNTH_SOURCE_DIR}/src/synth
+    ${FLUIDSYNTH_SOURCE_DIR}/src/rvoice
+    ${FLUIDSYNTH_SOURCE_DIR}/src/midi
+    ${FLUIDSYNTH_SOURCE_DIR}/src/utils
+    ${FLUIDSYNTH_SOURCE_DIR}/src/sfloader
+    ${FLUIDSYNTH_SOURCE_DIR}/src/bindings
+    ${FLUIDSYNTH_SOURCE_DIR}/include
 )
 
 if ( LIBFLUID_CPPFLAGS )
@@ -457,16 +457,16 @@ if ( FLUID_CPPFLAGS )
 endif ( FLUID_CPPFLAGS )
 
 target_include_directories ( fluidsynth PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src/bindings
-    ${CMAKE_SOURCE_DIR}/src/midi
-    ${CMAKE_SOURCE_DIR}/src/rvoice
-    ${CMAKE_SOURCE_DIR}/src/sfloader
-    ${CMAKE_SOURCE_DIR}/src/synth
-    ${CMAKE_SOURCE_DIR}/src/utils
-    ${CMAKE_SOURCE_DIR}/src/
-    ${CMAKE_SOURCE_DIR}/include
+    ${FLUIDSYNTH_BINARY_DIR}
+    ${FLUIDSYNTH_BINARY_DIR}/include
+    ${FLUIDSYNTH_SOURCE_DIR}/src/bindings
+    ${FLUIDSYNTH_SOURCE_DIR}/src/midi
+    ${FLUIDSYNTH_SOURCE_DIR}/src/rvoice
+    ${FLUIDSYNTH_SOURCE_DIR}/src/sfloader
+    ${FLUIDSYNTH_SOURCE_DIR}/src/synth
+    ${FLUIDSYNTH_SOURCE_DIR}/src/utils
+    ${FLUIDSYNTH_SOURCE_DIR}/src/
+    ${FLUIDSYNTH_SOURCE_DIR}/include
 )
 
 target_link_libraries ( fluidsynth PRIVATE
@@ -551,6 +551,6 @@ ExternalProject_Add(gentables
         "${CMAKE_COMMAND}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}" "${GENTAB_SDIR}"
     BUILD_COMMAND
         "${CMAKE_COMMAND}" --build "${GENTAB_BDIR}"
-    INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${CMAKE_BINARY_DIR}/"
+    INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${FLUIDSYNTH_BINARY_DIR}/"
 )
 add_dependencies(libfluidsynth-OBJ gentables)
