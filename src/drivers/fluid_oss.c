@@ -425,7 +425,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func,
         goto error_recovery;
     }
 
-    /* allocate the buffers. FIXME!!! don't use interleaved samples */
+    /* allocate the buffers. */
     dev->buffer = FLUID_MALLOC(dev->buffer_byte_size);
     dev->buffers[0] = FLUID_ARRAY(float, dev->buffer_size);
     dev->buffers[1] = FLUID_ARRAY(float, dev->buffer_size);
