@@ -31,6 +31,7 @@ and a description.
 - file: Driver to output audio to a file
 - sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
   FreeBSD, Haiku, etc.)
+- pipewire**: PipeWire (Linux)
 
 The default audio driver depends on the settings with which FluidSynth was
 compiled. You can get the default driver with
@@ -77,6 +78,12 @@ refer to the \setting{audio} documentation.
 is responsible for initializing SDL (e.g. with SDL_Init()). This must be done
 <strong>before</strong> the first call to <code>new_fluid_settings()</code>!
 Also make sure to call SDL_Quit() after all fluidsynth instances have been
+destroyed.
+
+<strong>**Note:</strong> In order to use pipeiwre as audio driver, the application
+is responsible for initializing PipeWire (e.g. with pw_init()). This must be done
+<strong>before</strong> the first call to <code>new_fluid_settings()</code>!
+Also make sure to call pw_deinit() after all fluidsynth instances have been
 destroyed.
 
 */

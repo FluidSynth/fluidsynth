@@ -192,7 +192,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
 
     if(!drv->pw_loop)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire loop");
+        FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire loop. Have you called pw_init() ?");
         goto driver_cleanup;
     }
 
