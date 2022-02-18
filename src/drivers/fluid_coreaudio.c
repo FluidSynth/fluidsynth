@@ -27,10 +27,10 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 
-/* 
+/*
  * !!! Make sure that no include above includes <netinet/tcp.h> !!!
  * It #defines some macros that collide with enum definitions of OpenTransportProviders.h, which is included from OSServices.h, included from CoreServices.h
- * 
+ *
  * https://trac.macports.org/ticket/36962
  */
 
@@ -81,7 +81,7 @@ get_num_outputs(AudioDeviceID deviceID)
     AudioObjectPropertyAddress pa;
     pa.mSelector = kAudioDevicePropertyStreamConfiguration;
     pa.mScope = kAudioDevicePropertyScopeOutput;
-    pa.mElement = kAudioObjectPropertyElementMaster;
+    pa.mElement = kAudioObjectPropertyElementMain;
 
     if(OK(AudioObjectGetPropertyDataSize(deviceID, &pa, 0, 0, &size)) && size > 0)
     {
@@ -118,7 +118,7 @@ fluid_core_audio_driver_settings(fluid_settings_t *settings)
     AudioObjectPropertyAddress pa;
     pa.mSelector = kAudioHardwarePropertyDevices;
     pa.mScope = kAudioObjectPropertyScopeWildcard;
-    pa.mElement = kAudioObjectPropertyElementMaster;
+    pa.mElement = kAudioObjectPropertyElementMain;
 
     fluid_settings_register_str(settings, "audio.coreaudio.device", "default", 0);
     fluid_settings_add_option(settings, "audio.coreaudio.device", "default");
@@ -172,6 +172,17 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     OSStatus status;
     UInt32 size;
     int i;
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    ComponentDescription desc;
+#else
+    AudioComponentDescription desc;
+#endif
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+    Component comp;
+#else
+    AudioComponent comp;
+#endif
+    AURenderCallbackStruct render;
 
     dev = FLUID_NEW(fluid_core_audio_driver_t);
 
@@ -187,11 +198,6 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     dev->data = data;
 
     // Open the default output unit
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-    ComponentDescription desc;
-#else
-    AudioComponentDescription desc;
-#endif
     desc.componentType = kAudioUnitType_Output;
     desc.componentSubType = kAudioUnitSubType_HALOutput; //kAudioUnitSubType_DefaultOutput;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
@@ -199,9 +205,9 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     desc.componentFlagsMask = 0;
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-    Component comp = FindNextComponent(NULL, &desc);
+    comp = FindNextComponent(NULL, &desc);
 #else
-    AudioComponent comp = AudioComponentFindNext(NULL, &desc);
+    comp = AudioComponentFindNext(NULL, &desc);
 #endif
 
     if(comp == NULL)
@@ -223,7 +229,6 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     }
 
     // Set up a callback function to generate output
-    AURenderCallbackStruct render;
     render.inputProc = fluid_core_audio_callback;
     render.inputProcRefCon = (void *) dev;
     status = AudioUnitSetProperty(dev->outputUnit,
@@ -250,7 +255,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         AudioObjectPropertyAddress pa;
         pa.mSelector = kAudioHardwarePropertyDevices;
         pa.mScope = kAudioObjectPropertyScopeWildcard;
-        pa.mElement = kAudioObjectPropertyElementMaster;
+        pa.mElement = kAudioObjectPropertyElementMain;
 
         if(OK(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &pa, 0, 0, &size)))
         {
@@ -342,7 +347,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     dev->buffers[0] = FLUID_ARRAY(float, dev->buffer_size);
     dev->buffers[1] = FLUID_ARRAY(float, dev->buffer_size);
-    
+
     if(dev->buffers[0] == NULL || dev->buffers[1] == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory.");

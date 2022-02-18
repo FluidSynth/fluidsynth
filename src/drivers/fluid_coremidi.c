@@ -49,6 +49,7 @@
 /* End work around */
 
 #include <unistd.h>
+#include <os/log.h>
 #include <CoreServices/CoreServices.h>
 #include <CoreMIDI/MIDIServices.h>
 
@@ -61,6 +62,10 @@ typedef struct
     fluid_midi_parser_t *parser;
     int autoconn_inputs;
 } fluid_coremidi_driver_t;
+
+static MIDIClientRef invalid_client = (MIDIClientRef)-1;
+static MIDIEndpointRef invalid_endpoint = (MIDIEndpointRef)-1;
+static MIDIPortRef invalid_port = (MIDIPortRef)-1;
 
 void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
@@ -108,6 +113,8 @@ new_fluid_coremidi_driver(fluid_settings_t *settings, handle_midi_event_func_t h
     char *id;
     CFStringRef str_portname;
     CFStringRef str_clientname;
+    OSStatus result;
+    CFStringRef str_input_portname;
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -124,9 +131,10 @@ new_fluid_coremidi_driver(fluid_settings_t *settings, handle_midi_event_func_t h
         return NULL;
     }
 
-    dev->client = 0;
-    dev->endpoint = 0;
-    dev->parser = 0;
+    dev->client = invalid_client;
+    dev->endpoint = invalid_endpoint;
+    dev->input_port = invalid_port;
+    dev->parser = NULL;
     dev->driver.handler = handler;
     dev->driver.data = data;
 
@@ -173,7 +181,7 @@ new_fluid_coremidi_driver(fluid_settings_t *settings, handle_midi_event_func_t h
         FLUID_FREE(portname);    /* -- free port name */
     }
 
-    OSStatus result = MIDIClientCreate(str_clientname, NULL, NULL, &client);
+    result = MIDIClientCreate(str_clientname, NULL, NULL, &client);
     CFRelease(str_clientname);
 
     if(result != noErr)
@@ -194,7 +202,7 @@ new_fluid_coremidi_driver(fluid_settings_t *settings, handle_midi_event_func_t h
         goto error_recovery;
     }
 
-    CFStringRef str_input_portname = CFSTR("input");
+    str_input_portname = CFSTR("input");
     result = MIDIInputPortCreate(client, str_input_portname,
                                  fluid_coremidi_callback,
                                  (void *)dev, &dev->input_port);
@@ -231,17 +239,17 @@ delete_fluid_coremidi_driver(fluid_midi_driver_t *p)
     fluid_coremidi_driver_t *dev = (fluid_coremidi_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
 
-    if(dev->input_port != NULL)
+    if(dev->input_port != invalid_port)
     {
         MIDIPortDispose(dev->input_port);
     }
 
-    if(dev->client != NULL)
+    if(dev->client != invalid_client)
     {
         MIDIClientDispose(dev->client);
     }
 
-    if(dev->endpoint != NULL)
+    if(dev->endpoint != invalid_endpoint)
     {
         MIDIEndpointDispose(dev->endpoint);
     }
