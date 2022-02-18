@@ -73,6 +73,10 @@ OSStatus fluid_core_audio_callback(void *data,
 
 #define OK(x) (x == noErr)
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1200
+#define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
+#endif
+
 int
 get_num_outputs(AudioDeviceID deviceID)
 {
