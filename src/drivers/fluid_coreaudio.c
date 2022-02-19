@@ -73,8 +73,8 @@ OSStatus fluid_core_audio_callback(void *data,
 
 #define OK(x) (x == noErr)
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1200
-#define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
+#if MAC_OS_X_VERSION < 1200
+#define kAudioObjectPropertyElementMain (kAudioObjectPropertyElementMaster)
 #endif
 
 int
@@ -178,12 +178,9 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     int i;
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
     ComponentDescription desc;
-#else
-    AudioComponentDescription desc;
-#endif
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
     Component comp;
 #else
+    AudioComponentDescription desc;
     AudioComponent comp;
 #endif
     AURenderCallbackStruct render;
