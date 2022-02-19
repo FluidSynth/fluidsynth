@@ -63,9 +63,9 @@ typedef struct
     int autoconn_inputs;
 } fluid_coremidi_driver_t;
 
-static MIDIClientRef invalid_client = (MIDIClientRef)-1;
-static MIDIEndpointRef invalid_endpoint = (MIDIEndpointRef)-1;
-static MIDIPortRef invalid_port = (MIDIPortRef)-1;
+static const MIDIClientRef invalid_client = (MIDIClientRef)-1;
+static const MIDIEndpointRef invalid_endpoint = (MIDIEndpointRef)-1;
+static const MIDIPortRef invalid_port = (MIDIPortRef)-1;
 
 void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
