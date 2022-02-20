@@ -16,7 +16,7 @@ and a description.
 
 - jack: JACK Audio Connection Kit (Linux, Mac OS X, Windows)
 - alsa: Advanced Linux Sound Architecture (Linux)
-- oss: Open Sound System (Linux, Unix)
+- oss: Open Sound System (primarily needed on BSD, rarely also Linux and Unix in general)
 - pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
 - coreaudio: Apple CoreAudio (Mac OS X)
 - dsound: Microsoft DirectSound (Windows)
