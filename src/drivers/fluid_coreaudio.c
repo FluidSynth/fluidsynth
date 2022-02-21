@@ -73,7 +73,7 @@ OSStatus fluid_core_audio_callback(void *data,
 
 #define OK(x) (x == noErr)
 
-#if MAC_OS_X_VERSION < 1200
+#if __MAC_OS_X_VERSION_MAX_ALLOWED < 120000
 #define kAudioObjectPropertyElementMain (kAudioObjectPropertyElementMaster)
 #endif
 
