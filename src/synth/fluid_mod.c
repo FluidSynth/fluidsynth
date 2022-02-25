@@ -184,6 +184,8 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 
     if(mod_flags & FLUID_MOD_CC)
     {
+        val = fluid_channel_get_cc(chan, mod_src);
+
         /* From MIDI Recommended Practice (RP-036) Default Pan Formula:
          * "Since MIDI controller values range from 0 to 127, the exact center
          * of the range, 63.5, cannot be represented. Therefore, the effective
@@ -197,16 +199,20 @@ fluid_mod_get_source_value(const unsigned char mod_src,
         if(mod_src == PAN_MSB || mod_src == BALANCE_MSB)
         {
             *range = 126;
-            val = fluid_channel_get_cc(chan, mod_src) - 1;
+            val -= 1;
 
             if(val < 0)
             {
                 val = 0;
             }
         }
-        else
+        else if(mod_src == PORTAMENTO_CTRL)
         {
-            val = fluid_channel_get_cc(chan, mod_src);
+            // an invalid portamento fromkey should be treated as 0 when it's actually used for moulating
+            if(!fluid_channel_is_valid_note(val))
+            {
+                val = 0;
+            }
         }
     }
     else
