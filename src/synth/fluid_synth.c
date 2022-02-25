@@ -2536,7 +2536,9 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t *synth, int chan)
     {
         voice = synth->voice[i];
 
-        if(fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == fluid_voice_get_channel(voice))))
+        // Do not turn off voices which are sustained. MIDI 1.0 Spec:
+        // "A Hold or Sustain pedal 'On' message takes priority over Note Off and All Notes Off until it is released."
+        if(fluid_voice_is_on(voice) && ((-1 == chan) || (chan == fluid_voice_get_channel(voice))))
         {
             fluid_voice_noteoff(voice);
         }
