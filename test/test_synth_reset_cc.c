@@ -122,6 +122,13 @@ int main(void)
 
     for (chan = 0; chan < fluid_synth_count_midi_channels(synth); chan++)
     {
+        const fluid_channel_t* channel = synth->channel[chan];
+        if(channel->channel_type == CHANNEL_TYPE_DRUM)
+        {
+            // drum channels won't spawn voices
+            continue;
+        }
+
         test_portamento_fromkey(synth, chan);
         fluid_synth_system_reset(synth);
         
