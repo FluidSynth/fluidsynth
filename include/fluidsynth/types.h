@@ -27,6 +27,9 @@
 extern "C" {
 #endif
 
+#if !(defined(_MSC_VER) && (_MSC_VER < 1800))
+#include <stdint.h>
+#endif
 
 /**
  * @defgroup Types Types
@@ -73,7 +76,6 @@ typedef __int64 fluid_long_long_t; // even on 32bit windows
  * A typedef for C99's type long long, which is at least 64-bit wide, as guaranteed by the C99.
  * @p __int64 will be used as replacement for VisualStudio 2010 and older.
  */
-#include <stdint.h>
 typedef int64_t fluid_long_long_t;
 #endif
 
