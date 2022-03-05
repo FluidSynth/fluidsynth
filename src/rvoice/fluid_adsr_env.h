@@ -64,7 +64,7 @@ struct _fluid_adsr_env_t
 /* For performance, all functions are inlined */
 
 static FLUID_INLINE void
-fluid_adsr_env_calc(fluid_adsr_env_t *env, int is_volenv)
+fluid_adsr_env_calc(fluid_adsr_env_t *env)
 {
     fluid_env_data_t *env_data;
     fluid_real_t x;
@@ -76,7 +76,8 @@ fluid_adsr_env_calc(fluid_adsr_env_t *env, int is_volenv)
     {
         // If we're switching envelope stages from decay to sustain, force the value to be the end value of the previous stage
         // Hmm, should this only apply to volenv? It was so before refactoring, so keep it for now. [DH]
-        if(env->section == FLUID_VOICE_ENVDECAY && is_volenv)
+        // No, must apply to both, otherwise some voices may sound detuned. [TM] (https://github.com/FluidSynth/fluidsynth/issues/1059)
+        if(env->section == FLUID_VOICE_ENVDECAY)
         {
             env->val = env_data->min * env_data->coeff;
         }

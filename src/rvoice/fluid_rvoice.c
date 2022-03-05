@@ -331,7 +331,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     /******************* vol env **********************/
 
-    fluid_adsr_env_calc(&voice->envlfo.volenv, 1);
+    fluid_adsr_env_calc(&voice->envlfo.volenv);
     fluid_check_fpe("voice_write vol env");
 
     if(fluid_adsr_env_get_section(&voice->envlfo.volenv) == FLUID_VOICE_ENVFINISHED)
@@ -341,7 +341,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     /******************* mod env **********************/
 
-    fluid_adsr_env_calc(&voice->envlfo.modenv, 0);
+    fluid_adsr_env_calc(&voice->envlfo.modenv);
     fluid_check_fpe("voice_write mod env");
 
     /******************* lfo **********************/
