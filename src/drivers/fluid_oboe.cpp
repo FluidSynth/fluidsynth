@@ -25,12 +25,8 @@
  * This file may make use of C++14, because it's required by oboe anyway.
  */
 
-extern "C" {
-
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
-
-} // extern "C"
 
 #if OBOE_SUPPORT
 

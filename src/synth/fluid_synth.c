@@ -1794,6 +1794,9 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     case ALL_CTRL_OFF: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_init_ctrl(chan, 1);
+        // the hold pedals have been reset, we maybe need to release voices
+        fluid_synth_damp_voices_by_sustain_LOCAL(synth, channum);
+        fluid_synth_damp_voices_by_sostenuto_LOCAL(synth, channum);
         fluid_synth_modulate_voices_all_LOCAL(synth, channum);
         break;
 

@@ -118,8 +118,7 @@ Developers:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE), samples are loaded to and unloaded from memory
-                on demand.
+                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel. PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this.
             </desc>
         </setting>
         <setting>

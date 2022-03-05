@@ -23,6 +23,10 @@
 
 #include "fluidsynth_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * fluid_audio_driver_t
  */
@@ -175,6 +179,8 @@ fluid_audio_driver_t *new_fluid_file_audio_driver(fluid_settings_t *settings,
 void delete_fluid_file_audio_driver(fluid_audio_driver_t *p);
 #endif
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _FLUID_AUDRIVER_H */
