@@ -208,7 +208,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
         }
         else if(mod_src == PORTAMENTO_CTRL)
         {
-            // an invalid portamento fromkey should be treated as 0 when it's actually used for moulating
+            // an invalid portamento fromkey should be treated as 0 when it's actually used for modulating
             if(!fluid_channel_is_valid_note(val))
             {
                 val = 0;
@@ -390,18 +390,14 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
  *
  *   Output = Amount * Map(primary source input) * Map(secondary source input)
  *
- * 2)When primary source input (src1) is set to General Controller 'No Controller',
- *   output is forced to 0.
- *
- * 3)When secondary source input (src2) is set to General Controller 'No Controller',
- *   output is forced to +1.0 
+ * 2) When a source is set to FLUID_MOD_NONE, its input value is treated as +1.0
  */
 fluid_real_t
 fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 {
     extern fluid_mod_t default_vel2filter_mod;
 
-    fluid_real_t v1 = 0.0, v2 = 1.0;
+    fluid_real_t v1, v2;
     fluid_real_t range1 = 127.0, range2 = 127.0;
 
     /* 'special treatment' for default controller
@@ -441,38 +437,26 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 // end S. Christian Collins' mod
 
     /* get the initial value of the first source */
-    if(mod->src1 > 0)
+    if(mod->src1 > FLUID_MOD_NONE)
     {
         v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
         /* transform the input value */
         v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
     }
-    /* When primary source input (src1) is set to General Controller 'No Controller',
-       output is forced to 0.0
-    */
     else
     {
-        return 0.0;
-    }
-
-    /* no need to go further */
-    if(v1 == 0.0f)
-    {
-        return 0.0f;
+        v1 = 1.0f;
     }
 
     /* get the second input source */
-    if(mod->src2 > 0)
+    if(mod->src2 > FLUID_MOD_NONE)
     {
         v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
         /* transform the second input value */
         v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
     }
-    /* When secondary source input (src2) is set to General Controller 'No Controller',
-       output is forced to +1.0
-    */
     else
     {
         v2 = 1.0f;
