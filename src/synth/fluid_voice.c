@@ -1110,8 +1110,9 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
     /* Modulation envelope */
     case GEN_MODENVDELAY:               /* SF2.01 section 8.1.3 # 25 */
         fluid_clip(x, -12000.0f, 5000.0f);
+        count = NUM_BUFFERS_DELAY(x);
         fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVDELAY,
-                                  NUM_BUFFERS_DELAY(x), 0.0f, 0.0f, -1.0f, 1.0f);
+                                  count, 0.0f, 0.0f, -1.0f, 1.0f);
         break;
 
     case GEN_MODENVATTACK:               /* SF2.01 section 8.1.3 # 26 */
