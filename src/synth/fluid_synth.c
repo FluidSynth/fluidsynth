@@ -1557,6 +1557,10 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
 
 /**
  * Send a MIDI controller event on a MIDI channel.
+ * 
+ * Most CCs are 7-bits wide in FluidSynth. There are a few exceptions which may be 14-bits wide as are documented here:
+ * https://github.com/FluidSynth/fluidsynth/wiki/FluidFeatures#midi-control-change-implementation-chart
+ * 
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param num MIDI controller number (0-127)
@@ -1571,6 +1575,8 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
  *    could be used as CC global for all channels belonging to basic channel 7.
  * - Let a basic channel 0 in mode 3. If MIDI channel 15  is disabled it could be used
  *   as CC global for all channels belonging to basic channel 0.
+ * @warning Contrary to the MIDI Standard, this function does not clear LSB controllers,
+ * when MSB controllers are received.
  */
 int
 fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
