@@ -73,16 +73,13 @@ new_fluid_haiku_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.period-size", &period_size);    
 
-    if(period_size < 1024) {
-        period_size = 1024;
-    } else {
-        if((period_size & (period_size - 1)) != 0) {
-            FLUID_LOG(FLUID_ERR, "\"audio.period-size\" must be a power of 2");
-            return NULL;
-        }
+    if(fluid_settings_str_equal(settings, "audio.sample-format", "float"))
+    {
+        FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
+        sample_size = sizeof(float);
+        write_ptr   = fluid_synth_write_float;
     }
-
-	if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
+   else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
         FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
         sample_size = sizeof(short);
@@ -106,7 +103,7 @@ new_fluid_haiku_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 	media_raw_audio_format mediaKitFormat = {
 		(float)sample_rate,
 		(uint32)2,
-		media_raw_audio_format::B_AUDIO_SHORT,
+       sample_size == sizeof(float) ? media_raw_audio_format::B_AUDIO_FLOAT : media_raw_audio_format::B_AUDIO_SHORT,
 		B_MEDIA_LITTLE_ENDIAN,
 		(uint32)periods * period_size * dev->frame_size
 	};
