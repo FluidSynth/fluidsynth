@@ -77,6 +77,10 @@ if ( HAIKU_SUPPORT )
   set ( fluid_haiku_SOURCES drivers/fluid_haiku.cpp )
 endif ( HAIKU_SUPPORT )
 
+if ( MIDIKIT2_SUPPORT )
+  set ( fluid_midikit2_SOURCES drivers/fluid_midikit2.cpp )
+endif ( MIDIKIT2_SUPPORT )
+
 if ( OSS_SUPPORT )
   set ( fluid_oss_SOURCES drivers/fluid_oss.c )
 endif ( OSS_SUPPORT )
@@ -244,6 +248,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
     ${fluid_haiku_SOURCES}
+    ${fluid_midikit2_SOURCES}
     ${fluid_sdl2_SOURCES}
     ${fluid_libinstpatch_SOURCES}
     ${libfluidsynth_SOURCES}

@@ -211,6 +211,9 @@
 /* Define to enable Haiku MediaKit audio driver */
 #cmakedefine HAIKU_SUPPORT @HAIKU_SUPPORT@
 
+/* Define to enable Haiku MidiKit2 MIDI driver */
+#cmakedefine MIDIKIT2_SUPPORT @MIDIKIT2_SUPPORT@
+
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS @STDC_HEADERS@
 

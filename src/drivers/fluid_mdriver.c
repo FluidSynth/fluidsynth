@@ -84,6 +84,14 @@ static const fluid_mdriver_definition_t fluid_midi_drivers[] =
         NULL
     },
 #endif
+#if MIDIKIT2_SUPPORT
+    {
+        "midikit2",
+        new_fluid_midikit2_driver,
+        delete_fluid_midikit2_driver,
+        fluid_midikit2_driver_settings
+    },
+#endif
 #if COREMIDI_SUPPORT
     {
         "coremidi",

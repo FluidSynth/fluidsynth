@@ -95,6 +95,7 @@ option ( enable-wasapi "compile Windows WASAPI support (if it is available)" on 
 option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
 option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-haiku "compile Haiku MediaKit audio support (if it is available)" on )
+option ( enable-midikit2 "compile Haiku MidiKit2 MIDI support (if it is available)" on )
 option ( enable-sdl2 "compile SDL2 audio support (if it is available)" off )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-pipewire "compile PipeWire support (if it is available)" on )
@@ -407,6 +408,9 @@ endif ( CMAKE_SYSTEM MATCHES "SunOS" )
 if ( CMAKE_SYSTEM MATCHES "Haiku" )
   set ( FLUID_LIBS "${FLUID_LIBS};network;bsd;be;media" )
   set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};network;bsd;be;media" )
+  if ( enable-midikit2 )
+    set( LIBFLUID_LIBS "midi2" ${LIBFLUID_LIBS} )
+  endif ( enable-midikit2 )
 endif ( CMAKE_SYSTEM MATCHES "Haiku" )
 
 # Apple Mac OSX
@@ -723,9 +727,14 @@ if ( enable-readline )
 endif ( enable-readline )
 
 unset ( HAIKU_SUPPORT CACHE )
+unset ( MIDIKIT2_SUPPORT CACHE )
 if ( enable-haiku )
   set ( HAIKU_SUPPORT 1 )
 endif ( enable-haiku )
+
+if ( enable-midikit2 )
+  set ( MIDIKIT2_SUPPORT 1 )
+endif ( enable-midikit2 )
 
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )
