@@ -391,14 +391,20 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
  *   Output = Amount * Map(primary source input) * Map(secondary source input)
  *
  * 2) When a source is set to FLUID_MOD_NONE, its input value is treated as +1.0
+ * 3) When both sources are FLUID_MOD_NONE, zero is returned
  */
 fluid_real_t
 fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 {
     extern fluid_mod_t default_vel2filter_mod;
 
-    fluid_real_t v1, v2;
+    fluid_real_t v1 = 1.0f, v2 = 1.0f;
     fluid_real_t range1 = 127.0, range2 = 127.0;
+
+    if(mod->src1 == FLUID_MOD_NONE || mod->src2 == FLUID_MOD_NONE)
+    {
+        return 0;
+    }
 
     /* 'special treatment' for default controller
      *
@@ -444,10 +450,6 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
         /* transform the input value */
         v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
     }
-    else
-    {
-        v1 = 1.0f;
-    }
 
     /* get the second input source */
     if(mod->src2 > FLUID_MOD_NONE)
@@ -456,10 +458,6 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 
         /* transform the second input value */
         v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
-    }
-    else
-    {
-        v2 = 1.0f;
     }
 
     /* it's as simple as that: */
