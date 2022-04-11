@@ -363,7 +363,23 @@ static fluid_seq_id_t get_fluidsynth_dest(fluid_sequencer_t *seq)
  * @param event MIDI event
  * @return #FLUID_OK or #FLUID_FAILED
  *
- * @since 2.2.X
+ * @note This function copies the fields of the MIDI event into the provided
+ * sequencer event. Calling applications must create the sequencer event and set
+ * additional fields such as the source and destination of the sequencer event.
+ *
+ * @code{.cpp}
+ * // ... get MIDI event, e.g. using player_callback()
+ *
+ * // Send MIDI event to sequencer to play
+ * fluid_event_t *evt = new_fluid_event();
+ * fluid_event_set_source(evt, -1);
+ * fluid_event_set_dest(evt, seqid);
+ * fluid_event_from_midi_event(evt, event);
+ * fluid_sequencer_send_at(sequencer, evt, 50, 0); // relative time
+ * delete_fluid_event(evt);
+ * @endcode
+ *
+ * @since 2.2.7
  */
 int fluid_event_from_midi_event(fluid_event_t *evt, const fluid_midi_event_t *event)
 {
