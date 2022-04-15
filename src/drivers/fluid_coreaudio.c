@@ -52,7 +52,7 @@ typedef struct
     fluid_audio_func_t callback;
     void *data;
     unsigned int buffer_size;
-    float *buffers[2];
+    float **buffers;
     double phase;
 } fluid_core_audio_driver_t;
 
@@ -171,7 +171,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 {
     char *devname = NULL;
     fluid_core_audio_driver_t *dev = NULL;
-    int period_size, periods;
+    int period_size, periods, audio_channels = 1;
     double sample_rate;
     OSStatus status;
     UInt32 size;
@@ -245,9 +245,13 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         goto error_recovery;
     }
 
+    fluid_settings_getint(settings, "synth.audio-channels", &audio_channels);
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.period-size", &period_size);
+
+    /* audio channels are in stereo, with a minimum of one pair */
+    audio_channels = (audio_channels > 0) ? (2 * audio_channels) : 2;
 
     /* get the selected device name. if none is specified, use NULL for the default device. */
     if(fluid_settings_dupstr(settings, "audio.coreaudio.device", &devname) == FLUID_OK   /* alloc device name */
@@ -303,11 +307,11 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     // necessary from our format to the device's format.
     dev->format.mSampleRate = sample_rate; // sample rate of the audio stream
     dev->format.mFormatID = kAudioFormatLinearPCM; // encoding type of the audio stream
-    dev->format.mFormatFlags = kLinearPCMFormatFlagIsFloat;
-    dev->format.mBytesPerPacket = 2 * sizeof(float);
+    dev->format.mFormatFlags = kLinearPCMFormatFlagIsFloat | kAudioFormatFlagIsNonInterleaved;
+    dev->format.mBytesPerPacket = sizeof(float);
     dev->format.mFramesPerPacket = 1;
-    dev->format.mBytesPerFrame = 2 * sizeof(float);
-    dev->format.mChannelsPerFrame = 2;
+    dev->format.mBytesPerFrame = sizeof(float);
+    dev->format.mChannelsPerFrame = audio_channels;
     dev->format.mBitsPerChannel = 8 * sizeof(float);
 
     FLUID_LOG(FLUID_DBG, "mSampleRate %g", dev->format.mSampleRate);
@@ -346,10 +350,9 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     FLUID_LOG(FLUID_DBG, "MaximumFramesPerSlice = %d", dev->buffer_size);
 
-    dev->buffers[0] = FLUID_ARRAY(float, dev->buffer_size);
-    dev->buffers[1] = FLUID_ARRAY(float, dev->buffer_size);
+    dev->buffers = FLUID_ARRAY(float *, audio_channels);
 
-    if(dev->buffers[0] == NULL || dev->buffers[1] == NULL)
+    if(dev->buffers == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory.");
         goto error_recovery;
@@ -396,14 +399,9 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t *p)
     AudioComponentInstanceDispose(dev->outputUnit);
 #endif
 
-    if(dev->buffers[0])
+    if(dev->buffers != NULL)
     {
-        FLUID_FREE(dev->buffers[0]);
-    }
-
-    if(dev->buffers[1])
-    {
-        FLUID_FREE(dev->buffers[1]);
+        FLUID_FREE(dev->buffers);
     }
 
     FLUID_FREE(dev);
@@ -417,30 +415,18 @@ fluid_core_audio_callback(void *data,
                           UInt32 inNumberFrames,
                           AudioBufferList *ioData)
 {
-    int i, k;
     fluid_core_audio_driver_t *dev = (fluid_core_audio_driver_t *) data;
     int len = inNumberFrames;
-    float *buffer = ioData->mBuffers[0].mData;
+    UInt32 i, nBuffers = ioData->mNumberBuffers;
+    fluid_audio_func_t callback = (dev->callback != NULL) ? dev->callback : (fluid_audio_func_t) fluid_synth_process;
 
-    if(dev->callback)
+    for(i = 0; i < ioData->mNumberBuffers; i++)
     {
-        float *left = dev->buffers[0];
-        float *right = dev->buffers[1];
-
-        FLUID_MEMSET(left, 0, len * sizeof(float));
-        FLUID_MEMSET(right, 0, len * sizeof(float));
-
-        (*dev->callback)(dev->data, len, 0, NULL, 2, dev->buffers);
-
-        for(i = 0, k = 0; i < len; i++)
-        {
-            buffer[k++] = left[i];
-            buffer[k++] = right[i];
-        }
+        dev->buffers[i] = ioData->mBuffers[i].mData;
+        FLUID_MEMSET(dev->buffers[i], 0, len * sizeof(float));
     }
-    else
-        fluid_synth_write_float((fluid_synth_t *) dev->data, len, buffer, 0, 2,
-                                buffer, 1, 2);
+
+    callback(dev->data, len, nBuffers, dev->buffers, nBuffers, dev->buffers);
 
     return noErr;
 }
