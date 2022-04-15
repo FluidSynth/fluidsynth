@@ -115,6 +115,75 @@ get_num_outputs(AudioDeviceID deviceID)
 }
 
 void
+set_channel_map(AudioUnit outputUnit, int audio_channels, const char *map_string)
+{
+    OSStatus status;
+    long int number_of_channels;
+    int i, *channel_map;
+    UInt32 property_size;
+    Boolean writable = false;
+
+    status = AudioUnitGetPropertyInfo(outputUnit,
+                                      kAudioOutputUnitProperty_ChannelMap,
+                                      kAudioUnitScope_Output,
+                                      0,
+                                      &property_size, &writable);
+    if(status != noErr)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to get the channel map size. Status=%ld\n", (long int) status);
+        return;
+    }
+
+    number_of_channels = property_size / sizeof(int);
+    if(!number_of_channels)
+    {
+        return;
+    }
+
+    channel_map = FLUID_ARRAY(int, number_of_channels);
+    if(channel_map == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory.\n");
+        return;
+    }
+
+    FLUID_MEMSET(channel_map, 0, property_size);
+
+    status = AudioUnitGetProperty(outputUnit,
+                                  kAudioOutputUnitProperty_ChannelMap,
+                                  kAudioUnitScope_Output,
+                                  0,
+                                  channel_map, &property_size);
+    if(status != noErr)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to get the existing channel map. Status=%ld\n", (long int) status);
+        FLUID_FREE(channel_map);
+        return;
+    }
+
+    fluid_settings_split_csv(map_string, channel_map, (int) number_of_channels);
+    for(i = 0; i < number_of_channels; i++)
+    {
+        if(channel_map[i] < -1 || channel_map[i] >= audio_channels)
+        {
+            channel_map[i] = -1;
+        }
+    }
+
+    status = AudioUnitSetProperty(outputUnit,
+                                  kAudioOutputUnitProperty_ChannelMap,
+                                  kAudioUnitScope_Output,
+                                  0,
+                                  channel_map, property_size);
+    if(status != noErr)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to set the channel map. Status=%ld\n", (long int) status);
+    }
+
+    FLUID_FREE(channel_map);
+}
+
+void
 fluid_core_audio_driver_settings(fluid_settings_t *settings)
 {
     int i;
@@ -125,6 +194,7 @@ fluid_core_audio_driver_settings(fluid_settings_t *settings)
     pa.mElement = kAudioObjectPropertyElementMain;
 
     fluid_settings_register_str(settings, "audio.coreaudio.device", "default", 0);
+    fluid_settings_register_str(settings, "audio.coreaudio.channel-map", "", 0);
     fluid_settings_add_option(settings, "audio.coreaudio.device", "default");
 
     if(OK(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &pa, 0, 0, &size)))
@@ -169,7 +239,7 @@ new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 fluid_audio_driver_t *
 new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
-    char *devname = NULL;
+    char *devname = NULL, *channel_map = NULL;
     fluid_core_audio_driver_t *dev = NULL;
     int period_size, periods, audio_channels = 1;
     double sample_rate;
@@ -334,6 +404,13 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         FLUID_LOG(FLUID_ERR, "Error setting the audio format. Status=%ld\n", (long int)status);
         goto error_recovery;
     }
+
+    if(fluid_settings_dupstr(settings, "audio.coreaudio.channel-map", &channel_map) == FLUID_OK   /* alloc channel map */
+            && channel_map && strlen(channel_map) > 0)
+    {
+        set_channel_map(dev->outputUnit, audio_channels, channel_map);
+    }
+    FLUID_FREE(channel_map);  /* free channel map */
 
     status = AudioUnitSetProperty(dev->outputUnit,
                                   kAudioUnitProperty_MaximumFramesPerSlice,
