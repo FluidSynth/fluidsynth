@@ -52,6 +52,7 @@ typedef struct
     fluid_audio_func_t callback;
     void *data;
     unsigned int buffer_size;
+    unsigned int buffer_count;
     float **buffers;
     double phase;
 } fluid_core_audio_driver_t;
@@ -435,6 +436,8 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         goto error_recovery;
     }
 
+    dev->buffer_count = (unsigned int) audio_channels;
+
     // Initialize the audio unit
     status = AudioUnitInitialize(dev->outputUnit);
 
@@ -497,7 +500,7 @@ fluid_core_audio_callback(void *data,
     UInt32 i, nBuffers = ioData->mNumberBuffers;
     fluid_audio_func_t callback = (dev->callback != NULL) ? dev->callback : (fluid_audio_func_t) fluid_synth_process;
 
-    for(i = 0; i < ioData->mNumberBuffers; i++)
+    for(i = 0; i < ioData->mNumberBuffers && i < dev->buffer_count; i++)
     {
         dev->buffers[i] = ioData->mBuffers[i].mData;
         FLUID_MEMSET(dev->buffers[i], 0, len * sizeof(float));
