@@ -148,7 +148,7 @@ set_channel_map(AudioUnit outputUnit, int audio_channels, const char *map_string
         return;
     }
 
-    FLUID_MEMSET(channel_map, 0, property_size);
+    FLUID_MEMSET(channel_map, 0xff, property_size);
 
     status = AudioUnitGetProperty(outputUnit,
                                   kAudioOutputUnitProperty_ChannelMap,
