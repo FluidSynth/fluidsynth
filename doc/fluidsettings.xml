@@ -455,6 +455,7 @@ Developers:
         <setting>
             <name>coreaudio.channel-map</name>
             <type>str</type>
+            <def>(empty string)</def>
             <desc>
                 This setting is a comma-separated integer list that maps CoreAudio channels
                 to output device channels. The value of each position in the list, up to the number of
