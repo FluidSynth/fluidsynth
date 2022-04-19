@@ -582,7 +582,7 @@ fluid_event_system_reset(fluid_event_t *evt)
  * Transforms an incoming MIDI event (from a MIDI driver or MIDI router) to a
  * sequencer event.
  *
- * @param evt returned sequencer event
+ * @param evt Sequencer event structure
  * @param event MIDI event
  * @return #FLUID_OK or #FLUID_FAILED
  *
@@ -606,9 +606,10 @@ fluid_event_system_reset(fluid_event_t *evt)
  */
 int fluid_event_from_midi_event(fluid_event_t *evt, const fluid_midi_event_t *event)
 {
+    int chan;
     fluid_return_val_if_fail(event != NULL, FLUID_FAILED);
 
-    int chan = fluid_midi_event_get_channel(event);
+    chan = fluid_midi_event_get_channel(event);
 
     switch (fluid_midi_event_get_type(event))
     {
