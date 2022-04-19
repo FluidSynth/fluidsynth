@@ -467,10 +467,14 @@ Developers:
                 copy the left channel to the right, a value of "1,0" will flip left and right, and a
                 value of "-1,1" will play only the right channel.
 
-                With a six channel output device, and the synth.audio-channels and synth.audio-groups
+                With a six-channel output device, and the synth.audio-channels and synth.audio-groups
                 settings both set to "2", a channel map of "-1,-1,0,1,2,3" will result in notes from odd
-                MIDI channels being sent to outputs 3 and 4, and even MIDI channels being send to
-                outputs 5 and 6.
+                MIDI channels (audible on the first stereo channel, i.e. mono-indices 0,1) being sent to
+                outputs 3 and 4, and even MIDI channels (audible on the second stereo channel, i.e. mono-indices 2,3)
+                being sent to outputs 5 and 6.
+
+                If the list specifies fewer than the number of available outputs channels, outputs
+                beyond those specified will maintain the default channel mapping.
             </desc>
         </setting>
         <setting>
