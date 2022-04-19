@@ -167,6 +167,7 @@ set_channel_map(AudioUnit outputUnit, int audio_channels, const char *map_string
     {
         if(channel_map[i] < -1 || channel_map[i] >= audio_channels)
         {
+            FLUID_LOG(FLUID_DBG, "Channel map of output channel %d is out-of-range. Silencing.", i);
             channel_map[i] = -1;
         }
     }
