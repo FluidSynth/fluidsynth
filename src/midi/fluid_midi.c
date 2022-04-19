@@ -1106,7 +1106,7 @@ delete_fluid_midi_event(fluid_midi_event_t *evt)
  * @return Event type field (MIDI status byte without channel)
  */
 int
-fluid_midi_event_get_type(fluid_midi_event_t *evt)
+fluid_midi_event_get_type(const fluid_midi_event_t *evt)
 {
     return evt->type;
 }
@@ -1130,7 +1130,7 @@ fluid_midi_event_set_type(fluid_midi_event_t *evt, int type)
  * @return Channel field
  */
 int
-fluid_midi_event_get_channel(fluid_midi_event_t *evt)
+fluid_midi_event_get_channel(const fluid_midi_event_t *evt)
 {
     return evt->channel;
 }
@@ -1154,7 +1154,7 @@ fluid_midi_event_set_channel(fluid_midi_event_t *evt, int chan)
  * @return MIDI note number (0-127)
  */
 int
-fluid_midi_event_get_key(fluid_midi_event_t *evt)
+fluid_midi_event_get_key(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -1178,7 +1178,7 @@ fluid_midi_event_set_key(fluid_midi_event_t *evt, int v)
  * @return MIDI velocity number (0-127)
  */
 int
-fluid_midi_event_get_velocity(fluid_midi_event_t *evt)
+fluid_midi_event_get_velocity(const fluid_midi_event_t *evt)
 {
     return evt->param2;
 }
@@ -1202,7 +1202,7 @@ fluid_midi_event_set_velocity(fluid_midi_event_t *evt, int v)
  * @return MIDI control number
  */
 int
-fluid_midi_event_get_control(fluid_midi_event_t *evt)
+fluid_midi_event_get_control(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -1226,7 +1226,7 @@ fluid_midi_event_set_control(fluid_midi_event_t *evt, int v)
  * @return Value field
  */
 int
-fluid_midi_event_get_value(fluid_midi_event_t *evt)
+fluid_midi_event_get_value(const fluid_midi_event_t *evt)
 {
     return evt->param2;
 }
@@ -1250,7 +1250,7 @@ fluid_midi_event_set_value(fluid_midi_event_t *evt, int v)
  * @return MIDI program number (0-127)
  */
 int
-fluid_midi_event_get_program(fluid_midi_event_t *evt)
+fluid_midi_event_get_program(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -1274,7 +1274,7 @@ fluid_midi_event_set_program(fluid_midi_event_t *evt, int val)
  * @return Pitch value (14 bit value, 0-16383, 8192 is center)
  */
 int
-fluid_midi_event_get_pitch(fluid_midi_event_t *evt)
+fluid_midi_event_get_pitch(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
