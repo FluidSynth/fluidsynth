@@ -387,17 +387,17 @@ void fluid_msleep(unsigned int msecs)
  */
 unsigned int fluid_curtime(void)
 {
-    float now;
-    static float initial_time = 0;
+    double now;
+    static double initial_time = 0;
 
     if(initial_time == 0)
     {
-        initial_time = (float)fluid_utime();
+        initial_time = fluid_utime();
     }
 
-    now = (float)fluid_utime();
+    now = fluid_utime();
 
-    return (unsigned int)((now - initial_time) / 1000.0f);
+    return (unsigned int)((now - initial_time) / 1000.0);
 }
 
 /**
