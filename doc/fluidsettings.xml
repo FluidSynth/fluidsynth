@@ -453,6 +453,31 @@ Developers:
             </desc>
         </setting>
         <setting>
+            <name>coreaudio.channel-map</name>
+            <type>str</type>
+            <def>(empty string)</def>
+            <desc>
+                This setting is a comma-separated integer list that maps CoreAudio channels
+                to output device channels. The value of each position in the list, up to the number of
+                output channels available on your device, is the zero-based index of the fluidsynth
+                output channel to route there. Additionally, the special value of -1 will turn off
+                an output.
+
+                For example, the default map for a single stereo output is "0,1". A value of "0,0" will
+                copy the left channel to the right, a value of "1,0" will flip left and right, and a
+                value of "-1,1" will play only the right channel.
+
+                With a six-channel output device, and the synth.audio-channels and synth.audio-groups
+                settings both set to "2", a channel map of "-1,-1,0,1,2,3" will result in notes from odd
+                MIDI channels (audible on the first stereo channel, i.e. mono-indices 0,1) being sent to
+                outputs 3 and 4, and even MIDI channels (audible on the second stereo channel, i.e. mono-indices 2,3)
+                being sent to outputs 5 and 6.
+
+                If the list specifies fewer than the number of available outputs channels, outputs
+                beyond those specified will maintain the default channel mapping.
+            </desc>
+        </setting>
+        <setting>
             <name>dart.device</name>
             <type>str</type>
             <def>default</def>
