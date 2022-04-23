@@ -651,7 +651,7 @@ else(NOT enable-pkgconfig)
 
     unset ( SDL2_SUPPORT CACHE )
     if ( enable-sdl2 )
-        pkg_check_modules ( SDL2 sdl2 )
+        pkg_check_modules ( SDL2 sdl2>=2.0.4 )
         set ( SDL2_SUPPORT ${SDL2_FOUND} )
         if ( SDL2_SUPPORT )
           list( APPEND PC_REQUIRES_PRIV "sdl2")
