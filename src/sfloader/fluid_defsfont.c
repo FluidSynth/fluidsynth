@@ -376,6 +376,7 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
     fluid_sample_t *sample;
     int sf3_file = (sfdata->version.major == 3);
     int sample_parsing_result = FLUID_OK;
+    int invalid_loops_were_sanitized = FALSE;
 
     /* For SF2 files, we load the sample data in one large block */
     if(!sf3_file)
@@ -404,7 +405,7 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
         {
             /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis format
              * anyway */
-            #pragma omp task firstprivate(sample,sfdata,defsfont) shared(sample_parsing_result) default(none)
+            #pragma omp task firstprivate(sample,sfdata,defsfont) shared(sample_parsing_result, invalid_loops_were_sanitized) default(none)
             {
                 if(fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
                 {
@@ -416,22 +417,44 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
                 }
                 else
                 {
-                    fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                    int modified = fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                    if(modified)
+                    {
+                        #pragma omp critical
+                        {
+                            invalid_loops_were_sanitized = TRUE;
+                        }
+                    }
                     fluid_voice_optimize_sample(sample);
                 }
             }
         }
         else
         {
-            #pragma omp task firstprivate(sample, defsfont) default(none)
+            #pragma omp task firstprivate(sample, defsfont) shared(invalid_loops_were_sanitized) default(none)
             {
+                int modified;
                 /* Data pointers of SF2 samples point to large sample data block loaded above */
                 sample->data = defsfont->sampledata;
                 sample->data24 = defsfont->sample24data;
-                fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+                modified = fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+                if(modified)
+                {
+                    #pragma omp critical
+                    {
+                        invalid_loops_were_sanitized = TRUE;
+                    }
+                }
                 fluid_voice_optimize_sample(sample);
             }
         }
+    }
+
+    if(invalid_loops_were_sanitized)
+    {
+        FLUID_LOG(FLUID_WARN,
+                  "Some invalid sample loops were sanitized! If you experience audible glitches, "
+                  "start fluidsynth in verbose mode for detailed information.");
     }
 
     return sample_parsing_result;

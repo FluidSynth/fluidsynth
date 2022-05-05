@@ -42,6 +42,10 @@
 #include <SDL.h>
 #endif
 
+#if PIPEWIRE_SUPPORT
+#include <pipewire/pipewire.h>
+#endif
+
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
@@ -400,7 +404,8 @@ int main(int argc, char **argv)
 #endif
 
 #if SDL2_SUPPORT
-
+    // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if(SDL_Init(SDL_INIT_AUDIO) != 0)
     {
         fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
@@ -409,7 +414,11 @@ int main(int argc, char **argv)
     {
         atexit(SDL_Quit);
     }
+#endif
 
+#if PIPEWIRE_SUPPORT
+    pw_init(&argc, &argv);
+    atexit(pw_deinit);
 #endif
 
     /* create the settings */
@@ -897,7 +906,7 @@ int main(int argc, char **argv)
         }
 
         /* if the automatically selected command file does not exist, do not even attempt to open it */
-        if(!fluid_stat(config_file, &st))
+        if(!fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
         {
             config_file = NULL;
         }
@@ -1214,7 +1223,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2021 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2022 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of Creative Technology Ltd.\n\n",
            fluid_version_str());

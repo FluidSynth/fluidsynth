@@ -199,6 +199,7 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     double samplerate;
     int retval;
 #endif
+    int audio_channels;
     char *filename = NULL;
     fluid_file_renderer_t *dev;
 
@@ -233,6 +234,7 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     }
 
     fluid_settings_dupstr(synth->settings, "audio.file.name", &filename);
+    fluid_settings_getint(synth->settings, "synth.audio-channels", &audio_channels);
 
     if(filename == NULL)
     {
@@ -309,6 +311,11 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     }
 
 #endif
+
+    if(audio_channels != 1)
+    {
+        FLUID_LOG(FLUID_WARN, "The file-renderer currently only supports a single stereo channel. You have provided %d stereo channels. Audio may sound strange or incomplete.", audio_channels);
+    }
 
     FLUID_FREE(filename);
     return dev;

@@ -31,6 +31,8 @@
 
 #include "config.h"
 
+#include <glib.h>
+
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
 #endif
@@ -50,6 +52,9 @@
 
 #include "fluidsynth.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /***************************************************************
  *
@@ -332,5 +337,8 @@ else \
 #define fluid_return_val_if_fail(cond, val) \
  fluid_return_if_fail(cond) (val)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUIDSYNTH_PRIV_H */

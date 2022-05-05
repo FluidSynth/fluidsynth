@@ -32,7 +32,7 @@ Group:          Productivity/Multimedia/Sound/Midi
 Url:            http://www.fluidsynth.org/
 Source:         https://github.com/FluidSynth/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 Source1000:     baselibs.conf
-BuildRequires:  cmake >= 3.1.0
+BuildRequires:  cmake >= 3.13.0
 BuildRequires:  gcc-c++
 %if 0%{?is_opensuse}
 BuildRequires:  ladspa-devel
@@ -133,8 +133,10 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files devel
 %{_libdir}/lib*.so
-%{_includedir}/*
+%dir %{_libdir}/cmake/%{name}
+%{_libdir}/cmake/%{name}/*.cmake
 %{_libdir}/pkgconfig/*.pc
+%{_includedir}/*
 
 %files -n libfluidsynth3
 %{_libdir}/lib*.so.*
