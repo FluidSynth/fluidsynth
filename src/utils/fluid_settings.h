@@ -22,6 +22,10 @@
 #ifndef _FLUID_SETTINGS_H
 #define _FLUID_SETTINGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int fluid_settings_add_option(fluid_settings_t *settings, const char *name, const char *s);
 int fluid_settings_remove_option(fluid_settings_t *settings, const char *name, const char *s);
 
@@ -53,5 +57,9 @@ int fluid_settings_callback_int(fluid_settings_t *settings, const char *name,
 int fluid_settings_split_csv(const char *str, int *buf, int buf_len);
 
 void* fluid_settings_get_user_data(fluid_settings_t * settings, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_SETTINGS_H */

@@ -501,14 +501,15 @@ fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out
         return 1;
     }
 
-    if(!_shell_parse_argv(cmd, &num_tokens, &tokens))
+
+    if(!fluid_shell_parse_argv(cmd, &num_tokens, &tokens))
     {
         fluid_ostream_printf(out, "Error parsing command\n");
         return FLUID_FAILED;
     }
 
     result = fluid_cmd_handler_handle(handler, num_tokens, &tokens[0], out);
-    _strfreev(tokens);
+    fluid_strfreev(tokens);
 
     return result;
 }

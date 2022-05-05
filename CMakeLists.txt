@@ -1,6 +1,6 @@
 # FluidSynth - A Software Synthesizer
 #
-# Copyright (C) 2003-2021 Peter Hanappe and others.
+# Copyright (C) 2003-2022 Peter Hanappe and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -19,18 +19,21 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
+cmake_minimum_required ( VERSION 3.13 )
+# 3.1 because of CMAKE_C_STANDARD
+# 3.11 because COMPATIBILITY SameMinorVersion in CMakePackageConfigHelpers
+# 3.13.5 because it is the latest supported in Windows XP
 
-if(POLICY CMP0075)
+if(POLICY CMP0075) # CMake version 3.13.5 warns when the policy is not set or value is OLD
   cmake_policy(SET CMP0075 NEW)
 endif()
 
-if(POLICY CMP0091)
+if(POLICY CMP0091) # new in CMake 3.15, defaults to OLD
   cmake_policy(SET CMP0091 NEW)
 endif()
 
 project ( FluidSynth C CXX )
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
+list( APPEND CMAKE_MODULE_PATH ${FluidSynth_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
@@ -38,7 +41,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 2 )
-set ( FLUIDSYNTH_VERSION_MICRO 3 )
+set ( FLUIDSYNTH_VERSION_MICRO 7 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -52,8 +55,8 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
-set ( LIB_VERSION_AGE 0 )
-set ( LIB_VERSION_REVISION 3 )
+set ( LIB_VERSION_AGE 1 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -113,20 +116,6 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
-# Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
-if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "64" )
-else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "" )
-endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-else ()
-  set ( _init_lib_suffix "" )
-endif()
-set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
-      "library directory name suffix (32/64/nothing)" )
-mark_as_advanced ( LIB_SUFFIX )
-
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
@@ -134,6 +123,7 @@ set(CMAKE_C_STANDARD 90)
 set(CMAKE_CXX_STANDARD 98)
 
 # whether to use gnu extensions
+set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
@@ -150,11 +140,11 @@ if ( NOT OS2 )
 endif ( NOT OS2 )
 
 # enforce visibility control for all types of cmake targets
-if ( POLICY CMP0063 )
+if ( POLICY CMP0063 ) # since version 3.3, CMake version 3.21.2 warns when the policy is not set and uses OLD behavior.
   cmake_policy ( SET CMP0063 NEW )
 endif ( POLICY CMP0063 )
 
-# Default install directory names
+# Default install directory names, some provided by GNUInstallDirs
 include ( DefaultDirs )
 
 # Basic C library checks
@@ -189,6 +179,7 @@ if ( NOT HAVE_LONG_LONG AND NOT MSVC)
     message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
 endif ()
 
+include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables()
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -382,7 +373,7 @@ unset ( MACOSX_FRAMEWORK CACHE )
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR} )
+        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -425,17 +416,15 @@ if ( enable-profiling )
 
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
 
-    if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
-        find_program( CLANG_TIDY
-                    NAMES "clang-tidy"
-                    DOC "Path to clang-tidy executable" )
+    find_program( CLANG_TIDY
+                NAMES "clang-tidy"
+                DOC "Path to clang-tidy executable" )
 
-        if ( CLANG_TIDY )
-            message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
-            execute_process ( COMMAND ${CLANG_TIDY} "--version" )
-            set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
-        endif ( CLANG_TIDY )
-    endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
+    if ( CLANG_TIDY )
+        message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
+        execute_process ( COMMAND ${CLANG_TIDY} "--version" )
+        set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
+    endif ( CLANG_TIDY )
 
 endif ( enable-profiling )
 
@@ -453,11 +442,6 @@ if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( FPE_CHECK 1 )
 endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
 
-if ( enable-debug )
-    set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
-          "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
-endif ( enable-debug )
-
 if ( NOT CMAKE_BUILD_TYPE )
     set ( CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
           "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
@@ -474,13 +458,13 @@ endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 file(GLOB_RECURSE
      ALL_SOURCE_FILES
      LIST_DIRECTORIES false
-     ${CMAKE_SOURCE_DIR}/*.[chi]
-     ${CMAKE_SOURCE_DIR}/*.[chi]pp
-     ${CMAKE_SOURCE_DIR}/*.[chi]xx
-     ${CMAKE_SOURCE_DIR}/*.cc
-     ${CMAKE_SOURCE_DIR}/*.hh
-     ${CMAKE_SOURCE_DIR}/*.ii
-     ${CMAKE_SOURCE_DIR}/*.[CHI]
+     ${FluidSynth_SOURCE_DIR}/*.[chi]
+     ${FluidSynth_SOURCE_DIR}/*.[chi]pp
+     ${FluidSynth_SOURCE_DIR}/*.[chi]xx
+     ${FluidSynth_SOURCE_DIR}/*.cc
+     ${FluidSynth_SOURCE_DIR}/*.hh
+     ${FluidSynth_SOURCE_DIR}/*.ii
+     ${FluidSynth_SOURCE_DIR}/*.[CHI]
      )
 
 find_program ( ASTYLE "astyle" )
@@ -542,11 +526,11 @@ if ( enable-threads )
 endif ( enable-threads )
 
 # manipulate some variables to setup a proper test env
-set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
-set(TEST_SOUNDFONT_UTF8_1 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
-set(TEST_SOUNDFONT_UTF8_2 "${CMAKE_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2")
-set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
-set(TEST_MIDI_UTF8 "${CMAKE_SOURCE_DIR}/test/èmpty.mid")
+set(TEST_SOUNDFONT "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
+set(TEST_SOUNDFONT_UTF8_1 "${FluidSynth_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
+set(TEST_SOUNDFONT_UTF8_2 "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2")
+set(TEST_SOUNDFONT_SF3 "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
+set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/èmpty.mid")
 
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
@@ -629,39 +613,30 @@ add_subdirectory ( doc )
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-if ( IS_ABSOLUTE "${LIB_INSTALL_DIR}" )
-  set ( libdir "${LIB_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}" )
+  set ( libdir "${CMAKE_INSTALL_LIBDIR}" )
 else ()
-  set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
+  set ( libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}" )
 endif ()
-if ( IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}" )
-  set ( includedir "${INCLUDE_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}" )
+  set ( includedir "${CMAKE_INSTALL_INCLUDEDIR}" )
 else ()
-  set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+  set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
 endif ()
 
-if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
-    # retrieve all the private libs we depend on
-    get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
-    # make a copy
-    set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
+generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
+install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
 
-    # this matches any path and any flag entries (starting with '-')
-    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
-    # remove all entries from the list which are specified by path and which already have -l
-    list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
-    # include only entries specifed by path
-    list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
+# Exported targets for cmake: find_package(FluidSynth)
+# when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
+# to use the build directory directly set the FluidSynth_DIR variable instead.
 
-    # prepend the linker flag to all entries except the ones that already have it
-    list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
-    list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
-    list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
-else ()
-    set ( LIBS_PRIVATE "" )
-    set ( LIBS_PRIVATE_WITH_PATH "" )
-    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
-endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
+# targets in the build directory
+export(EXPORT FluidSynthTargets
+   FILE "${FluidSynth_BINARY_DIR}/FluidSynthTargets.cmake"
+   NAMESPACE FluidSynth::
+)
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
@@ -672,38 +647,18 @@ install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
 if ( UNIX )
     if ( DEFINED FLUID_DAEMON_ENV_FILE)
         configure_file ( fluidsynth.service.in
-        ${CMAKE_BINARY_DIR}/fluidsynth.service @ONLY )
+        ${FluidSynth_BINARY_DIR}/fluidsynth.service @ONLY )
 
         configure_file ( fluidsynth.conf.in
-        ${CMAKE_BINARY_DIR}/fluidsynth.conf @ONLY )
+        ${FluidSynth_BINARY_DIR}/fluidsynth.conf @ONLY )
 
     endif ( DEFINED FLUID_DAEMON_ENV_FILE )
 
     # uninstall custom target
-    configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
-      "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
+    configure_file ( "${FluidSynth_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
+      "${FluidSynth_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
     add_custom_target ( uninstall
-      "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
-
-    # tarball custom target
-    add_custom_target ( tarball
-        COMMAND mkdir -p ${PACKAGE}-${VERSION}
-        COMMAND cp -r bindings ${PACKAGE}-${VERSION}
-        COMMAND cp -r cmake_admin ${PACKAGE}-${VERSION}
-        COMMAND cp -r doc ${PACKAGE}-${VERSION}
-        COMMAND cp -r include ${PACKAGE}-${VERSION}
-        COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt LICENSE ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
-#       COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-#       COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-#       COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
-        COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-        COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-        COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'
-        COMMAND rm -rf ${PACKAGE}-${VERSION}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-
+      "${CMAKE_COMMAND}" -P "${FluidSynth_BINARY_DIR}/cmake_uninstall.cmake")
 endif ( UNIX )
 
 include ( report )
@@ -711,8 +666,8 @@ include ( report )
 # CPack support
 set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "FluidSynth real-time synthesizer" )
 set ( CPACK_PACKAGE_VENDOR "fluidsynth.org" )
-set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md" )
-set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE" )
+set ( CPACK_PACKAGE_DESCRIPTION_FILE "${FluidSynth_SOURCE_DIR}/README.md" )
+set ( CPACK_RESOURCE_FILE_LICENSE "${FluidSynth_SOURCE_DIR}/LICENSE" )
 set ( CPACK_PACKAGE_VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR} )
 set ( CPACK_PACKAGE_VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR} )
 set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )

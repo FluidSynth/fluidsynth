@@ -1,6 +1,12 @@
 /*!
 
 \page RecentChanges Recent Changes
+\section NewIn2_2_7 What's new in 2.2.7?
+
+- Most getter functions of the MIDI event API are now const correct
+- fluid_event_from_midi_event() has been added
+
+
 \section NewIn2_2_0 What's new in 2.2.0?
 
 - #fluid_file_callbacks_t <span style="color:red">now uses <code>long long</code> as file-offset type (see #fluid_long_long_t).</span><span style="color:red;font-weight:bold">This is a breaking change</span>, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.

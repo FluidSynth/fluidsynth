@@ -61,6 +61,12 @@ else ( OSS_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OSS:                   no\n" )
 endif ( OSS_SUPPORT )
 
+if ( PIPEWIRE_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PipeWire:              yes\n" )
+else ( PIPEWIRE_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PipeWire:              no\n" )
+endif ( PIPEWIRE_SUPPORT )
+
 if ( PORTAUDIO_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PortAudio:             yes\n" )
 else ( PORTAUDIO_SUPPORT )

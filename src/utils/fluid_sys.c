@@ -412,17 +412,17 @@ void fluid_msleep(unsigned int msecs)
  */
 unsigned int fluid_curtime(void)
 {
-    float now;
-    static float initial_time = 0;
+    double now;
+    static double initial_time = 0;
 
     if(initial_time == 0)
     {
-        initial_time = (float)fluid_utime();
+        initial_time = fluid_utime();
     }
 
-    now = (float)fluid_utime();
+    now = fluid_utime();
 
-    return (unsigned int)((now - initial_time) / 1000.0f);
+    return (unsigned int)((now - initial_time) / 1000.0);
 }
 
 /**
@@ -1690,13 +1690,12 @@ FILE* fluid_file_open(const char* path, const char** errMsg)
     
     FILE* handle = NULL;
     
-    fluid_stat_buf_t statbuf;
-    int ret=fluid_stat(path, &statbuf);
-    if (ret != 0)
+
+    if(!fluid_file_test(path, FLUID_FILE_TEST_EXISTS))
     {
         *errMsg = ErrExist;
     }
-    else if((statbuf.st_mode & S_IFMT) != S_IFREG)
+    else if(!fluid_file_test(path, FLUID_FILE_TEST_IS_REGULAR))
     {
         if(errMsg != NULL)
         {
