@@ -60,7 +60,7 @@ set ( LIB_VERSION_INFO
 # Options disabled by default
 option ( enable-coverage "enable gcov code coverage" off )
 option ( enable-debug "enable debugging (default=no)" off )
-option ( enable-floats "enable type float instead of double for DSP samples" off )
+option ( enable-floats "enable type float instead of double for DSP samples" on )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
@@ -68,48 +68,48 @@ option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" of
 option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
 
 # Options enabled by default
-option ( enable-aufile "compile support for sound file output" on )
-option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
-option ( enable-dbus "compile DBUS support (if it is available)" on )
-option ( enable-ipv6  "enable ipv6 support" on )
-option ( enable-jack "compile JACK support (if it is available)" on )
+option ( enable-aufile "compile support for sound file output" off )
+option ( BUILD_SHARED_LIBS "Build a shared object or DLL" off )
+option ( enable-dbus "compile DBUS support (if it is available)" off )
+option ( enable-ipv6  "enable ipv6 support" off )
+option ( enable-jack "compile JACK support (if it is available)" off )
 option ( enable-ladspa "enable LADSPA effect units" off )
-option ( enable-libinstpatch "use libinstpatch (if available) to load DLS and GIG files" on )
-option ( enable-libsndfile "compile libsndfile support (if it is available)" on )
-option ( enable-midishare "compile MidiShare support (if it is available)" on )
+option ( enable-libinstpatch "use libinstpatch (if available) to load DLS and GIG files" off )
+option ( enable-libsndfile "compile libsndfile support (if it is available)" off )
+option ( enable-midishare "compile MidiShare support (if it is available)" off )
 option ( enable-opensles "compile OpenSLES support (if it is available)" off )
 option ( enable-oboe "compile Oboe support (requires OpenSLES and/or AAudio)" off )
-option ( enable-network "enable network support (requires BSD sockets)" on )
-option ( enable-oss "compile OSS support (if it is available)" on )
-option ( enable-dsound "compile DirectSound support (if it is available)" on )
-option ( enable-wasapi "compile Windows WASAPI support (if it is available)" on )
-option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
-option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
-option ( enable-sdl2 "compile SDL2 audio support (if it is available)" on )
-option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
-option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
-option ( enable-readline "compile readline lib line editing (if it is available)" on )
+option ( enable-network "enable network support (requires BSD sockets)" off )
+option ( enable-oss "compile OSS support (if it is available)" off )
+option ( enable-dsound "compile DirectSound support (if it is available)" off )
+option ( enable-wasapi "compile Windows WASAPI support (if it is available)" off )
+option ( enable-waveout "compile Windows WaveOut support (if it is available)" off )
+option ( enable-winmidi "compile Windows MIDI support (if it is available)" off )
+option ( enable-sdl2 "compile SDL2 audio support (if it is available)" off )
+option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" off )
+option ( enable-pulseaudio "compile PulseAudio support (if it is available)" off )
+option ( enable-readline "compile readline lib line editing (if it is available)" off )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-    option ( enable-lash "compile LASH support (if it is available)" on )
-    option ( enable-alsa "compile ALSA support (if it is available)" on )
+    option ( enable-lash "compile LASH support (if it is available)" off )
+    option ( enable-alsa "compile ALSA support (if it is available)" off )
 endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
 if ( CMAKE_SYSTEM MATCHES "Linux" )
-    option ( enable-systemd "compile systemd support (if it is available)" on )
+    option ( enable-systemd "compile systemd support (if it is available)" off )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
 
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
-    option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
-    option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
-    option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
+    option ( enable-coreaudio "compile CoreAudio support (if it is available)" off )
+    option ( enable-coremidi "compile CoreMIDI support (if it is available)" off )
+    option ( enable-framework "create a Mac OSX style FluidSynth.framework" off )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
-    option ( enable-dart "compile DART support (if it is available)" on )
+    option ( enable-dart "compile DART support (if it is available)" off )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
@@ -422,9 +422,9 @@ if ( enable-profiling )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
       set ( OPT_FLAGS "" )
     endif ( )
-    
+
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
-    
+
     if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
         find_program( CLANG_TIDY
                     NAMES "clang-tidy"
@@ -500,175 +500,6 @@ if ( ASTYLE )
     )
 endif(ASTYLE)
 
-if(enable-pkgconfig)
-
-    find_package ( PkgConfig REQUIRED )
-
-    include ( UnsetPkgConfig )
-
-    # Optional features
-    unset ( LIBSNDFILE_SUPPORT CACHE )
-    unset ( LIBSNDFILE_HASVORBIS CACHE )
-    if ( enable-libsndfile )
-    pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 )
-    set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
-    if ( LIBSNDFILE_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "sndfile")
-        message (DEBUG "LIBSNDFILE_STATIC_LIBRARIES: ${LIBSNDFILE_STATIC_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LINK_LIBRARIES: ${LIBSNDFILE_STATIC_LINK_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS: ${LIBSNDFILE_STATIC_LDFLAGS}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS_OTHER: ${LIBSNDFILE_STATIC_LDFLAGS_OTHER}")
-        if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
-             LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
-             LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
-          set ( LIBSNDFILE_HASVORBIS 1 )
-        else ()
-          message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
-        endif ()
-    endif ( LIBSNDFILE_SUPPORT )
-    else ( enable-libsndfile )
-    unset_pkg_config ( LIBSNDFILE )
-    unset_pkg_config ( LIBSNDFILE_VORBIS )
-    endif ( enable-libsndfile )
-
-    unset ( PULSE_SUPPORT CACHE )
-    if ( enable-pulseaudio )
-    pkg_check_modules ( PULSE libpulse-simple>=0.9.8 )
-    set ( PULSE_SUPPORT ${PULSE_FOUND} )
-    if ( PULSE_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "libpulse-simple")
-    endif ( PULSE_SUPPORT )
-    else ( enable-pulseaudio )
-    unset_pkg_config ( PULSE )
-    endif ( enable-pulseaudio )
-
-    unset ( ALSA_SUPPORT CACHE )
-    if ( enable-alsa )
-    pkg_check_modules ( ALSA alsa>=0.9.1 )
-    set ( ALSA_SUPPORT ${ALSA_FOUND} )
-    if ( ALSA_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "alsa")
-    endif ( ALSA_SUPPORT )
-    else ( enable-alsa )
-    unset_pkg_config ( ALSA )
-    endif ( enable-alsa )
-
-    unset ( PORTAUDIO_SUPPORT CACHE )
-    if ( enable-portaudio )
-    pkg_check_modules ( PORTAUDIO portaudio-2.0>=19 )
-    set ( PORTAUDIO_SUPPORT ${PORTAUDIO_FOUND} )
-    if ( PORTAUDIO_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "portaudio-2.0")
-    endif ()
-    else ( enable-portaudio )
-    unset_pkg_config ( PORTAUDIO )
-    endif ( enable-portaudio )
-
-    unset ( JACK_SUPPORT CACHE )
-    if ( enable-jack )
-    pkg_check_modules ( JACK jack )
-    set ( JACK_SUPPORT ${JACK_FOUND} )
-    if ( JACK_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "jack")
-    endif ()
-    else ( enable-jack )
-    unset_pkg_config ( JACK )
-    endif ( enable-jack )
-
-    unset ( LASH_SUPPORT CACHE )
-    if ( enable-lash )
-    pkg_check_modules ( LASH lash-1.0>=0.3 )
-    if ( LASH_FOUND )
-        set ( LASH_SUPPORT 1 )
-        add_definitions ( -DHAVE_LASH )
-        list( APPEND PC_REQUIRES_PRIV "lash-1.0")
-    endif ( LASH_FOUND )
-    else ( enable-lash )
-    unset_pkg_config ( LASH )
-    remove_definitions( -DHAVE_LASH )
-    endif ( enable-lash )
-
-    unset ( SYSTEMD_SUPPORT CACHE )
-    if ( enable-systemd )
-        pkg_check_modules ( SYSTEMD libsystemd )
-        set ( SYSTEMD_SUPPORT ${SYSTEMD_FOUND} )
-        if ( SYSTEMD_SUPPORT )
-          list( APPEND PC_REQUIRES_PRIV "libsystemd")
-        endif ( SYSTEMD_SUPPORT )
-    else ( enable-systemd )
-        unset_pkg_config ( SYSTEMD )
-    endif ( enable-systemd )
-
-    unset ( DBUS_SUPPORT CACHE )
-    if ( enable-dbus )
-    pkg_check_modules ( DBUS dbus-1>=1.0.0 )
-    set ( DBUS_SUPPORT ${DBUS_FOUND} )
-    if ( DBUS_SUPPORT )
-      list( APPEND PC_REQUIRES_PRIV "dbus-1")
-    endif ()
-    else ( enable-dbus )
-    unset_pkg_config ( DBUS )
-    endif ( enable-dbus )
-
-    unset ( LADSPA_SUPPORT CACHE )
-    if ( enable-ladspa )
-    check_include_file ( ladspa.h LADSPA_SUPPORT )
-    if ( LADSPA_SUPPORT )
-        pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 )
-        set ( LADSPA 1 )
-        list( APPEND PC_REQUIRES_PRIV "gmodule-2.0")
-    endif ( LADSPA_SUPPORT )
-    endif ( enable-ladspa )
-
-    unset ( LIBINSTPATCH_SUPPORT CACHE )
-    if ( enable-libinstpatch )
-        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 )
-        set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
-        if ( LIBINSTPATCH_SUPPORT )
-          list( APPEND PC_REQUIRES_PRIV "libinstpatch-1.0")
-        endif (LIBINSTPATCH_SUPPORT )
-    endif ( enable-libinstpatch )
-
-    unset ( SDL2_SUPPORT CACHE )
-    if ( enable-sdl2 )
-        pkg_check_modules ( SDL2 sdl2 )
-        set ( SDL2_SUPPORT ${SDL2_FOUND} )
-        if ( SDL2_SUPPORT )
-          list( APPEND PC_REQUIRES_PRIV "sdl2")
-        endif ( SDL2_SUPPORT )
-    else ( enable-sdl2 )
-        unset_pkg_config ( SDL2 )
-    endif ( enable-sdl2 )
-
-    unset ( OBOE_SUPPORT CACHE )
-    if ( enable-oboe )
-      pkg_check_modules ( OBOE oboe-1.0 )
-      if ( OBOE_FOUND )
-        set(CMAKE_CXX_STANDARD 14)
-        set(CMAKE_CXX_STANDARD_REQUIRED ON)
-        set ( OBOE_SUPPORT 1 )
-        list( APPEND PC_REQUIRES_PRIV "oboe-1.0")
-      endif ( OBOE_FOUND )
-    endif ( enable-oboe )
-
-    unset ( WITH_READLINE CACHE )
-    unset ( READLINE_LIBS CACHE )
-    if ( enable-readline )
-    pkg_check_modules ( READLINE readline )
-    if ( READLINE_FOUND )
-        list( APPEND PC_REQUIRES_PRIV "readline")
-    else ( READLINE_FOUND )
-        find_package ( READLINE )
-        set ( READLINE_FOUND ${HAVE_READLINE} )
-    endif ( READLINE_FOUND )
-    if ( READLINE_FOUND )
-        set ( WITH_READLINE 1 )
-        set ( READLINE_LIBS ${READLINE_LIBRARIES} )
-    endif ( READLINE_FOUND )
-    endif ( enable-readline )
-
-endif(enable-pkgconfig)
-
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )
   set ( AUFILE_SUPPORT 1 )
@@ -710,23 +541,6 @@ if ( enable-threads )
   set ( ENABLE_MIXER_THREADS 1 )
 endif ( enable-threads )
 
-unset ( HAVE_OPENMP CACHE )
-find_package ( OpenMP QUIET )
-if (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
-    message(STATUS "Found OpenMP ${OpenMP_C_SPEC_DATE}")
-    # require at least OMP 4.0
-    if ( ( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" ) )
-        set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-
-        # include dir and library link seems to be required for Xcode 12.5 (issue #917)
-        include_directories ( SYSTEM ${OpenMP_C_INCLUDE_DIRS} )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
-        set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
-        set ( HAVE_OPENMP 1 )
-    endif()
-endif()
-
 # manipulate some variables to setup a proper test env
 set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
 set(TEST_SOUNDFONT_UTF8_1 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
@@ -738,7 +552,6 @@ set(TEST_MIDI_UTF8 "${CMAKE_SOURCE_DIR}/test/èmpty.mid")
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
 
 # Check for C99 float math
-
 unset ( HAVE_SINF CACHE )
 CHECK_SYMBOL_EXISTS ( sinf "math.h" HAVE_SINF )
 if ( HAVE_SINF )
@@ -805,20 +618,6 @@ endif ( HAVE_SOCKLEN_T )
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 
-# Setup linker directories NOW, as the command will apply only to targets created after it has been called.
-link_directories (
-    ${LASH_LIBRARY_DIRS}
-    ${JACK_LIBRARY_DIRS}
-    ${ALSA_LIBRARY_DIRS}
-    ${PULSE_LIBRARY_DIRS}
-    ${PORTAUDIO_LIBRARY_DIRS}
-    ${LIBSNDFILE_LIBRARY_DIRS}
-    ${DBUS_LIBRARY_DIRS}
-    ${SDL2_LIBRARY_DIRS}
-    ${OBOE_LIBRARY_DIRS}
-    ${LIBINSTPATCH_LIBRARY_DIRS}
-)
-
 # required to allow ctest to be called from top-level build directory
 ENABLE_TESTING()
 
@@ -863,8 +662,6 @@ else ()
     set ( LIBS_PRIVATE_WITH_PATH "" )
     message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
 endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
-
-list ( JOIN PC_REQUIRES_PRIV " " PC_REQUIRES_PRIV_JOINED )
 
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )

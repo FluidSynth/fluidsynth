@@ -247,7 +247,7 @@ set ( public_main_HEADER
     ${CMAKE_BINARY_DIR}/include/fluidsynth.h
 )
 
-configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in 
+configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in
                  ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h )
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
@@ -271,26 +271,6 @@ endif ( WIN32 )
 
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
-    ${fluid_alsa_SOURCES}
-    ${fluid_aufile_SOURCES}
-    ${fluid_coreaudio_SOURCES}
-    ${fluid_coremidi_SOURCES}
-    ${fluid_dart_SOURCES}
-    ${fluid_dbus_SOURCES}
-    ${fluid_jack_SOURCES}
-    ${fluid_lash_SOURCES}
-    ${fluid_midishare_SOURCES}
-    ${fluid_opensles_SOURCES}
-    ${fluid_oboe_SOURCES}
-    ${fluid_oss_SOURCES}
-    ${fluid_portaudio_SOURCES}
-    ${fluid_pulse_SOURCES}
-    ${fluid_dsound_SOURCES}
-    ${fluid_wasapi_SOURCES}
-    ${fluid_waveout_SOURCES}
-    ${fluid_winmidi_SOURCES}
-    ${fluid_sdl2_SOURCES}
-    ${fluid_libinstpatch_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -408,7 +388,7 @@ else ( MACOSX_FRAMEWORK )
     RUNTIME DESTINATION ${BIN_INSTALL_DIR}
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-    PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/fluidsynth 
+    PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/fluidsynth
 )
    install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
