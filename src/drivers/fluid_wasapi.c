@@ -803,6 +803,7 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
 {
     fluid_wasapi_finddev_data_t *d = (fluid_wasapi_finddev_data_t *)data;
     int nsz;
+    size_t id_len;
     char *name = NULL;
     wchar_t *id = NULL;
     IPropertyStore *prop = NULL;
@@ -841,9 +842,15 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
             goto cleanup;
         }
 
-        nsz = wcslen(id);
-        d->id = FLUID_ARRAY(wchar_t, nsz + 1);
-        FLUID_MEMCPY(d->id, id, sizeof(wchar_t) * (nsz + 1));
+        id_len = wcslen(id);
+        if(id_len >= UINT_MAX / sizeof(wchar_t))
+        {
+            FLUID_LOG(FLUID_ERR, "wasapi: the returned device identifier was way too long");
+            goto cleanup;
+        }
+        id_len++;
+        d->id = FLUID_ARRAY(wchar_t, id_len);
+        FLUID_MEMCPY(d->id, id, sizeof(wchar_t) * id_len);
     }
 
 cleanup:

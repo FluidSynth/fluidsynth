@@ -126,8 +126,13 @@ new_fluid_midi_file(const char *buffer, size_t length)
 {
     fluid_midi_file *mf;
 
-    mf = FLUID_NEW(fluid_midi_file);
+    if(length > INT_MAX)
+    {
+        FLUID_LOG(FLUID_ERR, "Refusing to open a MIDI file which is bigger than 2GiB");
+        return NULL;
+    }
 
+    mf = FLUID_NEW(fluid_midi_file);
     if(mf == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -140,7 +145,7 @@ new_fluid_midi_file(const char *buffer, size_t length)
     mf->running_status = -1;
 
     mf->buffer = buffer;
-    mf->buf_len = length;
+    mf->buf_len = (int)length;
     mf->buf_pos = 0;
     mf->eof = FALSE;
 
