@@ -310,8 +310,9 @@ find_fluid_audio_driver(fluid_settings_t *settings)
  * Otherwise the behaviour is undefined.
  *
  * @note As soon as an audio driver is created, the \p synth starts rendering audio.
- * This means that all necessary sound-setup should be completed after this point,
- * thus of all object types in use (synth, midi player, sequencer, etc.) the audio
+ * This means that all necessary initialization and sound-setup should have been
+ * completed before calling this function.
+ * Thus, of all object types in use (synth, midi player, sequencer, etc.) the audio
  * driver should always be the last one to be created and the first one to be deleted!
  * Also refer to the order of object creation in the code examples.
  */
