@@ -2642,14 +2642,9 @@ fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)
      * of another message. */
     if(c >= 0xF8)
     {
-        if(c == MIDI_SYSTEM_RESET)
-        {
-            parser->event.type = c;
-            parser->status = 0; /* clear the status */
-            return &parser->event;
-        }
-
-        return NULL;
+        parser->event.type = c;
+        parser->status = 0; /* clear the status */
+        return &parser->event;
     }
 
     /* Status byte? - If previous message not yet complete, it is discarded (re-sync). */
