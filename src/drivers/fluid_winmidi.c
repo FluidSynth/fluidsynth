@@ -145,22 +145,29 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         break;
 
     case MIM_DATA:
-        event.type = msg_type(msg_param);
-        event.channel = msg_chan(msg_param) + dev_infos->channel_map;
+		if(msg_param < 0xF0)      /* Voice category message */
+		{
+			event.type = msg_type(msg_param);
+			event.channel = msg_chan(msg_param) + dev_infos->channel_map;
 
-        FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI message on channel %d, forwarded on channel: %d",
-                  dev_infos->dev_idx, msg_chan(msg_param), event.channel);
+			FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI message on channel %d, forwarded on channel: %d",
+					  dev_infos->dev_idx, msg_chan(msg_param), event.channel);
 
-        if(event.type != PITCH_BEND)
-        {
-            event.param1 = msg_p1(msg_param);
-            event.param2 = msg_p2(msg_param);
-        }
-        else      /* Pitch bend is a 14 bit value */
-        {
-            event.param1 = (msg_p2(msg_param) << 7) | msg_p1(msg_param);
-            event.param2 = 0;
-        }
+			if(event.type != PITCH_BEND)
+			{
+				event.param1 = msg_p1(msg_param);
+				event.param2 = msg_p2(msg_param);
+			}
+			else      /* Pitch bend is a 14 bit value */
+			{
+				event.param1 = (msg_p2(msg_param) << 7) | msg_p1(msg_param);
+				event.param2 = 0;
+			}
+		}
+		else                    /* System message */
+		{
+			event.type = msg_param;
+		}
 
         (*dev->driver.handler)(dev->driver.data, &event);
         break;
