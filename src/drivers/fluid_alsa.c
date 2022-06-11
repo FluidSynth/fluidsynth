@@ -553,7 +553,7 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d)
         {
             FLUID_MEMSET(left, 0, buffer_size * sizeof(*left));
             FLUID_MEMSET(right, 0, buffer_size * sizeof(*right));
-            
+
             (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
 
             /* convert floating point data to 16 bit (with dithering) */
@@ -1339,13 +1339,13 @@ fluid_alsa_seq_run(void *d)
                     break;
 
                 case SND_SEQ_EVENT_PORT_START:
+                {
+                    if(dev->autoconn_inputs)
                     {
-                        if(dev->autoconn_inputs)
-                        {
-                            fluid_alsa_seq_autoconnect_port(dev, seq_ev->data.addr.client, seq_ev->data.addr.port);
-                        }
+                        fluid_alsa_seq_autoconnect_port(dev, seq_ev->data.addr.client, seq_ev->data.addr.port);
                     }
-                    break;
+                }
+                break;
 
                 case SND_SEQ_EVENT_START:
                     evt.type = MIDI_START;
