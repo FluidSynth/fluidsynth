@@ -150,6 +150,17 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 
     fluid_profile_ref_var(prof_ref);
 
+#ifdef LADSPA
+
+    /* Run the signal through the LADSPA Fx unit. The buffers have already been
+     * set up in fluid_rvoice_mixer_set_ladspa. */
+    if(mixer->ladspa_fx)
+    {
+        fluid_ladspa_run(mixer->ladspa_fx, current_blockcount, FLUID_BUFSIZE);
+        fluid_check_fpe("LADSPA");
+    }
+
+#endif
 
     if(mix_fx_to_out)
     {
@@ -238,17 +249,6 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
                       current_blockcount * FLUID_BUFSIZE);
     }
 
-#ifdef LADSPA
-
-    /* Run the signal through the LADSPA Fx unit. The buffers have already been
-     * set up in fluid_rvoice_mixer_set_ladspa. */
-    if(mixer->ladspa_fx)
-    {
-        fluid_ladspa_run(mixer->ladspa_fx, current_blockcount, FLUID_BUFSIZE);
-        fluid_check_fpe("LADSPA");
-    }
-
-#endif
 }
 
 /**

@@ -509,8 +509,8 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * @param block_count number of blocks to render
  * @param block_size number of samples in a block
  *
- * FluidSynth calls this function during main output mixing, just after
- * the internal reverb and chorus effects have been processed.
+ * FluidSynth calls this function during main output mixing,
+ * just before processing the internal reverb and chorus effects.
  *
  * It copies audio data from the supplied buffers, runs all effects and copies the
  * resulting audio back into the same buffers.
