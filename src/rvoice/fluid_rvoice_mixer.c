@@ -1289,12 +1289,10 @@ int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t *mixer)
     return FLUID_MIXER_MAX_BUFFERS_DEFAULT;
 }
 
-#if WITH_PROFILING
 int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer)
 {
     return mixer->active_voices;
 }
-#endif
 
 #if ENABLE_MIXER_THREADS
 

@@ -1693,6 +1693,15 @@ new_fluid_player(fluid_synth_t *synth)
     fluid_player_set_tick_callback(player, NULL, NULL);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
                                "player.timing-source", "system");
+
+    if (synth->idle_timeout && !player->use_system_timer)
+    {
+        fluid_log(FLUID_ERR,
+                "MIDI players with sample timers are incompatible with idle-timeout "
+                "handling, use system timers (player.timing-source=system) instead");
+        goto err;
+    }
+
     if(player->use_system_timer)
     {
         player->system_timer = new_fluid_timer((int) player->deltatime,

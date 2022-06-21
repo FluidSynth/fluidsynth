@@ -164,6 +164,8 @@ struct _fluid_synth_t
     fluid_ladspa_fx_t *ladspa_fx;      /**< Effects unit for LADSPA support */
     enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
     enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
+
+    int idle_timeout;                  /**< Seconds until renderer idle timeout */
 };
 
 /**
@@ -251,6 +253,11 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
 void fluid_synth_settings(fluid_settings_t *settings);
 void fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate);
 
+/*
+ * idle state / auto-suspend handling
+ */
+int fluid_synth_is_idle(fluid_synth_t *synth);
+void fluid_synth_idle_wait(fluid_synth_t *synth);
 
 /* extern declared in fluid_synth_monopoly.c */
 

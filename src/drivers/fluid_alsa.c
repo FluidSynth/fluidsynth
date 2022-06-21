@@ -62,6 +62,7 @@ typedef struct
 
 static fluid_thread_return_t fluid_alsa_audio_run_float(void *d);
 static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d);
+static fluid_thread_return_t fluid_alsa_audio_run_s16_mmap(void *d);
 
 
 typedef struct
@@ -74,6 +75,12 @@ typedef struct
 
 static const fluid_alsa_formats_t fluid_alsa_formats[] =
 {
+    {
+        "s16, mmap, interleaved",
+        SND_PCM_FORMAT_S16,
+        SND_PCM_ACCESS_MMAP_INTERLEAVED,
+        fluid_alsa_audio_run_s16_mmap
+    },
     {
         "s16, rw, interleaved",
         SND_PCM_FORMAT_S16,
@@ -297,6 +304,8 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
         goto error_recovery;
     }
 
+    fluid_log(FLUID_ERR, "Using ALSA format %s\n", fluid_alsa_formats[i].name);
+
     /* Set the software params */
     snd_pcm_sw_params_current(dev->pcm, swparams);
 
@@ -315,10 +324,13 @@ new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
         FLUID_LOG(FLUID_ERR, "Software setup failed.");
     }
 
-    if(snd_pcm_nonblock(dev->pcm, 0) != 0)
+    if (fluid_alsa_formats[i].access != SND_PCM_ACCESS_MMAP_INTERLEAVED)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
-        goto error_recovery;
+        if(snd_pcm_nonblock(dev->pcm, 0) != 0)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
+            goto error_recovery;
+        }
     }
 
     /* Create the audio thread */
@@ -607,6 +619,23 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d)
                     offset += n;    /* no error occurred */
                 }
             }	/* while (offset < buffer_size) */
+
+            if (fluid_synth_is_idle(synth)) {
+                fluid_log(FLUID_ERR, "pausing rendering\n"); // FIXME: remove debug output
+                if(snd_pcm_drain(dev->pcm) != 0)
+                {
+                    FLUID_LOG(FLUID_ERR, "Failed to stop the audio device");
+                    goto error_recovery;
+                }
+                fluid_synth_idle_wait(synth);
+                fluid_log(FLUID_ERR, "resuming rendering\n"); // FIXME: remove debug output
+                if(snd_pcm_prepare(dev->pcm) != 0)
+                {
+                    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+                    goto error_recovery;
+                }
+                continue;
+            }
         }	/* while (dev->cont) */
     }
 
@@ -619,6 +648,74 @@ error_recovery:
     return FLUID_THREAD_RETURN_VALUE;
 }
 
+static fluid_thread_return_t fluid_alsa_audio_run_s16_mmap(void *d)
+{
+    fluid_alsa_audio_driver_t *dev = (fluid_alsa_audio_driver_t *) d;
+    snd_pcm_uframes_t frames;
+	snd_pcm_uframes_t offset;
+	const snd_pcm_channel_area_t *areas;
+    short *buf;
+    int ret;
+
+    /* use separate loops depending on if callback supplied or not */
+    if(dev->callback)
+    {
+        FLUID_LOG(FLUID_ERR, "Callback not supported for mmap");
+        goto error_recovery;
+    }
+    else	/* no user audio callback, dev->data is the synth instance */
+    {
+        fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
+        int avail;
+        int first = 1;
+
+        while(dev->cont)
+        {
+            avail = snd_pcm_avail_update(dev->pcm);
+
+            if (avail < dev->buffer_size) {
+                if (first)
+                {
+                    ret = snd_pcm_start(dev->pcm);
+                    if(ret != 0)
+                    {
+                        FLUID_LOG(FLUID_ERR, "Failed to start the audio device: %s (%d)", snd_strerror(ret), ret);
+                        goto error_recovery;
+                    }
+                    first = 0;
+                }
+
+                if (snd_pcm_wait(dev->pcm, -1) < 0)
+                {
+                    FLUID_LOG(FLUID_ERR, "Failed to wait for next");
+                    goto error_recovery;
+                }
+                continue;
+            }
+
+            frames = dev->buffer_size;
+            if (snd_pcm_mmap_begin(dev->pcm, &areas, &offset, &frames) != 0)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to begin mmap");
+                goto error_recovery;
+            }
+
+            buf = (short *)(areas[0].addr) + (areas[0].first + offset * areas[0].step) / 16;
+            fluid_synth_write_s16(synth, frames, buf, 0, 2, buf, 1, 2);
+
+            ret = snd_pcm_mmap_commit(dev->pcm, offset, frames);
+            if (ret < 0 || ret != frames)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to commit mmap: %d", ret);
+                goto error_recovery;
+            }
+
+        }	/* while (dev->cont) */
+    }
+
+error_recovery:
+    return FLUID_THREAD_RETURN_VALUE;
+}
 
 /**************************************************************
  *
