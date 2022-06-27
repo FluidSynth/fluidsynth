@@ -156,14 +156,9 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
                                    &bufattr,
                                    &err);
 
-    if(err != PA_OK)
+    if(!dev->pa_handle || err != PA_OK)
     {
-        FLUID_LOG(FLUID_ERR, "pa_simple_new() failed with error: %s", pa_strerror(err));
-    }
-
-    if(!dev->pa_handle)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection");
+        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection, because pa_simple_new() failed with error: %s", pa_strerror(err));
         goto error_recovery;
     }
 
