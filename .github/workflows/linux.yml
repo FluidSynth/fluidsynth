@@ -62,7 +62,6 @@ jobs:
         echo Can execute `nproc` make jobs in parallel
         cmake --version
         cmake -E make_directory ${{github.workspace}}/build
-        sudo ln -s /usr/bin/clang-tidy-10 /usr/bin/clang-tidy
         which clang-tidy || true
         ls -la `which clang-tidy` || true
         echo $PATH

@@ -3717,7 +3717,8 @@ fluid_synth_get_active_voice_count(fluid_synth_t *synth)
  * @param synth FluidSynth instance
  * @return Internal buffer size in audio frames.
  *
- * Audio is synthesized this number of frames at a time.  Defaults to 64 frames.
+ * Audio is synthesized at this number of frames at a time. Defaults to 64 frames. I.e. the synth can only react to notes,
+ * control changes, and other audio affecting events after having processed 64 audio frames.
  */
 int
 fluid_synth_get_internal_bufsize(fluid_synth_t *synth)

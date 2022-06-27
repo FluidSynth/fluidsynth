@@ -413,7 +413,7 @@ Developers:
             <min>64</min>
             <max>8192</max>
             <desc>
-                The size of the audio buffers (in frames).
+                This is the number of audio samples most audio drivers will request from the synth at one time. In other words, it's the amount of samples the synth is allowed to render in one go when no state changes (events) are about to happen. Because of that, specifying too big numbers here may cause MIDI events to be poorly quantized (=untimed) when a MIDI driver or the synth's API directly is used, as fluidsynth cannot determine when those events are to arrive. This issue does not matter, when using the MIDI player or the MIDI sequencer, because in this case, fluidsynth does know when events will be received.
             </desc>
         </setting>
         <setting>
