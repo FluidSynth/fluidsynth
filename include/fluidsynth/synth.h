@@ -331,6 +331,18 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
  * render real-time audio, ensure that you call these functions from a high-priority
  * thread with little to no other duties other than calling the rendering functions.
  *
+ * @warning
+ * If a concurrently running thread calls any other sound affecting synth function
+ * (e.g. fluid_synth_noteon(), fluid_synth_cc(), etc.) it is unspecified whether the event triggered by such a call
+ * will be effective in the recently synthesized audio. While this is inaudible when only requesting small chunks from the
+ * synth with every call (cf. fluid_synth_get_internal_bufsize()), it will become evident when requesting larger sample chunks:
+ * With larger sample chunks it will get harder for the synth to react on those spontaneously occurring events in time
+ * (like events received from a MIDI driver, or directly made synth API calls).
+ * In those real-time scenarios, prefer requesting smaller
+ * sample chunks from the synth with each call, to avoid poor quantization of your events in the synthesized audio.
+ * This issue is not applicable when using the MIDI player or sequencer for event dispatching. Also
+ * refer to the documentation of \setting{audio_period-size}.
+ *
  * @{
  */
 FLUIDSYNTH_API int fluid_synth_write_s16(fluid_synth_t *synth, int len,
