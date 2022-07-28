@@ -145,7 +145,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         break;
 
     case MIM_DATA:
-        if(msg_param < 0xF0)      /* Voice category message */
+        if(msg_type(msg_param) < 0xf0)      /* Voice category message */
         {
             event.type = msg_type(msg_param);
             event.channel = msg_chan(msg_param) + dev_infos->channel_map;
@@ -166,7 +166,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         }
         else                    /* System message */
         {
-            event.type = msg_param;
+            event.type = (unsigned char)(msg_param & 0xff);
         }
 
         (*dev->driver.handler)(dev->driver.data, &event);
