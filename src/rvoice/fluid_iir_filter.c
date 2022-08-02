@@ -380,7 +380,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
        between 20khz cutoff and 0 Q? */
 
     /* I removed the optimization of turning the filter off when the
-     * resonance frequence is above the maximum frequency. Instead, the
+     * resonance frequency is above the maximum frequency. Instead, the
      * filter frequency is set to a maximum of 0.45 times the sampling
      * rate. For a 44100 kHz sampling rate, this amounts to 19845
      * Hz. The reason is that there were problems with anti-aliasing when the
