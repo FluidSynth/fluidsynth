@@ -590,7 +590,7 @@ void fluid_clear_fpe_i386(void)
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
   profiling       |    Internal     |      |             |      Audio
   command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
