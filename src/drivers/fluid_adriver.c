@@ -446,7 +446,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
  *
  * @warning This function may only be called if no thread is residing in fluidsynth's API and no instances of any kind
  * are alive (e.g. as it would be the case right after fluidsynth's initial creation). Else the behaviour is undefined.
- * Furtermore any attempt of using audio drivers that have not been registered is undefined behaviour!
+ * Furthermore any attempt of using audio drivers that have not been registered is undefined behaviour!
  *
  * @note This function is not thread safe and will never be!
  *

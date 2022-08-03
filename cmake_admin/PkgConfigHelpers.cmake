@@ -45,7 +45,7 @@ macro ( generate_pkgconfig_spec template outfile target )
         set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
         # remove all entries from the list which are specified by path and which already have -l
         list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
-        # include only entries specifed by path
+        # include only entries specified by path
         list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
 
         # prepend the linker flag to all entries except the ones that already have it
