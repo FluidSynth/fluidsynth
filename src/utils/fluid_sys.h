@@ -524,7 +524,7 @@ fluid_long_long_t fluid_file_tell(FILE* f);
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
   profiling       |    Internal     |      |             |      Audio
   command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
