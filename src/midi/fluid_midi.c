@@ -2161,10 +2161,10 @@ fluid_player_callback(void *data, unsigned int msec)
 
         for(i = 0; i < player->ntracks; i++)
         {
+            fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
             if(!fluid_track_eot(player->track[i]))
             {
                 status = FLUID_PLAYER_PLAYING;
-                fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
             }
         }
 
