@@ -2116,6 +2116,7 @@ fluid_player_callback(void *data, unsigned int msec)
                 {
                     fluid_midi_event_set_channel(&mute_event, i);
                     player->playback_callback(player->playback_userdata, &mute_event);
+                    player->channel_isplaying[i] = FALSE;
                 }
             }
             fluid_atomic_int_set(&player->stopping, 0);
@@ -2153,6 +2154,7 @@ fluid_player_callback(void *data, unsigned int msec)
                 {
                     fluid_midi_event_set_channel(&mute_event, i);
                     player->playback_callback(player->playback_userdata, &mute_event);
+                    player->channel_isplaying[i] = FALSE;
                 }
             }
         }
