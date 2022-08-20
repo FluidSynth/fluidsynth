@@ -1,0 +1,90 @@
+name: FluidSynth All
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+env:
+  dir_build: build
+  dir_source: .
+  type: Release
+
+jobs:
+  build:
+    name: All platforms
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            name: linux
+            generator: Unix Makefiles
+            flags: -Denable-portaudio=1 -Denable-ladspa=1
+            path: ./build/src
+          - os: macos-latest
+            name: mac
+            generator: Unix Makefiles
+            flags: -Denable-portaudio=1 -Denable-ladspa=1
+            path: ./build/src
+          - os: windows-latest
+            name: win
+            generator: Visual Studio 17 2022
+            flags: -Denable-jack=0 -Denable-pulseaudio=0 -Denable-ladspa=0 -Denable-dbus=0 -Denable-readline=0 -Denable-sdl2=0 -Denable-libinstpatch=0
+            path: ./build/src/Release
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Linux dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get update && sudo apt-get install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libsystemd-dev libinstpatch-dev libreadline-dev g++-7 g++-8 clang-7 clang-8 clang-9 clang-10 clang-tidy-10
+
+    - name: Install macOS dependencies
+      if: matrix.os == 'macos-latest'
+      run: brew install cmake pulseaudio portaudio jack dbus sdl2
+
+    - name: Install Windows dependencies
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir D:/deps
+        cd D:/deps
+        curl -LfsS -o gtk-bundle-dev.zip http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip
+        curl -LfsS -o libsndfile-dev.zip http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w64.zip
+        7z x -aos -- gtk-bundle-dev.zip
+        7z x -aos -- libsndfile-dev.zip
+        mv ./lib/libsndfile-1.lib ./lib/sndfile.lib
+        mv ./lib/libsndfile-1.def ./lib/sndfile.def
+        rm -rf C:/Strawberry/perl/bin/pkg-config*
+        echo "/deps/bin" >> $GITHUB_PATH
+
+    - name: Build
+      run: |
+        cmake \
+          -G "${{ matrix.generator }}" \
+          -DCMAKE_BUILD_TYPE="${{ env.type }}" \
+          -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install \
+          -DCMAKE_VERBOSE_MAKEFILE=1 \
+          -DNO_GUI=1 \
+          ${{ matrix.flags }} \
+          -S "${{ env.dir_source }}" \
+          -B "${{ env.dir_build }}"
+        cmake --build ${{ env.dir_build }} --config ${{ env.type }} --parallel 3
+        cmake --build ${{ env.dir_build }} --config ${{ env.type }} --target check
+        cmake --build ${{ env.dir_build }} --config ${{ env.type }} --target demo
+        cmake --build ${{ env.dir_build }} --config ${{ env.type }} --target install
+
+    - name: List files generated
+      run: |
+        cd ${{ matrix.path }}
+        find "$(pwd)"
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: fluidsynth-${{ matrix.name }}
+        path: ${{ matrix.path }}
