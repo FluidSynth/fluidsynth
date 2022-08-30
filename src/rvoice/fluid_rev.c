@@ -435,7 +435,7 @@ static void set_mod_frequency(sinus_modulator *mod,
 
     a = (2 * FLUID_M_PI / 360) * phase;
 
-    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-intial angle) */
+    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-initial angle) */
     mod->buffer1 = FLUID_SIN(a); /* y(n) = sin(initial phase) */
     mod->reset_buffer2 = FLUID_SIN(FLUID_M_PI / 2 - w); /* reset value for PI/2 */
 }
