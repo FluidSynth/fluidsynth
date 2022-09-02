@@ -694,7 +694,7 @@ char *
 fluid_get_sysconf(char *buf, int len)
 {
 #if defined(WIN32)
-    const char program_data[] = getenv("ProgramData");
+    const char* program_data = getenv("ProgramData");
     if(program_data == NULL || program_data[0] == '\0')
     {
         return NULL;
