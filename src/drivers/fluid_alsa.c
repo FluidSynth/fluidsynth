@@ -1190,7 +1190,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
     FLUID_MEMSET(port_info, 0, snd_seq_port_info_sizeof());
 
     fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
-    dev->port_count = ceil(midi_channels / 16);
+    dev->port_count = ceil(midi_channels / 16.0f);
 
     snd_seq_port_info_set_capability(port_info,
                                      SND_SEQ_PORT_CAP_WRITE |
