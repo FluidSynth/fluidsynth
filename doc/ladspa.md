@@ -31,7 +31,7 @@ file.
 ## Introduction to LADSPA
 
 You don't need to to have detailed knowledge of LADSPA to use effects with
-FluidSynth, but knowing some of it's concepts will help if you want to make the
+FluidSynth, but knowing some of the LADSPA concepts will help if you want to make the
 best use of it.
 
 If you have the LADSPA SDK installed you should be able to use the `listplugins`
@@ -76,13 +76,13 @@ that only have a single output port and no input at all (think of noise
 generators...)
 
 Also note the line `Has run_adding() Function: No`. This specifies that this
-plugin can not mix it's audio output into an output buffer, but will always
+plugin can not mix its audio output into an output buffer, but will always
 replace anything that is already there. This will become important again later
 on.
 
 ## FluidSynth Host Ports
 
-Just as LADSPA plugins have input and output ports, FluidSynth provides it's
+Just as LADSPA plugins have input and output ports, FluidSynth provides its
 own audio ports that can be connected to plugins. On a standard stereo setup,
 the following four ports are automatically created:
 
@@ -135,7 +135,7 @@ Please note that we only specified the path to the library
 `/usr/lib/ladspa/delay.so` when creating the "e1" effect, but not which plugin
 from the library to use. This is possible because the delay.so library contains
 only a single plugin. If you want to use a library that contains more than one
-plugin, you would need to give the plugin name as well, as we've done when
+plugin, you would need to specify the plugin name as well, as we've done when
 creating the "e2" effect. The string to use here is what is called "Plugin
 Label" in the `analyseplugin` output.
 
@@ -230,8 +230,8 @@ send amount specified in the SoundFont.
 
 If you want to replace the internal reverb or chorus effects with a LADSPA
 plugin and you want to honour the decisions made by the SoundFont designer, you
-should use the `Reverb:Send` or `Chorus:Send` ports as effect input and
-`Main:L` and `Main:R` ports as effect outputs. (See the "Example Setups" section
+should use the `Reverb:Send` or `Chorus:Send` ports as inputs to the effects and
+`Main:L` and `Main:R` ports as outputs. (See the "Example Setups" section
 below for an example on how to replace the internal reverb with a LADSPA plugin.)
 
 Please note that FluidSynth uses a mono signal for both effects, that is why
@@ -260,17 +260,16 @@ ladspa_effect <effect-name> <library-path> [plugin-name] [--mix [gain]]
 ```
 
 Load the LADSPA plugin library given by `<library-path>` and create a new effect
-(i.e. an instance of a plugin). `<effect-name>` can be chosen by the user and must
+(i.e. an instance of a plugin). `<effect-name>` can be chosen by the user and must be 
 unique. `<plugin-name>` is optional if the library contains only one plugin.
 
 If the optional `--mix` parameter is given, then the LADSPA engine will call the
-`run_adding` interface of the plugin. This will make the effect add it's output
-to the output buffers instead of replacing them. The `--mix` parameter takes an
+`run_adding` interface of the plugin. This will tell the effect to mix its output into the output buffers instead of replacing them. The `--mix` parameter takes an
 optional float value `gain`, which will be multiplied with each sample before
 adding to the output buffers.
 
 Please note that there is no command to delete a single effect once created. To
-remove effects, please use `ladspa_reset` to clear everything start from
+remove effects, please use `ladspa_reset` to clear everything and start from
 scratch.
 
 Can only be called when the effect unit is not active.
@@ -281,8 +280,8 @@ Can only be called when the effect unit is not active.
 ladspa_buffer <buffer-name>
 ```
 
-Create a new audio buffer called `<buffer-name>`. The buffer is able to be used as
-mono output or mono input to an effect. Buffers can be used to connect plugins
+Create a new audio buffer called `<buffer-name>`. The buffer can be used as
+mono output or mono input for an effect. Buffers can be used to connect plugins
 between each other without overwriting the host ports with temporary data.
 
 Please note that there is no command to delete a buffer. To remove buffers,
@@ -296,7 +295,7 @@ Can only be used when the effect unit is not active.
 ladspa_link <effect-name> <audio-port-name> <buffer-or-host-port-name>
 ```
 
-Connects an effect input or output port with a buffer or a host port. This
+Connects an effect input or output port to a buffer or a host port. This
 command can be called multiple times and will overwrite the previous connection
 made on that effect port.
 
@@ -348,7 +347,7 @@ it can be started again with `ladspa_start`.
 ladspa_reset
 ```
 
-Deactivates the effects unit if active and clears all configuration and loaded
+Deactivates the effects unit if it is currently active and clears all configuration and loaded
 plugins.
 
 
@@ -440,7 +439,7 @@ Explaining multi-channel output in detail is out of scope for this guide. But
 using multiple output channels has an effect on the host ports that are
 available to LADSPA plugins.
 
-As soon as you configure more than one audio-channel, the main audio ports will
+As soon as you configure more than one audio-group, the main audio ports will
 not be called "Main:L" and "Main:R" anymore, but will have indices added to
 their name. So if you start FluidSynth with `-o synth.audio-groups=2`, then the
 following ports will be created:
@@ -462,7 +461,7 @@ LADSPA is a very simple plugin architecture and only requires the ladspa.h
 header file as compile-time dependency. To build FluidSynth on non-Linux
 platform with LADSPA support, download the ladspa.h file from
 https://www.ladspa.org and place it somewhere in your compiler include path. Then
-configure and build LADSPA as you normally would.
+configure and build FluidSynth as you normally would.
 
 All information in the above documentation is valid for all other platforms as
 well. Just make sure you use the file path format specific to your platform in

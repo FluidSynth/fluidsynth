@@ -4,6 +4,16 @@ Documentation=man:fluidsynth(1)
 After=sound.target
 
 [Service]
+# added automatically, for details please see
+# https://en.opensuse.org/openSUSE:Security_Features#Systemd_hardening_effort
+ProtectSystem=full
+ProtectHome=read-only
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+# end of automatic additions
 Type=notify
 NotifyAccess=main
 EnvironmentFile=@FLUID_DAEMON_ENV_FILE@

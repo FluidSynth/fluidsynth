@@ -686,13 +686,23 @@ fluid_get_userconf(char *buf, int len)
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no system command file for this system type.
  *
- * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
+ * MACOS does not have a system-wide config file currently. Since fluidsynth 2.2.9, the config
+ * on Windows is @c "%PROGRAMDATA%\fluidsynth\fluidsynth.cfg". For anything else it
  * returns @c "/etc/fluidsynth.conf".
  */
 char *
 fluid_get_sysconf(char *buf, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
+#if defined(WIN32)
+    const char* program_data = getenv("ProgramData");
+    if(program_data == NULL || program_data[0] == '\0')
+    {
+        return NULL;
+    }
+
+    FLUID_SNPRINTF(buf, len, "%s\\fluidsynth\\fluidsynth.cfg", program_data);
+    return buf;
+#elif defined(MACOS9)
     return NULL;
 #else
     FLUID_SNPRINTF(buf, len, "/etc/fluidsynth.conf");

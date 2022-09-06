@@ -376,6 +376,7 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
     fluid_sample_t *sample;
     int sf3_file = (sfdata->version.major == 3);
     int sample_parsing_result = FLUID_OK;
+    int invalid_loops_were_sanitized = FALSE;
 
     /* For SF2 files, we load the sample data in one large block */
     if(!sf3_file)
@@ -404,7 +405,7 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
         {
             /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis format
              * anyway */
-            #pragma omp task firstprivate(sample,sfdata,defsfont) shared(sample_parsing_result) default(none)
+            #pragma omp task firstprivate(sample,sfdata,defsfont) shared(sample_parsing_result, invalid_loops_were_sanitized) default(none)
             {
                 if(fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
                 {
@@ -416,22 +417,44 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
                 }
                 else
                 {
-                    fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                    int modified = fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                    if(modified)
+                    {
+                        #pragma omp critical
+                        {
+                            invalid_loops_were_sanitized = TRUE;
+                        }
+                    }
                     fluid_voice_optimize_sample(sample);
                 }
             }
         }
         else
         {
-            #pragma omp task firstprivate(sample, defsfont) default(none)
+            #pragma omp task firstprivate(sample, defsfont) shared(invalid_loops_were_sanitized) default(none)
             {
+                int modified;
                 /* Data pointers of SF2 samples point to large sample data block loaded above */
                 sample->data = defsfont->sampledata;
                 sample->data24 = defsfont->sample24data;
-                fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+                modified = fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+                if(modified)
+                {
+                    #pragma omp critical
+                    {
+                        invalid_loops_were_sanitized = TRUE;
+                    }
+                }
                 fluid_voice_optimize_sample(sample);
             }
         }
+    }
+
+    if(invalid_loops_were_sanitized)
+    {
+        FLUID_LOG(FLUID_WARN,
+                  "Some invalid sample loops were sanitized! If you experience audible glitches, "
+                  "start fluidsynth in verbose mode for detailed information.");
     }
 
     return sample_parsing_result;
@@ -723,7 +746,7 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 
 /*
  * Adds global and local modulators list to the voice. This is done in 2 steps:
- * - Step 1: Local modulators replace identic global modulators.
+ * - Step 1: Local modulators replace identical global modulators.
  * - Step 2: global + local modulators are added to the voice using mode.
  *
  * Instrument zone list (local/global) must be added using FLUID_VOICE_OVERWRITE.
@@ -756,7 +779,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t *voice,
      */
     int identity_limit_count;
 
-    /* Step 1: Local modulators replace identic global modulators. */
+    /* Step 1: Local modulators replace identical global modulators. */
 
     /* local (instrument zone/preset zone), modulators: Put them all into a list. */
     mod_list_count = 0;
@@ -777,7 +800,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t *voice,
      * (Preset zone:     SF 2.01 page 69, second-last bullet).
      *
      * mod_list contains local modulators. Now we know that there
-     * is no global modulator identic to another global modulator (this has
+     * is no global modulator identical to another global modulator (this has
      * been checked at soundfont loading time). So global modulators
      * are only checked against local modulators number.
      */
@@ -827,8 +850,8 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t *voice,
 
     /*
      * mod_list contains local and global modulators, we know that:
-     * - there is no global modulator identic to another global modulator,
-     * - there is no local modulator identic to another local modulator,
+     * - there is no global modulator identical to another global modulator,
+     * - there is no local modulator identical to another local modulator,
      * So these local/global modulators are only checked against
      * actual number of voice modulators.
      */
@@ -1286,25 +1309,25 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t *preset_zone
 }
 
 /**
- * Checks if modulator mod is identic to another modulator in the list
+ * Checks if modulator mod is identical to another modulator in the list
  * (specs SF 2.0X  7.4, 7.8).
  * @param mod, modulator list.
  * @param name, if not NULL, pointer on a string displayed as warning.
- * @return TRUE if mod is identic to another modulator, FALSE otherwise.
+ * @return TRUE if mod is identical to another modulator, FALSE otherwise.
  */
 static int
-fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
+fluid_zone_is_mod_identical(fluid_mod_t *mod, char *name)
 {
     fluid_mod_t *next = mod->next;
 
     while(next)
     {
-        /* is mod identic to next ? */
+        /* is mod identical to next ? */
         if(fluid_mod_test_identity(mod, next))
         {
             if(name)
             {
-                FLUID_LOG(FLUID_WARN, "Ignoring identic modulator %s", name);
+                FLUID_LOG(FLUID_WARN, "Ignoring identical modulator %s", name);
             }
 
             return TRUE;
@@ -1359,7 +1382,7 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
 /**
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
- * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
+ * - checks identical modulators in the list (specs SF 2.01  7.4, 7.8).
  * @param zone_name, zone name.
  * @param list_mod, address of pointer on modulators list.
  */
@@ -1380,8 +1403,8 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
 
         /* has mod invalid sources ? */
         if(!fluid_mod_check_sources(mod,  zone_mod_name)
-                /* or is mod identic to any following modulator ? */
-                || fluid_zone_is_mod_identic(mod, zone_mod_name))
+                /* or is mod identical to any following modulator ? */
+                || fluid_zone_is_mod_identical(mod, zone_mod_name))
         {
             /* the modulator is useless so we remove it */
             if(prev_mod)

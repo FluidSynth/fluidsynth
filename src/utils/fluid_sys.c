@@ -387,17 +387,17 @@ void fluid_msleep(unsigned int msecs)
  */
 unsigned int fluid_curtime(void)
 {
-    float now;
-    static float initial_time = 0;
+    double now;
+    static double initial_time = 0;
 
     if(initial_time == 0)
     {
-        initial_time = (float)fluid_utime();
+        initial_time = fluid_utime();
     }
 
-    now = (float)fluid_utime();
+    now = fluid_utime();
 
-    return (unsigned int)((now - initial_time) / 1000.0f);
+    return (unsigned int)((now - initial_time) / 1000.0);
 }
 
 /**
@@ -590,11 +590,11 @@ void fluid_clear_fpe_i386(void)
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
-  profiling       |    Internal    |      |             |      Audio
-  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
-  shell           |    API         |      |             |      API
+  profiling       |    Internal     |      |             |      Audio
+  command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
+  shell           |    API          |      |             |      API
 
 */
 /* default parameters for shell command "prof_start" in fluid_sys.c */

@@ -87,6 +87,17 @@ new_fluid_midishare_midi_driver(fluid_settings_t *settings,
     fluid_midishare_midi_driver_t *dev;
     int i;
 
+    FLUID_LOG(FLUID_WARN,
+              "\n\n"
+              "================ MidiShare MIDI driver has been deprecated! =================\n"
+              "You're using the MidiShare driver. This driver is old, unmaintained and believed\n"
+              "to be unused. If you still need it, pls. let us know by posting to our\n"
+              "mailing list at fluid-dev@nongnu.org - otherwise this driver might be removed\n"
+              "in a future release of FluidSynth!\n"
+              "================ MidiShare MIDI driver has been deprecated! =================\n"
+              "\n"
+    );
+
     /* not much use doing anything */
     if(handler == NULL)
     {

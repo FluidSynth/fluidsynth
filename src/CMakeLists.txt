@@ -106,7 +106,7 @@ if ( OBOE_SUPPORT )
   set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
 endif ( OBOE_SUPPORT )
 
-set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
+set ( config_SOURCES ${FluidSynth_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c
@@ -183,32 +183,32 @@ set ( libfluidsynth_SOURCES
 )
 
 set ( public_HEADERS
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/ladspa.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/log.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/midi.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/misc.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/mod.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/seq.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/seqbind.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/settings.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/sfont.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/shell.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/synth.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/types.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/voice.h
-    ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/audio.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/event.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/gen.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/ladspa.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/log.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/midi.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/misc.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/mod.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/seq.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/seqbind.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/settings.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/sfont.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/shell.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/synth.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/types.h
+    ${FluidSynth_SOURCE_DIR}/include/fluidsynth/voice.h
+    ${FluidSynth_BINARY_DIR}/include/fluidsynth/version.h
 )
 
 set ( public_main_HEADER
-    ${CMAKE_BINARY_DIR}/include/fluidsynth.h
+    ${FluidSynth_BINARY_DIR}/include/fluidsynth.h
 )
 
-configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in 
-                 ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h )
-configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
+configure_file ( ${FluidSynth_SOURCE_DIR}/include/fluidsynth/version.h.in 
+                 ${FluidSynth_BINARY_DIR}/include/fluidsynth/version.h )
+configure_file ( ${FluidSynth_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
 if ( WIN32 )
@@ -258,17 +258,17 @@ add_library ( libfluidsynth-OBJ OBJECT
 )
 
 target_include_directories ( libfluidsynth-OBJ PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/drivers
-    ${CMAKE_SOURCE_DIR}/src/synth
-    ${CMAKE_SOURCE_DIR}/src/rvoice
-    ${CMAKE_SOURCE_DIR}/src/midi
-    ${CMAKE_SOURCE_DIR}/src/utils
-    ${CMAKE_SOURCE_DIR}/src/sfloader
-    ${CMAKE_SOURCE_DIR}/src/bindings
-    ${CMAKE_SOURCE_DIR}/include
+    ${FluidSynth_BINARY_DIR}
+    ${FluidSynth_BINARY_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/src
+    ${FluidSynth_SOURCE_DIR}/src/drivers
+    ${FluidSynth_SOURCE_DIR}/src/synth
+    ${FluidSynth_SOURCE_DIR}/src/rvoice
+    ${FluidSynth_SOURCE_DIR}/src/midi
+    ${FluidSynth_SOURCE_DIR}/src/utils
+    ${FluidSynth_SOURCE_DIR}/src/sfloader
+    ${FluidSynth_SOURCE_DIR}/src/bindings
+    ${FluidSynth_SOURCE_DIR}/include
 )
 
 if ( LIBFLUID_CPPFLAGS )
@@ -276,13 +276,19 @@ if ( LIBFLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS )
 
-# note: by default this target creates a shared object (or dll). To build a
+# Note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
-add_library ( libfluidsynth $<TARGET_OBJECTS:libfluidsynth-OBJ> )
+# Further note: The headers must be explicitly added here to have CMake install
+# them correctly in case of MACOSX_FRAMEWORK
+add_library ( libfluidsynth
+    $<TARGET_OBJECTS:libfluidsynth-OBJ>
+    ${public_main_HEADER}
+    ${public_HEADERS}
+)
 
 if ( MACOSX_FRAMEWORK )
-     set_property ( SOURCE ${public_HEADERS}
-         PROPERTY MACOSX_PACKAGE_LOCATION Headers/fluidsynth
+    set_source_files_properties ( ${public_HEADERS}
+         PROPERTIES MACOSX_PACKAGE_LOCATION Headers/fluidsynth
      )
     set_target_properties ( libfluidsynth
       PROPERTIES
@@ -451,16 +457,16 @@ if ( FLUID_CPPFLAGS )
 endif ( FLUID_CPPFLAGS )
 
 target_include_directories ( fluidsynth PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src/bindings
-    ${CMAKE_SOURCE_DIR}/src/midi
-    ${CMAKE_SOURCE_DIR}/src/rvoice
-    ${CMAKE_SOURCE_DIR}/src/sfloader
-    ${CMAKE_SOURCE_DIR}/src/synth
-    ${CMAKE_SOURCE_DIR}/src/utils
-    ${CMAKE_SOURCE_DIR}/src/
-    ${CMAKE_SOURCE_DIR}/include
+    ${FluidSynth_BINARY_DIR}
+    ${FluidSynth_BINARY_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/src/bindings
+    ${FluidSynth_SOURCE_DIR}/src/midi
+    ${FluidSynth_SOURCE_DIR}/src/rvoice
+    ${FluidSynth_SOURCE_DIR}/src/sfloader
+    ${FluidSynth_SOURCE_DIR}/src/synth
+    ${FluidSynth_SOURCE_DIR}/src/utils
+    ${FluidSynth_SOURCE_DIR}/src/
+    ${FluidSynth_SOURCE_DIR}/include
 )
 
 target_link_libraries ( fluidsynth PRIVATE
@@ -484,6 +490,10 @@ if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT ) # because SDL_Init() etc.
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::SDL2 )
 endif()
 
+if ( TARGET PkgConfig::PIPEWIRE AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
+    target_link_libraries ( fluidsynth PRIVATE PkgConfig::PIPEWIRE )
+endif()
+
 if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE PkgConfig::LIBINSTPATCH )
 endif()
@@ -496,8 +506,8 @@ if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     EXPORT FluidSynthTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
-    ARCHIVE DESTINATION ${FRAMEWORK_INSTALL_DIR}
+    FRAMEWORK DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}"
+    ARCHIVE DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}"
 )
 else ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
@@ -545,6 +555,6 @@ ExternalProject_Add(gentables
         "${CMAKE_COMMAND}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}" "${GENTAB_SDIR}"
     BUILD_COMMAND
         "${CMAKE_COMMAND}" --build "${GENTAB_BDIR}"
-    INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${CMAKE_BINARY_DIR}/"
+    INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${FluidSynth_BINARY_DIR}/"
 )
 add_dependencies(libfluidsynth-OBJ gentables)

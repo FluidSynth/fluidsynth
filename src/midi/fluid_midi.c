@@ -126,8 +126,13 @@ new_fluid_midi_file(const char *buffer, size_t length)
 {
     fluid_midi_file *mf;
 
-    mf = FLUID_NEW(fluid_midi_file);
+    if(length > INT_MAX)
+    {
+        FLUID_LOG(FLUID_ERR, "Refusing to open a MIDI file which is bigger than 2GiB");
+        return NULL;
+    }
 
+    mf = FLUID_NEW(fluid_midi_file);
     if(mf == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -140,7 +145,7 @@ new_fluid_midi_file(const char *buffer, size_t length)
     mf->running_status = -1;
 
     mf->buffer = buffer;
-    mf->buf_len = length;
+    mf->buf_len = (int)length;
     mf->buf_pos = 0;
     mf->eof = FALSE;
 
@@ -1106,7 +1111,7 @@ delete_fluid_midi_event(fluid_midi_event_t *evt)
  * @return Event type field (MIDI status byte without channel)
  */
 int
-fluid_midi_event_get_type(fluid_midi_event_t *evt)
+fluid_midi_event_get_type(const fluid_midi_event_t *evt)
 {
     return evt->type;
 }
@@ -1130,7 +1135,7 @@ fluid_midi_event_set_type(fluid_midi_event_t *evt, int type)
  * @return Channel field
  */
 int
-fluid_midi_event_get_channel(fluid_midi_event_t *evt)
+fluid_midi_event_get_channel(const fluid_midi_event_t *evt)
 {
     return evt->channel;
 }
@@ -1154,7 +1159,7 @@ fluid_midi_event_set_channel(fluid_midi_event_t *evt, int chan)
  * @return MIDI note number (0-127)
  */
 int
-fluid_midi_event_get_key(fluid_midi_event_t *evt)
+fluid_midi_event_get_key(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -1178,7 +1183,7 @@ fluid_midi_event_set_key(fluid_midi_event_t *evt, int v)
  * @return MIDI velocity number (0-127)
  */
 int
-fluid_midi_event_get_velocity(fluid_midi_event_t *evt)
+fluid_midi_event_get_velocity(const fluid_midi_event_t *evt)
 {
     return evt->param2;
 }
@@ -1202,7 +1207,7 @@ fluid_midi_event_set_velocity(fluid_midi_event_t *evt, int v)
  * @return MIDI control number
  */
 int
-fluid_midi_event_get_control(fluid_midi_event_t *evt)
+fluid_midi_event_get_control(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -1226,7 +1231,7 @@ fluid_midi_event_set_control(fluid_midi_event_t *evt, int v)
  * @return Value field
  */
 int
-fluid_midi_event_get_value(fluid_midi_event_t *evt)
+fluid_midi_event_get_value(const fluid_midi_event_t *evt)
 {
     return evt->param2;
 }
@@ -1250,7 +1255,7 @@ fluid_midi_event_set_value(fluid_midi_event_t *evt, int v)
  * @return MIDI program number (0-127)
  */
 int
-fluid_midi_event_get_program(fluid_midi_event_t *evt)
+fluid_midi_event_get_program(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -1274,7 +1279,7 @@ fluid_midi_event_set_program(fluid_midi_event_t *evt, int val)
  * @return Pitch value (14 bit value, 0-16383, 8192 is center)
  */
 int
-fluid_midi_event_get_pitch(fluid_midi_event_t *evt)
+fluid_midi_event_get_pitch(const fluid_midi_event_t *evt)
 {
     return evt->param1;
 }
@@ -2111,6 +2116,7 @@ fluid_player_callback(void *data, unsigned int msec)
                 {
                     fluid_midi_event_set_channel(&mute_event, i);
                     player->playback_callback(player->playback_userdata, &mute_event);
+                    player->channel_isplaying[i] = FALSE;
                 }
             }
             fluid_atomic_int_set(&player->stopping, 0);
@@ -2148,16 +2154,17 @@ fluid_player_callback(void *data, unsigned int msec)
                 {
                     fluid_midi_event_set_channel(&mute_event, i);
                     player->playback_callback(player->playback_userdata, &mute_event);
+                    player->channel_isplaying[i] = FALSE;
                 }
             }
         }
 
         for(i = 0; i < player->ntracks; i++)
         {
+            fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
             if(!fluid_track_eot(player->track[i]))
             {
                 status = FLUID_PLAYER_PLAYING;
-                fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
             }
         }
 
@@ -2331,6 +2338,12 @@ static void fluid_player_update_tempo(fluid_player_t *player)
     int tempo; /* tempo in micro seconds by quarter note */
     float deltatime;
 
+    /* do nothing if the division is still unknown to avoid a div by zero */
+    if(player->division == 0)
+    {
+        return;
+    }
+
     if(fluid_atomic_int_get(&player->sync_mode))
     {
         /* take internal tempo from MIDI file */
@@ -2394,6 +2407,10 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * MIDI file so that next call to fluid_player_set_tempo() with
  * #FLUID_PLAYER_TEMPO_INTERNAL will set the player to follow this internal
  * tempo.
+ *
+ * @warning If the function is called when no MIDI file is loaded or currently playing, it
+ * would have caused a division by zero in fluidsynth 2.2.7 and earlier. Starting with 2.2.8, the
+ * new tempo change will be stashed and applied later.
  *
  * @return #FLUID_OK if success or #FLUID_FAILED otherwise (incorrect parameters).
  * @since 2.2.0
@@ -2637,14 +2654,9 @@ fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)
      * of another message. */
     if(c >= 0xF8)
     {
-        if(c == MIDI_SYSTEM_RESET)
-        {
-            parser->event.type = c;
-            parser->status = 0; /* clear the status */
-            return &parser->event;
-        }
-
-        return NULL;
+        parser->event.type = c;
+        parser->status = 0; /* clear the status */
+        return &parser->event;
     }
 
     /* Status byte? - If previous message not yet complete, it is discarded (re-sync). */

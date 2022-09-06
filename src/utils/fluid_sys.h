@@ -524,11 +524,11 @@ fluid_long_long_t fluid_file_tell(FILE* f);
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
-  profiling       |    Internal    |      |             |      Audio
-  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
-  shell           |    API         |      |             |      API
+  profiling       |    Internal     |      |             |      Audio
+  command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
+  shell           |    API          |      |             |      API
 
 */
 
@@ -730,7 +730,7 @@ enum
     Floating point exceptions
 
     fluid_check_fpe() checks for "unnormalized numbers" and other
-    exceptions of the floating point processsor.
+    exceptions of the floating point processor.
 */
 #ifdef FPE_CHECK
 #define fluid_check_fpe(expl) fluid_check_fpe_i386(expl)

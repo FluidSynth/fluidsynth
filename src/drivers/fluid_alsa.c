@@ -1440,6 +1440,26 @@ fluid_alsa_seq_run(void *d)
                 }
                 break;
 
+                case SND_SEQ_EVENT_START:
+                    evt.type = MIDI_START;
+                    break;
+
+                case SND_SEQ_EVENT_CONTINUE:
+                    evt.type = MIDI_CONTINUE;
+                    break;
+
+                case SND_SEQ_EVENT_STOP:
+                    evt.type = MIDI_STOP;
+                    break;
+
+                case SND_SEQ_EVENT_CLOCK:
+                    evt.type = MIDI_SYNC;
+                    break;
+
+                case SND_SEQ_EVENT_RESET:
+                    evt.type = MIDI_SYSTEM_RESET;
+                    break;
+
                 default:
                     continue;		/* unhandled event, next loop iteration */
                 }
