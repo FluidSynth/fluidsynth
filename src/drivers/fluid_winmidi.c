@@ -474,12 +474,12 @@ static void fluid_winmidi_autoconnect_build_name(char *name)
 
     if(num < 11)
     {
-        memset(name, 0, MAXPNAMELEN);
+        FLUID_MEMSET(name, 0, MAXPNAMELEN);
 
         for(i = 0; i < num; ++i)
         {
             char x[4];
-            j = snprintf(x, 4, "%d;", i);
+            j = FLUID_SNPRINTF(x, sizeof(x), "%d;", i);
             strncat(name, x, j);
             n += j;
         }
