@@ -471,15 +471,20 @@ static void fluid_winmidi_autoconnect_build_name(char *name)
 {
     int i, j, n = 0;
     int num = midiInGetNumDevs();
-    if (num < 11) {
+
+    if(num < 11)
+    {
         memset(name, 0, MAXPNAMELEN);
-        for(i=0; i<num; ++i) {
+
+        for(i = 0; i < num; ++i)
+        {
             char x[4];
             j = snprintf(x, 4, "%d;", i);
             strncat(name, x, j);
             n += j;
         }
-        name[n-1] = 0;
+
+        name[n - 1] = 0;
     }
 }
 
@@ -517,7 +522,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     fluid_settings_getint(settings, "midi.autoconnect", &autoconnect_inputs);
     fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
 
-    if ((strcmp(dev_name, "default") == 0) && (autoconnect_inputs != 0)) {
+    if((strcmp(dev_name, "default") == 0) && (autoconnect_inputs != 0))
+    {
         fluid_winmidi_autoconnect_build_name(dev_name);
     }
 
@@ -557,9 +563,12 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev_infos->channel_map = ch_map; /* map from input to output */
         /* calculate the next channel mapping, up to synth.midi-channels */
         ch_map += 16;
-        if (ch_map >= midi_channels) {
+
+        if(ch_map >= midi_channels)
+        {
             ch_map = 0;
         }
+
         FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
         res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
