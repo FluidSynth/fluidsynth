@@ -554,7 +554,7 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d)
         {
             FLUID_MEMSET(left, 0, buffer_size * sizeof(*left));
             FLUID_MEMSET(right, 0, buffer_size * sizeof(*right));
-            
+
             (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
 
             /* convert floating point data to 16 bit (with dithering) */
@@ -638,15 +638,20 @@ void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
 
     /* Enumeration of ALSA Raw MIDI devices */
     err = snd_card_next(&card);
-    while ((err == 0) && (card >= 0)) {
+
+    while((err == 0) && (card >= 0))
+    {
         int device = -1;
         snd_ctl_t *ctl;
         char card_name[32];
 
         sprintf(card_name, "hw:%d", card);
         err = snd_ctl_open(&ctl, card_name, 0);
-        if (err == 0) {
-            for (;;) {
+
+        if(err == 0)
+        {
+            for(;;)
+            {
                 int num_subs;
                 int subdevice;
                 char newoption[64];
@@ -655,27 +660,44 @@ void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
                 const char *sub_name;
 
                 err = snd_ctl_rawmidi_next_device(ctl, &device);
-                if ((err < 0) || (device < 0))
+
+                if((err < 0) || (device < 0))
+                {
                     break;
+                }
+
                 snd_rawmidi_info_alloca(&info);
                 snd_rawmidi_info_set_device(info, device);
                 snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
                 err = snd_ctl_rawmidi_info(ctl, info);
-                if (err == 0)
+
+                if(err == 0)
+                {
                     num_subs = snd_rawmidi_info_get_subdevices_count(info);
+                }
                 else
+                {
                     break;
-                for (subdevice = 0; subdevice < num_subs; ++subdevice) {
+                }
+
+                for(subdevice = 0; subdevice < num_subs; ++subdevice)
+                {
                     snd_rawmidi_info_set_subdevice(info, subdevice);
                     err = snd_ctl_rawmidi_info(ctl, info);
-                    if (err == 0) {
+
+                    if(err == 0)
+                    {
                         name = snd_rawmidi_info_get_name(info);
                         sub_name = snd_rawmidi_info_get_subdevice_name(info);
-                        if (subdevice == 0 && sub_name[0] == '\0') {
+
+                        if(subdevice == 0 && sub_name[0] == '\0')
+                        {
                             sprintf(newoption, "hw:%d,%d    %s", card, device, name);
                             fluid_settings_add_option(settings, "midi.alsa.device", newoption);
                             break;
-                        } else {
+                        }
+                        else
+                        {
                             sprintf(newoption, "hw:%d,%d,%d  %s", card, device, subdevice, sub_name);
                             fluid_settings_add_option(settings, "midi.alsa.device", newoption);
                         }
@@ -683,6 +705,7 @@ void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
                 }
             }
         }
+
         snd_ctl_close(ctl);
         err = snd_card_next(&card);
     }
@@ -979,7 +1002,9 @@ static void fluid_alsa_seq_autoconnect_port_info(fluid_alsa_seq_driver_t *dev, s
     /* Calculate the next port to be auto-connected. When all ports have been connected
      * in sequence, start again from port 0 for the next auto-connection. */
     dev->autoconn_dest.port++;
-    if (dev->autoconn_dest.port >= dev->port_count) {
+
+    if(dev->autoconn_dest.port >= dev->port_count)
+    {
         dev->autoconn_dest.port  = 0;
     }
 }
