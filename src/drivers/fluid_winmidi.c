@@ -525,6 +525,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     if((strcmp(dev_name, "default") == 0) && (autoconnect_inputs != 0))
     {
         fluid_winmidi_autoconnect_build_name(dev_name);
+        FLUID_LOG(FLUID_DBG, "winmidi: autoconnect device name is now '%s'", dev_name);
     }
 
     /* parse device name, get the maximum number of devices to handle */
