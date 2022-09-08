@@ -476,23 +476,27 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
 
 static void fluid_winmidi_autoconnect_build_name(char *name)
 {
+    char new_name[MAXPNAMELEN] = { 0 };
     int i, j, n = 0;
     int num = midiInGetNumDevs();
 
-    if(num < 11)
+    for (i = 0; i < num; ++i)
     {
-        FLUID_MEMSET(name, 0, MAXPNAMELEN);
-
-        for(i = 0; i < num; ++i)
+        char x[4];
+        j = FLUID_SNPRINTF(x, sizeof(x), "%d;", i);
+        n += j;
+        if (n >= sizeof(new_name))
         {
-            char x[4];
-            j = FLUID_SNPRINTF(x, sizeof(x), "%d;", i);
-            strncat(name, x, j);
-            n += j;
+            FLUID_LOG(FLUID_DBG, "winmidi: autoconnect dev name exceeds MAXPNAMELEN (%d), num (%d), n (%d)", MAXPNAMELEN, num, n);
+            return;
         }
-
-        name[n - 1] = 0;
+        strncat(new_name, x, j);
     }
+
+    name[n - 1] = 0;
+
+    FLUID_MEMSET(name, 0, MAXPNAMELEN);
+    FLUID_STRCPY(name, new_name);
 }
 
 /*
