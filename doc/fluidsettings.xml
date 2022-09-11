@@ -761,7 +761,7 @@ Developers:
             <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port).</desc>
+            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port). Since fluidsynth 2.3.0 this setting will be populated with available devices when fluidsynth starts up.</desc>
         </setting>
         <setting>
             <name>alsa_seq.device</name>
