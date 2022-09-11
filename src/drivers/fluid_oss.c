@@ -52,7 +52,7 @@
 #define BUFFER_LENGTH 512
 
 // Build issue on some systems (OSS 4.0)?
-#if !defined(SOUND_PCM_WRITE_CHANNELS) && defined(SNDCTL_DSP_CHANNELS)
+#if (defined(SOUND_VERSION) && SOUND_VERSION >= 0x040000) || (!defined(SOUND_PCM_WRITE_CHANNELS) && defined(SNDCTL_DSP_CHANNELS))
 #define SOUND_PCM_WRITE_CHANNELS        SNDCTL_DSP_CHANNELS
 #endif
 
