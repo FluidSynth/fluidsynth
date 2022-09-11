@@ -612,7 +612,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     if(autoconnect)
     {
-        jack_ports = jack_get_ports(client, NULL, NULL, JackPortIsInput | JackPortIsPhysical);
+        jack_ports = jack_get_ports(client, NULL, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsPhysical);
 
         if(jack_ports && jack_ports[0])
         {
