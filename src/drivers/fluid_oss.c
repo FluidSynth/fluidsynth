@@ -52,8 +52,10 @@
 #define BUFFER_LENGTH 512
 
 // Build issue on some systems (OSS 4.0)?
-#if !defined(SOUND_PCM_WRITE_CHANNELS) && defined(SNDCTL_DSP_CHANNELS)
-#define SOUND_PCM_WRITE_CHANNELS        SNDCTL_DSP_CHANNELS
+#if (defined(SOUND_VERSION) && SOUND_VERSION >= 0x040000) || (!defined(SOUND_PCM_WRITE_CHANNELS) && defined(SNDCTL_DSP_CHANNELS))
+#define OSS_CHANNELS_PLACEHOLDER        SNDCTL_DSP_CHANNELS
+#else
+#define OSS_CHANNELS_PLACEHOLDER        SOUND_PCM_WRITE_CHANNELS
 #endif
 
 /** fluid_oss_audio_driver_t
@@ -230,7 +232,7 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     channels = 2;
 
-    if(ioctl(dev->dspfd, SOUND_PCM_WRITE_CHANNELS, &channels) < 0)
+    if(ioctl(dev->dspfd, OSS_CHANNELS_PLACEHOLDER, &channels) < 0)
     {
         FLUID_LOG(FLUID_ERR, "Can't set the number of channels");
         goto error_recovery;
@@ -376,7 +378,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func,
 
     channels = 2;
 
-    if(ioctl(dev->dspfd, SOUND_PCM_WRITE_CHANNELS, &channels) < 0)
+    if(ioctl(dev->dspfd, OSS_CHANNELS_PLACEHOLDER, &channels) < 0)
     {
         FLUID_LOG(FLUID_ERR, "Can't set the number of channels");
         goto error_recovery;
