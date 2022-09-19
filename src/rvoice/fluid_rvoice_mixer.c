@@ -178,9 +178,11 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
 
     if(mixer->with_reverb || mixer->with_chorus)
     {
+#if ENABLE_MIXER_THREADS && !defined(WITH_PROFILING)
         int fx_mixer_threads = mixer->fx_units;
         fluid_clip(fx_mixer_threads, 1, mixer->thread_count + 1);
-        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func, dry_count, current_blockcount, mix_fx_to_out, fx_channels_per_unit, prof_ref, fluid_profile_data, fluid_profile_status) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
+        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func, dry_count, current_blockcount, mix_fx_to_out, fx_channels_per_unit) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
+#endif
         {
             int i, f;
             int buf_idx;  /* buffer index */
@@ -189,7 +191,9 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
             int sample_count; /* sample count to process */
             if(mixer->with_reverb)
             {
+#if ENABLE_MIXER_THREADS && !defined(WITH_PROFILING)
                 #pragma omp for schedule(static)
+#endif
                 for(f = 0; f < mixer->fx_units; f++)
                 {
                     if(!mixer->fx[f].reverb_on)
@@ -217,14 +221,15 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
                     }
                 } // implicit omp barrier - required, because out_rev_l aliases with out_ch_l
 
-                #pragma omp single nowait
                 fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref, 0,
                             current_blockcount * FLUID_BUFSIZE);
             }
 
             if(mixer->with_chorus)
             {
+#if ENABLE_MIXER_THREADS && !defined(WITH_PROFILING)
                 #pragma omp for schedule(static)
+#endif
                 for(f = 0; f < mixer->fx_units; f++)
                 {
                     if(!mixer->fx[f].chorus_on)
@@ -252,7 +257,6 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
                     }
                 }
 
-                #pragma omp single nowait
                 fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref, 0,
                             current_blockcount * FLUID_BUFSIZE);
             }
