@@ -180,7 +180,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
     {
         int fx_mixer_threads = mixer->fx_units;
         fluid_clip(fx_mixer_threads, 1, mixer->thread_count + 1);
-        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func, dry_count, current_blockcount, mix_fx_to_out, fx_channels_per_unit) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
+        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func, dry_count, current_blockcount, mix_fx_to_out, fx_channels_per_unit, prof_ref, fluid_profile_data, fluid_profile_status) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
         {
             int i, f;
             int buf_idx;  /* buffer index */
@@ -217,6 +217,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
                     }
                 } // implicit omp barrier - required, because out_rev_l aliases with out_ch_l
 
+                #pragma omp single nowait
                 fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref, 0,
                             current_blockcount * FLUID_BUFSIZE);
             }
@@ -251,6 +252,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
                     }
                 }
 
+                #pragma omp single nowait
                 fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref, 0,
                             current_blockcount * FLUID_BUFSIZE);
             }
@@ -582,7 +584,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice)
 
     /* This should never happen */
     FLUID_LOG(FLUID_ERR, "Trying to exceed polyphony in fluid_rvoice_mixer_add_voice");
-    return;
 }
 
 static int
@@ -652,7 +653,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
 #endif
 
     handler->polyphony = value;
-    return /*FLUID_OK*/;
+    /*return FLUID_OK*/;
 }
 
 
