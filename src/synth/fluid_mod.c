@@ -186,27 +186,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
     {
         val = fluid_channel_get_cc(chan, mod_src);
 
-        /* From MIDI Recommended Practice (RP-036) Default Pan Formula:
-         * "Since MIDI controller values range from 0 to 127, the exact center
-         * of the range, 63.5, cannot be represented. Therefore, the effective
-         * range for CC#10 is modified to be 1 to 127, and values 0 and 1 both
-         * pan hard left. The recommended method is to subtract 1 from the
-         * value of CC#10, and saturate the result to be non-negative."
-         *
-         * We treat the balance control in exactly the same way, as the same
-         * problem applies here as well.
-         */
-        if(mod_src == PAN_MSB || mod_src == BALANCE_MSB)
-        {
-            *range = 126;
-            val -= 1;
-
-            if(val < 0)
-            {
-                val = 0;
-            }
-        }
-        else if(mod_src == PORTAMENTO_CTRL)
+        if(mod_src == PORTAMENTO_CTRL)
         {
             // an invalid portamento fromkey should be treated as 0 when it's actually used for moulating
             if(!fluid_channel_is_valid_note(val))
@@ -402,7 +382,19 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     extern fluid_mod_t default_vel2filter_mod;
 
     fluid_real_t v1 = 0.0, v2 = 1.0;
-    fluid_real_t range1 = 127.0, range2 = 127.0;
+    /* The wording of the default modulators refers to a range of 127/128.
+     * And the table in section 9.5.3 suggests, that this mapping should be applied
+     * to all unipolar and bipolar mappings respectively.
+     *
+     * Thinking about this further, this is actually pretty clever, as this is properly
+     * addresses MIDI Recommended Practice (RP-036) Default Pan Formula
+     * "Since MIDI controller values range from 0 to 127, the exact center
+     * of the range, 63.5, cannot be represented."
+     *
+     * When changing the overall range to 127/128 however, the "middle pan" value of 64
+     * can be correctly represented.
+     */
+    fluid_real_t range1 = 128.0, range2 = 128.0;
 
     /* 'special treatment' for default controller
      *
