@@ -180,7 +180,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blo
     {
         int fx_mixer_threads = mixer->fx_units;
         fluid_clip(fx_mixer_threads, 1, mixer->thread_count + 1);
-        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
+        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func, dry_count, current_blockcount, mix_fx_to_out, fx_channels_per_unit) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
         {
             int i, f;
             int buf_idx;  /* buffer index */
