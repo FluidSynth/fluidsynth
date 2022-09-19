@@ -128,11 +128,13 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
 #endif
 
 static FLUID_INLINE void
-fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, const int current_blockcount)
+fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcount)
 {
-    const int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
-    const int dry_count = mixer->buffers.buf_count; /* dry buffers count */
-    const int mix_fx_to_out = mixer->mix_fx_to_out; /* get mix_fx_to_out mode */
+    // Making those variables const causes gcc to fail with "variable is predetermined ‘shared’ for ‘shared’".
+    // Not explicitly marking them shared makes it fail for clang and MSVC...
+    /*const*/ int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
+    /*const*/ int dry_count = mixer->buffers.buf_count; /* dry buffers count */
+    /*const*/ int mix_fx_to_out = mixer->mix_fx_to_out; /* get mix_fx_to_out mode */
     
     void (*reverb_process_func)(fluid_revmodel_t *rev, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
     void (*chorus_process_func)(fluid_chorus_t *chorus, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
