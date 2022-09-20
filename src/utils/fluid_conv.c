@@ -298,16 +298,17 @@ fluid_real_t fluid_balance(fluid_real_t balance, int left)
 fluid_real_t
 fluid_concave(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_concave_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_concave_tab[(int) val];
+    return fluid_concave_tab[ival] + (fluid_concave_tab[ival + 1] - fluid_concave_tab[ival]) * (val - ival);
 }
 
 /*
@@ -316,15 +317,17 @@ fluid_concave(fluid_real_t val)
 fluid_real_t
 fluid_convex(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_convex_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_convex_tab[(int) val];
+    // interpolation between convex steps: fixes bad sounds with modenv and filter cutoff
+    return fluid_convex_tab[ival] + (fluid_convex_tab[ival + 1] - fluid_convex_tab[ival]) * (val - ival);
 }
 
