@@ -720,7 +720,9 @@ endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
 find_package ( OpenMP QUIET )
-if (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
+if (enable-openmp AND ENABLE_UBSAN)
+    message(WARNING "OpenMP is not supported when UBSan is enabled. Disabling OpenMP.")
+elseif (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
     message(STATUS "Found OpenMP version: ${OpenMP_C_VERSION} date: ${OpenMP_C_SPEC_DATE}")
     if ( TARGET OpenMP::OpenMP_C AND (( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" )) )
         #[[ cmake_print_properties( TARGETS OpenMP::OpenMP_C
@@ -729,7 +731,7 @@ if (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
                INTERFACE_INCLUDE_DIRECTORIES
                INTERFACE_LINK_OPTIONS
                INTERFACE_LINK_LIBRARIES ) ]]
-   	set ( HAVE_OPENMP 1 )
+        set ( HAVE_OPENMP 1 )
     else()
         message(STATUS "  OpenMP version is not supported. Feature disabled.")
     endif()
