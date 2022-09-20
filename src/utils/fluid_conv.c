@@ -328,7 +328,7 @@ fluid_convex(fluid_real_t val)
     }
     else if (ival == FLUID_VEL_CB_SIZE - 1)
     {
-        return fluid_convex_tab[ival] ;
+        return fluid_convex_tab[ival];
     }
     else if(ival > FLUID_VEL_CB_SIZE - 1)
     {
