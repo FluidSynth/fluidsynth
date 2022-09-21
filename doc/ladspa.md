@@ -99,10 +99,11 @@ modified signals back into FluidSynth.
 mono effect send signals (as determined by the reverb and chorus send
 generators for each voice) into the LADSPA effects.
 
-Please note that if you run FluidSynth with the internal reverb and chorus
-effects active (which is the default), then those effects are already mixed
-into the Main:L and Main:R channels. Fore more details, please see the "Signal
-Flow" section below.
+Please note that if you run FluidSynth 2.3.0 with the internal reverb and chorus
+effects active (which is the default), then those effects are mixed
+into the Main:L and Main:R channels after LADSPA has been invoked. Before FluidSynth 2.3.0
+the internal effects had been already mixed into Main channels at the time when LADSPA is invoked.
+Fore more details, please see the "Signal Flow" section below.
 
 For host port setups in multi-channel configurations, please see the
 "Multi-Channel Output" section below.
