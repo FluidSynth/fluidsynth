@@ -211,7 +211,7 @@ ladspa_set e1 Del 0.5
 
 # Signal Flow
 
-The LADSPA effects unit runs immediately after the internal reverb and chorus
+The LADSPA effects unit runs immediately before the internal reverb and chorus
 effects have been processed. When no effects have been configured, the LADSPA
 engine is dormant and uses no additional system resources.
 
