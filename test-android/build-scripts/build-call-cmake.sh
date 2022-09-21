@@ -41,7 +41,6 @@ source ./build-env.sh
         -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_STAGING_PREFIX=${PREFIX} \
         -DBUILD_SHARED_LIBS=1 \
-        -DLIB_SUFFIX="" \
         $parameters_cmakeArgs ..
         #-DCMAKE_VERBOSE_MAKEFILE=1 \
     make -j$((`nproc`+1)) || (popd && popd && exit 1)
