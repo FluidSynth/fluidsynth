@@ -125,6 +125,8 @@ summary of contributions.
   soundfonts, added support for DLS soundfonts, fixed various bugs, implemented
   unit tests and CI builds for Windows, Linux, MacOSX and BSD.
 
+* Fabian Greffrath added initial support of vorbis-compressed sf3 sound fonts.
+
 * Growing list of individuals who contributed bug fixes, corrections and minor features:
 Nicolas Boulicault for ALSA sequencer midi.portname setting.
 Werner Schweer
