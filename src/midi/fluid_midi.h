@@ -306,6 +306,7 @@ struct _fluid_player_t
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
     int cur_msec;             /* the current time */
+    int end_msec;             /* when >=0, playback is extended until this time (for, e.g., reverb) */
     /* sync mode: indicates the tempo mode the player is driven by (see fluid_player_set_tempo()):
        1, the player is driven by internal tempo (miditempo). This is the default.
        0, the player is driven by external tempo (exttempo)
@@ -329,6 +330,8 @@ struct _fluid_player_t
 
     int channel_isplaying[MAX_NUMBER_OF_CHANNELS]; /* flags indicating channels on which notes have played */
 };
+
+#define FLUID_PLAYER_STOP_GRACE_MS 2000
 
 void fluid_player_settings(fluid_settings_t *settings);
 

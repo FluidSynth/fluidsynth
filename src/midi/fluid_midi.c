@@ -1687,6 +1687,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
+    player->end_msec = -1;
     player->last_callback_ticks = -1;
     fluid_atomic_int_set(&player->seek_ticks, -1);
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
@@ -2177,6 +2178,23 @@ fluid_player_callback(void *data, unsigned int msec)
             fluid_atomic_int_set(&player->seek_ticks, -1); /* clear seek_ticks */
         }
 
+        /* Once we've run out of MIDI events, keep playing until no voices are active */
+        if(status == FLUID_PLAYER_DONE && fluid_synth_get_active_voice_count(player->synth) > 0)
+        {
+            status = FLUID_PLAYER_PLAYING;
+        }
+
+        /* Once no voices are active, if end_msec hasn't been scheduled, schedule it */
+        if(status == FLUID_PLAYER_DONE && player->end_msec < 0)
+        {
+            player->end_msec = msec + FLUID_PLAYER_STOP_GRACE_MS;
+        }
+        /* If end_msec has been scheduled and is in the future, keep playing */
+        if (player->end_msec >= 0 && msec < (unsigned int) player->end_msec)
+        {
+          status = FLUID_PLAYER_PLAYING;
+        }
+
         if(status == FLUID_PLAYER_DONE)
         {
             FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", __FILE__,
@@ -2225,12 +2243,14 @@ fluid_player_play(fluid_player_t *player)
         fluid_sample_timer_reset(player->synth, player->sample_timer);
     }
 
-	/* If we're at the end of the playlist and there are no loops left, loop once */
-	if(player->currentfile == NULL && player->loop == 0)
-	{
-		player->loop = 1;
-	}
-	
+    /* If we're at the end of the playlist and there are no loops left, loop once */
+    if(player->currentfile == NULL && player->loop == 0)
+    {
+      player->loop = 1;
+    }
+
+    player->end_msec = -1;
+
     fluid_atomic_int_set(&player->status, FLUID_PLAYER_PLAYING);
 
     return FLUID_OK;
