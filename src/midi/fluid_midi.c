@@ -1688,6 +1688,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->cur_msec = 0;
     player->cur_ticks = 0;
     player->end_msec = -1;
+    player->end_pedals_disabled = 0;
     player->last_callback_ticks = -1;
     fluid_atomic_int_set(&player->seek_ticks, -1);
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
@@ -2181,10 +2182,22 @@ fluid_player_callback(void *data, unsigned int msec)
         /* Once we've run out of MIDI events, keep playing until no voices are active */
         if(status == FLUID_PLAYER_DONE && fluid_synth_get_active_voice_count(player->synth) > 0)
         {
+            /* The first time we notice we've run out of MIDI events but there are still active voices, disable all hold pedals */
+            if(!player->end_pedals_disabled)
+            {
+                for(i = 0; i < synth->midi_channels; i++)
+                {
+                    fluid_synth_cc(player->synth, i, SUSTAIN_SWITCH, 0);
+                    fluid_synth_cc(player->synth, i, SOSTENUTO_SWITCH, 0);
+                }
+
+                player->end_pedals_disabled = 1;
+            }
+
             status = FLUID_PLAYER_PLAYING;
         }
 
-        /* Once no voices are active, if end_msec hasn't been scheduled, schedule it */
+        /* Once no voices are active, if end_msec hasn't been scheduled, schedule it so we wait for reverb, etc to finish */
         if(status == FLUID_PLAYER_DONE && player->end_msec < 0)
         {
             player->end_msec = msec + FLUID_PLAYER_STOP_GRACE_MS;
@@ -2195,6 +2208,7 @@ fluid_player_callback(void *data, unsigned int msec)
           status = FLUID_PLAYER_PLAYING;
         }
 
+        /* Once there's no reason to keep playing, we're actually done */
         if(status == FLUID_PLAYER_DONE)
         {
             FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", __FILE__,
@@ -2250,6 +2264,7 @@ fluid_player_play(fluid_player_t *player)
     }
 
     player->end_msec = -1;
+    player->end_pedals_disabled = 0;
 
     fluid_atomic_int_set(&player->status, FLUID_PLAYER_PLAYING);
 

@@ -307,6 +307,7 @@ struct _fluid_player_t
     int start_msec;           /* the start time of the last tempo change */
     int cur_msec;             /* the current time */
     int end_msec;             /* when >=0, playback is extended until this time (for, e.g., reverb) */
+    char end_pedals_disabled; /* 1 once the pedals have been released after the last midi event, 0 otherwise */
     /* sync mode: indicates the tempo mode the player is driven by (see fluid_player_set_tempo()):
        1, the player is driven by internal tempo (miditempo). This is the default.
        0, the player is driven by external tempo (exttempo)
