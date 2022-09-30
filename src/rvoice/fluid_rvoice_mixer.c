@@ -306,6 +306,24 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t *buffers, fluid_real_t **outbu
             ? &base_ptr[(fx_idx + SYNTH_CHORUS_CHANNEL) * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT]
             : NULL;
     }
+    #ifdef STEREO_FX
+    base_ptr = fluid_align_ptr(buffers->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+
+    for(i = 0; i < buffers->mixer->fx_units; i++)
+    {
+        int fx_idx = i * fx_channels_per_unit;
+
+        outbufs[offset + fx_idx + SYNTH_REVERB_CHANNEL + 2] =
+            (with_reverb)
+            ? &base_ptr[(fx_idx + SYNTH_REVERB_CHANNEL) * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT]
+            : NULL;
+
+        outbufs[offset + fx_idx + SYNTH_CHORUS_CHANNEL + 2] =
+            (with_chorus)
+            ? &base_ptr[(fx_idx + SYNTH_CHORUS_CHANNEL) * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT]
+            : NULL;
+    }
+    #endif
 
     /* The output associated with a MIDI channel is wrapped around
      * using the number of audio groups as modulo divider.  This is
@@ -333,7 +351,7 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t *buffers, fluid_real_t **outbu
         outbufs[i * 2 + 1] = &base_ptr[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
     }
 
-    return offset + buffers->fx_buf_count;
+    return offset + 2 * buffers->fx_buf_count;
 }
 
 
@@ -667,8 +685,13 @@ static void
 fluid_render_loop_singlethread(fluid_rvoice_mixer_t *mixer, int blockcount)
 {
     int i;
+    #ifdef STEREO_FX
     FLUID_DECLARE_VLA(fluid_real_t *, bufs,
                       mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
+    #else
+    FLUID_DECLARE_VLA(fluid_real_t *, bufs,
+                      mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2 * 2); // *2 as stereo fx
+    #endif
     int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
 
     fluid_real_t *local_buf = fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT);
@@ -738,7 +761,7 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice_mixer_t *m
 
     buffers->fx_left_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
     buffers->fx_right_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
-
+    
     if((buffers->fx_left_buf == NULL) || (buffers->fx_right_buf == NULL))
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -964,8 +987,18 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
         fluid_real_t *rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
         fluid_real_t *chor = rev;
 
+        #ifdef STEREO_FX
+        fluid_real_t *rev_r = fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t *chor_r = rev_r;
+        #endif
+
         rev = &rev[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
         chor = &chor[SYNTH_CHORUS_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+
+        #ifdef STEREO_FX
+        rev_r = &rev_r[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+        chor_r = &chor_r[SYNTH_CHORUS_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+        #endif
 
         fluid_ladspa_add_host_ports(ladspa_fx, "Main:L", audio_groups,
                                     main_l,
@@ -975,13 +1008,32 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
                                     main_r,
                                     FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
 
-        fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
+        #ifdef STEREO_FX
+        fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:SendL", 1,
+                                    rev,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:SendR", 1,
+                                    rev_r,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:SendL", 1,
+                                    chor,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:SendR", 1,
+                                    chor_r,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+        #else
+         fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
                                     rev,
                                     FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
 
         fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
                                     chor,
                                     FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        #endif
     }
 }
 #endif
