@@ -55,7 +55,7 @@ FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t *synth);
 
 FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API const char *fluid_synth_error(fluid_synth_t *synth);
-/* @} */
+/** @} */
 
 /**
  * @defgroup midi_messages MIDI Channel Messages
@@ -102,7 +102,7 @@ FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_set_gen(fluid_synth_t *synth, int chan,
                                        int param, float value);
 FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param);
-/* @} MIDI Channel Messages */
+/** @} MIDI Channel Messages */
 
 
 /**
@@ -124,7 +124,7 @@ FLUIDSYNTH_API fluid_voice_t *fluid_synth_alloc_voice(fluid_synth_t *synth,
 FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t *synth, fluid_voice_t *voice);
 FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t *synth,
         fluid_voice_t *buf[], int bufsize, int ID);
-/* @} Voice Control */
+/** @} Voice Control */
 
 
 /**
@@ -148,7 +148,7 @@ FLUIDSYNTH_API fluid_sfont_t *fluid_synth_get_sfont_by_name(fluid_synth_t *synth
         const char *name);
 FLUIDSYNTH_API int fluid_synth_set_bank_offset(fluid_synth_t *synth, int sfont_id, int offset);
 FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_id);
-/* @} Soundfont Management */
+/** @} Soundfont Management */
 
 
 /**
@@ -183,7 +183,7 @@ FLUIDSYNTH_API int fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, i
 FLUIDSYNTH_API int fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int fx_group, double *damping);
 FLUIDSYNTH_API int fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int fx_group, double *width);
 FLUIDSYNTH_API int fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int fx_group, double *level);
- /* @} Reverb */
+ /** @} Reverb */
 
 
 /**
@@ -233,7 +233,7 @@ FLUIDSYNTH_API int fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int 
 FLUIDSYNTH_API int fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fx_group, double *speed);
 FLUIDSYNTH_API int fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int fx_group, double *depth_ms);
 FLUIDSYNTH_API int fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fx_group, int *type);
-/* @} Chorus */
+/** @} Chorus */
 
 /**
  * @defgroup synthesis_params Synthesis Parameters
@@ -286,7 +286,7 @@ enum fluid_synth_add_mod
 
 FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mode);
 FLUIDSYNTH_API int fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod);
-/* @} Synthesis Parameters */
+/** @} Synthesis Parameters */
 
 
 /**
@@ -316,7 +316,7 @@ FLUIDSYNTH_API
 int fluid_synth_tuning_iteration_next(fluid_synth_t *synth, int *bank, int *prog);
 FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int prog,
         char *name, int len, double *pitch);
-/* @} MIDI Tuning */
+/** @} MIDI Tuning */
 
 
 /**
@@ -357,7 +357,7 @@ FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_nwrite_float(fluid_synth_t *synt
 FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t *synth, int len,
                                        int nfx, float *fx[],
                                        int nout, float *out[]);
-/* @} Audio Rendering */
+/** @} Audio Rendering */
 
 
 /**
@@ -391,7 +391,7 @@ enum fluid_iir_filter_flags
 };
 
 FLUIDSYNTH_API int fluid_synth_set_custom_filter(fluid_synth_t *, int type, int flags);
-/* @} IIR Filter */
+/** @} IIR Filter */
 
 
 
@@ -519,7 +519,7 @@ FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t *synth,
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
         int chan, int  *breathmode);
 /** @} Breath Mode */
-/* @} MIDI Channel Setup */
+/** @} MIDI Channel Setup */
 
 
 /** @ingroup settings */

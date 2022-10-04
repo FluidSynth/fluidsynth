@@ -353,7 +353,7 @@ FLUIDSYNTH_API int fluid_sample_set_sound_data(fluid_sample_t *sample,
 FLUIDSYNTH_API int fluid_sample_set_loop(fluid_sample_t *sample, unsigned int loop_start, unsigned int loop_end);
 FLUIDSYNTH_API int fluid_sample_set_pitch(fluid_sample_t *sample, int root_key, int fine_tune);
 
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }
