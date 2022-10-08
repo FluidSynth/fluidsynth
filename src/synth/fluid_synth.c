@@ -2061,8 +2061,9 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
     }
 
     /* XG message */
+    /* note the comparison of device_id, see XG spec 1.23A page 42 "XG System On" */
     if(data[0] == MIDI_SYSEX_MANUF_YAMAHA
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == ((synth->device_id & 0x0F) | 0x10) || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_XG_ID)
     {
         int result;
