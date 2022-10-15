@@ -54,7 +54,8 @@ enum fluid_mod_flags
     FLUID_MOD_GC = 0,             /**< General controller source type (#fluid_mod_src) */
     FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
 
-    FLUID_MOD_SIN = 0x80,            /**< Custom non-standard sinus mapping function */
+    FLUID_MOD_CUSTOM = 0x40,       /**< Custom mapping function */
+    FLUID_MOD_SIN = 0x80,          /**< Custom non-standard sinus mapping function @deprecated Deprecated since 2.3.1, use #FLUID_MOD_CUSTOM and fluid_mod_set_custom_mapping() instead. */
 };
 
 /**
@@ -81,6 +82,19 @@ enum fluid_mod_src
     FLUID_MOD_PITCHWHEELSENS = 16         /**< Pitch wheel sensitivity */
 };
 
+/**
+ * This function transforms or maps a normalised value into a range of [-1;+1].
+ *
+ * See fluid_mod_set_custom_mapping().
+ *
+ * @param mod The modulator instance.
+ * @param value The input value, which is in range [0;127/128]
+ * @return A value mapped into range [-1;+1].
+ * @note Returning a value that exceeds the mentioned range results in implementation
+ * defined behavior (i.e. it may be honored, it may be clipped, ignored, etc.).
+ */
+typedef double (*fluid_mod_mapping_t)(fluid_mod_t* mod, double value);
+
 /** @startlifecycle{Modulator} */
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);
 FLUIDSYNTH_API void delete_fluid_mod(fluid_mod_t *mod);
@@ -93,6 +107,7 @@ FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags);
 FLUIDSYNTH_API void fluid_mod_set_dest(fluid_mod_t *mod, int dst);
 FLUIDSYNTH_API void fluid_mod_set_amount(fluid_mod_t *mod, double amount);
 FLUIDSYNTH_API void fluid_mod_set_transform(fluid_mod_t *mod, int type);
+FLUIDSYNTH_API void fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function);
 
 FLUIDSYNTH_API int fluid_mod_get_source1(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags1(const fluid_mod_t *mod);
