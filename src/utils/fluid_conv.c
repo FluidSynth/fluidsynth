@@ -231,10 +231,11 @@ fluid_hz2ct(fluid_real_t f)
     return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
 }
  */
-fluid_real_t
-fluid_act2hz(fluid_real_t c)
+double
+fluid_act2hz(double c)
 {
-    return 8.1757989156437073336828122976032719176391831357 * FLUID_POW(2.f, c / 1200.f);
+    // do not use FLUID_POW, otherwise the unit tests will fail when compiled in single precision
+    return 8.1757989156437073336828122976032719176391831357 * pow(2.f, c / 1200.f);
 }
 
 /*
