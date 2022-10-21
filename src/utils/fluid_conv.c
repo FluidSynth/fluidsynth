@@ -234,7 +234,7 @@ fluid_hz2ct(fluid_real_t f)
 fluid_real_t
 fluid_act2hz(fluid_real_t c)
 {
-    return 8.176f * FLUID_POW(2.f, c / 1200.f);
+    return 8.1757989156437073336828122976032719176391831357 * FLUID_POW(2.f, c / 1200.f);
 }
 
 /*
