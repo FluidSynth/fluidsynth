@@ -48,7 +48,7 @@ fluid_ct2hz_real(fluid_real_t cents)
 {
     if(FLUID_UNLIKELY(cents < 0))
     {
-        return (fluid_real_t) 1.0;
+        return fluid_act2hz(cents);
     }
     else
     {
