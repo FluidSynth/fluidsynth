@@ -35,7 +35,8 @@ int main(void)
     TEST_ASSERT(float_eq(fluid_ct2hz_real(1), 8.1805228064648688650522010380302841769481091116));
     TEST_ASSERT(float_eq(fluid_ct2hz_real(0), 8.1757989156437073336828122976032719176391831357)); // often referred to as Absolute zero in the SF2 spec
 
-    for(i = 0; i < 13500; i++)
+    // Test the entire possible range: from lowest permitted value of MODLFOFREQ up to filter fc limit
+    for(i = -16000; i < 13500; i++)
     {
         TEST_ASSERT(float_eq(fluid_ct2hz_real(i), fluid_act2hz(i)));
     }
