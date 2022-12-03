@@ -2,6 +2,7 @@
 Description=FluidSynth Daemon
 Documentation=man:fluidsynth(1)
 After=sound.target
+After=pipewire.service
 
 [Service]
 # added automatically, for details please see
