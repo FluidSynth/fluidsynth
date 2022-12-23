@@ -1969,7 +1969,7 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  * @param len Length of data in buffer
  * @param response Buffer to store response to or NULL to ignore
  * @param response_len IN/OUT parameter, in: size of response buffer, out:
- *   amount of data written to response buffer (if FLUID_FAILED is returned and
+ *   amount of data written to response buffer (if #FLUID_FAILED is returned and
  *   this value is non-zero, it indicates the response buffer is too small)
  * @param handled Optional location to store boolean value if message was
  *   recognized and handled or not (set to TRUE if it was handled)
@@ -1977,12 +1977,20 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  *   command (useful for checking if a SYSEX message would be handled)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
- */
-/* SYSEX format (0xF0 and 0xF7 not passed to this function):
- * Non-realtime:    0xF0 0x7E <DeviceId> [BODY] 0xF7
- * Realtime:        0xF0 0x7F <DeviceId> [BODY] 0xF7
- * Tuning messages: 0xF0 0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
- * GS DT1 messages: 0xF0 0x41 <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
+ * @note When Fluidsynth receives an XG System Mode ON message, it compares the @p synth 's deviceID
+ * directly with the deviceID of the SysEx message. This is contrary to the XG spec (page 42), which
+ * requires to only compare the lower nibble. However, following the XG spec seems to break drum channels
+ * for a lot of MIDI files out there and therefore we've decided for this customization. If you rely on
+ * XG System Mode ON messages, make sure to set the setting \ref settings_synth_device-id to match the
+ * deviceID provided in the SysEx message (in most cases, this will be <code>deviceID=16</code>).
+ *
+ * @code
+ * SYSEX format (0xF0 and 0xF7 bytes shall not be passed to this function):
+ * Non-realtime:    0xF0   0x7E      <DeviceId> [BODY] 0xF7
+ * Realtime:        0xF0   0x7F      <DeviceId> [BODY] 0xF7
+ * Tuning messages: 0xF0   0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
+ * GS DT1 messages: 0xF0   0x41      <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
+ * @endcode
  */
 int
 fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
@@ -2061,9 +2069,8 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
     }
 
     /* XG message */
-    /* note the comparison of device_id, see XG spec 1.23A page 42 "XG System On" */
     if(data[0] == MIDI_SYSEX_MANUF_YAMAHA
-            && (data[1] == ((synth->device_id & 0x0F) | 0x10) || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_XG_ID)
     {
         int result;
