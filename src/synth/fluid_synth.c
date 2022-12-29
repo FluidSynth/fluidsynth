@@ -6837,15 +6837,34 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 && (fluid_voice_get_key(voice) == key)
                 && (fluid_voice_get_id(voice) != synth->noteid))
         {
+            enum fluid_midi_channel_type type = synth->channel[chan]->channel_type;
+
             /* Id of voices that was sustained by sostenuto */
             if(fluid_voice_is_sostenuto(voice))
             {
                 synth->storeid = fluid_voice_get_id(voice);
             }
 
-            /* Force the voice into release stage except if pedaling
-               (sostenuto or sustain) is active */
-            fluid_voice_noteoff(voice);
+            switch(type)
+            {
+                case CHANNEL_TYPE_DRUM:
+                    if(!fluid_voice_is_sostenuto(voice) && !fluid_voice_is_sustained(voice))
+                    {
+                        /* turn off the voice, this should make riding hi-hats or snares sound more
+                         * realistic (Discussion #1196) */
+                        fluid_voice_off(voice);
+                        break;
+                    }
+                    /* fall-through */
+                case CHANNEL_TYPE_MELODIC:
+                    /* Force the voice into release stage except if pedaling (sostenuto or sustain) is active.
+                     * This gives a more realistic sound to pianos and possibly other instruments (see PR #905). */
+                    fluid_voice_noteoff(voice);
+                    break;
+                default:
+                    FLUID_LOG(FLUID_ERR, "This should never happen: unknown channel type %d", (int)type);
+                    break;
+            }
         }
     }
 }
