@@ -6848,14 +6848,10 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
             switch(type)
             {
                 case CHANNEL_TYPE_DRUM:
-                    if(!fluid_voice_is_sostenuto(voice) && !fluid_voice_is_sustained(voice))
-                    {
-                        /* turn off the voice, this should make riding hi-hats or snares sound more
-                         * realistic (Discussion #1196) */
-                        fluid_voice_off(voice);
-                        break;
-                    }
-                    /* fall-through */
+                    /* release the voice, this should make riding hi-hats or snares sound more
+                     * realistic (Discussion #1196) */
+                    fluid_voice_off(voice);
+                    break;
                 case CHANNEL_TYPE_MELODIC:
                     /* Force the voice into release stage except if pedaling (sostenuto or sustain) is active.
                      * This gives a more realistic sound to pianos and possibly other instruments (see PR #905). */
