@@ -612,16 +612,16 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     if(autoconnect)
     {
-        jack_ports = jack_get_ports(client, NULL, NULL, JackPortIsInput | JackPortIsPhysical);
+        jack_ports = jack_get_ports(client, NULL, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsPhysical);
 
-        if(jack_ports)
+        if(jack_ports && jack_ports[0])
         {
-            int err;
+            int err, o = 0;
             int connected = 0;
 
-            for(i = 0; jack_ports[i] && i < 2 * dev->num_output_ports; ++i)
+            for(i = 0; i < 2 * dev->num_output_ports; ++i)
             {
-                err = jack_connect(client, jack_port_name(dev->output_ports[i]), jack_ports[i]);
+                err = jack_connect(client, jack_port_name(dev->output_ports[i]), jack_ports[o++]);
 
                 if(err)
                 {
@@ -630,12 +630,18 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
                 else
                 {
                     connected++;
+                }
+
+                if(!jack_ports[o])
+                {
+                    o = 0;
                 }
             }
 
-            for(i = 0; jack_ports[i] && i < 2 * dev->num_fx_ports; ++i)
+            o = 0;
+            for(i = 0; i < 2 * dev->num_fx_ports; ++i)
             {
-                err = jack_connect(client, jack_port_name(dev->fx_ports[i]), jack_ports[i]);
+                err = jack_connect(client, jack_port_name(dev->fx_ports[i]), jack_ports[o++]);
 
                 if(err)
                 {
@@ -644,6 +650,11 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
                 else
                 {
                     connected++;
+                }
+
+                if(!jack_ports[o])
+                {
+                    o = 0;
                 }
             }
 

@@ -74,9 +74,9 @@ extern "C" {
  * For further details please refer to fluid_synth_process().
  *
  * @parblock
- * @note Whereas fluid_synth_process() allows aliasing buffers, there is the guarentee that @p out
+ * @note Whereas fluid_synth_process() allows aliasing buffers, there is the guarantee that @p out
  * and @p fx buffers provided by fluidsynth's audio drivers never alias. This prevents downstream
- * applications from e.g. applying a custom effect accidentially to the same buffer multiple times.
+ * applications from e.g. applying a custom effect accidentally to the same buffer multiple times.
  * @endparblock
  *
  * @parblock
@@ -120,7 +120,7 @@ FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t *driver);
 /** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
-/* @} */
+/** @} */
 
 /**
  * @defgroup file_renderer File Renderer
@@ -146,7 +146,7 @@ FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t *dev);
 
 FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t *dev);
 FLUIDSYNTH_API int fluid_file_set_encoding_quality(fluid_file_renderer_t *dev, double q);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

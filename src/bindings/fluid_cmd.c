@@ -441,14 +441,14 @@ fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out
         return 1;
     }
 
-    if(!g_shell_parse_argv(cmd, &num_tokens, &tokens, NULL))
+    if(!fluid_shell_parse_argv(cmd, &num_tokens, &tokens))
     {
         fluid_ostream_printf(out, "Error parsing command\n");
         return FLUID_FAILED;
     }
 
     result = fluid_cmd_handler_handle(handler, num_tokens, &tokens[0], out);
-    g_strfreev(tokens);
+    fluid_strfreev(tokens);
 
     return result;
 }
@@ -686,13 +686,23 @@ fluid_get_userconf(char *buf, int len)
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no system command file for this system type.
  *
- * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
+ * MACOS does not have a system-wide config file currently. Since fluidsynth 2.2.9, the config
+ * on Windows is @c "%PROGRAMDATA%\fluidsynth\fluidsynth.cfg". For anything else it
  * returns @c "/etc/fluidsynth.conf".
  */
 char *
 fluid_get_sysconf(char *buf, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
+#if defined(WIN32)
+    const char* program_data = getenv("ProgramData");
+    if(program_data == NULL || program_data[0] == '\0')
+    {
+        return NULL;
+    }
+
+    FLUID_SNPRINTF(buf, len, "%s\\fluidsynth\\fluidsynth.cfg", program_data);
+    return buf;
+#elif defined(MACOS9)
     return NULL;
 #else
     FLUID_SNPRINTF(buf, len, "/etc/fluidsynth.conf");
@@ -1137,7 +1147,7 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
 /*
   The function is useful for reverb and chorus commands which have
   1 or 2 parameters.
-  The function checks that there is 1 or 2 aguments.
+  The function checks that there is 1 or 2 arguments.
   When there is 2 parameters it checks the first argument that must be
   an fx group index in the range[0..synth->effects_groups-1].
 
@@ -1159,7 +1169,7 @@ static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
         return -2;
     }
 
-    /* check optionnal first argument which is a fx group index */
+    /* check optional first argument which is a fx group index */
     fx_group = -1;
 
     if(ac > 1)

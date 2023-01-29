@@ -110,8 +110,8 @@
 
 /* SCALE_WET_WIDTH is a compensation weight factor to get an output
    amplitude (wet) rather independent of the width setting.
-    0: the output amplitude is fully dependant on the width setting.
-   >0: the output amplitude is less dependant on the width setting.
+    0: the output amplitude is fully dependent on the width setting.
+   >0: the output amplitude is less dependent on the width setting.
    With a SCALE_WET_WIDTH of 0.2 the output amplitude is rather
    independent of width setting (see fluid_chorus_set()).
  */
@@ -134,7 +134,7 @@
                         /* and max lfo speed (5 Hz) */
 #define RANGE_MOD_RATE (HIGH_MOD_RATE - LOW_MOD_RATE)
 
-/* some chorus cpu_load measurement dependant of modulation rate: mod_rate
+/* some chorus cpu_load measurement dependent of modulation rate: mod_rate
  (number of chorus blocks: 2)
 
  No stero unit:
@@ -251,7 +251,7 @@ static void set_sinus_frequency(sinus_modulator *mod,
 
     a = (2 * FLUID_M_PI / 360) * phase;
 
-    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-intial angle) */
+    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-initial angle) */
     mod->buffer1 = FLUID_SIN(a); /* y(n) = sin(initial phase) */
     mod->reset_buffer2 = FLUID_SIN(FLUID_M_PI / 2 - w); /* reset value for PI/2 */
 }
@@ -560,7 +560,7 @@ static void update_parameters_from_sample_rate(fluid_chorus_t *chorus)
  Modulated delay line initialization.
 
  Sets the length line ( alloc delay samples).
- Remark: the function sets the internal size accordling to the length delay_length.
+ Remark: the function sets the internal size according to the length delay_length.
  The size is augmented by INTERP_SAMPLES_NBR to take account of interpolation.
 
  @param chorus, pointer on chorus unit.
@@ -783,7 +783,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         chorus->level = 0.1;
     }
 
-    /* update parameters dependant of sample rate */
+    /* update parameters dependent of sample rate */
     update_parameters_from_sample_rate(chorus);
 
 #ifdef DEBUG_PRINT
@@ -915,7 +915,7 @@ fluid_chorus_samplerate_change(fluid_chorus_t *chorus, fluid_real_t sample_rate)
 {
     chorus->sample_rate = sample_rate;
 
-    /* update parameters dependant of sample rate */
+    /* update parameters dependent of sample rate */
     update_parameters_from_sample_rate(chorus);
 }
 

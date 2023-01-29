@@ -475,7 +475,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 }
 
 /* Useful to return the nominal pitch of a key */
-/* The nominal pitch is dependant of voice->root_pitch,tuning, and
+/* The nominal pitch is dependent of voice->root_pitch,tuning, and
    GEN_SCALETUNE generator.
    This is useful to set the value of GEN_PITCH generator on noteOn.
    This is useful to get the beginning/ending pitch for portamento.
@@ -670,6 +670,7 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
      * GEN_KEYTOVOLENVDECAY, GEN_KEYTOMODENVHOLD, GEN_KEYTOMODENVDECAY
      */
 
+    fluid_real_t keysteps;
     fluid_real_t timecents;
     fluid_real_t seconds;
     int buffers;
@@ -681,7 +682,9 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
      * will cause (60-72)*100=-1200 timecents of time variation.
      * The time is cut in half.
      */
-    timecents = (fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * (fluid_real_t)(60 - fluid_voice_get_actual_key(voice)));
+
+    keysteps = 60.0f - fluid_channel_get_key_pitch(voice->channel, fluid_voice_get_actual_key(voice)) / 100.0f;
+    timecents = fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * keysteps;
 
     /* Range checking */
     if(is_decay)
@@ -903,7 +906,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          * - the delay into a sample delay
          */
         fluid_clip(x, -16000.0f, 4500.0f);
-        x = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
+        x = (4.0f * FLUID_BUFSIZE * fluid_ct2hz_real(x) / voice->output_rate);
         UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, modlfo, x);
         break;
 
@@ -914,7 +917,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          * - the delay into a sample delay
          */
         fluid_clip(x, -16000.0f, 4500.0f);
-        x = 4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate;
+        x = 4.0f * FLUID_BUFSIZE * fluid_ct2hz_real(x) / voice->output_rate;
         UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, viblfo, x);
         break;
 
@@ -1107,8 +1110,9 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
     /* Modulation envelope */
     case GEN_MODENVDELAY:               /* SF2.01 section 8.1.3 # 25 */
         fluid_clip(x, -12000.0f, 5000.0f);
+        count = NUM_BUFFERS_DELAY(x);
         fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVDELAY,
-                                  NUM_BUFFERS_DELAY(x), 0.0f, 0.0f, -1.0f, 1.0f);
+                                  count, 0.0f, 0.0f, -1.0f, 1.0f);
         break;
 
     case GEN_MODENVATTACK:               /* SF2.01 section 8.1.3 # 26 */

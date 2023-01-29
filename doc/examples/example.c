@@ -28,31 +28,47 @@
 
 int main(int argc, char **argv)
 {
-    fluid_settings_t *settings;
-    fluid_synth_t *synth;
-    fluid_audio_driver_t *adriver;
+    fluid_settings_t *settings = NULL;
+    fluid_synth_t *synth = NULL;
+    fluid_audio_driver_t *adriver = NULL;
     int sfont_id;
     int i, key;
 
     /* Create the settings. */
     settings = new_fluid_settings();
+    if(settings == NULL)
+    {
+        puts("Failed to create the settings!");
+        goto err;
+    }
 
     /* Change the settings if necessary*/
 
     /* Create the synthesizer. */
     synth = new_fluid_synth(settings);
+    if(synth == NULL)
+    {
+        puts("Failed to create the synth!");
+        goto err;
+    }
+
+    /* Load a SoundFont and reset presets (so that new instruments
+     * get used from the SoundFont)
+     * Depending on the size of the SoundFont, this will take some time to complete...
+     */
+    sfont_id = fluid_synth_sfload(synth, "example.sf2", 1);
+    if(sfont_id == FLUID_FAILED)
+    {
+        puts("Loading the SoundFont failed!");
+        goto err;
+    }
 
     /* Create the audio driver. The synthesizer starts playing as soon
        as the driver is created. */
     adriver = new_fluid_audio_driver(settings, synth);
-
-    /* Load a SoundFont and reset presets (so that new instruments
-     * get used from the SoundFont) */
-    sfont_id = fluid_synth_sfload(synth, "example.sf2", 1);
-
-    if(sfont_id == FLUID_FAILED)
+    if(adriver == NULL)
     {
-        puts("Loading the SoundFont failed!");
+        puts("Failed to create the audio driver!");
         goto err;
     }
 
@@ -61,7 +77,6 @@ int main(int argc, char **argv)
 
     for(i = 0; i < 12; i++)
     {
-
         /* Generate a random key */
         key = 60 + (int)(12.0f * rand() / (float) RAND_MAX);
 

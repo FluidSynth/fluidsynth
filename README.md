@@ -8,15 +8,13 @@
 | <img src="https://www.microsoft.com/windows/favicon.ico" height="25" alt=""> **Windows (vcpkg)** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.vcpkg?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=6&branchName=master) |
 | <img src="https://www.apple.com/favicon.ico" height="30" alt=""> **MacOSX** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.macOS?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=5&branchName=master) |
 | <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.Android?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=4&branchName=master) |
-| <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** (legacy Cerbero) | [![CircleCI](https://circleci.com/gh/FluidSynth/fluidsynth/tree/master.svg?style=shield)](https://circleci.com/gh/FluidSynth/fluidsynth) |
-
 
 
 #### FluidSynth is a cross-platform, real-time software synthesizer based on the Soundfont 2 specification.
 
 FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play MIDI files.
 
-[![SonarQube Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FluidSynth_fluidsynth&metric=alert_status)](https://sonarcloud.io/dashboard?id=FluidSynth_fluidsynth) [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/FluidSynth/fluidsynth.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/FluidSynth/fluidsynth/context:cpp) [![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
+[![SonarQube Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FluidSynth_fluidsynth&metric=alert_status)](https://sonarcloud.io/dashboard?id=FluidSynth_fluidsynth) [![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
 
 
 ## Documentation

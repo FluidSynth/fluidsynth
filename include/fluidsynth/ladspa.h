@@ -59,7 +59,7 @@ FLUIDSYNTH_API int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const 
         const char *port_name, float val);
 FLUIDSYNTH_API int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *name);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

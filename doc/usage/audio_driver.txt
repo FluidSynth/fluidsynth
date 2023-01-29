@@ -16,7 +16,7 @@ and a description.
 
 - jack: JACK Audio Connection Kit (Linux, Mac OS X, Windows)
 - alsa: Advanced Linux Sound Architecture (Linux)
-- oss: Open Sound System (Linux, Unix)
+- oss: Open Sound System (primarily needed on BSD, rarely also Linux and Unix in general)
 - pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
 - coreaudio: Apple CoreAudio (Mac OS X)
 - dsound: Microsoft DirectSound (Windows)
@@ -31,6 +31,7 @@ and a description.
 - file: Driver to output audio to a file
 - sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
   FreeBSD, Haiku, etc.)
+- pipewire**: PipeWire (Linux)
 
 The default audio driver depends on the settings with which FluidSynth was
 compiled. You can get the default driver with
@@ -77,6 +78,12 @@ refer to the \setting{audio} documentation.
 is responsible for initializing SDL (e.g. with SDL_Init()). This must be done
 <strong>before</strong> the first call to <code>new_fluid_settings()</code>!
 Also make sure to call SDL_Quit() after all fluidsynth instances have been
+destroyed.
+
+<strong>**Note:</strong> In order to use pipeiwre as audio driver, the application
+is responsible for initializing PipeWire (e.g. with pw_init()). This must be done
+<strong>before</strong> the first call to <code>new_fluid_settings()</code>!
+Also make sure to call pw_deinit() after all fluidsynth instances have been
 destroyed.
 
 */

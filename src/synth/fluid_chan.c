@@ -162,9 +162,10 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
             fluid_channel_set_cc(chan, i, 0);
         }
 
-        fluid_channel_clear_portamento(chan); /* Clear PTC receive */
         chan->previous_cc_breath = 0;/* Reset previous breath */
     }
+    /* Unconditionally clear PTC receive (issue #1050) */
+    fluid_channel_clear_portamento(chan);
 
     /* Reset polyphonic key pressure on all voices */
     for(i = 0; i < 128; i++)
@@ -371,6 +372,27 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont,
     if(prog)
     {
         *prog = (sfont_bank_prog & PROG_MASKVAL) >> PROG_SHIFTVAL;
+    }
+}
+
+/**
+ * Compute the pitch for a key after applying Fluidsynth's tuning functionality
+ * and channel coarse/fine tunings.
+ * @param chan fluid_channel_t
+ * @param key MIDI note number (0-127)
+ * @return the pitch of the key
+ */
+fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key)
+{
+    if(chan->tuning)
+    {
+        return fluid_tuning_get_pitch(chan->tuning, key)
+            + 100.0f * fluid_channel_get_gen(chan, GEN_COARSETUNE)
+            + fluid_channel_get_gen(chan, GEN_FINETUNE);
+    }
+    else
+    {
+        return key * 100.0f;
     }
 }
 

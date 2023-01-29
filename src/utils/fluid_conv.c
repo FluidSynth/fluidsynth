@@ -48,7 +48,7 @@ fluid_ct2hz_real(fluid_real_t cents)
 {
     if(FLUID_UNLIKELY(cents < 0))
     {
-        return (fluid_real_t) 1.0;
+        return fluid_act2hz(cents);
     }
     else
     {
@@ -231,10 +231,11 @@ fluid_hz2ct(fluid_real_t f)
     return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
 }
  */
-fluid_real_t
-fluid_act2hz(fluid_real_t c)
+double
+fluid_act2hz(double c)
 {
-    return 8.176f * FLUID_POW(2.f, c / 1200.f);
+    // do not use FLUID_POW, otherwise the unit tests will fail when compiled in single precision
+    return 8.1757989156437073336828122976032719176391831357 * pow(2.f, c / 1200.f);
 }
 
 /*
@@ -298,16 +299,17 @@ fluid_real_t fluid_balance(fluid_real_t balance, int left)
 fluid_real_t
 fluid_concave(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_concave_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_concave_tab[(int) val];
+    return fluid_concave_tab[ival] + (fluid_concave_tab[ival + 1] - fluid_concave_tab[ival]) * (val - ival);
 }
 
 /*
@@ -316,15 +318,17 @@ fluid_concave(fluid_real_t val)
 fluid_real_t
 fluid_convex(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_convex_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_convex_tab[(int) val];
+    // interpolation between convex steps: fixes bad sounds with modenv and filter cutoff
+    return fluid_convex_tab[ival] + (fluid_convex_tab[ival + 1] - fluid_convex_tab[ival]) * (val - ival);
 }
 

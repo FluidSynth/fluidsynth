@@ -42,6 +42,10 @@
 #include <SDL.h>
 #endif
 
+#if PIPEWIRE_SUPPORT
+#include <pipewire/pipewire.h>
+#endif
+
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
@@ -155,6 +159,45 @@ print_pretty_int(int i)
         printf("%d", i);
     }
 }
+
+#ifdef WIN32
+/* Function using win32 api to convert ANSI encoding string to UTF8 encoding string */
+static char*
+win32_ansi_to_utf8(const char* ansi_null_terminated_string)
+{
+    LPWSTR u16_buf = NULL;
+    char *u8_buf = NULL;
+    fluid_return_val_if_fail(ansi_null_terminated_string != NULL, NULL);
+    do
+    {
+        int u16_count, u8_byte_count;
+        u16_count = MultiByteToWideChar(CP_ACP, 0, ansi_null_terminated_string, -1, NULL, 0);
+        if (u16_count == 0)
+        {
+            fprintf(stderr, "Failed to convert ANSI string to wide char string\n");
+            break;
+        }
+        u16_buf = malloc(u16_count * sizeof(WCHAR));
+        if (u16_buf == NULL)
+        {
+            fprintf(stderr, "Out of memory\n");
+            break;
+        }
+        u16_count = MultiByteToWideChar(CP_ACP, 0, ansi_null_terminated_string, -1, u16_buf, u16_count);
+        u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, NULL, 0, NULL, NULL);
+
+        u8_buf = malloc(u8_byte_count);
+        if (u8_buf == NULL)
+        {
+            fprintf(stderr, "Out of memory\n");
+            break;
+        }
+        WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, u8_buf, u8_byte_count, NULL, NULL);
+    } while (0);
+    free(u16_buf);
+    return u8_buf;
+}
+#endif
 
 typedef struct
 {
@@ -361,7 +404,8 @@ int main(int argc, char **argv)
 #endif
 
 #if SDL2_SUPPORT
-
+    // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if(SDL_Init(SDL_INIT_AUDIO) != 0)
     {
         fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
@@ -370,7 +414,11 @@ int main(int argc, char **argv)
     {
         atexit(SDL_Quit);
     }
+#endif
 
+#if PIPEWIRE_SUPPORT
+    pw_init(&argc, &argv);
+    atexit(pw_deinit);
 #endif
 
     /* create the settings */
@@ -851,13 +899,13 @@ int main(int argc, char **argv)
     if(config_file == NULL)
     {
         config_file = fluid_get_userconf(buf, sizeof(buf));
-        if(config_file == NULL)
+        if(config_file == NULL || !g_file_test(config_file, G_FILE_TEST_EXISTS))
         {
             config_file = fluid_get_sysconf(buf, sizeof(buf));
         }
 
         /* if the automatically selected command file does not exist, do not even attempt to open it */
-        if(!g_file_test(config_file, G_FILE_TEST_EXISTS))
+        if(config_file != NULL && !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
         {
             config_file = NULL;
         }
@@ -896,14 +944,25 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-        if(fluid_is_midifile(argv[i]))
+        const char *u8_path = argv[i];
+#if defined(WIN32)
+        /* try to convert ANSI encoding path to UTF8 encoding path */
+        char *u8_buf = win32_ansi_to_utf8(argv[i]);
+        if (u8_buf == NULL)
+        {
+            // error msg. already printed
+            goto cleanup;
+        }
+        u8_path = u8_buf;
+#endif
+        if(fluid_is_midifile(u8_path))
         {
             continue;
         }
 
-        if(fluid_is_soundfont(argv[i]))
+        if(fluid_is_soundfont(u8_path))
         {
-            if(fluid_synth_sfload(synth, argv[i], 1) == -1)
+            if(fluid_synth_sfload(synth, u8_path, 1) == -1)
             {
                 fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
             }
@@ -912,6 +971,9 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
+#if defined(WIN32)
+        free(u8_buf);
+#endif
     }
 
     /* Try to load the default soundfont, if no soundfont specified */
@@ -1160,7 +1222,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2021 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2022 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of Creative Technology Ltd.\n\n",
            fluid_version_str());

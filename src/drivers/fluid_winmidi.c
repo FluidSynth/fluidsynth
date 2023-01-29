@@ -29,19 +29,21 @@
  * pointers to a queue and re-add them in a separate thread.  Lame-o API! :(
  *
  * Multiple/single devices handling capabilities:
- * This driver is able to handle multiple devices chosen by the user trough
+ * This driver is able to handle multiple devices chosen by the user through
  * the settings midi.winmidi.device.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
- * Then the driver is able receive MIDI messages comming from distinct devices
+ * Then the driver is able receive MIDI messages coming from distinct devices
  * and forward these messages on distinct MIDI channels set.
  * 1.1)For example, if the user chooses 2 devices at index 0 and 1, the user
  * must specify this by putting the name "0;1" in midi.winmidi.device setting.
- * We get a fictif device composed of real devices (0,1). This fictif device
+ * We get a fictive device composed of real devices (0,1). This fictive device
  * behaves like a device with 32 MIDI channels whose messages are forwarded to
  * driver output as this:
  * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 1 are output to MIDI channels set 15 to 31.
+ * The above example assumes the setting synth.midi-channels value 32, but the
+ * default value for this setting is 16, in which case there will be no mapping.
  *
  * 1.2)Now another example with the name "1;0". The driver will forward
  * MIDI messages as this:
@@ -57,6 +59,13 @@
  * or use the multi device naming "0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
  *
+ * 3)If the device name is "default" and the setting "midi.autoconnect" is enabled,
+ * then all the available devices are opened, applying the appropriate channel
+ * mappings to each device (the first device is mapped to the 16 first channels,
+ * the second one to the next 16 channels, and so on with the limit of the
+ * synth.midi-channels setting. After arriving to the channels limit, the mapping
+ * restars with the channels 1-16.
+ * If the device name is specified, then midi.autoconnect setting is ignored.
  */
 
 #include "fluidsynth_priv.h"
@@ -95,8 +104,8 @@ struct fluid_winmidi_driver
     HANDLE hThread;
     DWORD  dwThread;
 
-    /* devices informations table */
-    int dev_count;   /* device informations count in dev_infos[] table */
+    /* devices information table */
+    int dev_count;   /* device information count in dev_infos[] table */
     device_infos_t dev_infos[1];
 };
 
@@ -145,21 +154,28 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         break;
 
     case MIM_DATA:
-        event.type = msg_type(msg_param);
-        event.channel = msg_chan(msg_param) + dev_infos->channel_map;
-
-        FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI message on channel %d, forwarded on channel: %d",
-                  dev_infos->dev_idx, msg_chan(msg_param), event.channel);
-
-        if(event.type != PITCH_BEND)
+        if(msg_type(msg_param) < 0xf0)      /* Voice category message */
         {
-            event.param1 = msg_p1(msg_param);
-            event.param2 = msg_p2(msg_param);
+            event.type = msg_type(msg_param);
+            event.channel = msg_chan(msg_param) + dev_infos->channel_map;
+
+            FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI message on channel %d, forwarded on channel: %d",
+                      dev_infos->dev_idx, msg_chan(msg_param), event.channel);
+
+            if(event.type != PITCH_BEND)
+            {
+                event.param1 = msg_p1(msg_param);
+                event.param2 = msg_p2(msg_param);
+            }
+            else      /* Pitch bend is a 14 bit value */
+            {
+                event.param1 = (msg_p2(msg_param) << 7) | msg_p1(msg_param);
+                event.param2 = 0;
+            }
         }
-        else      /* Pitch bend is a 14 bit value */
+        else                    /* System message */
         {
-            event.param1 = (msg_p2(msg_param) << 7) | msg_p1(msg_param);
-            event.param2 = 0;
+            event.type = (unsigned char)(msg_param & 0xff);
         }
 
         (*dev->driver.handler)(dev->driver.data, &event);
@@ -205,7 +221,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
  * build a device name prefixed by its index. The format of the returned
  * name is: dev_idx:dev_name
  * The name returned is convenient for midi.winmidi.device setting.
- * It allows the user to identify a device index through its name or vise
+ * It allows the user to identify a device index through its name or vice
  * versa. This allows the user to specify a multi device name using a list of
  * devices index (see fluid_winmidi_midi_driver_settings()).
  *
@@ -350,7 +366,7 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
 
     /* look for a multi device naming */
     /* multi devices name "x;[y;..]". parse devices index: x;y;..
-       Each ascii index are separated by a semicolon caracter.
+       Each ascii index are separated by a semicolon character.
     */
     FLUID_STRCPY(cpy_dev_name, dev_name); /* fluid_strtok() will overwrite */
     next_idx = cpy_dev_name;
@@ -458,6 +474,31 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
     return dev_count;
 }
 
+static void fluid_winmidi_autoconnect_build_name(char *name)
+{
+    char new_name[MAXPNAMELEN] = { 0 };
+    int i, j, n = 0;
+    int num = midiInGetNumDevs();
+
+    for (i = 0; i < num; ++i)
+    {
+        char x[4];
+        j = FLUID_SNPRINTF(x, sizeof(x), "%d;", i);
+        n += j;
+        if (n >= sizeof(new_name))
+        {
+            FLUID_LOG(FLUID_DBG, "winmidi: autoconnect dev name exceeds MAXPNAMELEN (%d), num (%d), n (%d)", MAXPNAMELEN, num, n);
+            return;
+        }
+        strncat(new_name, x, j);
+    }
+
+    name[n - 1] = 0;
+
+    FLUID_MEMSET(name, 0, MAXPNAMELEN);
+    FLUID_STRCPY(name, new_name);
+}
+
 /*
  * new_fluid_winmidi_driver
  */
@@ -469,6 +510,9 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     MMRESULT res;
     int i, j;
     int max_devices;  /* maximum number of devices to handle */
+    int autoconnect_inputs = 0;
+    int midi_channels = 16;
+    int ch_map = 0;
     char strError[MAXERRORLENGTH];
     char dev_name[MAXPNAMELEN];
 
@@ -486,6 +530,15 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         FLUID_STRCPY(dev_name, "default");
     }
 
+    fluid_settings_getint(settings, "midi.autoconnect", &autoconnect_inputs);
+    fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
+
+    if((strcmp(dev_name, "default") == 0) && (autoconnect_inputs != 0))
+    {
+        fluid_winmidi_autoconnect_build_name(dev_name);
+        FLUID_LOG(FLUID_DBG, "winmidi: autoconnect device name is now '%s'", dev_name);
+    }
+
     /* parse device name, get the maximum number of devices to handle */
     max_devices = fluid_winmidi_parse_device_name(NULL, dev_name);
 
@@ -496,7 +549,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         return NULL;
     }
 
-    /* allocation of driver structure size dependant of max_devices */
+    /* allocation of driver structure size dependent of max_devices */
     i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos_t);
     dev = FLUID_MALLOC(i);
 
@@ -519,7 +572,15 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         device_infos_t *dev_infos = &dev->dev_infos[i];
         dev_infos->dev = dev;            /* driver structure */
         dev_infos->midi_num = i;         /* device order number */
-        dev_infos->channel_map = i * 16; /* map from input to output */
+        dev_infos->channel_map = ch_map; /* map from input to output */
+        /* calculate the next channel mapping, up to synth.midi-channels */
+        ch_map += 16;
+
+        if(ch_map >= midi_channels)
+        {
+            ch_map = 0;
+        }
+
         FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
         res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,

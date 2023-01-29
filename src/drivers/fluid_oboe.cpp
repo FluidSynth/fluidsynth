@@ -25,12 +25,8 @@
  * This file may make use of C++14, because it's required by oboe anyway.
  */
 
-extern "C" {
-
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
-
-} // extern "C"
 
 #if OBOE_SUPPORT
 
@@ -43,6 +39,7 @@ using namespace oboe;
 constexpr int NUM_CHANNELS = 2;
 
 class OboeAudioStreamCallback;
+class OboeAudioStreamErrorCallback;
 
 /** fluid_oboe_audio_driver_t
  *
@@ -55,7 +52,16 @@ typedef struct
     fluid_synth_t *synth = nullptr;
     bool cont = false;
     std::unique_ptr<OboeAudioStreamCallback> oboe_callback;
+    std::unique_ptr<OboeAudioStreamErrorCallback> oboe_error_callback;
     std::shared_ptr<AudioStream> stream;
+
+    double sample_rate;
+    int is_sample_format_float;
+    int device_id;
+    int sharing_mode; // 0: Shared, 1: Exclusive
+    int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
+    oboe::SampleRateConversionQuality srate_conversion_quality;
+    int error_recovery_mode; // 0: Reconnect, 1: Stop
 } fluid_oboe_audio_driver_t;
 
 
@@ -93,20 +99,34 @@ private:
     void *user_data;
 };
 
+class OboeAudioStreamErrorCallback : public AudioStreamErrorCallback
+{
+    fluid_oboe_audio_driver_t *dev;
+
+public:
+    OboeAudioStreamErrorCallback(fluid_oboe_audio_driver_t *dev) : dev(dev) {}
+
+    void onErrorAfterClose(AudioStream *stream, Result result);
+};
+
+constexpr char OBOE_ID[] = "audio.oboe.id";
+constexpr char SHARING_MODE[] = "audio.oboe.sharing-mode";
+constexpr char PERF_MODE[] = "audio.oboe.performance-mode";
 constexpr char SRCQ_SET[] = "audio.oboe.sample-rate-conversion-quality";
+constexpr char RECOVERY_MODE[] = "audio.oboe.error-recovery-mode";
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
 {
-    fluid_settings_register_int(settings, "audio.oboe.id", 0, 0, 0x7FFFFFFF, 0);
+    fluid_settings_register_int(settings, OBOE_ID, 0, 0, 0x7FFFFFFF, 0);
 
-    fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Shared", 0);
-    fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Shared");
-    fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Exclusive");
+    fluid_settings_register_str(settings, SHARING_MODE, "Shared", 0);
+    fluid_settings_add_option(settings,   SHARING_MODE, "Shared");
+    fluid_settings_add_option(settings,   SHARING_MODE, "Exclusive");
 
-    fluid_settings_register_str(settings, "audio.oboe.performance-mode", "None", 0);
-    fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "None");
-    fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "PowerSaving");
-    fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "LowLatency");
+    fluid_settings_register_str(settings, PERF_MODE, "None", 0);
+    fluid_settings_add_option(settings,   PERF_MODE, "None");
+    fluid_settings_add_option(settings,   PERF_MODE, "PowerSaving");
+    fluid_settings_add_option(settings,   PERF_MODE, "LowLatency");
 
     fluid_settings_register_str(settings, SRCQ_SET, "Medium", 0);
     fluid_settings_add_option(settings,   SRCQ_SET, "None");
@@ -115,6 +135,10 @@ void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings,   SRCQ_SET, "Medium");
     fluid_settings_add_option(settings,   SRCQ_SET, "High");
     fluid_settings_add_option(settings,   SRCQ_SET, "Best");
+
+    fluid_settings_register_str(settings, RECOVERY_MODE, "Reconnect", 0);
+    fluid_settings_add_option(settings, RECOVERY_MODE, "Reconnect");
+    fluid_settings_add_option(settings, RECOVERY_MODE, "Stop");
 }
 
 static oboe::SampleRateConversionQuality get_srate_conversion_quality(fluid_settings_t *settings)
@@ -157,6 +181,28 @@ static oboe::SampleRateConversionQuality get_srate_conversion_quality(fluid_sett
     return q;
 }
 
+Result
+fluid_oboe_connect_or_reconnect(fluid_oboe_audio_driver_t *dev)
+{
+    AudioStreamBuilder builder;
+    builder.setDeviceId(dev->device_id)
+    ->setDirection(Direction::Output)
+    ->setChannelCount(NUM_CHANNELS)
+    ->setSampleRate(dev->sample_rate)
+    ->setFormat(dev->is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
+    ->setSharingMode(dev->sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
+    ->setPerformanceMode(
+        dev->performance_mode == 1 ? PerformanceMode::PowerSaving :
+        dev->performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
+    ->setUsage(Usage::Media)
+    ->setContentType(ContentType::Music)
+    ->setCallback(dev->oboe_callback.get())
+    ->setErrorCallback(dev->oboe_error_callback.get())
+    ->setSampleRateConversionQuality(dev->srate_conversion_quality);
+
+    return builder.openStream(dev->stream);
+}
+
 /*
  * new_fluid_oboe_audio_driver
  */
@@ -168,44 +214,24 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     try
     {
         Result result;
-        AudioStreamBuilder builder_obj;
-        AudioStreamBuilder *builder = &builder_obj;
-
-        double sample_rate;
-        int is_sample_format_float;
-        int device_id;
-        int sharing_mode; // 0: Shared, 1: Exclusive
-        int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
-
         dev = new fluid_oboe_audio_driver_t();
 
         dev->synth = synth;
         dev->oboe_callback = std::make_unique<OboeAudioStreamCallback>(dev);
+        dev->oboe_error_callback = std::make_unique<OboeAudioStreamErrorCallback>(dev);
 
-        fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-        is_sample_format_float = fluid_settings_str_equal(settings, "audio.sample-format", "float");
-        fluid_settings_getint(settings, "audio.oboe.id", &device_id);
-        sharing_mode =
-            fluid_settings_str_equal(settings, "audio.oboe.sharing-mode", "Exclusive") ? 1 : 0;
-        performance_mode =
-            fluid_settings_str_equal(settings, "audio.oboe.performance-mode", "PowerSaving") ? 1 :
-            fluid_settings_str_equal(settings, "audio.oboe.performance-mode", "LowLatency") ? 2 : 0;
+        fluid_settings_getnum(settings, "synth.sample-rate", &dev->sample_rate);
+        dev->is_sample_format_float = fluid_settings_str_equal(settings, "audio.sample-format", "float");
+        fluid_settings_getint(settings, OBOE_ID, &dev->device_id);
+        dev->sharing_mode =
+            fluid_settings_str_equal(settings, SHARING_MODE, "Exclusive") ? 1 : 0;
+        dev->performance_mode =
+            fluid_settings_str_equal(settings, PERF_MODE, "PowerSaving") ? 1 :
+            fluid_settings_str_equal(settings, PERF_MODE, "LowLatency") ? 2 : 0;
+        dev->srate_conversion_quality = get_srate_conversion_quality(settings);
+        dev->error_recovery_mode = fluid_settings_str_equal(settings, RECOVERY_MODE, "Stop") ? 1 : 0;
 
-        builder->setDeviceId(device_id)
-        ->setDirection(Direction::Output)
-        ->setChannelCount(NUM_CHANNELS)
-        ->setSampleRate(sample_rate)
-        ->setFormat(is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
-        ->setSharingMode(sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
-        ->setPerformanceMode(
-            performance_mode == 1 ? PerformanceMode::PowerSaving :
-            performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
-        ->setUsage(Usage::Media)
-        ->setContentType(ContentType::Music)
-        ->setCallback(dev->oboe_callback.get())
-        ->setSampleRateConversionQuality(get_srate_conversion_quality(settings));
-
-        result = builder->openStream(dev->stream);
+        result = fluid_oboe_connect_or_reconnect(dev);
 
         if(result != Result::OK)
         {
@@ -267,6 +293,39 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
     }
 
     delete dev;
+}
+
+
+void
+OboeAudioStreamErrorCallback::onErrorAfterClose(AudioStream *stream, Result result)
+{
+    if(dev->error_recovery_mode == 1)    // Stop
+    {
+        FLUID_LOG(FLUID_ERR, "Oboe driver encountered an error (such as earphone unplugged). Stopped.");
+        dev->stream.reset();
+        return;
+    }
+    else
+    {
+        FLUID_LOG(FLUID_WARN, "Oboe driver encountered an error (such as earphone unplugged). Recovering...");
+    }
+
+    result = fluid_oboe_connect_or_reconnect(dev);
+
+    if(result != Result::OK)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to reconnect Oboe audio stream");
+        return; // cannot do anything further
+    }
+
+    // start the new stream.
+    result = dev->stream->start();
+
+    if(result != Result::OK)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to restart Oboe audio stream");
+        return; // cannot do anything further
+    }
 }
 
 #endif // OBOE_SUPPORT

@@ -14,11 +14,6 @@ https://stackoverflow.com/a/6251757
 Developers:
  - Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
  - Real-time settings can be marked with <realtime>SOME OPTIONAL TEXT</realtime>.
-
-ATTENTION: if you change anything in this file, make sure you also refresh
-the doxygen/fluidsettings.txt file (used by fluidsynth.org API doc build)
-and commit the results. Refresh with the following command:
-    xsltproc -o doxygen/fluidsettings.txt doxygen/fluidsettings.xsl fluidsettings.xml
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
@@ -123,8 +118,7 @@ and commit the results. Refresh with the following command:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE), samples are loaded to and unloaded from memory
-                on demand.
+                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel. PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this.
             </desc>
         </setting>
         <setting>
@@ -185,7 +179,7 @@ and commit the results. Refresh with the following command:
                 <ul>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
                     <li>gm: ignores CC0 and CC32 messages.</li>
-                    <li>xg: CC32 becomes the bank number, CC0 toggles between melodic or drum channel.</li>
+                    <li>xg: if CC0&lt;120 then channel is set to melodic and CC32 is the bank number. If CC0&gt;=120 then channel is set to drum and the bank number is set to 128 (CC32 is ignored).</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
                 </ul>
             </desc>
@@ -419,7 +413,7 @@ and commit the results. Refresh with the following command:
             <min>64</min>
             <max>8192</max>
             <desc>
-                The size of the audio buffers (in frames).
+                This is the number of audio samples most audio drivers will request from the synth at one time. In other words, it's the amount of samples the synth is allowed to render in one go when no state changes (events) are about to happen. Because of that, specifying too big numbers here may cause MIDI events to be poorly quantized (=untimed) when a MIDI driver or the synth's API directly is used, as fluidsynth cannot determine when those events are to arrive. This issue does not matter, when using the MIDI player or the MIDI sequencer, because in this case, fluidsynth does know when events will be received.
             </desc>
         </setting>
         <setting>
@@ -456,6 +450,32 @@ and commit the results. Refresh with the following command:
             <def>default</def>
             <desc>
                 Selects the CoreAudio device to use.
+            </desc>
+        </setting>
+        <setting>
+            <name>coreaudio.channel-map</name>
+            <type>str</type>
+            <def>(empty string)</def>
+            <desc>
+                This setting is a comma-separated integer list that maps fluidsynth mono-channels
+                to CoreAudio device output channels. Each position in the list represents the output channel
+                of the CoreAudio device.
+                The value of each position indicates the zero-based index of the fluidsynth
+                output mono-channel to route there (i.e. the buffer index used for fluid_synth_process()).
+                Additionally, the special value of -1 will turn off an output.
+                <br /><br />
+                For example, the default map for a single stereo output is "0,1". A value of "0,0" will
+                copy the left channel to the right, a value of "1,0" will flip left and right, and a
+                value of "-1,1" will play only the right channel.
+                <br /><br />
+                With a six-channel output device, and the synth.audio-channels and synth.audio-groups
+                settings both set to "2", a channel map of "-1,-1,0,1,2,3" will result in notes from odd
+                MIDI channels (audible on the first stereo channel, i.e. mono-indices 0,1) being sent to
+                outputs 3 and 4, and even MIDI channels (audible on the second stereo channel, i.e. mono-indices 2,3)
+                being sent to outputs 5 and 6.
+                <br /><br />
+                If the list specifies less than the number of available outputs channels, outputs
+                beyond those specified will maintain the default channel mapping given by the CoreAudio driver.
             </desc>
         </setting>
         <setting>
@@ -591,11 +611,44 @@ and commit the results. Refresh with the following command:
             </desc>
         </setting>
         <setting>
+            <name>oboe.error-recovery-mode</name>
+            <type>str</type>
+            <def>Reconnect</def>
+            <vals>Reconnect, Stop</vals>
+            <desc>
+                Sets the error recovery mode when audio device error such as earphone disconnection occurred. It reconnects by default (same as OpenSLES behavior), but can be stopped if Stop is specified.
+            </desc>
+        </setting>
+        <setting>
             <name>oss.device</name>
             <type>str</type>
             <def>/dev/dsp</def>
             <desc>
                 Device to use for OSS audio output.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-category</name>
+            <type>str</type>
+            <def>Playback</def>
+            <desc>
+                The media category to use. This value will be passed to <code>PW_KEY_MEDIA_CATEGORY</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-role</name>
+            <type>str</type>
+            <def>Music</def>
+            <desc>
+                The media role to use. This value will be passed to <code>PW_KEY_MEDIA_ROLE</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-type</name>
+            <type>str</type>
+            <def>Audio</def>
+            <desc>
+                The media type to use. This value will be passed to <code>PW_KEY_MEDIA_TYPE</code>, see Pipewire documentation for valid values.
             </desc>
         </setting>
         <setting>
@@ -708,7 +761,7 @@ and commit the results. Refresh with the following command:
             <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port).</desc>
+            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port). Since fluidsynth 2.3.0 this setting will be populated with available devices when fluidsynth starts up.</desc>
         </setting>
         <setting>
             <name>alsa_seq.device</name>

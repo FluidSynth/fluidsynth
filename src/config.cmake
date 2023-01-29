@@ -130,6 +130,9 @@
 /* Define to enable JACK driver */
 #cmakedefine JACK_SUPPORT @JACK_SUPPORT@
 
+/* Define to enable PipeWire driver */
+#cmakedefine PIPEWIRE_SUPPORT @PIPEWIRE_SUPPORT@
+
 /* Include the LADSPA Fx unit */
 #cmakedefine LADSPA @LADSPA_SUPPORT@
 
@@ -261,5 +264,8 @@
 
 /* Define to 1 if you have the logf() function. */
 #cmakedefine HAVE_LOGF @HAVE_LOGF@
+
+/* Define to 1 if you have the socklen_t type. */
+#cmakedefine HAVE_SOCKLEN_T @HAVE_SOCKLEN_T@
 
 #endif /* CONFIG_H */

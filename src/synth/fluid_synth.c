@@ -1557,6 +1557,10 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
 
 /**
  * Send a MIDI controller event on a MIDI channel.
+ * 
+ * Most CCs are 7-bits wide in FluidSynth. There are a few exceptions which may be 14-bits wide as are documented here:
+ * https://github.com/FluidSynth/fluidsynth/wiki/FluidFeatures#midi-control-change-implementation-chart
+ * 
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param num MIDI controller number (0-127)
@@ -1571,6 +1575,8 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
  *    could be used as CC global for all channels belonging to basic channel 7.
  * - Let a basic channel 0 in mode 3. If MIDI channel 15  is disabled it could be used
  *   as CC global for all channels belonging to basic channel 0.
+ * @warning Contrary to the MIDI Standard, this function does not clear LSB controllers,
+ * when MSB controllers are received.
  */
 int
 fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
@@ -1794,6 +1800,9 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     case ALL_CTRL_OFF: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_init_ctrl(chan, 1);
+        // the hold pedals have been reset, we maybe need to release voices
+        fluid_synth_damp_voices_by_sustain_LOCAL(synth, channum);
+        fluid_synth_damp_voices_by_sostenuto_LOCAL(synth, channum);
         fluid_synth_modulate_voices_all_LOCAL(synth, channum);
         break;
 
@@ -1960,7 +1969,7 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  * @param len Length of data in buffer
  * @param response Buffer to store response to or NULL to ignore
  * @param response_len IN/OUT parameter, in: size of response buffer, out:
- *   amount of data written to response buffer (if FLUID_FAILED is returned and
+ *   amount of data written to response buffer (if #FLUID_FAILED is returned and
  *   this value is non-zero, it indicates the response buffer is too small)
  * @param handled Optional location to store boolean value if message was
  *   recognized and handled or not (set to TRUE if it was handled)
@@ -1968,12 +1977,20 @@ fluid_synth_handle_device_id(void *data, const char *name, int value)
  *   command (useful for checking if a SYSEX message would be handled)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
- */
-/* SYSEX format (0xF0 and 0xF7 not passed to this function):
- * Non-realtime:    0xF0 0x7E <DeviceId> [BODY] 0xF7
- * Realtime:        0xF0 0x7F <DeviceId> [BODY] 0xF7
- * Tuning messages: 0xF0 0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
- * GS DT1 messages: 0xF0 0x41 <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
+ * @note When Fluidsynth receives an XG System Mode ON message, it compares the @p synth 's deviceID
+ * directly with the deviceID of the SysEx message. This is contrary to the XG spec (page 42), which
+ * requires to only compare the lower nibble. However, following the XG spec seems to break drum channels
+ * for a lot of MIDI files out there and therefore we've decided for this customization. If you rely on
+ * XG System Mode ON messages, make sure to set the setting \ref settings_synth_device-id to match the
+ * deviceID provided in the SysEx message (in most cases, this will be <code>deviceID=16</code>).
+ *
+ * @code
+ * SYSEX format (0xF0 and 0xF7 bytes shall not be passed to this function):
+ * Non-realtime:    0xF0   0x7E      <DeviceId> [BODY] 0xF7
+ * Realtime:        0xF0   0x7F      <DeviceId> [BODY] 0xF7
+ * Tuning messages: 0xF0   0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
+ * GS DT1 messages: 0xF0   0x41      <DeviceId> 0x42 0x12 [ADDRESS (3 bytes)] [DATA] <ChkSum> 0xF7
+ * @endcode
  */
 int
 fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
@@ -2371,6 +2388,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
 
     if(len < 9) // at least one byte of data should be transmitted
     {
+        FLUID_LOG(FLUID_INFO, "SysEx DT1: message too short, dropping it.");
         return FLUID_FAILED;
     }
     len_data = len - 8;
@@ -2380,8 +2398,10 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         checksum += data[i];
     }
-    if (0x80 - (checksum & 0x7F) != data[len - 1])
+    checksum = 0x80 - (checksum & 0x7F);
+    if (checksum != data[len - 1])
     {
+        FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;
     }
 
@@ -2389,6 +2409,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         if (len_data > 1 || (data[7] != 0 && data[7] != 0x7f))
         {
+            FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping invalid mode set message");
             return FLUID_FAILED;
         }
         if (handled)
@@ -2419,6 +2440,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         if (len_data > 1 || data[7] > 0x02)
         {
+            FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping invalid rhythm part message");
             return FLUID_FAILED;
         }
         if (handled)
@@ -2433,6 +2455,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
             synth->channel[chan]->channel_type =
                 data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
 
+            FLUID_LOG(FLUID_DBG, "SysEx DT1: setting MIDI channel %d to type %d", chan, (int)synth->channel[chan]->channel_type);
             //Roland synths seem to "remember" the last instrument a channel
             //used in the selected mode. This behavior is not replicated here.
             fluid_synth_program_change(synth, chan, 0);
@@ -3702,7 +3725,8 @@ fluid_synth_get_active_voice_count(fluid_synth_t *synth)
  * @param synth FluidSynth instance
  * @return Internal buffer size in audio frames.
  *
- * Audio is synthesized this number of frames at a time.  Defaults to 64 frames.
+ * Audio is synthesized at this number of frames at a time. Defaults to 64 frames. I.e. the synth can only react to notes,
+ * control changes, and other audio affecting events after having processed 64 audio frames.
  */
 int
 fluid_synth_get_internal_bufsize(fluid_synth_t *synth)

@@ -509,8 +509,8 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * @param block_count number of blocks to render
  * @param block_size number of samples in a block
  *
- * FluidSynth calls this function during main output mixing, just after
- * the internal reverb and chorus effects have been processed.
+ * FluidSynth calls this function during main output mixing,
+ * just before processing the internal reverb and chorus effects.
  *
  * It copies audio data from the supplied buffers, runs all effects and copies the
  * resulting audio back into the same buffers.
@@ -1325,13 +1325,16 @@ static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
      * are private to this effect, so we can safely remove them here. Nodes connected
      * to audio ports might be connected to other effects as well, so we simply remove
      * any pointers to them from the effect. */
-    for(i = 0; i < effect->desc->PortCount; i++)
+    if(effect->desc != NULL)
     {
-        node = (fluid_ladspa_node_t *) effect->port_nodes[i];
-
-        if(node && node->type & FLUID_LADSPA_NODE_CONTROL)
+        for(i = 0; i < effect->desc->PortCount; i++)
         {
-            delete_fluid_ladspa_node(node);
+            node = (fluid_ladspa_node_t *) effect->port_nodes[i];
+
+            if(node && node->type & FLUID_LADSPA_NODE_CONTROL)
+            {
+                delete_fluid_ladspa_node(node);
+            }
         }
     }
 

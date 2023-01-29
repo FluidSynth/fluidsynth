@@ -39,6 +39,7 @@ fluid_midi_event_t *fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigne
 
 
 #define MAX_NUMBER_OF_TRACKS 128
+#define MAX_NUMBER_OF_CHANNELS 16
 
 enum fluid_midi_event_type
 {
@@ -200,7 +201,7 @@ enum midi_sysex_tuning_msg_id
     MIDI_SYSEX_TUNING_BULK_DUMP           = 0x01, /**< Bulk tuning dump response (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE           = 0x02, /**< Tuning note change message (realtime) */
     MIDI_SYSEX_TUNING_BULK_DUMP_REQ_BANK  = 0x03, /**< Bulk tuning dump request (with bank, non-realtime) */
-    MIDI_SYSEX_TUNING_BULK_DUMP_BANK      = 0x04, /**< Bulk tuning dump resonse (with bank, non-realtime) */
+    MIDI_SYSEX_TUNING_BULK_DUMP_BANK      = 0x04, /**< Bulk tuning dump response (with bank, non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_1BYTE   = 0x05, /**< Octave tuning dump using 1 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_2BYTE   = 0x06, /**< Octave tuning dump using 2 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE_BANK      = 0x07, /**< Tuning note change message (with bank, realtime/non-realtime) */
@@ -285,6 +286,7 @@ typedef struct
 struct _fluid_player_t
 {
     fluid_atomic_int_t status;
+    fluid_atomic_int_t stopping; /* Flag for sending all_notes_off when player is stopped */
     int ntracks;
     fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
     fluid_synth_t *synth;
@@ -304,12 +306,14 @@ struct _fluid_player_t
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
     int cur_msec;             /* the current time */
+    int end_msec;             /* when >=0, playback is extended until this time (for, e.g., reverb) */
+    char end_pedals_disabled; /* 1 once the pedals have been released after the last midi event, 0 otherwise */
     /* sync mode: indicates the tempo mode the player is driven by (see fluid_player_set_tempo()):
        1, the player is driven by internal tempo (miditempo). This is the default.
        0, the player is driven by external tempo (exttempo)
     */
     int sync_mode;
-    /* miditempo: internal tempo comming from MIDI file tempo change events
+    /* miditempo: internal tempo coming from MIDI file tempo change events
       (in micro seconds per quarter note)
     */
     int miditempo;     /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
@@ -324,7 +328,11 @@ struct _fluid_player_t
     void *playback_userdata; /* pointer to user-defined data passed to playback_callback function */
     handle_midi_tick_func_t tick_callback; /* function fired on each tick change */
     void *tick_userdata; /* pointer to user-defined data passed to tick_callback function */
+
+    int channel_isplaying[MAX_NUMBER_OF_CHANNELS]; /* flags indicating channels on which notes have played */
 };
+
+#define FLUID_PLAYER_STOP_GRACE_MS 2000
 
 void fluid_player_settings(fluid_settings_t *settings);
 

@@ -37,7 +37,7 @@ struct _fluid_env_data_t
 };
 
 /* Indices for envelope tables */
-enum fluid_voice_envelope_index_t
+enum fluid_voice_envelope_index
 {
     FLUID_VOICE_ENVDELAY,
     FLUID_VOICE_ENVATTACK,
@@ -49,7 +49,7 @@ enum fluid_voice_envelope_index_t
     FLUID_VOICE_ENVLAST
 };
 
-typedef enum fluid_voice_envelope_index_t fluid_adsr_env_section_t;
+typedef enum fluid_voice_envelope_index fluid_adsr_env_section_t;
 
 typedef struct _fluid_adsr_env_t fluid_adsr_env_t;
 
@@ -57,14 +57,14 @@ struct _fluid_adsr_env_t
 {
     fluid_env_data_t data[FLUID_VOICE_ENVLAST];
     unsigned int count;
-    int section;
     fluid_real_t val;         /* the current value of the envelope */
+    fluid_adsr_env_section_t section;
 };
 
 /* For performance, all functions are inlined */
 
 static FLUID_INLINE void
-fluid_adsr_env_calc(fluid_adsr_env_t *env, int is_volenv)
+fluid_adsr_env_calc(fluid_adsr_env_t *env)
 {
     fluid_env_data_t *env_data;
     fluid_real_t x;
@@ -76,7 +76,8 @@ fluid_adsr_env_calc(fluid_adsr_env_t *env, int is_volenv)
     {
         // If we're switching envelope stages from decay to sustain, force the value to be the end value of the previous stage
         // Hmm, should this only apply to volenv? It was so before refactoring, so keep it for now. [DH]
-        if(env->section == FLUID_VOICE_ENVDECAY && is_volenv)
+        // No, must apply to both, otherwise some voices may sound detuned. [TM] (https://github.com/FluidSynth/fluidsynth/issues/1059)
+        if(env->section == FLUID_VOICE_ENVDECAY)
         {
             env->val = env_data->min * env_data->coeff;
         }
@@ -106,8 +107,6 @@ fluid_adsr_env_calc(fluid_adsr_env_t *env, int is_volenv)
     }
 
     env->val = x;
-
-
 }
 
 /* This one cannot be inlined since it is referenced in
@@ -118,7 +117,7 @@ static FLUID_INLINE void
 fluid_adsr_env_reset(fluid_adsr_env_t *env)
 {
     env->count = 0;
-    env->section = 0;
+    env->section = FLUID_VOICE_ENVDELAY;
     env->val = 0.0f;
 }
 

@@ -70,6 +70,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if PIPEWIRE_SUPPORT
+    {
+        "pipewire",
+        new_fluid_pipewire_audio_driver,
+        new_fluid_pipewire_audio_driver2,
+        delete_fluid_pipewire_audio_driver,
+        fluid_pipewire_audio_driver_settings
+    },
+#endif
+
 #if OSS_SUPPORT
     {
         "oss",
@@ -310,8 +320,9 @@ find_fluid_audio_driver(fluid_settings_t *settings)
  * Otherwise the behaviour is undefined.
  *
  * @note As soon as an audio driver is created, the \p synth starts rendering audio.
- * This means that all necessary sound-setup should be completed after this point,
- * thus of all object types in use (synth, midi player, sequencer, etc.) the audio
+ * This means that all necessary initialization and sound-setup should have been
+ * completed before calling this function.
+ * Thus, of all object types in use (synth, midi player, sequencer, etc.) the audio
  * driver should always be the last one to be created and the first one to be deleted!
  * Also refer to the order of object creation in the code examples.
  */
@@ -322,7 +333,20 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(def)
     {
-        fluid_audio_driver_t *driver = (*def->new)(settings, synth);
+        fluid_audio_driver_t *driver;
+        double srate, midi_event_latency;
+        int period_size;
+        
+        fluid_settings_getint(settings, "audio.period-size", &period_size);
+        fluid_settings_getnum(settings, "synth.sample-rate", &srate);
+        
+        midi_event_latency = period_size / srate;
+        if(midi_event_latency >= 0.05)
+        {
+            FLUID_LOG(FLUID_WARN, "You have chosen 'audio.period-size' to be %d samples. Given a sample rate of %.1f this results in a latency of %.1f ms, which will cause MIDI events to be poorly quantized (=untimed) in the synthesized audio (also known as the 'drunken-drummer' syndrome). To avoid that, you're strongly advised to increase 'audio.periods' instead, while keeping 'audio.period-size' small enough to make this warning disappear.", period_size, srate, midi_event_latency*1000.0);
+        }
+        
+        driver = (*def->new)(settings, synth);
 
         if(driver)
         {
@@ -422,7 +446,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
  *
  * @warning This function may only be called if no thread is residing in fluidsynth's API and no instances of any kind
  * are alive (e.g. as it would be the case right after fluidsynth's initial creation). Else the behaviour is undefined.
- * Furtermore any attempt of using audio drivers that have not been registered is undefined behaviour!
+ * Furthermore any attempt of using audio drivers that have not been registered is undefined behaviour!
  *
  * @note This function is not thread safe and will never be!
  *

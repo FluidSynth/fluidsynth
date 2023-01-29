@@ -73,7 +73,7 @@ static const IID   _IID_IAudioRenderClient =
  *
  * Current limitations:
  *  - Only one stereo audio output.
- *  - If audio.sample-format is "16bits", a convertion from float
+ *  - If audio.sample-format is "16bits", a conversion from float
  *    without dithering is used.
  *
  * Available settings:
@@ -261,7 +261,7 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     /* start event must be first */
     wait_handles[0] = dev->start_ev;
     wait_handles[1] = dev->thread;
-    ret = WaitForMultipleObjects(FLUID_N_ELEMENTS(wait_handles), wait_handles, FALSE, 1000);
+    ret = WaitForMultipleObjects(FLUID_N_ELEMENTS(wait_handles), wait_handles, FALSE, 2000);
 
     switch(ret)
     {
@@ -788,9 +788,9 @@ static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
         int nsz;
         char *name;
 
-        nsz = WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, 0, 0, 0, 0);
+        nsz = WideCharToMultiByte(CP_ACP, 0, var.pwszVal, -1, 0, 0, 0, 0);
         name = FLUID_ARRAY(char, nsz + 1);
-        WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, name, nsz, 0, 0);
+        WideCharToMultiByte(CP_ACP, 0, var.pwszVal, -1, name, nsz, 0, 0);
         fluid_settings_add_option(settings, "audio.wasapi.device", name);
         FLUID_FREE(name);
     }
@@ -803,6 +803,7 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
 {
     fluid_wasapi_finddev_data_t *d = (fluid_wasapi_finddev_data_t *)data;
     int nsz;
+    size_t id_len;
     char *name = NULL;
     wchar_t *id = NULL;
     IPropertyStore *prop = NULL;
@@ -827,9 +828,9 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
         goto cleanup;
     }
 
-    nsz = WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, 0, 0, 0, 0);
+    nsz = WideCharToMultiByte(CP_ACP, 0, var.pwszVal, -1, 0, 0, 0, 0);
     name = FLUID_ARRAY(char, nsz + 1);
-    WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, name, nsz, 0, 0);
+    WideCharToMultiByte(CP_ACP, 0, var.pwszVal, -1, name, nsz, 0, 0);
 
     if(!FLUID_STRCASECMP(name, d->name))
     {
@@ -841,9 +842,15 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
             goto cleanup;
         }
 
-        nsz = wcslen(id);
-        d->id = FLUID_ARRAY(wchar_t, nsz + 1);
-        FLUID_MEMCPY(d->id, id, sizeof(wchar_t) * (nsz + 1));
+        id_len = wcslen(id);
+        if(id_len >= UINT_MAX / sizeof(wchar_t))
+        {
+            FLUID_LOG(FLUID_ERR, "wasapi: the returned device identifier was way too long");
+            goto cleanup;
+        }
+        id_len++;
+        d->id = FLUID_ARRAY(wchar_t, id_len);
+        FLUID_MEMCPY(d->id, id, sizeof(wchar_t) * id_len);
     }
 
 cleanup:

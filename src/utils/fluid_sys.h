@@ -200,12 +200,21 @@ char* fluid_get_windows_error(void);
  */
 char *fluid_strtok(char **str, char *delim);
 
+#define FLUID_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
+#define FLUID_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
+#define fluid_file_test(path, flags) g_file_test(path, flags)
+
+#define fluid_shell_parse_argv(command_line, argcp, argvp) g_shell_parse_argv(command_line, argcp, argvp, NULL)
+#define fluid_strfreev g_strfreev
 
 #if defined(__OS2__)
 #define INCL_DOS
 #include <os2.h>
 
+/* Define socklen_t if not provided */
+#if !HAVE_SOCKLEN_T
 typedef int socklen_t;
+#endif
 #endif
 
 /**
@@ -515,11 +524,11 @@ fluid_long_long_t fluid_file_tell(FILE* f);
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
-  profiling       |    Internal    |      |             |      Audio
-  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
-  shell           |    API         |      |             |      API
+  profiling       |    Internal     |      |             |      Audio
+  command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
+  shell           |    API          |      |             |      API
 
 */
 
@@ -721,7 +730,7 @@ enum
     Floating point exceptions
 
     fluid_check_fpe() checks for "unnormalized numbers" and other
-    exceptions of the floating point processsor.
+    exceptions of the floating point processor.
 */
 #ifdef FPE_CHECK
 #define fluid_check_fpe(expl) fluid_check_fpe_i386(expl)

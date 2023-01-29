@@ -185,7 +185,7 @@ typedef void (*fluid_settings_foreach_t)(void *data, const char *name, int type)
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t *settings, void *data,
                             fluid_settings_foreach_t func);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }
