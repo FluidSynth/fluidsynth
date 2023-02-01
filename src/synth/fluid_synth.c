@@ -2021,7 +2021,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* MIDI tuning SYSEX message? */
     if((data[0] == MIDI_SYSEX_UNIV_NON_REALTIME || data[0] == MIDI_SYSEX_UNIV_REALTIME)
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_MIDI_TUNING_ID)
     {
         int result;
@@ -2035,7 +2035,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* GM or GM2 system on */
     if(data[0] == MIDI_SYSEX_UNIV_NON_REALTIME
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_GM_ID)
     {
         if(handled)
@@ -2056,7 +2056,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* GS DT1 message */
     if(data[0] == MIDI_SYSEX_MANUF_ROLAND
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_GS_ID
             && data[3] == MIDI_SYSEX_GS_DT1)
     {
@@ -2070,7 +2070,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* XG message */
     if(data[0] == MIDI_SYSEX_MANUF_YAMAHA
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_XG_ID)
     {
         int result;
