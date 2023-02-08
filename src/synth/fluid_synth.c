@@ -5554,7 +5554,7 @@ exit:
 }
 
 /**
- * Add a SoundFont.  The SoundFont will be added to the top of the SoundFont stack.
+ * Add a SoundFont. The SoundFont will be added to the top of the SoundFont stack and ownership is transferred to @p synth.
  * @param synth FluidSynth instance
  * @param sfont SoundFont to add
  * @return New assigned SoundFont ID or #FLUID_FAILED on error
