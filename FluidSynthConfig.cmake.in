@@ -1,10 +1,110 @@
-# for the find_dependency() macro:
-# include(CMakeFindDependencyMacro)
-# it has the same syntax as find_package:
-# find_dependency(MYDEP REQUIRED)
+# Allows CMake to use the shipped Find modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
-# define variables for configuration options:
-# set(network-enabled @enable-network@)
+# Save what library support was built
+set(FLUIDSYNTH_ALSA_SUPPORT @ALSA_SUPPORT@)
+set(FLUIDSYNTH_DBUS_SUPPORT @DBUS_SUPPORT@)
+set(FLUIDSYNTH_JACK_SUPPORT @JACK_SUPPORT@)
+set(FLUIDSYNTH_LADSPA_SUPPORT @LADSPA_SUPPORT@)
+set(FLUIDSYNTH_LASH_SUPPORT @LASH_SUPPORT@)
+set(FLUIDSYNTH_LIBINSTPATCH_SUPPORT @LIBINSTPATCH_SUPPORT@)
+set(FLUIDSYNTH_LIBSNDFILE_SUPPORT @LIBSNDFILE_SUPPORT@)
+set(FLUIDSYNTH_MIDISHARE_SUPPORT @MIDISHARE_SUPPORT@)
+set(FLUIDSYNTH_OBOE_SUPPORT @OBOE_SUPPORT@)
+set(FLUIDSYNTH_OPENMP_SUPPORT @HAVE_OPENMP@)
+set(FLUIDSYNTH_OPENSLES_SUPPORT @OPENSLES_SUPPORT@)
+set(FLUIDSYNTH_OSS_SUPPORT @OSS_SUPPORT@)
+set(FLUIDSYNTH_PIPEWIRE_SUPPORT @PIPEWIRE_SUPPORT@)
+set(FLUIDSYNTH_PORTAUDIO_SUPPORT @PORTAUDIO_SUPPORT@)
+set(FLUIDSYNTH_PULSE_SUPPORT @PULSE_SUPPORT@)
+set(FLUIDSYNTH_READLINE_SUPPORT @WITH_READLINE@)
+set(FLUIDSYNTH_SDL2_SUPPORT @SDL2_SUPPORT@)
+set(FLUIDSYNTH_SYSTEMD_SUPPORT @SYSTEMD_SUPPORT@)
+
+# Load find_dependency macro and pkg-config
+include(CMakeFindDependencyMacro)
+find_dependency(PkgConfig)
+
+# Mandatory dependencies
+pkg_check_modules(GLIB REQUIRED IMPORTED_TARGET glib-2.0>=2.6.5
+                  gthread-2.0>=2.6.5)
+
+# Optional dependencies
+if(FLUIDSYNTH_ALSA_SUPPORT)
+  pkg_check_modules(ALSA REQUIRED IMPORTED_TARGET alsa>=0.9.1)
+endif()
+
+if(FLUIDSYNTH_DBUS_SUPPORT)
+  pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1>=1.0.0)
+endif()
+
+if(FLUIDSYNTH_JACK_SUPPORT)
+  pkg_check_modules(JACK REQUIRED IMPORTED_TARGET jack)
+endif()
+
+if(FLUIDSYNTH_LADSPA_SUPPORT)
+  pkg_check_modules(GMODULE REQUIRED IMPORTED_TARGET gmodule-2.0>=2.6.5)
+endif()
+
+if(FLUIDSYNTH_LASH_SUPPORT)
+  pkg_check_modules(LASH REQUIRED IMPORTED_TARGET lash-1.0>=0.3)
+endif()
+
+if(FLUIDSYNTH_LIBINSTPATCH_SUPPORT)
+  pkg_check_modules(LIBINSTPATCH REQUIRED IMPORTED_TARGET
+                    libinstpatch-1.0>=1.1.0)
+endif()
+
+if(FLUIDSYNTH_LIBSNDFILE_SUPPORT)
+  pkg_check_modules(LIBSNDFILE REQUIRED IMPORTED_TARGET sndfile>=1.0.0)
+endif()
+
+if(FLUIDSYNTH_MIDISHARE_SUPPORT)
+  find_dependency(MidiShare REQUIRED)
+endif()
+
+if(FLUIDSYNTH_OBOE_SUPPORT)
+  pkg_check_modules(OBOE REQUIRED IMPORTED_TARGET oboe-1.0)
+endif()
+
+if(FLUIDSYNTH_OPENMP_SUPPORT)
+  find_dependency(OpenMP COMPONENTS C REQUIRED)
+endif()
+
+if(FLUIDSYNTH_OPENSLES_SUPPORT)
+  find_library(OpenSLES_LIBS OpenSLES REQUIRED)
+endif()
+
+if(FLUIDSYNTH_OSS_SUPPORT)
+  find_dependency(OSS REQUIRED)
+endif()
+
+if(FLUIDSYNTH_PIPEWIRE_SUPPORT)
+  pkg_check_modules(PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
+endif()
+
+if(FLUIDSYNTH_PORTAUDIO_SUPPORT)
+  pkg_check_modules(PORTAUDIO REQUIRED IMPORTED_TARGET portaudio-2.0>=19)
+endif()
+
+if(FLUIDSYNTH_PULSE_SUPPORT)
+  pkg_check_modules(PULSE REQUIRED IMPORTED_TARGET libpulse-simple>=0.9.8)
+endif()
+
+if(FLUIDSYNTH_READLINE_SUPPORT)
+  pkg_check_modules(READLINE QUIET IMPORTED_TARGET readline)
+  if(NOT READLINE_FOUND)
+    find_dependency(READLINE REQUIRED)
+  endif()
+endif()
+
+if(FLUIDSYNTH_SDL2_SUPPORT)
+  pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2>=2.0.4)
+endif()
+
+if(FLUIDSYNTH_SYSTEMD_SUPPORT)
+  pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET libsystemd)
+endif()
 
 # finally, include the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/FluidSynthTargets.cmake")
