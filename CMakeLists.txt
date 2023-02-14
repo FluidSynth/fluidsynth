@@ -881,6 +881,9 @@ write_basic_package_version_file(
 configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
 install(FILES "${FluidSynth_BINARY_DIR}/FluidSynthConfig.cmake"
               "${FluidSynth_BINARY_DIR}/FluidSynthConfigVersion.cmake"
+              "${FluidSynth_SOURCE_DIR}/cmake_admin/FindMidiShare.cmake"
+              "${FluidSynth_SOURCE_DIR}/cmake_admin/FindOSS.cmake"
+              "${FluidSynth_SOURCE_DIR}/cmake_admin/FindREADLINE.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
 )
 
