@@ -881,11 +881,15 @@ write_basic_package_version_file(
 configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
 install(FILES "${FluidSynth_BINARY_DIR}/FluidSynthConfig.cmake"
               "${FluidSynth_BINARY_DIR}/FluidSynthConfigVersion.cmake"
-              "${FluidSynth_SOURCE_DIR}/cmake_admin/FindMidiShare.cmake"
-              "${FluidSynth_SOURCE_DIR}/cmake_admin/FindOSS.cmake"
-              "${FluidSynth_SOURCE_DIR}/cmake_admin/FindREADLINE.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
-)
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth")
+# In static builds, we need the extra find modules so the config can
+# find the transitive dependencies.
+if ( NOT BUILD_SHARED_LIBS )
+    install(FILES "${FluidSynth_SOURCE_DIR}/cmake_admin/FindMidiShare.cmake"
+                  "${FluidSynth_SOURCE_DIR}/cmake_admin/FindOSS.cmake"
+                  "${FluidSynth_SOURCE_DIR}/cmake_admin/FindREADLINE.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth")
+endif ( NOT BUILD_SHARED_LIBS )
 
 # Extra targets for Unix build environments
 if ( UNIX )
