@@ -1,7 +1,8 @@
 # Allows CMake to use the shipped Find modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
-# Save what library support was built
+# Save the options that were chosen
+set(FLUIDSYNTH_IS_SHARED @BUILD_SHARED_LIBS@)
 set(FLUIDSYNTH_SUPPORT_ALSA @ALSA_SUPPORT@)
 set(FLUIDSYNTH_SUPPORT_DBUS @DBUS_SUPPORT@)
 set(FLUIDSYNTH_SUPPORT_JACK @JACK_SUPPORT@)
@@ -21,87 +22,89 @@ set(FLUIDSYNTH_SUPPORT_READLINE @WITH_READLINE@)
 set(FLUIDSYNTH_SUPPORT_SDL2 @SDL2_SUPPORT@)
 set(FLUIDSYNTH_SUPPORT_SYSTEMD @SYSTEMD_SUPPORT@)
 
-# Load find_dependency macro and pkg-config
-include(CMakeFindDependencyMacro)
-find_dependency(PkgConfig)
+if(NOT FLUIDSYNTH_IS_SHARED)
+  # Load find_dependency macro and pkg-config
+  include(CMakeFindDependencyMacro)
+  find_dependency(PkgConfig)
 
-# Mandatory dependencies
-pkg_check_modules(GLIB IMPORTED_TARGET glib-2.0>=2.6.5 gthread-2.0>=2.6.5)
+  # Mandatory dependencies
+  pkg_check_modules(GLIB IMPORTED_TARGET glib-2.0>=2.6.5 gthread-2.0>=2.6.5)
 
-# Optional dependencies
-if(FLUIDSYNTH_SUPPORT_ALSA)
-  pkg_check_modules(ALSA IMPORTED_TARGET alsa>=0.9.1)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_DBUS)
-  pkg_check_modules(DBUS IMPORTED_TARGET dbus-1>=1.0.0)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_JACK)
-  pkg_check_modules(JACK IMPORTED_TARGET jack)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_LADSPA)
-  pkg_check_modules(GMODULE IMPORTED_TARGET gmodule-2.0>=2.6.5)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_LASH)
-  pkg_check_modules(LASH IMPORTED_TARGET lash-1.0>=0.3)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_LIBINSTPATCH)
-  pkg_check_modules(LIBINSTPATCH IMPORTED_TARGET libinstpatch-1.0>=1.1.0)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_LIBSNDFILE)
-  pkg_check_modules(LIBSNDFILE IMPORTED_TARGET sndfile>=1.0.0)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_MIDISHARE)
-  find_dependency(MidiShare)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_OBOE)
-  pkg_check_modules(OBOE IMPORTED_TARGET oboe-1.0)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_OPENMP)
-  find_dependency(OpenMP COMPONENTS C)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_OPENSLES)
-  find_library(OpenSLES_LIBS OpenSLES)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_OSS)
-  find_dependency(OSS)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_PIPEWIRE)
-  pkg_check_modules(PIPEWIRE IMPORTED_TARGET libpipewire-0.3)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_PORTAUDIO)
-  pkg_check_modules(PORTAUDIO IMPORTED_TARGET portaudio-2.0>=19)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_PULSE)
-  pkg_check_modules(PULSE IMPORTED_TARGET libpulse-simple>=0.9.8)
-endif()
-
-if(FLUIDSYNTH_SUPPORT_READLINE)
-  pkg_check_modules(READLINE IMPORTED_TARGET readline)
-  if(NOT READLINE_FOUND)
-    find_dependency(READLINE)
+  # Optional dependencies
+  if(FLUIDSYNTH_SUPPORT_ALSA)
+    pkg_check_modules(ALSA IMPORTED_TARGET alsa>=0.9.1)
   endif()
-endif()
 
-if(FLUIDSYNTH_SUPPORT_SDL2)
-  pkg_check_modules(SDL2 IMPORTED_TARGET sdl2>=2.0.4)
-endif()
+  if(FLUIDSYNTH_SUPPORT_DBUS)
+    pkg_check_modules(DBUS IMPORTED_TARGET dbus-1>=1.0.0)
+  endif()
 
-if(FLUIDSYNTH_SUPPORT_SYSTEMD)
-  pkg_check_modules(SYSTEMD IMPORTED_TARGET libsystemd)
+  if(FLUIDSYNTH_SUPPORT_JACK)
+    pkg_check_modules(JACK IMPORTED_TARGET jack)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_LADSPA)
+    pkg_check_modules(GMODULE IMPORTED_TARGET gmodule-2.0>=2.6.5)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_LASH)
+    pkg_check_modules(LASH IMPORTED_TARGET lash-1.0>=0.3)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_LIBINSTPATCH)
+    pkg_check_modules(LIBINSTPATCH IMPORTED_TARGET libinstpatch-1.0>=1.1.0)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_LIBSNDFILE)
+    pkg_check_modules(LIBSNDFILE IMPORTED_TARGET sndfile>=1.0.0)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_MIDISHARE)
+    find_dependency(MidiShare)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_OBOE)
+    pkg_check_modules(OBOE IMPORTED_TARGET oboe-1.0)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_OPENMP)
+    find_dependency(OpenMP COMPONENTS C)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_OPENSLES)
+    find_library(OpenSLES_LIBS OpenSLES)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_OSS)
+    find_dependency(OSS)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_PIPEWIRE)
+    pkg_check_modules(PIPEWIRE IMPORTED_TARGET libpipewire-0.3)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_PORTAUDIO)
+    pkg_check_modules(PORTAUDIO IMPORTED_TARGET portaudio-2.0>=19)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_PULSE)
+    pkg_check_modules(PULSE IMPORTED_TARGET libpulse-simple>=0.9.8)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_READLINE)
+    pkg_check_modules(READLINE IMPORTED_TARGET readline)
+    if(NOT READLINE_FOUND)
+      find_dependency(READLINE)
+    endif()
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_SDL2)
+    pkg_check_modules(SDL2 IMPORTED_TARGET sdl2>=2.0.4)
+  endif()
+
+  if(FLUIDSYNTH_SUPPORT_SYSTEMD)
+    pkg_check_modules(SYSTEMD IMPORTED_TARGET libsystemd)
+  endif()
 endif()
 
 # finally, include the targets file
