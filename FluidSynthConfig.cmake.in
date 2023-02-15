@@ -71,10 +71,6 @@ if(NOT FLUIDSYNTH_IS_SHARED)
     find_dependency(OpenMP COMPONENTS C)
   endif()
 
-  if(FLUIDSYNTH_SUPPORT_OPENSLES)
-    find_library(OpenSLES_LIBS OpenSLES)
-  endif()
-
   if(FLUIDSYNTH_SUPPORT_OSS)
     find_dependency(OSS)
   endif()
