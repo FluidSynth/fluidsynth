@@ -620,7 +620,7 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
     fluid_shell_t shell;
     int result;
 
-#ifdef WIN32
+#ifdef _WIN32
     file = _open(filename, _O_RDONLY);
 #else
     file = open(filename, O_RDONLY);
@@ -634,7 +634,7 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
     fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
     result = (fluid_shell_run(&shell) == FLUID_THREAD_RETURN_VALUE) ? 0 : -1;
 
-#ifdef WIN32
+#ifdef _WIN32
     _close(file);
 #else
     close(file);
@@ -658,7 +658,7 @@ fluid_get_userconf(char *buf, int len)
 {
     const char *home = NULL;
     const char *config_file;
-#if defined(WIN32)
+#if defined(_WIN32)
     home = getenv("USERPROFILE");
     config_file = "\\fluidsynth.cfg";
 
@@ -693,7 +693,7 @@ fluid_get_userconf(char *buf, int len)
 char *
 fluid_get_sysconf(char *buf, int len)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     const char* program_data = getenv("ProgramData");
     if(program_data == NULL || program_data[0] == '\0')
     {
@@ -4502,7 +4502,7 @@ fluid_is_number(char *a)
 char *
 fluid_expand_path(char *path, char *new_path, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
+#if defined(_WIN32) || defined(MACOS9)
     FLUID_SNPRINTF(new_path, len - 1, "%s", path);
 #else
 
