@@ -47,7 +47,6 @@ endif ( JACK_SUPPORT )
 
 if ( PIPEWIRE_SUPPORT )
   set ( fluid_pipewire_SOURCES drivers/fluid_pipewire.c )
-  include_directories ( SYSTEM ${PIPEWIRE_INCLUDE_DIRS} )
 endif ( PIPEWIRE_SUPPORT )
 
 if ( PORTAUDIO_SUPPORT )
@@ -338,8 +337,6 @@ target_link_libraries ( libfluidsynth-OBJ PUBLIC
     ${COREAUDIO_LIBS}
     ${COREMIDI_LIBS}
     ${WINDOWS_LIBS}
-    ${MidiShare_LIBS}
-    ${OpenSLES_LIBS}
     ${LIBFLUID_LIBS}
 )
 
@@ -347,72 +344,59 @@ if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
 endif()
 
-if ( TARGET PkgConfig::GLIB )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::GLIB )
-else()
-    target_include_directories ( libfluidsynth-OBJ PUBLIC ${GLIB_INCLUDE_DIRS} )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${GLIB_LIBRARIES} )
+target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::glib-2 GLib2::gthread-2 )
+
+if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC SndFile::sndfile )
 endif()
 
-if ( TARGET PkgConfig::LIBSNDFILE AND LIBSNDFILE_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LIBSNDFILE )
+if ( PULSE_SUPPORT )
+    target_include_directories( libfluidsynth-OBJ PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${PULSEAUDIO_LIBRARIES} )
 endif()
 
-if ( TARGET PkgConfig::PULSE AND PULSE_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PULSE )
+if ( TARGET ALSA::ALSA AND ALSA_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC ALSA::ALSA )
 endif()
 
-if ( ALSA_SUPPORT )
-    if ( TARGET PkgConfig::ALSA )
-        target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::ALSA )
-    else()
-        target_link_libraries ( libfluidsynth-OBJ PUBLIC ALSA::ALSA )
-    endif()
+if ( TARGET PortAudio::PortAudio AND PORTAUDIO_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PortAudio::PortAudio )
 endif()
 
-if ( TARGET PkgConfig::PORTAUDIO AND PORTAUDIO_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PORTAUDIO )
+if ( TARGET Jack::Jack AND JACK_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC Jack::Jack )
 endif()
 
-if ( TARGET PkgConfig::JACK AND JACK_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::JACK )
+if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC PipeWire::PipeWire )
 endif()
 
-if ( TARGET PkgConfig::PIPEWIRE AND PIPEWIRE_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::PIPEWIRE )
+if ( TARGET LASH::LASH AND LASH_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC LASH::LASH )
 endif()
 
-if ( TARGET PkgConfig::LASH AND LASH_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LASH )
+if ( TARGET dbus-1 AND DBUS_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC dbus-1 )
 endif()
 
-if ( TARGET PkgConfig::DBUS AND DBUS_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::DBUS )
+if ( TARGET GLib2::gmodule-2 AND LADSPA_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::gmodule-2 )
 endif()
 
-if ( TARGET PkgConfig::GMODULE AND LADSPA_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::GMODULE )
+if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
 endif()
 
-if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::LIBINSTPATCH )
+if ( DEFINED SDL2_TARGET AND SDL2_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${SDL2_TARGET} )
 endif()
 
-if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::SDL2 )
+if ( TARGET oboe::oboe AND OBOE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC oboe::oboe )
 endif()
 
-if ( TARGET PkgConfig::OBOE AND OBOE_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::OBOE )
-endif()
-
-if ( WITH_READLINE )
-    if ( TARGET PkgConfig::READLINE )
-        target_link_libraries ( libfluidsynth-OBJ PUBLIC PkgConfig::READLINE )
-    else()
-        target_link_libraries ( libfluidsynth-OBJ PUBLIC ${READLINE_LIBRARIES} )
-        target_include_directories ( libfluidsynth-OBJ PUBLIC ${READLINE_INCLUDE_DIR} )
-    endif()
+if ( TARGET Readline::Readline AND READLINE_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC Readline::Readline )
 endif()
 
 if ( DART_SUPPORT )
@@ -420,11 +404,11 @@ if ( DART_SUPPORT )
 endif ( DART_SUPPORT )
 
 if ( MIDISHARE_SUPPORT )
-    target_include_directories ( libfluidsynth-OBJ PUBLIC ${MidiShare_INCLUDE_DIRS} )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC MidiShare::MidiShare )
 endif ( MIDISHARE_SUPPORT )
 
 if ( OPENSLES_SUPPORT )
-    target_include_directories ( libfluidsynth-OBJ PUBLIC ${OpenSLES_INCLUDE_DIRS} )
+    target_link_libraries( libfluidsynth-OBJ PUBLIC OpenSLES::OpenSLES )
 endif ( OPENSLES_SUPPORT )
 
 # This doesn't install any object file at all!
@@ -478,28 +462,31 @@ if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( fluidsynth PRIVATE OpenMP::OpenMP_C )
 endif()
 
-if ( TARGET PkgConfig::SYSTEMD AND SYSTEMD_SUPPORT )
-    target_link_libraries ( fluidsynth PRIVATE PkgConfig::SYSTEMD )
+if ( TARGET Systemd::libsystemd AND SYSTEMD_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE Systemd::libsystemd )
 endif()
 
-if ( TARGET PkgConfig::GLIB ) # because g_file_test()
-    target_link_libraries ( fluidsynth PRIVATE PkgConfig::GLIB )
+if ( TARGET GLib2::glib-2 ) # because g_file_test()
+    target_link_libraries ( fluidsynth PRIVATE GLib2::glib-2 )
 endif()
 
-if ( TARGET PkgConfig::SDL2 AND SDL2_SUPPORT ) # because SDL_Init() etc.
-    target_link_libraries ( fluidsynth PRIVATE PkgConfig::SDL2 )
+if ( DEFINED SDL2_TARGET AND SDL2_SUPPORT ) # because SDL_Init() etc.
+    target_link_libraries ( fluidsynth PRIVATE ${SDL2_TARGET} )
+    if ( TARGET SDL2::SDL2main )
+      target_link_libraries ( fluidsynth PRIVATE SDL2::SDL2main )
+    endif()
 endif()
 
-if ( TARGET PkgConfig::PIPEWIRE AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
-    target_link_libraries ( fluidsynth PRIVATE PkgConfig::PIPEWIRE )
+if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
+    target_link_libraries ( fluidsynth PRIVATE PipeWire::PipeWire )
 endif()
 
-if ( TARGET PkgConfig::LIBINSTPATCH AND LIBINSTPATCH_SUPPORT )
-    target_link_libraries ( fluidsynth PRIVATE PkgConfig::LIBINSTPATCH )
+if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE InstPatch::libinstpatch )
 endif()
 
-if ( TARGET PkgConfig::LASH AND LASH_SUPPORT )
-    target_link_libraries ( fluidsynth PRIVATE PkgConfig::LASH )
+if ( TARGET LASH::LASH AND LASH_SUPPORT )
+    target_link_libraries ( fluidsynth PRIVATE LASH::LASH )
 endif()
 
 if ( MACOSX_FRAMEWORK )
