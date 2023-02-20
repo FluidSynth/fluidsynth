@@ -344,11 +344,17 @@ if ( WIN32 )
       set ( WINDOWS_LIBS "${WINDOWS_LIBS};mman" )
     endif ()
   endif  ( MINGW )
-else ( WIN32 )
-# Check PThreads, but not in Windows
-  find_package ( Threads REQUIRED )
-  set ( LIBFLUID_LIBS "m" ${CMAKE_THREAD_LIBS_INIT} )
 endif ( WIN32 )
+
+# Check for threads and math
+find_package ( Threads REQUIRED )
+
+find_library ( HAS_LIBM NAMES "m" )
+if ( HAS_LIBM )
+  set ( MATH_LIBRARY "m" )
+endif ( HAS_LIBM )
+
+set ( LIBFLUID_LIBS ${MATH_LIBRARY} Threads::Threads )
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )

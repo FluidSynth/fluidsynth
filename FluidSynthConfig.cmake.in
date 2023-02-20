@@ -49,11 +49,20 @@ set(FLUIDSYNTH_SUPPORT_UBSAN @ENABLE_UBSAN@)
 
 # Only load dependencies on static builds
 if(NOT FLUIDSYNTH_IS_SHARED)
+  # Check the system has a separated math library
+  find_library(HAS_LIBM NAMES "m" NO_CACHE)
+  if(HAS_LIBM)
+    set(MATH_LIBRARY "m")
+  endif(HAS_LIBM)
+
   # Load find_dependency macro and pkg-config
   include(CMakeFindDependencyMacro)
   find_dependency(PkgConfig)
 
   # Mandatory dependencies
+  if(NOT TARGET Threads::Threads)
+    find_dependency(Threads)
+  endif()
   pkg_check_modules(GLIB IMPORTED_TARGET glib-2.0>=2.6.5 gthread-2.0>=2.6.5)
 
   # Optional dependencies
