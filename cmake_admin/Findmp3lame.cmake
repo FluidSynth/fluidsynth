@@ -39,7 +39,7 @@ find_library(mp3lame_mpghip_LIBRARY NAMES "mpghip" "libmpghip"
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  mp3lame REQUIRED_VARS "mp3lame_LIBRARY"
+  mp3lame REQUIRED_VARS "mp3lame_mp3lame_LIBRARY"
                         "mp3lame_INCLUDE_DIR")
 
 # Create the targets
