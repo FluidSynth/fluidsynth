@@ -129,6 +129,17 @@ typedef gintptr  intptr_t;
 
 #endif
 
+/*
+ * CYGWIN has its own version of <windows.h>, which can be
+ * safely included together with POSIX includes.
+ * Thanks to this, CYGWIN can also run audio output and MIDI
+ * input drivers from traditional interfaces of Windows.
+ */
+#if defined(__CYGWIN__) && HAVE_WINDOWS_H
+#include <windows.h>
+#include <wchar.h>
+#endif
+
 #if defined(_WIN32) && HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>	/* Provides also socklen_t */
@@ -167,7 +178,7 @@ typedef gintptr  intptr_t;
  */
 #define fluid_gerror_message(err)  ((err) ? err->message : "No error details")
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 char* fluid_get_windows_error(void);
 #endif
 

@@ -251,7 +251,21 @@ unset ( WASAPI_SUPPORT CACHE )
 unset ( WAVEOUT_SUPPORT CACHE )
 unset ( WINMIDI_SUPPORT CACHE )
 unset ( MINGW32 CACHE )
-if ( WIN32 )
+
+if ( CYGWIN )
+  find_library(W32API_UUID_LIBRARY uuid
+    NO_DEFAULT_PATH
+    PATHS /lib/w32api
+  )
+  if ( NOT W32API_UUID_LIBRARY )
+    set ( enable-wasapi off )
+  else ()
+    message(STATUS "Found W32API uuid library for CYGWIN: " ${W32API_UUID_LIBRARY})
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};${W32API_UUID_LIBRARY}" )
+  endif ()
+endif ( CYGWIN )
+
+if ( WIN32 OR CYGWIN )
   include ( CheckIncludeFiles )
 
   # We have to set _WIN32_WINNT to make sure CMake gets correct results when probing for functions.
@@ -283,14 +297,10 @@ if ( WIN32 )
   # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
-  check_include_file ( dsound.h HAVE_DSOUND_H )
+  check_include_files ( "windows.h;dsound.h" HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
   check_include_files ( "mmdeviceapi.h;audioclient.h" HAVE_WASAPI_HEADERS )
   check_include_file ( objbase.h HAVE_OBJBASE_H )
-
-  if ( enable-network )
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
-  endif ( enable-network )
 
   if ( enable-dsound AND HAVE_DSOUND_H )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound;ksuser" )
@@ -311,6 +321,12 @@ if ( WIN32 )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};ole32" )
     set ( WASAPI_SUPPORT 1 )
   endif ()
+endif ( WIN32 OR CYGWIN )
+
+if ( WIN32 )
+  if ( enable-network )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
+  endif ( enable-network )
 
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )

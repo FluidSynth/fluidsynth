@@ -1777,7 +1777,7 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #endif
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!
 char* fluid_get_windows_error(void)
 {
