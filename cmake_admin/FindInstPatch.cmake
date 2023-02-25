@@ -33,7 +33,7 @@ find_path(
   InstPatch_INCLUDE_DIR
   NAMES "libinstpatch/libinstpatch.h"
   PATHS "${PC_INSTPATCH_INCLUDEDIR}"
-  PATH_SUFFIXES "libinstpatch-2")
+  PATH_SUFFIXES "libinstpatch-1" "libinstpatch-2")
 
 find_library(
   InstPatch_LIBRARY
