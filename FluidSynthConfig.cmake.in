@@ -64,16 +64,16 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   endif()
 
   if(NOT TARGET GLib2::glib-2 OR NOT TARGET GLib2::gthread-2)
-    find_dependency(GLib2 2.6.5)
+    find_dependency(GLib2 @GLIB2_MINUMUM_VERSION@)
   endif()
 
   # Optional dependencies
   if(FLUIDSYNTH_SUPPORT_ALSA AND NOT TARGET ALSA::ALSA)
-    find_dependency(ALSA 0.9.1)
+    find_dependency(ALSA @ALSA_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_DBUS AND NOT TARGET dbus-1)
-    find_dependency(DBus1 1.11.12)
+    find_dependency(DBus1 @DBUS_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_JACK AND NOT TARGET Jack::Jack)
@@ -85,15 +85,15 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_LASH AND NOT TARGET LASH::LASH)
-    find_dependency(LASH 0.3)
+    find_dependency(LASH @LASH_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_LIBINSTPATCH AND NOT TARGET InstPatch::libinstpatch)
-    find_dependency(InstPatch 1.1.0)
+    find_dependency(InstPatch @LIBINSTPATCH_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_LIBSNDFILE AND NOT TARGET SndFile::sndfile)
-    find_dependency(SndFile 1.0.0)
+    find_dependency(SndFile @LIBSNDFILE_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_MIDISHARE AND NOT TARGET MidiShare::MidiShare)
@@ -113,11 +113,11 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_PIPEWIRE AND NOT TARGET PipeWire::PipeWire)
-    find_dependency(PipeWire 0.3)
+    find_dependency(PipeWire @PIPEWIRE_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_PORTAUDIO AND NOT TARGET PortAudio::PortAudio)
-    find_dependency(PortAudio 2.19)
+    find_dependency(PortAudio @PORTAUDIO_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_READLINE AND NOT TARGET Readline::Readline)
@@ -125,7 +125,7 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_SDL2 AND NOT TARGET SDL2::SDL2)
-    find_dependency(SDL2 2.0.12)
+    find_dependency(SDL2 @SDL2_MINIMUM_VERSION@)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_SYSTEMD AND NOT Systemd::libsystemd)
