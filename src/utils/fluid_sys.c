@@ -30,7 +30,7 @@
 #include "fluid_rtkit.h"
 #endif
 
-#if HAVE_PTHREAD_H && !defined(WIN32)
+#if HAVE_PTHREAD_H && !defined(_WIN32)
 // Do not include pthread on windows. It includes winsock.h, which collides with ws2tcpip.h from fluid_sys.h
 // It isn't need on Windows anyway.
 #include <pthread.h>
@@ -132,7 +132,7 @@ fluid_default_log_function(int level, const char *message, void *data)
 {
     FILE *out;
 
-#if defined(WIN32)
+#if defined(_WIN32)
     out = stdout;
 #else
     out = stderr;
@@ -228,7 +228,7 @@ void* fluid_alloc(size_t len)
  */
 FILE *fluid_fopen(const char *filename, const char *mode)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     wchar_t *wpath = NULL, *wmode = NULL;
     FILE *file = NULL;
     int length;
@@ -420,7 +420,7 @@ fluid_utime(void)
      * used instead.
      * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
      */
-#if defined(WITH_PROFILING) &&  defined(WIN32) &&\
+#if defined(WITH_PROFILING) &&  defined(_WIN32) &&\
 	/* glib < 2.53.3 */\
 	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
     /* use high precision performance counter. */
@@ -449,7 +449,7 @@ fluid_utime(void)
 
 
 
-#if defined(WIN32)      /* Windoze specific stuff */
+#if defined(_WIN32)      /* Windoze specific stuff */
 
 void
 fluid_thread_self_set_prio(int prio_level)
@@ -864,7 +864,7 @@ int fluid_profile_is_cancel_req(void)
 {
 #ifdef FLUID_PROFILE_CANCEL
 
-#if defined(WIN32)      /* Windows specific stuff */
+#if defined(_WIN32)      /* Windows specific stuff */
     /* Profile cancellation is supported for Windows */
     /* returns TRUE if key <ENTER> is depressed */
     return(GetAsyncKeyState(VK_RETURN) & 0x1);
@@ -1357,7 +1357,7 @@ fluid_istream_gets(fluid_istream_t in, char *buf, int len)
 
     while(--len > 0)
     {
-#ifndef WIN32
+#ifndef _WIN32
         n = read(in, &c, 1);
 
         if(n == -1)
@@ -1447,7 +1447,7 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
 
     buf[4095] = 0;
 
-#ifndef WIN32
+#ifndef _WIN32
     return write(out, buf, FLUID_STRLEN(buf));
 #else
     {
@@ -1757,7 +1757,7 @@ FILE* fluid_file_open(const char* path, const char** errMsg)
 
 fluid_long_long_t fluid_file_tell(FILE* f)
 {
-#ifdef WIN32
+#ifdef _WIN32
     // On Windows, long is only a 32 bit integer. Thus ftell() does not support to handle files >2GiB.
     // We should use _ftelli64() in this case, however its availability depends on MS CRT and might not be
     // available on WindowsXP, Win98, etc.
@@ -1777,7 +1777,7 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #endif
 }
 
-#ifdef WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!
 char* fluid_get_windows_error(void)
 {

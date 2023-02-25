@@ -45,7 +45,7 @@ fluid_long_long_t default_ftell(void *handle)
     return FLUID_FTELL((FILE *)handle);
 }
 
-#ifdef WIN32
+#ifdef _WIN32
     #define PRIi64 "%I64d"
 #else
     #define PRIi64 "%lld"
