@@ -51,9 +51,10 @@ elseif(InstPatch_INCLUDE_DIR)
   set(InstPatch_VERSION "${CMAKE_MATCH_1}")
 endif()
 
-# Get the dependencies
-if(PC_INSTPATCH_LIBRARIES)
-  set(_instpatch_link_libraries "${PC_INSTPATCH_LIBRARIES}")
+# Handle transitive dependencies
+if(PC_INSTPATCH_FOUND)
+  get_linker_flags_from_pkg_config("${InstPatch_LIBRARY}" "PC_INSTPATCH"
+                                   "_instpatch_link_libraries")
 else()
   if(NOT TARGET GLib2::gobject-2
      OR NOT TARGET GLib2::gthread-2
@@ -81,8 +82,7 @@ if(InstPatch_FOUND AND NOT TARGET InstPatch::libinstpatch)
     PROPERTIES IMPORTED_LOCATION "${InstPatch_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_INSTPATCH_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${InstPatch_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_instpatch_link_libraries}"
-               INTERFACE_LINK_DIRECTORIES "${PC_INSTPATCH_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "${_instpatch_link_libraries}")
 endif()
 
 mark_as_advanced(InstPatch_INCLUDE_DIR InstPatch_LIBRARY)

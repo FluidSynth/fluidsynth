@@ -22,7 +22,7 @@ This will define the following variables:
 
 #]=======================================================================]
 
-# Use pkg-config if available 
+# Use pkg-config if available
 find_package(PkgConfig QUIET)
 pkg_check_modules(PC_JACK QUIET jack)
 
@@ -37,11 +37,12 @@ find_library(
   NAMES "jack"
   PATHS "${PC_JACK_LIBDIR}")
 
-# Get the dependencies
-if(PC_JACK_LIBRARIES)
-  set(_Jack_link_libraries "${PC_JACK_LIBRARIES}")
+# Handle transitive dependencies
+if(PC_JACK_FOUND)
+  get_linker_flags_from_pkg_config("${Jack_LIBRARY}" "PC_JACK"
+                                   "_jack_link_libraries")
 else()
-  set(_Jack_link_libraries "Threads::Threads")
+  set(_jack_link_libraries "Threads::Threads")
 endif()
 
 # Forward the result to CMake
@@ -57,8 +58,7 @@ if(Jack_FOUND AND NOT TARGET Jack::Jack)
     PROPERTIES IMPORTED_LOCATION "${Jack_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_JACK_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${Jack_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_Jack_link_libraries}"
-               INTERFACE_LINK_DIRECTORIES "${PC_JACK_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "${_jack_link_libraries}")
 endif()
 
 mark_as_advanced(Jack_INCLUDE_DIR Jack_LIBRARY)

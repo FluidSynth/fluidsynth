@@ -59,9 +59,10 @@ find_library(
   NAMES "vorbisfile"
   PATHS "${PC_VORBISFILE_LIBDIR}")
 
-# Handle the transitive dependencies
-if(PC_VORBIS_LIBRARIES)
-  set(_vorbis_link_libraries "${PC_VORBIS_LIBRARIES}")
+# Handle transitive dependencies
+if(PC_VORBIS_FOUND)
+  get_linker_flags_from_pkg_config("${Vorbis_LIBRARY}" "PC_VORBIS"
+                                   "_vorbis_link_libraries")
 else()
   if(NOT TARGET Ogg::ogg)
     find_package(Ogg QUIET)
@@ -83,8 +84,7 @@ if(Vorbis_FOUND AND NOT TARGET Vorbis::vorbis)
     PROPERTIES IMPORTED_LOCATION "${Vorbis_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_VORBIS_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${Vorbis_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_vorbis_link_libraries}"
-               INTERFACE_LINK_DIRECTORIES "${PC_VORBIS_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "${_vorbis_link_libraries}")
   set(Vorbis_Vorbis_FOUND TRUE)
 endif()
 
@@ -95,8 +95,7 @@ if(Vorbis_FOUND AND NOT TARGET Vorbis::vorbisenc)
     PROPERTIES IMPORTED_LOCATION "${Vorbis_Enc_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_VORBISENC_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${Vorbis_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "Vorbis::vorbis"
-               INTERFACE_LINK_DIRECTORIES "${PC_VORBISENC_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "Vorbis::vorbis")
   set(Vorbis_Enc_FOUND TRUE)
 endif()
 
@@ -107,8 +106,7 @@ if(Vorbis_FOUND AND NOT TARGET Vorbis::vorbisfile)
     PROPERTIES IMPORTED_LOCATION "${Vorbis_File_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_VORBISFILE_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${Vorbis_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "Vorbis::vorbis"
-               INTERFACE_LINK_DIRECTORIES "${PC_VORBISFILE_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "Vorbis::vorbis")
   set(Vorbis_File_FOUND TRUE)
 endif()
 

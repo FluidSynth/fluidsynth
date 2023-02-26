@@ -48,9 +48,7 @@ if(libffi_FOUND AND NOT TARGET libffi)
     libffi
     PROPERTIES IMPORTED_LOCATION "${libffi_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_FFI_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${libffi_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${PC_LIBFFI_LIBRARIES}"
-               INTERFACE_LINK_DIRECTORIES "${PC_LIBFFI_LIBDIR}")
+               INTERFACE_INCLUDE_DIRECTORIES "${libffi_INCLUDE_DIR}")
 endif()
 
 mark_as_advanced(libffi_LIBRARY libffi_INCLUDE_DIR)

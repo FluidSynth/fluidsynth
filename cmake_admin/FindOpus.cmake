@@ -86,9 +86,7 @@ if(Opus_FOUND AND NOT TARGET Opus::opus)
     Opus::opus
     PROPERTIES IMPORTED_LOCATION "${Opus_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_OPUS_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${_opus_include_dirs}"
-               INTERFACE_LINK_LIBRARIES "${PC_OPUS_LIBRARIES}"
-               INTERFACE_LINK_DIRECTORIES "${PC_OPUS_LIBDIR}")
+               INTERFACE_INCLUDE_DIRECTORIES "${_opus_include_dirs}")
 
   # Set additional variables for compatibility with upstream config
   set(OPUS_FOUND TRUE)

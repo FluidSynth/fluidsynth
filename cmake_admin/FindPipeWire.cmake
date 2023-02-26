@@ -24,7 +24,7 @@ This will define the following variables:
 
 #]=======================================================================]
 
-# Use pkg-config if available 
+# Use pkg-config if available
 find_package(PkgConfig QUIET)
 pkg_check_modules(PC_PIPEWIRE QUIET libpipewire-0.3)
 
@@ -83,9 +83,7 @@ if(PipeWire_FOUND AND NOT TARGET PipeWire::PipeWire)
     PROPERTIES IMPORTED_LOCATION "${PipeWire_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_PIPEWIRE_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES
-               "${PipeWire_INCLUDE_DIR};${Spa_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${PC_PIPEWIRE_LIBRARIES}"
-               INTERFACE_LINK_DIRECTORIES "${PC_PIPEWIRE_LIBDIR}")
+               "${PipeWire_INCLUDE_DIR};${Spa_INCLUDE_DIR}")
 endif()
 
 mark_as_advanced(PipeWire_INCLUDE_DIR Spa_INCLUDE_DIR PipeWire_LIBRARY)

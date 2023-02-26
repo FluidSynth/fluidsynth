@@ -61,9 +61,7 @@ if(Ogg_FOUND AND NOT TARGET Ogg::ogg)
     Ogg::ogg
     PROPERTIES IMPORTED_LOCATION "${_ogg_library}"
                INTERFACE_COMPILE_OPTIONS "${PC_OGG_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${Ogg_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${PC_OGG_LIBRARIES}"
-               INTERFACE_LINK_DIRECTORIES "${PC_OGG_LIBDIR}")
+               INTERFACE_INCLUDE_DIRECTORIES "${Ogg_INCLUDE_DIR}")
 
   # Set additional variables for compatibility with upstream config
   set(Ogg_INCLUDE_DIRS "${Ogg_INCLUDE_DIR}")

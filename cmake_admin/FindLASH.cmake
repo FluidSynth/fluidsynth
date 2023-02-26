@@ -56,9 +56,10 @@ else()
   set(LASH_VERSION ${_assumed_version})
 endif()
 
-# Get the dependencies
-if(PC_LASH_LIBRARIES)
-  set(_lash_link_libraries "${PC_LASH_LIBRARIES}")
+# Handle transitive dependencies
+if(PC_LASH_FOUND)
+  get_linker_flags_from_pkg_config("${LASH_LIBRARY}" "PC_LASH"
+                                   "_lash_link_libraries")
 else()
   set(_lash_link_libraries "Jack::Jack" "Threads::Threads" "ALSA::ALSA" "uuid")
 endif()
@@ -77,8 +78,7 @@ if(LASH_FOUND AND NOT TARGET LASH::LASH)
     PROPERTIES IMPORTED_LOCATION "${LASH_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_LASH_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${LASH_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_lash_link_libraries}"
-               INTERFACE_LINK_DIRECTORIES "${PC_LASH_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "${_lash_link_libraries}")
 endif()
 
 mark_as_advanced(LASH_INCLUDE_DIR LASH_LIBRARY)

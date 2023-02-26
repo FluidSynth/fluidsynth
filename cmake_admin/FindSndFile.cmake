@@ -62,7 +62,7 @@ if(PC_SNDFILE_VERSION)
   list(GET _sndfile_version_list 2 SndFile_VERSION_PATCH)
 elseif(SndFile_INCLUDE_DIR)
   file(READ "${SndFile_INCLUDE_DIR}/sndfile.h" _sndfile_h)
-  if("#define SNDFILE_!" MATCHES _snfile_h)
+  if("#define SNDFILE_1" MATCHES _snfile_h)
     set(SndFile_VERSION "1")
     set(SndFile_VERSION_MAJOR "1")
   endif()
@@ -138,8 +138,9 @@ int main() {
 endif()
 
 # Handle transitive dependencies
-if(PC_SNDFILE_LIBRARIES)
-  set(_sndfile_link_libraries "${PC_SNDFILE_LIBRARIES}")
+if(PC_SNDFILE_FOUND)
+  get_linker_flags_from_pkg_config("${_sndfile_library}" "PC_SNDFILE"
+                                   "_sndfile_link_libraries")
 else()
   if(SndFile_WITH_EXTERNAL_LIBS)
     list(APPEND _sndfile_link_libraries "FLAC::FLAC" "Opus::opus"
@@ -164,8 +165,7 @@ if(SndFile_FOUND AND NOT TARGET SndFile::sndfile)
     PROPERTIES IMPORTED_LOCATION "${_sndfile_library}"
                INTERFACE_COMPILE_OPTIONS "${PC_SNDFILE_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${SndFile_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_sndfile_link_libraries}"
-               INTERFACE_LINK_DIRECTORIES "${PC_SNDFILE_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "${_sndfile_link_libraries}")
 
   # Set additional variables for compatibility with upstream config
   set(SNDFILE_FOUND TRUE)
