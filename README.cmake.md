@@ -174,16 +174,17 @@ endif()
 ```
 
 The last thing we need to search for is the usage requirements, providing them
-makes static linking much easier. If pkg-config is available, this is once
-again trivial, otherwise you need to refer to the upstream documentation. In
-the case of libinstpatch, we need `glib-2` and `libsndfile`, fortunately, we
-have Find modules for both libraries already:
+makes static linking much easier. If pkg-config is available, we use a helper
+function to get the correct set of link flags, otherwise you need to refer to
+the upstream documentation. In the case of libinstpatch, we need `glib-2` and
+`libsndfile`, fortunately, we already have Find modules for both libraries:
 
-file [cmake_admin/FindInstPatch.cmake](./cmake_admin/FindInstPatch.cmake#L55), lines 55-68:
+file [cmake_admin/FindInstPatch.cmake](./cmake_admin/FindInstPatch.cmake#L55), lines 55-69:
 
 ```cmake
-if(PC_INSTPATCH_LIBRARIES)
-  set(_instpatch_link_libraries "${PC_INSTPATCH_LIBRARIES}")
+if(PC_INSTPATCH_FOUND)
+  get_linker_flags_from_pkg_config("${InstPatch_LIBRARY}" "PC_INSTPATCH"
+                                   "_instpatch_link_libraries")
 else()
   if(NOT TARGET GLib2::gobject-2
      OR NOT TARGET GLib2::gthread-2
@@ -201,7 +202,7 @@ endif()
 We then use `find_package_handle_standard_args` to check that all the
 variables are set and the version matches what was requested:
 
-file [cmake_admin/FindInstPatch.cmake](./cmake_admin/FindInstPatch.cmake#L71), lines 71-75:
+file [cmake_admin/FindInstPatch.cmake](./cmake_admin/FindInstPatch.cmake#L72), lines 72-76:
 
 ```cmake
 include(FindPackageHandleStandardArgs)
@@ -216,7 +217,7 @@ otherwise.
 
 If the library is found, we then create the target and set its properties:
 
-file [cmake_admin/FindInstPatch.cmake](./cmake_admin/FindInstPatch.cmake#L77), lines 77-86:
+file [cmake_admin/FindInstPatch.cmake](./cmake_admin/FindInstPatch.cmake#L78), lines 78-86:
 
 ```cmake
 if(InstPatch_FOUND AND NOT TARGET InstPatch::libinstpatch)
@@ -226,8 +227,7 @@ if(InstPatch_FOUND AND NOT TARGET InstPatch::libinstpatch)
     PROPERTIES IMPORTED_LOCATION "${InstPatch_LIBRARY}"
                INTERFACE_COMPILE_OPTIONS "${PC_INSTPATCH_CFLAGS_OTHER}"
                INTERFACE_INCLUDE_DIRECTORIES "${InstPatch_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_instpatch_link_libraries}"
-               INTERFACE_LINK_DIRECTORIES "${PC_INSTPATCH_LIBDIR}")
+               INTERFACE_LINK_LIBRARIES "${_instpatch_link_libraries}")
 endif()
 ```
 
@@ -237,8 +237,8 @@ Here is a breakdown of the properties:
 - `INTERFACE_INCLUDE_DIRECTORES` should be the result of `find_path`;
 - `INTERFACE_LINK_LIBRARIES` should be the transitive usage requirements, it
   may be omitted if there are none;
-- `INTERFACE_COMPILE_OPTIONS` and `INTERFACE_LINK_DIRECTORIES` should be set to
-  what pkg-config provided us, if pkg-config is unavailable they will be ignored.
+- `INTERFACE_COMPILE_OPTIONS` should be set to what pkg-config provided us, if
+  pkg-config is unavailable it will be ignored.
 
 Lastly, we call mark a few cache variables as advanced:
 
