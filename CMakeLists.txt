@@ -852,6 +852,7 @@ write_basic_package_version_file(
 unset ( FIND_MODULES )
 if ( NOT BUILD_SHARED_LIBS )
   file(GLOB FIND_MODULES "${FluidSynth_SOURCE_DIR}/cmake_admin/Find*.cmake")
+  file(COPY ${FIND_MODULES} DESTINATION "${FluidSynth_BINARY_DIR}")
 endif ( NOT BUILD_SHARED_LIBS )
 
 # Here, configure_file() is used instead of the more orthodox macro
