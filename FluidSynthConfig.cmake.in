@@ -46,8 +46,11 @@ set(FLUIDSYNTH_SUPPORT_UBSAN @ENABLE_UBSAN@)
 
 # Only load dependencies on static builds
 if(NOT FLUIDSYNTH_IS_SHARED)
-  # Allows CMake to use the shipped Find modules
+  # Allows CMake to use the additional modules
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+
+  # Load the pkg-config helpers
+  include(PkgConfigHelpers)
 
   # Check the system has a separated math library
   find_library(HAS_LIBM NAMES "m" NO_CACHE)

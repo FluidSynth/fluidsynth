@@ -508,6 +508,8 @@ set ( PIPEWIRE_MINIMUM_VERSION 0.3 )
 set ( PORTAUDIO_MINIMUM_VERSION 2.19 )
 set ( PULSEAUDIO_MINIMUM_VERSION 2.0 )
 
+include ( PkgConfigHelpers ) # Needed for Find modules using pkg-config
+
 # Mandatory libraries: glib and gthread
 find_package ( GLib2 ${GLIB2_MINUMUM_VERSION} REQUIRED )
 list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
@@ -515,8 +517,6 @@ list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
 if ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
     message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
 endif ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
-
-include ( PkgConfigHelpers ) # has unset_pkg_config()
 
 # Optional features
 unset ( LIBSNDFILE_SUPPORT CACHE )
@@ -847,12 +847,13 @@ write_basic_package_version_file(
     COMPATIBILITY SameMinorVersion
 )
 
-# In static builds, we need the extra find modules so the config can
+# In static builds, we need the extra modules so the config can
 # find the transitive dependencies.
-unset ( FIND_MODULES )
+unset ( EXTRA_STATIC_MODULES )
 if ( NOT BUILD_SHARED_LIBS )
-  file(GLOB FIND_MODULES "${FluidSynth_SOURCE_DIR}/cmake_admin/Find*.cmake")
-  file(COPY ${FIND_MODULES} DESTINATION "${FluidSynth_BINARY_DIR}")
+  file ( GLOB EXTRA_STATIC_MODULES "${FluidSynth_SOURCE_DIR}/cmake_admin/Find*.cmake" )
+  list ( APPEND EXTRA_STATIC_MODULES "${FluidSynth_SOURCE_DIR}/cmake_admin/PkgConfigHelpers.cmake" )
+  file ( COPY ${EXTRA_STATIC_MODULES} DESTINATION "${FluidSynth_BINARY_DIR}" )
 endif ( NOT BUILD_SHARED_LIBS )
 
 # Here, configure_file() is used instead of the more orthodox macro
@@ -862,7 +863,7 @@ endif ( NOT BUILD_SHARED_LIBS )
 configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
 install(FILES "${FluidSynth_BINARY_DIR}/FluidSynthConfig.cmake"
               "${FluidSynth_BINARY_DIR}/FluidSynthConfigVersion.cmake"
-              ${FIND_MODULES}
+              ${EXTRA_STATIC_MODULES}
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth")
 
 # Extra targets for Unix build environments
