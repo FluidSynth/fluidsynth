@@ -387,8 +387,9 @@ if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
 endif()
 
-if ( DEFINED SDL2_TARGET AND SDL2_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${SDL2_TARGET} )
+if ( SDL2_SUPPORT )
+    target_include_directories ( libfluidsynth-OBJ PRIVATE ${SDL2_INCLUDE_DIRS} )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${SDL2_LIBRARIES} )
 endif()
 
 if ( TARGET oboe::oboe AND OBOE_SUPPORT )
@@ -470,11 +471,9 @@ if ( TARGET GLib2::glib-2 ) # because g_file_test()
     target_link_libraries ( fluidsynth PRIVATE GLib2::glib-2 )
 endif()
 
-if ( DEFINED SDL2_TARGET AND SDL2_SUPPORT ) # because SDL_Init() etc.
-    target_link_libraries ( fluidsynth PRIVATE ${SDL2_TARGET} )
-    if ( TARGET SDL2::SDL2main )
-      target_link_libraries ( fluidsynth PRIVATE SDL2::SDL2main )
-    endif()
+if ( SDL2_SUPPORT ) # because SDL_Init() etc.
+    target_include_directories ( fluidsynth PRIVATE ${SDL2_INCLUDE_DIRS} )
+    target_link_libraries ( fluidsynth PRIVATE ${SDL2_LIBRARIES} )
 endif()
 
 if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT ) # because pw_init() etc.

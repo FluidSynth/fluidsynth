@@ -125,7 +125,7 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_SDL2 AND NOT TARGET SDL2::SDL2)
-    find_dependency(SDL2 @SDL2_MINIMUM_VERSION@)
+    find_dependency(SDL2)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_SYSTEMD AND NOT Systemd::libsystemd)
