@@ -20,8 +20,6 @@ Result Variables
 This will define the following variables:
 
 ``mp3lame_FOUND``
-  True if all the libraries were found.
-``mp3lame_mp3lame_FOUND``
   True if the mp3lame library was found.
 ``mp3lame_mpghip_FOUND``
   True if the mpghip library was found.
@@ -59,10 +57,6 @@ if(mp3lame_mpghip_LIBRARY AND NOT TARGET mp3lame::mpghip)
     PROPERTIES IMPORTED_LOCATION "${mp3lame_mpghip_LIBRARY}"
                INTERFACE_INCLUDE_DIRECTORIES "${mp3lame_INCLUDE_DIR}")
   set(mp3lame_mpghip_FOUND)
-endif()
-
-if(NOT mp3lame_mp3lame_LIBRARY OR NOT mp3lame_mpghip_LIBRARY)
-  set(mp3lame_FOUND FALSE)
 endif()
 
 mark_as_advanced(mp3lame_INCLUDE_DIR mp3lame_mp3lame_LIBRARY
