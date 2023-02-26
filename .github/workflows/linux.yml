@@ -13,6 +13,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
+  INSTALL_LOCATION: ${{github.workspace}}/fluidsynth_install
 
 jobs:
   build:
@@ -78,7 +79,7 @@ jobs:
       run: |
         export CC=${{ matrix.CC }}
         export CXX=${{ matrix.CXX }}
-        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev ${{ matrix.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
+        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev ${{ matrix.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX="$INSTALL_LOCATION" -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -100,3 +101,17 @@ jobs:
     - name: Install
       working-directory: ${{github.workspace}}/build
       run: make install
+
+    - name: Consume from build
+      run: |
+        export CC=${{ matrix.CC }}
+        export CXX=${{ matrix.CXX }}
+        cmake -S test/cmake -B consume-build -DFluidSynth_DIR="${{github.workspace}}/build" -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        cmake --build consume-build
+
+    - name: Consume from install
+      run: |
+        export CC=${{ matrix.CC }}
+        export CXX=${{ matrix.CXX }}
+        cmake -S test/cmake -B consume-install -DFluidSynth_DIR="$INSTALL_LOCATION/lib/cmake" -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        cmake --build consume-install
