@@ -59,6 +59,20 @@ find_library(
   NAMES "syn123"
   PATHS "${PC_SYN123_LIBDIR}")
 
+# Extract additional flags if pkg-config is available
+if(PC_MPG123_FOUND)
+  get_target_properties_from_pkg_config("${MPG123_libmpg123_LIBRARY}"
+                                        "PC_MPG123" "_mpg123")
+endif()
+if(PC_OUT123_FOUND)
+  get_target_properties_from_pkg_config("${MPG123_libout123_LIBRARY}"
+                                        "PC_OUT123" "_out123")
+endif()
+if(PC_SYN123_FOUND)
+  get_target_properties_from_pkg_config("${MPG123_libsyn123_LIBRARY}"
+                                        "PC_SYN123" "_syn123")
+endif()
+
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -71,8 +85,10 @@ if(MPG123_FOUND AND NOT TARGET MPG123::libmpg123)
   set_target_properties(
     MPG123::libmpg123
     PROPERTIES IMPORTED_LOCATION "${MPG123_libmpg123_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_MPG123_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${MPG123_INCLUDE_DIR}")
+               INTERFACE_COMPILE_OPTIONS "${_mpg123_compile_options}"
+               INTERFACE_INCLUDE_DIRECTORIES "${MPG123_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "${_mpg123_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_mpg123_link_directories}")
   set(MPG123_libmpg123_FOUND TRUE)
 endif()
 
@@ -81,8 +97,10 @@ if(MPG123_FOUND AND NOT TARGET MPG123::libout123)
   set_target_properties(
     MPG123::libout123
     PROPERTIES IMPORTED_LOCATION "${MPG123_libout123_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_OUT123_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${MPG123_INCLUDE_DIR}")
+               INTERFACE_COMPILE_OPTIONS "${_out123_compile_options}"
+               INTERFACE_INCLUDE_DIRECTORIES "${MPG123_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "${_out123_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_out123_link_directories}")
   set(MPG123_libout123_FOUND TRUE)
 endif()
 
@@ -91,8 +109,10 @@ if(MPG123_FOUND AND NOT TARGET MPG123::libsyn123)
   set_target_properties(
     MPG123::libsyn123
     PROPERTIES IMPORTED_LOCATION "${MPG123_libsyn123_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_SYN123_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${MPG123_INCLUDE_DIR}")
+               INTERFACE_COMPILE_OPTIONS "${_syn123_compile_options}"
+               INTERFACE_INCLUDE_DIRECTORIES "${MPG123_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "${_syn123_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_syn123_link_directories}")
   set(MPG123_libsyn123_FOUND TRUE)
 endif()
 

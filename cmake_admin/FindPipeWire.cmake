@@ -68,6 +68,12 @@ elseif(PipeWire_INCLUDE_DIR)
   endif()
 endif()
 
+# Extract additional flags if pkg-config is available
+if(PC_PIPEWIRE_FOUND)
+  get_target_properties_from_pkg_config("${PipeWire_LIBRARY}" "PC_PIPEWIRE"
+                                        "_pipewire")
+endif()
+
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -81,9 +87,11 @@ if(PipeWire_FOUND AND NOT TARGET PipeWire::PipeWire)
   set_target_properties(
     PipeWire::PipeWire
     PROPERTIES IMPORTED_LOCATION "${PipeWire_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_PIPEWIRE_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_pipewire_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES
-               "${PipeWire_INCLUDE_DIR};${Spa_INCLUDE_DIR}")
+               "${PipeWire_INCLUDE_DIR};${Spa_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "${_pipewire_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_pipewire_link_directories}")
 endif()
 
 mark_as_advanced(PipeWire_INCLUDE_DIR Spa_INCLUDE_DIR PipeWire_LIBRARY)

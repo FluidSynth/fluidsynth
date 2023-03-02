@@ -39,8 +39,7 @@ find_library(
 
 # Handle transitive dependencies
 if(PC_JACK_FOUND)
-  get_linker_flags_from_pkg_config("${Jack_LIBRARY}" "PC_JACK"
-                                   "_jack_link_libraries")
+  get_target_properties_from_pkg_config("${Jack_LIBRARY}" "PC_JACK" "_jack")
 else()
   set(_jack_link_libraries "Threads::Threads")
 endif()
@@ -56,9 +55,10 @@ if(Jack_FOUND AND NOT TARGET Jack::Jack)
   set_target_properties(
     Jack::Jack
     PROPERTIES IMPORTED_LOCATION "${Jack_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_JACK_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_jack_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${Jack_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_jack_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_jack_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_jack_link_directories}")
 endif()
 
 mark_as_advanced(Jack_INCLUDE_DIR Jack_LIBRARY)

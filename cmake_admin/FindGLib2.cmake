@@ -106,8 +106,8 @@ find_package_handle_standard_args(
 if(GLib2_glib-2_LIBRARY AND NOT TARGET GLib2::glib-2)
   # Handle transitive dependencies
   if(PC_GLIB2_FOUND)
-    get_linker_flags_from_pkg_config("${GLib2_glib-2_LIBRARY}" "PC_GLIB2"
-                                     "_glib2_link_libraries")
+    get_target_properties_from_pkg_config("${GLib2_glib-2_LIBRARY}" "PC_GLIB2"
+                                          "_glib2")
   else()
     find_package(Intl QUIET)
     find_package(Iconv QUIET)
@@ -157,16 +157,17 @@ if(GLib2_glib-2_LIBRARY AND NOT TARGET GLib2::glib-2)
   set_target_properties(
     GLib2::glib-2
     PROPERTIES IMPORTED_LOCATION "${GLib2_glib-2_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_GLIB2_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_glib2_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${GLib2_INCLUDE_DIRS}"
-               INTERFACE_LINK_LIBRARIES "${_glib2_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_glib2_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_glib2_link_directories}")
 endif()
 
 if(GLib2_gthread-2_LIBRARY AND NOT TARGET GLib2::gthread-2)
   # Handle transitive dependencies
   if(PC_GTHREAD2_FOUND)
-    get_linker_flags_from_pkg_config("${GLib2_gthread-2_LIBRARY}" "PC_GTHREAD2"
-                                     "_gthread2_link_libraries")
+    get_target_properties_from_pkg_config("${GLib2_gthread-2_LIBRARY}"
+                                          "PC_GTHREAD2" "_gthread2")
   else()
     set(_gthread2_link_libraries "Threads::Threads" "GLib2::glib-2")
   endif()
@@ -175,16 +176,17 @@ if(GLib2_gthread-2_LIBRARY AND NOT TARGET GLib2::gthread-2)
   set_target_properties(
     GLib2::gthread-2
     PROPERTIES IMPORTED_LOCATION "${GLib2_gthread-2_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_GTHREAD2_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_gthread2_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${GLib2_INCLUDE_DIRS}"
-               INTERFACE_LINK_LIBRARIES "${_gthread2_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_gthread2_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_gthread2_link_directories}")
 endif()
 
 if(GLib2_gmodule-2_LIBRARY AND NOT TARGET GLib2::gmodule-2)
   # Handle transitive dependencies
   if(PC_GMODULE2_FOUND)
-    get_linker_flags_from_pkg_config("${GLib2_gmodule-2_LIBRARY}" "PC_GMODULE2"
-                                     "_gmodule2_link_libraries")
+    get_target_properties_from_pkg_config("${GLib2_gmodule-2_LIBRARY}"
+                                          "PC_GMODULE2" "_gmodule2")
   else()
     set(_gmodule2_link_libraries "GLib2::glib-2")
   endif()
@@ -193,16 +195,17 @@ if(GLib2_gmodule-2_LIBRARY AND NOT TARGET GLib2::gmodule-2)
   set_target_properties(
     GLib2::gmodule-2
     PROPERTIES IMPORTED_LOCATION "${GLib2_gmodule-2_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_GMODULE2_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_gmodule2_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${GLib2_INCLUDE_DIRS}"
-               INTERFACE_LINK_LIBRARIES "${_gmodule2_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_gmodule2_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_gmodule2_link_directories}")
 endif()
 
 if(GLib2_gobject-2_LIBRARY AND NOT TARGET GLib2::gobject-2)
   # Handle transitive dependencies
   if(PC_GOBJECT2_FOUND)
-    get_linker_flags_from_pkg_config("${GLib2_gobject-2_LIBRARY}" "PC_OBJECT2"
-                                     "_gobject2_link_libraries")
+    get_target_properties_from_pkg_config("${GLib2_gobject-2_LIBRARY}"
+                                          "PC_OBJECT2" "_gobject2")
   else()
     find_package(libffi QUIET)
     set(_gobject2_link_libraries "libffi" "GLib2::glib-2")
@@ -212,9 +215,10 @@ if(GLib2_gobject-2_LIBRARY AND NOT TARGET GLib2::gobject-2)
   set_target_properties(
     GLib2::gobject-2
     PROPERTIES IMPORTED_LOCATION "${GLib2_gobject-2_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_GOBJECT2_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_gobject2_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${GLib2_INCLUDE_DIRS}"
-               INTERFACE_LINK_LIBRARIES "${_gobject2_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_gobject2_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_gobject2_link_directories}")
 endif()
 
 mark_as_advanced(GLib2_INCLUDE_DIR GLib2_glib-2_LIBRARY GLib2_gthread-2_LIBRARY

@@ -56,8 +56,7 @@ find_library(
 
 # Handle transitive dependencies
 if(PC_FLAC_FOUND)
-  get_linker_flags_from_pkg_config("${FLAC_LIBRARY}" "PC_FLAC"
-                                   "_flac_link_libraries")
+  get_target_properties_from_pkg_config("${FLAC_LIBRARY}" "PC_FLAC" "_flac")
 else()
   if(NOT TARGET "Ogg::ogg")
     find_package(Ogg QUIET)
@@ -66,8 +65,8 @@ else()
 endif()
 
 if(PC_FLAC++_FOUND)
-  get_linker_flags_from_pkg_config("${FLAC++_LIBRARY}" "PC_FLAC++"
-                                   "_flac++_link_libraries")
+  get_target_properties_from_pkg_config("${FLAC++_LIBRARY}" "PC_FLAC++"
+                                        "_flac++")
 else()
   set(_flac++_link_libraries "FLAC::FLAC")
 endif()
@@ -84,9 +83,10 @@ if(FLAC_FOUND AND NOT TARGET FLAC::FLAC)
   set_target_properties(
     FLAC::FLAC
     PROPERTIES IMPORTED_LOCATION "${FLAC_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_FLAC_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_flac_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${FLAC_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_flac_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_flac_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_flac_link_directories}")
   set(FLAC_FLAC_FOUND TRUE)
 endif()
 
@@ -95,9 +95,10 @@ if(FLAC_FOUND AND NOT TARGET FLAC::FLAC++)
   set_target_properties(
     FLAC::FLAC++
     PROPERTIES IMPORTED_LOCATION "${FLAC++_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_FLAC++_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_flac++_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${FLAC++_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_flac++_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_flac++_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_flac++_link_directories}")
   set(FLAC_FLAC++_FOUND TRUE)
 endif()
 

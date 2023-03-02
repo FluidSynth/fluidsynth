@@ -70,6 +70,11 @@ else()
   set(OPUS_VERSION_PATCH)
 endif()
 
+# Extract additional flags if pkg-config is available
+if(PC_OPUS_FOUND)
+  get_target_properties_from_pkg_config("${Opus_LIBRARY}" "PC_OPUS" "_opus")
+endif()
+
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -85,8 +90,10 @@ if(Opus_FOUND AND NOT TARGET Opus::opus)
   set_target_properties(
     Opus::opus
     PROPERTIES IMPORTED_LOCATION "${Opus_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_OPUS_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${_opus_include_dirs}")
+               INTERFACE_COMPILE_OPTIONS "${_opus_compile_options}"
+               INTERFACE_INCLUDE_DIRECTORIES "${_opus_include_dirs}"
+               INTERFACE_LINK_LIBRARIES "${_opus_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_opus_link_directories}")
 
   # Set additional variables for compatibility with upstream config
   set(OPUS_FOUND TRUE)

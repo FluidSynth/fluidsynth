@@ -41,8 +41,8 @@ find_library(
 
 # Handle transitive dependencies
 if(PC_PORTAUDIO_FOUND)
-  get_linker_flags_from_pkg_config("${PortAudio_LIBRARY}" "PC_PORTAUDIO"
-                                   "_portaudio_link_libraries")
+  get_target_properties_from_pkg_config("${PortAudio_LIBRARY}" "PC_PORTAUDIO"
+                                        "_portaudio")
 else()
   set(_portaudio_link_libraries "ALSA::ALSA" ${MATH_LIBRARY} "Threads::Threads")
 endif()
@@ -57,9 +57,10 @@ if(PortAudio_FOUND AND NOT TARGET PortAudio::PortAudio)
   set_target_properties(
     PortAudio::PortAudio
     PROPERTIES IMPORTED_LOCATION "${PortAudio_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_PORTAUDIO_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_portaudio_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${PortAudio_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_portaudio_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_portaudio_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_portaudio_link_directories}")
 endif()
 
 mark_as_advanced(PortAudio_INCLUDE_DIR PortAudio_LIBRARY)

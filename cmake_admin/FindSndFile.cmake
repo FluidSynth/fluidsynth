@@ -139,8 +139,8 @@ endif()
 
 # Handle transitive dependencies
 if(PC_SNDFILE_FOUND)
-  get_linker_flags_from_pkg_config("${_sndfile_library}" "PC_SNDFILE"
-                                   "_sndfile_link_libraries")
+  get_target_properties_from_pkg_config("${_sndfile_library}" "PC_SNDFILE"
+                                        "_sndfile")
 else()
   if(SndFile_WITH_EXTERNAL_LIBS)
     list(APPEND _sndfile_link_libraries "FLAC::FLAC" "Opus::opus"
@@ -163,9 +163,10 @@ if(SndFile_FOUND AND NOT TARGET SndFile::sndfile)
   set_target_properties(
     SndFile::sndfile
     PROPERTIES IMPORTED_LOCATION "${_sndfile_library}"
-               INTERFACE_COMPILE_OPTIONS "${PC_SNDFILE_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_sndfile_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${SndFile_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_sndfile_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_sndfile_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_sndfile_link_directories}")
 
   # Set additional variables for compatibility with upstream config
   set(SNDFILE_FOUND TRUE)

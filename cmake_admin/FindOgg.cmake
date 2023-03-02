@@ -49,6 +49,11 @@ find_library(
   NAMES "ogg"
   PATHS "${PC_OGG_LIBDIR}")
 
+# Extract additional flags if pkg-config is available
+if(PC_OGG_FOUND)
+  get_target_properties_from_pkg_config("${_ogg_library}" "PC_OGG" "_ogg")
+endif()
+
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Ogg REQUIRED_VARS "_ogg_library"
@@ -60,8 +65,10 @@ if(Ogg_FOUND AND NOT TARGET Ogg::ogg)
   set_target_properties(
     Ogg::ogg
     PROPERTIES IMPORTED_LOCATION "${_ogg_library}"
-               INTERFACE_COMPILE_OPTIONS "${PC_OGG_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${Ogg_INCLUDE_DIR}")
+               INTERFACE_COMPILE_OPTIONS "${_ogg_compile_options}"
+               INTERFACE_INCLUDE_DIRECTORIES "${Ogg_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "${_ogg_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_ogg_link_directories}")
 
   # Set additional variables for compatibility with upstream config
   set(Ogg_INCLUDE_DIRS "${Ogg_INCLUDE_DIR}")

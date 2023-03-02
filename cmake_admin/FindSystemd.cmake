@@ -37,6 +37,12 @@ find_library(
   NAMES "systemd"
   PATHS "${PC_SYSTEMD_LIBDIR}")
 
+# Extract additional flags if pkg-config is available
+if(PC_SYSTEMD_FOUND)
+  get_target_properties_from_pkg_config("${Systemd_LIBRARY}" "PC_SYSTEMD"
+                                        "_systemd")
+endif()
+
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Systemd REQUIRED_VARS "Systemd_LIBRARY"
@@ -47,8 +53,10 @@ if(Systemd_FOUND AND NOT TARGET Systemd::libsystemd)
   set_target_properties(
     Systemd::libsystemd
     PROPERTIES IMPORTED_LOCATION "${Systemd_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_SYSTEMD_CFLAGS_OTHER}"
-               INTERFACE_INCLUDE_DIRECTORIES "${Systemd_INCLUDE_DIR}")
+               INTERFACE_COMPILE_OPTIONS "${_systemd_compile_options}"
+               INTERFACE_INCLUDE_DIRECTORIES "${Systemd_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "${_systemd_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_systemd_link_directories}")
 endif()
 
 mark_as_advanced(Systemd_INCLUDE_DIR Systemd_LIBRARY)

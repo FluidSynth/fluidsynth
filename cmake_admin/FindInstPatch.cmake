@@ -53,8 +53,8 @@ endif()
 
 # Handle transitive dependencies
 if(PC_INSTPATCH_FOUND)
-  get_linker_flags_from_pkg_config("${InstPatch_LIBRARY}" "PC_INSTPATCH"
-                                   "_instpatch_link_libraries")
+  get_target_properties_from_pkg_config("${InstPatch_LIBRARY}" "PC_INSTPATCH"
+                                        "_instpatch")
 else()
   if(NOT TARGET GLib2::gobject-2
      OR NOT TARGET GLib2::gthread-2
@@ -80,9 +80,10 @@ if(InstPatch_FOUND AND NOT TARGET InstPatch::libinstpatch)
   set_target_properties(
     InstPatch::libinstpatch
     PROPERTIES IMPORTED_LOCATION "${InstPatch_LIBRARY}"
-               INTERFACE_COMPILE_OPTIONS "${PC_INSTPATCH_CFLAGS_OTHER}"
+               INTERFACE_COMPILE_OPTIONS "${_instpatch_compile_options}"
                INTERFACE_INCLUDE_DIRECTORIES "${InstPatch_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "${_instpatch_link_libraries}")
+               INTERFACE_LINK_LIBRARIES "${_instpatch_link_libraries}"
+               INTERFACE_LINK_DIRECTORIES "${_instpatch_link_directories}")
 endif()
 
 mark_as_advanced(InstPatch_INCLUDE_DIR InstPatch_LIBRARY)
