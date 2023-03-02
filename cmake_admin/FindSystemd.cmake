@@ -30,12 +30,12 @@ pkg_check_modules(PC_SYSTEMD QUIET libsystemd)
 find_path(
   Systemd_INCLUDE_DIR
   NAMES "systemd/sd-daemon.h"
-  PATHS "${PC_SYSTEMD_INCLUDEDIR}")
+  HINTS "${PC_SYSTEMD_INCLUDEDIR}")
 
 find_library(
   Systemd_LIBRARY
   NAMES "systemd"
-  PATHS "${PC_SYSTEMD_LIBDIR}")
+  HINTS "${PC_SYSTEMD_LIBDIR}")
 
 # Extract additional flags if pkg-config is available
 if(PC_SYSTEMD_FOUND)

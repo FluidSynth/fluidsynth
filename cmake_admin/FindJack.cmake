@@ -30,12 +30,12 @@ pkg_check_modules(PC_JACK QUIET jack)
 find_path(
   Jack_INCLUDE_DIR
   NAMES "jack/jack.h"
-  PATHS "${PC_JACK_INCLUDEDIR}")
+  HINTS "${PC_JACK_INCLUDEDIR}")
 
 find_library(
   Jack_LIBRARY
   NAMES "jack"
-  PATHS "${PC_JACK_LIBDIR}")
+  HINTS "${PC_JACK_LIBDIR}")
 
 # Handle transitive dependencies
 if(PC_JACK_FOUND)

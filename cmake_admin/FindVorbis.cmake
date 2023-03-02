@@ -42,22 +42,22 @@ pkg_check_modules(PC_VORBISFILE QUIET vorbisfile)
 find_path(
   Vorbis_INCLUDE_DIR
   NAMES "vorbis/codec.h"
-  PATHS "${PC_VORBIS_INCLUDEDIR}")
+  HINTS "${PC_VORBIS_INCLUDEDIR}")
 
 find_library(
   Vorbis_LIBRARY
   NAMES "vorbis"
-  PATHS "${PC_VORBIS_LIBDIR}")
+  HINTS "${PC_VORBIS_LIBDIR}")
 
 find_library(
   Vorbis_Enc_LIBRARY
   NAMES "vorbisenc"
-  PATHS "${PC_VORBISENC_LIBDIR}")
+  HINTS "${PC_VORBISENC_LIBDIR}")
 
 find_library(
   Vorbis_File_LIBRARY
   NAMES "vorbisfile"
-  PATHS "${PC_VORBISFILE_LIBDIR}")
+  HINTS "${PC_VORBISFILE_LIBDIR}")
 
 # Handle transitive dependencies
 if(PC_VORBIS_FOUND)

@@ -32,19 +32,19 @@ pkg_check_modules(PC_PIPEWIRE QUIET libpipewire-0.3)
 find_path(
   PipeWire_INCLUDE_DIR
   NAMES "pipewire/pipewire.h"
-  PATHS "${PC_PIPEWIRE_INCLUDEDIR}"
+  HINTS "${PC_PIPEWIRE_INCLUDEDIR}"
   PATH_SUFFIXES "pipewire-0.3")
 
 find_path(
   Spa_INCLUDE_DIR
   NAMES "spa/support/plugin.h"
-  PATHS "${PC_PIPEWIRE_INCLUDEDIR}"
+  HINTS "${PC_PIPEWIRE_INCLUDEDIR}"
   PATH_SUFFIXES "spa-0.2")
 
 find_library(
   PipeWire_LIBRARY
   NAMES "pipewire-0.3"
-  PATHS "${PC_PIPEWIRE_LIBDIR}")
+  HINTS "${PC_PIPEWIRE_LIBDIR}")
 
 # Get version from pkg-config or read the version header
 if(PC_PIPEWIRE_VERSION)

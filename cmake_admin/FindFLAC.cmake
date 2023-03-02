@@ -37,22 +37,22 @@ pkg_check_modules(PC_FLAC++ QUIET flac++)
 find_path(
   FLAC_INCLUDE_DIR
   NAMES "FLAC/all.h"
-  PATHS "PC_FLAC_INCLUDEDIR")
+  HINTS "PC_FLAC_INCLUDEDIR")
 
 find_path(
   FLAC++_INCLUDE_DIR
   NAMES "FLAC++/all.h"
-  PATHS "PC_FLAC++_INCLUDEDIR")
+  HINTS "PC_FLAC++_INCLUDEDIR")
 
 find_library(
   FLAC_LIBRARY
   NAMES "FLAC"
-  PATHS "${PC_FLAC_LIBDIR}")
+  HINTS "${PC_FLAC_LIBDIR}")
 
 find_library(
   FLAC++_LIBRARY
   NAMES "FLAC++"
-  PATHS "${PC_FLAC++_LIBDIR}")
+  HINTS "${PC_FLAC++_LIBDIR}")
 
 # Handle transitive dependencies
 if(PC_FLAC_FOUND)

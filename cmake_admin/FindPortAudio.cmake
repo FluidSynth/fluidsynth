@@ -32,12 +32,12 @@ pkg_check_modules(PC_PORTAUDIO QUIET portaudio-2.0)
 find_path(
   PortAudio_INCLUDE_DIR
   NAMES "portaudio.h"
-  PATHS "${PC_PORTAUDIO_INCLUDEDIR}")
+  HINTS "${PC_PORTAUDIO_INCLUDEDIR}")
 
 find_library(
   PortAudio_LIBRARY
   NAMES "portaudio"
-  PATHS "${PC_PORTAUDIO_LIBDIR}")
+  HINTS "${PC_PORTAUDIO_LIBDIR}")
 
 # Handle transitive dependencies
 if(PC_PORTAUDIO_FOUND)

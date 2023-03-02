@@ -44,12 +44,12 @@ pkg_check_modules(PC_OPUS QUIET opus)
 find_path(
   Opus_INCLUDE_DIR
   NAMES "opus/opus.h"
-  PATHS "${PC_OPUS_INCLUDEDIR}")
+  HINTS "${PC_OPUS_INCLUDEDIR}")
 
 find_library(
   Opus_LIBRARY
   NAMES "opus"
-  PATHS "${PC_OPUS_LIBDIR}")
+  HINTS "${PC_OPUS_LIBDIR}")
 
 # Get the version from pkg-config
 if(PC_OPUS_VERSION)

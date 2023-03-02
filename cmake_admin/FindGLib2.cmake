@@ -41,35 +41,35 @@ pkg_check_modules(PC_GMODULE2 QUIET gobject-2.0)
 find_path(
   GLib2_INCLUDE_DIR
   NAMES "glib.h"
-  PATHS "${PC_GLIB2_INCLUDEDIR}"
+  HINTS "${PC_GLIB2_INCLUDEDIR}"
   PATH_SUFFIXES "glib-2.0")
 
 find_library(
   GLib2_glib-2_LIBRARY
   NAMES "glib-2.0"
-  PATHS "${PC_GLIB2_LIBDIR}")
+  HINTS "${PC_GLIB2_LIBDIR}")
 
 find_library(
   GLib2_gthread-2_LIBRARY
   NAMES "gthread-2.0"
-  PATHS "${PC_GTHREAD2_LIBDIR}")
+  HINTS "${PC_GTHREAD2_LIBDIR}")
 
 find_library(
   GLib2_gmodule-2_LIBRARY
   NAMES "gmodule-2.0"
-  PATHS "${PC_GMODULE2_LIBDIR}")
+  HINTS "${PC_GMODULE2_LIBDIR}")
 
 find_library(
   GLib2_gobject-2_LIBRARY
   NAMES "gobject-2.0"
-  PATHS "${PC_GOBJECT2_LIBDIR}")
+  HINTS "${PC_GOBJECT2_LIBDIR}")
 
 # GLib stores its config in lib/glib-2.0/include
 get_filename_component(_glib2_libdir "${GLib2_glib-2_LIBRARY}" PATH)
 find_path(
   _glib2_config_header "glibconfig.h"
   PATH_SUFFIXES "glib-2.0/include"
-  PATHS "${PC_GLIB2_INCLUDEDIR}" "${_glib2_libdir}")
+  HINTS "${PC_GLIB2_INCLUDEDIR}" "${_glib2_libdir}")
 
 set(GLib2_INCLUDE_DIRS "${GLib2_INCLUDE_DIR}" "${_glib2_config_header}")
 
@@ -127,7 +127,7 @@ if(GLib2_glib-2_LIBRARY AND NOT TARGET GLib2::glib-2)
     find_library(
       _pcre2_8bit_library
       NAMES "pcre2-8"
-      PATHS "${PC_GLIB2_LIBDIR}")
+      HINTS "${PC_GLIB2_LIBDIR}")
     if(_pcre2_8bit_library)
       include(CheckCSourceCompiles)
       set(_backup_includes ${CMAKE_REQUIRED_INCLUDES})

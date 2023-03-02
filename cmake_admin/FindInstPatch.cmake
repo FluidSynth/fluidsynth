@@ -32,13 +32,13 @@ pkg_check_modules(PC_INSTPATCH QUIET libinstpatch-1.0)
 find_path(
   InstPatch_INCLUDE_DIR
   NAMES "libinstpatch/libinstpatch.h"
-  PATHS "${PC_INSTPATCH_INCLUDEDIR}"
+  HINTS "${PC_INSTPATCH_INCLUDEDIR}"
   PATH_SUFFIXES "libinstpatch-1" "libinstpatch-2")
 
 find_library(
   InstPatch_LIBRARY
   NAMES "instpatch-1.0"
-  PATHS "${PC_INSTPATCH_LIBDIR}")
+  HINTS "${PC_INSTPATCH_LIBDIR}")
 
 # Get version from pkg-config or read the config header
 if(PC_INSTPATCH_VERSION)

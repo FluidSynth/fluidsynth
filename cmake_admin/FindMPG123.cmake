@@ -42,22 +42,22 @@ pkg_check_modules(PC_SYN123 QUIET libsyn123)
 find_path(
   MPG123_INCLUDE_DIR
   NAMES "mpg123.h"
-  PATHS "${PC_MPG123_INCLUDEDIR}")
+  HINTS "${PC_MPG123_INCLUDEDIR}")
 
 find_library(
   MPG123_libmpg123_LIBRARY
   NAMES "mpg123"
-  PATHS "${PC_MPG123_LIBDIR}")
+  HINTS "${PC_MPG123_LIBDIR}")
 
 find_library(
   MPG123_libout123_LIBRARY
   NAMES "out123"
-  PATHS "${PC_OUT123_LIBDIR}")
+  HINTS "${PC_OUT123_LIBDIR}")
 
 find_library(
   MPG123_libsyn123_LIBRARY
   NAMES "syn123"
-  PATHS "${PC_SYN123_LIBDIR}")
+  HINTS "${PC_SYN123_LIBDIR}")
 
 # Extract additional flags if pkg-config is available
 if(PC_MPG123_FOUND)

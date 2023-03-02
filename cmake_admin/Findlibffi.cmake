@@ -30,12 +30,12 @@ pkg_check_modules(PC_LIBFFI QUIET libffi)
 find_path(
   libffi_INCLUDE_DIR
   NAMES "ffi.h"
-  PATHS "${PC_LIBFFI_INCLUDE_DIR}")
+  HINTS "${PC_LIBFFI_INCLUDE_DIR}")
 
 find_library(
   libffi_LIBRARY
   NAMES "ffi" "libffi"
-  PATHS "${PC_FFI_LIBDIR}")
+  HINTS "${PC_FFI_LIBDIR}")
 
 # Extract additional flags if pkg-config is available
 if(PC_FFI_FOUND)

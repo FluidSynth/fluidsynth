@@ -42,12 +42,12 @@ pkg_check_modules(PC_OGG QUIET ogg)
 find_path(
   Ogg_INCLUDE_DIR
   NAMES "ogg/ogg.h"
-  PATHS "${PC_OGG_INCLUDEDIR}")
+  HINTS "${PC_OGG_INCLUDEDIR}")
 
 find_library(
   _ogg_library
   NAMES "ogg"
-  PATHS "${PC_OGG_LIBDIR}")
+  HINTS "${PC_OGG_LIBDIR}")
 
 # Extract additional flags if pkg-config is available
 if(PC_OGG_FOUND)

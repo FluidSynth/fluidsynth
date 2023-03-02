@@ -32,13 +32,13 @@ pkg_check_modules(PC_LASH QUIET lash-1.0)
 find_path(
   LASH_INCLUDE_DIR
   NAMES "lash/lash.h"
-  PATHS "${PC_LASH_INCLUDEDIR}"
+  HINTS "${PC_LASH_INCLUDEDIR}"
   PATH_SUFFIXES "lash-1.0")
 
 find_library(
   LASH_LIBRARY
   NAMES "lash"
-  PATHS "${PC_LASH_LIBDIR}")
+  HINTS "${PC_LASH_LIBDIR}")
 
 # Get version from pkg-config or read the config header
 if(PC_LASH_VERSION)

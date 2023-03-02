@@ -46,12 +46,12 @@ pkg_check_modules(PC_SNDFILE QUIET sndfile)
 find_path(
   SndFile_INCLUDE_DIR
   NAMES "sndfile.h"
-  PATHS "${PC_SNDFILE_INCLUDEDIR}")
+  HINTS "${PC_SNDFILE_INCLUDEDIR}")
 
 find_library(
   _sndfile_library
   NAMES "sndfile"
-  PATHS "${PC_SNDFILE_LIBDIR}")
+  HINTS "${PC_SNDFILE_LIBDIR}")
 
 # Get version from pkg-config or read the config header
 if(PC_SNDFILE_VERSION)

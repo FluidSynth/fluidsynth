@@ -32,13 +32,13 @@ pkg_check_modules(PC_READLINE QUIET readline)
 find_path(
   Readline_INCLUDE_DIR
   NAMES "history.h"
-  PATHS "${PC_READLINE_INCLUDEDIR}"
+  HINTS "${PC_READLINE_INCLUDEDIR}"
   PATH_SUFFIXES "readline")
 
 find_library(
   Readline_LIBRARY
   NAMES "readline"
-  PATHS "${PC_READLINE_LIBDIR}")
+  HINTS "${PC_READLINE_LIBDIR}")
 
 # Get version from pkg-config or read the config header
 if(PC_READLINE_VERSION)
