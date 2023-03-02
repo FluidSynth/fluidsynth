@@ -134,6 +134,9 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   if(FLUIDSYNTH_SUPPORT_SYSTEMD AND NOT Systemd::libsystemd)
     find_dependency(Systemd)
   endif()
+
+  # Restore the module path
+  list(REMOVE_ITEM CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 endif()
 
 # finally, include the targets file
