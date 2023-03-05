@@ -73,3 +73,22 @@ macro ( unset_pkg_config _prefix )
   unset ( ${_prefix}_LIBRARY_DIRS CACHE )
   unset ( __pkg_config_checked_${_prefix} CACHE )
 endmacro ( unset_pkg_config )
+
+function ( get_target_properties_from_pkg_config _library _prefix _out_prefix )
+  if ( "${_library}" MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$" )
+    set ( _cflags ${_prefix}_STATIC_CFLAGS_OTHER )
+    set ( _link_libraries ${_prefix}_STATIC_LIBRARIES )
+    set ( _library_dirs ${_prefix}_STATIC_LIBRARY_DIRS )
+  else ()
+    set ( _cflags ${_prefix}_CFLAGS_OTHER )
+    set ( _link_libraries ${_prefix}_LIBRARIES )
+    set ( _library_dirs ${_prefix}_LIBRARY_DIRS )
+  endif ()
+
+  # The link_libraries list always starts with the library itself, and POP_FRONT is >=3.15
+  list(REMOVE_AT "${_link_libraries}" 0)
+
+  set ( ${_out_prefix}_compile_options "${${_cflags}}" PARENT_SCOPE )
+  set ( ${_out_prefix}_link_libraries "${${_link_libraries}}" PARENT_SCOPE )
+  set ( ${_out_prefix}_link_directories "${${_library_dirs}}" PARENT_SCOPE )
+endfunction ( get_target_properties_from_pkg_config )

@@ -21,7 +21,7 @@
 #include "fluid_sys.h"
 
 
-#if WITH_READLINE
+#if READLINE_SUPPORT
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
@@ -1308,7 +1308,7 @@ int
 fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt,
                        char *buf, int len)
 {
-#if WITH_READLINE
+#if READLINE_SUPPORT
 
     if(in == fluid_get_stdin())
     {

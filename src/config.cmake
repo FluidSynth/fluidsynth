@@ -232,7 +232,7 @@
 #cmakedefine WITH_PROFILING @WITH_PROFILING@
 
 /* Define to use the readline library for line editing */
-#cmakedefine WITH_READLINE @WITH_READLINE@
+#cmakedefine READLINE_SUPPORT @READLINE_SUPPORT@
 
 /* Define if the compiler supports VLA */ 
 #cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@ 
