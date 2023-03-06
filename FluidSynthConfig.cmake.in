@@ -49,6 +49,11 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   # Allows CMake to use the additional modules
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
+  # Make searching for packages easier on VCPKG
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15 AND VCPKG_TOOLCHAIN)
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+  endif()
+
   # Load the pkg-config helpers
   include(PkgConfigHelpers)
 
