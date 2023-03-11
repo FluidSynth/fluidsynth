@@ -516,6 +516,11 @@ set ( PULSEAUDIO_MINIMUM_VERSION 2.0 )
 
 include ( PkgConfigHelpers ) # Needed for Find modules using pkg-config
 
+# Make searching for packages easier on VCPKG
+if ( CMAKE_VERSION VERSION_GREATER_EQUAL 3.15 AND VCPKG_TOOLCHAIN )
+  set ( CMAKE_FIND_PACKAGE_PREFER_CONFIG ON )
+endif ()
+
 # Mandatory libraries: glib and gthread
 find_package ( GLib2 ${GLIB2_MINUMUM_VERSION} REQUIRED )
 list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")

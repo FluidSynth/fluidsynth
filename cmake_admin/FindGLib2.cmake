@@ -112,11 +112,7 @@ if(GLib2_glib-2_LIBRARY AND NOT TARGET GLib2::glib-2)
     find_package(Intl QUIET)
     find_package(Iconv QUIET)
     list(APPEND _glib2_link_libraries "Intl::Intl" "Iconv::Iconv")
-    if(APPLE)
-      list(APPEND _glib2_link_libraries "-Wl,-framework,Foundation"
-           "-Wl,-framework,CoreFoundation" "-Wl,-framework,AppKit"
-           "-Wl,-framework,Carbon")
-    elseif(WIN32)
+    if(WIN32)
       list(APPEND _glib2_link_libraries "ws2_32" "winmm")
     else()
       list(APPEND _glib2_link_libraries "Threads::Threads")
@@ -151,6 +147,14 @@ if(GLib2_glib-2_LIBRARY AND NOT TARGET GLib2::glib-2)
     else()
       list(APPEND _glib2_link_libraries "pcre")
     endif()
+  endif()
+
+  # pkg_check_modules consider these as LDFLAGS_OTHER rather instead of
+  # libraries
+  if(APPLE)
+    list(APPEND _glib2_link_libraries "-Wl,-framework,Foundation"
+         "-Wl,-framework,CoreFoundation" "-Wl,-framework,AppKit"
+         "-Wl,-framework,Carbon")
   endif()
 
   add_library(GLib2::glib-2 UNKNOWN IMPORTED)
