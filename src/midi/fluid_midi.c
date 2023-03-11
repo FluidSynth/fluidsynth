@@ -2607,6 +2607,19 @@ int fluid_player_get_bpm(fluid_player_t *player)
 }
 
 /**
+ * Get the division currently used by a MIDI player.
+ * The player can be controlled by internal tempo coming from MIDI file tempo
+ * change or controlled by external tempo see fluid_player_set_tempo().
+ * @param player MIDI player instance. Must be a valid pointer.
+ * @return MIDI player division or FLUID_FAILED if error.
+ * @since 2.3.2
+ */
+int fluid_player_get_division(fluid_player_t *player)
+{
+    return player->division;
+}
+
+/**
  * Get the tempo currently used by a MIDI player.
  * The player can be controlled by internal tempo coming from MIDI file tempo
  * change or controlled by external tempo see fluid_player_set_tempo().
