@@ -317,6 +317,15 @@ elseif ( WIN32 )
       VERSION ${LIB_VERSION_INFO}
       SOVERSION ${LIB_VERSION_CURRENT}
     )
+elseif ( CYGWIN )
+  set_target_properties ( libfluidsynth
+    PROPERTIES
+      PUBLIC_HEADER "${public_HEADERS}"
+      PREFIX "cyg"
+      OUTPUT_NAME "fluidsynth"
+      VERSION ${LIB_VERSION_INFO}
+      SOVERSION ${LIB_VERSION_CURRENT}
+    )
 else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth
     PROPERTIES
