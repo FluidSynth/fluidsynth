@@ -46,6 +46,9 @@ jobs:
           - CC: "clang-12"
             CXX: "clang++-12"
             CMAKE_FLAGS: ""
+          - CC: "clang-12"
+            CXX: "clang++-12"
+            CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
@@ -113,20 +116,22 @@ jobs:
       run: cmake --install build && ls -la $INSTALL_LOCATION
 
     - name: Consume from pkg-config
-      if: ${{ contains(matrix.CMAKE_FLAGS, '-DBUILD_SHARED_LIBS=0') }}
+      if: ${{ contains(matrix.CMAKE_FLAGS, 'BUILD_SHARED_LIBS=0') }}
       run: |
+        set -e
         cat << EOF > static-link-test.c
         #include <fluidsynth.h>
         int main() { fluid_free(0); return 0; }
         EOF
         export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
-        set +x
+        set -x
         gcc -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
         ./static-link-test
         echo $?
 
     - name: Consume from build
       run: |
+        set -e
         export CC=${{ matrix.CC }}
         export CXX=${{ matrix.CXX }}
         cmake -S test/cmake \
@@ -138,6 +143,7 @@ jobs:
 
     - name: Consume from install
       run: |
+        set -e
         export CC=${{ matrix.CC }}
         export CXX=${{ matrix.CXX }}
         cmake -S test/cmake -B consume-install \
