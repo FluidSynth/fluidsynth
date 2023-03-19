@@ -92,6 +92,7 @@ jobs:
           -B build \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_VERBOSE_MAKEFILE=1 \
           -Werror=dev \
           -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
           -Denable-portaudio=1 \
@@ -119,10 +120,10 @@ jobs:
         int main() { fluid_free(0); return 0; }
         EOF
         export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
-        pkg-config --libs --static fluidsynth
+        set +x
         gcc -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
-        ls -la
         ./static-link-test
+        echo $?
 
     - name: Consume from build
       run: |
