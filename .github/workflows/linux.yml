@@ -49,6 +49,9 @@ jobs:
           - CC: "clang-12"
             CXX: "clang++-12"
             CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
+          - CC: "clang-13"
+            CXX: "clang++-13"
+            CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
@@ -66,8 +69,9 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends install \
           clang-7 \
           clang-8 \
-          clang-9 \
           clang-10 \
+          clang-12 \
+          clang-13 \
           clang-tidy \
           cmake \
           cmake-data \
@@ -85,6 +89,7 @@ jobs:
           libsndfile-dev \
           libsystemd-dev \
           ninja-build \
+          libomp-dev \
           portaudio19-dev
 
     - name: Configure CMake
@@ -125,7 +130,7 @@ jobs:
         EOF
         export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
         set -x
-        gcc -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
+        gcc -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
         ./static-link-test
         echo $?
 
