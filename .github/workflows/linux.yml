@@ -112,7 +112,7 @@ jobs:
       run: cmake --install build && ls -la $INSTALL_LOCATION
 
     - name: Consume from pkg-config
-      if: ${{ contains(${{matrix.CMAKE_FLAGS}}, '-DBUILD_SHARED_LIBS=0') }}
+      if: ${{ contains(matrix.CMAKE_FLAGS, '-DBUILD_SHARED_LIBS=0') }}
       run: |
         cat << EOF > static-link-test.c
         #include <fluidsynth.h>
