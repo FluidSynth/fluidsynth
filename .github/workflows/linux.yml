@@ -118,9 +118,9 @@ jobs:
         #include <fluidsynth.h>
         int main() { fluid_free(0); return 0; }
         EOF
-        export PKG_CONFIG_PATH=$INSTALL_LOCATION
+        export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
         pkg-config --libs --static fluidsynth
-        ${{ matrix.CC }} -o static-link-test static-link-test.c src/libfluidsynth.a $(pkg-config --libs --static fluidsynth)
+        ${{ matrix.CC }} -o static-link-test static-link-test.c $(pkg-config --libs --static fluidsynth)
         ls -la
         ./static-link-test
 
