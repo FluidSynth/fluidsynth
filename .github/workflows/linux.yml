@@ -109,7 +109,20 @@ jobs:
       run: cmake --build build --target demo
 
     - name: Install
-      run: cmake --install build
+      run: cmake --install build && ls -la $INSTALL_LOCATION
+
+    - name: Consume from pkg-config
+      if: ${{ contains(${{matrix.CMAKE_FLAGS}}, '-DBUILD_SHARED_LIBS=0') }}
+      run: |
+        cat << EOF > static-link-test.c
+        #include <fluidsynth.h>
+        int main() { fluid_free(0); return 0; }
+        EOF
+        export PKG_CONFIG_PATH=$INSTALL_LOCATION
+        pkg-config --libs --static fluidsynth
+        ${{ matrix.CC }} -o static-link-test static-link-test.c src/libfluidsynth.a $(pkg-config --libs --static fluidsynth)
+        ls -la
+        ./static-link-test
 
     - name: Consume from build
       run: |
