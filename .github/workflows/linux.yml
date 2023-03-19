@@ -120,7 +120,7 @@ jobs:
         EOF
         export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
         pkg-config --libs --static fluidsynth
-        ${{ matrix.CC }} -o static-link-test static-link-test.c $(pkg-config --libs --static fluidsynth)
+        gcc -o static-link-test static-link-test.c $(pkg-config --libs --static fluidsynth)
         ls -la
         ./static-link-test
 
