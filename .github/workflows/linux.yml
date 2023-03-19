@@ -49,9 +49,6 @@ jobs:
           - CC: "clang-12"
             CXX: "clang++-12"
             CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
-          - CC: "clang-13"
-            CXX: "clang++-13"
-            CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
@@ -71,7 +68,6 @@ jobs:
           clang-8 \
           clang-10 \
           clang-12 \
-          clang-13 \
           clang-tidy \
           cmake \
           cmake-data \
