@@ -83,7 +83,7 @@ elseif(_sndfile_library)
   find_package(FLAC QUIET)
   find_package(Opus QUIET)
   find_package(mp3lame QUIET)
-  find_package(MPG123 QUIET)
+  find_package(mpg123 QUIET)
 
   if(NOT CMAKE_CROSSCOMPILING)
     include(CheckSourceRuns)
