@@ -37,7 +37,8 @@ macro ( generate_pkgconfig_spec template outfile target )
             endif()
         endforeach()
         list(REMOVE_DUPLICATES _cleanlibs)
-        set (LIBS_PRIVATE ${_cleanlibs})
+        list ( REMOVE_DUPLICATES PC_LIBS_PRIV )
+        set (LIBS_PRIVATE ${_cleanlibs} ${PC_LIBS_PRIV})
         # make a copy
         set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
 
