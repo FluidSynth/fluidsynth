@@ -2178,34 +2178,37 @@ fluid_player_callback(void *data, unsigned int msec)
             player->start_msec = msec;      /* should be the (synth)-time of the last tempo change */
             fluid_atomic_int_set(&player->seek_ticks, -1); /* clear seek_ticks */
         }
-
-        /* Once we've run out of MIDI events, keep playing until no voices are active */
-        if(status == FLUID_PLAYER_DONE && fluid_synth_get_active_voice_count(player->synth) > 0)
+        
+        if(fluid_list_next(player->currentfile) == NULL && player->loop == 0)
         {
-            /* The first time we notice we've run out of MIDI events but there are still active voices, disable all hold pedals */
-            if(!player->end_pedals_disabled)
+            /* Once we've run out of MIDI events, keep playing until no voices are active */
+            if(status == FLUID_PLAYER_DONE && fluid_synth_get_active_voice_count(player->synth) > 0)
             {
-                for(i = 0; i < synth->midi_channels; i++)
+                /* The first time we notice we've run out of MIDI events but there are still active voices, disable all hold pedals */
+                if(!player->end_pedals_disabled)
                 {
-                    fluid_synth_cc(player->synth, i, SUSTAIN_SWITCH, 0);
-                    fluid_synth_cc(player->synth, i, SOSTENUTO_SWITCH, 0);
+                    for(i = 0; i < synth->midi_channels; i++)
+                    {
+                        fluid_synth_cc(player->synth, i, SUSTAIN_SWITCH, 0);
+                        fluid_synth_cc(player->synth, i, SOSTENUTO_SWITCH, 0);
+                    }
+
+                    player->end_pedals_disabled = 1;
                 }
 
-                player->end_pedals_disabled = 1;
+                status = FLUID_PLAYER_PLAYING;
             }
 
-            status = FLUID_PLAYER_PLAYING;
-        }
-
-        /* Once no voices are active, if end_msec hasn't been scheduled, schedule it so we wait for reverb, etc to finish */
-        if(status == FLUID_PLAYER_DONE && player->end_msec < 0)
-        {
-            player->end_msec = msec + FLUID_PLAYER_STOP_GRACE_MS;
-        }
-        /* If end_msec has been scheduled and is in the future, keep playing */
-        if (player->end_msec >= 0 && msec < (unsigned int) player->end_msec)
-        {
-          status = FLUID_PLAYER_PLAYING;
+            /* Once no voices are active, if end_msec hasn't been scheduled, schedule it so we wait for reverb, etc to finish */
+            if(status == FLUID_PLAYER_DONE && player->end_msec < 0)
+            {
+                player->end_msec = msec + FLUID_PLAYER_STOP_GRACE_MS;
+            }
+            /* If end_msec has been scheduled and is in the future, keep playing */
+            if (player->end_msec >= 0 && msec < (unsigned int) player->end_msec)
+            {
+                status = FLUID_PLAYER_PLAYING;
+            }
         }
 
         /* Once there's no reason to keep playing, we're actually done */
