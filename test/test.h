@@ -17,7 +17,7 @@
  */
 #if defined(NO_GUI) && defined(MINGW32)
 #define TEST_ABORT exit(EXIT_FAILURE);
-#elif defined(NO_GUI) && defined(WIN32)
+#elif defined(NO_GUI) && defined(_WIN32)
 #define TEST_ABORT _set_abort_behavior(0, _WRITE_ABORT_MSG); abort()
 #else
 #define TEST_ABORT abort()

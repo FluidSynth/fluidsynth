@@ -1,6 +1,11 @@
 /*!
 
 \page RecentChanges Recent Changes
+\section NewIn2_3_2 What's new in 2.3.2?
+
+- fluid_player_get_division() has been added
+
+
 \section NewIn2_2_7 What's new in 2.2.7?
 
 - Most getter functions of the MIDI event API are now const correct

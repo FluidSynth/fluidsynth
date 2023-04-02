@@ -20,7 +20,7 @@
 
 #include "fluid_sys.h"
 
-#if !defined(WIN32) && !defined(MACINTOSH)
+#if !defined(_WIN32) && !defined(MACINTOSH)
 #define _GNU_SOURCE
 #endif
 
@@ -160,7 +160,7 @@ print_pretty_int(int i)
     }
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 /* Function using win32 api to convert ANSI encoding string to UTF8 encoding string */
 static char*
 win32_ansi_to_utf8(const char* ansi_null_terminated_string)
@@ -734,7 +734,7 @@ int main(int argc, char **argv)
         case 'q':
             quiet = 1;
 
-#if defined(WIN32)
+#if defined(_WIN32)
             /* Windows logs to stdout by default, so make sure anything
              * lower than PANIC is not printed either */
             fluid_set_log_function(FLUID_ERR, NULL, NULL);
@@ -852,7 +852,7 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 #endif
 
@@ -945,7 +945,7 @@ int main(int argc, char **argv)
     for(i = arg1; i < argc; i++)
     {
         const char *u8_path = argv[i];
-#if defined(WIN32)
+#if defined(_WIN32)
         /* try to convert ANSI encoding path to UTF8 encoding path */
         char *u8_buf = win32_ansi_to_utf8(argv[i]);
         if (u8_buf == NULL)
@@ -971,7 +971,7 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
-#if defined(WIN32)
+#if defined(_WIN32)
         free(u8_buf);
 #endif
     }
@@ -1222,7 +1222,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2022 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2023 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of Creative Technology Ltd.\n\n",
            fluid_version_str());

@@ -108,10 +108,10 @@ Developers:
             <type>int</type>
             <def>0</def>
             <min>0</min>
-            <max>126</max>
+            <max>127</max>
             <realtime/>
             <desc>
-                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID. Broadcast commands (with ID=127) will always be processed.</desc>
+                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed.</desc>
         </setting>
         <setting>
             <name>dynamic-sample-loading</name>

@@ -52,7 +52,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - name: Install Dependencies
-      run: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libinstpatch-dev libreadline-dev
+      run: sudo -E apt-get update && sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libinstpatch-dev libreadline-dev
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
