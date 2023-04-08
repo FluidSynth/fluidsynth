@@ -6387,7 +6387,7 @@ int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
  * @param synth FluidSynth instance
  * @param speed Chorus speed in Hz (0.1-5.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_set_chorus_group_level() in new code instead.
+ * @deprecated Use fluid_synth_set_chorus_group_speed() in new code instead.
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 {
