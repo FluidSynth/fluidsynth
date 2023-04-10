@@ -45,6 +45,9 @@
 #include <string.h>
 #endif
 
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #include "fluidsynth.h"
 
