@@ -2666,6 +2666,11 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 {
     int i;
 
+    if(synth->verbose)
+    {
+        FLUID_LOG(FLUID_INFO, "=== systemreset ===");
+    }
+
     fluid_synth_all_sounds_off_LOCAL(synth, -1);
 
     for(i = 0; i < synth->midi_channels; i++)
