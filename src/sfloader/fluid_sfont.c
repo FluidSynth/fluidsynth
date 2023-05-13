@@ -46,9 +46,9 @@ fluid_long_long_t default_ftell(void *handle)
 }
 
 #ifdef _WIN32
-    #define PRIi64 "%I64d"
+#define FLUID_PRIi64 "I64d"
 #else
-    #define PRIi64 "%lld"
+#define FLUID_PRIi64 "lld"
 #endif
 
 int safe_fread(void *buf, fluid_long_long_t count, void *fd)
@@ -57,7 +57,7 @@ int safe_fread(void *buf, fluid_long_long_t count, void *fd)
     {
         if(feof((FILE *)fd))
         {
-            FLUID_LOG(FLUID_ERR, "EOF while attempting to read " PRIi64 " bytes", count);
+            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %" FLUID_PRIi64 " bytes", count);
         }
         else
         {
@@ -74,14 +74,14 @@ int safe_fseek(void *fd, fluid_long_long_t ofs, int whence)
 {
     if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
     {
-        FLUID_LOG(FLUID_ERR, "File seek failed with offset = " PRIi64 " and whence = %d", ofs, whence);
+        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %" FLUID_PRIi64 " and whence = %d", ofs, whence);
         return FLUID_FAILED;
     }
 
     return FLUID_OK;
 }
 
-#undef PRIi64
+#undef FLUID_PRIi64
 
 /**
  * Creates a new SoundFont loader.

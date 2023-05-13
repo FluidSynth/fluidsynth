@@ -290,8 +290,12 @@ static void
 fluid_synth_init(void)
 {
 #ifdef TRAP_ON_FPE
+  #if !defined(__GLIBC__) && defined(__linux__)
+    #warning "Trap on FPE is only supported when using glibc!"
+  #else
     /* Turn on floating point exception traps */
     feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
+  #endif
 #endif
 
     init_dither();
