@@ -2141,6 +2141,16 @@ fluid_player_callback(void *data, unsigned int msec)
             }
         }
 
+        if(msec < player->cur_msec)
+        {
+            // overflow of fluid_synth_get_ticks()
+            FLUID_LOG(FLUID_ERR, "The maximum playback duration has been reached. Terminating player!");
+            fluid_player_stop(player);
+            fluid_player_seek(player, 0);
+            player->cur_ticks = 0;
+            return 0;
+        }
+
         player->cur_msec = msec;
         deltatime = fluid_atomic_float_get(&player->deltatime);
         player->cur_ticks = (player->start_ticks

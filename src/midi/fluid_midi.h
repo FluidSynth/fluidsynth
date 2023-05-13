@@ -305,7 +305,7 @@ struct _fluid_player_t
     int last_callback_ticks;  /* the last tick number that was passed to player->tick_callback */
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
-    int cur_msec;             /* the current time */
+    unsigned int cur_msec;    /* the current time */
     int end_msec;             /* when >=0, playback is extended until this time (for, e.g., reverb) */
     char end_pedals_disabled; /* 1 once the pedals have been released after the last midi event, 0 otherwise */
     /* sync mode: indicates the tempo mode the player is driven by (see fluid_player_set_tempo()):
