@@ -1104,7 +1104,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t *defpreset,
             return FLUID_FAILED;
         }
 
-        if(fluid_preset_zone_import_sfont(zone, sfzone, defsfont, sfdata) != FLUID_OK)
+        if(fluid_preset_zone_import_sfont(zone, defpreset->global_zone, sfzone, defsfont, sfdata) != FLUID_OK)
         {
             delete_fluid_preset_zone(zone);
             return FLUID_FAILED;
@@ -1116,6 +1116,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t *defpreset,
         }
         else if(fluid_defpreset_add_zone(defpreset, zone) != FLUID_OK)
         {
+            delete_fluid_preset_zone(zone);
             return FLUID_FAILED;
         }
 
@@ -1439,10 +1440,21 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
  * @param sfzone, pointer on soundfont zone generators.
  */
 static void
-fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, SFZone *sfzone)
+fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, fluid_zone_range_t *global_range, SFZone *sfzone)
 {
     fluid_list_t *r;
     SFGen *sfgen;
+
+    if(global_range != NULL)
+    {
+        // Local zones are initialized with the default range of 0-127. However, they should be inited
+        // with the range of their global zone in case the local zone lacks a GEN_KEYRANGE or GEN_VELRANGE
+        // (see issue #1250).
+        range->keylo = global_range->keylo;
+        range->keyhi = global_range->keyhi;
+        range->vello = global_range->vello;
+        range->velhi = global_range->velhi;
+    }
 
     for(r = sfzone->gen; r != NULL;)
     {
@@ -1678,10 +1690,10 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
  * fluid_preset_zone_import_sfont
  */
 int
-fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata)
+fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, fluid_preset_zone_t *global_zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata)
 {
     /* import the generators */
-    fluid_zone_gen_import_sfont(zone->gen, &zone->range, sfzone);
+    fluid_zone_gen_import_sfont(zone->gen, &zone->range, global_zone ? &global_zone->range : NULL, sfzone);
 
     if(zone->gen[GEN_INSTRUMENT].flags == GEN_SET)
     {
@@ -1844,16 +1856,17 @@ fluid_inst_import_sfont(int inst_idx, fluid_defsfont_t *defsfont, SFData *sfdata
         FLUID_SNPRINTF(zone_name, sizeof(zone_name), "iz:%s/%d", inst->name, count);
 
         inst_zone = new_fluid_inst_zone(zone_name);
-
         if(inst_zone == NULL)
         {
-            return NULL;
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            goto error;
         }
 
-        if(fluid_inst_zone_import_sfont(inst_zone, sfzone, defsfont, sfdata) != FLUID_OK)
+        if(fluid_inst_zone_import_sfont(inst_zone, inst->global_zone, sfzone, defsfont, sfdata) != FLUID_OK)
         {
+            FLUID_LOG(FLUID_ERR, "fluid_inst_zone_import_sfont() failed for instrument %s", inst->name);
             delete_fluid_inst_zone(inst_zone);
-            return NULL;
+            goto error;
         }
 
         if((count == 0) && (fluid_inst_zone_get_sample(inst_zone) == NULL))
@@ -1863,7 +1876,9 @@ fluid_inst_import_sfont(int inst_idx, fluid_defsfont_t *defsfont, SFData *sfdata
         }
         else if(fluid_inst_add_zone(inst, inst_zone) != FLUID_OK)
         {
-            return NULL;
+            FLUID_LOG(FLUID_ERR, "fluid_inst_add_zone() failed for instrument %s", inst->name);
+            delete_fluid_inst_zone(inst_zone);
+            goto error;
         }
 
         p = fluid_list_next(p);
@@ -1872,6 +1887,10 @@ fluid_inst_import_sfont(int inst_idx, fluid_defsfont_t *defsfont, SFData *sfdata
 
     defsfont->inst = fluid_list_append(defsfont->inst, inst);
     return inst;
+
+error:
+    delete_fluid_inst(inst);
+    return NULL;
 }
 
 /*
@@ -1982,11 +2001,10 @@ fluid_inst_zone_next(fluid_inst_zone_t *zone)
  * fluid_inst_zone_import_sfont
  */
 int
-fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont,
-                             SFData *sfdata)
+fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, fluid_inst_zone_t *global_inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata)
 {
     /* import the generators */
-    fluid_zone_gen_import_sfont(inst_zone->gen, &inst_zone->range, sfzone);
+    fluid_zone_gen_import_sfont(inst_zone->gen, &inst_zone->range, global_inst_zone ? &global_inst_zone->range : NULL, sfzone);
 
     /* FIXME */
     /*    if (zone->gen[GEN_EXCLUSIVECLASS].flags == GEN_SET) { */
