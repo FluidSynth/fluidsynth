@@ -1447,8 +1447,8 @@ fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, fluid_z
 
     if(global_range != NULL)
     {
-        // Local zones are initialized with the default range of 0-127. However, they should be inited
-        // with the range of their global zone in case the local zone lacks a GEN_KEYRANGE or GEN_VELRANGE
+        // All zones are initialized with the default range of 0-127. However, local zones should be superseded by
+        // the range of their global zone in case that local zone lacks a GEN_KEYRANGE or GEN_VELRANGE
         // (see issue #1250).
         range->keylo = global_range->keylo;
         range->keyhi = global_range->keyhi;
