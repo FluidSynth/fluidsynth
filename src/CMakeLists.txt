@@ -121,6 +121,7 @@ set ( libfluidsynth_SOURCES
     utils/fluidsynth_priv.h
     utils/fluid_sys.c
     utils/fluid_sys.h
+    utils/fluid_thread.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h

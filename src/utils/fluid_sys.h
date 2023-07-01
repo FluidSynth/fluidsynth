@@ -40,6 +40,7 @@
 #define _FLUID_SYS_H
 
 #include "fluidsynth_priv.h"
+#include "fluid_thread.h"
 
 #if HAVE_MATH_H
 #include <math.h>
@@ -348,7 +349,7 @@ typedef GStaticMutex fluid_mutex_t;
 #define fluid_mutex_unlock(_m)    g_static_mutex_unlock(&(_m))
 
 #define fluid_mutex_init(_m)      do { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
+  if (!fluid_thread_supported()) g_thread_init (NULL); \
   g_static_mutex_init (&(_m)); \
 } while(0)
 
@@ -359,7 +360,7 @@ typedef GStaticRecMutex fluid_rec_mutex_t;
 #define fluid_rec_mutex_unlock(_m)    g_static_rec_mutex_unlock(&(_m))
 
 #define fluid_rec_mutex_init(_m)      do { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
+  if (!fluid_thread_supported()) g_thread_init (NULL); \
   g_static_rec_mutex_init (&(_m)); \
 } while(0)
 
@@ -372,7 +373,7 @@ typedef GMutex    fluid_cond_mutex_t;
 static FLUID_INLINE fluid_cond_mutex_t *
 new_fluid_cond_mutex(void)
 {
-    if(!g_thread_supported())
+    if(!fluid_thread_supported())
     {
         g_thread_init(NULL);
     }
@@ -395,7 +396,7 @@ typedef GStaticPrivate fluid_private_t;
 #define fluid_private_free(_priv)                  g_static_private_free(&(_priv))
 
 #define fluid_private_init(_priv)                  do { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
+  if (!fluid_thread_supported()) g_thread_init (NULL); \
   g_static_private_init (&(_priv)); \
 } while(0)
 

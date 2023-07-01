@@ -1002,7 +1002,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
 fluid_cond_t *
 new_fluid_cond(void)
 {
-    if(!g_thread_supported())
+    if(!fluid_thread_supported())
     {
         g_thread_init(NULL);
     }
@@ -1048,7 +1048,7 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
     /* Make sure g_thread_init has been called.
      * Probably not a good idea in a shared library,
      * but what can we do *and* remain backwards compatible? */
-    if(!g_thread_supported())
+    if(!fluid_thread_supported())
     {
         g_thread_init(NULL);
     }
