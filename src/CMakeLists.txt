@@ -205,7 +205,7 @@ set ( public_main_HEADER
     ${FluidSynth_BINARY_DIR}/include/fluidsynth.h
 )
 
-configure_file ( ${FluidSynth_SOURCE_DIR}/include/fluidsynth/version.h.in 
+configure_file ( ${FluidSynth_SOURCE_DIR}/include/fluidsynth/version.h.in
                  ${FluidSynth_BINARY_DIR}/include/fluidsynth/version.h )
 configure_file ( ${FluidSynth_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
@@ -275,6 +275,14 @@ if ( LIBFLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS )
 
+# The CMake Xcode generator fails to build the framework unless it references
+# a source file. Create an empty one in the build directory to use for this
+# purpose.
+if ( MACOSX_FRAMEWORK )
+  set ( MACOSX_FRAMEWORK_SOURCE_HACK ${CMAKE_BINARY_DIR}/empty_file_for_linking_issue.cpp )
+  file ( TOUCH ${MACOSX_FRAMEWORK_SOURCE_HACK} )
+endif ( MACOSX_FRAMEWORK )
+
 # Note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
 # Further note: The headers must be explicitly added here to have CMake install
@@ -283,6 +291,7 @@ add_library ( libfluidsynth
     $<TARGET_OBJECTS:libfluidsynth-OBJ>
     ${public_main_HEADER}
     ${public_HEADERS}
+    ${MACOSX_FRAMEWORK_SOURCE_HACK}
 )
 
 if ( MACOSX_FRAMEWORK )
