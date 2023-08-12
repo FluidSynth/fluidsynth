@@ -547,7 +547,7 @@ endif ( enable-libsndfile )
 
 unset ( PULSE_SUPPORT CACHE )
 if ( enable-pulseaudio )
-    find_package ( PulseAudio ${PULSEAUDIO_MINIMUM_VERSION} QUIET )
+    find_package ( PulseAudio ${PULSEAUDIO_MINIMUM_VERSION} )
     # Upstream config does not search for pulse-simple
     find_library ( PULSEAUDIO_SIMPLE_LIBRARY NAMES "pulse-simple" )
     if ( PULSEAUDIO_FOUND AND PULSEAUDIO_SIMPLE_LIBRARY )
