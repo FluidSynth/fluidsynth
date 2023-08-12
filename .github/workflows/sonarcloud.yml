@@ -17,6 +17,7 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   # Use Debug build for better code coverage results
   BUILD_TYPE: Debug
+  BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
 name: SonarCloud Workflow
 jobs:
@@ -60,20 +61,23 @@ jobs:
       shell: bash
       working-directory: ${{github.workspace}}/build
       run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -Denable-portaudio=1 -Denable-ladspa=1 -Denable-coverage=1 -DNO_GUI=1 $GITHUB_WORKSPACE
+      
+    - name: Install sonar-scanner and build-wrapper
+      uses: SonarSource/sonarcloud-github-c-cpp@v2
 
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: |
-        ./build-wrapper-linux-x86-64 --out-dir bw-output make
+        build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute tests defined by the CMake configuration.
       run: |
-        ./build-wrapper-linux-x86-64 --out-dir bw-output make coverage
+        build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make coverage
 
 # sonar-scanner does not like utf8 filenames
     - name: Prepare for Sonar
@@ -85,19 +89,11 @@ jobs:
        ls -la ${{ github.workspace }}/build
        ls -la ${{ github.workspace }}/build/coverage
 
-# The official sonarsource/sonarcloud-github-action@v1.5 action does not work properly.
-# It keeps complaining that the build-wrapper.json cannot be found.
-# Hence, use a third party action to download and add sonar-scanner to PATH and then run it manually.
-    - name: Setup sonarqube
-      uses: warchant/setup-sonar-scanner@v3
-      
-    - name: Run sonarqube
+    - name: Run sonar-scanner
       env:
-        # to get access to secrets.SONAR_TOKEN, provide GITHUB_TOKEN
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: sonar-scanner
-           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-           -Dsonar.cfamily.build-wrapper-output=${{ github.workspace }}/build/bw-output
-           -Dsonar.coverageReportPaths=build/coverage/sonarqube.report
-           -Dsonar.verbose=false
-           -Dsonar.host.url=https://sonarcloud.io/
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+          sonar-scanner \
+            -Dsonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}" \
+            -Dsonar.coverageReportPaths=${{github.workspace}}/build/coverage/sonarqube.report

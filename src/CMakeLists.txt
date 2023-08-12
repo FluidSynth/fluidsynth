@@ -369,7 +369,8 @@ if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
 endif()
 
 if ( PULSE_SUPPORT )
-    target_include_directories( libfluidsynth-OBJ PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} )
+    # need to include PULSEAUDIO_INCLUDE_DIR to make it compile with homebrew on Mac
+    target_include_directories( libfluidsynth-OBJ PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} ${PULSEAUDIO_INCLUDE_DIR} )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC ${PULSEAUDIO_LIBRARIES} )
 endif()
 
