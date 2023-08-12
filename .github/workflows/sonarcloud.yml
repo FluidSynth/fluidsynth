@@ -104,7 +104,7 @@ jobs:
            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
            -Dsonar.cfamily.build-wrapper-output=${{ github.workspace }}/build/bw-output
            -Dsonar.coverageReportPaths=build/coverage/sonarqube.report
-           -Dsonar.verbose=false
+           -Dsonar.verbose=true
            -Dsonar.host.url=https://sonarcloud.io/
            -Dsonar.organization=fluidsynth
-           -Dsonar.projectKey=fluidsynth
+           -Dsonar.projectKey=FluidSynth_fluidsynth
