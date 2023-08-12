@@ -95,10 +95,9 @@ jobs:
         java-version: '17'
 
     - name: Run sonar-scanner
-      working-directory: ${{github.workspace}}/build
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
-          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" 
-           -Dsonar.coverageReportPaths=build/coverage/sonarqube.report
+          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}" 
+           -Dsonar.coverageReportPaths=${{github.workspace}}/build/coverage/sonarqube.report
