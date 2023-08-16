@@ -9,7 +9,7 @@ Imported Targets
 
 This module provides the following imported targets, if found:
 
-``Jack::libJack``
+``Jack::Jack``
   The Jack library
 
 Result Variables
@@ -35,7 +35,7 @@ find_path(
 find_library(
   Jack_LIBRARY
   NAMES "jack"
-  HINTS "${PC_JACK_LIBDIR}")
+  HINTS "${PC_JACK_LIBDIR}" "${PC_JACK_LIBRARY_DIRS}")
 
 # Handle transitive dependencies
 if(PC_JACK_FOUND)
