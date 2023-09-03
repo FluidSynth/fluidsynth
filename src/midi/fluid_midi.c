@@ -2291,6 +2291,7 @@ fluid_player_play(fluid_player_t *player)
     if(!player->use_system_timer)
     {
         fluid_sample_timer_reset(player->synth, player->sample_timer);
+        player->cur_msec = 0;
     }
 
     /* If we're at the end of the playlist and there are no loops left, loop once */
