@@ -157,7 +157,7 @@ struct _fluid_synth_t
     fluid_sample_timer_t *sample_timers; /**< List of timers triggered before a block is processed */
     unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
 
-    int cores;                         /**< Number of CPU cores (1 by default) */
+    int cores;                         /**< Number of CPU cores (4 by default) */
 
     fluid_mod_t *default_mod;          /**< the (dynamic) list of default modulators */
 
