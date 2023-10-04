@@ -231,7 +231,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_num(settings, "synth.sample-rate", 44100.0f, 8000.0f, 96000.0f, 0);
     fluid_settings_register_int(settings, "synth.device-id", 0, 0, 127, 0);
 #ifdef ENABLE_MIXER_THREADS
-    fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0);
+    fluid_settings_register_int(settings, "synth.cpu-cores", 4, 1, 256, 0);
 #else
     fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 1, 0);
 #endif
