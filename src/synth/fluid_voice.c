@@ -321,7 +321,7 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     voice->mod_count = 0;
     voice->start_time = start_time;
     voice->has_noteoff = 0;
-    voice->ignore_sustain = 0;
+    voice->note_off_sustain= 0;
     UPDATE_RVOICE0(fluid_rvoice_reset);
 
     /*
@@ -613,15 +613,24 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
         int dest_gen_index = mod->dest;
         fluid_gen_t *dest_gen = &voice->gen[dest_gen_index];
         dest_gen->mod += modval;
-        
-        // issue blablabla: If a modulator is in use, which responds to CC64 and intended to manipulate the release envelope, this voice should not be sustained,
-        // to allow the modulator to achieve its desired behavior while the sustain switch is being depressed.
-        if((mod->src1 == SUSTAIN_SWITCH && mod->flags1 & (FLUID_MOD_CC | FLUID_MOD_SWITCH))
-            || (mod->src2 == SUSTAIN_SWITCH && mod->flags2 & (FLUID_MOD_CC | FLUID_MOD_SWITCH))
-            && (mod->dest == GEN_VOLENVRELEASE))
-        {
-            voice->ignore_sustain = 1;
-        }
+      	
+    // Issue #1276: Using Sustain Pedal like Soft Pedal 
+    //
+    //    If a modulator is in use that responds
+    //    to the CC64 and intends to manipulate the release envelope,
+    //    It's voice should change the volume envelope during the sustain fase.
+    //     to allow the modulator to achieve the desired behavior 
+    //    it uses this modulator amount in new decay value and set attenuation,
+    //     creating smooth release.
+    // 
+    
+    if(mod->src1 == SUSTAIN_SWITCH &&      
+            (mod->flags1 & FLUID_MOD_CC) &&
+            mod->dest == GEN_VOLENVRELEASE)
+    {
+        voice->note_off_sustain = mod->amount;
+    }
+
         /*      fluid_dump_modulator(mod); */
     }
 
@@ -1374,9 +1383,16 @@ fluid_voice_noteoff(fluid_voice_t *voice)
         voice->status = FLUID_VOICE_HELD_BY_SOSTENUTO;
     }
     /* Or sustain a note under Sustain pedal */
-    else if(fluid_channel_sustained(channel) && !voice->ignore_sustain)
+    else if(fluid_channel_sustained(channel))
     {
-        voice->status = FLUID_VOICE_SUSTAINED;
+        voice->status = FLUID_VOICE_SUSTAINED;        
+        //  Here it changes the envelope to simulate ignore_sustain        
+        if(voice->note_off_sustain)
+        {
+            fluid_voice_gen_set(voice, GEN_VOLENVDECAY, voice->note_off_sustain);
+            fluid_voice_gen_set(voice, GEN_VOLENVSUSTAIN, 960); 
+            fluid_voice_update_param(voice, GEN_VOLENVSUSTAIN); 
+        }
     }
     /* Or force the voice to release stage */
     else

@@ -105,7 +105,7 @@ struct _fluid_voice_t
     /* rvoice control */
     fluid_rvoice_t *rvoice;
     fluid_rvoice_t *overflow_rvoice; /* Used temporarily and only in overflow situations */
-    char ignore_sustain;
+    double note_off_sustain;      /* for create smooth sustain #1276 */
     char can_access_rvoice; /* False if rvoice is being rendered in separate thread */
     char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
     char has_noteoff; /* Flag set when noteoff has been sent */
