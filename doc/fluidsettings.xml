@@ -47,7 +47,7 @@ Developers:
         <setting>
             <name>chorus.depth</name>
             <type>num</type>
-            <def>8.0</def>
+            <def>4.25</def>
             <min>0.0</min>
             <max>256.0</max>
             <realtime/>
@@ -57,7 +57,7 @@ Developers:
         <setting>
             <name>chorus.level</name>
             <type>num</type>
-            <def>2.0</def>
+            <def>0.6</def>
             <min>0.0</min>
             <max>10.0</max>
             <realtime/>
@@ -77,7 +77,7 @@ Developers:
         <setting>
             <name>chorus.speed</name>
             <type>num</type>
-            <def>0.3</def>
+            <def>0.2</def>
             <min>0.1</min>
             <max>5.0</max>
             <realtime/>
@@ -312,7 +312,7 @@ Developers:
         <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0.0</def>
+            <def>0.3</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -322,7 +322,7 @@ Developers:
         <setting>
             <name>reverb.level</name>
             <type>num</type>
-            <def>0.9</def>
+            <def>0.7</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -332,7 +332,7 @@ Developers:
         <setting>
             <name>reverb.room-size</name>
             <type>num</type>
-            <def>0.2</def>
+            <def>0.5</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -342,7 +342,7 @@ Developers:
         <setting>
             <name>reverb.width</name>
             <type>num</type>
-            <def>0.5</def>
+            <def>0.8</def>
             <min>0.0</min>
             <max>100.0</max>
             <realtime/>
