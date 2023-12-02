@@ -140,7 +140,7 @@ Developers:
         <setting>
             <name>gain</name>
             <type>num</type>
-            <def>0.2</def>
+            <def>0.6</def>
             <min>0.0</min>
             <max>10.0</max>
             <realtime/>

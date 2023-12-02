@@ -223,7 +223,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.polyphony", 256, 1, 65535, 0);
     fluid_settings_register_int(settings, "synth.midi-channels", 16, 16, 256, 0);
-    fluid_settings_register_num(settings, "synth.gain", 0.2f, 0.0f, 10.0f, 0);
+    fluid_settings_register_num(settings, "synth.gain", 0.6f, 0.0f, 10.0f, 0);
     fluid_settings_register_int(settings, "synth.audio-channels", 1, 1, 128, 0);
     fluid_settings_register_int(settings, "synth.audio-groups", 1, 1, 128, 0);
     fluid_settings_register_int(settings, "synth.effects-channels", 2, 2, 2, 0);
