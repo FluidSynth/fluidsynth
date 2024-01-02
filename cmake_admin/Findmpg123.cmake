@@ -92,7 +92,7 @@ find_package_handle_standard_args(
 # Create the targets
 foreach(_component libmpg123 libout123 libsyn123)
   if(mpg123_${_component}_FOUND AND NOT TARGET MPG123::${_component})
-    add_library(MPG123::${_component})
+    add_library(MPG123::${_component} UNKNOWN IMPORTED)
     set_target_properties(
       MPG123::${_component}
       PROPERTIES IMPORTED_LOCATION "${mpg123_${_component}_LIBRARY}"
