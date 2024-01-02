@@ -37,8 +37,8 @@ For compatibility with upstream, the following variables are also set:
 #]=======================================================================]
 
 # Use pkg-config if available
-find_package(PkgConfig)
-pkg_check_modules(PC_OPUS opus)
+find_package(PkgConfig QUIET)
+pkg_check_modules(PC_OPUS QUIET opus)
 
 # Find the headers and library
 find_path(
@@ -53,13 +53,13 @@ find_library(
 
 # Get the version from pkg-config
 if(PC_OPUS_VERSION)
-  set(Opus_VERSION "${PC_OPUS_VERSION}")
+  set(Opus_VERSION "${PC_OPUS_VERSION}.0")
   set(OPUS_VERSION "${Opus_VERSION}")
   set(OPUS_VERSION_STRING "${Opus_VERSION}")
   string(REPLACE "." ";" _opus_version_list "${Opus_VERSION}")
   list(GET _opus_version_list 0 OPUS_VERSION_MAJOR)
   list(GET _opus_version_list 1 OPUS_VERSION_MINOR)
-  list(GET _opus_version_list 2 OPUS_VERSION_PATCH)
+  list(GET _opus_version_list 2 OPUS_VERSION_PATCH) # might be missing if zero, hence adding the .0 above
 else()
   message(STATUS "Unable to get Opus version without pkg-config.")
   set(Opus_VERSION)
