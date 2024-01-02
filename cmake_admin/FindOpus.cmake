@@ -37,8 +37,8 @@ For compatibility with upstream, the following variables are also set:
 #]=======================================================================]
 
 # Use pkg-config if available
-find_package(PkgConfig QUIET)
-pkg_check_modules(PC_OPUS QUIET opus)
+find_package(PkgConfig)
+pkg_check_modules(PC_OPUS opus)
 
 # Find the headers and library
 find_path(
