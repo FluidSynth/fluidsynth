@@ -69,7 +69,8 @@ elseif(SndFile_INCLUDE_DIR)
 endif()
 
 # Check the features SndFile was built with
-if(PC_SNDFILE_FOUND)
+# 2024-01-02: Recent versions of libsndfile don't seem to provide a pkgconfig file and older version who did are lacking private libraries like OGG.
+if(FALSE) #PC_SNDFILE_FOUND
   if("vorbis" IN_LIST PC_SNDFILE_STATIC_LIBRARIES)
     set(SndFile_WITH_EXTERNAL_LIBS TRUE)
   endif()
