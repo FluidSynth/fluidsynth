@@ -50,7 +50,7 @@ find_path(
 
 find_library(
   _sndfile_library
-  NAMES "sndfile"
+  NAMES "sndfile" "sndfile-1"
   HINTS "${PC_SNDFILE_LIBDIR}")
 
 # Get version from pkg-config or read the config header
