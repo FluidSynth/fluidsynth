@@ -68,10 +68,6 @@ else()
                                 "GLib2::glib-2" "SndFile::sndfile")
 endif()
 
-message(STATUS "PC_INSTPATCH_FOUND: ${PC_INSTPATCH_FOUND}")
-message(STATUS "_instpatch_link_libraries: ${_instpatch_link_libraries}")
-message(STATUS "SNDFILE_INCLUDE_DIR: ${SNDFILE_INCLUDE_DIR}")
-
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
