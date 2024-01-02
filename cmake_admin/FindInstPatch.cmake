@@ -25,8 +25,8 @@ This will define the following variables:
 #]=======================================================================]
 
 # Use pkg-config if available
-find_package(PkgConfig)
-pkg_check_modules(PC_INSTPATCH libinstpatch-1.0)
+find_package(PkgConfig QUIET)
+pkg_check_modules(PC_INSTPATCH QUIET libinstpatch-1.0)
 
 # Find the headers and library
 find_path(
@@ -59,10 +59,10 @@ else()
   if(NOT TARGET GLib2::gobject-2
      OR NOT TARGET GLib2::gthread-2
      OR NOT TARGET GLib2::glib-2)
-    find_package(GLib2)
+    find_package(GLib2 QUIET)
   endif()
   if(NOT TARGET SndFile::sndfile)
-    find_package(SndFile)
+    find_package(SndFile QUIET)
   endif()
   set(_instpatch_link_libraries "GLib2::gobject-2" "GLib2::gthread-2"
                                 "GLib2::glib-2" "SndFile::sndfile")

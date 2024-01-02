@@ -39,8 +39,8 @@ For compatibility with upstream, the following variables are also set:
 #]=======================================================================]
 
 # Use pkg-config if available
-find_package(PkgConfig)
-pkg_check_modules(PC_SNDFILE sndfile)
+find_package(PkgConfig QUIET)
+pkg_check_modules(PC_SNDFILE QUIET sndfile)
 
 # Find the headers and libraries
 find_path(
@@ -78,12 +78,12 @@ if(PC_SNDFILE_FOUND)
   endif()
 elseif(_sndfile_library)
   # sndfile may need any of these libraries
-  find_package(Ogg 1.3)
-  find_package(Vorbis)
-  find_package(FLAC)
-  find_package(Opus)
-  find_package(mp3lame)
-  find_package(mpg123)
+  find_package(Ogg 1.3 QUIET)
+  find_package(Vorbis QUIET)
+  find_package(FLAC QUIET)
+  find_package(Opus QUIET)
+  find_package(mp3lame QUIET)
+  find_package(mpg123 QUIET)
 
   if(NOT CMAKE_CROSSCOMPILING)
     include(CheckSourceRuns)
