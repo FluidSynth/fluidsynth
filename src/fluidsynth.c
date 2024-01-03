@@ -29,9 +29,6 @@
 #define GETOPT_SUPPORT 1
 #endif
 
-#ifdef LIBINSTPATCH_SUPPORT
-#include <libinstpatch/libinstpatch.h>
-#endif
 #include "fluid_lash.h"
 
 #ifdef SYSTEMD_SUPPORT
