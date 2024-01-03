@@ -499,10 +499,6 @@ if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
     target_link_libraries ( fluidsynth PRIVATE PipeWire::PipeWire )
 endif()
 
-if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
-    target_link_libraries ( fluidsynth PRIVATE InstPatch::libinstpatch )
-endif()
-
 if ( TARGET LASH::LASH AND LASH_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE LASH::LASH )
 endif()

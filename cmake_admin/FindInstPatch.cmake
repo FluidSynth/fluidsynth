@@ -37,7 +37,7 @@ find_path(
 
 find_library(
   InstPatch_LIBRARY
-  NAMES "instpatch-1.0"
+  NAMES "instpatch-1.0" "instpatch-2"
   HINTS "${PC_INSTPATCH_LIBDIR}")
 
 # Get version from pkg-config or read the config header
