@@ -154,6 +154,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     char *media_category = NULL;
     float *buffer = NULL;
     const struct spa_pod *params[1];
+    struct pw_properties *props;
 
     drv = FLUID_NEW(fluid_pipewire_audio_driver_t);
 
@@ -196,7 +197,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
         goto driver_cleanup;
     }
 
-    struct pw_properties *props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL);
+    props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL);
 
     pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", period_size, (int) sample_rate);
     pw_properties_setf(props, PW_KEY_NODE_RATE, "1/%d", (int) sample_rate);
