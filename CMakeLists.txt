@@ -47,7 +47,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 3 )
-set ( FLUIDSYNTH_VERSION_MICRO 4 )
+set ( FLUIDSYNTH_VERSION_MICRO 5 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -62,7 +62,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 2 )
-set ( LIB_VERSION_REVISION 2 )
+set ( LIB_VERSION_REVISION 3 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -102,7 +102,7 @@ option ( enable-openmp "enable OpenMP support (parallelization of soundfont deco
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-    option ( enable-lash "compile LASH support (if it is available)" on )
+    option ( enable-lash "compile LASH support (if it is available)" off )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
@@ -600,6 +600,7 @@ unset ( LASH_SUPPORT CACHE )
 if ( enable-lash )
     find_package ( LASH ${LASH_MINIMUM_VERSION} )
     if ( LASH_FOUND )
+        message ( WARNING "LASH support has been deprecated and will be removed in fluidsynth 2.4.0" )
         set ( LASH_SUPPORT 1 )
         add_definitions ( -DHAVE_LASH )
         list( APPEND PC_REQUIRES_PRIV "lash-1.0")
