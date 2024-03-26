@@ -153,12 +153,6 @@ else ( LADSPA_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  LADSPA support:        no\n" )
 endif ( LADSPA_SUPPORT )
 
-if ( LASH_SUPPORT )
-  set ( MISC_REPORT "${MISC_REPORT}  LASH support:          yes (NOTE: GPL library)\n" )
-else ( LASH_SUPPORT )
-  set ( MISC_REPORT "${MISC_REPORT}  LASH support:          no\n" )
-endif ( LASH_SUPPORT )
-
 if ( NETWORK_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  NETWORK Support:       yes\n" )
 else ( NETWORK_SUPPORT )

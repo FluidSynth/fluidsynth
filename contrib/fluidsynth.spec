@@ -79,8 +79,7 @@ This package contains the shared library for Fluidsynth.
 
 %build
 %cmake \
-    -DFLUID_DAEMON_ENV_FILE=%{_fillupdir}/sysconfig.%{name} \
-    -Denable-lash=0
+    -DFLUID_DAEMON_ENV_FILE=%{_fillupdir}/sysconfig.%{name}
 %cmake_build
 
 %check

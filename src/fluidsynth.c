@@ -29,8 +29,6 @@
 #define GETOPT_SUPPORT 1
 #endif
 
-#include "fluid_lash.h"
-
 #ifdef SYSTEMD_SUPPORT
 #include <systemd/sd-daemon.h>
 #endif
@@ -392,13 +390,6 @@ int main(int argc, char **argv)
     int dump = 0;
     int fast_render = 0;
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
-#ifdef HAVE_LASH
-    int connect_lash = 1;
-    int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
-    fluid_lash_args_t *lash_args;
-
-    lash_args = fluid_lash_extract_args(&argc, &argv);
-#endif
 
 #if SDL2_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
@@ -653,9 +644,7 @@ int main(int argc, char **argv)
             break;
 
         case 'l':			/* disable LASH */
-#ifdef HAVE_LASH
-            connect_lash = 0;
-#endif
+            // lash support removed in 2.4.0, NOOP
             break;
 
         case 'm':
@@ -851,17 +840,6 @@ int main(int argc, char **argv)
 
 #ifdef _WIN32
     SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
-#endif
-
-#ifdef HAVE_LASH
-
-    /* connect to the lash server */
-    if(connect_lash)
-    {
-        enabled_lash = fluid_lash_connect(lash_args);
-        fluid_settings_setint(settings, "lash.enable", enabled_lash ? 1 : 0);
-    }
-
 #endif
 
     /* The 'groups' setting is relevant for LADSPA operation and channel mapping
@@ -1097,15 +1075,6 @@ int main(int argc, char **argv)
 
 #endif
 
-#ifdef HAVE_LASH
-
-    if(enabled_lash)
-    {
-        fluid_lash_create_thread(synth);
-    }
-
-#endif
-
     /* fast rendering audio file, if requested */
     if(fast_render)
     {
@@ -1284,10 +1253,6 @@ print_help(fluid_settings_t *settings)
            "    Attempt to connect the jack outputs to the physical ports\n");
     printf(" -K, --midi-channels=[num]\n"
            "    The number of midi channels [default = 16]\n");
-#ifdef HAVE_LASH
-    printf(" -l, --disable-lash\n"
-           "    Don't connect to LASH server\n");
-#endif
     printf(" -L, --audio-channels=[num]\n"
            "    The number of stereo audio channels [default = 1]\n");
     printf(" -m, --midi-driver=[label]\n"

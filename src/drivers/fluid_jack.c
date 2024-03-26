@@ -38,8 +38,6 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
-#include "fluid_lash.h"
-
 
 typedef struct _fluid_jack_audio_driver_t fluid_jack_audio_driver_t;
 typedef struct _fluid_jack_midi_driver_t fluid_jack_midi_driver_t;
@@ -264,19 +262,6 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
         FLUID_LOG(FLUID_ERR, "Failed to activate Jack client");
         goto error_recovery;
     }
-
-    /* tell the lash server our client name */
-#ifdef HAVE_LASH
-    {
-        int enable_lash = 0;
-        fluid_settings_getint(settings, "lash.enable", &enable_lash);
-
-        if(enable_lash)
-        {
-            fluid_lash_jack_client_name(fluid_lash_client, name);
-        }
-    }
-#endif /* HAVE_LASH */
 
     client_ref->server = server;        /* !! takes over allocation */
     server = NULL;      /* Set to NULL so it doesn't get freed below */

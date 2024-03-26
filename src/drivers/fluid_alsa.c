@@ -37,8 +37,6 @@
 #include <poll.h>
 #include <math.h>
 
-#include "fluid_lash.h"
-
 #define FLUID_ALSA_DEFAULT_MIDI_DEVICE  "default"
 #define FLUID_ALSA_DEFAULT_SEQ_DEVICE   "default"
 
@@ -1240,19 +1238,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
         dev->autoconn_dest.port = 0;
         fluid_alsa_seq_autoconnect(dev);
     }
-
-    /* tell the lash server our client id */
-#ifdef HAVE_LASH
-    {
-        int enable_lash = 0;
-        fluid_settings_getint(settings, "lash.enable", &enable_lash);
-
-        if(enable_lash)
-        {
-            fluid_lash_alsa_client_id(fluid_lash_client, snd_seq_client_id(dev->seq_handle));
-        }
-    }
-#endif /* HAVE_LASH */
 
     fluid_atomic_int_set(&dev->should_quit, 0);
 

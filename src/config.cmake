@@ -43,9 +43,6 @@
 /* Define to 1 if you have the <io.h> header file. */
 #cmakedefine HAVE_IO_H @HAVE_IO_H@
 
-/* whether or not we are supporting lash */
-#cmakedefine HAVE_LASH @HAVE_LASH@
-
 /* Define if systemd support is enabled */
 #cmakedefine SYSTEMD_SUPPORT @SYSTEMD_SUPPORT@
 

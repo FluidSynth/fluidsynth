@@ -102,7 +102,6 @@ option ( enable-openmp "enable OpenMP support (parallelization of soundfont deco
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-    option ( enable-lash "compile LASH support (if it is available)" off )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
@@ -507,7 +506,6 @@ endif(ASTYLE)
 set ( ALSA_MINIMUM_VERSION 0.9.1 )
 set ( DBUS_MINIMUM_VERSION 1.11.12 )
 set ( GLIB2_MINUMUM_VERSION 2.6.5 )
-set ( LASH_MINIMUM_VERSION 0.3 )
 set ( LIBINSTPATCH_MINIMUM_VERSION 1.1.0 )
 set ( LIBSNDFILE_MINIMUM_VERSION 1.0.0 )
 set ( PIPEWIRE_MINIMUM_VERSION 0.3 )
@@ -595,17 +593,6 @@ if ( enable-pipewire )
         list( APPEND PC_REQUIRES_PRIV "libpipewire-0.3")
     endif()
 endif ( enable-pipewire )
-
-unset ( LASH_SUPPORT CACHE )
-if ( enable-lash )
-    find_package ( LASH ${LASH_MINIMUM_VERSION} )
-    if ( LASH_FOUND )
-        message ( WARNING "LASH support has been deprecated and will be removed in fluidsynth 2.4.0" )
-        set ( LASH_SUPPORT 1 )
-        add_definitions ( -DHAVE_LASH )
-        list( APPEND PC_REQUIRES_PRIV "lash-1.0")
-    endif ( LASH_FOUND )
-endif ( enable-lash )
 
 unset ( SYSTEMD_SUPPORT CACHE )
 if ( enable-systemd )
