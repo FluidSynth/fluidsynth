@@ -102,7 +102,7 @@ option ( enable-openmp "enable OpenMP support (parallelization of soundfont deco
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-    option ( enable-lash "compile LASH support (if it is available)" on )
+    option ( enable-lash "compile LASH support (if it is available)" off )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
@@ -600,6 +600,7 @@ unset ( LASH_SUPPORT CACHE )
 if ( enable-lash )
     find_package ( LASH ${LASH_MINIMUM_VERSION} )
     if ( LASH_FOUND )
+        message ( STATUS "Lash support has been deprecated and will be removed in fluidsynth 2.4.0" )
         set ( LASH_SUPPORT 1 )
         add_definitions ( -DHAVE_LASH )
         list( APPEND PC_REQUIRES_PRIV "lash-1.0")
