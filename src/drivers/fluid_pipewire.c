@@ -297,7 +297,7 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
 
     if (drv->pw_loop)
     {
-        pw_thread_loop_stop(drv->pw_loop);
+        pw_thread_loop_lock(drv->pw_loop);
     }
 
     if(drv->pw_stream)
@@ -307,6 +307,7 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
 
     if(drv->pw_loop)
     {
+        pw_thread_loop_unlock(drv->pw_loop);
         pw_thread_loop_destroy(drv->pw_loop);
     }
 
