@@ -548,12 +548,19 @@ set (GENTAB_BDIR ${CMAKE_CURRENT_BINARY_DIR}/gentables)
 # To fix cross-compiling fluidsynth from Win32 to ARM (using vcpkg), we need to pass the current generator
 # on to the external project, otherwise (for some unknown reason) the target compiler will be used rather
 # than the host compiler.
+#
+# Some use-cases however cannot rely on this logic, therefore, FLUID_HOST_COMPILER can be specified to
+# force using a particular host compiler, see https://github.com/FluidSynth/fluidsynth/issues/1301
+if ( FLUID_HOST_COMPILER )
+  set ( EXPLICIT_HOST_COMPILER_STR "-DCMAKE_C_COMPILER=${FLUID_HOST_COMPILER}" )
+endif ()
+
 ExternalProject_Add(gentables
     DOWNLOAD_COMMAND ""
     SOURCE_DIR ${GENTAB_SDIR}
     BINARY_DIR ${GENTAB_BDIR}
     CONFIGURE_COMMAND
-        "${CMAKE_COMMAND}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}" "${GENTAB_SDIR}"
+        "${CMAKE_COMMAND}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} ${EXPLICIT_HOST_COMPILER_STR} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}" "${GENTAB_SDIR}"
     BUILD_COMMAND
         "${CMAKE_COMMAND}" --build "${GENTAB_BDIR}"
     INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${FluidSynth_BINARY_DIR}/"
