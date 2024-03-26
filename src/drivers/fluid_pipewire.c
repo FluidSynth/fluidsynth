@@ -295,6 +295,11 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
     fluid_pipewire_audio_driver_t *drv = (fluid_pipewire_audio_driver_t *)p;
     fluid_return_if_fail(drv);
 
+    if (drv->pw_loop)
+    {
+        pw_thread_loop_stop(drv->pw_loop);
+    }
+
     if(drv->pw_stream)
     {
         pw_stream_destroy(drv->pw_stream);
