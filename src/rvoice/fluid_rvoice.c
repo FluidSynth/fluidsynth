@@ -355,10 +355,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     count = fluid_rvoice_calc_amp(voice);
 
-    if(count <= 0)
-    {
-        return count; /* return -1 if voice is quiet, 0 if voice has finished */
-    }
 
     /******************* phase **********************/
 
@@ -431,6 +427,19 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
      * Depending on the position in the loop and the loop size, this
      * may require several runs. */
 
+    if(count <= 0)
+    {
+        // The voice is quite, i.e. either in delay phase or zero volume.
+        // We need to update the rvoice's dsp phase, as the delay phase shall not "postpone" the sound, rather
+        // it should be played silently, see https://github.com/FluidSynth/fluidsynth/issues/1312
+        //
+        // Currently, this does access the sample buffers, which is redundant and could be optimized away.
+        // On the other hand, entering this if-clause is not supposed to happen often.
+        //
+        // Also note, that we're returning directly without running the IIR filter below.
+        return fluid_rvoice_dsp_interpolate_none(&voice->dsp, dsp_buf, is_looping);
+    }
+
     switch(voice->dsp.interp_method)
     {
     case FLUID_INTERP_NONE:
@@ -455,6 +464,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     if(count == 0)
     {
+        // voice has finished
         return count;
     }
 
