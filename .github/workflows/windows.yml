@@ -54,8 +54,8 @@ jobs:
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
 
-    #- name: '${{ matrix.icon }} Test'
-    #  run: cmake --build build --target check
+    - name: '${{ matrix.icon }} Test'
+      run: cmake --build build --target check
 
     - name: '${{ matrix.icon }} Demo'
       run: cmake --build build --target demo
