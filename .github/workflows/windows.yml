@@ -71,5 +71,5 @@ jobs:
       with:
         name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}
         path: ${{env.INSTALL_LOCATION}}.tar
-        retention-days: 90
+        retention-days: 14
         overwrite: true
