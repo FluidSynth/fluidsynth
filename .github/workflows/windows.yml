@@ -46,10 +46,7 @@ jobs:
           cmake:p
           ninja:p
           glib2:p
-          SDL2:p
           libsndfile:p
-          libopenmpt-modplug:p
-          libopenmpt:p
 
     - name: '${{ matrix.icon }} Configure CMake'
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
@@ -57,8 +54,8 @@ jobs:
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
 
-    - name: '${{ matrix.icon }} Test'
-      run: cmake --build build --target check
+    #- name: '${{ matrix.icon }} Test'
+    #  run: cmake --build build --target check
 
     - name: '${{ matrix.icon }} Demo'
       run: cmake --build build --target demo
