@@ -54,8 +54,8 @@ jobs:
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
 
-    #- name: '${{ matrix.icon }} Test'
-    #  run: cmake --build build --target check
+    - name: '${{ matrix.icon }} Test'
+      run: cmake --build build --target check
 
     - name: '${{ matrix.icon }} Demo'
       run: cmake --build build --target demo
@@ -63,13 +63,10 @@ jobs:
     - name: '${{ matrix.icon }} Install'
       run: cmake --install build && ls -la $INSTALL_LOCATION
 
-    - name: '${{ matrix.icon }} Create Archive'
-      run: tar cvf ${{env.INSTALL_LOCATION}}.tar ${{env.INSTALL_LOCATION}}
-
     - name: '${{ matrix.icon }} Upload Artifacts'
       uses: actions/upload-artifact@v4
       with:
         name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}
-        path: ${{env.INSTALL_LOCATION}}.tar
-        retention-days: 90
+        path: ${{env.INSTALL_LOCATION}}
+        retention-days: 14
         overwrite: true
