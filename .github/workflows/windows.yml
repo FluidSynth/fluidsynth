@@ -40,13 +40,13 @@ jobs:
         msystem: ${{matrix.sys}}
         install: >-
           make
+          libreadline
         pacboy: >-
           toolchain:p
           cmake:p
           ninja:p
           glib2:p
           SDL2:p
-          libreadline:p
           libsndfile:p
           libopenmpt-modplug:p
           libopenmpt:p
