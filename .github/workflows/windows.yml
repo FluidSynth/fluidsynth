@@ -44,7 +44,11 @@ jobs:
           toolchain:p
           cmake:p
           ninja:p
-          gtest:p
+          SDL2:p
+          libreadline:p
+          libsndfile:p
+          libopenmpt-modplug:p
+          libopenmpt:p
 
     - name: '${{ matrix.icon }} Configure CMake'
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
