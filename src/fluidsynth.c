@@ -391,6 +391,10 @@ int main(int argc, char **argv)
     int fast_render = 0;
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 
+#ifdef _WIN32
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+
 #if SDL2_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
