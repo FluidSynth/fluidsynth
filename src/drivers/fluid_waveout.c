@@ -201,9 +201,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
 void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
 {
     UINT n, nDevs = waveOutGetNumDevs();
-#ifdef _UNICODE
-    char dev_name[MAXPNAMELEN];
-#endif
+    char *dev_name;
 
     fluid_settings_register_str(settings, "audio.waveout.device", "default", 0);
     fluid_settings_add_option(settings, "audio.waveout.device", "default");
@@ -218,13 +216,15 @@ void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
         if(res == MMSYSERR_NOERROR)
         {
 #ifdef _UNICODE
-            WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, dev_name, MAXPNAMELEN, 0, 0);
+            int nsz = WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, 0, 0, 0, 0);
+            dev_name = FLUID_ARRAY(char, nsz + 1);
+            WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, dev_name, nsz, 0, 0);
+#else
+            dev_name = FLUID_STRDUP(caps.szPname);
+#endif
             FLUID_LOG(FLUID_DBG, "Testing audio device: %s", dev_name);
             fluid_settings_add_option(settings, "audio.waveout.device", dev_name);
-#else
-            FLUID_LOG(FLUID_DBG, "Testing audio device: %s", caps.szPname);
-            fluid_settings_add_option(settings, "audio.waveout.device", caps.szPname);
-#endif
+            FLUID_FREE(dev_name);
         }
     }
 }

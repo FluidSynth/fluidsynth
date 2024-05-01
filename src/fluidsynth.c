@@ -392,7 +392,10 @@ int main(int argc, char **argv)
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 
 #ifdef _WIN32
-	SetConsoleOutputCP(CP_UTF8);
+    // console output will be utf-8
+    SetConsoleOutputCP(CP_UTF8);
+    // console input, too
+    SetConsoleCP(CP_UTF8);
 #endif
 
 #if SDL2_SUPPORT
