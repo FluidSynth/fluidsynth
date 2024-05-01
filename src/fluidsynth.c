@@ -401,7 +401,10 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef _WIN32
-	SetConsoleOutputCP(CP_UTF8);
+    // console output will be utf-8
+    SetConsoleOutputCP(CP_UTF8);
+    // console input, too
+    SetConsoleCP(CP_UTF8);
 #endif
 
 #if SDL2_SUPPORT
