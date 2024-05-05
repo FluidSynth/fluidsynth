@@ -217,7 +217,7 @@ void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
         {
 #ifdef _UNICODE
             int nsz = WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, 0, 0, 0, 0);
-            dev_name = FLUID_ARRAY(char, nsz + 1);
+            dev_name = FLUID_ARRAY(char, nsz);
             WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, dev_name, nsz, 0, 0);
 #else
             dev_name = FLUID_STRDUP(caps.szPname);
