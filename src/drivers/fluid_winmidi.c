@@ -241,7 +241,7 @@ static char *fluid_winmidi_get_device_name(int dev_idx, TCHAR *input_dev_name)
 
 #if _UNICODE
     int nsz = WideCharToMultiByte(CP_UTF8, 0, input_dev_name, -1, 0, 0, 0, 0);
-    dev_name = FLUID_ARRAY(char, nsz + 1);
+    dev_name = FLUID_ARRAY(char, nsz);
     WideCharToMultiByte(CP_UTF8, 0, input_dev_name, -1, dev_name, nsz, 0, 0);
 #else
     dev_name = FLUID_STRDUP(input_dev_name);

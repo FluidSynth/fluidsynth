@@ -491,7 +491,7 @@ Developers:
             <type>str</type>
             <def>default</def>
             <desc>
-                Selects the DirectSound (Windows) device to use.
+                Selects the DirectSound (Windows) device to use. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
         <setting>
@@ -704,7 +704,7 @@ Developers:
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for WASAPI driver output.
+                Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
         <setting>
@@ -720,7 +720,7 @@ Developers:
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for WaveOut driver output.
+                Device to use for WaveOut driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
     </audio>
@@ -803,7 +803,7 @@ Developers:
             <name>winmidi.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels).</desc>
+            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels). Starting with 2.3.6 all device names are expected to be UTF8 encoded.</desc>
         </setting>
     </midi>
     

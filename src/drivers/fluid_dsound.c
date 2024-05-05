@@ -111,7 +111,7 @@ fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPV
     char *name;
 #if _UNICODE
     int nsz = WideCharToMultiByte(CP_UTF8, 0, description, -1, 0, 0, 0, 0);
-    name = FLUID_ARRAY(char, nsz + 1);
+    name = FLUID_ARRAY(char, nsz);
     WideCharToMultiByte(CP_UTF8, 0, description, -1, name, nsz, 0, 0);
 #else
     name = FLUID_STRDUP(description);
@@ -135,7 +135,7 @@ fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LP
     char *name;
 #if _UNICODE
     int nsz = WideCharToMultiByte(CP_UTF8, 0, description, -1, 0, 0, 0, 0);
-    name = FLUID_ARRAY(char, nsz + 1);
+    name = FLUID_ARRAY(char, nsz);
     WideCharToMultiByte(CP_UTF8, 0, description, -1, name, nsz, 0, 0);
 #else
     name = FLUID_STRDUP(description);
@@ -144,6 +144,7 @@ fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LP
 
     if (FLUID_STRCASECMP(devsel->devname, name) == 0)
     {
+        FLUID_FREE(name);
         /* The device exists, return a copy of its GUID */
         devsel->devGUID = FLUID_NEW(GUID);
 
@@ -155,7 +156,6 @@ fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LP
             return FALSE;
         }
     }
-    FLUID_FREE(name);
 
     return TRUE;
 }

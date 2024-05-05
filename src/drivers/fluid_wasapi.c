@@ -789,7 +789,7 @@ static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
         char *name;
 
         nsz = WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, 0, 0, 0, 0);
-        name = FLUID_ARRAY(char, nsz + 1);
+        name = FLUID_ARRAY(char, nsz);
         WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, name, nsz, 0, 0);
         fluid_settings_add_option(settings, "audio.wasapi.device", name);
         FLUID_FREE(name);
@@ -829,7 +829,7 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
     }
 
     nsz = WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, 0, 0, 0, 0);
-    name = FLUID_ARRAY(char, nsz + 1);
+    name = FLUID_ARRAY(char, nsz);
     WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, name, nsz, 0, 0);
 
     if(!FLUID_STRCASECMP(name, d->name))
