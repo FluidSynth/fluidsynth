@@ -48,6 +48,9 @@ void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 void print_configure(void);
 void fluid_wasapi_device_enumerate(void);
+#ifdef _WIN32
+static char* win32_ansi_to_utf8(const char* ansi_null_terminated_string);
+#endif
 
 /*
  * the globals
@@ -122,16 +125,25 @@ int process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         }
 
         break;
-
-    case FLUID_STR_TYPE:
-        if(fluid_settings_setstr(settings, optarg, val) != FLUID_OK)
+        
+    case FLUID_STR_TYPE: {
+        char *u8_val = val;
+#if defined(_WIN32)
+        u8_val = win32_ansi_to_utf8(val);
+#endif
+        if(fluid_settings_setstr(settings, optarg, u8_val) != FLUID_OK)
         {
             fprintf(stderr, "Failed to set string parameter '%s'\n", optarg);
+#if defined(_WIN32)
+            free(u8_val);
+#endif
             return FLUID_FAILED;
         }
-
+#if defined(_WIN32)
+        free(u8_val);
+#endif
         break;
-
+    }
     default:
         fprintf(stderr, "Setting parameter '%s' not found\n", optarg);
         return FLUID_FAILED;
