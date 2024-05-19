@@ -12,6 +12,10 @@
  * [Pedro López-Cabanillas <plcl@users.sf.net>]
  */
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <list>
 #include <string>
 #include <iostream>
@@ -22,6 +26,11 @@ int main(int argc, char**)
 {
     fluid_settings_t* settings = nullptr;
     void* context = nullptr;
+
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    setvbuf(stdout, nullptr, _IONBF, 0);
+#endif
 
     std::cout << "C++ enum settings of FluidSynth v" << fluid_version_str() << std::endl;
 

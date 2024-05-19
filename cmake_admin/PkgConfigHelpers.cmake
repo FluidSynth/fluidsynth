@@ -76,7 +76,8 @@ macro ( unset_pkg_config _prefix )
 endmacro ( unset_pkg_config )
 
 function ( get_target_properties_from_pkg_config _library _prefix _out_prefix )
-  if ( "${_library}" MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$" )
+  if ( NOT "${_library}" MATCHES "${CMAKE_IMPORT_LIBRARY_SUFFIX}$"
+       AND "${_library}" MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$" )
     set ( _cflags ${_prefix}_STATIC_CFLAGS_OTHER )
     set ( _link_libraries ${_prefix}_STATIC_LIBRARIES )
     set ( _library_dirs ${_prefix}_STATIC_LIBRARY_DIRS )
