@@ -2050,8 +2050,8 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                 || data[3] == MIDI_SYSEX_GM2_ON))
         {
             int result;
-            synth->bank_select = FLUID_BANK_STYLE_GM;
             fluid_synth_api_enter(synth);
+            synth->bank_select = FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
             FLUID_API_RETURN(result);
         }
