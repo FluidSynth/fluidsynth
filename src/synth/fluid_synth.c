@@ -1827,6 +1827,10 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
                 if(nrpn_select < GEN_LAST)
                 {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "NRPN\t%d\t%d\t%d", channum, nrpn_select, data);
+                    }
                     float val = fluid_gen_scale_nrpn(nrpn_select, data);
                     fluid_synth_set_gen_LOCAL(synth, channum, nrpn_select, val);
                 }
