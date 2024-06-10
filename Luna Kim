@@ -1,0 +1,27 @@
+from midiutil import MIDIFile
+
+# Create a MIDI object
+midi = MIDIFile(1)
+
+# Tracks and channels
+track = 0
+channel = 0
+time = 0    # In beats
+tempo = 120 # In BPM
+
+# Add track name and tempo
+midi.addTrackName(track, time, "Moonlight Dream")
+midi.addTempo(track, time, tempo)
+
+# Notes for the melody (C4, D4, E4, G4, A4)
+notes = [60, 62, 64, 67, 69]
+duration = 1   # 1 beat per note
+volume = 100   # Volume (0-127)
+
+# Add melody notes to the MIDI file
+for i, note in enumerate(notes):
+    midi.addNote(track, channel, note, time + i, duration, volume)
+
+# Save the MIDI file
+with open("/mnt/data/Moonlight_Dream.mid", "wb") as output_file:
+    midi.writeFile(output_file)
