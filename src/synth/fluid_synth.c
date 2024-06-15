@@ -1827,6 +1827,10 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
                 if(nrpn_select < GEN_LAST)
                 {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "NRPN\t%d\t%d\t%d", channum, nrpn_select, data);
+                    }
                     float val = fluid_gen_scale_nrpn(nrpn_select, data);
                     fluid_synth_set_gen_LOCAL(synth, channum, nrpn_select, val);
                 }
@@ -2050,8 +2054,8 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                 || data[3] == MIDI_SYSEX_GM2_ON))
         {
             int result;
-            synth->bank_select = FLUID_BANK_STYLE_GM;
             fluid_synth_api_enter(synth);
+            synth->bank_select = FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
             FLUID_API_RETURN(result);
         }

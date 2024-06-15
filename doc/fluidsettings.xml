@@ -112,7 +112,7 @@ Developers:
             <max>127</max>
             <realtime/>
             <desc>
-                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed.</desc>
+                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed. It has been observed that setting this ID to 16 provides best compatibility when playing MIDI files which contain SYSEX commands that you want to have honored.</desc>
         </setting>
         <setting>
             <name>dynamic-sample-loading</name>
