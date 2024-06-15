@@ -1837,6 +1837,18 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
                 chan->nrpn_select = 0;  /* Reset to 0 */
             }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+            {
+                int gen = fluid_channel_get_cc(chan, NRPN_LSB);
+                if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
+                {
+                    fluid_synth_process_awe32_nrpn_LOCAL(synth, chan, gen, data);
+                }
+                else
+                {
+                    FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
+                }
+            }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
         {
@@ -7583,6 +7595,131 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
             fluid_voice_set_param(voice, param, value);
         }
     }
+}
+
+/**
+ * This implementation is based on "Frequently Asked Questions for SB AWE32" http://archive.gamedev.net/archive/reference/articles/article445.html
+ * as well as on the "SB AWE32 Developer's Information Pack" https://github.com/user-attachments/files/15757220/adip301.pdf
+ * 
+ * @param gen the AWE32 effect or generator to manipulate
+ * @param data the composed value of DATA_MSB and DATA_LSB
+ */
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data)
+{
+    data -= 8192;
+
+    static const fluid_gen_type awe32_to_sf2_gen[] =
+    {
+        // assuming LFO1 maps to MODLFO and LFO2 maps to VIBLFO
+        // observe how nicely most of the AWE32 generators here match up with the order of SF2 generators in fluid_gen_type
+        GEN_MODLFODELAY,		/**< Modulation LFO delay */
+        GEN_MODLFOFREQ,		/**< Modulation LFO frequency */
+        GEN_VIBLFODELAY,		/**< Vibrato LFO delay */
+        GEN_VIBLFOFREQ,		/**< Vibrato LFO frequency */
+        GEN_MODENVDELAY,		/**< Modulation envelope delay */
+        GEN_MODENVATTACK,		/**< Modulation envelope attack */
+        GEN_MODENVHOLD,		/**< Modulation envelope hold */
+        GEN_MODENVDECAY,		/**< Modulation envelope decay */
+        GEN_MODENVSUSTAIN,		/**< Modulation envelope sustain */
+        GEN_MODENVRELEASE,		/**< Modulation envelope release */
+        GEN_VOLENVDELAY,		/**< Volume envelope delay */
+        GEN_VOLENVATTACK,		/**< Volume envelope attack */
+        GEN_VOLENVHOLD,		/**< Volume envelope hold */
+        GEN_VOLENVDECAY,		/**< Volume envelope decay */
+        GEN_VOLENVSUSTAIN,		/**< Volume envelope sustain */
+        GEN_VOLENVRELEASE,		/**< Volume envelope release */
+        GEN_PITCH,              /**< Initial Pitch */
+        GEN_MODLFOTOPITCH,		/**< Modulation LFO to pitch */
+        GEN_VIBLFOTOPITCH,		/**< Vibrato LFO to pitch */
+        GEN_MODENVTOPITCH,		/**< Modulation envelope to pitch */
+        GEN_MODLFOTOVOL,		/**< Modulation LFO to volume */
+        GEN_FILTERFC,			/**< Filter cutoff */
+        GEN_FILTERQ,			/**< Filter Q */
+        GEN_MODLFOTOFILTERFC,		/**< Modulation LFO to filter cutoff */
+        GEN_MODENVTOFILTERFC,		/**< Modulation envelope to filter cutoff */
+        GEN_CHORUSSEND,		/**< Chorus send amount */
+        GEN_REVERBSEND,		/**< Reverb send amount */
+    };
+
+    int sf2_gen = awe32_to_sf2_gen[gen];
+    fluid_real_t converted_sf2_generator_value;
+    switch(sf2_gen)
+    {
+        case GEN_MODLFODELAY:
+        case GEN_VIBLFODELAY:
+        case GEN_MODENVDELAY:
+        case GEN_VOLENVDELAY:
+            fluid_clip(data, 0, 5900);
+            converted_sf2_generator_value = fluid_sec2tc(data * 4 / 1000);
+            break;
+
+        case GEN_MODLFOFREQ:
+        case GEN_VIBLFOFREQ:
+            break;
+
+        case GEN_MODENVATTACK:
+        case GEN_VOLENVATTACK:
+            fluid_clip(data, 0, 5940);
+            converted_sf2_generator_value = fluid_sec2tc(data * 1 / 1000);
+            break;
+
+        case GEN_MODENVHOLD:
+        case GEN_VOLENVHOLD:
+            fluid_clip(data, 0, 8191);
+            converted_sf2_generator_value = fluid_sec2tc(data * 1 / 1000);
+            break;
+
+        case GEN_MODENVDECAY:
+        case GEN_MODENVRELEASE:
+        case GEN_VOLENVDECAY:
+        case GEN_VOLENVRELEASE:
+            fluid_clip(data, 0, 5940);
+            converted_sf2_generator_value = fluid_sec2tc(data * 4 / 1000);
+            break;
+
+        case GEN_MODENVSUSTAIN:
+        case GEN_VOLENVSUSTAIN:
+            fluid_clip(data, 0, 127);
+            break;
+
+        case GEN_PITCH:
+            converted_sf2_generator_value = data + 8192;
+            // This has the side effect of manipulating the state of the channel's pitchwheel, but I'll buy it
+            fluid_synth_pitch_bend(synth, chan, converted_sf2_generator_value);
+            return;
+
+        case GEN_MODLFOTOPITCH:
+        case GEN_VIBLFOTOPITCH:
+        case GEN_MODENVTOPITCH:
+            break;
+
+        case GEN_MODLFOTOVOL:
+            break;
+
+        case GEN_FILTERFC:
+            break;
+        case GEN_FILTERQ:
+            break;
+        case GEN_MODLFOTOFILTERFC:
+            break;
+        case GEN_MODENVTOFILTERFC:
+            break;
+
+        case GEN_REVERBSEND:
+            fluid_clip(data, 0, 255);
+            /* transform the input value */
+            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod->flags1, 256);
+            converted_sf2_generator_value*= fluid_mod_get_amount(default_reverb_mod);
+
+        case GEN_CHORUSSEND:
+            fluid_clip(data, 0, 255);
+            /* transform the input value */
+            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_chorus_mod->flags1, 256);
+            converted_sf2_generator_value*= fluid_mod_get_amount(default_chorus_mod);
+            break;
+    }
+
+    fluid_synth_set_gen_LOCAL(synth, chan, sf2_gen, converted_sf2_generator_value);
 }
 
 /**
