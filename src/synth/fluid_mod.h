@@ -45,6 +45,8 @@ struct _fluid_mod_t
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
+fluid_real_t fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range);
+
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);

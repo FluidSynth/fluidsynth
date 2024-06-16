@@ -129,6 +129,7 @@ static void fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id);
 
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
 
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data);
 
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
@@ -7611,9 +7612,9 @@ calc_awe32_filter_q(int data)
     {
         fluid_real_t q_lo;
         fluid_real_t q_hi;
-    } awe32_q_table;
+    } awe32_q;
 
-    static const awe32_q_table[] =
+    static const awe32_q awe32_q_table[] =
     {
         {5.f,  0.f}, /* coef 0 */
         {6.f,  0.5f},/* coef 1 */
@@ -7633,8 +7634,7 @@ calc_awe32_filter_q(int data)
         {28.f, 18.f}, /* coef 15 */
     };
 
-    fluid_real_t q;
-    awe32_q_table* tab;
+    awe32_q* tab;
 
     fluid_clip(data, 0, 127);
     data /= 8;
@@ -7652,9 +7652,7 @@ calc_awe32_filter_q(int data)
  */
 static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data)
 {
-    data -= 8192;
-
-    static const fluid_gen_type awe32_to_sf2_gen[] =
+    static const enum fluid_gen_type awe32_to_sf2_gen[] =
     {
         // assuming LFO1 maps to MODLFO and LFO2 maps to VIBLFO
         // observe how nicely most of the AWE32 generators here match up with the order of SF2 generators in fluid_gen_type
@@ -7687,8 +7685,11 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         GEN_REVERBSEND,		/**< Reverb send amount */
     };
 
-    int sf2_gen = awe32_to_sf2_gen[gen];
+    enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
     fluid_real_t converted_sf2_generator_value;
+    
+    data -= 8192;
+    
     switch(sf2_gen)
     {
         case GEN_MODLFODELAY:
@@ -7770,16 +7771,21 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod->flags1, 256);
-            converted_sf2_generator_value*= fluid_mod_get_amount(default_reverb_mod);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod.flags1, 256);
+            converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
             break;
 
         case GEN_CHORUSSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_chorus_mod->flags1, 256);
-            converted_sf2_generator_value*= fluid_mod_get_amount(default_chorus_mod);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_chorus_mod.flags1, 256);
+            converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
             break;
+
+        default:
+            // should not happen
+            FLUID_LOG(FLUID_WARN, "AWE32 NPRN %d conversion not implemented", gen);
+            return;
     }
 
     fluid_synth_set_gen_LOCAL(synth, chan, sf2_gen, converted_sf2_generator_value);

@@ -240,7 +240,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 /**
  * transforms the initial value retrieved by \c fluid_mod_get_source_value into [0.0;1.0]
  */
-static fluid_real_t
+fluid_real_t
 fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range)
 {
     /* normalized value, i.e. usually in the range [0;1] */

@@ -247,7 +247,7 @@ fluid_tc2sec_release(fluid_real_t tc)
  */
 fluid_real_t fluid_hz2ct(fluid_real_t f)
 {
-    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
+    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f);
 }
 
 /*

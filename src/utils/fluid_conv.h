@@ -27,7 +27,7 @@
 fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);
 fluid_real_t fluid_cb2amp(fluid_real_t cb);
-fluid_real_t fluid_sec2tc(fluid_real_t sec)
+fluid_real_t fluid_sec2tc(fluid_real_t sec);
 fluid_real_t fluid_tc2sec(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_delay(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_attack(fluid_real_t tc);
