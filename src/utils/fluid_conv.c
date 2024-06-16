@@ -242,17 +242,18 @@ fluid_tc2sec_release(fluid_real_t tc)
     return fluid_tc2sec(tc);
 }
 
+/**
+ * The inverse operation, converting from Hertz to cents
+ */
+fluid_real_t fluid_hz2ct(fluid_real_t f)
+{
+    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
+}
+
 /*
  * fluid_act2hz
  *
  * Convert from absolute cents to Hertz
- * 
- * The inverse operation, converting from Hertz to cents, was unused and implemented as
- *
-fluid_hz2ct(fluid_real_t f)
-{
-    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
-}
  */
 double
 fluid_act2hz(double c)

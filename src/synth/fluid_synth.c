@@ -7597,6 +7597,52 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
     }
 }
 
+// The "SB AWE32 Developer's Information Pack" provides a lookup table for the filter resonance.
+// Instead of a single Q value, a high and low Q value is given. This suggests a variable-Q filter design, which is
+// incompatible to fluidsynth's IIR filter. Therefore we need to somehow derive a single Q value.
+// Options are:
+// * mean
+// * geometric distance (sqrt(q_lo * q_hi))
+// * either q_lo or q_hi
+static fluid_real_t
+calc_awe32_filter_q(int data)
+{
+    typedef struct
+    {
+        fluid_real_t q_lo;
+        fluid_real_t q_hi;
+    } awe32_q_table;
+
+    static const awe32_q_table[] =
+    {
+        {5.f,  0.f}, /* coef 0 */
+        {6.f,  0.5f},/* coef 1 */
+        {8.f,  1.f}, /* coef 2 */
+        {10.f, 2.f}, /* coef 3 */
+        {11.f, 3.f}, /* coef 4 */
+        {13.f, 4.f}, /* coef 5 */
+        {14.f, 5.f}, /* coef 6 */
+        {16.f, 6.f}, /* coef 7 */
+        {17.f, 7.f}, /* coef 8 */
+        {19.f, 9.f}, /* coef 9 */
+        {20.f, 10.f}, /* coef 10 */
+        {22.f, 11.f}, /* coef 11 */
+        {23.f, 13.f}, /* coef 12 */
+        {25.f, 15.f}, /* coef 13 */
+        {26.f, 16.f}, /* coef 14 */
+        {28.f, 18.f}, /* coef 15 */
+    };
+
+    fluid_real_t q;
+    awe32_q_table* tab;
+
+    fluid_clip(data, 0, 127);
+    data /= 8;
+    tab = &awe32_q_table[data];
+
+    return (tab->q_lo + tab->q_hi) / 2;
+}
+
 /**
  * This implementation is based on "Frequently Asked Questions for SB AWE32" http://archive.gamedev.net/archive/reference/articles/article445.html
  * as well as on the "SB AWE32 Developer's Information Pack" https://github.com/user-attachments/files/15757220/adip301.pdf
@@ -7655,6 +7701,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_MODLFOFREQ:
         case GEN_VIBLFOFREQ:
+            fluid_clip(data, 0, 127);
+            converted_sf2_generator_value = fluid_hz2ct(data * 0.084 /* Hz */);
             break;
 
         case GEN_MODENVATTACK:
@@ -7680,6 +7728,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_MODENVSUSTAIN:
         case GEN_VOLENVSUSTAIN:
             fluid_clip(data, 0, 127);
+            converted_sf2_generator_value = data * (0.75 /* dB */ * 10) /* cB */;
             break;
 
         case GEN_PITCH:
@@ -7691,18 +7740,31 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_MODLFOTOPITCH:
         case GEN_VIBLFOTOPITCH:
         case GEN_MODENVTOPITCH:
+            fluid_clip(data, -127, 127);
+            converted_sf2_generator_value = data * 9.375 /* cents */;
             break;
 
         case GEN_MODLFOTOVOL:
+            fluid_clip(data, 0, 127);
+            converted_sf2_generator_value = data * (0.1875 /* dB */ * 10) /* cB */;
             break;
 
         case GEN_FILTERFC:
+            fluid_clip(data, 0, 127);
+            converted_sf2_generator_value = fluid_hz2ct(data * 62 /* Hz */);
             break;
+
         case GEN_FILTERQ:
+            converted_sf2_generator_value = calc_awe32_filter_q(data);
             break;
+
         case GEN_MODLFOTOFILTERFC:
+            fluid_clip(data, -64, 63);
+            converted_sf2_generator_value = data * 56.25 /* cents */;
             break;
         case GEN_MODENVTOFILTERFC:
+            fluid_clip(data, -127, 127);
+            converted_sf2_generator_value = data * 56.25 /* cents */;
             break;
 
         case GEN_REVERBSEND:
@@ -7710,6 +7772,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             /* transform the input value */
             converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod->flags1, 256);
             converted_sf2_generator_value*= fluid_mod_get_amount(default_reverb_mod);
+            break;
 
         case GEN_CHORUSSEND:
             fluid_clip(data, 0, 255);
