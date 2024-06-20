@@ -169,7 +169,7 @@
 /* modulator */
 typedef struct
 {
-    fluid_real_t   a1;          /* Coefficient: a1 = 2 * cos(w) */
+    double   a1;                /* Coefficient: a1 = 2 * cos(w), MUST be double! See https://github.com/FluidSynth/fluidsynth/issues/1331 */
     fluid_real_t   buffer1;     /* buffer1 */
     fluid_real_t   buffer2;     /* buffer2 */
     fluid_real_t   reset_buffer2;/* reset value of buffer2 */
@@ -247,7 +247,8 @@ static void set_sinus_frequency(sinus_modulator *mod,
     fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* initial angle */
     fluid_real_t a;
 
-    mod->a1 = 2 * FLUID_COS(w);
+    // DO NOT use potentially single precision cosf or FLUID_COS here! See https://github.com/FluidSynth/fluidsynth/issues/1331
+    mod->a1 = 2 * cos(w);
 
     a = (2 * FLUID_M_PI / 360) * phase;
 
