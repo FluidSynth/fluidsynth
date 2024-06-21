@@ -127,6 +127,9 @@
 /* Define to enable JACK driver */
 #cmakedefine JACK_SUPPORT @JACK_SUPPORT@
 
+/* Define to enable KAI driver */
+#cmakedefine KAI_SUPPORT @KAI_SUPPORT@
+
 /* Define to enable PipeWire driver */
 #cmakedefine PIPEWIRE_SUPPORT @PIPEWIRE_SUPPORT@
 

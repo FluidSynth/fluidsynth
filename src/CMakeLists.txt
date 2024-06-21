@@ -81,6 +81,10 @@ if ( DART_SUPPORT )
   set ( fluid_dart_SOURCES drivers/fluid_dart.c )
 endif ( DART_SUPPORT )
 
+if ( KAI_SUPPORT )
+  set ( fluid_kai_SOURCES drivers/fluid_kai.c )
+endif ( KAI_SUPPORT )
+
 if ( MIDISHARE_SUPPORT )
   set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
 endif ( MIDISHARE_SUPPORT )
@@ -232,6 +236,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_dart_SOURCES}
     ${fluid_dbus_SOURCES}
     ${fluid_jack_SOURCES}
+    ${fluid_kai_SOURCES}
     ${fluid_pipewire_SOURCES}
     ${fluid_midishare_SOURCES}
     ${fluid_opensles_SOURCES}
@@ -347,6 +352,7 @@ endif ( MACOSX_FRAMEWORK )
 # but since they do not have a link step nothing is done with their object files.
 target_link_libraries ( libfluidsynth-OBJ PUBLIC
     ${DART_LIBS}
+    ${KAI_LIBS}
     ${COREAUDIO_LIBS}
     ${COREMIDI_LIBS}
     ${WINDOWS_LIBS}
@@ -413,6 +419,10 @@ endif()
 if ( DART_SUPPORT )
     target_include_directories ( libfluidsynth-OBJ PUBLIC ${DART_INCLUDE_DIRS} )
 endif ( DART_SUPPORT )
+
+if ( KAI_SUPPORT )
+    target_include_directories ( libfluidsynth-OBJ PUBLIC ${KAI_INCLUDE_DIRS} )
+endif ( KAI_SUPPORT )
 
 if ( MIDISHARE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC MidiShare::MidiShare )

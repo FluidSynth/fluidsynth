@@ -170,6 +170,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if KAI_SUPPORT
+    {
+        "kai",
+        new_fluid_kai_audio_driver,
+        NULL,
+        delete_fluid_kai_audio_driver,
+        fluid_kai_audio_driver_settings
+    },
+#endif
+
 #if DART_SUPPORT
     {
         "dart",

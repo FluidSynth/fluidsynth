@@ -55,6 +55,12 @@ else ( DART_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OS/2 DART:             no\n" )
 endif ( DART_SUPPORT )
 
+if ( KAI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OS/2 KAI:              yes\n" )
+else ( KAI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OS/2 KAI:              no\n" )
+endif ( KAI_SUPPORT )
+
 if ( OSS_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OSS:                   yes\n" )
 else ( OSS_SUPPORT )
