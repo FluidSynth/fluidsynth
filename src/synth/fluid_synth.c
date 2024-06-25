@@ -1843,7 +1843,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 int gen = fluid_channel_get_cc(chan, NRPN_LSB);
                 if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
                 {
-                    fluid_synth_process_awe32_nrpn_LOCAL(synth, chan, gen, data);
+                    fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
                 }
                 else
                 {
@@ -7612,35 +7612,37 @@ calc_awe32_filter_q(int data)
     {
         fluid_real_t q_lo;
         fluid_real_t q_hi;
+        fluid_real_t dc_atten;
     } awe32_q;
 
+    // Q in dB
     static const awe32_q awe32_q_table[] =
     {
-        {5.f,  0.f}, /* coef 0 */
-        {6.f,  0.5f},/* coef 1 */
-        {8.f,  1.f}, /* coef 2 */
-        {10.f, 2.f}, /* coef 3 */
-        {11.f, 3.f}, /* coef 4 */
-        {13.f, 4.f}, /* coef 5 */
-        {14.f, 5.f}, /* coef 6 */
-        {16.f, 6.f}, /* coef 7 */
-        {17.f, 7.f}, /* coef 8 */
-        {19.f, 9.f}, /* coef 9 */
-        {20.f, 10.f}, /* coef 10 */
-        {22.f, 11.f}, /* coef 11 */
-        {23.f, 13.f}, /* coef 12 */
-        {25.f, 15.f}, /* coef 13 */
-        {26.f, 16.f}, /* coef 14 */
-        {28.f, 18.f}, /* coef 15 */
+        { 5.f, 0.f, -0.0f },   /* coef 0 */
+        { 6.f, 0.5f, -0.5f },  /* coef 1 */
+        { 8.f, 1.f, -1.2f },   /* coef 2 */
+        { 10.f, 2.f, -1.8f },  /* coef 3 */
+        { 11.f, 3.f, -2.5f },  /* coef 4 */
+        { 13.f, 4.f, -3.3f },  /* coef 5 */
+        { 14.f, 5.f, -4.1f },  /* coef 6 */
+        { 16.f, 6.f, -5.5f},   /* coef 7 */
+        { 17.f, 7.f, -6.0f },  /* coef 8 */
+        { 19.f, 9.f, -6.6f },  /* coef 9 */
+        { 20.f, 10.f, -7.2f }, /* coef 10 */
+        { 22.f, 11.f, -7.9f }, /* coef 11 */
+        { 23.f, 13.f, -8.5f }, /* coef 12 */
+        { 25.f, 15.f, -9.3f }, /* coef 13 */
+        { 26.f, 16.f, -10.1f },/* coef 14 */
+        { 28.f, 18.f, -11.0f}, /* coef 15 */
     };
 
-    awe32_q* tab;
+    const awe32_q* tab;
 
     fluid_clip(data, 0, 127);
     data /= 8;
     tab = &awe32_q_table[data];
 
-    return (tab->q_lo + tab->q_hi) / 2;
+    return (tab->q_lo + tab->q_hi) * 10 / 2 /* cB */;
 }
 
 /**
@@ -7686,6 +7688,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     };
 
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
+    int is_realtime = FALSE, i;
     fluid_real_t converted_sf2_generator_value;
     
     data -= 8192;
@@ -7704,6 +7707,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_VIBLFOFREQ:
             fluid_clip(data, 0, 127);
             converted_sf2_generator_value = fluid_hz2ct(data * 0.084 /* Hz */);
+            is_realtime = TRUE;
             break;
 
         case GEN_MODENVATTACK:
@@ -7740,6 +7744,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_MODLFOTOPITCH:
         case GEN_VIBLFOTOPITCH:
+            is_realtime = TRUE;
+            /* fallthrough */
         case GEN_MODENVTOPITCH:
             fluid_clip(data, -127, 127);
             converted_sf2_generator_value = data * 9.375 /* cents */;
@@ -7748,11 +7754,13 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_MODLFOTOVOL:
             fluid_clip(data, 0, 127);
             converted_sf2_generator_value = data * (0.1875 /* dB */ * 10) /* cB */;
+            is_realtime = TRUE;
             break;
 
         case GEN_FILTERFC:
             fluid_clip(data, 0, 127);
             converted_sf2_generator_value = fluid_hz2ct(data * 62 /* Hz */);
+            is_realtime = TRUE;
             break;
 
         case GEN_FILTERQ:
@@ -7762,7 +7770,9 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_MODLFOTOFILTERFC:
             fluid_clip(data, -64, 63);
             converted_sf2_generator_value = data * 56.25 /* cents */;
+            is_realtime = TRUE;
             break;
+
         case GEN_MODENVTOFILTERFC:
             fluid_clip(data, -127, 127);
             converted_sf2_generator_value = data * 56.25 /* cents */;
@@ -7788,7 +7798,18 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             return;
     }
 
-    fluid_synth_set_gen_LOCAL(synth, chan, sf2_gen, converted_sf2_generator_value);
+    fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
+
+    for (i = 0; is_realtime && i < synth->polyphony; i++)
+    {
+        fluid_voice_t* voice = synth->voice[i];
+
+        if (fluid_voice_is_playing(voice) && fluid_voice_get_channel(voice) == chan)
+        {
+            fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
+        }
+    }
+
 }
 
 /**
