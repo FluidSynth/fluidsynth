@@ -24,6 +24,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_midi.h"
 #include "fluid_tuning.h"
+#include "fluid_gen.h"
 
 /* The mononophonic list is part of the legato detector for monophonic mode */
 /* see fluid_synth_monopoly.c about a description of the legato detector device */
