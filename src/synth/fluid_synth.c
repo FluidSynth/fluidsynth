@@ -7788,13 +7788,15 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             converted_sf2_generator_value = data * 56.25 /* cents */;
             FLUID_LOG(FLUID_INFO, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
             is_realtime = TRUE;
-            break;
+            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
+            return;
 
         case GEN_MODENVTOFILTERFC:
             fluid_clip(data, -127, 127);
             converted_sf2_generator_value = data * 56.25 /* cents */;
             FLUID_LOG(FLUID_INFO, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
-            break;
+            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
+            return;
 
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
