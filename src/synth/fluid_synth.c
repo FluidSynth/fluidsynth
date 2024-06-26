@@ -7646,7 +7646,7 @@ calc_awe32_filter_q(int data)
     data /= 8;
     tab = &awe32_q_table[data];
 
-    return (/*tab->q_lo +*/ tab->q_hi) * 10 / 2 /* cB */;
+    return (/*tab->q_lo +*/ tab->q_hi) * 10 /* cB */;
 }
 
 /**
@@ -7770,6 +7770,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             break;
 
         case GEN_FILTERQ:
+            FLUID_LOG(FLUID_INFO, "AWE32 IIR Q: %d",data);
             converted_sf2_generator_value = calc_awe32_filter_q(data);
             break;
 

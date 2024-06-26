@@ -954,7 +954,6 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                     for(i = 0; i < GEN_LAST; i++)
                     {
-                        fluid_real_t awe_val;
                         /* SF 2.01 section 9.4 'bullet' 4:
                          *
                          * A generator in a local instrument zone supersedes a
@@ -977,12 +976,6 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                              * Do nothing, leave it at the default.
                              */
                         }
-
-                        /* ...unless the default value has been overridden by an AWE32 NRPN */
-                        if (fluid_channel_get_override_gen_default(synth->channel[chan], i, &awe_val))
-                        {
-                            fluid_voice_gen_set(voice, i, awe_val);
-                        }
                     } /* for all generators */
 
                     /* Adds instrument zone modulators (global and local) to the voice.*/
@@ -996,7 +989,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                     for(i = 0; i < GEN_LAST; i++)
                     {
-
+                        fluid_real_t awe_val;
                         /* SF 2.01 section 8.5 page 58: If some generators are
                          encountered at preset level, they should be ignored.
                          However this check is not necessary when the soundfont
@@ -1030,6 +1023,14 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                             /* The generator has not been defined in this preset
                              * Do nothing, leave it unchanged.
                              */
+                        }
+
+                        /* ...unless the default value has been overridden by an AWE32 NRPN */
+                        if (fluid_channel_get_override_gen_default(synth->channel[chan], i, &awe_val))
+                        {
+                            if(i == GEN_FILTERQ)
+                                FLUID_LOG(FLUID_INFO,"Init voice Filter Q %f -> %f", fluid_voice_gen_get(voice, i), awe_val);
+                            fluid_voice_gen_set(voice, i, awe_val);
                         }
                     } /* for all generators */
 

@@ -398,7 +398,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres = 5.f;
     }
 
-    FLUID_LOG(FLUID_INFO, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
+    // FLUID_LOG(FLUID_INFO, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
     /* if filter enabled and there is a significant frequency change.. */
     if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres - iir_filter->last_fres) > 0.01f)
     {
