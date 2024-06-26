@@ -125,6 +125,8 @@ struct _fluid_channel_t
     enum fluid_gen_type nrpn_select;      /* Generator ID of SoundFont NRPN message */
     char nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
 
+    char awe32_filter_coeff;
+    
     /* The values of the generators, set by NRPN messages, or by
      * fluid_synth_set_gen(), are cached in the channel so they can be
      * applied to future notes. They are copied to a voice's generators

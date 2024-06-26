@@ -7609,11 +7609,15 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
 // * mean
 // * geometric distance (sqrt(q_lo * q_hi))
 // * either q_lo or q_hi
+// * linear interpolation between low and high fc
+// * log interpolation between low and high fc
 static fluid_real_t
-calc_awe32_filter_q(int data)
+calc_awe32_filter_q(int data, fluid_real_t* fc)
 {
     typedef struct
     {
+        fluid_real_t fc_lo;
+        fluid_real_t fc_hi;
         fluid_real_t q_lo;
         fluid_real_t q_hi;
         fluid_real_t dc_atten;
@@ -7622,31 +7626,37 @@ calc_awe32_filter_q(int data)
     // Q in dB
     static const awe32_q awe32_q_table[] =
     {
-        { 5.f, 0.f, -0.0f },   /* coef 0 */
-        { 6.f, 0.5f, -0.5f },  /* coef 1 */
-        { 8.f, 1.f, -1.2f },   /* coef 2 */
-        { 10.f, 2.f, -1.8f },  /* coef 3 */
-        { 11.f, 3.f, -2.5f },  /* coef 4 */
-        { 13.f, 4.f, -3.3f },  /* coef 5 */
-        { 14.f, 5.f, -4.1f },  /* coef 6 */
-        { 16.f, 6.f, -5.5f},   /* coef 7 */
-        { 17.f, 7.f, -6.0f },  /* coef 8 */
-        { 19.f, 9.f, -6.6f },  /* coef 9 */
-        { 20.f, 10.f, -7.2f }, /* coef 10 */
-        { 22.f, 11.f, -7.9f }, /* coef 11 */
-        { 23.f, 13.f, -8.5f }, /* coef 12 */
-        { 25.f, 15.f, -9.3f }, /* coef 13 */
-        { 26.f, 16.f, -10.1f },/* coef 14 */
-        { 28.f, 18.f, -11.0f}, /* coef 15 */
+        {92, 22000, 5.f, 0.f, -0.0f },  /* coef 0 */
+        {93, 8500, 6.f, 0.5f, -0.5f },  /* coef 1 */
+        {94, 8300, 8.f, 1.f, -1.2f },   /* coef 2 */
+        {95, 8200, 10.f, 2.f, -1.8f },  /* coef 3 */
+        {96, 8100, 11.f, 3.f, -2.5f },  /* coef 4 */
+        {97, 8000, 13.f, 4.f, -3.3f },  /* coef 5 */
+        {98, 7900, 14.f, 5.f, -4.1f },  /* coef 6 */
+        {99, 7800, 16.f, 6.f, -5.5f},   /* coef 7 */
+        {100, 7700, 17.f, 7.f, -6.0f },  /* coef 8 */
+        {100, 7500, 19.f, 9.f, -6.6f },  /* coef 9 */
+        {100, 7400, 20.f, 10.f, -7.2f }, /* coef 10 */
+        {100, 7300, 22.f, 11.f, -7.9f }, /* coef 11 */
+        {100, 7200, 23.f, 13.f, -8.5f }, /* coef 12 */
+        {100, 7100, 25.f, 15.f, -9.3f }, /* coef 13 */
+        {100, 7100, 26.f, 16.f, -10.1f },/* coef 14 */
+        {100, 7000, 28.f, 18.f, -11.0f}, /* coef 15 */
     };
 
     const awe32_q* tab;
+    fluid_real_t alpha;
 
     fluid_clip(data, 0, 127);
     data /= 8;
     tab = &awe32_q_table[data];
+    
+    fluid_clip(*fc, tab->fc_lo, tab->fc_hi);
+    
+    alpha = (*fc - tab->fc_lo) / (tab->fc_hi - tab->fc_lo);
 
-    return (/*tab->q_lo +*/ tab->q_hi) * 10 /* cB */;
+    // linearly interpolate between high and low Q
+    return 10 * /* cB */ (tab->q_lo * (1.0f - alpha) + tab->q_hi * alpha);
 }
 
 /**
@@ -7763,16 +7773,15 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_FILTERFC:
             fluid_clip(data, 0, 127);
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc: %d Hz",data * 62);
-            converted_sf2_generator_value = fluid_hz2ct(data * 62 /* Hz */);
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc: %f cents", converted_sf2_generator_value);
+            // conversion continues below!
+            converted_sf2_generator_value = (data * 62 /* Hz */);
+            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc: %f Hz",converted_sf2_generator_value);
             is_realtime = TRUE;
             break;
 
         case GEN_FILTERQ:
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Q: %d",data);
-            converted_sf2_generator_value = calc_awe32_filter_q(data);
-            break;
+            synth->channel[chan]->awe32_filter_coeff = data;
+            return;
 
         case GEN_MODLFOTOFILTERFC:
             fluid_clip(data, -64, 63);
@@ -7808,7 +7817,28 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             FLUID_LOG(FLUID_WARN, "AWE32 NPRN %d conversion not implemented", gen);
             return;
     }
+    
+    fluid_real_t q;
+    int coef = synth->channel[chan]->awe32_filter_coeff;
+    if(sf2_gen == GEN_FILTERFC)
+    {
+        if(coef != -1)
+        {
+            q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
+            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc (fixed): %f cents", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_INFO, "AWE32 IIR Q: %f cB", q);
 
+            converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
+
+            // Safe the "true initial Q"
+            fluid_channel_set_override_gen_default(synth->channel[chan], GEN_FILTERQ, q);
+        }
+        else
+        {
+            converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
+        }
+    }
+    
     fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
 
     for (i = 0; is_realtime && i < synth->polyphony; i++)
@@ -7817,10 +7847,17 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         if (fluid_voice_is_playing(voice) && fluid_voice_get_channel(voice) == chan)
         {
-            fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
+            int coef = synth->channel[chan]->awe32_filter_coeff;
+            if(sf2_gen == GEN_FILTERFC && coef != -1)
+            {
+                // sets the adjusted fc
+                fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
+
+                // sets the calculated Q
+                fluid_voice_gen_set(voice, GEN_FILTERQ, q);
+            }
         }
     }
-
 }
 
 /**

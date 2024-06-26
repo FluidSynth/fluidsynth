@@ -131,6 +131,7 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
         chan->override_gen_default[i].flags = GEN_UNUSED;
         chan->override_gen_default[i].val = 0.0f;
     }
+    chan->awe32_filter_coeff = -1;
 
     if(is_all_ctrl_off)
     {
