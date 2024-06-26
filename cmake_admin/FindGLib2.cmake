@@ -35,7 +35,7 @@ find_package(PkgConfig QUIET)
 pkg_check_modules(PC_GLIB2 QUIET glib-2.0)
 pkg_check_modules(PC_GTHREAD2 QUIET gthread-2.0)
 pkg_check_modules(PC_GMODULE2 QUIET gmodule-2.0)
-pkg_check_modules(PC_GMODULE2 QUIET gobject-2.0)
+pkg_check_modules(PC_GOBJECT2 QUIET gobject-2.0)
 
 # Find the headers and libraries
 find_path(
@@ -209,7 +209,7 @@ if(GLib2_gobject-2_LIBRARY AND NOT TARGET GLib2::gobject-2)
   # Handle transitive dependencies
   if(PC_GOBJECT2_FOUND)
     get_target_properties_from_pkg_config("${GLib2_gobject-2_LIBRARY}"
-                                          "PC_OBJECT2" "_gobject2")
+                                          "PC_GOBJECT2" "_gobject2")
   else()
     find_package(libffi QUIET)
     set(_gobject2_link_libraries "libffi" "GLib2::glib-2")
