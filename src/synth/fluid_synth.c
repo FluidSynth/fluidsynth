@@ -1599,7 +1599,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
         /* chan is enabled */
         if(synth->verbose)
         {
-            FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
+            FLUID_LOG(FLUID_INFO, "cc\t\t%d\t%d\t%d", chan, num, val);
         }
 
         fluid_channel_set_cc(channel, num, val);
@@ -1633,7 +1633,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
             {
                 if(synth->verbose)
                 {
-                    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", i, num, val);
+                    FLUID_LOG(FLUID_INFO, "cc\t\t%d\t%d\t%d", i, num, val);
                 }
 
                 fluid_channel_set_cc(synth->channel[i], num, val);
@@ -1841,6 +1841,10 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
             else if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
             {
                 int gen = fluid_channel_get_cc(chan, NRPN_LSB);
+                if(synth->verbose)
+                {
+                    FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
+                }
                 if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
                 {
                     fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
@@ -2870,7 +2874,7 @@ fluid_synth_pitch_bend(fluid_synth_t *synth, int chan, int val)
 
     if(synth->verbose)
     {
-        FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+        FLUID_LOG(FLUID_INFO, "pitchb\t\t%d\t%d", chan, val);
     }
 
     fluid_channel_set_pitch_bend(synth->channel[chan], val);
@@ -3102,7 +3106,7 @@ fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
 
     if(synth->verbose)
     {
-        FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
+        FLUID_LOG(FLUID_INFO, "prog\t\t%d\t%d\t%d", chan, banknum, prognum);
     }
 
     /* I think this is a hack for MIDI files that do bank changes in GM mode.
