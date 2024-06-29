@@ -53,10 +53,6 @@ struct _fluid_iir_filter_t
     fluid_real_t a1;              /* a0 / a0 */
     fluid_real_t a2;              /* a1 / a0 */
 
-    fluid_real_t b02_incr;
-    fluid_real_t b1_incr;
-    fluid_real_t a1_incr;
-    fluid_real_t a2_incr;
     fluid_real_t hist1, hist2;      /* Sample history for the IIR filter */
     int filter_startup;             /* Flag: If set, the filter will be set directly.
 					   Else it changes smoothly. */
