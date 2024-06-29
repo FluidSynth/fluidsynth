@@ -7723,26 +7723,26 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_MODENVDELAY:
         case GEN_VOLENVDELAY:
             fluid_clip(data, 0, 5900);
-            converted_sf2_generator_value = fluid_sec2tc(data * 4 / 1000);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(4.0 / 1000.0));
             break;
 
         case GEN_MODLFOFREQ:
         case GEN_VIBLFOFREQ:
             fluid_clip(data, 0, 127);
-            converted_sf2_generator_value = fluid_hz2ct(data * 0.084 /* Hz */);
+            converted_sf2_generator_value = fluid_hz2ct(data * (fluid_real_t)0.084 /* Hz */);
             is_realtime = TRUE;
             break;
 
         case GEN_MODENVATTACK:
         case GEN_VOLENVATTACK:
             fluid_clip(data, 0, 5940);
-            converted_sf2_generator_value = fluid_sec2tc(data * 1 / 1000);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(1.0 / 1000.0));
             break;
 
         case GEN_MODENVHOLD:
         case GEN_VOLENVHOLD:
             fluid_clip(data, 0, 8191);
-            converted_sf2_generator_value = fluid_sec2tc(data * 1 / 1000);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(1.0 / 1000.0));
             break;
 
         case GEN_MODENVDECAY:
@@ -7750,18 +7750,20 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_VOLENVDECAY:
         case GEN_VOLENVRELEASE:
             fluid_clip(data, 0, 5940);
-            converted_sf2_generator_value = fluid_sec2tc(data * 4 / 1000);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(4.0 / 1000.0));
             break;
 
         case GEN_MODENVSUSTAIN:
         case GEN_VOLENVSUSTAIN:
             fluid_clip(data, 0, 127);
-            converted_sf2_generator_value = data * (0.75 /* dB */ * 10) /* cB */;
+            converted_sf2_generator_value = data * (fluid_real_t)(0.75 /* dB */ * 10) /* cB */;
             break;
 
         case GEN_PITCH:
             converted_sf2_generator_value = data + 8192;
-            // This has the side effect of manipulating the state of the channel's pitchwheel, but I'll buy it
+            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but 
+            // I'll buy it, since pitch bend is not a regular SF2 generator and we do a bit of magic there to
+            // make it work
             fluid_synth_pitch_bend(synth, chan, converted_sf2_generator_value);
             return;
 
@@ -7771,12 +7773,12 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             /* fallthrough */
         case GEN_MODENVTOPITCH:
             fluid_clip(data, -127, 127);
-            converted_sf2_generator_value = data * 9.375 /* cents */;
+            converted_sf2_generator_value = data * (fluid_real_t)9.375 /* cents */;
             break;
 
         case GEN_MODLFOTOVOL:
             fluid_clip(data, 0, 127);
-            converted_sf2_generator_value = data * (0.1875 /* dB */ * 10) /* cB */;
+            converted_sf2_generator_value = data * (fluid_real_t)(0.1875 /* dB */ * 10.0) /* cB */;
             is_realtime = TRUE;
             break;
 
@@ -7795,7 +7797,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_MODLFOTOFILTERFC:
             fluid_clip(data, -64, 63);
-            converted_sf2_generator_value = data * 56.25 /* cents */;
+            converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
             FLUID_LOG(FLUID_INFO, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
             is_realtime = TRUE;
             // not supported, as this modulates the "phase" rather than the filters cutoff frequency
@@ -7803,7 +7805,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_MODENVTOFILTERFC:
             fluid_clip(data, -127, 127);
-            converted_sf2_generator_value = data * 56.25 /* cents */;
+            converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
             FLUID_LOG(FLUID_INFO, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
             // not supported, as this modulates the "phase" rather than the filters cutoff frequency
             return;
