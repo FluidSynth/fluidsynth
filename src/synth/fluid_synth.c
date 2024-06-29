@@ -1812,8 +1812,29 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         break;
 
     case DATA_ENTRY_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
+    {
+        int data = (fluid_channel_get_cc(chan, DATA_ENTRY_MSB) << 7) + value;
+        // ALTITUDE.MID also manipulates AWE32 NRPNs by only using DATA LSB events - seems to be legal
+        if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+        {
+            int gen;
+    AWE32_NRPN:
+            gen = fluid_channel_get_cc(chan, NRPN_LSB);
+            // if(synth->verbose)
+            {
+                FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
+            }
+            if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
+            {
+                fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
+            }
+            else
+            {
+                FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
+            }
+        }
         break;
-
+    }
     case DATA_ENTRY_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     {
         int data = (value << 7) + fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
@@ -1840,19 +1861,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
             }
             else if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
             {
-                int gen = fluid_channel_get_cc(chan, NRPN_LSB);
-                // if(synth->verbose)
-                {
-                    FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
-                }
-                if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
-                {
-                    fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
-                }
-                else
-                {
-                    FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
-                }
+                goto AWE32_NRPN;
             }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
@@ -7780,6 +7789,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             break;
 
         case GEN_FILTERQ:
+            FLUID_LOG(FLUID_INFO, "AWE32 IIR Q Tab: %d",data);
             synth->channel[chan]->awe32_filter_coeff = data;
             return;
 
