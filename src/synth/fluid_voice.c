@@ -357,12 +357,17 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     /* Set up buffer mapping, should be done more flexible in the future. */
     i = 2 * channel->synth->audio_groups;
     i += (voice->chan % channel->synth->effects_groups) * channel->synth->effects_channels;
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i + SYNTH_REVERB_CHANNEL);
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i + SYNTH_CHORUS_CHANNEL);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, REV_L, i + SYNTH_REVERB_CHANNEL);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, CHO_L, i + SYNTH_CHORUS_CHANNEL);
+    
+    #ifdef STEREO_FX
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, REV_R, i + SYNTH_REVERB_CHANNEL + 2);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, CHO_R, i + SYNTH_CHORUS_CHANNEL + 2);
+    #endif
 
     i = 2 * (voice->chan % channel->synth->audio_groups);
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 0, i);
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 1, i + 1);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, DRY_L, i);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, DRY_R, i + 1);
 
     return FLUID_OK;
 }
@@ -769,12 +774,12 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         voice->balance = fluid_voice_gen_value(voice, GEN_CUSTOM_BALANCE);
 
         /* left amp */
-        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 0,
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, DRY_L,
                                   fluid_voice_calculate_gain_amplitude(voice,
                                           fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1)));
 
         /* right amp */
-        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 1,
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, DRY_R,
                                   fluid_voice_calculate_gain_amplitude(voice,
                                           fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0)));
         break;
@@ -805,15 +810,29 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
     case GEN_REVERBSEND:
         /* The generator unit is 'tenths of a percent'. */
         voice->reverb_send = x / 1000.0f;
-        fluid_clip(voice->reverb_send, 0.f, 1.f);
-        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 2, fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send));
+        fluid_clip(voice->reverb_send, 0.f, 1.f);       
+        #ifdef STEREO_FX 
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, REV_L, fluid_voice_calculate_gain_amplitude(voice,  
+                        voice->reverb_send * fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1)));
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, REV_R, fluid_voice_calculate_gain_amplitude(voice,  
+                        voice->reverb_send * fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0)));
+        #else
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, REV_L, fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send));
+        #endif
         break;
 
     case GEN_CHORUSSEND:
         /* The generator unit is 'tenths of a percent'. */
         voice->chorus_send = x / 1000.0f;
         fluid_clip(voice->chorus_send, 0.f, 1.f);
-        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 3, fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send));
+        #ifdef STEREO_FX
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, CHO_L, fluid_voice_calculate_gain_amplitude(voice, 
+                voice->chorus_send * fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1)));
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, CHO_R, fluid_voice_calculate_gain_amplitude(voice, 
+                voice->chorus_send * fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0)));
+        #else
+        UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, CHO_L, fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send));
+        #endif
         break;
 
     case GEN_OVERRIDEROOTKEY:
@@ -1848,6 +1867,9 @@ int fluid_voice_set_param(fluid_voice_t *voice, int gen, fluid_real_t nrpn_value
 int fluid_voice_set_gain(fluid_voice_t *voice, fluid_real_t gain)
 {
     fluid_real_t left, right, reverb, chorus;
+    #ifdef STEREO_FX
+    fluid_real_t  reverb_right, chorus_right;
+    #endif
 
     /* avoid division by zero*/
     if(gain < 0.0000001f)
@@ -1860,14 +1882,29 @@ int fluid_voice_set_gain(fluid_voice_t *voice, fluid_real_t gain)
             fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1));
     right = fluid_voice_calculate_gain_amplitude(voice,
             fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0));
+    #ifdef STEREO_FX
+    reverb = fluid_voice_calculate_gain_amplitude(voice, 
+            voice->reverb_send * fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1));
+    reverb_right = fluid_voice_calculate_gain_amplitude(voice, 
+            voice->reverb_send * fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0));
+    chorus = fluid_voice_calculate_gain_amplitude(voice, 
+            voice->chorus_send * fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1));
+    chorus_right = fluid_voice_calculate_gain_amplitude(voice, 
+            voice->chorus_send * fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0));
+    #else
     reverb = fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send);
     chorus = fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send);
+    #endif
 
     UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, gain);
-    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 0, left);
-    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 1, right);
-    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 2, reverb);
-    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 3, chorus);
+    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, DRY_L, left);
+    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, DRY_R, right);
+    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, REV_L, reverb);
+    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, CHO_L, chorus);
+    #ifdef STEREO_FX
+    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, REV_R, reverb_right);
+    UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, CHO_R, chorus_right);
+    #endif
 
     return FLUID_OK;
 }
