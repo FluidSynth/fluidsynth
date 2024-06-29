@@ -83,7 +83,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         * doesn't change.
         */
 
-        if(0)
+        if(dsp_filter_coeff_incr_count > 0)
         {
             fluid_real_t dsp_a1_incr = iir_filter->a1_incr;
             fluid_real_t dsp_a2_incr = iir_filter->a2_incr;
@@ -123,16 +123,16 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
             for(dsp_i = 0; dsp_i < count; dsp_i++)
             {
                 /* The filter is implemented in Direct-II form. */
-                //dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-                //dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-                //dsp_hist2 = dsp_hist1;
-                //dsp_hist1 = dsp_centernode;
+                dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+                dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+                dsp_hist2 = dsp_hist1;
+                dsp_hist1 = dsp_centernode;
 
                 /* The filter is implemented in Transposed Direct Form II */
-                fluid_real_t dsp_input = dsp_buf[dsp_i];
-                dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
-                dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
-                dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
+                // fluid_real_t dsp_input = dsp_buf[dsp_i];
+                // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
+                // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
+                // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
             }
         }
 
@@ -404,7 +404,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres = 5.f;
     }
 
-    FLUID_LOG(FLUID_INFO, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
+    // FLUID_LOG(FLUID_INFO, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
     /* if filter enabled and there is a significant frequency change.. */
     if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres - iir_filter->last_fres) > 0.01f)
     {
