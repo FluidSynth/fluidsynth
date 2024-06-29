@@ -7702,8 +7702,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     };
 
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
-    int is_realtime = FALSE, i;
-    fluid_real_t converted_sf2_generator_value;
+    int is_realtime = FALSE, i, coef;
+    fluid_real_t converted_sf2_generator_value, q;
     
     data -= 8192;
     
@@ -7820,8 +7820,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             return;
     }
     
-    fluid_real_t q;
-    int coef = synth->channel[chan]->awe32_filter_coeff;
+    coef = synth->channel[chan]->awe32_filter_coeff;
     if(sf2_gen == GEN_FILTERFC)
     {
         if(coef != -1)
