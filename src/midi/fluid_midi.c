@@ -932,6 +932,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
             break;
 
         default:
+            FLUID_LOG(FLUID_INFO, "Ignoring unrecognized meta event type 0x%X", type);
             break;
         }
 
