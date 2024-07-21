@@ -142,7 +142,7 @@ new_fluid_midi_file(const char *buffer, size_t length)
     FLUID_MEMSET(mf, 0, sizeof(fluid_midi_file));
 
     mf->c = -1;
-    mf->running_status = -1;
+    mf->running_status = 0;
 
     mf->buffer = buffer;
     mf->buf_len = (int)length;
@@ -651,7 +651,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
     {
         if((mf->running_status & 0x80) == 0)
         {
-            FLUID_LOG(FLUID_ERR, "Undefined status and invalid running status");
+            FLUID_LOG(FLUID_ERR, "Undefined status and invalid running status (0x%X, 0x%X)", status, mf->running_status);
             return FLUID_FAILED;
         }
 
@@ -661,9 +661,23 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
     /* check what message we have */
 
-    mf->running_status = status;
+    switch(status)
+    {
+        case NOTE_OFF:
+        case NOTE_ON:
+        case KEY_PRESSURE:
+        case CONTROL_CHANGE:
+        case CHANNEL_PRESSURE:
+        case PITCH_BEND:
+            // running status applies to "Voice and Mode messages" only.
+            mf->running_status = status;
+            break;
+        default:
+            // Sysex events and meta-events cancel any running status which was in effect, but they do not reset it!
+            break;
+    }
 
-    if(status == MIDI_SYSEX)    /* system exclusif */
+    if(status == MIDI_SYSEX)    /* system exclusive */
     {
         /* read the length of the message */
         if(fluid_midi_file_read_varlen(mf) != FLUID_OK)
@@ -1016,7 +1030,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
         default:
             /* Can't possibly happen !? */
-            FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event");
+            FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event 0x%X", status);
             return FLUID_FAILED;
         }
 
