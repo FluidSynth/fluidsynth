@@ -1834,9 +1834,6 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
     return lower_bound;
 }
 
-
-
-
 int fluid_voice_set_param(fluid_voice_t *voice, int gen, fluid_real_t nrpn_value)
 {
     voice->gen[gen].nrpn = nrpn_value;
