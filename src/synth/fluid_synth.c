@@ -1822,7 +1822,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         {
             /* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
             if((fluid_channel_get_cc(chan, NRPN_MSB) == 120)
-                && (fluid_channel_get_cc(chan, NRPN_LSB) < 100))
+                    && (fluid_channel_get_cc(chan, NRPN_LSB) < 100))
             {
                 nrpn_select = chan->nrpn_select;
 
@@ -1843,34 +1843,34 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         {
             switch(fluid_channel_get_cc(chan, RPN_LSB))
             {
-                case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones plus cents */
-                    fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], msb_value + lsb_value / 100.0f); /* 0-127 maps to 0-100 cents */
-                    fluid_synth_update_pitch_wheel_sens_LOCAL(synth, channum);    /* Update bend range */
-                    break;
+            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones plus cents */
+                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], msb_value + lsb_value / 100.0f); /* 0-127 maps to 0-100 cents */
+                fluid_synth_update_pitch_wheel_sens_LOCAL(synth, channum);    /* Update bend range */
+                break;
 
-                case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
-                    fluid_synth_set_gen_LOCAL(synth, channum, GEN_FINETUNE,
-                                              (float)(data - 8192) * (100.0f / 8192.0f));
-                    break;
+            case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
+                fluid_synth_set_gen_LOCAL(synth, channum, GEN_FINETUNE,
+                                          (float)(data - 8192) * (100.0f / 8192.0f));
+                break;
 
-                case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
-                    fluid_synth_set_gen_LOCAL(synth, channum, GEN_COARSETUNE,
-                                              msb_value - 64);
-                    break;
+            case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
+                fluid_synth_set_gen_LOCAL(synth, channum, GEN_COARSETUNE,
+                                          msb_value - 64);
+                break;
 
-                case RPN_TUNING_PROGRAM_CHANGE:
-                    fluid_channel_set_tuning_prog(chan, msb_value);
-                    fluid_synth_activate_tuning(synth, channum,
-                                                fluid_channel_get_tuning_bank(chan),
-                                                msb_value, TRUE);
-                    break;
+            case RPN_TUNING_PROGRAM_CHANGE:
+                fluid_channel_set_tuning_prog(chan, msb_value);
+                fluid_synth_activate_tuning(synth, channum,
+                                            fluid_channel_get_tuning_bank(chan),
+                                            msb_value, TRUE);
+                break;
 
-                case RPN_TUNING_BANK_SELECT:
-                    fluid_channel_set_tuning_bank(chan, msb_value);
-                    break;
+            case RPN_TUNING_BANK_SELECT:
+                fluid_channel_set_tuning_bank(chan, msb_value);
+                break;
 
-                case RPN_MODULATION_DEPTH_RANGE:
-                    break;
+            case RPN_MODULATION_DEPTH_RANGE:
+                break;
             }
         }
 
