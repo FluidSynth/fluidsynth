@@ -131,9 +131,23 @@ struct _fluid_rvoice_dsp_t
     fluid_real_t phase_incr;	/* the phase increment for the next FLUID_BUFSIZE samples */
 };
 
+#define STEREO_FX
+
+typedef enum  {
+DRY_L = 0,
+DRY_R,
+REV_L,
+CHO_L,
+#ifdef STEREO_FX
+REV_R,
+CHO_R,
+#endif
+RBUF_COUNT
+}  fluid_rvoice_bufidx_t;
+
 /* Currently left, right, reverb, chorus. To be changed if we
    ever add surround positioning, or stereo reverb/chorus */
-#define FLUID_RVOICE_MAX_BUFS (4)
+#define FLUID_RVOICE_MAX_BUFS (RBUF_COUNT)
 
 /*
  * rvoice mixer-related parameters
