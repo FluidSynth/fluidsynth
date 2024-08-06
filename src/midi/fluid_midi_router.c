@@ -369,7 +369,7 @@ fluid_midi_router_add_rule(fluid_midi_router_t *router, fluid_midi_router_rule_t
  *
  * @return Newly allocated router rule or NULL if out of memory.
  *
- * The new rule is a "unity" rule which will accept any values and wont modify
+ * The new rule is a "unity" rule which will accept any values and won't modify
  * them.
  *
  * @since 1.1.0

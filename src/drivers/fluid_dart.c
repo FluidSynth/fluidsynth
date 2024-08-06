@@ -51,7 +51,7 @@ typedef struct
     USHORT usDeviceID;                          /* Amp Mixer device id     */
     MCI_MIX_BUFFER MixBuffers[NUM_MIX_BUFS];    /* Device buffers          */
     MCI_MIXSETUP_PARMS MixSetupParms;           /* Mixer parameters        */
-    MCI_BUFFER_PARMS BufferParms;               /* Device buffer parms     */
+    MCI_BUFFER_PARMS BufferParms;               /* Device buffer params    */
 } fluid_dart_audio_driver_t;
 
 static HMODULE m_hmodMDM = NULLHANDLE;

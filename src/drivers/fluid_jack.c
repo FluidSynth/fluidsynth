@@ -160,7 +160,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
     fluid_mutex_lock(last_client_mutex);      /* ++ lock last_client */
 
     /* If the last client uses the same server and is not the same type (audio or MIDI),
-     * then re-use the client. */
+     * then reuse the client. */
     if(last_client &&
             (last_client->server != NULL && server != NULL && FLUID_STRCMP(last_client->server, server) == 0) &&
             ((!isaudio && last_client->midi_driver == NULL) || (isaudio && last_client->audio_driver == NULL)))
