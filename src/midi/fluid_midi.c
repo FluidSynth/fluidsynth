@@ -357,6 +357,12 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     }
 
     mf->type = mthd[9];
+    if(!(mf->type == 0 || mf->type == 1))
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "Sorry, but MIDI Format %d is not supported by this player", mf->type);
+        return FLUID_FAILED;
+    }
     mf->ntracks = (unsigned) mthd[11];
     mf->ntracks += (unsigned int)(mthd[10]) << 16;
 
