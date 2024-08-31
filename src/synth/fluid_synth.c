@@ -1812,32 +1812,12 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         break;
 
     case DATA_ENTRY_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
-    {
-        int data = (fluid_channel_get_cc(chan, DATA_ENTRY_MSB) << 7) + value;
-        // ALTITUDE.MID also manipulates AWE32 NRPNs by only using DATA LSB events - seems to be legal
-        if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
-        {
-            int gen;
-    AWE32_NRPN:
-            gen = fluid_channel_get_cc(chan, NRPN_LSB);
-            // if(synth->verbose)
-            {
-                FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
-            }
-            if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
-            {
-                fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
-            }
-            else
-            {
-                FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
-            }
-        }
-        break;
-    }
     case DATA_ENTRY_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     {
-        int data = (value << 7) + fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
+        /* handle both because msb might come first */
+        int lsb_value = fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
+        int msb_value = fluid_channel_get_cc(chan, DATA_ENTRY_MSB);
+        int data = (msb_value << 7) + lsb_value;
 
         if(chan->nrpn_active)   /* NRPN is active? */
         {
@@ -1861,17 +1841,32 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
             }
             else if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
             {
-                goto AWE32_NRPN;
+                // ALTITUDE.MID also manipulates AWE32 NRPNs by only using DATA LSB events - seems to be legal
+                if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+                {
+                    int gen = fluid_channel_get_cc(chan, NRPN_LSB);
+                    // if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
+                    }
+                    if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
+                    {
+                        fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
+                    }
+                    else
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
+                    }
+                }
             }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
         {
             switch(fluid_channel_get_cc(chan, RPN_LSB))
             {
-            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones */
-                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], value);
+            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones plus cents */
+                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], msb_value + lsb_value / 100.0f); /* 0-127 maps to 0-100 cents */
                 fluid_synth_update_pitch_wheel_sens_LOCAL(synth, channum);    /* Update bend range */
-                /* FIXME - Handle LSB? (Fine bend range in cents) */
                 break;
 
             case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
@@ -1881,18 +1876,18 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
                 fluid_synth_set_gen_LOCAL(synth, channum, GEN_COARSETUNE,
-                                          value - 64);
+                                          msb_value - 64);
                 break;
 
             case RPN_TUNING_PROGRAM_CHANGE:
-                fluid_channel_set_tuning_prog(chan, value);
+                fluid_channel_set_tuning_prog(chan, msb_value);
                 fluid_synth_activate_tuning(synth, channum,
                                             fluid_channel_get_tuning_bank(chan),
-                                            value, TRUE);
+                                            msb_value, TRUE);
                 break;
 
             case RPN_TUNING_BANK_SELECT:
-                fluid_channel_set_tuning_bank(chan, value);
+                fluid_channel_set_tuning_bank(chan, msb_value);
                 break;
 
             case RPN_MODULATION_DEPTH_RANGE:
