@@ -354,6 +354,12 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     /******************* amplitude **********************/
 
     count = fluid_rvoice_calc_amp(voice);
+    if(count == 0)
+    {
+        // Voice has finished, remove from dsp loop
+        return 0;
+    }
+    // else if count is negative, still process the voice
 
 
     /******************* phase **********************/
@@ -427,7 +433,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
      * Depending on the position in the loop and the loop size, this
      * may require several runs. */
 
-    if(count <= 0)
+    if(count < 0)
     {
         // The voice is quite, i.e. either in delay phase or zero volume.
         // We need to update the rvoice's dsp phase, as the delay phase shall not "postpone" the sound, rather
