@@ -111,9 +111,20 @@ fluid_cb2amp(fluid_real_t cb)
      */
 
     /* minimum attenuation: 0 dB */
-    if(cb < 0)
+    if(FLUID_UNLIKELY(cb < 0))
     {
-        return 1.0;
+        /* Issue #1374: it seems that by using modLfoToVolEnv, the attenuation can become negative and
+         * therefore the signal needs to be amplified.
+         * In such a rare case, calculate the attenuation on the fly.
+         *
+         * This behavior is backed by the spec saying:
+         * modLfoToVolume: "A positive number indicates a positive LFO excursion increases volume;
+         * a negative number indicates a positive excursion decreases volume.
+         * [...] For example, a value of 100 indicates that the volume will first rise ten dB, then fall ten dB."
+         *
+         * And in order to rise, a negative attenuation must be permitted.
+         */
+        return FLUID_POW(10.0f, cb / -200.0f);
     }
 
     if(cb >= FLUID_CB_AMP_SIZE)
