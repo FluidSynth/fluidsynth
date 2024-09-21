@@ -11,3 +11,7 @@ updates:
           - "*"  # Group all Actions updates into a single larger pull request
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "SonarSource/sonarcloud-github-c-cpp"
+        # Version 3 of that task causes the scanner to throw a Java exception...
+        versions: ["3.x"]
