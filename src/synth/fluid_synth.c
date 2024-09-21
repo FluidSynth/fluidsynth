@@ -1845,7 +1845,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
                 {
                     int gen = fluid_channel_get_cc(chan, NRPN_LSB);
-                    // if(synth->verbose)
+                    if(synth->verbose)
                     {
                         FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
                     }
@@ -7784,19 +7784,19 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             fluid_clip(data, 0, 127);
             // conversion continues below!
             converted_sf2_generator_value = (data * 62 /* Hz */);
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc: %f Hz",converted_sf2_generator_value);
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc: %f Hz",converted_sf2_generator_value);
             is_realtime = TRUE;
             break;
 
         case GEN_FILTERQ:
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Q Tab: %d",data);
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data);
             synth->channel[chan]->awe32_filter_coeff = data;
             return;
 
         case GEN_MODLFOTOFILTERFC:
             fluid_clip(data, -64, 63);
             converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
-            FLUID_LOG(FLUID_INFO, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_DBG, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
             is_realtime = TRUE;
             // not supported, as this modulates the "phase" rather than the filters cutoff frequency
             return;
@@ -7804,7 +7804,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_MODENVTOFILTERFC:
             fluid_clip(data, -127, 127);
             converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
-            FLUID_LOG(FLUID_INFO, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_DBG, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
             // not supported, as this modulates the "phase" rather than the filters cutoff frequency
             return;
 
@@ -7812,7 +7812,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             fluid_clip(data, 0, 255);
             /* transform the input value */
             converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod.flags1, 256);
-            FLUID_LOG(FLUID_INFO, "AWE32 Reverb: %f", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
             break;
 
@@ -7820,7 +7820,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             fluid_clip(data, 0, 255);
             /* transform the input value */
             converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_chorus_mod.flags1, 256);
-            FLUID_LOG(FLUID_INFO, "AWE32 Chorus: %f", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
             break;
 
@@ -7838,8 +7838,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         if(coef != -1)
         {
             q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc (fixed): %f Hz", converted_sf2_generator_value);
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Q: %f cB", q);
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc (corrected): %f Hz", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
 
             converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
 
