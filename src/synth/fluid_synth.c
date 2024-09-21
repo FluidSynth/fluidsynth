@@ -7661,6 +7661,9 @@ calc_awe32_filter_q(int data, fluid_real_t* fc)
 
     // linearly interpolate between high and low Q
     return 10 * /* cB */ (tab->q_lo * (1.0f - alpha) + tab->q_hi * alpha);
+
+    // alternatively: log interpolation
+    // return 10 * /* cB */ FLUID_POW(tab->q_hi, alpha) * FLUID_POW(tab->q_lo, 1.0f - alpha);
 }
 
 /**
@@ -7830,10 +7833,12 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     coef = synth->channel[chan]->awe32_filter_coeff;
     if(sf2_gen == GEN_FILTERFC)
     {
+        // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 500Hz gives a closer signal to the SB! hardware filter...
+        converted_sf2_generator_value -= 500;
         if(coef != -1)
         {
             q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
-            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc (fixed): %f cents", converted_sf2_generator_value);
+            FLUID_LOG(FLUID_INFO, "AWE32 IIR Fc (fixed): %f Hz", converted_sf2_generator_value);
             FLUID_LOG(FLUID_INFO, "AWE32 IIR Q: %f cB", q);
 
             converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
