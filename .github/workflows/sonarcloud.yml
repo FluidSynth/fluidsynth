@@ -63,7 +63,7 @@ jobs:
       run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -Denable-portaudio=1 -Denable-ladspa=1 -Denable-coverage=1 -DNO_GUI=1 $GITHUB_WORKSPACE
       
     - name: Install sonar-scanner and build-wrapper
-      uses: SonarSource/sonarcloud-github-c-cpp@v2
+      uses: SonarSource/sonarcloud-github-c-cpp@v3
 
     - name: Build
       working-directory: ${{github.workspace}}/build
