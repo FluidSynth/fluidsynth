@@ -1055,7 +1055,6 @@ int main(int argc, char **argv)
         }
         u8_path = u8_buf;
 #endif
-
         if((u8_path[0] != '-') && fluid_is_midifile(u8_path))
         {
             if(player == NULL)
@@ -1077,6 +1076,9 @@ int main(int argc, char **argv)
 
             fluid_player_add(player, u8_path);
         }
+#if defined(_WIN32)
+        free(u8_buf);
+#endif
     }
 
     /* try to load and execute the user or system configuration file */
