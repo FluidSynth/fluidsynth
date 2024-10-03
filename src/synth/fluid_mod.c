@@ -378,7 +378,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 {
     extern fluid_mod_t default_vel2filter_mod;
 
-    fluid_real_t v1 = 0.0, v2 = 1.0;
+    fluid_real_t v1, v2;
     /* The wording of the default modulators refers to a range of 127/128.
      * And the table in section 9.5.3 suggests, that this mapping should be applied
      * to all unipolar and bipolar mappings respectively.
@@ -392,11 +392,6 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
      * can be correctly represented.
      */
     fluid_real_t range1 = 128.0, range2 = 128.0;
-
-    if(mod->src1 == FLUID_MOD_NONE || mod->src2 == FLUID_MOD_NONE)
-    {
-        return 0;
-    }
 
     /* 'special treatment' for default controller
      *
@@ -433,23 +428,20 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
         return 0;
     }
 
-    /* get the initial value of the first source */
-    if(mod->src1 > FLUID_MOD_NONE)
-    {
-        v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
+    /* Get the initial value of the first source.
+     *
+     * Even if the src is FLUID_MOD_NONE, the value has to be transformed, see #1389
+     */
+    v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
-        /* transform the input value */
-        v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
-    }
+    /* transform the input value */
+    v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
 
     /* get the second input source */
-    if(mod->src2 > FLUID_MOD_NONE)
-    {
-        v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
+    v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
-        /* transform the second input value */
-        v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
-    }
+    /* transform the second input value */
+    v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
 
     /* it's as simple as that: */
     return (fluid_real_t) mod->amount * v1 * v2;
