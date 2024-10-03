@@ -365,13 +365,10 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
  *
  * Output = Transform(Amount * Map(primary source input) * Map(secondary source input))
  *
- * Notes:
- * 1)fluid_mod_get_value, ignores the Transform operator. The result is:
+ * Note:
+ * fluid_mod_get_value ignores the Transform operator. The result is:
  *
  *   Output = Amount * Map(primary source input) * Map(secondary source input)
- *
- * 2) When a source is set to FLUID_MOD_NONE, its input value is treated as +1.0
- * 3) When both sources are FLUID_MOD_NONE, zero is returned
  */
 fluid_real_t
 fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
