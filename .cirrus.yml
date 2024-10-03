@@ -3,9 +3,8 @@ task:
     name: FreeBSD
     freebsd_instance:
         matrix:
-            image_family: freebsd-11-4
-            image_family: freebsd-12-2
-            image_family: freebsd-13-0
+            image_family: freebsd-14-0
+            image_family: freebsd-13-3
 
     install_script: pwd && ls -la && pkg update --force && pkg install -y cmake glib alsa-lib ladspa portaudio pulseaudio pkgconf sdl2
     

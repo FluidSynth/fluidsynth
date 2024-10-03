@@ -240,7 +240,7 @@ EOF
 
         # FIXME: On arm64 it fails to build fluidsynth executable due to a bunch of library resolution failures...
         # To avoid the entire build failures, we ignore the 
-        # exit coode here and go on with fake executable file.
+        # exit code here and go on with fake executable file.
         # It is not runnable on Android anyways.
         parameters_cmakeArgs="-Denable-opensles=1 -Denable-floats=1 -Denable-oboe=1 -Denable-dbus=0 -Denable-oss=0" parameters_sourceDir=../.. parameters_workDir=  parameters_condition=  parameters_installCommand='echo success' bash ./build-call-cmake.sh || echo "Failed to build fluidsynth, but it is expected. We continue build..." && touch ../../build_$ANDROID_ABI_CMAKE/src/fluidsynth
 

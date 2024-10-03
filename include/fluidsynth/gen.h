@@ -125,7 +125,7 @@ enum fluid_gen_type
                           @warning This symbol is not part of the public API and ABI
                           stability guarantee and may change at any time! */
 };
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

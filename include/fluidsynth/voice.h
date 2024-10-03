@@ -68,7 +68,7 @@ FLUIDSYNTH_API int fluid_voice_is_sustained(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_is_sostenuto(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t *s);
 FLUIDSYNTH_API void fluid_voice_update_param(fluid_voice_t *voice, int gen);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

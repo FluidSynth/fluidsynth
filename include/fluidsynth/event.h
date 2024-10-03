@@ -117,6 +117,7 @@ FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t *evt);
 FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t *evt);
 
 FLUIDSYNTH_API void fluid_event_scale(fluid_event_t *evt, double new_scale);
+FLUIDSYNTH_API int fluid_event_from_midi_event(fluid_event_t *, const fluid_midi_event_t *);
 
 /* Accessing event data */
 FLUIDSYNTH_API int fluid_event_get_type(fluid_event_t *evt);
@@ -134,7 +135,7 @@ FLUIDSYNTH_API short fluid_event_get_bank(fluid_event_t *evt);
 FLUIDSYNTH_API int fluid_event_get_pitch(fluid_event_t *evt);
 FLUIDSYNTH_API double fluid_event_get_scale(fluid_event_t *evt);
 FLUIDSYNTH_API unsigned int fluid_event_get_sfont_id(fluid_event_t *evt);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

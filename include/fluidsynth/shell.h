@@ -47,7 +47,7 @@ FLUIDSYNTH_API fluid_istream_t fluid_get_stdin(void);
 FLUIDSYNTH_API fluid_ostream_t fluid_get_stdout(void);
 FLUIDSYNTH_API char *fluid_get_userconf(char *buf, int len);
 FLUIDSYNTH_API char *fluid_get_sysconf(char *buf, int len);
-/* @} */
+/** @} */
 
 
 /**
@@ -78,7 +78,7 @@ int fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t
 
 FLUIDSYNTH_API
 int fluid_source(fluid_cmd_handler_t *handler, const char *filename);
-/* @} */
+/** @} */
 
 
 /**
@@ -106,7 +106,7 @@ void fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler);
 FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t *shell);
 /** @endlifecycle */
 
-/* @} */
+/** @} */
 
 
 /**
@@ -141,7 +141,7 @@ FLUIDSYNTH_API void delete_fluid_server(fluid_server_t *server);
 FLUIDSYNTH_API int fluid_server_join(fluid_server_t *server);
 /** @endlifecycle */
 
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

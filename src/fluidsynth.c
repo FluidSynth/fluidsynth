@@ -20,7 +20,7 @@
 
 #include "fluid_sys.h"
 
-#if !defined(WIN32) && !defined(MACINTOSH)
+#if !defined(_WIN32) && !defined(MACINTOSH)
 #define _GNU_SOURCE
 #endif
 
@@ -28,11 +28,6 @@
 #include <getopt.h>
 #define GETOPT_SUPPORT 1
 #endif
-
-#ifdef LIBINSTPATCH_SUPPORT
-#include <libinstpatch/libinstpatch.h>
-#endif
-#include "fluid_lash.h"
 
 #ifdef SYSTEMD_SUPPORT
 #include <systemd/sd-daemon.h>
@@ -42,11 +37,18 @@
 #include <SDL.h>
 #endif
 
+#if PIPEWIRE_SUPPORT
+#include <pipewire/pipewire.h>
+#endif
+
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 void print_configure(void);
 void fluid_wasapi_device_enumerate(void);
+#ifdef _WIN32
+static char* win32_ansi_to_utf8(const char* ansi_null_terminated_string);
+#endif
 
 /*
  * the globals
@@ -121,16 +123,25 @@ int process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         }
 
         break;
-
-    case FLUID_STR_TYPE:
-        if(fluid_settings_setstr(settings, optarg, val) != FLUID_OK)
+        
+    case FLUID_STR_TYPE: {
+        char *u8_val = val;
+#if defined(_WIN32)
+        u8_val = win32_ansi_to_utf8(val);
+#endif
+        if(fluid_settings_setstr(settings, optarg, u8_val) != FLUID_OK)
         {
             fprintf(stderr, "Failed to set string parameter '%s'\n", optarg);
+#if defined(_WIN32)
+            free(u8_val);
+#endif
             return FLUID_FAILED;
         }
-
+#if defined(_WIN32)
+        free(u8_val);
+#endif
         break;
-
+    }
     default:
         fprintf(stderr, "Setting parameter '%s' not found\n", optarg);
         return FLUID_FAILED;
@@ -156,7 +167,7 @@ print_pretty_int(int i)
     }
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 /* Function using win32 api to convert ANSI encoding string to UTF8 encoding string */
 static char*
 win32_ansi_to_utf8(const char* ansi_null_terminated_string)
@@ -391,16 +402,17 @@ int main(int argc, char **argv)
     int dump = 0;
     int fast_render = 0;
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
-#ifdef HAVE_LASH
-    int connect_lash = 1;
-    int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
-    fluid_lash_args_t *lash_args;
 
-    lash_args = fluid_lash_extract_args(&argc, &argv);
+#ifdef _WIN32
+    // console output will be utf-8
+    SetConsoleOutputCP(CP_UTF8);
+    // console input, too
+    SetConsoleCP(CP_UTF8);
 #endif
 
 #if SDL2_SUPPORT
-
+    // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if(SDL_Init(SDL_INIT_AUDIO) != 0)
     {
         fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
@@ -409,7 +421,11 @@ int main(int argc, char **argv)
     {
         atexit(SDL_Quit);
     }
+#endif
 
+#if PIPEWIRE_SUPPORT
+    pw_init(&argc, &argv);
+    atexit(pw_deinit);
 #endif
 
     /* create the settings */
@@ -647,9 +663,7 @@ int main(int argc, char **argv)
             break;
 
         case 'l':			/* disable LASH */
-#ifdef HAVE_LASH
-            connect_lash = 0;
-#endif
+            // lash support removed in 2.4.0, NOOP
             break;
 
         case 'm':
@@ -725,7 +739,7 @@ int main(int argc, char **argv)
         case 'q':
             quiet = 1;
 
-#if defined(WIN32)
+#if defined(_WIN32)
             /* Windows logs to stdout by default, so make sure anything
              * lower than PANIC is not printed either */
             fluid_set_log_function(FLUID_ERR, NULL, NULL);
@@ -843,19 +857,8 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
-#endif
-
-#ifdef HAVE_LASH
-
-    /* connect to the lash server */
-    if(connect_lash)
-    {
-        enabled_lash = fluid_lash_connect(lash_args);
-        fluid_settings_setint(settings, "lash.enable", enabled_lash ? 1 : 0);
-    }
-
 #endif
 
     /* The 'groups' setting is relevant for LADSPA operation and channel mapping
@@ -890,13 +893,13 @@ int main(int argc, char **argv)
     if(config_file == NULL)
     {
         config_file = fluid_get_userconf(buf, sizeof(buf));
-        if(config_file == NULL)
+        if(config_file == NULL || !g_file_test(config_file, G_FILE_TEST_EXISTS))
         {
             config_file = fluid_get_sysconf(buf, sizeof(buf));
         }
 
         /* if the automatically selected command file does not exist, do not even attempt to open it */
-        if(!g_file_test(config_file, G_FILE_TEST_EXISTS))
+        if(config_file != NULL && !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
         {
             config_file = NULL;
         }
@@ -936,7 +939,7 @@ int main(int argc, char **argv)
     for(i = arg1; i < argc; i++)
     {
         const char *u8_path = argv[i];
-#if defined(WIN32)
+#if defined(_WIN32)
         /* try to convert ANSI encoding path to UTF8 encoding path */
         char *u8_buf = win32_ansi_to_utf8(argv[i]);
         if (u8_buf == NULL)
@@ -962,7 +965,7 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
-#if defined(WIN32)
+#if defined(_WIN32)
         free(u8_buf);
 #endif
     }
@@ -1091,15 +1094,6 @@ int main(int argc, char **argv)
 
 #endif
 
-#ifdef HAVE_LASH
-
-    if(enabled_lash)
-    {
-        fluid_lash_create_thread(synth);
-    }
-
-#endif
-
     /* fast rendering audio file, if requested */
     if(fast_render)
     {
@@ -1213,7 +1207,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2022 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2024 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of Creative Technology Ltd.\n\n",
            fluid_version_str());
@@ -1278,10 +1272,6 @@ print_help(fluid_settings_t *settings)
            "    Attempt to connect the jack outputs to the physical ports\n");
     printf(" -K, --midi-channels=[num]\n"
            "    The number of midi channels [default = 16]\n");
-#ifdef HAVE_LASH
-    printf(" -l, --disable-lash\n"
-           "    Don't connect to LASH server\n");
-#endif
     printf(" -L, --audio-channels=[num]\n"
            "    The number of stereo audio channels [default = 1]\n");
     printf(" -m, --midi-driver=[label]\n"

@@ -906,7 +906,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          * - the delay into a sample delay
          */
         fluid_clip(x, -16000.0f, 4500.0f);
-        x = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
+        x = (4.0f * FLUID_BUFSIZE * fluid_ct2hz_real(x) / voice->output_rate);
         UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, modlfo, x);
         break;
 
@@ -917,7 +917,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          * - the delay into a sample delay
          */
         fluid_clip(x, -16000.0f, 4500.0f);
-        x = 4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate;
+        x = 4.0f * FLUID_BUFSIZE * fluid_ct2hz_real(x) / voice->output_rate;
         UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, viblfo, x);
         break;
 
@@ -1110,8 +1110,9 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
     /* Modulation envelope */
     case GEN_MODENVDELAY:               /* SF2.01 section 8.1.3 # 25 */
         fluid_clip(x, -12000.0f, 5000.0f);
+        count = NUM_BUFFERS_DELAY(x);
         fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVDELAY,
-                                  NUM_BUFFERS_DELAY(x), 0.0f, 0.0f, -1.0f, 1.0f);
+                                  count, 0.0f, 0.0f, -1.0f, 1.0f);
         break;
 
     case GEN_MODENVATTACK:               /* SF2.01 section 8.1.3 # 26 */

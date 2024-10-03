@@ -43,9 +43,6 @@
 /* Define to 1 if you have the <io.h> header file. */
 #cmakedefine HAVE_IO_H @HAVE_IO_H@
 
-/* whether or not we are supporting lash */
-#cmakedefine HAVE_LASH @HAVE_LASH@
-
 /* Define if systemd support is enabled */
 #cmakedefine SYSTEMD_SUPPORT @SYSTEMD_SUPPORT@
 
@@ -129,6 +126,12 @@
 
 /* Define to enable JACK driver */
 #cmakedefine JACK_SUPPORT @JACK_SUPPORT@
+
+/* Define to enable KAI driver */
+#cmakedefine KAI_SUPPORT @KAI_SUPPORT@
+
+/* Define to enable PipeWire driver */
+#cmakedefine PIPEWIRE_SUPPORT @PIPEWIRE_SUPPORT@
 
 /* Include the LADSPA Fx unit */
 #cmakedefine LADSPA @LADSPA_SUPPORT@
@@ -229,7 +232,7 @@
 #cmakedefine WITH_PROFILING @WITH_PROFILING@
 
 /* Define to use the readline library for line editing */
-#cmakedefine WITH_READLINE @WITH_READLINE@
+#cmakedefine READLINE_SUPPORT @READLINE_SUPPORT@
 
 /* Define if the compiler supports VLA */ 
 #cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@ 

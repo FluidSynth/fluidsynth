@@ -1,0 +1,72 @@
+name: Fluidsynth Windows
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/sonarcloud.yml'
+      - '.cirrus.yml'
+      - 'README.md'
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+  INSTALL_LOCATION: fluidsynth_install
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+        fail-fast: false
+        matrix:
+          include:
+            - { icon: '⬛', sys: mingw32 }
+            - { icon: '🟦', sys: mingw64 }
+            - { icon: '🟨', sys: ucrt64  }
+            - { icon: '🟧', sys: clang64 }
+    name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: '${{ matrix.icon }} Setup MSYS2'
+      uses: msys2/setup-msys2@v2
+      with:
+        release: false
+        msystem: ${{matrix.sys}}
+        install: >-
+          make
+          libreadline
+        pacboy: >-
+          toolchain:p
+          cmake:p
+          ninja:p
+          glib2:p
+          libsndfile:p
+
+    - name: '${{ matrix.icon }} Configure CMake'
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
+
+    - name: '${{ matrix.icon }} Build'
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: '${{ matrix.icon }} Test'
+      run: cmake --build build --target check
+
+    - name: '${{ matrix.icon }} Demo'
+      run: cmake --build build --target demo
+
+    - name: '${{ matrix.icon }} Install'
+      run: cmake --install build && ls -la $INSTALL_LOCATION
+
+    - name: '${{ matrix.icon }} Upload Artifacts'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}
+        path: ${{env.INSTALL_LOCATION}}
+        retention-days: 14
+        overwrite: true

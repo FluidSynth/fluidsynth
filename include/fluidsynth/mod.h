@@ -96,7 +96,7 @@ FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl
 FLUIDSYNTH_API int fluid_mod_has_dest(const fluid_mod_t *mod, int gen);
 
 FLUIDSYNTH_API void fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

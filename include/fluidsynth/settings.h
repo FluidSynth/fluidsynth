@@ -48,6 +48,9 @@ extern "C" {
  *       // ...
  *     }
  * @endcode
+ * All string settings are encoded in UTF-8. This includes the names
+ * of the audio and MIDI devices, exposed as setting options.
+ * 
  * @sa @ref CreatingSettings
  *
  * @{
@@ -185,7 +188,7 @@ typedef void (*fluid_settings_foreach_t)(void *data, const char *name, int type)
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t *settings, void *data,
                             fluid_settings_foreach_t func);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

@@ -34,9 +34,8 @@
 
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
-#include <sys/poll.h>
-
-#include "fluid_lash.h"
+#include <poll.h>
+#include <math.h>
 
 #define FLUID_ALSA_DEFAULT_MIDI_DEVICE  "default"
 #define FLUID_ALSA_DEFAULT_SEQ_DEVICE   "default"
@@ -553,7 +552,7 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d)
         {
             FLUID_MEMSET(left, 0, buffer_size * sizeof(*left));
             FLUID_MEMSET(right, 0, buffer_size * sizeof(*right));
-            
+
             (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
 
             /* convert floating point data to 16 bit (with dithering) */
@@ -629,7 +628,91 @@ error_recovery:
 
 void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
 {
+    int card = -1;
+    int err = 0;
+    snd_rawmidi_info_t *info;
+
     fluid_settings_register_str(settings, "midi.alsa.device", "default", 0);
+    fluid_settings_add_option(settings, "midi.alsa.device", "default");
+
+    snd_rawmidi_info_alloca(&info);
+
+    /* Enumeration of ALSA Raw MIDI devices */
+    err = snd_card_next(&card);
+
+    while((err == 0) && (card >= 0))
+    {
+        int device = -1;
+        snd_ctl_t *ctl = NULL;
+        char card_name[32];
+
+        FLUID_SNPRINTF(card_name, sizeof(card_name), "hw:%d", card);
+        err = snd_ctl_open(&ctl, card_name, 0);
+
+        if(err == 0)
+        {
+            for(;;)
+            {
+                int num_subs;
+                int subdevice;
+                char newoption[64];
+                const char *name;
+                const char *sub_name;
+
+                err = snd_ctl_rawmidi_next_device(ctl, &device);
+
+                if((err < 0) || (device < 0))
+                {
+                    break;
+                }
+
+                snd_rawmidi_info_set_device(info, device);
+                snd_rawmidi_info_set_stream(info, SND_RAWMIDI_STREAM_INPUT);
+                err = snd_ctl_rawmidi_info(ctl, info);
+
+                if(err == 0)
+                {
+                    num_subs = snd_rawmidi_info_get_subdevices_count(info);
+                }
+                else
+                {
+                    break;
+                }
+
+                for(subdevice = 0; subdevice < num_subs; ++subdevice)
+                {
+                    snd_rawmidi_info_set_subdevice(info, subdevice);
+                    err = snd_ctl_rawmidi_info(ctl, info);
+
+                    if(err == 0)
+                    {
+                        name = snd_rawmidi_info_get_name(info);
+                        sub_name = snd_rawmidi_info_get_subdevice_name(info);
+
+                        if(subdevice == 0 && sub_name[0] == '\0')
+                        {
+                            FLUID_SNPRINTF(newoption, sizeof(newoption), "hw:%d,%d    %s", card, device, name);
+                            fluid_settings_add_option(settings, "midi.alsa.device", newoption);
+                            break;
+                        }
+                        else
+                        {
+                            FLUID_SNPRINTF(newoption, sizeof(newoption), "hw:%d,%d,%d  %s", card, device, subdevice, sub_name);
+                            fluid_settings_add_option(settings, "midi.alsa.device", newoption);
+                        }
+                    }
+                }
+            }
+        }
+
+        if(ctl)
+        {
+            snd_ctl_close(ctl);
+            ctl = NULL;
+        }
+
+        err = snd_card_next(&card);
+    }
 }
 
 /*
@@ -919,6 +1002,15 @@ static void fluid_alsa_seq_autoconnect_port_info(fluid_alsa_seq_driver_t *dev, s
     }
 
     FLUID_LOG(FLUID_INFO, "Connection of %s succeeded", pname);
+
+    /* Calculate the next port to be auto-connected. When all ports have been connected
+     * in sequence, start again from port 0 for the next auto-connection. */
+    dev->autoconn_dest.port++;
+
+    if(dev->autoconn_dest.port >= dev->port_count)
+    {
+        dev->autoconn_dest.port  = 0;
+    }
 }
 
 // Autoconnect a single client port (by id) to autoconnect_dest if it has right type/capabilities
@@ -939,16 +1031,19 @@ static void fluid_alsa_seq_autoconnect_port(fluid_alsa_seq_driver_t *dev, int cl
     fluid_alsa_seq_autoconnect_port_info(dev, pinfo);
 }
 
-// Connect available ALSA MIDI inputs to the provided port_info
-static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_seq_port_info_t *dest_pinfo)
+// Connect available ALSA MIDI inputs
+static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev)
 {
     int err;
     snd_seq_t *seq = dev->seq_handle;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
 
-    // subscribe to future new clients/ports showing up
-    if((err = snd_seq_connect_from(seq, snd_seq_port_info_get_port(dest_pinfo),
+    /* Subscribe to system:announce for future new clients/ports showing up.
+     * This subscription is made to the first port, and does not rotate
+     * dev->autoconn_dest, because this subscription never provides
+     * MIDI channel messages, only system (ALSA) messages. */
+    if((err = snd_seq_connect_from(seq, dev->autoconn_dest.port,
                                    SND_SEQ_CLIENT_SYSTEM, SND_SEQ_PORT_SYSTEM_ANNOUNCE)) < 0)
     {
         FLUID_LOG(FLUID_ERR, "snd_seq_connect_from() failed: %s", snd_strerror(err));
@@ -956,8 +1051,6 @@ static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_s
 
     snd_seq_client_info_alloca(&cinfo);
     snd_seq_port_info_alloca(&pinfo);
-
-    dev->autoconn_dest = *snd_seq_port_info_get_addr(dest_pinfo);
 
     snd_seq_client_info_set_client(cinfo, -1);
 
@@ -1100,7 +1193,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
     FLUID_MEMSET(port_info, 0, snd_seq_port_info_sizeof());
 
     fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
-    dev->port_count = midi_channels / 16;
+    dev->port_count = ceil(midi_channels / 16.0f);
 
     snd_seq_port_info_set_capability(port_info,
                                      SND_SEQ_PORT_CAP_WRITE |
@@ -1140,21 +1233,11 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
 
     if(dev->autoconn_inputs)
     {
-        fluid_alsa_seq_autoconnect(dev, port_info);
+        /* The next port to be auto-connected, starting by port 0 */
+        dev->autoconn_dest = *snd_seq_port_info_get_addr(port_info);
+        dev->autoconn_dest.port = 0;
+        fluid_alsa_seq_autoconnect(dev);
     }
-
-    /* tell the lash server our client id */
-#ifdef HAVE_LASH
-    {
-        int enable_lash = 0;
-        fluid_settings_getint(settings, "lash.enable", &enable_lash);
-
-        if(enable_lash)
-        {
-            fluid_lash_alsa_client_id(fluid_lash_client, snd_seq_client_id(dev->seq_handle));
-        }
-    }
-#endif /* HAVE_LASH */
 
     fluid_atomic_int_set(&dev->should_quit, 0);
 
@@ -1346,6 +1429,26 @@ fluid_alsa_seq_run(void *d)
                     }
                 }
                 break;
+
+                case SND_SEQ_EVENT_START:
+                    evt.type = MIDI_START;
+                    break;
+
+                case SND_SEQ_EVENT_CONTINUE:
+                    evt.type = MIDI_CONTINUE;
+                    break;
+
+                case SND_SEQ_EVENT_STOP:
+                    evt.type = MIDI_STOP;
+                    break;
+
+                case SND_SEQ_EVENT_CLOCK:
+                    evt.type = MIDI_SYNC;
+                    break;
+
+                case SND_SEQ_EVENT_RESET:
+                    evt.type = MIDI_SYSTEM_RESET;
+                    break;
 
                 default:
                     continue;		/* unhandled event, next loop iteration */

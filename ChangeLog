@@ -344,7 +344,7 @@ valuable information.
 
 2006-02-20    Josh Green <jgreen@users.sourceforge.net>
 
-	* Fixed build error that occured when neither LASH or LADCCA are
+	* Fixed build error that occurred when neither LASH or LADCCA are
 	  present.
 	* Updated README-OSX from Ebrahim Mayat.
 
@@ -573,7 +573,7 @@ valuable information.
 	(main): User config and system config file are now loaded correctly
 
 	* src/fluid_cmd.c (fluid_shell_run): the shell doesn't get stuck
-	and loop on an emtpy string when the end of the stream is reached.
+	and loop on an empty string when the end of the stream is reached.
 
 	* src/fluid_io.c (fluid_istream_gets): fluid_istream_gets()
 	returns 0 if the end of the stream was reached and -1 on error.
@@ -804,7 +804,7 @@ valuable information.
 	
 1999-11-30  Antoine Schmitt  <as@gratin.org>
 
-	* src/fluid_defsfont.c: inst_zone lokey is now properly inialized to 0
+	* src/fluid_defsfont.c: inst_zone lokey is now properly initialized to 0
 	(it was not, leading to random lost noteons depending on memory
 	initialization)
 
@@ -1048,13 +1048,13 @@ valuable information.
 	(iiwu_synth_system_reset): This function now also resets the
 	default controller values on the MIDI channels, and clears the
 	reverb and chorus delay lines.
-	(iiwu_synth_count_midi_channels): New function to retreive the
+	(iiwu_synth_count_midi_channels): New function to retrieve the
 	number of available midi channels.
-	(iiwu_synth_count_audio_channels): New function to retreive the
+	(iiwu_synth_count_audio_channels): New function to retrieve the
 	number of available midi channels.
-	(iiwu_synth_count_effects_channels): New function to retreive the
+	(iiwu_synth_count_effects_channels): New function to retrieve the
 	number of available effects channels.
-	(iiwu_synth_get_cpu_load): New function to retreive an estimation
+	(iiwu_synth_get_cpu_load): New function to retrieve an estimation
 	of the CPU load.
 
 	* src/iiwusynth.h: Added fields to handle multi-channel audio and
@@ -1346,7 +1346,7 @@ valuable information.
 	references.
 
 	* src/iiwu_cmd.c (iiwu_handle_reverb): renamed 'rev_enable' to
-	'reverb' in correspondance with the long command line arguments
+	'reverb' in correspondence with the long command line arguments
 
 	* src/iiwusynth.c (main): checking if files on command line are valid
 
@@ -1623,9 +1623,9 @@ valuable information.
 
 	* src/iiwu_synth.c (iiwu_sp_write_lr): now using a 64-bits
 	fixed-point number to calculate the phase of the
-	wavetable. because of rounding erros, the float value I used
+	wavetable. because of rounding errors, the float value I used
 	before gave terrible tuning problems. I updated all the
-	intepolation macros.
+	interpolation macros.
 
 	* src/iiwusynth_priv.h: included the iiwu_phase_t data type. This
 	type represents a 64-bits fixed-point number. It's used to hold
@@ -1644,9 +1644,9 @@ valuable information.
 2001-06-07  Peter Hanappe  <peter@hanappe.com>
 
 	* src/iiwu_synth.c (iiwu_sp_write_lr): rewrote the dsp function to
-	accept a seperate left and right channel buffer.
+	accept a separate left and right channel buffer.
 	(iiwu_sp_write_lr): using cubic hermite interpolation by default.
-	(iiwu_synth_write_lr): added a dsp function to accept a seperate
+	(iiwu_synth_write_lr): added a dsp function to accept a separate
 	left and right channel buffer.
 
 2001-05-26  Peter Hanappe  <peter@hanappe.com>
@@ -1668,20 +1668,20 @@ valuable information.
 
 	* src/iiwusynth.c: added the stupidly simple interpreter
 
-	* src/iiwu_synth.c: removed all param strcutures. 
+	* src/iiwu_synth.c: removed all param structures. 
 
 	* src/iiwu_synth.c (iiwu_channel_get_banknum): new function
 
 2001-05-23  Peter Hanappe  <peter@hanappe.com>
 
-	* src/iiwu_synth.c (iiwu_sp_write): Fixed devide by zero in filter
+	* src/iiwu_synth.c (iiwu_sp_write): Fixed divide by zero in filter
 
 	* src/smurf.c (gerr): applied Josh's patch: using va_list now (as
 	it should).
 
 2001-05-22  Peter Hanappe  <peter@hanappe.com>
 
-	* src/iiwu_midi.c: the midi handler is now devided in a dummy
+	* src/iiwu_midi.c: the midi handler is now divided in a dummy
 	iiwu_midi_handler_t and a "low level" driver. This allows for
 	multiple midi drivers to be compiled in.
 

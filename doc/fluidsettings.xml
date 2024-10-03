@@ -14,11 +14,6 @@ https://stackoverflow.com/a/6251757
 Developers:
  - Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
  - Real-time settings can be marked with <realtime>SOME OPTIONAL TEXT</realtime>.
-
-ATTENTION: if you change anything in this file, make sure you also refresh
-the doxygen/fluidsettings.txt file (used by fluidsynth.org API doc build)
-and commit the results. Refresh with the following command:
-    xsltproc -o doxygen/fluidsettings.txt doxygen/fluidsettings.xsl fluidsettings.xml
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
@@ -52,7 +47,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>chorus.depth</name>
             <type>num</type>
-            <def>8.0</def>
+            <def>4.25 (since version 2.4.0),<br />8.0 (2.3.x and older)</def>
             <min>0.0</min>
             <max>256.0</max>
             <realtime/>
@@ -62,7 +57,8 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>chorus.level</name>
             <type>num</type>
-            <def>2.0</def>
+            <def>0.6 (since version 2.4.0),<br />2.0 (2.3.x and older)</def>
+            <def></def>
             <min>0.0</min>
             <max>10.0</max>
             <realtime/>
@@ -82,7 +78,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>chorus.speed</name>
             <type>num</type>
-            <def>0.3</def>
+            <def>0.2 (since version 2.4.0),<br />0.3 (2.3.x and older)</def>
             <min>0.1</min>
             <max>5.0</max>
             <realtime/>
@@ -113,10 +109,10 @@ and commit the results. Refresh with the following command:
             <type>int</type>
             <def>0</def>
             <min>0</min>
-            <max>126</max>
+            <max>127</max>
             <realtime/>
             <desc>
-                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID. Broadcast commands (with ID=127) will always be processed.</desc>
+                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed. It has been observed that setting this ID to 16 provides best compatibility when playing MIDI files which contain SYSEX commands that you want to have honored.</desc>
         </setting>
         <setting>
             <name>dynamic-sample-loading</name>
@@ -145,7 +141,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>gain</name>
             <type>num</type>
-            <def>0.2</def>
+            <def>0.6 (since version 2.4.0),<br />0.2 (2.3.x and older)</def>
             <min>0.0</min>
             <max>10.0</max>
             <realtime/>
@@ -184,8 +180,8 @@ and commit the results. Refresh with the following command:
                 <ul>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
                     <li>gm: ignores CC0 and CC32 messages.</li>
-                    <li>xg: CC32 becomes the bank number, CC0 toggles between melodic or drum channel.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
+                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum and the bank number is set to 128 (CC32 is ignored). Otherwise the channel is set to melodic and CC32 is the bank number. Note that you need fluidsynth &gt;=2.3.5 for this to work correctly, previous versions behaved incorrectly.</li>
                 </ul>
             </desc>
         </setting>
@@ -317,7 +313,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0.0</def>
+            <def>0.3 (since version 2.4.0),<br />0.0 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -327,7 +323,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>reverb.level</name>
             <type>num</type>
-            <def>0.9</def>
+            <def>0.7 (since version 2.4.0),<br />0.9 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -337,7 +333,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>reverb.room-size</name>
             <type>num</type>
-            <def>0.2</def>
+            <def>0.5 (since version 2.4.0),<br />0.2 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -347,7 +343,7 @@ and commit the results. Refresh with the following command:
         <setting>
             <name>reverb.width</name>
             <type>num</type>
-            <def>0.5</def>
+            <def>0.8 (since version 2.4.0),<br />0.5 (2.3.x and older)</def>
             <min>0.0</min>
             <max>100.0</max>
             <realtime/>
@@ -418,7 +414,7 @@ and commit the results. Refresh with the following command:
             <min>64</min>
             <max>8192</max>
             <desc>
-                The size of the audio buffers (in frames).
+                This is the number of audio samples most audio drivers will request from the synth at one time. In other words, it's the amount of samples the synth is allowed to render in one go when no state changes (events) are about to happen. Because of that, specifying too big numbers here may cause MIDI events to be poorly quantized (=untimed) when a MIDI driver or the synth's API directly is used, as fluidsynth cannot determine when those events are to arrive. This issue does not matter, when using the MIDI player or the MIDI sequencer, because in this case, fluidsynth does know when events will be received.
             </desc>
         </setting>
         <setting>
@@ -458,6 +454,32 @@ and commit the results. Refresh with the following command:
             </desc>
         </setting>
         <setting>
+            <name>coreaudio.channel-map</name>
+            <type>str</type>
+            <def>(empty string)</def>
+            <desc>
+                This setting is a comma-separated integer list that maps fluidsynth mono-channels
+                to CoreAudio device output channels. Each position in the list represents the output channel
+                of the CoreAudio device.
+                The value of each position indicates the zero-based index of the fluidsynth
+                output mono-channel to route there (i.e. the buffer index used for fluid_synth_process()).
+                Additionally, the special value of -1 will turn off an output.
+                <br /><br />
+                For example, the default map for a single stereo output is "0,1". A value of "0,0" will
+                copy the left channel to the right, a value of "1,0" will flip left and right, and a
+                value of "-1,1" will play only the right channel.
+                <br /><br />
+                With a six-channel output device, and the synth.audio-channels and synth.audio-groups
+                settings both set to "2", a channel map of "-1,-1,0,1,2,3" will result in notes from odd
+                MIDI channels (audible on the first stereo channel, i.e. mono-indices 0,1) being sent to
+                outputs 3 and 4, and even MIDI channels (audible on the second stereo channel, i.e. mono-indices 2,3)
+                being sent to outputs 5 and 6.
+                <br /><br />
+                If the list specifies less than the number of available outputs channels, outputs
+                beyond those specified will maintain the default channel mapping given by the CoreAudio driver.
+            </desc>
+        </setting>
+        <setting>
             <name>dart.device</name>
             <type>str</type>
             <def>default</def>
@@ -470,7 +492,7 @@ and commit the results. Refresh with the following command:
             <type>str</type>
             <def>default</def>
             <desc>
-                Selects the DirectSound (Windows) device to use.
+                Selects the DirectSound (Windows) device to use. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
         <setting>
@@ -607,6 +629,30 @@ and commit the results. Refresh with the following command:
             </desc>
         </setting>
         <setting>
+            <name>pipewire.media-category</name>
+            <type>str</type>
+            <def>Playback</def>
+            <desc>
+                The media category to use. This value will be passed to <code>PW_KEY_MEDIA_CATEGORY</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-role</name>
+            <type>str</type>
+            <def>Music</def>
+            <desc>
+                The media role to use. This value will be passed to <code>PW_KEY_MEDIA_ROLE</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
+            <name>pipewire.media-type</name>
+            <type>str</type>
+            <def>Audio</def>
+            <desc>
+                The media type to use. This value will be passed to <code>PW_KEY_MEDIA_TYPE</code>, see Pipewire documentation for valid values.
+            </desc>
+        </setting>
+        <setting>
             <name>portaudio.device</name>
             <type>str</type>
             <def>PortAudio Default</def>
@@ -659,7 +705,7 @@ and commit the results. Refresh with the following command:
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for WASAPI driver output.
+                Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
         <setting>
@@ -675,7 +721,7 @@ and commit the results. Refresh with the following command:
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for WaveOut driver output.
+                Device to use for WaveOut driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
     </audio>
@@ -716,7 +762,7 @@ and commit the results. Refresh with the following command:
             <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port).</desc>
+            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port). Since fluidsynth 2.3.0 this setting will be populated with available devices when fluidsynth starts up.</desc>
         </setting>
         <setting>
             <name>alsa_seq.device</name>
@@ -758,7 +804,7 @@ and commit the results. Refresh with the following command:
             <name>winmidi.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels).</desc>
+            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels). Starting with 2.3.6 all device names are expected to be UTF8 encoded.</desc>
         </setting>
     </midi>
     

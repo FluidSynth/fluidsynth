@@ -48,7 +48,7 @@ fluid_ct2hz_real(fluid_real_t cents)
 {
     if(FLUID_UNLIKELY(cents < 0))
     {
-        return (fluid_real_t) 1.0;
+        return fluid_act2hz(cents);
     }
     else
     {
@@ -111,9 +111,20 @@ fluid_cb2amp(fluid_real_t cb)
      */
 
     /* minimum attenuation: 0 dB */
-    if(cb < 0)
+    if(FLUID_UNLIKELY(cb < 0))
     {
-        return 1.0;
+        /* Issue #1374: it seems that by using modLfoToVolEnv, the attenuation can become negative and
+         * therefore the signal needs to be amplified.
+         * In such a rare case, calculate the attenuation on the fly.
+         *
+         * This behavior is backed by the spec saying:
+         * modLfoToVolume: "A positive number indicates a positive LFO excursion increases volume;
+         * a negative number indicates a positive excursion decreases volume.
+         * [...] For example, a value of 100 indicates that the volume will first rise ten dB, then fall ten dB."
+         *
+         * And in order to rise, a negative attenuation must be permitted.
+         */
+        return FLUID_POW(10.0f, cb / -200.0f);
     }
 
     if(cb >= FLUID_CB_AMP_SIZE)
@@ -231,10 +242,11 @@ fluid_hz2ct(fluid_real_t f)
     return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
 }
  */
-fluid_real_t
-fluid_act2hz(fluid_real_t c)
+double
+fluid_act2hz(double c)
 {
-    return 8.176f * FLUID_POW(2.f, c / 1200.f);
+    // do not use FLUID_POW, otherwise the unit tests will fail when compiled in single precision
+    return 8.1757989156437073336828122976032719176391831357 * pow(2.f, c / 1200.f);
 }
 
 /*
@@ -298,16 +310,17 @@ fluid_real_t fluid_balance(fluid_real_t balance, int left)
 fluid_real_t
 fluid_concave(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_concave_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_concave_tab[(int) val];
+    return fluid_concave_tab[ival] + (fluid_concave_tab[ival + 1] - fluid_concave_tab[ival]) * (val - ival);
 }
 
 /*
@@ -316,15 +329,17 @@ fluid_concave(fluid_real_t val)
 fluid_real_t
 fluid_convex(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_convex_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_convex_tab[(int) val];
+    // interpolation between convex steps: fixes bad sounds with modenv and filter cutoff
+    return fluid_convex_tab[ival] + (fluid_convex_tab[ival + 1] - fluid_convex_tab[ival]) * (val - ival);
 }
 

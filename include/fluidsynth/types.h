@@ -76,7 +76,7 @@ typedef __int64 fluid_long_long_t; // even on 32bit windows
 typedef long long fluid_long_long_t;
 #endif
 
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

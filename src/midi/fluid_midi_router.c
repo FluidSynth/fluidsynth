@@ -369,7 +369,7 @@ fluid_midi_router_add_rule(fluid_midi_router_t *router, fluid_midi_router_rule_t
  *
  * @return Newly allocated router rule or NULL if out of memory.
  *
- * The new rule is a "unity" rule which will accept any values and wont modify
+ * The new rule is a "unity" rule which will accept any values and won't modify
  * them.
  *
  * @since 1.1.0
@@ -913,6 +913,10 @@ int fluid_midi_dump_prerouter(void *data, fluid_midi_event_t *event)
                 event->channel, event->param1, event->param2);
         break;
 
+    case MIDI_SYSTEM_RESET:
+        fprintf(stdout, "event_pre_system_reset\n");
+        break;
+
     default:
         break;
     }
@@ -964,6 +968,10 @@ int fluid_midi_dump_postrouter(void *data, fluid_midi_event_t *event)
     case KEY_PRESSURE:
         fprintf(stdout, "event_post_kpress %i %i %i\n",
                 event->channel, event->param1, event->param2);
+        break;
+
+    case MIDI_SYSTEM_RESET:
+        fprintf(stdout, "event_post_system_reset\n");
         break;
 
     default:
