@@ -1,8 +1,8 @@
 #[=======================================================================[.rst:
-FindOboe
+Findoboe
 -------
 
-Finds the Oboe library.
+Finds the oboe library.
 
 Imported Targets
 ^^^^^^^^^^^^^^^^
@@ -10,22 +10,22 @@ Imported Targets
 This module provides the following imported targets, if found:
 
 ``oboe::oboe``
-  The Oboe library
+  The oboe library
 
 Result Variables
 ^^^^^^^^^^^^^^^^
 
 This will define the following variables:
 
-``Oboe_FOUND``
-  True if the system has the Oboe library.
+``oboe_FOUND``
+  True if the system has the oboe library.
 
 For compatibility with upstream, the following variables are also set:
 
-``Oboe_INCLUDE_DIR``
-``Oboe_INCLUDE_DIRS``
-``Oboe_LIBRARY``
-``Oboe_LIBRARIES``
+``oboe_INCLUDE_DIR``
+``oboe_INCLUDE_DIRS``
+``oboe_LIBRARY``
+``oboe_LIBRARIES``
 ``OBOE_INCLUDE_DIR``
 ``OBOE_INCLUDE_DIRS``
 ``OBOE_LIBRARY``
@@ -40,7 +40,7 @@ pkg_check_modules(PC_OBOE QUIET oboe-1.0)
 
 # Find the headers and library
 find_path(
-  Oboe_INCLUDE_DIR
+  oboe_INCLUDE_DIR
   NAMES "oboe/Oboe.h"
   HINTS "${PC_OBOE_INCLUDEDIR}")
 
@@ -56,26 +56,26 @@ endif()
 
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Oboe REQUIRED_VARS "_oboe_library"
-                                                    "Oboe_INCLUDE_DIR")
+find_package_handle_standard_args(oboe REQUIRED_VARS "_oboe_library"
+                                                    "oboe_INCLUDE_DIR")
 
 # Create the target
-if(Oboe_FOUND AND NOT TARGET oboe::oboe)
+if(oboe_FOUND AND NOT TARGET oboe::oboe)
   add_library(oboe::oboe UNKNOWN IMPORTED)
   set_target_properties(
     oboe::oboe
     PROPERTIES IMPORTED_LOCATION "${_oboe_library}"
                INTERFACE_COMPILE_OPTIONS "${_oboe_compile_options}"
-               INTERFACE_INCLUDE_DIRECTORIES "${Oboe_INCLUDE_DIR}"
+               INTERFACE_INCLUDE_DIRECTORIES "${oboe_INCLUDE_DIR}"
                INTERFACE_LINK_LIBRARIES "${_oboe_link_libraries}"
                INTERFACE_LINK_DIRECTORIES "${_oboe_link_directories}")
 
   # Set additional variables for compatibility with upstream config
-  set(Oboe_INCLUDE_DIRS "${Oboe_INCLUDE_DIR}")
-  set(Oboe_LIBRARY oboe::oboe)
-  set(Oboe_LIBRARIES oboe::oboe)
-  set(OBOE_INCLUDE_DIR "${${Oboe_INCLUDE_DIR}}")
-  set(OBOE_INCLUDE_DIRS "${${Oboe_INCLUDE_DIR}}")
+  set(oboe_INCLUDE_DIRS "${oboe_INCLUDE_DIR}")
+  set(oboe_LIBRARY oboe::oboe)
+  set(oboe_LIBRARIES oboe::oboe)
+  set(OBOE_INCLUDE_DIR "${${oboe_INCLUDE_DIR}}")
+  set(OBOE_INCLUDE_DIRS "${${oboe_INCLUDE_DIR}}")
   set(OBOE_LIBRARY oboe::oboe)
   set(OBOE_LIBRARIES oboe::oboe)
   set(OBOE_FOUND TRUE)
