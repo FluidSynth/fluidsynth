@@ -129,7 +129,7 @@ static void fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id);
 
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
 
-static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data);
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb);
 
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
@@ -1847,11 +1847,11 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                     int gen = fluid_channel_get_cc(chan, NRPN_LSB);
                     if(synth->verbose)
                     {
-                        FLUID_LOG(FLUID_INFO, "AWE32 NRPN\t%d\t%d\t%d", channum, gen, data);
+                        FLUID_LOG(FLUID_INFO, "AWE32 NRPN RAW: Chan %d, Gen %d, data %d | 0x%X, MSB: %d, LSB: %d", channum, gen, data, data, msb_value, lsb_value);
                     }
                     if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
                     {
-                        fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data);
+                        fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data, lsb_value);
                     }
                     else
                     {
@@ -7673,7 +7673,7 @@ calc_awe32_filter_q(int data, fluid_real_t* fc)
  * @param gen the AWE32 effect or generator to manipulate
  * @param data the composed value of DATA_MSB and DATA_LSB
  */
-static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data)
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb)
 {
     static const enum fluid_gen_type awe32_to_sf2_gen[] =
     {
@@ -7711,9 +7711,11 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
     int is_realtime = FALSE, i, coef;
     fluid_real_t converted_sf2_generator_value, q;
-    
+
+    // The AWE32 NRPN docs say that a value of 8192 is considered to be the middle, i.e. zero.
+    // However, it looks like for those generators which work in range [0,127], the AWE32 only inspects the DATA_LSB, i.e. and not doing this subtraction. Found while investigating Uplift.mid.
     data -= 8192;
-    
+
     switch(sf2_gen)
     {
         case GEN_MODLFODELAY:
@@ -7726,8 +7728,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_MODLFOFREQ:
         case GEN_VIBLFOFREQ:
-            fluid_clip(data, 0, 127);
-            converted_sf2_generator_value = fluid_hz2ct(data * (fluid_real_t)0.084 /* Hz */);
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = fluid_hz2ct(data_lsb * (fluid_real_t)0.084 /* Hz */);
             is_realtime = TRUE;
             break;
 
@@ -7753,8 +7755,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_MODENVSUSTAIN:
         case GEN_VOLENVSUSTAIN:
-            fluid_clip(data, 0, 127);
-            converted_sf2_generator_value = data * (fluid_real_t)(0.75 /* dB */ * 10) /* cB */;
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.75 /* dB */ * 10) /* cB */;
             break;
 
         case GEN_PITCH:
@@ -7775,22 +7777,24 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             break;
 
         case GEN_MODLFOTOVOL:
-            fluid_clip(data, 0, 127);
-            converted_sf2_generator_value = data * (fluid_real_t)(0.1875 /* dB */ * 10.0) /* cB */;
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.1875 /* dB */ * 10.0) /* cB */;
             is_realtime = TRUE;
             break;
 
         case GEN_FILTERFC:
-            fluid_clip(data, 0, 127);
+            fluid_clip(data_lsb, 0, 127);
+            // Yes, DO NOT use data here, Uplift.mid doesn't set MSB=64, therefore we would always get a negative value after subtracting 8192.
+            // Since Uplift.mid sounds fine on hardware though, it seems like AWE32 only inspects DATA_LSB in this case.
             // conversion continues below!
-            converted_sf2_generator_value = (data * 62 /* Hz */);
+            converted_sf2_generator_value = (data_lsb * 62 /* Hz */);
             FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc: %f Hz",converted_sf2_generator_value);
             is_realtime = TRUE;
             break;
 
         case GEN_FILTERQ:
-            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data);
-            synth->channel[chan]->awe32_filter_coeff = data;
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data_lsb);
+            synth->channel[chan]->awe32_filter_coeff = data_lsb;
             return;
 
         case GEN_MODLFOTOFILTERFC:
@@ -7835,21 +7839,14 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     {
         // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 500Hz gives a closer signal to the SB! hardware filter...
         converted_sf2_generator_value -= 500;
-        if(coef != -1)
-        {
-            q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
-            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc (corrected): %f Hz", converted_sf2_generator_value);
-            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
+        q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
+        FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc (corrected): %f Hz", converted_sf2_generator_value);
+        FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
 
-            converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
+        converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
 
-            // Safe the "true initial Q"
-            fluid_channel_set_override_gen_default(synth->channel[chan], GEN_FILTERQ, q);
-        }
-        else
-        {
-            converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
-        }
+        // Safe the "true initial Q"
+        fluid_channel_set_override_gen_default(synth->channel[chan], GEN_FILTERQ, q);
     }
     
     fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
@@ -7860,8 +7857,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         if (fluid_voice_is_playing(voice) && fluid_voice_get_channel(voice) == chan)
         {
-            int coef = synth->channel[chan]->awe32_filter_coeff;
-            if(sf2_gen == GEN_FILTERFC && coef != -1)
+            if(sf2_gen == GEN_FILTERFC)
             {
                 // sets the adjusted fc
                 fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
