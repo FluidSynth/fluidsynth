@@ -402,10 +402,7 @@ fluid_synth_init(void)
                          );
     fluid_mod_set_source2(&default_pan_mod, 0, 0);                 /* No second source */
     fluid_mod_set_dest(&default_pan_mod, GEN_PAN);                 /* Target: pan */
-    /* Amount: 500. The SF specs $8.4.6, p. 55 says: "Amount = 1000
-       tenths of a percent". The center value (64) corresponds to 50%,
-       so it follows that amount = 50% x 1000/% = 500. */
-    fluid_mod_set_amount(&default_pan_mod, 500.0);
+    fluid_mod_set_amount(&default_pan_mod, 1000.0);                /* Amount: 1000 tenths of a percent */
 
 
     /* SF2.01 page 55 section 8.4.7: MIDI continuous controller 11 to initial attenuation*/
