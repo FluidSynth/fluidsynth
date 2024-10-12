@@ -480,7 +480,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
  * @return New allocated modulator or NULL if out of memory
  */
 fluid_mod_t *
-new_fluid_mod()
+new_fluid_mod(void)
 {
     fluid_mod_t *mod = FLUID_NEW(fluid_mod_t);
 
@@ -511,7 +511,7 @@ delete_fluid_mod(fluid_mod_t *mod)
  *
  * Useful in low latency scenarios e.g. to allocate a modulator on the stack.
  */
-size_t fluid_mod_sizeof()
+size_t fluid_mod_sizeof(void)
 {
     return sizeof(fluid_mod_t);
 }
