@@ -517,7 +517,7 @@ int main(int argc, char **argv)
             {
                 optarg = argv[i];
 
-                if(optarg[0] == '-')
+                if((optarg[0] == '-') && ((optarg[1] != '\0') || (c != 'F')))
                 {
                     printf("Expected argument to option -%c found switch instead\n", c);
                     print_usage();
