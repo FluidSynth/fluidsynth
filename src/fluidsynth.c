@@ -1044,7 +1044,18 @@ int main(int argc, char **argv)
     /* create the player and add any midi files, if requested */
     for(i = arg1; i < argc; i++)
     {
-        if((argv[i][0] != '-') && fluid_is_midifile(argv[i]))
+        const char *u8_path = argv[i];
+#if defined(_WIN32)
+        /* try to convert ANSI encoding path to UTF8 encoding path */
+        char *u8_buf = win32_ansi_to_utf8(argv[i]);
+        if (u8_buf == NULL)
+        {
+            // error msg. already printed
+            goto cleanup;
+        }
+        u8_path = u8_buf;
+#endif
+        if((u8_path[0] != '-') && fluid_is_midifile(u8_path))
         {
             if(player == NULL)
             {
@@ -1063,8 +1074,11 @@ int main(int argc, char **argv)
                 }
             }
 
-            fluid_player_add(player, argv[i]);
+            fluid_player_add(player, u8_path);
         }
+#if defined(_WIN32)
+        free(u8_buf);
+#endif
     }
 
     /* try to load and execute the user or system configuration file */
