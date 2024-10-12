@@ -1242,14 +1242,14 @@ cleanup:
  * print_usage
  */
 void
-print_usage()
+print_usage(void)
 {
     fprintf(stderr, "Usage: fluidsynth [options] [soundfonts]\n");
     fprintf(stderr, "Try -h for help.\n");
 }
 
 void
-print_welcome()
+print_welcome(void)
 {
     printf("FluidSynth runtime version %s\n"
            "Copyright (C) 2000-2024 Peter Hanappe and others.\n"
@@ -1258,7 +1258,7 @@ print_welcome()
            fluid_version_str());
 }
 
-void print_configure()
+void print_configure(void)
 {
     puts("FluidSynth executable version " FLUIDSYNTH_VERSION);
     puts("Sample type="
