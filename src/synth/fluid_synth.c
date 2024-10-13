@@ -7837,8 +7837,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     coef = synth->channel[chan]->awe32_filter_coeff;
     if(sf2_gen == GEN_FILTERFC)
     {
-        // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 500Hz gives a closer signal to the SB! hardware filter...
-        converted_sf2_generator_value -= 500;
+        // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 1000Hz gives a closer signal to the SB! hardware filter...
+        converted_sf2_generator_value -= 1000;
         q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
         FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc (corrected): %f Hz", converted_sf2_generator_value);
         FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
@@ -7857,13 +7857,16 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         if (fluid_voice_is_playing(voice) && fluid_voice_get_channel(voice) == chan)
         {
+            // sets the adjusted generator
+            fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
+            fluid_voice_update_param(voice, sf2_gen);
+            
+            FLUID_LOG(FLUID_DBG, "AWE32 Realtime: adjusting voice id %d, generator %d, chan %d", fluid_voice_get_id(voice), sf2_gen, chan);
             if(sf2_gen == GEN_FILTERFC)
             {
-                // sets the adjusted fc
-                fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
-
-                // sets the calculated Q
+                // also sets the calculated Q
                 fluid_voice_gen_set(voice, GEN_FILTERQ, q);
+                fluid_voice_update_param(voice, GEN_FILTERQ);
             }
         }
     }
