@@ -99,6 +99,24 @@ fluid_mod_set_amount(fluid_mod_t *mod, double amount)
 }
 
 /**
+ * Set the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @param type Transform type
+ */
+void
+fluid_mod_set_transform(fluid_mod_t *mod, int type)
+{
+    unsigned char flag = (unsigned char) type;
+    if(flag != FLUID_MOD_LINEAR_TRANSFORM && flag != FLUID_MOD_ABS_VALUE)
+    {
+        /* invalid transform */
+        return;
+    }
+    mod->trans = flag;
+}
+
+/**
  * Get the primary source value from a modulator.
  *
  * @param mod The modulator instance
@@ -168,6 +186,18 @@ double
 fluid_mod_get_amount(const fluid_mod_t *mod)
 {
     return (double) mod->amount;
+}
+
+/**
+ * Get the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @return Transform type
+ */
+int
+fluid_mod_get_transform(fluid_mod_t *mod)
+{
+    return (int) mod->trans;
 }
 
 /*
@@ -474,10 +504,11 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 
     /* it indeed is as simple as that: */
     final_value = (fluid_real_t) mod->amount * v1 * v2;
-    /* check for absolute value transform*/
-    if(mod->trans == 2)
+
+    /* check for absolute value transform */
+    if(mod->trans == FLUID_MOD_ABS_VALUE)
     {
-        final_value = fabs(final_value);
+        final_value = FLUID_FABS(final_value);
     }
     return final_value;
 }
@@ -497,7 +528,8 @@ new_fluid_mod(void)
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-
+    // for the sake of backward compatibility
+    mod->trans = FLUID_MOD_LINEAR_TRANSFORM;
     return mod;
 }
 

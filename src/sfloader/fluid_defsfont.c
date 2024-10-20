@@ -1648,8 +1648,20 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
             mod_dest->flags2 &= ~FLUID_MOD_BIPOLAR;
         }
 
-        /* *** Transform Type *** */
-        mod_dest->trans = mod_src->trans;
+        /**
+         * *** Transform Type ***
+         * Only 2 types of transform are defined in the sf2 specification.
+         */
+        if(mod_src->trans != FLUID_MOD_LINEAR_TRANSFORM && mod_src->trans != FLUID_MOD_ABS_VALUE)
+        {
+            /* disable the modulator as the transform is invalid */
+            mod_dest->amount = 0;
+            mod_dest->trans = FLUID_MOD_LINEAR_TRANSFORM;
+        }
+        else
+        {
+            mod_dest->trans = mod_src->trans;
+        }
 
         /* Store the new modulator in the zone The order of modulators
          * will make a difference, at least in an instrument context: The
