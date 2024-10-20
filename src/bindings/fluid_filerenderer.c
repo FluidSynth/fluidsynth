@@ -289,7 +289,32 @@ new_fluid_file_renderer(fluid_synth_t *synth)
         goto error_recovery;
     }
 
+#ifdef _WIN32
+    if (0 == FLUID_STRCMP("-", filename))
+        dev->sndfile = sf_open(filename, SFM_WRITE, &info); // pipe open
+    else
+    {
+        int u16_count;
+        LPWSTR filename_wchar;
+        dev->sndfile = NULL;
+        
+        // utf-8 filename to utf-16 filename_wchar
+        if (1 > (u16_count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0)))
+            FLUID_LOG(FLUID_ERR, "Failed to convert UTF8 string to wide char string");
+        else if (NULL == (filename_wchar = (LPWSTR)FLUID_ARRAY(WCHAR, u16_count)))
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+        else
+        {
+            if (u16_count != MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, filename_wchar, u16_count))
+                FLUID_LOG(FLUID_ERR, "Failed to convert UTF8 string to wide char string");
+            else
+                dev->sndfile = sf_wchar_open(filename_wchar, SFM_WRITE, &info); // file open
+            FLUID_FREE(filename_wchar);
+        }
+    }
+#else
     dev->sndfile = sf_open(filename, SFM_WRITE, &info);
+#endif
 
     if(!dev->sndfile)
     {
