@@ -423,7 +423,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     }
 
     /* loop mode release? if not in release, the voice is silent */
-    if( voice->dsp.samplemode == FLUID_START_ON_RELEASE && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE)
+    if(voice->dsp.samplemode == FLUID_START_ON_RELEASE && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE)
     {
         return -1;
     }
