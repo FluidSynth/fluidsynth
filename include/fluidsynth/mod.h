@@ -58,12 +58,12 @@ enum fluid_mod_flags
 };
 
 /**
- * Transform types for the SoundFont2 modulators.
+ * Transform types for the SoundFont2 modulators as defined by SoundFont 2.04 section 8.3.
  */
 enum fluid_mod_transforms
 {
-    FLUID_MOD_LINEAR_TRANSFORM = 0, /* **< Linear: directly add the computed value to summing node */
-    FLUID_MOD_ABS_VALUE = 2     /* **< Absolute value: add abs of the computed value */
+    FLUID_MOD_LINEAR_TRANSFORM = 0, /**< Linear: directly add the computed value to summing node */
+    FLUID_MOD_ABS_VALUE = 2     /**< Abs: add the absolute value of the computed to summing node */
 };
 
 /**

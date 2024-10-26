@@ -102,7 +102,7 @@ fluid_mod_set_amount(fluid_mod_t *mod, double amount)
  * Set the transform type of a modulator.
  *
  * @param mod The modulator instance
- * @param type Transform type
+ * @param type Transform type, see #fluid_mod_transforms
  */
 void
 fluid_mod_set_transform(fluid_mod_t *mod, int type)
@@ -192,7 +192,7 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
  * Get the transform type of a modulator.
  *
  * @param mod The modulator instance
- * @return Transform type
+ * @param type Transform type, see #fluid_mod_transforms
  */
 int
 fluid_mod_get_transform(fluid_mod_t *mod)
