@@ -110,7 +110,7 @@ fluid_mod_set_transform(fluid_mod_t *mod, int type)
     unsigned char flag = (unsigned char) type;
     if(flag != FLUID_MOD_TRANSFORM_LINEAR && flag != FLUID_MOD_TRANSFORM_ABS)
     {
-        /* invalid transform */
+        FLUID_LOG(FLUID_ERR, "fluid_mod_set_transform() called with invalid transform type %d", type);
         return;
     }
     mod->trans = flag;
