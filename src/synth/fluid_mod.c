@@ -39,6 +39,7 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
     mod->src2 = src->src2;
     mod->flags2 = src->flags2;
     mod->amount = src->amount;
+    mod->trans = src->trans;
 }
 
 /**
@@ -95,6 +96,24 @@ void
 fluid_mod_set_amount(fluid_mod_t *mod, double amount)
 {
     mod->amount = (double) amount;
+}
+
+/**
+ * Set the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @param type Transform type, see #fluid_mod_transforms
+ */
+void
+fluid_mod_set_transform(fluid_mod_t *mod, int type)
+{
+    unsigned char flag = (unsigned char) type;
+    if(flag != FLUID_MOD_TRANSFORM_LINEAR && flag != FLUID_MOD_TRANSFORM_ABS)
+    {
+        FLUID_LOG(FLUID_ERR, "fluid_mod_set_transform() called with invalid transform type %d", type);
+        return;
+    }
+    mod->trans = flag;
 }
 
 /**
@@ -167,6 +186,18 @@ double
 fluid_mod_get_amount(const fluid_mod_t *mod)
 {
     return (double) mod->amount;
+}
+
+/**
+ * Get the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @param type Transform type, see #fluid_mod_transforms
+ */
+int
+fluid_mod_get_transform(fluid_mod_t *mod)
+{
+    return (int) mod->trans;
 }
 
 /*
@@ -382,6 +413,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     extern fluid_mod_t default_vel2filter_mod;
 
     fluid_real_t v1 = 0.0, v2 = 1.0;
+    fluid_real_t final_value;
     /* The wording of the default modulators refers to a range of 127/128.
      * And the table in section 9.5.3 suggests, that this mapping should be applied
      * to all unipolar and bipolar mappings respectively.
@@ -470,8 +502,15 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
         v2 = 1.0f;
     }
 
-    /* it's as simple as that: */
-    return (fluid_real_t) mod->amount * v1 * v2;
+    /* it indeed is as simple as that: */
+    final_value = (fluid_real_t) mod->amount * v1 * v2;
+
+    /* check for absolute value transform */
+    if(mod->trans == FLUID_MOD_TRANSFORM_ABS)
+    {
+        final_value = FLUID_FABS(final_value);
+    }
+    return final_value;
 }
 
 /**
@@ -489,7 +528,8 @@ new_fluid_mod(void)
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-
+    // for the sake of backward compatibility
+    mod->trans = FLUID_MOD_TRANSFORM_LINEAR;
     return mod;
 }
 

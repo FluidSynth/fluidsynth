@@ -1639,7 +1639,7 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
         /* Note: When secondary source input (src2) is set to General Controller 'No Controller',
            output will be forced to +1.0 at synthesis time (see fluid_mod_get_value()).
            That means that this source will behave unipolar only. We need to force the
-           unipolar flag to ensure to ensure a correct evaluation of the minimum
+           unipolar flag to ensure a correct evaluation of the minimum
            value later (see fluid_voice_get_lower_boundary_for_attenuation()).
         */
         if(((mod_dest->flags2 & FLUID_MOD_CC) == FLUID_MOD_GC) && 
@@ -1648,13 +1648,19 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
             mod_dest->flags2 &= ~FLUID_MOD_BIPOLAR;
         }
 
-        /* *** Transform *** */
-        /* SF2.01 only uses the 'linear' transform (0).
-         * Deactivate the modulator by setting the amount to 0 in any other case.
+        /**
+         * *** Transform Type ***
+         * Only 2 types of transform are defined in the sf2 specification.
          */
-        if(mod_src->trans != 0)
+        if(mod_src->trans != FLUID_MOD_TRANSFORM_LINEAR && mod_src->trans != FLUID_MOD_TRANSFORM_ABS)
         {
+            /* disable the modulator as the transform is invalid */
             mod_dest->amount = 0;
+            mod_dest->trans = FLUID_MOD_TRANSFORM_LINEAR;
+        }
+        else
+        {
+            mod_dest->trans = mod_src->trans;
         }
 
         /* Store the new modulator in the zone The order of modulators
