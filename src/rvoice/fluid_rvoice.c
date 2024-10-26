@@ -422,6 +422,14 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         voice->dsp.phase_incr = 1;
     }
 
+    /* loop mode release? if not in release, the voice is silent
+     * note: this intentionally processes the volenv before returning silence,
+     * since that's what polyphone does (PR #1400) */
+    if(voice->dsp.samplemode == FLUID_START_ON_RELEASE && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE)
+    {
+        return -1;
+    }
+
     /* voice is currently looping? */
     is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
                  || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
