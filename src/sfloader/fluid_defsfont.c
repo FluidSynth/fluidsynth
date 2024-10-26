@@ -1652,11 +1652,11 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
          * *** Transform Type ***
          * Only 2 types of transform are defined in the sf2 specification.
          */
-        if(mod_src->trans != FLUID_MOD_LINEAR_TRANSFORM && mod_src->trans != FLUID_MOD_ABS_VALUE)
+        if(mod_src->trans != FLUID_MOD_TRANSFORM_LINEAR && mod_src->trans != FLUID_MOD_TRANSFORM_ABS)
         {
             /* disable the modulator as the transform is invalid */
             mod_dest->amount = 0;
-            mod_dest->trans = FLUID_MOD_LINEAR_TRANSFORM;
+            mod_dest->trans = FLUID_MOD_TRANSFORM_LINEAR;
         }
         else
         {

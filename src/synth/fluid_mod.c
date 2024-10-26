@@ -108,7 +108,7 @@ void
 fluid_mod_set_transform(fluid_mod_t *mod, int type)
 {
     unsigned char flag = (unsigned char) type;
-    if(flag != FLUID_MOD_LINEAR_TRANSFORM && flag != FLUID_MOD_ABS_VALUE)
+    if(flag != FLUID_MOD_TRANSFORM_LINEAR && flag != FLUID_MOD_TRANSFORM_ABS)
     {
         /* invalid transform */
         return;
@@ -506,7 +506,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     final_value = (fluid_real_t) mod->amount * v1 * v2;
 
     /* check for absolute value transform */
-    if(mod->trans == FLUID_MOD_ABS_VALUE)
+    if(mod->trans == FLUID_MOD_TRANSFORM_ABS)
     {
         final_value = FLUID_FABS(final_value);
     }
@@ -529,7 +529,7 @@ new_fluid_mod(void)
         return NULL;
     }
     // for the sake of backward compatibility
-    mod->trans = FLUID_MOD_LINEAR_TRANSFORM;
+    mod->trans = FLUID_MOD_TRANSFORM_LINEAR;
     return mod;
 }
 

@@ -62,8 +62,8 @@ enum fluid_mod_flags
  */
 enum fluid_mod_transforms
 {
-    FLUID_MOD_LINEAR_TRANSFORM = 0, /**< Linear: directly add the computed value to summing node */
-    FLUID_MOD_ABS_VALUE = 2     /**< Abs: add the absolute value of the computed to summing node */
+    FLUID_MOD_TRANSFORM_LINEAR = 0, /**< Linear: directly add the computed value to summing node */
+    FLUID_MOD_TRANSFORM_ABS = 2     /**< Abs: add the absolute value of the computed to summing node */
 };
 
 /**
