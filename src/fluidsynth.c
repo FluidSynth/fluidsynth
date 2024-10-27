@@ -375,7 +375,7 @@ int main(int argc, char **argv)
             else
             {
                 // allocates a new argv array
-                if (NULL == (argv = argv_dup = (char **)FLUID_ARRAY(char *, (1 + argc))))
+                if (NULL == (argv = argv_dup = (char **)malloc(sizeof(char *) * (SIZE_T)(1 + argc))))
                     fprintf(stderr, "Out of memory\n");
                 else
                 {
@@ -392,7 +392,7 @@ int main(int argc, char **argv)
 
                         if (1 > (u8_count = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, argv_wchar[i], -1, NULL, 0, NULL, NULL)))
                             fprintf(stderr, "Failed to convert wide char string to UTF8 string\n");
-                        else if (NULL == (argv[i] = (char *)FLUID_ARRAY(char, u8_count)))
+                        else if (NULL == (argv[i] = (char *)malloc(sizeof(char) * (SIZE_T)u8_count)))
                             fprintf(stderr, "Out of memory\n");
                         else if (u8_count != WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, argv_wchar[i], -1, argv[i], u8_count, NULL, NULL))
                             fprintf(stderr, "Failed to convert wide char string to UTF8 string\n");
@@ -1184,9 +1184,9 @@ cleanup:
         for (i = 0; argc_dup > i; i++)
         {
             if (NULL != argv_dup[i])
-                FLUID_FREE(argv_dup[i]);
+                free(argv_dup[i]);
         }
-        FLUID_FREE(argv_dup);
+        free(argv_dup);
     }
 #endif
 	    
