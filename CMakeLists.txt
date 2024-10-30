@@ -76,6 +76,7 @@ option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" of
 option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
 
 # Options enabled by default
+option ( enable-alsa "compile ALSA support (if it is available)" on )
 option ( enable-aufile "compile support for sound file output" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
@@ -101,10 +102,6 @@ option ( enable-threads "enable multi-threading support (such as parallel voice 
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 
 # Platform specific options
-if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-    option ( enable-alsa "compile ALSA support (if it is available)" on )
-endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-
 if ( CMAKE_SYSTEM MATCHES "Linux" )
     option ( enable-systemd "compile systemd support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
