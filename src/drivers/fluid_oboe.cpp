@@ -46,7 +46,7 @@ class OboeAudioStreamErrorCallback;
  * This structure should not be accessed directly. Use audio port
  * functions instead.
  */
-typedef struct
+struct fluid_oboe_audio_driver_t
 {
     fluid_audio_driver_t driver;
     fluid_synth_t *synth = nullptr;
@@ -62,7 +62,7 @@ typedef struct
     int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
     oboe::SampleRateConversionQuality srate_conversion_quality;
     int error_recovery_mode; // 0: Reconnect, 1: Stop
-} fluid_oboe_audio_driver_t;
+};
 
 
 class OboeAudioStreamCallback : public AudioStreamCallback
