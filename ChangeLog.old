@@ -1,9 +1,7 @@
 This file is no longer used. For detailed Changelog information, please refer to the 
 version control system's commits. For an overview of differences between versions,
 see:
-https://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_2
-https://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_1
-etc.
+https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog
 
 For developer related "What's new"-information, doc/fluidsynth-v11-devdoc contains
 valuable information.
