@@ -1791,7 +1791,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                3)absolute value of amount.
 
                When at least one source mapping is bipolar:
-			     min_val is -|amount| regardless the sign of amount.
+                 min_val is -|amount| regardless the sign of amount.
                When both sources mapping are unipolar:
                  min_val is -|amount|, if amount is negative.
                  min_val is 0, if amount is positive
