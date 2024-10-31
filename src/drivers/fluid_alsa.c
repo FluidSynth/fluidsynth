@@ -42,6 +42,14 @@
 
 #define BUFFER_LENGTH 512
 
+#ifndef ESTRPIPE
+#define ESTRPIPE EPIPE
+#endif
+
+#ifndef EBADFD
+#define EBADFD EBADF
+#endif
+
 /** fluid_alsa_audio_driver_t
  *
  * This structure should not be accessed directly. Use audio port
