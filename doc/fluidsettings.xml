@@ -141,7 +141,7 @@ Developers:
         <setting>
             <name>gain</name>
             <type>num</type>
-            <def>0.6 (since version 2.4.0),<br />0.2 (2.3.x and older)</def>
+            <def>0.2</def>
             <min>0.0</min>
             <max>10.0</max>
             <realtime/>

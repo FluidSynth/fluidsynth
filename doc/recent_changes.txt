@@ -3,7 +3,6 @@
 \page RecentChanges Recent Changes
 \section NewIn2_4_0 What's new in 2.4.0?
 - synth.device-id now has a default value of 16
-- synth.gain now has a default value of 0.6
 - Default values of reverb and chorus settings have been tuned
 - fluid_mod_get_transform() and fluid_mod_set_transform() for SoundFont 2.04 compliant modulators
 
