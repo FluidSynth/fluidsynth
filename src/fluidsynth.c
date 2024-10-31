@@ -1247,6 +1247,8 @@ print_help(fluid_settings_t *settings)
 {
     char *audio_options;
     char *midi_options;
+    double ddef;
+    int idef;
 
     audio_options = fluid_settings_option_concat(settings, "audio.driver", NULL);
     midi_options = fluid_settings_option_concat(settings, "midi.driver", NULL);
@@ -1274,8 +1276,9 @@ print_help(fluid_settings_t *settings)
            "    Load command configuration file (shell commands)\n");
     printf(" -F, --fast-render=[file]\n"
            "    Render MIDI file to raw audio data and store in [file]\n");
+    fluid_settings_getnum_default(settings, "synth.gain", &ddef);
     printf(" -g, --gain\n"
-           "    Set the master gain [0 < gain < 10, default = 0.2]\n");
+           "    Set the master gain [0 < gain < 10, default = def=%0.3g]\n", ddef);
     printf(" -G, --audio-groups\n"
            "    Defines the number of LADSPA audio nodes\n");
     printf(" -h, --help\n"
@@ -1284,10 +1287,14 @@ print_help(fluid_settings_t *settings)
            "    Don't read commands from the shell [default = yes]\n");
     printf(" -j, --connect-jack-outputs\n"
            "    Attempt to connect the jack outputs to the physical ports\n");
+
+    fluid_settings_getint_default(settings, "synth.midi-channels", &idef);
     printf(" -K, --midi-channels=[num]\n"
-           "    The number of midi channels [default = 16]\n");
+           "    The number of midi channels [default = %d]\n", idef);
+
+    fluid_settings_getint_default(settings, "synth.audio-channels", &idef);
     printf(" -L, --audio-channels=[num]\n"
-           "    The number of stereo audio channels [default = 1]\n");
+           "    The number of stereo audio channels [default = %d]\n", idef);
     printf(" -m, --midi-driver=[label]\n"
            "    The name of the midi driver to use.\n"
            "    Valid values: %s\n", midi_options ? midi_options : "ERROR");
