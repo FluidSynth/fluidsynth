@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # remove $CC from the current environment and by that force cmake to look for a (working) C compiler,
 # which hopefully will be the host compiler

@@ -954,7 +954,6 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                     for(i = 0; i < GEN_LAST; i++)
                     {
-
                         /* SF 2.01 section 9.4 'bullet' 4:
                          *
                          * A generator in a local instrument zone supersedes a
@@ -977,7 +976,6 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                              * Do nothing, leave it at the default.
                              */
                         }
-
                     } /* for all generators */
 
                     /* Adds instrument zone modulators (global and local) to the voice.*/
@@ -991,7 +989,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                     for(i = 0; i < GEN_LAST; i++)
                     {
-
+                        fluid_real_t awe_val;
                         /* SF 2.01 section 8.5 page 58: If some generators are
                          encountered at preset level, they should be ignored.
                          However this check is not necessary when the soundfont
@@ -1025,6 +1023,12 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                             /* The generator has not been defined in this preset
                              * Do nothing, leave it unchanged.
                              */
+                        }
+
+                        /* ...unless the default value has been overridden by an AWE32 NRPN */
+                        if (fluid_channel_get_override_gen_default(synth->channel[chan], i, &awe_val))
+                        {
+                            fluid_voice_gen_set(voice, i, awe_val);
                         }
                     } /* for all generators */
 
@@ -1625,13 +1629,19 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
             mod_dest->amount = 0;
         }
 
-        /* *** Transform *** */
-        /* SF2.01 only uses the 'linear' transform (0).
-         * Deactivate the modulator by setting the amount to 0 in any other case.
+        /**
+         * *** Transform Type ***
+         * Only 2 types of transform are defined in the sf2 specification.
          */
-        if(mod_src->trans != 0)
+        if(mod_src->trans != FLUID_MOD_TRANSFORM_LINEAR && mod_src->trans != FLUID_MOD_TRANSFORM_ABS)
         {
+            /* disable the modulator as the transform is invalid */
             mod_dest->amount = 0;
+            mod_dest->trans = FLUID_MOD_TRANSFORM_LINEAR;
+        }
+        else
+        {
+            mod_dest->trans = mod_src->trans;
         }
 
         /* Store the new modulator in the zone The order of modulators

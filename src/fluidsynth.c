@@ -508,7 +508,7 @@ int main(int argc, char **argv)
             {
                 optarg = argv[i];
 
-                if(optarg[0] == '-')
+                if((optarg[0] == '-') && ((optarg[1] != '\0') || (c != 'F')))
                 {
                     printf("Expected argument to option -%c found switch instead\n", c);
                     print_usage();
@@ -1022,7 +1022,18 @@ int main(int argc, char **argv)
     /* create the player and add any midi files, if requested */
     for(i = arg1; i < argc; i++)
     {
-        if((argv[i][0] != '-') && fluid_is_midifile(argv[i]))
+        const char *u8_path = argv[i];
+#if defined(_WIN32)
+        /* try to convert ANSI encoding path to UTF8 encoding path */
+        char *u8_buf = win32_ansi_to_utf8(argv[i]);
+        if (u8_buf == NULL)
+        {
+            // error msg. already printed
+            goto cleanup;
+        }
+        u8_path = u8_buf;
+#endif
+        if((u8_path[0] != '-') && fluid_is_midifile(u8_path))
         {
             if(player == NULL)
             {
@@ -1041,8 +1052,11 @@ int main(int argc, char **argv)
                 }
             }
 
-            fluid_player_add(player, argv[i]);
+            fluid_player_add(player, u8_path);
         }
+#if defined(_WIN32)
+        free(u8_buf);
+#endif
     }
 
     /* try to load and execute the user or system configuration file */
@@ -1197,14 +1211,14 @@ cleanup:
  * print_usage
  */
 void
-print_usage()
+print_usage(void)
 {
     fprintf(stderr, "Usage: fluidsynth [options] [soundfonts]\n");
     fprintf(stderr, "Try -h for help.\n");
 }
 
 void
-print_welcome()
+print_welcome(void)
 {
     printf("FluidSynth runtime version %s\n"
            "Copyright (C) 2000-2024 Peter Hanappe and others.\n"
@@ -1213,7 +1227,7 @@ print_welcome()
            fluid_version_str());
 }
 
-void print_configure()
+void print_configure(void)
 {
     puts("FluidSynth executable version " FLUIDSYNTH_VERSION);
     puts("Sample type="
@@ -1233,6 +1247,8 @@ print_help(fluid_settings_t *settings)
 {
     char *audio_options;
     char *midi_options;
+    double ddef;
+    int idef;
 
     audio_options = fluid_settings_option_concat(settings, "audio.driver", NULL);
     midi_options = fluid_settings_option_concat(settings, "midi.driver", NULL);
@@ -1260,8 +1276,9 @@ print_help(fluid_settings_t *settings)
            "    Load command configuration file (shell commands)\n");
     printf(" -F, --fast-render=[file]\n"
            "    Render MIDI file to raw audio data and store in [file]\n");
+    fluid_settings_getnum_default(settings, "synth.gain", &ddef);
     printf(" -g, --gain\n"
-           "    Set the master gain [0 < gain < 10, default = 0.2]\n");
+           "    Set the master gain [0 < gain < 10, default = def=%0.3g]\n", ddef);
     printf(" -G, --audio-groups\n"
            "    Defines the number of LADSPA audio nodes\n");
     printf(" -h, --help\n"
@@ -1270,10 +1287,14 @@ print_help(fluid_settings_t *settings)
            "    Don't read commands from the shell [default = yes]\n");
     printf(" -j, --connect-jack-outputs\n"
            "    Attempt to connect the jack outputs to the physical ports\n");
+
+    fluid_settings_getint_default(settings, "synth.midi-channels", &idef);
     printf(" -K, --midi-channels=[num]\n"
-           "    The number of midi channels [default = 16]\n");
+           "    The number of midi channels [default = %d]\n", idef);
+
+    fluid_settings_getint_default(settings, "synth.audio-channels", &idef);
     printf(" -L, --audio-channels=[num]\n"
-           "    The number of stereo audio channels [default = 1]\n");
+           "    The number of stereo audio channels [default = %d]\n", idef);
     printf(" -m, --midi-driver=[label]\n"
            "    The name of the midi driver to use.\n"
            "    Valid values: %s\n", midi_options ? midi_options : "ERROR");

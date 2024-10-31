@@ -39,6 +39,7 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
     mod->src2 = src->src2;
     mod->flags2 = src->flags2;
     mod->amount = src->amount;
+    mod->trans = src->trans;
 }
 
 /**
@@ -95,6 +96,24 @@ void
 fluid_mod_set_amount(fluid_mod_t *mod, double amount)
 {
     mod->amount = (double) amount;
+}
+
+/**
+ * Set the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @param type Transform type, see #fluid_mod_transforms
+ */
+void
+fluid_mod_set_transform(fluid_mod_t *mod, int type)
+{
+    unsigned char flag = (unsigned char) type;
+    if(flag != FLUID_MOD_TRANSFORM_LINEAR && flag != FLUID_MOD_TRANSFORM_ABS)
+    {
+        FLUID_LOG(FLUID_ERR, "fluid_mod_set_transform() called with invalid transform type %d", type);
+        return;
+    }
+    mod->trans = flag;
 }
 
 /**
@@ -169,6 +188,18 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
     return (double) mod->amount;
 }
 
+/**
+ * Get the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @param type Transform type, see #fluid_mod_transforms
+ */
+int
+fluid_mod_get_transform(fluid_mod_t *mod)
+{
+    return (int) mod->trans;
+}
+
 /*
  * retrieves the initial value from the given source of the modulator
  */
@@ -240,7 +271,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 /**
  * transforms the initial value retrieved by \c fluid_mod_get_source_value into [0.0;1.0]
  */
-static fluid_real_t
+fluid_real_t
 fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range)
 {
     /* normalized value, i.e. usually in the range [0;1] */
@@ -376,6 +407,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     extern fluid_mod_t default_vel2filter_mod;
 
     fluid_real_t v1, v2;
+    fluid_real_t final_value;
     /* The wording of the default modulators refers to a range of 127/128.
      * And the table in section 9.5.3 suggests, that this mapping should be applied
      * to all unipolar and bipolar mappings respectively.
@@ -440,8 +472,15 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     /* transform the second input value */
     v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
 
-    /* it's as simple as that: */
-    return (fluid_real_t) mod->amount * v1 * v2;
+    /* it indeed is as simple as that: */
+    final_value = (fluid_real_t) mod->amount * v1 * v2;
+
+    /* check for absolute value transform */
+    if(mod->trans == FLUID_MOD_TRANSFORM_ABS)
+    {
+        final_value = FLUID_FABS(final_value);
+    }
+    return final_value;
 }
 
 /**
@@ -450,7 +489,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
  * @return New allocated modulator or NULL if out of memory
  */
 fluid_mod_t *
-new_fluid_mod()
+new_fluid_mod(void)
 {
     fluid_mod_t *mod = FLUID_NEW(fluid_mod_t);
 
@@ -459,7 +498,8 @@ new_fluid_mod()
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-
+    // for the sake of backward compatibility
+    mod->trans = FLUID_MOD_TRANSFORM_LINEAR;
     return mod;
 }
 
@@ -481,7 +521,7 @@ delete_fluid_mod(fluid_mod_t *mod)
  *
  * Useful in low latency scenarios e.g. to allocate a modulator on the stack.
  */
-size_t fluid_mod_sizeof()
+size_t fluid_mod_sizeof(void)
 {
     return sizeof(fluid_mod_t);
 }
