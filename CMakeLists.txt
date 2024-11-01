@@ -182,7 +182,7 @@ if ( NOT HAVE_LONG_LONG AND NOT MSVC)
     message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
 endif ()
 
-include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables() 
+include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables()
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -441,9 +441,9 @@ if ( enable-profiling )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
       set ( OPT_FLAGS "" )
     endif ( )
-    
+
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
-    
+
     find_program( CLANG_TIDY
                 NAMES "clang-tidy"
                 DOC "Path to clang-tidy executable" )
@@ -746,7 +746,7 @@ set(TEST_SOUNDFONT "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
 set(TEST_SOUNDFONT_UTF8_1 "${FluidSynth_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
 set(TEST_SOUNDFONT_UTF8_2 "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2")
 set(TEST_SOUNDFONT_SF3 "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
-set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/èmpty.mid")
+set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid")
 
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
