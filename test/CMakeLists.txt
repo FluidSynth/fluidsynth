@@ -31,6 +31,10 @@ ADD_FLUID_TEST(test_seq_event_queue_remove)
 ADD_FLUID_TEST(test_jack_obtaining_synth)
 ADD_FLUID_TEST(test_utf8_open)
 
+if( LIBSNDFILE_SUPPORT )
+    ADD_FLUID_TEST(test_fast_render)
+endif()
+
 ADD_FLUID_TEST_UTIL(dump_sfont)
 
 ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf2)
