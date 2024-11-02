@@ -35,8 +35,8 @@ int main(void)
 
     renderer = new_fluid_file_renderer(synth);
     TEST_ASSERT(renderer != NULL);
-
-    fluid_player_play(player);
+    
+    TEST_SUCCESS(fluid_player_play(player));
 
     while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
     {
@@ -50,6 +50,13 @@ int main(void)
     delete_fluid_player(player);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
-
+    
+#if 0    
+    FILE *file;
+    file = FLUID_FOPEN(TEST_WAV_UTF8, "rb");
+    TEST_ASSERT(file != NULL);
+    TEST_ASSERT(FLUID_FCLOSE(file) == 0);
+#endif
+    
     return EXIT_SUCCESS;
 }
