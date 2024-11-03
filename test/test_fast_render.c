@@ -51,12 +51,10 @@ int main(void)
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
     
-#if 0    
     FILE *file;
     file = FLUID_FOPEN(TEST_WAV_UTF8, "rb");
     TEST_ASSERT(file != NULL);
     TEST_ASSERT(FLUID_FCLOSE(file) == 0);
-#endif
     
     return EXIT_SUCCESS;
 }
