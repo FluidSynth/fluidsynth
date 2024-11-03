@@ -218,6 +218,7 @@
 #cmakedefine TEST_SOUNDFONT_UTF8_1 "@TEST_SOUNDFONT_UTF8_1@"
 #cmakedefine TEST_SOUNDFONT_UTF8_2 "@TEST_SOUNDFONT_UTF8_2@"
 #cmakedefine TEST_MIDI_UTF8 "@TEST_MIDI_UTF8@"
+#cmakedefine TEST_WAV_UTF8 "@TEST_WAV_UTF8@"
 
 /* SF3 Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT_SF3 "@TEST_SOUNDFONT_SF3@"
@@ -234,8 +235,8 @@
 /* Define to use the readline library for line editing */
 #cmakedefine READLINE_SUPPORT @READLINE_SUPPORT@
 
-/* Define if the compiler supports VLA */ 
-#cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@ 
+/* Define if the compiler supports VLA */
+#cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
