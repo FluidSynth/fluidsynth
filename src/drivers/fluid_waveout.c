@@ -427,8 +427,11 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
             if(res == MMSYSERR_NOERROR)
             {
 #ifdef _UNICODE
-
+#ifdef __CYGWIN__
+                if(wcscasecmp(lpwDevName, caps.szPname) == 0)
+#else
                 if(wcsicmp(lpwDevName, caps.szPname) == 0)
+#endif
 #else
                 if(FLUID_STRCASECMP(dev_name, caps.szPname) == 0)
 #endif
