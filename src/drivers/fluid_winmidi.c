@@ -481,8 +481,9 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
 static void fluid_winmidi_autoconnect_build_name(char *name)
 {
     char new_name[MAXPNAMELEN] = { 0 };
-    int i, j, n = 0;
-    int num = midiInGetNumDevs();
+    int j;
+    unsigned int i, n = 0;
+    unsigned int num = midiInGetNumDevs();
 
     for (i = 0; i < num; ++i)
     {
