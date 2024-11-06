@@ -156,6 +156,12 @@ typedef gintptr  intptr_t;
 #pragma warning(disable : 4996)
 #endif
 
+/*
+ * Required by Windows-specific sf_wchar_open() from
+ * libsndfile that takes a UTF16_BE encoded filename.
+ */
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+
 #endif
 
 /* Darwin special defines (taken from config_macosx.h) */
