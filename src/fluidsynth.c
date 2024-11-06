@@ -46,9 +46,6 @@ void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 void print_configure(void);
 void fluid_wasapi_device_enumerate(void);
-#ifdef _WIN32
-static char* win32_ansi_to_utf8(const char* ansi_null_terminated_string);
-#endif
 
 /*
  * the globals
@@ -126,20 +123,11 @@ int process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         
     case FLUID_STR_TYPE: {
         char *u8_val = val;
-#if defined(_WIN32)
-        u8_val = win32_ansi_to_utf8(val);
-#endif
         if(fluid_settings_setstr(settings, optarg, u8_val) != FLUID_OK)
         {
             fprintf(stderr, "Failed to set string parameter '%s'\n", optarg);
-#if defined(_WIN32)
-            free(u8_val);
-#endif
             return FLUID_FAILED;
         }
-#if defined(_WIN32)
-        free(u8_val);
-#endif
         break;
     }
     default:
@@ -166,45 +154,6 @@ print_pretty_int(int i)
         printf("%d", i);
     }
 }
-
-#ifdef _WIN32
-/* Function using win32 api to convert ANSI encoding string to UTF8 encoding string */
-static char*
-win32_ansi_to_utf8(const char* ansi_null_terminated_string)
-{
-    LPWSTR u16_buf = NULL;
-    char *u8_buf = NULL;
-    fluid_return_val_if_fail(ansi_null_terminated_string != NULL, NULL);
-    do
-    {
-        int u16_count, u8_byte_count;
-        u16_count = MultiByteToWideChar(CP_ACP, 0, ansi_null_terminated_string, -1, NULL, 0);
-        if (u16_count == 0)
-        {
-            fprintf(stderr, "Failed to convert ANSI string to wide char string\n");
-            break;
-        }
-        u16_buf = malloc(u16_count * sizeof(WCHAR));
-        if (u16_buf == NULL)
-        {
-            fprintf(stderr, "Out of memory\n");
-            break;
-        }
-        u16_count = MultiByteToWideChar(CP_ACP, 0, ansi_null_terminated_string, -1, u16_buf, u16_count);
-        u8_byte_count = WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, NULL, 0, NULL, NULL);
-
-        u8_buf = malloc(u8_byte_count);
-        if (u8_buf == NULL)
-        {
-            fprintf(stderr, "Out of memory\n");
-            break;
-        }
-        WideCharToMultiByte(CP_UTF8, 0, u16_buf, u16_count, u8_buf, u8_byte_count, NULL, NULL);
-    } while (0);
-    free(u16_buf);
-    return u8_buf;
-}
-#endif
 
 typedef struct
 {
@@ -376,9 +325,13 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     15)create the audio driver (i.e synthesis thread) and a synchronous user
        shell if interactive.
  */
+#if defined(_WIN32)
+int wmain(int argc, wchar_t **wargv)
+#else
 int main(int argc, char **argv)
+#endif
 {
-    fluid_settings_t *settings;
+    fluid_settings_t *settings = NULL;
     int result = -1;
     int arg1 = 1;
     char buf[512];
@@ -403,11 +356,40 @@ int main(int argc, char **argv)
     int fast_render = 0;
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 
-#ifdef _WIN32
+#if defined(_WIN32)
+    char **argv = NULL;
     // console output will be utf-8
     SetConsoleOutputCP(CP_UTF8);
     // console input, too
     SetConsoleCP(CP_UTF8);
+    // conversion of wchar_t (UTF-16) arguments to char (UTF-8)
+    if ((argv = (char **) calloc( argc, sizeof(char *) )) == NULL)
+    {
+        fprintf(stderr, "Out of memory\n");
+        goto cleanup;
+    }
+    else
+    {
+        for (i = 0; i < argc; ++i)
+        {
+            int u8_count = 0;
+            if (1 > (u8_count = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wargv[i], -1, NULL, 0, NULL, NULL)))
+            {
+                fprintf(stderr, "Failed to convert wide char string to UTF8\n");
+                goto cleanup;
+            }
+            else if ((argv[i] = (char *) calloc(u8_count, sizeof(char))) == NULL)
+            {
+                fprintf(stderr, "Out of memory\n");
+                goto cleanup;
+            }
+            else if (u8_count != WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wargv[i], -1, argv[i], u8_count, NULL, NULL))
+            {
+                fprintf(stderr, "Failed to convert wide char string to UTF8\n");
+                goto cleanup;
+            }
+        }
+    }
 #endif
 
 #if SDL2_SUPPORT
@@ -939,16 +921,6 @@ int main(int argc, char **argv)
     for(i = arg1; i < argc; i++)
     {
         const char *u8_path = argv[i];
-#if defined(_WIN32)
-        /* try to convert ANSI encoding path to UTF8 encoding path */
-        char *u8_buf = win32_ansi_to_utf8(argv[i]);
-        if (u8_buf == NULL)
-        {
-            // error msg. already printed
-            goto cleanup;
-        }
-        u8_path = u8_buf;
-#endif
         if(fluid_is_midifile(u8_path))
         {
             continue;
@@ -965,9 +937,6 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
-#if defined(_WIN32)
-        free(u8_buf);
-#endif
     }
 
     /* Try to load the default soundfont, if no soundfont specified */
@@ -1023,16 +992,6 @@ int main(int argc, char **argv)
     for(i = arg1; i < argc; i++)
     {
         const char *u8_path = argv[i];
-#if defined(_WIN32)
-        /* try to convert ANSI encoding path to UTF8 encoding path */
-        char *u8_buf = win32_ansi_to_utf8(argv[i]);
-        if (u8_buf == NULL)
-        {
-            // error msg. already printed
-            goto cleanup;
-        }
-        u8_path = u8_buf;
-#endif
         if((u8_path[0] != '-') && fluid_is_midifile(u8_path))
         {
             if(player == NULL)
@@ -1054,9 +1013,6 @@ int main(int argc, char **argv)
 
             fluid_player_add(player, u8_path);
         }
-#if defined(_WIN32)
-        free(u8_buf);
-#endif
     }
 
     /* try to load and execute the user or system configuration file */
@@ -1203,6 +1159,17 @@ cleanup:
     delete_fluid_midi_router(router);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
+
+#ifdef _WIN32
+    if (argv != NULL)
+    {
+        for (i = 0; i < argc; ++i)
+        {
+            free(argv[i]);
+        }
+        free(argv);
+    }
+#endif
 
     return result;
 }
