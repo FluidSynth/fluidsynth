@@ -51,7 +51,7 @@ if(NOT DEFINED GENERAL_USER_GS2)
         COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --red "In order to run the manual test suite, you need to set variable GENERAL_USER_GS2 to the path of the soundfont.")
 else()
 
-    set(IIR_FILTER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter/")
+    set(IIR_FILTER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -66,7 +66,7 @@ else()
         COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR})
 
     add_custom_target(render1415
-        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter/1415_the-nervous-filter.${FEXT} "The Nervous Filter trimmed.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1415_the-nervous-filter.${FEXT} "The Nervous Filter trimmed.mid" ${GENERAL_USER_GS2}
         COMMENT "Rendering testfile of issue 1415"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1415_the-nervous-filter/
@@ -74,7 +74,7 @@ else()
     )
 
     add_custom_target(render1417
-        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter/1417_filter-envelope-noise.${FEXT} filter-envelope-noise.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1417_filter-envelope-noise.${FEXT} filter-envelope-noise.mid ${GENERAL_USER_GS2}
         COMMENT "Rendering testfile of issue 1417"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1417_filter-envelope-noise/
