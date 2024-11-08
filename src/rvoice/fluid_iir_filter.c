@@ -140,6 +140,8 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres)
 
     iir_filter->fres = fres;
     iir_filter->last_fres = -1.;
+    
+    FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_fres: fres= %f [Hz]",fres);
 }
 
 static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
@@ -178,6 +180,8 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     fluid_iir_filter_t *iir_filter = obj;
     fluid_real_t q = param[0].real;
     int flags = iir_filter->flags;
+    
+    FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_q: Q= %f [dB]",q);
 
     if(flags & FLUID_IIR_Q_ZERO_OFF && q <= 0.0)
     {
@@ -196,6 +200,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
         q = fluid_iir_filter_q_from_dB(q);
     }
 
+    FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_q: Q= %f [linear]",q);
     iir_filter->q_lin = q;
     iir_filter->filter_gain = 1.0;
 
@@ -324,7 +329,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres = 5.f;
     }
 
-    // FLUID_LOG(FLUID_INFO, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
+    FLUID_LOG(FLUID_DBG, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
     /* if filter enabled and there is a significant frequency change.. */
     if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres - iir_filter->last_fres) > 0.01f)
     {
