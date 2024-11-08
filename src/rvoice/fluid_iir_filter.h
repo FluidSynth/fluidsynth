@@ -58,7 +58,7 @@ struct _fluid_iir_filter_t
 					   Else it changes smoothly. */
 
     fluid_real_t fres;              /* the resonance frequency, in cents (not absolute cents) */
-    fluid_real_t last_fres;         /* Current resonance frequency of the IIR filter */
+    fluid_real_t last_fres;         /* Current resonance frequency of the IIR filter in Hz */
     /* Serves as a flag: A deviation between fres and last_fres */
     /* indicates, that the filter has to be recalculated. */
     fluid_real_t q_lin;             /* the q-factor on a linear scale */
