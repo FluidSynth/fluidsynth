@@ -81,8 +81,17 @@ else()
         VERBATIM
     )
 
+    add_custom_target(render1424
+        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1424_clicks-on-ModEnv-FilterFc-change.${FEXT} 1424.mid echo_drops.sf2
+        COMMENT "Rendering testfile of issue 1424"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1424_clicks-on-ModEnv-FilterFc-change/
+        VERBATIM
+    )
+
     # Add a dependency so that rendering targets depends on check_manual
     add_dependencies(check_manual render1415)
     add_dependencies(check_manual render1417)
+    add_dependencies(check_manual render1424)
 
 endif()
