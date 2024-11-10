@@ -30,7 +30,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q);
 
 void fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
-                            fluid_real_t *dsp_buf, int dsp_buf_count);
+                            fluid_real_t *dsp_buf, int dsp_buf_count, fluid_real_t output_rate);
 
 void fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter);
 
@@ -54,13 +54,14 @@ struct _fluid_iir_filter_t
     fluid_real_t a2;              /* a1 / a0 */
 
     fluid_real_t hist1, hist2;      /* Sample history for the IIR filter */
-    int filter_startup;             /* Flag: If set, the filter will be set directly.
-					   Else it changes smoothly. */
+    int filter_startup;             /* Flag: If set, the filter will be set directly. Else it changes smoothly. */
 
-    fluid_real_t fres;              /* the resonance frequency, in absolute cents */
-    fluid_real_t last_fres;         /* Current resonance frequency of the IIR filter in Hz */
-    /* Serves as a flag: A deviation between fres and last_fres */
-    /* indicates, that the filter has to be recalculated. */
+    fluid_real_t fres;              /* The desired resonance frequency, in absolute cents, this filter is currently set to */
+    fluid_real_t last_fres;         /* The filter's currently (smoothed out) resonance frequency in Hz, which will converge towards its target fres once fres_incr_count has become zero */
+    fluid_real_t target_fres;       /* The filter's target fres, that last_fres should converge towards - for debugging only */
+    fluid_real_t fres_incr;         /* The linear increment of fres on each sample */
+    int fres_incr_count;            /* The number of samples left for the smoothed last_fres adjustment to complete */
+    
     fluid_real_t q_lin;             /* the q-factor on a linear scale */
     fluid_real_t filter_gain;       /* Gain correction factor, depends on q */
 };

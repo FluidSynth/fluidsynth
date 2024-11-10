@@ -22,6 +22,11 @@
 #include "fluid_sys.h"
 #include "fluid_conv.h"
 
+
+static FLUID_INLINE void
+fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter, fluid_real_t output_rate);
+
+
 /**
  * Applies a low- or high-pass filter with variable cutoff frequency and quality factor
  * for a given biquad transfer function:
@@ -48,7 +53,7 @@
  */
 void
 fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
-                       fluid_real_t *dsp_buf, int count)
+                       fluid_real_t *dsp_buf, int count, fluid_real_t output_rate)
 {
     if(iir_filter->type == FLUID_IIR_DISABLED || iir_filter->q_lin == 0)
     {
@@ -65,6 +70,9 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         fluid_real_t dsp_a2 = iir_filter->a2;
         fluid_real_t dsp_b02 = iir_filter->b02;
         fluid_real_t dsp_b1 = iir_filter->b1;
+        
+        fluid_real_t fres_incr = iir_filter->fres_incr;
+        int fres_incr_count = iir_filter->fres_incr_count;
 
         fluid_real_t dsp_centernode;
         int dsp_i;
@@ -94,6 +102,22 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
             // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
             // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
             // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
+            
+            if(fres_incr_count > 0)
+            {
+                --fres_incr_count;
+                iir_filter->last_fres += fres_incr;
+                
+                FLUID_LOG(FLUID_DBG, "last_fres: %f   |  target_fres: %f", iir_filter->last_fres, iir_filter->target_fres);
+                
+                fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
+                
+                // re-read coeffs
+                dsp_a1 = iir_filter->a1;
+                dsp_a2 = iir_filter->a2;
+                dsp_b02 = iir_filter->b02;
+                dsp_b1 = iir_filter->b1;
+            }
         }
 
         iir_filter->hist1 = dsp_hist1;
@@ -102,11 +126,12 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         iir_filter->a2 = dsp_a2;
         iir_filter->b02 = dsp_b02;
         iir_filter->b1 = dsp_b1;
+        
+        iir_filter->fres_incr_count = fres_incr_count;
 
         fluid_check_fpe("voice_filter");
     }
 }
-
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init)
 {
@@ -139,7 +164,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres)
     fluid_real_t fres = param[0].real;
 
     iir_filter->fres = fres;
-    iir_filter->last_fres = -1.;
     
     FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_fres: fres= %f [acents]",fres);
 }
@@ -219,14 +243,10 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
          */
         iir_filter->filter_gain /= FLUID_SQRT(q);
     }
-
-    /* The synthesis loop will have to recalculate the filter coefficients. */
-    iir_filter->last_fres = -1.;
 }
 
 static FLUID_INLINE void
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
-                                        int transition_samples,
                                         fluid_real_t output_rate)
 {
     /* FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0 */
@@ -294,7 +314,6 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
         iir_filter->a2 = a2_temp;
         iir_filter->b02 = b02_temp;
         iir_filter->b1 = b1_temp;
-        iir_filter->filter_startup = 0;
 
         fluid_check_fpe("voice_write filter calculation");
     }
@@ -305,7 +324,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                            fluid_real_t output_rate,
                            fluid_real_t fres_mod)
 {
-    fluid_real_t fres;
+    fluid_real_t fres, fres_diff;
 
     /* calculate the frequency of the resonant filter in Hz */
     fres = fluid_ct2hz(iir_filter->fres + fres_mod);
@@ -330,8 +349,10 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     }
 
     FLUID_LOG(FLUID_DBG, "%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
+    
     /* if filter enabled and there is a significant frequency change.. */
-    if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres - iir_filter->last_fres) > 0.01f)
+    fres_diff = fres - iir_filter->last_fres;
+    if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres_diff) > 0.01f)
     {
         /* The filter coefficients have to be recalculated (filter
          * parameters have changed). Recalculation for various reasons is
@@ -339,13 +360,23 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
          * indicates, that the DSP loop runs for the first time, in this
          * case, the filter is set directly, instead of smoothly fading
          * between old and new settings. */
-        iir_filter->last_fres = fres;
-        fluid_iir_filter_calculate_coefficients(iir_filter, FLUID_BUFSIZE,
-                                                output_rate);
+        if(iir_filter->filter_startup)
+        {
+            iir_filter->fres_incr_count = 0;
+            iir_filter->last_fres = fres;
+            iir_filter->filter_startup = 0;
+        }
+        else
+        {
+            static const int fres_incr_count = FLUID_BUFSIZE;
+            iir_filter->fres_incr = fres_diff / (fres_incr_count);
+            iir_filter->fres_incr_count = fres_incr_count;
+        }
+        iir_filter->target_fres = fres;
+        fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
     }
 
 
     fluid_check_fpe("voice_write DSP coefficients");
 
 }
-
