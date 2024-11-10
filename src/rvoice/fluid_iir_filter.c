@@ -55,7 +55,7 @@ void
 fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                        fluid_real_t *dsp_buf, int count, fluid_real_t output_rate)
 {
-    if(iir_filter->type == FLUID_IIR_DISABLED || iir_filter->q_lin == 0)
+    if(iir_filter->type == FLUID_IIR_DISABLED || FLUID_FABS(iir_filter->last_q) <= 0.001)
     {
         return;
     }
@@ -71,8 +71,8 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         fluid_real_t dsp_b02 = iir_filter->b02;
         fluid_real_t dsp_b1 = iir_filter->b1;
         
-        fluid_real_t fres_incr = iir_filter->fres_incr;
         int fres_incr_count = iir_filter->fres_incr_count;
+        int q_incr_count = iir_filter->q_incr_count;
 
         fluid_real_t dsp_centernode;
         int dsp_i;
@@ -103,12 +103,20 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
             // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
             // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
             
-            if(fres_incr_count > 0)
+            if(fres_incr_count > 0 || q_incr_count > 0)
             {
-                --fres_incr_count;
-                iir_filter->last_fres += fres_incr;
+                if(fres_incr_count > 0)
+                {
+                    --fres_incr_count;
+                    iir_filter->last_fres += iir_filter->fres_incr;
+                }
+                if(q_incr_count > 0)
+                {
+                    --q_incr_count;
+                    iir_filter->last_q += iir_filter->q_incr;
+                }
                 
-                FLUID_LOG(FLUID_DBG, "last_fres: %f   |  target_fres: %f", iir_filter->last_fres, iir_filter->target_fres);
+                FLUID_LOG(FLUID_DBG, "last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
                 
                 fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
                 
@@ -128,6 +136,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         iir_filter->b1 = dsp_b1;
         
         iir_filter->fres_incr_count = fres_incr_count;
+        iir_filter->q_incr_count = q_incr_count;
 
         fluid_check_fpe("voice_filter");
     }
@@ -154,7 +163,7 @@ fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter)
     iir_filter->hist1 = 0;
     iir_filter->hist2 = 0;
     iir_filter->last_fres = -1.;
-    iir_filter->q_lin = 0;
+    iir_filter->last_q = 0;
     iir_filter->filter_startup = 1;
 }
 
@@ -225,37 +234,35 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     }
 
     FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_q: Q= %f [linear]",q);
-    iir_filter->q_lin = q;
-    iir_filter->filter_gain = 1.0;
-
-    if(!(flags & FLUID_IIR_NO_GAIN_AMP))
+    
+    if(iir_filter->filter_startup)
     {
-        /* SF 2.01 page 59:
-         *
-         *  The SoundFont specs ask for a gain reduction equal to half the
-         *  height of the resonance peak (Q).  For example, for a 10 dB
-         *  resonance peak, the gain is reduced by 5 dB.  This is done by
-         *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
-         *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
-         *  The gain is later factored into the 'b' coefficients
-         *  (numerator of the filter equation).  This gain factor depends
-         *  only on Q, so this is the right place to calculate it.
-         */
-        iir_filter->filter_gain /= FLUID_SQRT(q);
+        iir_filter->last_q = q;
     }
+    else
+    {
+        static const int q_incr_count = FLUID_BUFSIZE;
+        iir_filter->q_incr = (q - iir_filter->last_q) / (q_incr_count);
+        iir_filter->q_incr_count = q_incr_count;
+    }
+    iir_filter->target_q = q;
 }
 
 static FLUID_INLINE void
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
                                         fluid_real_t output_rate)
 {
-    /* FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0 */
-    if(iir_filter->q_lin == 0)
+    // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
+    // Due to the linear smoothing, last_q may not exactly become zero.
+    if(FLUID_FABS(iir_filter->last_q) <= 0.001)
     {
         return;
     }
     else
     {
+        int flags = iir_filter->flags;
+        fluid_real_t filter_gain = 1.0f;
+
         /*
          * Those equations from Robert Bristow-Johnson's `Cookbook
          * formulae for audio EQ biquad filter coefficients', obtained
@@ -269,7 +276,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
                                             (iir_filter->last_fres / output_rate);
         fluid_real_t sin_coeff = FLUID_SIN(omega);
         fluid_real_t cos_coeff = FLUID_COS(omega);
-        fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
+        fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->last_q);
         fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
 
         /* Calculate the filter coefficients. All coefficients are
@@ -277,20 +284,35 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
          *
          * Here a couple of multiplications are saved by reusing common expressions.
          * The original equations should be:
-         *  iir_filter->b0=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain;
-         *  iir_filter->b1=(1.-cos_coeff)*a0_inv*iir_filter->filter_gain;
-         *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain; */
+         *  iir_filter->b0=(1.-cos_coeff)*a0_inv*0.5*filter_gain;
+         *  iir_filter->b1=(1.-cos_coeff)*a0_inv*filter_gain;
+         *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*filter_gain; */
 
         /* "a" coeffs are same for all 3 available filter types */
         fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
         fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-
         fluid_real_t b02_temp, b1_temp;
+
+        if(!(flags & FLUID_IIR_NO_GAIN_AMP))
+        {
+            /* SF 2.01 page 59:
+            *
+            *  The SoundFont specs ask for a gain reduction equal to half the
+            *  height of the resonance peak (Q).  For example, for a 10 dB
+            *  resonance peak, the gain is reduced by 5 dB.  This is done by
+            *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
+            *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
+            *  The gain is later factored into the 'b' coefficients
+            *  (numerator of the filter equation).  This gain factor depends
+            *  only on Q, so this is the right place to calculate it.
+            */
+            filter_gain /= FLUID_SQRT(iir_filter->last_q);
+        }
 
         switch(iir_filter->type)
         {
         case FLUID_IIR_HIGHPASS:
-            b1_temp = (1.0f + cos_coeff) * a0_inv * iir_filter->filter_gain;
+            b1_temp = (1.0f + cos_coeff) * a0_inv * filter_gain;
 
             /* both b0 -and- b2 */
             b02_temp = b1_temp * 0.5f;
@@ -299,7 +321,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
             break;
 
         case FLUID_IIR_LOWPASS:
-            b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
+            b1_temp = (1.0f - cos_coeff) * a0_inv * filter_gain;
 
             /* both b0 -and- b2 */
             b02_temp = b1_temp * 0.5f;
@@ -324,7 +346,13 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                            fluid_real_t output_rate,
                            fluid_real_t fres_mod)
 {
+    unsigned int calc_coeff_flag = FALSE;
     fluid_real_t fres, fres_diff;
+    
+    if(iir_filter->type == FLUID_IIR_DISABLED)
+    {
+        return;
+    }
 
     /* calculate the frequency of the resonant filter in Hz */
     fres = fluid_ct2hz(iir_filter->fres + fres_mod);
@@ -348,34 +376,39 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres = 5.f;
     }
 
-    FLUID_LOG(FLUID_DBG, "%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
+    FLUID_LOG(FLUID_DBG, "%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->last_q);
     
     /* if filter enabled and there is a significant frequency change.. */
     fres_diff = fres - iir_filter->last_fres;
-    if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres_diff) > 0.01f)
+    if(iir_filter->filter_startup)
     {
-        /* The filter coefficients have to be recalculated (filter
-         * parameters have changed). Recalculation for various reasons is
-         * forced by setting last_fres to -1.  The flag filter_startup
-         * indicates, that the DSP loop runs for the first time, in this
-         * case, the filter is set directly, instead of smoothly fading
-         * between old and new settings. */
-        if(iir_filter->filter_startup)
-        {
-            iir_filter->fres_incr_count = 0;
-            iir_filter->last_fres = fres;
-            iir_filter->filter_startup = 0;
-        }
-        else
-        {
-            static const int fres_incr_count = FLUID_BUFSIZE;
-            iir_filter->fres_incr = fres_diff / (fres_incr_count);
-            iir_filter->fres_incr_count = fres_incr_count;
-        }
+        // The filer was just starting up, make sure to calculate initial coefficients for the initial Q value, even though the fres may not have changed
+        calc_coeff_flag = TRUE;
+        
+        iir_filter->fres_incr_count = 0;
+        iir_filter->last_fres = fres;
+        iir_filter->filter_startup = 0;
+    }
+    else if(FLUID_FABS(fres_diff) > 0.01f)
+    {
+        static const int fres_incr_count = FLUID_BUFSIZE;
+        iir_filter->fres_incr = fres_diff / (fres_incr_count);
+        iir_filter->fres_incr_count = fres_incr_count;
         iir_filter->target_fres = fres;
-        fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
+
+        // The filter coefficients have to be recalculated (filter cutoff has changed).
+        calc_coeff_flag = TRUE;
+    }
+    else
+    {
+        // We do not account for any change of Q here - if it was changed q_incro_count will be non-zero and recalculating the coeffs
+        // will be taken care of in fluid_iir_filter_apply().
     }
 
+    if(calc_coeff_flag)
+    {
+        fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
+    }
 
     fluid_check_fpe("voice_write DSP coefficients");
 
