@@ -116,7 +116,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                     iir_filter->last_q += iir_filter->q_incr;
                 }
                 
-                FLUID_LOG(FLUID_DBG, "last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
+                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
                 
                 fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
                 
@@ -174,7 +174,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres)
 
     iir_filter->fres = fres;
     
-    FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_fres: fres= %f [acents]",fres);
+    LOG_FILTER("fluid_iir_filter_set_fres: fres= %f [acents]",fres);
 }
 
 static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
@@ -214,7 +214,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     fluid_real_t q = param[0].real;
     int flags = iir_filter->flags;
     
-    FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_q: Q= %f [dB]",q);
+    LOG_FILTER("fluid_iir_filter_set_q: Q= %f [dB]",q);
 
     if(flags & FLUID_IIR_Q_ZERO_OFF && q <= 0.0)
     {
@@ -233,7 +233,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
         q = fluid_iir_filter_q_from_dB(q);
     }
 
-    FLUID_LOG(FLUID_DBG, "fluid_iir_filter_set_q: Q= %f [linear]",q);
+    LOG_FILTER("fluid_iir_filter_set_q: Q= %f [linear]",q);
     
     if(iir_filter->filter_startup)
     {
@@ -245,7 +245,9 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
         iir_filter->q_incr = (q - iir_filter->last_q) / (q_incr_count);
         iir_filter->q_incr_count = q_incr_count;
     }
+#ifdef DBG_FILTER
     iir_filter->target_q = q;
+#endif
 }
 
 static FLUID_INLINE void
@@ -376,7 +378,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres = 5.f;
     }
 
-    FLUID_LOG(FLUID_DBG, "%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->last_q);
+    LOG_FILTER("%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->last_q);
     
     /* if filter enabled and there is a significant frequency change.. */
     fres_diff = fres - iir_filter->last_fres;
@@ -399,7 +401,9 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres_incr_count *= num_buffers;
         iir_filter->fres_incr = fres_diff / (fres_incr_count);
         iir_filter->fres_incr_count = fres_incr_count;
+#ifdef DBG_FILTER
         iir_filter->target_fres = fres;
+#endif
 
         // The filter coefficients have to be recalculated (filter cutoff has changed).
         calc_coeff_flag = TRUE;
