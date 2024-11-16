@@ -1,0 +1,5 @@
+filter-envelope-noise-1345[[:space:]]reverted.flac filter=lfs diff=lfs merge=lfs -text
+filter-envelope-noise-FluidSynth[[:space:]]2.4.flac filter=lfs diff=lfs merge=lfs -text
+filter-envelope-noise.mid filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+*.sf2 filter=lfs diff=lfs merge=lfs -text
