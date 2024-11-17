@@ -43,3 +43,64 @@ if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
     ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf3)
 endif ( LIBSNDFILE_HASVORBIS )
+
+
+# Prepare the manual test suite down here
+if(NOT DEFINED GENERAL_USER_GS2)
+    add_custom_target(check_manual
+        COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --red "In order to run the manual test suite, you need to set variable GENERAL_USER_GS2 to the path of the soundfont.")
+else()
+
+    set(IIR_FILTER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter")
+
+    if(LIBSNDFILE_SUPPORT)
+      set(FEXT "wav")
+    else()
+      set(FEXT "raw")
+    endif()
+
+    # Add an empty pseudo target
+    add_custom_target(check_manual)
+
+    add_custom_target(create_iir_dir
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR})
+
+    add_custom_target(render1415
+        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1415_the-nervous-filter.${FEXT} "The Nervous Filter trimmed.mid" ${GENERAL_USER_GS2}
+        COMMENT "Rendering testfile of issue 1415"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1415_the-nervous-filter/
+        VERBATIM
+    )
+
+    add_custom_target(render1417
+        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1417_filter-envelope-noise.${FEXT} filter-envelope-noise.mid ${GENERAL_USER_GS2}
+        COMMENT "Rendering testfile of issue 1417"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1417_filter-envelope-noise/
+        VERBATIM
+    )
+
+    add_custom_target(render1424
+        COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1424_clicks-on-ModEnv-FilterFc-change.${FEXT} 1424.mid echo_drops.sf2
+        COMMENT "Rendering testfile of issue 1424"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1424_clicks-on-ModEnv-FilterFc-change/
+        VERBATIM
+    )
+
+    add_custom_target(render1427
+        COMMAND fluidsynth -R 0 -C 0 -g 5 -F ${IIR_FILTER_RENDER_DIR}/1427_high-Q-note-cutoff.${FEXT} high_Q_note_cutoff_test.mid high_Q_note_cutoff_test.sf2
+        COMMENT "Rendering testfile of issue 1427"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1427_high-Q-note-cutoff/
+        VERBATIM
+    )
+
+    # Add a dependency so that rendering targets depends on check_manual
+    add_dependencies(check_manual render1415)
+    add_dependencies(check_manual render1417)
+    add_dependencies(check_manual render1424)
+    add_dependencies(check_manual render1427)
+
+endif()
