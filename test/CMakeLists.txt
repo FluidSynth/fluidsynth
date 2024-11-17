@@ -101,7 +101,7 @@ else()
 
 
     add_custom_target(renderAltitude
-        COMMAND fluidsynth -R 1 -C 1 -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid Altitude.sf2
+        COMMAND fluidsynth -R 1 -C 1 -g 0.5 -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid Altitude.sf2
         COMMENT "Rendering AWE32 NRPN test file Altitude.mid"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Altitude/
