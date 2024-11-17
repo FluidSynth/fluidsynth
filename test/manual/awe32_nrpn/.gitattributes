@@ -1,0 +1,11 @@
+Altitude/Altitude.mid filter=lfs diff=lfs merge=lfs -text
+Altitude/Altitude-SB[[:space:]]Audigy2[[:space:]]ZS.ogg filter=lfs diff=lfs merge=lfs -text
+Altitude/Altitude.sbk filter=lfs diff=lfs merge=lfs -text
+Altitude/Altitude.sf2 filter=lfs diff=lfs merge=lfs -text
+Altitude/Altitude.txt filter=lfs diff=lfs merge=lfs -text
+Filter/The[[:space:]]Nervous[[:space:]]Filter.mid filter=lfs diff=lfs merge=lfs -text
+Filter/The[[:space:]]Nervous[[:space:]]Filter[[:space:]]SB[[:space:]]Live.wav filter=lfs diff=lfs merge=lfs -text
+Uplift/Uplift.mid filter=lfs diff=lfs merge=lfs -text
+Uplift/Uplift.sbk filter=lfs diff=lfs merge=lfs -text
+Uplift/Uplift.sf2 filter=lfs diff=lfs merge=lfs -text
+Uplift/Uplift.txt filter=lfs diff=lfs merge=lfs -text
