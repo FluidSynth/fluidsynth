@@ -23,7 +23,8 @@
 
 #include "fluidsynth_priv.h"
 
-#define DBG_FILTER
+// Uncomment to get debug logging for filter parameters
+// #define DBG_FILTER
 #ifdef DBG_FILTER
 #define LOG_FILTER(...) FLUID_LOG(FLUID_DBG, __VA_ARGS__)
 #else
