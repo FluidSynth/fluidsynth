@@ -357,6 +357,10 @@ int main(int argc, char **argv)
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 
 #if defined(_WIN32)
+// WC_ERR_INVALID_CHARS is only supported on Windows Vista and newer. To support older Windows, our only chance is to use zero for this flag.
+#ifndef WC_ERR_INVALID_CHARS
+#define WC_ERR_INVALID_CHARS 0
+#endif
     char **argv = NULL;
     // console output will be utf-8
     SetConsoleOutputCP(CP_UTF8);
