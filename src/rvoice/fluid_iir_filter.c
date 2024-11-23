@@ -24,7 +24,9 @@
 
 
 static FLUID_INLINE void
-fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter, fluid_real_t output_rate);
+fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter, fluid_real_t output_rate,
+                                        fluid_real_t *a1_out, fluid_real_t *a2_out,
+                                        fluid_real_t *b02_out, fluid_real_t *b1_out);
 
 
 /**
@@ -118,13 +120,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                 
                 LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
                 
-                fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
-                
-                // re-read coeffs
-                dsp_a1 = iir_filter->a1;
-                dsp_a2 = iir_filter->a2;
-                dsp_b02 = iir_filter->b02;
-                dsp_b1 = iir_filter->b1;
+                fluid_iir_filter_calculate_coefficients(iir_filter, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
         }
 
@@ -252,7 +248,9 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
 
 static FLUID_INLINE void
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
-                                        fluid_real_t output_rate)
+                                        fluid_real_t output_rate,
+                                        fluid_real_t *a1_out, fluid_real_t *a2_out,
+                                        fluid_real_t *b02_out, fluid_real_t *b1_out)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -334,10 +332,10 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
             return;
         }
 
-        iir_filter->a1 = a1_temp;
-        iir_filter->a2 = a2_temp;
-        iir_filter->b02 = b02_temp;
-        iir_filter->b1 = b1_temp;
+        *a1_out = a1_temp;
+        *a2_out = a2_temp;
+        *b02_out = b02_temp;
+        *b1_out = b1_temp;
 
         fluid_check_fpe("voice_write filter calculation");
     }
@@ -416,7 +414,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
 
     if(calc_coeff_flag)
     {
-        fluid_iir_filter_calculate_coefficients(iir_filter, output_rate);
+        fluid_iir_filter_calculate_coefficients(iir_filter, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
     }
 
     fluid_check_fpe("voice_write DSP coefficients");
