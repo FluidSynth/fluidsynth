@@ -52,6 +52,7 @@ if(NOT DEFINED GENERAL_USER_GS2)
 else()
 
     set(IIR_FILTER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter")
+    set(AWE32_NRPN_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/awe32_nrpn")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -63,7 +64,8 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR})
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR}
+        VERBATIM)
 
     add_custom_target(render1415
         COMMAND fluidsynth -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1415_the-nervous-filter.${FEXT} "The Nervous Filter trimmed.mid" ${GENERAL_USER_GS2}
@@ -97,10 +99,38 @@ else()
         VERBATIM
     )
 
+
+    add_custom_target(renderAltitude
+        COMMAND fluidsynth -R 1 -C 1 -g 0.5 -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid Altitude.sf2
+        COMMENT "Rendering AWE32 NRPN test file Altitude.mid"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Altitude/
+        VERBATIM
+    )
+
+    add_custom_target(renderFilter
+        COMMAND fluidsynth -R 0 -C 0 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter.${FEXT}" "The Nervous Filter.mid" ${GENERAL_USER_GS2}
+        COMMENT "Rendering AWE32 NRPN test file The Nervous Filter.mid"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Filter/
+        VERBATIM
+    )
+
+    add_custom_target(renderUplift
+        COMMAND fluidsynth -R 1 -C 1 -g 0.7 -F ${AWE32_NRPN_RENDER_DIR}/Uplift-fixed.${FEXT} Uplift-fixed.mid Uplift.sf2
+        COMMENT "Rendering AWE32 NRPN test file Uplift.mid"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/
+        VERBATIM
+    )
+
     # Add a dependency so that rendering targets depends on check_manual
     add_dependencies(check_manual render1415)
     add_dependencies(check_manual render1417)
     add_dependencies(check_manual render1424)
     add_dependencies(check_manual render1427)
+    add_dependencies(check_manual renderAltitude)
+    add_dependencies(check_manual renderFilter)
+    add_dependencies(check_manual renderUplift)
 
 endif()
