@@ -395,7 +395,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     {
         int fres_incr_count = FLUID_BUFSIZE;
         fluid_real_t num_buffers = iir_filter->last_q;
-        fluid_clip(num_buffers, 1, 8);
+        fluid_clip(num_buffers, 1, 5);
         // For high values of Q, the phase gets really steep. To prevent clicks when quickly modulating fres in this case, we need to smooth out "slower".
         // This is done by simply using Q times FLUID_BUFSIZE samples for the interpolation to complete, capped at 8.
         fres_incr_count *= num_buffers;
