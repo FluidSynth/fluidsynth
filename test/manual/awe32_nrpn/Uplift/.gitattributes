@@ -1,0 +1,2 @@
+Uplift-fixed-SB[[:space:]]Audigy2[[:space:]]ZS.ogg filter=lfs diff=lfs merge=lfs -text
+Uplift-fixed.mid filter=lfs diff=lfs merge=lfs -text
