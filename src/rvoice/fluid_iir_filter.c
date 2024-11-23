@@ -237,7 +237,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     }
     else
     {
-        static const int q_incr_count = FLUID_BUFSIZE;
+        static const fluid_real_t q_incr_count = FLUID_BUFSIZE;
         iir_filter->q_incr = (q - iir_filter->last_q) / (q_incr_count);
         iir_filter->q_incr_count = q_incr_count;
     }
@@ -391,11 +391,12 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     }
     else if(FLUID_FABS(fres_diff) > 0.01f)
     {
-        int fres_incr_count = FLUID_BUFSIZE;
+        fluid_real_t fres_incr_count = FLUID_BUFSIZE;
         fluid_real_t num_buffers = iir_filter->last_q;
         fluid_clip(num_buffers, 1, 5);
         // For high values of Q, the phase gets really steep. To prevent clicks when quickly modulating fres in this case, we need to smooth out "slower".
-        // This is done by simply using Q times FLUID_BUFSIZE samples for the interpolation to complete, capped at 8.
+        // This is done by simply using Q times FLUID_BUFSIZE samples for the interpolation to complete, capped at 5.
+        // 5 was chosen because the phase doesn't really get any steeper when continuing to increase Q.
         fres_incr_count *= num_buffers;
         iir_filter->fres_incr = fres_diff / (fres_incr_count);
         iir_filter->fres_incr_count = fres_incr_count;
