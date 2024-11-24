@@ -1,3 +1,4 @@
+include( SCMRevision )
 
 set ( AUDIO_MIDI_REPORT "\n" )
 
@@ -189,6 +190,19 @@ else ( HAVE_GETOPT_H )
   set ( MISC_REPORT "${MISC_REPORT}  getopt:                no\n" )
 endif ( HAVE_GETOPT_H )
 
+if ( WIN32 OR CYGWIN )
+    set ( WINDOWS_REPORT "\nWindows specific info:\n" )
+    if ( windows-version )
+        set ( WINDOWS_REPORT "${WINDOWS_REPORT}  target version:        ${windows-version}\n" )
+    endif ( windows-version )
+    if ( enable-unicode )
+      set ( WINDOWS_REPORT "${WINDOWS_REPORT}  unicode support:       yes\n" )
+    else ( enable-unicode )
+      set ( WINDOWS_REPORT "${WINDOWS_REPORT}  unicode support:       no\n" )
+    endif ( enable-unicode )
+else ( WIN32 OR CYGWIN )
+    set ( WINDOWS_REPORT "")
+endif ( WIN32 OR CYGWIN )
 
 set ( DEVEL_REPORT "\nDeveloper nerds info:\n" )
 
@@ -249,6 +263,9 @@ endif ( ENABLE_COVERAGE )
 message( STATUS 
         "\n**************************************************************\n"
         "Build Summary:\n"
+        "FluidSynth Version:    " ${FLUIDSYNTH_VERSION} "\n"
+        "Library version:       " ${LIB_VERSION_INFO} "\n"
+        "Git revision:          " ${FluidSynth_WC_REVISION} "\n"
         "Build type:            " ${CMAKE_BUILD_TYPE} "\n"
         "Install Prefix:        " ${CMAKE_INSTALL_PREFIX} "\n"
         "\n"
@@ -257,6 +274,7 @@ message( STATUS
         ${INPUTS_REPORT}
         ${RENDERING_REPORT}
         ${MISC_REPORT}
+        ${WINDOWS_REPORT}
         ${DEVEL_REPORT}
          )
 

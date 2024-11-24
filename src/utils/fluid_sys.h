@@ -157,8 +157,9 @@ typedef gintptr  intptr_t;
 #endif
 
 /*
- * Required by Windows-specific sf_wchar_open() from
- * libsndfile that takes a UTF16_BE encoded filename.
+ * Required by Windows-specific sf_wchar_open() from old libsndfile
+ * versions before v1.1.0, that takes a UTF16_BE encoded filename.
+ * Note that FluidSynth needs libsndfile >= v1.2.1 anyway.
  */
 #define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
 

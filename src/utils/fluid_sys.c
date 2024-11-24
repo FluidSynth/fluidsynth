@@ -1659,8 +1659,8 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         fluid_socket_cleanup();
         return NULL;
     }
-
-    if(bind(sock, addr, addr_size) == SOCKET_ERROR)
+    
+    if(bind(sock, addr, (int) addr_size) == SOCKET_ERROR)
     {
         FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %d", fluid_socket_get_error());
         fluid_socket_close(sock);
