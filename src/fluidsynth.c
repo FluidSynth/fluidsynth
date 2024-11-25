@@ -325,7 +325,7 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     15)create the audio driver (i.e synthesis thread) and a synchronous user
        shell if interactive.
  */
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(_UNICODE)
 int wmain(int argc, wchar_t **wargv)
 #else
 int main(int argc, char **argv)
@@ -356,7 +356,7 @@ int main(int argc, char **argv)
     int fast_render = 0;
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(_UNICODE)
 // WC_ERR_INVALID_CHARS is only supported on Windows Vista and newer. To support older Windows, our only chance is to use zero for this flag.
 #ifndef WC_ERR_INVALID_CHARS
 #define WC_ERR_INVALID_CHARS 0
@@ -1164,7 +1164,7 @@ cleanup:
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(_UNICODE)
     if (argv != NULL)
     {
         for (i = 0; i < argc; ++i)

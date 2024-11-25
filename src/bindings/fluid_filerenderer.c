@@ -289,7 +289,7 @@ new_fluid_file_renderer(fluid_synth_t *synth)
         goto error_recovery;
     }
     
-#ifdef _WIN32
+#if defined( _WIN32 ) && defined( _UNICODE )
     if (0 == FLUID_STRCMP("-", filename))
     {
         dev->sndfile = sf_open(filename, SFM_WRITE, &info);

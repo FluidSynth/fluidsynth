@@ -500,7 +500,7 @@ if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
     target_link_libraries ( fluidsynth PRIVATE PipeWire::PipeWire )
 endif()
 
-if ( MINGW )
+if ( MINGW AND enable-unicode )
     target_link_options( fluidsynth PRIVATE -municode )
 endif()
 
