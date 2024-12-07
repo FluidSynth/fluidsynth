@@ -1,3 +1,0 @@
-high_Q_note_cutoff_test.sf2 filter=lfs diff=lfs merge=lfs -text
-fluidsynth_iir-tests.flac filter=lfs diff=lfs merge=lfs -text
-high_Q_note_cutoff_test.mid filter=lfs diff=lfs merge=lfs -text
