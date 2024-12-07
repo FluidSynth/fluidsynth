@@ -435,6 +435,16 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                  || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
                      && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE);
 
+    /*************** resonant filter ******************/
+
+    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
+                          fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
+                          modenv_val * voice->envlfo.modenv_to_fc);
+
+
+    /* additional custom filter - only uses the fixed modulator, no lfos... */
+    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
+
     /*********************** run the dsp chain ************************
      * The sample is mixed with the output buffer.
      * The buffer has to be filled from 0 to FLUID_BUFSIZE-1.
@@ -451,26 +461,26 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         // On the other hand, entering this if-clause is not supposed to happen often.
         //
         // Also note, that we're returning directly without running the IIR filter below.
-        return fluid_rvoice_dsp_interpolate_none(&voice->dsp, dsp_buf, is_looping);
+        return fluid_rvoice_dsp_interpolate_none(voice, dsp_buf, is_looping);
     }
 
     switch(voice->dsp.interp_method)
     {
     case FLUID_INTERP_NONE:
-        count = fluid_rvoice_dsp_interpolate_none(&voice->dsp, dsp_buf, is_looping);
+        count = fluid_rvoice_dsp_interpolate_none(voice, dsp_buf, is_looping);
         break;
 
     case FLUID_INTERP_LINEAR:
-        count = fluid_rvoice_dsp_interpolate_linear(&voice->dsp, dsp_buf, is_looping);
+        count = fluid_rvoice_dsp_interpolate_linear(voice, dsp_buf, is_looping);
         break;
 
     case FLUID_INTERP_4THORDER:
     default:
-        count = fluid_rvoice_dsp_interpolate_4th_order(&voice->dsp, dsp_buf, is_looping);
+        count = fluid_rvoice_dsp_interpolate_4th_order(voice, dsp_buf, is_looping);
         break;
 
     case FLUID_INTERP_7THORDER:
-        count = fluid_rvoice_dsp_interpolate_7th_order(&voice->dsp, dsp_buf, is_looping);
+        count = fluid_rvoice_dsp_interpolate_7th_order(voice, dsp_buf, is_looping);
         break;
     }
 
@@ -481,18 +491,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         // voice has finished
         return count;
     }
-
-    /*************** resonant filter ******************/
-
-    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
-                          fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
-                          modenv_val * voice->envlfo.modenv_to_fc);
-
-    fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, count, voice->dsp.output_rate);
-
-    /* additional custom filter - only uses the fixed modulator, no lfos... */
-    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
-    fluid_iir_filter_apply(&voice->resonant_custom_filter, dsp_buf, count, voice->dsp.output_rate);
 
     return count;
 }
