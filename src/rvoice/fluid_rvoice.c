@@ -440,6 +440,9 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     // This is to satisfy SF2 Section 9.1.8, particularly, the filtered output must be gain-adjusted by the volEnv.
     // Applying the filter after applying the gain from the volEnv might cause audible clicks for when turning off
     // voices that are filtered by a high Q, see https://github.com/FluidSynth/fluidsynth/issues/1427
+    //
+    // Note that at this point we are using voice->dsp.output_rate which is set to the synth's output rate, because
+    // the filter will receive the interpolated waveform.
 
     fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
                           fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
