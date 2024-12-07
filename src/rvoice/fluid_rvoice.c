@@ -91,6 +91,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
          * can safely turn off the voice. Duh. */
         if(amp_max < amplitude_that_reaches_noise_floor)
         {
+            FLUID_LOG(FLUID_DBG, "amp_max %f < amplitude_that_reaches_noise_floor %f | env_get_val: %f", amp_max, amplitude_that_reaches_noise_floor, fluid_adsr_env_get_val(&voice->envlfo.volenv));
             return 0;
         }
     }
@@ -103,6 +104,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
     /* no volume and not changing? - No need to process */
     if((voice->dsp.amp == 0.0f) && (voice->dsp.amp_incr == 0.0f))
     {
+        FLUID_LOG(FLUID_DBG, "no volume and not changing? - No need to process");
         return -1;
     }
 
@@ -336,6 +338,18 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     if(fluid_adsr_env_get_section(&voice->envlfo.volenv) == FLUID_VOICE_ENVFINISHED)
     {
+        FLUID_LOG(FLUID_DBG, "voice finished, voice->dsp.amp=%f", voice->dsp.amp);
+        
+        FLUID_MEMSET(dsp_buf, 0, sizeof(*dsp_buf) * FLUID_BUFSIZE);
+        
+        fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, FLUID_BUFSIZE, voice->dsp.output_rate);
+        
+        // voice->envlfo.volenv.section++;
+        return FLUID_BUFSIZE;
+    }
+    
+    if(fluid_adsr_env_get_section(&voice->envlfo.volenv) == FLUID_VOICE_ENVLAST)
+    {
         return 0;
     }
 
@@ -356,6 +370,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     count = fluid_rvoice_calc_amp(voice);
     if(count == 0)
     {
+        FLUID_LOG(FLUID_DBG, "fluid_rvoice_calc_amp returned zero");
         // Voice has finished, remove from dsp loop
         return 0;
     }
@@ -478,6 +493,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     if(count == 0)
     {
+        FLUID_LOG(FLUID_DBG,"sample count zero, voice finished");
         // voice has finished
         return count;
     }
@@ -487,7 +503,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
                           fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
                           modenv_val * voice->envlfo.modenv_to_fc);
-
+    
     fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, count, voice->dsp.output_rate);
 
     /* additional custom filter - only uses the fixed modulator, no lfos... */
