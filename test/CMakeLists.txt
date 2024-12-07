@@ -110,7 +110,9 @@ else()
     )
 
     add_custom_target(renderFilter
-        COMMAND fluidsynth -R 0 -C 0 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter.${FEXT}" "The Nervous Filter.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter GenUserGS2.sf2.${FEXT}" "The Nervous Filter.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter 1mgm.sf2.${FEXT}" "The Nervous Filter.mid" "1mgm.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter GM_Roland.sf2.${FEXT}" "The Nervous Filter.mid" "GM_Roland.sf2"
         COMMENT "Rendering AWE32 NRPN test file The Nervous Filter.mid"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Filter/
