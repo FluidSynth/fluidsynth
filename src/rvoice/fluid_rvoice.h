@@ -35,8 +35,6 @@ typedef struct _fluid_rvoice_buffers_t fluid_rvoice_buffers_t;
 typedef struct _fluid_rvoice_t fluid_rvoice_t;
 
 /* Smallest amplitude that can be perceived (full scale is +/- 0.5)
- * gain = 10^(dB/20)
- * attenuation = 1 / gain
  * 16 bits => 96+4=100 dB dynamic range => 0.00001
  * 24 bits => 144-4 = 140 dB dynamic range => 1.e-7
  * 1.e-7 * 2 == 2.e-7 :)
