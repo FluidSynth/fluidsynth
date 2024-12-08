@@ -29,6 +29,9 @@
 #include "fluid_phase.h"
 #include "fluid_sfont.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct _fluid_rvoice_envlfo_t fluid_rvoice_envlfo_t;
 typedef struct _fluid_rvoice_dsp_t fluid_rvoice_dsp_t;
 typedef struct _fluid_rvoice_buffers_t fluid_rvoice_buffers_t;
@@ -228,4 +231,7 @@ fluid_rvoice_get_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned 
     return (int32_t)((msb << 8) | lsb);
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif

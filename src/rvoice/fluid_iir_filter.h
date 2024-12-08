@@ -31,6 +31,9 @@
 #define LOG_FILTER(...) 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init);
@@ -78,5 +81,8 @@ struct _fluid_iir_filter_t
 #endif
 };
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 
