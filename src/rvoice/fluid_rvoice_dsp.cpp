@@ -767,33 +767,69 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     return (dsp_i);
 }
 
+struct InterpolateNone
+{
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    {
+        return fluid_rvoice_dsp_interpolate_none_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+    }
+};
+
+struct InterpolateLinear
+{
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    {
+        return fluid_rvoice_dsp_interpolate_linear_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+    }
+};
+
+struct Interpolate4thOrder
+{
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    {
+        return fluid_rvoice_dsp_interpolate_4th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+    }
+};
+
+struct Interpolate7thOrder
+{
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    {
+        return fluid_rvoice_dsp_interpolate_7th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+    }
+};
 
 template<typename T>
-int dsp_invoker(T func, fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
+    T func;
     const char *dsp_data24 = rvoice->dsp.sample->data24;
 
     if (rvoice->resonant_custom_filter.flags & FLUID_IIR_DISABLED)
     {
-        if (dsp_data24 != nullptr)
+        if (dsp_data24 != NULL)
         {
-            func<false, true>(rvoice, dsp_buf, looping);
+            return func.template operator()<false, true>(rvoice, dsp_buf, looping);
         }
         else
         {
             // This case is most common, thanks to templating it will also become the fastest one
-            func<false, false>(rvoice, dsp_buf, looping);
+            return func.template operator()<false, false>(rvoice, dsp_buf, looping);
         }
     }
     else
     {
-        if (dsp_data24 != nullptr)
+        if (dsp_data24 != NULL)
         {
-            func<true, true>(rvoice, dsp_buf, looping);
+            return func.template operator()<true, true>(rvoice, dsp_buf, looping);
         }
         else
         {
-            func<true, false>(rvoice, dsp_buf, looping);
+            return func.template operator()<true, false>(rvoice, dsp_buf, looping);
         }
     }
 }
@@ -801,22 +837,22 @@ int dsp_invoker(T func, fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp
 extern "C" int
 fluid_rvoice_dsp_interpolate_none(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
-    return dsp_invoker(fluid_rvoice_dsp_interpolate_none_local, rvoice, dsp_buf, looping);
+    return dsp_invoker<InterpolateNone>(rvoice, dsp_buf, looping);
 }
 
 extern "C" int
 fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
-    return dsp_invoker(fluid_rvoice_dsp_interpolate_linear_local, rvoice, dsp_buf, looping);
+    return dsp_invoker<InterpolateLinear>(rvoice, dsp_buf, looping);
 }
 
 extern "C" int
 fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
-    return dsp_invoker(fluid_rvoice_dsp_interpolate_4th_order_local, rvoice, dsp_buf, looping);
+    return dsp_invoker<Interpolate4thOrder>(rvoice, dsp_buf, looping);
 }
 
 extern "C" int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
-    return dsp_invoker(fluid_rvoice_dsp_interpolate_7th_order_local, rvoice, dsp_buf, looping);
+    return dsp_invoker<Interpolate7thOrder>(rvoice, dsp_buf, looping);
 }
