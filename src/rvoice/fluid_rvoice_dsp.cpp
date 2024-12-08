@@ -67,9 +67,9 @@ fluid_rvoice_get_float_sample(const short int *FLUID_RESTRICT dsp_msb, const cha
 /* No interpolation. Just take the sample, which is closest to
   * the playback pointer.  Questionable quality, but very
   * efficient. */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
 static int
-fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
@@ -85,7 +85,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
 
-    end_index = looping ? voice->loopend - 1 : voice->end;
+    end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
     while(1)
     {
@@ -111,7 +111,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         }
 
         /* break out if not looping (buffer may not be full) */
-        if(!looping)
+        if(!LOOPING)
         {
             break;
         }
@@ -140,9 +140,9 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
  * Returns number of samples processed (usually FLUID_BUFSIZE but could be
  * smaller if end of sample occurs).
  */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
 static int
-fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
@@ -161,10 +161,10 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
 
     /* last index before 2nd interpolation point must be specially handled */
-    end_index = (looping ? voice->loopend - 1 : voice->end) - 1;
+    end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 1;
 
     /* 2nd interpolation point to use at end of loop or sample */
-    if(looping)
+    if(LOOPING)
     {
         point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart);    /* loop start */
     }
@@ -231,7 +231,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
             dsp_amp += dsp_amp_incr;	/* increment amplitude */
         }
 
-        if(!looping)
+        if(!LOOPING)
         {
             break;    /* break out if not looping (end of sample) */
         }
@@ -262,9 +262,9 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
  * Returns number of samples processed (usually FLUID_BUFSIZE but could be
  * smaller if end of sample occurs).
  */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
 static int
-fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
@@ -283,7 +283,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
 
     /* last index before 4th interpolation point must be specially handled */
-    end_index = (looping ? voice->loopend - 1 : voice->end) - 2;
+    end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 2;
 
     if(voice->has_looped)	/* set start_index and start point if looped or not */
     {
@@ -297,7 +297,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     }
 
     /* get points off the end (loop start if looping, duplicate point if end) */
-    if(looping)
+    if(LOOPING)
     {
         end_point1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart);
         end_point2 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart + 1);
@@ -423,7 +423,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             dsp_amp += dsp_amp_incr;
         }
 
-        if(!looping)
+        if(!LOOPING)
         {
             break;    /* break out if not looping (end of sample) */
         }
@@ -460,9 +460,9 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
  * Returns number of samples processed (usually FLUID_BUFSIZE but could be
  * smaller if end of sample occurs).
  */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
+template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
 static int
-fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
@@ -485,7 +485,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     fluid_phase_incr(dsp_phase, (fluid_phase_t)0x80000000);
 
     /* last index before 7th interpolation point must be specially handled */
-    end_index = (looping ? voice->loopend - 1 : voice->end) - 3;
+    end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 3;
 
     if(voice->has_looped)	/* set start_index and start point if looped or not */
     {
@@ -503,7 +503,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     }
 
     /* get the 3 points off the end (loop start if looping, duplicate point if end) */
-    if(looping)
+    if(LOOPING)
     {
         end_points[0] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart);
         end_points[1] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart + 1);
@@ -728,7 +728,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             dsp_amp += dsp_amp_incr;
         }
 
-        if(!looping)
+        if(!LOOPING)
         {
             break;    /* break out if not looping (end of sample) */
         }
@@ -769,37 +769,37 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
 
 struct InterpolateNone
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
-    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_none_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+        return fluid_rvoice_dsp_interpolate_none_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
     }
 };
 
 struct InterpolateLinear
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
-    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_linear_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+        return fluid_rvoice_dsp_interpolate_linear_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
     }
 };
 
 struct Interpolate4thOrder
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
-    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_4th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+        return fluid_rvoice_dsp_interpolate_4th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
     }
 };
 
 struct Interpolate7thOrder
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT>
-    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping) const
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_7th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf, looping);
+        return fluid_rvoice_dsp_interpolate_7th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
     }
 };
 
@@ -813,23 +813,51 @@ int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, in
     {
         if (dsp_data24 != NULL)
         {
-            return func.template operator()<false, true>(rvoice, dsp_buf, looping);
+            if(looping)
+            {
+                return func.template operator()<false, true, true>(rvoice, dsp_buf);
+            }
+            else
+            {
+                return func.template operator()<false, true, false>(rvoice, dsp_buf);
+            }
         }
         else
         {
             // This case is most common, thanks to templating it will also become the fastest one
-            return func.template operator()<false, false>(rvoice, dsp_buf, looping);
+            if (looping)
+            {
+                return func.template operator()<false, false, true>(rvoice, dsp_buf);
+            }
+            else
+            {
+                return func.template operator()<false, false, false>(rvoice, dsp_buf);
+            }
         }
     }
     else
     {
         if (dsp_data24 != NULL)
         {
-            return func.template operator()<true, true>(rvoice, dsp_buf, looping);
+            if (looping)
+            {
+                return func.template operator()<true, true, true>(rvoice, dsp_buf);
+            }
+            else
+            {
+                return func.template operator()<true, true, false>(rvoice, dsp_buf);
+            }
         }
         else
         {
-            return func.template operator()<true, false>(rvoice, dsp_buf, looping);
+            if (looping)
+            {
+                return func.template operator()<true, false, true>(rvoice, dsp_buf);
+            }
+            else
+            {
+                return func.template operator()<true, false, false>(rvoice, dsp_buf);
+            }
         }
     }
 }
