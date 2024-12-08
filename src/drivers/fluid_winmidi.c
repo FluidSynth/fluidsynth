@@ -484,24 +484,26 @@ static void fluid_winmidi_autoconnect_build_name(char *name)
     int j;
     unsigned int i, n = 0;
     unsigned int num = midiInGetNumDevs();
-
-    for (i = 0; i < num; ++i)
+    if (num > 0)
     {
-        char x[4];
-        j = FLUID_SNPRINTF(x, sizeof(x), "%d;", i);
-        n += j;
-        if (n >= sizeof(new_name))
+        for (i = 0; i < num; ++i)
         {
-            FLUID_LOG(FLUID_DBG, "winmidi: autoconnect dev name exceeds MAXPNAMELEN (%d), num (%d), n (%d)", MAXPNAMELEN, num, n);
-            return;
+            char x[4];
+            j = FLUID_SNPRINTF(x, sizeof(x), "%d;", i);
+            n += j;
+            if (n >= sizeof(new_name))
+            {
+                FLUID_LOG(FLUID_DBG, "winmidi: autoconnect dev name exceeds MAXPNAMELEN (%d), num (%d), n (%d)", MAXPNAMELEN, num, n);
+                return;
+            }
+            strncat(new_name, x, j);
         }
-        strncat(new_name, x, j);
+    
+        name[n - 1] = 0;
+    
+        FLUID_MEMSET(name, 0, MAXPNAMELEN);
+        FLUID_STRCPY(name, new_name);
     }
-
-    name[n - 1] = 0;
-
-    FLUID_MEMSET(name, 0, MAXPNAMELEN);
-    FLUID_STRCPY(name, new_name);
 }
 
 /*
