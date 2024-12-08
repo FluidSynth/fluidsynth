@@ -57,6 +57,8 @@ void
 fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                        fluid_real_t *dsp_buf, int count, fluid_real_t output_rate)
 {
+    // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
+    // Due to the linear smoothing, last_q may not exactly become zero.
     if(iir_filter->type == FLUID_IIR_DISABLED || FLUID_FABS(iir_filter->last_q) <= 0.001)
     {
         return;
@@ -248,95 +250,85 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
                                         fluid_real_t *a1_out, fluid_real_t *a2_out,
                                         fluid_real_t *b02_out, fluid_real_t *b1_out)
 {
-    // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
-    // Due to the linear smoothing, last_q may not exactly become zero.
-    if(FLUID_FABS(iir_filter->last_q) <= 0.001)
+    int flags = iir_filter->flags;
+    fluid_real_t filter_gain = 1.0f;
+
+    /*
+     * Those equations from Robert Bristow-Johnson's `Cookbook
+     * formulae for audio EQ biquad filter coefficients', obtained
+     * from Harmony-central.com / Computer / Programming. They are
+     * the result of the bilinear transform on an analogue filter
+     * prototype. To quote, `BLT frequency warping has been taken
+     * into account for both significant frequency relocation and for
+     * bandwidth readjustment'. */
+
+    fluid_real_t omega = (fluid_real_t)(2.0 * M_PI) *
+                                       (iir_filter->last_fres / output_rate);
+    fluid_real_t sin_coeff = FLUID_SIN(omega);
+    fluid_real_t cos_coeff = FLUID_COS(omega);
+    fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->last_q);
+    fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
+
+    /* Calculate the filter coefficients. All coefficients are
+     * normalized by a0. Think of `a1' as `a1/a0'.
+     *
+     * Here a couple of multiplications are saved by reusing common expressions.
+     * The original equations should be:
+     *  iir_filter->b0=(1.-cos_coeff)*a0_inv*0.5*filter_gain;
+     *  iir_filter->b1=(1.-cos_coeff)*a0_inv*filter_gain;
+     *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*filter_gain; */
+
+    /* "a" coeffs are same for all 3 available filter types */
+    fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
+    fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
+    fluid_real_t b02_temp, b1_temp;
+
+    if(!(flags & FLUID_IIR_NO_GAIN_AMP))
     {
+        /* SF 2.01 page 59:
+         *
+         *  The SoundFont specs ask for a gain reduction equal to half the
+         *  height of the resonance peak (Q).  For example, for a 10 dB
+         *  resonance peak, the gain is reduced by 5 dB.  This is done by
+         *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
+         *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
+         *  The gain is later factored into the 'b' coefficients
+         *  (numerator of the filter equation).  This gain factor depends
+         *  only on Q, so this is the right place to calculate it.
+         */
+        filter_gain /= FLUID_SQRT(iir_filter->last_q);
+    }
+
+    switch(iir_filter->type)
+    {
+    case FLUID_IIR_HIGHPASS:
+        b1_temp = (1.0f + cos_coeff) * a0_inv * filter_gain;
+
+        /* both b0 -and- b2 */
+        b02_temp = b1_temp * 0.5f;
+
+        b1_temp *= -1.0f;
+        break;
+
+    case FLUID_IIR_LOWPASS:
+        b1_temp = (1.0f - cos_coeff) * a0_inv * filter_gain;
+
+        /* both b0 -and- b2 */
+        b02_temp = b1_temp * 0.5f;
+        break;
+
+    default:
+        /* filter disabled, should never get here */
         return;
     }
-    else
-    {
-        int flags = iir_filter->flags;
-        fluid_real_t filter_gain = 1.0f;
 
-        /*
-         * Those equations from Robert Bristow-Johnson's `Cookbook
-         * formulae for audio EQ biquad filter coefficients', obtained
-         * from Harmony-central.com / Computer / Programming. They are
-         * the result of the bilinear transform on an analogue filter
-         * prototype. To quote, `BLT frequency warping has been taken
-         * into account for both significant frequency relocation and for
-         * bandwidth readjustment'. */
+    *a1_out = a1_temp;
+    *a2_out = a2_temp;
+    *b02_out = b02_temp;
+    *b1_out = b1_temp;
 
-        fluid_real_t omega = (fluid_real_t)(2.0 * M_PI) *
-                                            (iir_filter->last_fres / output_rate);
-        fluid_real_t sin_coeff = FLUID_SIN(omega);
-        fluid_real_t cos_coeff = FLUID_COS(omega);
-        fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->last_q);
-        fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
-
-        /* Calculate the filter coefficients. All coefficients are
-         * normalized by a0. Think of `a1' as `a1/a0'.
-         *
-         * Here a couple of multiplications are saved by reusing common expressions.
-         * The original equations should be:
-         *  iir_filter->b0=(1.-cos_coeff)*a0_inv*0.5*filter_gain;
-         *  iir_filter->b1=(1.-cos_coeff)*a0_inv*filter_gain;
-         *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*filter_gain; */
-
-        /* "a" coeffs are same for all 3 available filter types */
-        fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
-        fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-        fluid_real_t b02_temp, b1_temp;
-
-        if(!(flags & FLUID_IIR_NO_GAIN_AMP))
-        {
-            /* SF 2.01 page 59:
-            *
-            *  The SoundFont specs ask for a gain reduction equal to half the
-            *  height of the resonance peak (Q).  For example, for a 10 dB
-            *  resonance peak, the gain is reduced by 5 dB.  This is done by
-            *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
-            *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
-            *  The gain is later factored into the 'b' coefficients
-            *  (numerator of the filter equation).  This gain factor depends
-            *  only on Q, so this is the right place to calculate it.
-            */
-            filter_gain /= FLUID_SQRT(iir_filter->last_q);
-        }
-
-        switch(iir_filter->type)
-        {
-        case FLUID_IIR_HIGHPASS:
-            b1_temp = (1.0f + cos_coeff) * a0_inv * filter_gain;
-
-            /* both b0 -and- b2 */
-            b02_temp = b1_temp * 0.5f;
-
-            b1_temp *= -1.0f;
-            break;
-
-        case FLUID_IIR_LOWPASS:
-            b1_temp = (1.0f - cos_coeff) * a0_inv * filter_gain;
-
-            /* both b0 -and- b2 */
-            b02_temp = b1_temp * 0.5f;
-            break;
-
-        default:
-            /* filter disabled, should never get here */
-            return;
-        }
-
-        *a1_out = a1_temp;
-        *a2_out = a2_temp;
-        *b02_out = b02_temp;
-        *b1_out = b1_temp;
-
-        fluid_check_fpe("voice_write filter calculation");
-    }
+    fluid_check_fpe("voice_write filter calculation");
 }
-
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                            fluid_real_t output_rate,
@@ -383,7 +375,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         
         iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
-        iir_filter->filter_startup = 0;
+        iir_filter->filter_startup = (FLUID_FABS(iir_filter->last_q) <= 0.001); // filter coefficients will not be initialized when Q is small
     }
     else if(FLUID_FABS(fres_diff) > 0.01f)
     {
@@ -409,7 +401,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         // will be taken care of in fluid_iir_filter_apply().
     }
 
-    if(calc_coeff_flag)
+    if (calc_coeff_flag && !iir_filter->filter_startup)
     {
         fluid_iir_filter_calculate_coefficients(iir_filter, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
     }
