@@ -78,7 +78,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     char *dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
-    unsigned int dsp_i = 0;
+    unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
 
@@ -151,7 +151,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
     char *dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
-    unsigned int dsp_i = 0;
+    unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
     fluid_real_t point;
@@ -273,7 +273,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     char *dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
-    unsigned int dsp_i = 0;
+    unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int start_index, end_index;
     fluid_real_t start_point, end_point1, end_point2;
@@ -471,7 +471,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
-    unsigned int dsp_i = 0;
+    unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int start_index, end_index;
     fluid_real_t start_points[3], end_points[3];
