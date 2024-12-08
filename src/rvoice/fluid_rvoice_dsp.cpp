@@ -74,8 +74,8 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
-    short int *dsp_data = voice->sample->data;
-    char *dsp_data24 = voice->sample->data24;
+    const short int *FLUID_RESTRICT dsp_data = voice->sample->data;
+    const char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
     unsigned short dsp_i = 0;
@@ -147,8 +147,8 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
-    short int *dsp_data = voice->sample->data;
-    char *dsp_data24 = voice->sample->data24;
+    const short int *FLUID_RESTRICT dsp_data = voice->sample->data;
+    const char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
     unsigned short dsp_i = 0;
@@ -269,8 +269,8 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
-    short int *dsp_data = voice->sample->data;
-    char *dsp_data24 = voice->sample->data24;
+    const short int *FLUID_RESTRICT dsp_data = voice->sample->data;
+    const char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
     unsigned short dsp_i = 0;
@@ -467,8 +467,8 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
-    short int *FLUID_RESTRICT dsp_data = voice->sample->data;
-    char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
+    const short int *FLUID_RESTRICT dsp_data = voice->sample->data;
+    const char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
     fluid_real_t dsp_amp = voice->amp;
     fluid_real_t dsp_amp_incr = voice->amp_incr;
     unsigned short dsp_i = 0;
@@ -807,11 +807,11 @@ template<typename T>
 int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
     T func;
-    const char *dsp_data24 = rvoice->dsp.sample->data24;
+    bool is_24bit = rvoice->dsp.sample->data24 != NULL;
 
     if (rvoice->resonant_custom_filter.flags & FLUID_IIR_DISABLED)
     {
-        if (dsp_data24 != NULL)
+        if (is_24bit)
         {
             if(looping)
             {
@@ -837,7 +837,7 @@ int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, in
     }
     else
     {
-        if (dsp_data24 != NULL)
+        if (is_24bit)
         {
             if (looping)
             {
