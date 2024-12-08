@@ -22,6 +22,7 @@
 #include "fluid_sys.h"
 #include "fluid_conv.h"
 
+static const fluid_real_t Q_MIN = 0.001f;
 
 static FLUID_INLINE void
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter, fluid_real_t output_rate,
@@ -59,7 +60,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
-    if(iir_filter->type == FLUID_IIR_DISABLED || FLUID_FABS(iir_filter->last_q) <= 0.001)
+    if (iir_filter->type == FLUID_IIR_DISABLED || FLUID_FABS(iir_filter->last_q) < Q_MIN)
     {
         return;
     }
@@ -236,6 +237,11 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     else
     {
         static const fluid_real_t q_incr_count = FLUID_BUFSIZE;
+        // Q must be at least Q_MIN, otherwise fluid_iir_filter_apply would never be entered
+        if(q >= Q_MIN && iir_filter->last_q < Q_MIN)
+        {
+            iir_filter->last_q = Q_MIN;
+        }
         iir_filter->q_incr = (q - iir_filter->last_q) / (q_incr_count);
         iir_filter->q_incr_count = q_incr_count;
     }
@@ -375,7 +381,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         
         iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
-        iir_filter->filter_startup = (FLUID_FABS(iir_filter->last_q) <= 0.001); // filter coefficients will not be initialized when Q is small
+        iir_filter->filter_startup = (FLUID_FABS(iir_filter->last_q) < Q_MIN); // filter coefficients will not be initialized when Q is small
     }
     else if(FLUID_FABS(fres_diff) > 0.01f)
     {
