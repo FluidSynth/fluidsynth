@@ -772,7 +772,7 @@ struct InterpolateNone
     template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_none_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_none_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
@@ -781,7 +781,7 @@ struct InterpolateLinear
     template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_linear_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_linear_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
@@ -790,7 +790,7 @@ struct Interpolate4thOrder
     template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_4th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_4th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
@@ -799,7 +799,7 @@ struct Interpolate7thOrder
     template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_7th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_7th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
