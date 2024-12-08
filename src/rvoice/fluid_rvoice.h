@@ -214,21 +214,37 @@ int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *voice, fluid_real_t *
  * least sig. 8 bit part in order to create a 24 bit sample.
  */
 static FLUID_INLINE int32_t
-fluid_rvoice_get_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned int idx)
+fluid_rvoice_get_sample24(const short int *FLUID_RESTRICT dsp_msb, const char *FLUID_RESTRICT dsp_lsb, unsigned int idx)
 {
     /* cast sample to unsigned type, so we can safely shift and bitwise or
      * without relying on undefined behaviour (should never happen anyway ofc...) */
     uint32_t msb = (uint32_t)dsp_msb[idx];
-    uint8_t lsb = 0U;
-
-    /* most soundfonts have 16 bit samples, assume that it's unlikely we
-     * experience 24 bit samples here */
-    if(FLUID_UNLIKELY(dsp_lsb != NULL))
-    {
-        lsb = (uint8_t)dsp_lsb[idx];
-    }
+    uint8_t lsb = (uint8_t)dsp_lsb[idx];
 
     return (int32_t)((msb << 8) | lsb);
+}
+
+static FLUID_INLINE int32_t
+fluid_rvoice_get_sample16(const short int *FLUID_RESTRICT dsp_msb, unsigned int idx)
+{
+    /* cast sample to unsigned type, so we can safely shift and bitwise or
+     * without relying on undefined behaviour (should never happen anyway ofc...) */
+    uint32_t msb = (uint32_t)dsp_msb[idx];
+
+    return (int32_t)((msb << 8) | 0);
+}
+
+static FLUID_INLINE int32_t
+fluid_rvoice_get_sample(const short int *FLUID_RESTRICT dsp_msb, const char *FLUID_RESTRICT dsp_lsb, unsigned int idx)
+{
+    if (dsp_lsb != NULL)
+    {
+        return fluid_rvoice_get_sample24(dsp_msb, dsp_lsb, idx);
+    }
+    else
+    {
+        return fluid_rvoice_get_sample16(dsp_msb, idx);
+    }
 }
 
 #ifdef __cplusplus
