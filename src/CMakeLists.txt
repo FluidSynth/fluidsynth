@@ -1,6 +1,6 @@
 # FluidSynth - A Software Synthesizer
 #
-# Copyright (C) 2003-2010 Peter Hanappe and others.
+# Copyright (C) 2003-2024 Peter Hanappe and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -211,20 +211,11 @@ configure_file ( ${FluidSynth_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
 if ( WIN32 )
-include(generate_product_version)
-generate_product_version(
-    VersionFilesOutputVariable
-    NAME "Fluidsynth"
-    BUNDLE "Fluidsynth"
-    VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR}
-    VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR}
-    VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO}
-    VERSION_REVISION 0
-    COMMENTS "Fluidsynth"
-    COMPANY_NAME "Fluidsynth LGPL"
-    ORIGINAL_FILENAME "libfluidsynth.dll"
-    FILE_DESCRIPTION "Fluidsynth"
-)
+    set(TARGET_TYPE "VFT_DLL")
+    set(TARGET_FILENAME "libfluidsynth-${LIB_VERSION_CURRENT}.dll")
+    set(PRODUCT_NAME "FluidSynth Library")
+    set(VersionFilesOutputVariable "${FluidSynth_BINARY_DIR}/src/VersionInfoLib.rc")
+    configure_file(${FluidSynth_SOURCE_DIR}/cmake_admin/VersionResource.rc.in ${VersionFilesOutputVariable} @ONLY)
 endif ( WIN32 )
 
 add_library ( libfluidsynth-OBJ OBJECT
@@ -449,8 +440,17 @@ if ( WASAPI_SUPPORT )
   set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} fluid_wasapi_device_enumerate.c )
 endif ( WASAPI_SUPPORT )
 
+if ( WIN32 )
+    set(TARGET_TYPE "VFT_APP")
+    set(TARGET_FILENAME "fluidsynth.exe")
+    set(PRODUCT_NAME "FluidSynth CLI")
+    set(VersionFilesOutputVariable "${FluidSynth_BINARY_DIR}/src/VersionInfo.rc")
+    configure_file(${FluidSynth_SOURCE_DIR}/cmake_admin/VersionResource.rc.in ${VersionFilesOutputVariable} @ONLY)
+endif ( WIN32 )
+
 add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
+    ${VersionFilesOutputVariable}
 )
 
 set_target_properties ( fluidsynth
