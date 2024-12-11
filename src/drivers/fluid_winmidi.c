@@ -498,8 +498,6 @@ static void fluid_winmidi_autoconnect_build_name(char *name)
         strncat(new_name, x, j);
     }
 
-    name[n - 1] = 0;
-
     FLUID_MEMSET(name, 0, MAXPNAMELEN);
     FLUID_STRCPY(name, new_name);
 }
