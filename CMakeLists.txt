@@ -221,8 +221,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info -Wcast-align" )
-
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align" )
+    
+    if ( CMAKE_COMPILER_IS_GNUCXX )
+      set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info" )
+    endif()
     if ( enable-ubsan )
       set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
       set ( CMAKE_CXX_FLAGS "-fsanitize=address,undefined ${CMAKE_CXX_FLAGS}" )
