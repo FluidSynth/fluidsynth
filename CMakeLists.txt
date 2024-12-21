@@ -224,7 +224,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align" )
     
     if ( CMAKE_COMPILER_IS_GNUCXX )
-      set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info" )
+      set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info-missed=missed.all" )
     endif()
     if ( enable-ubsan )
       set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
