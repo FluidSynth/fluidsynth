@@ -27,10 +27,9 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        os: ["ubuntu-20.04"]
         CC: [""]
         CXX: [""]
         CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0","-Denable-ubsan=1 -Denable-debug=1", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"]
@@ -38,23 +37,18 @@ jobs:
           - CC: "clang-7"
             CXX: "clang++-7"
             CMAKE_FLAGS: ""
-            os: "ubuntu-20.04"
           - CC: "clang-8"
             CXX: "clang++-8"
             CMAKE_FLAGS: ""
-            os: "ubuntu-20.04"
           - CC: "clang-10"
             CXX: "clang++-10"
             CMAKE_FLAGS: ""
-            os: "ubuntu-20.04"
           - CC: "clang-12"
             CXX: "clang++-12"
             CMAKE_FLAGS: ""
-            os: "ubuntu-20.04"
           - CC: "clang-10"
             CXX: "clang++-10"
             CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
-            os: "ubuntu-20.04"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
