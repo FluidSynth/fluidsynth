@@ -546,6 +546,11 @@ unset ( LIBSNDFILE_HASVORBIS CACHE )
 if ( enable-libsndfile )
     #set(CMAKE_FIND_DEBUG_MODE ON)
     find_package ( SndFile ${LIBSNDFILE_MINIMUM_VERSION} QUIET )
+    if ( NOT SndFile_FOUND )
+        # Not all distros have switched to libsndfile's cmake based build system, see #1445.
+        # Therefore, discover sndfile via the legacy pkg-config magic.
+        find_package ( SndFileLegacy )
+    endif ()
     set ( LIBSNDFILE_SUPPORT ${SndFile_FOUND} )
     if ( LIBSNDFILE_SUPPORT )
         message ( STATUS "Found libSndFile: ${SndFile_VERSION}" )
