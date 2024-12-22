@@ -155,7 +155,7 @@ endif()
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  SndFile
+  SndFileLegacy
   REQUIRED_VARS "_sndfile_library" "SndFile_INCLUDE_DIR"
   VERSION_VAR "SndFile_VERSION")
 
@@ -171,6 +171,7 @@ if(SndFile_FOUND AND NOT TARGET SndFile::sndfile)
 
   # Set additional variables for compatibility with upstream config
   set(SNDFILE_FOUND TRUE)
+  set(SndFile_FOUND TRUE)
   set(SndFile_LIBRARY SndFile::sndfile)
   set(SndFile_LIBRARIES SndFile::sndfile)
   set(SNDFILE_LIBRARY SndFile::sndfile)
