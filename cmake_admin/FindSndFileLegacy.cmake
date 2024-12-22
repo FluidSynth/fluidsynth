@@ -159,7 +159,7 @@ find_package_handle_standard_args(
   REQUIRED_VARS "_sndfile_library" "SndFile_INCLUDE_DIR"
   VERSION_VAR "SndFile_VERSION")
 
-if(SndFile_FOUND AND NOT TARGET SndFile::sndfile)
+if(SndFileLegacy_FOUND AND NOT TARGET SndFile::sndfile)
   add_library(SndFile::sndfile UNKNOWN IMPORTED)
   set_target_properties(
     SndFile::sndfile
