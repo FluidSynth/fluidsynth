@@ -38,18 +38,23 @@ jobs:
           - CC: "clang-7"
             CXX: "clang++-7"
             CMAKE_FLAGS: ""
+            os: "ubuntu-20.04"
           - CC: "clang-8"
             CXX: "clang++-8"
             CMAKE_FLAGS: ""
+            os: "ubuntu-20.04"
           - CC: "clang-10"
             CXX: "clang++-10"
             CMAKE_FLAGS: ""
+            os: "ubuntu-20.04"
           - CC: "clang-12"
             CXX: "clang++-12"
             CMAKE_FLAGS: ""
+            os: "ubuntu-20.04"
           - CC: "clang-10"
             CXX: "clang++-10"
             CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
+            os: "ubuntu-20.04"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
