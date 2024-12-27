@@ -54,6 +54,7 @@ else()
     set(IIR_FILTER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter")
     set(AWE32_NRPN_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/awe32_nrpn")
     set(SFSPEC_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/SoundFont-Spec-Test")
+    set(PORTAMENTO_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/portamento")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -65,7 +66,7 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -127,6 +128,23 @@ else()
         VERBATIM
     )
 
+    add_custom_target(render1TOWOW
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
+        COMMENT "Rendering Portamento tests"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/portamento/
+        VERBATIM
+    )
+
+    add_custom_target(renderDescent8
+        COMMAND fluidsynth -R 1 -C 1 -g 0.5 -F ${PORTAMENTO_RENDER_DIR}/Game08.${FEXT} Game08.mid ${GENERAL_USER_GS2}
+        COMMENT "Rendering Descent Game 8"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/portamento/
+        VERBATIM
+    )
+
     add_custom_target(renderSfSpecTest
         COMMAND fluidsynth -R 1 -C 1 -g 0.5 -F ${SFSPEC_RENDER_DIR}/sf_spec_test.${FEXT} sf_spec_test.mid sf_spec_test.sf2
         COMMENT "Rendering Christian Collins' SF2 spec test"
@@ -143,6 +161,8 @@ else()
     add_dependencies(check_manual renderAltitude)
     add_dependencies(check_manual renderFilter)
     add_dependencies(check_manual renderUplift)
+    add_dependencies(check_manual render1TOWOW)
+    add_dependencies(check_manual renderDescent8)
     add_dependencies(check_manual renderSfSpecTest)
 
 endif()
