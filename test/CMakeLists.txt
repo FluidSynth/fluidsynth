@@ -55,6 +55,7 @@ else()
     set(AWE32_NRPN_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/awe32_nrpn")
     set(SFSPEC_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/SoundFont-Spec-Test")
     set(PORTAMENTO_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/portamento")
+    set(REVERB_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/reverb")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -66,7 +67,7 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -153,6 +154,35 @@ else()
         VERBATIM
     )
 
+    add_custom_target(render1455
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.0 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_000.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.5 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_000.5.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=1.0 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_001.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=5.0 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_005.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=10  -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_010.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=50  -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_050.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=100 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_100.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMENT "Rendering Christian Collins' reverb test issue 1455"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
+        VERBATIM
+    )
+
+    set(DK64SF2 "../sf2/ANMP-data/soundfonts/N64/DK64.sf2")
+    add_custom_target(renderDK64JJU
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.0 -F ${REVERB_RENDER_DIR}/DK64_sparse04_000.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.5 -F ${REVERB_RENDER_DIR}/DK64_sparse04_000.5.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=1.0 -F ${REVERB_RENDER_DIR}/DK64_sparse04_001.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=5.0 -F ${REVERB_RENDER_DIR}/DK64_sparse04_005.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=10  -F ${REVERB_RENDER_DIR}/DK64_sparse04_010.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=50  -F ${REVERB_RENDER_DIR}/DK64_sparse04_050.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=100 -F ${REVERB_RENDER_DIR}/DK64_sparse04_100.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
+        COMMENT "Praise Grant Kirkhope!"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
+        VERBATIM
+    )
+
     # Add a dependency so that rendering targets depends on check_manual
     add_dependencies(check_manual render1415)
     add_dependencies(check_manual render1417)
@@ -164,5 +194,7 @@ else()
     add_dependencies(check_manual render1TOWOW)
     add_dependencies(check_manual renderDescent8)
     add_dependencies(check_manual renderSfSpecTest)
+    add_dependencies(check_manual render1455)
+    add_dependencies(check_manual renderDK64JJU)
 
 endif()
