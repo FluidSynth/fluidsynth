@@ -348,7 +348,7 @@ Developers:
             <max>100.0</max>
             <realtime/>
             <desc>
-                Sets the stereo spread of the reverb signal.</desc>
+                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 100 indicates maximum separation between left and right channels. Otherwise, this setting should be considered as dimensionless quantity. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
         </setting>
         <setting>
             <name>sample-rate</name>
