@@ -222,10 +222,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align" )
-    
-    if ( CMAKE_COMPILER_IS_GNUCXX )
-      set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopt-info-missed=missed.all" )
-    endif()
+
     if ( enable-ubsan )
       set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
       set ( CMAKE_CXX_FLAGS "-fsanitize=address,undefined ${CMAKE_CXX_FLAGS}" )
@@ -445,10 +442,11 @@ if ( enable-profiling )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
       set ( OPT_FLAGS "-qopt-report=3" )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
-      set ( OPT_FLAGS "" )
+      set ( OPT_FLAGS "-fopt-info -ftree-vectorizer-verbose" )
     endif ( )
 
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPT_FLAGS}" )
 
     find_program( CLANG_TIDY
                 NAMES "clang-tidy"
