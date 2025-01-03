@@ -5211,7 +5211,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
 
         FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d",
                   chan, key, vel, synth->storeid,
-                  (float) ticks / 44100.0f,
+                  (float) ticks / synth->sample_rate,
                   (fluid_curtime() - synth->start) / 1000.0f,
                   0.0f,
                   k);
