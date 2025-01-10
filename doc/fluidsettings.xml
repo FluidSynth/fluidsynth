@@ -348,7 +348,7 @@ Developers:
             <max>100.0</max>
             <realtime/>
             <desc>
-                Sets the stereo spread of the reverb signal.</desc>
+                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange [0;1] is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
         </setting>
         <setting>
             <name>sample-rate</name>
