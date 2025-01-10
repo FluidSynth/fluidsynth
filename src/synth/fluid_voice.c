@@ -1405,10 +1405,6 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
     fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -2000);
     fluid_voice_update_param(voice, GEN_VOLENVRELEASE);
 
-    /* Speed up the modulation envelope */
-    fluid_voice_gen_set(voice, GEN_MODENVRELEASE, -1000);
-    fluid_voice_update_param(voice, GEN_MODENVRELEASE);
-
     at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
     UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
 
