@@ -1399,12 +1399,14 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
     fluid_voice_gen_set(voice, GEN_EXCLUSIVECLASS, 0);
 
     /* Speed up the volume envelope */
-    /* The value was found through listening tests with hi-hat samples. */
-    fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -200);
+    /* The previously-used value of "-200" was found through listening tests
+       with hi-hat samples. This was changed to "-2000" after "-200" was shown
+       to cause too long cut times in most cases. */
+    fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -2000);
     fluid_voice_update_param(voice, GEN_VOLENVRELEASE);
 
     /* Speed up the modulation envelope */
-    fluid_voice_gen_set(voice, GEN_MODENVRELEASE, -200);
+    fluid_voice_gen_set(voice, GEN_MODENVRELEASE, -1000);
     fluid_voice_update_param(voice, GEN_MODENVRELEASE);
 
     at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
