@@ -56,6 +56,7 @@ else()
     set(SFSPEC_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/SoundFont-Spec-Test")
     set(PORTAMENTO_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/portamento")
     set(REVERB_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/reverb")
+    set(EXCL_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/exclusive_class")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -67,7 +68,7 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -183,6 +184,14 @@ else()
         VERBATIM
     )
 
+    add_custom_target(renderExcl
+        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/exclusive class cutoff speed.${FEXT}" "exclusive class cutoff speed.mid" "exclusive class cutoff speed.sf2"
+        COMMENT "Rendering Christian Collins' exclusive class cutoff test"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
+        VERBATIM
+    )
+
     # Add a dependency so that rendering targets depends on check_manual
     add_dependencies(check_manual render1415)
     add_dependencies(check_manual render1417)
@@ -196,5 +205,6 @@ else()
     add_dependencies(check_manual renderSfSpecTest)
     add_dependencies(check_manual render1455)
     add_dependencies(check_manual renderDK64JJU)
+    add_dependencies(check_manual renderExcl)
 
 endif()
