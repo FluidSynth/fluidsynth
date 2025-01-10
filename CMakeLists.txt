@@ -1,6 +1,6 @@
 # FluidSynth - A Software Synthesizer
 #
-# Copyright (C) 2003-2023 Peter Hanappe and others.
+# Copyright (C) 2003-2024 Peter Hanappe and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -47,7 +47,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 4 )
-set ( FLUIDSYNTH_VERSION_MICRO 1 )
+set ( FLUIDSYNTH_VERSION_MICRO 2 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION ${VERSION} )
 
@@ -62,7 +62,7 @@ set ( FLUIDSYNTH_VERSION ${VERSION} )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 3 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_REVISION 2 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -521,7 +521,7 @@ set ( ALSA_MINIMUM_VERSION 0.9.1 )
 set ( DBUS_MINIMUM_VERSION 1.11.12 )
 set ( GLIB2_MINUMUM_VERSION 2.6.5 )
 set ( LIBINSTPATCH_MINIMUM_VERSION 1.1.0 )
-set ( LIBSNDFILE_MINIMUM_VERSION 1.2.1 )
+set ( LIBSNDFILE_MINIMUM_VERSION 1.0.0 )
 set ( PIPEWIRE_MINIMUM_VERSION 0.3 )
 set ( PORTAUDIO_MINIMUM_VERSION 2.19 )
 set ( PULSEAUDIO_MINIMUM_VERSION 2.0 )
@@ -547,6 +547,11 @@ unset ( LIBSNDFILE_HASVORBIS CACHE )
 if ( enable-libsndfile )
     #set(CMAKE_FIND_DEBUG_MODE ON)
     find_package ( SndFile ${LIBSNDFILE_MINIMUM_VERSION} QUIET )
+    if ( NOT SndFile_FOUND )
+        # Not all distros have switched to libsndfile's cmake based build system, see #1445.
+        # Therefore, discover sndfile via the legacy pkg-config magic.
+        find_package ( SndFileLegacy )
+    endif ()
     set ( LIBSNDFILE_SUPPORT ${SndFile_FOUND} )
     if ( LIBSNDFILE_SUPPORT )
         message ( STATUS "Found libSndFile: ${SndFile_VERSION}" )
