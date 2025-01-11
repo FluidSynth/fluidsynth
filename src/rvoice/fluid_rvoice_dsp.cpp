@@ -64,6 +64,66 @@ fluid_rvoice_get_float_sample(const short int *FLUID_RESTRICT dsp_msb, const cha
     return (fluid_real_t)sample;
 }
 
+/* Special case of interpolate_none for rendering silent voices, i.e. in delay phase or zero volume */
+template<bool LOOPING>
+static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
+{
+    fluid_rvoice_dsp_t *voice = &rvoice->dsp;
+    fluid_phase_t dsp_phase = voice->phase;
+    fluid_phase_t dsp_phase_incr;
+    fluid_real_t dsp_amp = voice->amp;
+    fluid_real_t dsp_amp_incr = voice->amp_incr;
+    unsigned short dsp_i = 0;
+    unsigned int dsp_phase_index;
+    unsigned int end_index;
+
+    /* Convert playback "speed" floating point value to phase index/fract */
+    fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+
+    end_index = LOOPING ? voice->loopend - 1 : voice->end;
+
+    while (1)
+    {
+        dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
+
+        /* interpolate sequence of sample points */
+        for (; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
+        {
+            fluid_real_t sample = 0;
+            dsp_buf[dsp_i] = sample;
+
+            /* increment phase and amplitude */
+            fluid_phase_incr(dsp_phase, dsp_phase_incr);
+            dsp_amp += dsp_amp_incr;
+        }
+
+        /* break out if not looping (buffer may not be full) */
+        if (!LOOPING)
+        {
+            break;
+        }
+
+        dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
+        /* go back to loop start */
+        if (dsp_phase_index > end_index)
+        {
+            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            voice->has_looped = 1;
+        }
+
+        /* break out if filled buffer */
+        if (dsp_i >= FLUID_BUFSIZE)
+        {
+            break;
+        }
+    }
+
+    voice->phase = dsp_phase;
+    voice->amp = dsp_amp;
+
+    return (dsp_i);
+}
+
 /* No interpolation. Just take the sample, which is closest to
   * the playback pointer.  Questionable quality, but very
   * efficient. */
@@ -767,6 +827,15 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     return (dsp_i);
 }
 
+struct ProcessSilence
+{
+    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
+    {
+        return fluid_rvoice_dsp_silence_local<LOOPING>(rvoice, dsp_buf);
+    }
+};
+
 struct InterpolateNone
 {
     template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
@@ -860,6 +929,12 @@ int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, in
             }
         }
     }
+}
+
+extern "C" int
+fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+{
+    return dsp_invoker<ProcessSilence>(rvoice, dsp_buf, looping);
 }
 
 extern "C" int
