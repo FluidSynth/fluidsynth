@@ -439,6 +439,15 @@ if ( enable-profiling )
     set ( WITH_PROFILING 1 )
     if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
       set ( OPT_FLAGS "-Rpass=loop-vectorize" ) # -Rpass-analysis=loop-vectorize" )
+      find_program( CLANG_TIDY
+                    NAMES "clang-tidy"
+                    DOC "Path to clang-tidy executable" )
+
+      if ( CLANG_TIDY )
+        message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
+        execute_process ( COMMAND ${CLANG_TIDY} "--version" )
+        set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
+      endif ( CLANG_TIDY )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
       set ( OPT_FLAGS "-qopt-report=3" )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
@@ -447,16 +456,6 @@ if ( enable-profiling )
 
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPT_FLAGS}" )
-
-    find_program( CLANG_TIDY
-                NAMES "clang-tidy"
-                DOC "Path to clang-tidy executable" )
-
-    if ( CLANG_TIDY )
-        message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
-        execute_process ( COMMAND ${CLANG_TIDY} "--version" )
-        set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
-    endif ( CLANG_TIDY )
 
 endif ( enable-profiling )
 
