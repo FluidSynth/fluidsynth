@@ -451,7 +451,7 @@ if ( enable-profiling )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
       set ( OPT_FLAGS "-qopt-report=3" )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
-      set ( OPT_FLAGS "-fopt-info -ftree-vectorizer-verbose" )
+      set ( OPT_FLAGS "-fopt-info -fopt-info-vec-missed" )
     endif ( )
 
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
