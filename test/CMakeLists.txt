@@ -186,7 +186,11 @@ else()
 
     add_custom_target(renderExcl
         COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/exclusive class cutoff speed.${FEXT}" "exclusive class cutoff speed.mid" "exclusive class cutoff speed.sf2"
-        COMMENT "Rendering Christian Collins' exclusive class cutoff test"
+        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/MIDInotecut.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/percussion note cutoff.${FEXT}" "percussion note cutoff.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
+        COMMENT "Rendering exclusive class cutoff tests"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
         VERBATIM
