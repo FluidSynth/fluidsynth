@@ -71,8 +71,6 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
-    fluid_real_t dsp_amp = voice->amp;
-    fluid_real_t dsp_amp_incr = voice->amp_incr;
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
@@ -94,7 +92,6 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
-            dsp_amp += dsp_amp_incr;
         }
 
         /* break out if not looping (buffer may not be full) */
@@ -119,7 +116,8 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
     }
 
     voice->phase = dsp_phase;
-    voice->amp = dsp_amp;
+    // Note, there is no need to update the amplitude here. When the voice becomes audible again, the amp will be updated anyway in fluid_rvoice_calc_amp().
+    // voice->amp = dsp_amp;
 
     return (dsp_i);
 }
