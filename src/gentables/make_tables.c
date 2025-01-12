@@ -61,7 +61,22 @@ static void open_table(FILE**fp, const char* dir, const char* file)
     }
     
     /* Emit warning header */
-    fprintf(*fp, "/* THIS FILE HAS BEEN AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n");
+    fprintf(*fp,
+	"/* THIS FILE HAS BEEN AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n"
+    "#ifdef __cplusplus\n"
+	"extern \"C\" {\n"
+	"#endif\n\n"
+	);
+}
+
+static void close_table(FILE**fp)
+{
+    fprintf(*fp,
+	"#ifdef __cplusplus\n"
+	"}\n"
+	"#endif\n"
+	);
+    fclose(*fp);
 }
 
 int main (int argc, char *argv[])
@@ -74,11 +89,11 @@ int main (int argc, char *argv[])
     
     open_table(&fp, argv[1], "fluid_conv_tables.inc.h");
     gen_conv_table(fp);
-    fclose(fp);
+    close_table(&fp);
 
     open_table(&fp, argv[1], "fluid_rvoice_dsp_tables.inc.h");
     gen_rvoice_table_dsp(fp);
-    fclose(fp);
+    close_table(&fp);
 
     return 0;
 }

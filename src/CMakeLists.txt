@@ -139,7 +139,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_lfo.h
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c
-    rvoice/fluid_rvoice_dsp.c
+    rvoice/fluid_rvoice_dsp.cpp
     rvoice/fluid_rvoice_event.h
     rvoice/fluid_rvoice_event.c
     rvoice/fluid_rvoice_mixer.h
@@ -311,8 +311,6 @@ elseif ( WIN32 )
   set_target_properties ( libfluidsynth
     PROPERTIES
       PUBLIC_HEADER "${public_HEADERS}"
-      ARCHIVE_OUTPUT_NAME "fluidsynth"
-      PREFIX "lib"
       OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
       VERSION ${LIB_VERSION_INFO}
       SOVERSION ${LIB_VERSION_CURRENT}
