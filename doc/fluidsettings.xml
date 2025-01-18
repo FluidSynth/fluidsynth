@@ -195,7 +195,7 @@ Developers:
                 Sets the minimum note duration in milliseconds. This ensures that really short duration note events, such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.</desc>
         </setting>
         <setting>
-            <name>msgs-note-cut</name>
+            <name>note-cut</name>
             <type>int</type>
             <def>0</def>
             <min>0</min>

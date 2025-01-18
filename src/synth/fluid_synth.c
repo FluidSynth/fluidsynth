@@ -256,7 +256,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
 
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
-    fluid_settings_register_int(settings, "synth.msgs-note-cut", 0, 0, 2, 0);
+    fluid_settings_register_int(settings, "synth.note-cut", 0, 0, 2, 0);
 }
 
 /**
@@ -689,7 +689,7 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
     fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
     
-    fluid_settings_getnum_int(settings, "synth.msgs-note-cut", &i);
+    fluid_settings_getnum_int(settings, "synth.note-cut", &i);
     synth->msgs_note_cut_mode = i;
 
     /* register the callbacks */
