@@ -186,12 +186,25 @@ else()
 
     add_custom_target(renderExcl
         COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/exclusive class cutoff speed.${FEXT}" "exclusive class cutoff speed.mid" "exclusive class cutoff speed.sf2"
-        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/MIDInotecut.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -o synth.note-cut=0 -F "${EXCL_RENDER_DIR}/MIDInotecut0.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -o synth.note-cut=1 -F "${EXCL_RENDER_DIR}/MIDInotecut1.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 1.4 -o synth.note-cut=2 -F "${EXCL_RENDER_DIR}/MIDInotecut2.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
         COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/percussion note cutoff.${FEXT}" "percussion note cutoff.mid" ${GENERAL_USER_GS2}
         COMMAND fluidsynth -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/percussion-test.${FEXT}" "percussion-test.mid" ${GENERAL_USER_GS2}
-        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
-        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
         COMMENT "Rendering exclusive class cutoff tests"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
+        VERBATIM
+    )
+
+    add_custom_target(rendere1m1
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.note-cut=0 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut0.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.note-cut=0 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut0.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.note-cut=1 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut1.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.note-cut=1 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut1.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.note-cut=2 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut2.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.note-cut=2 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut2.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
+        COMMENT "Rendering Doom E1M1 with note-cut 0,1,2"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
         VERBATIM
