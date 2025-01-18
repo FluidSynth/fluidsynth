@@ -689,7 +689,7 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
     fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
     
-    fluid_settings_getnum_int(settings, "synth.note-cut", &i);
+    fluid_settings_getint(settings, "synth.note-cut", &i);
     synth->msgs_note_cut_mode = i;
 
     /* register the callbacks */
