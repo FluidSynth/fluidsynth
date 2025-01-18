@@ -1,6 +1,9 @@
 /*!
 
 \page RecentChanges Recent Changes
+\section NewIn2_4_3 What's new in 2.4.3?
+- synth.note-cut has been introduced
+
 \section NewIn2_4_0 What's new in 2.4.0?
 - synth.device-id now has a default value of 16
 - Default values of reverb and chorus settings have been tuned
