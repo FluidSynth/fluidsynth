@@ -915,6 +915,10 @@ if ( UNIX )
       "${CMAKE_COMMAND}" -P "${FluidSynth_BINARY_DIR}/cmake_uninstall.cmake")
 endif ( UNIX )
 
+
+configure_file(prefab.json.in prefab.json @ONLY)
+configure_file(module.json.in module.json @ONLY)
+
 include ( report )
 
 # CPack support
