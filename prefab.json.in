@@ -1,0 +1,6 @@
+{
+    "schema_version": 1,
+    "name": "fluidsynth",
+    "version": "@FLUIDSYNTH_VERSION@",
+    "dependencies": []
+}
