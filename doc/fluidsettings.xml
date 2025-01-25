@@ -195,6 +195,20 @@ Developers:
                 Sets the minimum note duration in milliseconds. This ensures that really short duration note events, such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.</desc>
         </setting>
         <setting>
+            <name>note-cut</name>
+            <type>int</type>
+            <def>0</def>
+            <min>0</min>
+            <max>2</max>
+            <desc>
+                This setting specifies the behavior for releasing voices, if the same note is hit twice on the same channel. Early synthesizers like the Roland SC-55 and Microsoft Wavetable GS MIDI synthesizer (MSGS) are terminating notes abruptly that have already received a noteOff after receiving a noteOn for the same key. This behavior was presumably implemented to save polyphony in these systems. This setting was introduced in fluidsynth 2.4.3 and can be enabled to mimic this behavior, to esp. play back old tunes like Doom E1M1 more accurately. Please note that using a SoundFont which makes proper use of exclusive classes for e.g. percussion instruments will yield a similar result. Also, this approach is generally preferable since it's portable among SF2 compliant synths and can be applied more fine-grained among instruments.
+                <ul>
+                    <li>0: A regular noteOff is applied to the previous note, which is the default SF2 compliant behavior.</li>
+                    <li>1: Note-cut is only applied on drum MIDI channels (i.e. CHANNEL_TYPE_DRUM). Fluidsynth 2.4.0, 2.4.1, and 2.4.2 unconditionally used this mode.</li>
+                    <li>2: Note-cut is applied to both, drum and melodic MIDI channels.</li>
+                </ul></desc>
+        </setting>
+        <setting>
             <name>overflow.age</name>
             <type>num</type>
             <def>1000.0</def>
