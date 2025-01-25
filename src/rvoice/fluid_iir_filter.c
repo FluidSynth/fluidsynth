@@ -115,6 +115,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     if(iir_filter->filter_startup)
     {
         iir_filter->last_q = q;
+        iir_filter->q_incr_count = 0;
     }
     else
     {
@@ -126,6 +127,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
         }
         iir_filter->q_incr = (q - iir_filter->last_q) / (q_incr_count);
         iir_filter->q_incr_count = q_incr_count;
+        LOG_FILTER("%f - %f / %f = %f", q , iir_filter->last_q, q_incr_count, iir_filter->q_incr);
     }
 #ifdef DBG_FILTER
     iir_filter->target_q = q;
