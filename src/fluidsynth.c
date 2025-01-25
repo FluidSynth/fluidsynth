@@ -1283,7 +1283,7 @@ print_help(fluid_settings_t *settings)
 #endif
     printf(" -q, --quiet\n"
            "    Do not print welcome message or other informational output\n"
-           "    (Windows only: also suppress all log messages lower than PANIC\n");
+           "    (Windows only: also suppress all log messages lower than PANIC)\n");
     printf(" -r, --sample-rate\n"
            "    Set the sample rate\n");
     printf(" -R, --reverb\n"
