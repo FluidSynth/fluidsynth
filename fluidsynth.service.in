@@ -19,6 +19,7 @@ ProtectControlGroups=true
 PrivateUsers=yes
 Type=notify
 NotifyAccess=main
+Environment=OTHER_OPTS= SOUND_FONT=
 EnvironmentFile=@FLUID_DAEMON_ENV_FILE@
 EnvironmentFile=-%h/.config/fluidsynth
 ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/fluidsynth -is $OTHER_OPTS $SOUND_FONT
