@@ -1,16 +1,20 @@
 cmake_minimum_required(VERSION 3.5)
 
-# remove $CC from the current environment and by that force cmake to look for a (working) C compiler,
-# which hopefully will be the host compiler
-unset(ENV{CC})
-
-# also unset $CFLAGS to avoid passing any cross compilation flags to the host compiler
-unset(ENV{CFLAGS})
-
-# linker flags as well
-unset(ENV{LDFLAGS})
-
 project (gentables C)
+
+if ( CMAKE_CROSSCOMPILING )
+
+    # remove $CC from the current environment and by that force cmake to look for a (working) C compiler,
+    # which hopefully will be the host compiler
+    unset(ENV{CC})
+
+    # also unset $CFLAGS to avoid passing any cross compilation flags to the host compiler
+    unset(ENV{CFLAGS})
+
+    # linker flags as well
+    unset(ENV{LDFLAGS})
+
+endif ()
 
 set ( CMAKE_BUILD_TYPE Debug )
 
