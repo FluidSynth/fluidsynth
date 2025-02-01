@@ -503,6 +503,10 @@ if ( SDL2_SUPPORT ) # because SDL_Init() etc.
     target_link_libraries ( fluidsynth PRIVATE ${SDL2_LIBRARIES} )
 endif()
 
+if ( SDL3_SUPPORT ) # because SDL_Init() etc.
+    target_link_libraries ( fluidsynth PRIVATE SDL3::SDL3 )
+endif()
+
 if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
     target_link_libraries ( fluidsynth PRIVATE PipeWire::PipeWire )
 endif()
