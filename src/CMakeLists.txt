@@ -402,6 +402,10 @@ if ( SDL2_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC ${SDL2_LIBRARIES} )
 endif()
 
+if ( SDL3_SUPPORT )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
+endif()
+
 if ( TARGET oboe::oboe AND OBOE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC oboe::oboe )
 endif()
