@@ -686,7 +686,7 @@ endif ( enable-sdl2 )
 
 unset ( SDL3_SUPPORT CACHE )
 if ( enable-sdl3 )
-    find_package ( SDL3 QUIET )
+    find_package ( SDL3 QUIET CONFIG COMPONENTS SDL3 )
     if ( SDL3_FOUND )
         if ( NOT DEFINED SDL3_VERSION )
             include ( GetSDL3VersionFromHeaders )
