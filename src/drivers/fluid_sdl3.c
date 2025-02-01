@@ -192,6 +192,14 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         return;
     }
 
+    if(!SDL_InitSubSystem(SDL_INIT_AUDIO))
+    {
+#if FLUID_VERSION_CHECK(FLUIDSYNTH_VERSION_MAJOR, FLUIDSYNTH_VERSION_MINOR, FLUIDSYNTH_VERSION_MICRO) < FLUID_VERSION_CHECK(2,2,0)
+        FLUID_LOG(FLUID_WARN, "SDL3 subsystem not initialized, SDL3 audio driver won't be usable");
+#endif
+        return;
+    }
+
     list= SDL_malloc(sizeof(AudioDeviceList));
     devices = SDL_GetAudioPlaybackDevices(&nDevs);
 
@@ -426,6 +434,8 @@ void delete_fluid_sdl3_audio_driver(fluid_audio_driver_t *d)
 
         FLUID_FREE(dev);
     }
+
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 #endif /* SDL3_SUPPORT */
