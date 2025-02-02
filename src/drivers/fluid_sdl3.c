@@ -154,23 +154,30 @@ static int GetNumAudioDevices(int iscapture, fluid_sdl3_audio_driver_t *dev)
 static void
 SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 {
-    void *buffer = malloc(len);
+    void *buffer = SDL_malloc(len);
+    int buf_len = 0;
     fluid_sdl3_audio_driver_t *dev = (fluid_sdl3_audio_driver_t *)data;
-    (void)add_len;
 
-    if (buffer == NULL)
+    while (add_len > 0)
     {
-        return;
-    }
+        buf_len = SDL_min(add_len, len);
+        buffer = SDL_malloc(buf_len);
 
-    len /= dev->frame_size;
+        if (buffer == NULL)
+        {
+            return;
+        }
 
-    dev->write_ptr(dev->synth, len, buffer, 0, 2, buffer, 1, 2);
-    SDL_PutAudioStreamData(dev->stream, buffer, len);
+        dev->write_ptr(dev->synth, buf_len, buffer, 0, 2, buffer, 1, 2);
+        add_len /= dev->frame_size;
 
-    if (buffer != NULL)
-    {
-        free(buffer);
+        SDL_PutAudioStreamData(stream, buffer, buf_len);
+        add_len -= buf_len;  /* subtract what we've just fed the stream. */
+
+        if (buffer != NULL)
+        {
+            SDL_free(buffer);
+        }
     }
 }
 
@@ -435,9 +442,10 @@ void delete_fluid_sdl3_audio_driver(fluid_audio_driver_t *d)
         }
 
         FLUID_FREE(dev);
+
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
     }
 
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 #endif /* SDL3_SUPPORT */
