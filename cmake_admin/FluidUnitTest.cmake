@@ -8,11 +8,7 @@ macro ( ADD_FLUID_TEST _test )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_test} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-       if ( SDL3_SUPPORT )
-          target_link_libraries( ${_test} libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
-       else ( SDL3_SUPPORT )
-          target_link_libraries( ${_test} libfluidsynth-OBJ )
-       endif ( SDL3_SUPPORT )
+       target_link_libraries( ${_test} libfluidsynth-OBJ )
     endif
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}
