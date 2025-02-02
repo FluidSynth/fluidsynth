@@ -95,7 +95,7 @@ option ( enable-wasapi "compile Windows WASAPI support (if it is available)" on 
 option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
 option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-sdl2 "compile SDL2 audio support (if it is available)" off )
-option ( enable-sdl3 "compile SDL3 audio support (if it is available)" off )
+option ( enable-sdl3 "compile SDL3 audio support (if it is available)" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-pipewire "compile PipeWire support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
