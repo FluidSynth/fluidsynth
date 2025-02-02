@@ -289,9 +289,7 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(!SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
-#if FLUID_VERSION_CHECK(FLUIDSYNTH_VERSION_MAJOR, FLUIDSYNTH_VERSION_MINOR, FLUIDSYNTH_VERSION_MICRO) < FLUID_VERSION_CHECK(2,2,0)
         FLUID_LOG(FLUID_WARN, "SDL3 subsystem not initialized, SDL3 audio driver won't be usable");
-#endif
         return NULL;
     }
 
