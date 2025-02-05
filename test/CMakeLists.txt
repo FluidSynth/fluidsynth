@@ -57,6 +57,7 @@ else()
     set(PORTAMENTO_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/portamento")
     set(REVERB_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/reverb")
     set(EXCL_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/exclusive_class")
+    set(DSPINTERP_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dsp_interp")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -68,7 +69,7 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -105,7 +106,7 @@ else()
 
 
     add_custom_target(renderAltitude
-        COMMAND fluidsynth -R 1 -C 1 -g 0.5 -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid Altitude.sf2
+        COMMAND fluidsynth -R 1 -C 1 -f fluidsynth.cfg -o synth.default-soundfont="../../sf2/synthgs-sf2_04-compat.sf2" -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid 
         COMMENT "Rendering AWE32 NRPN test file Altitude.mid"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Altitude/
@@ -207,6 +208,14 @@ else()
         COMMENT "Rendering Doom E1M1 with note-cut 0,1,2"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
+        VERBATIM
+    )
+
+    add_custom_target(renderdspInterp
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${DSPINTERP_RENDER_DIR}/sample interpolation test.${FEXT}" "sample interpolation test.mid" "sample interpolation test.sf2"
+        COMMENT "Rendering Interpolation examples"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dsp_interp/
         VERBATIM
     )
 
