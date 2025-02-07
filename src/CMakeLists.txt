@@ -404,6 +404,7 @@ endif()
 
 if ( SDL3_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
+    target_include_directories( libfluidsynth-OBJ PRIVATE SDL3::Headers )
 endif()
 
 if ( TARGET oboe::oboe AND OBOE_SUPPORT )
@@ -459,6 +460,11 @@ add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
     ${VersionFilesOutputVariable}
 )
+
+if ( SDL3_SUPPORT )
+    target_link_libraries ( fluidsynth PUBLIC SDL3::SDL3 )
+    target_include_directories( fluidsynth PRIVATE SDL3::Headers )
+endif ( SDL3_SUPPORT )
 
 set_target_properties ( fluidsynth
     PROPERTIES IMPORT_PREFIX "" )
