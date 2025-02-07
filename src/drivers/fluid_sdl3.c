@@ -154,30 +154,22 @@ static int GetNumAudioDevices(int iscapture, fluid_sdl3_audio_driver_t *dev)
 static void
 SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 {
-    void *buffer = SDL_malloc(len);
+    unsigned int buffer[512];
     int buf_len = 0;
     fluid_sdl3_audio_driver_t *dev = (fluid_sdl3_audio_driver_t *)data;
 
     while (add_len > 0)
     {
-        buf_len = SDL_min(add_len, len);
-        buffer = SDL_malloc(buf_len);
+        buf_len = SDL_min(add_len, SDL_arraysize(buffer));
 
         if (buffer == NULL)
         {
             return;
         }
 
-        dev->write_ptr(dev->synth, buf_len, buffer, 0, 2, buffer, 1, 2);
-        add_len /= dev->frame_size;
-
+        dev->write_ptr(dev->synth, buf_len / sizeof(unsigned int), buffer, 0, 2, buffer, 1, 2);
         SDL_PutAudioStreamData(stream, buffer, buf_len);
         add_len -= buf_len;  /* subtract what we've just fed the stream. */
-
-        if (buffer != NULL)
-        {
-            SDL_free(buffer);
-        }
     }
 }
 
