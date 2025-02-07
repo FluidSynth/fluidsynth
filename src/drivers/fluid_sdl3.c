@@ -160,13 +160,7 @@ SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 
     while (add_len > 0)
     {
-        buf_len = SDL_min(add_len, SDL_arraysize(buffer));
-
-        if (buffer == NULL)
-        {
-            return;
-        }
-
+        buf_len = SDL_min(add_len, (int)SDL_arraysize(buffer));
         dev->write_ptr(dev->synth, buf_len / dev->frame_size, buffer, 0, 2, buffer, 1, 2);
         SDL_PutAudioStreamData(stream, buffer, buf_len);
         add_len -= buf_len;  /* subtract what we've just fed the stream. */
