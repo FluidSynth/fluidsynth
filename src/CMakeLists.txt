@@ -460,10 +460,6 @@ add_executable ( fluidsynth
     ${VersionFilesOutputVariable}
 )
 
-if ( SDL3_SUPPORT )
-    target_link_libraries ( fluidsynth PUBLIC SDL3::SDL3 )
-endif ( SDL3_SUPPORT )
-
 set_target_properties ( fluidsynth
     PROPERTIES IMPORT_PREFIX "" )
 
@@ -506,6 +502,10 @@ if ( SDL2_SUPPORT ) # because SDL_Init() etc.
     target_include_directories ( fluidsynth PRIVATE ${SDL2_INCLUDE_DIRS} )
     target_link_libraries ( fluidsynth PRIVATE ${SDL2_LIBRARIES} )
 endif()
+
+if ( SDL3_SUPPORT )
+    target_link_libraries ( fluidsynth PUBLIC SDL3::SDL3 )
+endif ( SDL3_SUPPORT )
 
 if ( TARGET PipeWire::PipeWire AND PIPEWIRE_SUPPORT ) # because pw_init() etc.
     target_link_libraries ( fluidsynth PRIVATE PipeWire::PipeWire )
