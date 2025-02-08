@@ -53,6 +53,8 @@ typedef struct
 
     int frame_size;
     int period_size;
+
+    unsigned char *render_buf;
 } fluid_sdl3_audio_driver_t;
 
 const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_driver_t *dev)
@@ -156,26 +158,13 @@ static void
 SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 {
     fluid_sdl3_audio_driver_t *dev = (fluid_sdl3_audio_driver_t *)data;
-    unsigned int *buffer = SDL_malloc(dev->period_size * dev->frame_size);
-    int buf_len = 0;
-
-    if (buffer == NULL)
-    {
-        FLUID_LOG(FLUID_WARN, "Audio callback buffer allocation has failed");
-        return;
-    }
 
     while (add_len > 0)
     {
         buf_len = SDL_min(add_len, dev->period_size * dev->frame_size);
-        dev->write_ptr(dev->synth, buf_len / dev->frame_size, buffer, 0, 2, buffer, 1, 2);
-        SDL_PutAudioStreamData(stream, buffer, buf_len);
+        dev->write_ptr(dev->synth, buf_len / dev->frame_size, dev->render_buf, 0, 2, dev->render_buf, 1, 2);
+        SDL_PutAudioStreamData(stream, dev->render_buf, buf_len);
         add_len -= buf_len;  /* subtract what we've just fed the stream. */
-    }
-
-    if (buffer != NULL)
-    {
-        SDL_free(buffer);
     }
 }
 
@@ -405,6 +394,12 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         dev->write_ptr = write_ptr;
         dev->frame_size = sample_size * aspec.channels;
         dev->period_size = period_size;
+        dev->render_buf = FLUID_MALLOC(dev->period_size * dev->frame_size);
+        if (dev->render_buf == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            break;
+        }
 
         /* Open audio device */
         dev->stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &aspec, SDLAudioCallback, dev);
@@ -440,6 +435,7 @@ void delete_fluid_sdl3_audio_driver(fluid_audio_driver_t *d)
             SDL_CloseAudioDevice(dev->devid);
         }
 
+        FLUID_FREE(dev->render_buf);
         FLUID_FREE(dev);
 
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
