@@ -63,18 +63,24 @@ const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_dri
     SDL_Mutex *AudioDeviceLock = SDL_CreateMutex();
     const char *retval = NULL;
 
-    if (!SDL_GetCurrentAudioDriver()) {
+    if(!SDL_GetCurrentAudioDriver())
+    {
         SDL_SetError("Audio subsystem is not initialized");
         return NULL;
     }
 
     SDL_LockMutex(AudioDeviceLock);
     list = iscapture ? &(dev->AudioSDL3RecordingDevices) : &(dev->AudioSDL3PlaybackDevices);
-    if ((idx < 0) || (idx >= list->num_devices)) {
+
+    if((idx < 0) || (idx >= list->num_devices))
+    {
         SDL_InvalidParamError("index");
-    } else {
+    }
+    else
+    {
         retval = list->devices[idx].name;
     }
+
     SDL_UnlockMutex(AudioDeviceLock);
     SDL_free(AudioDeviceLock);
 
@@ -89,30 +95,39 @@ static int GetNumAudioDevices(int iscapture, fluid_sdl3_audio_driver_t *dev)
     int num_devices = 0;
     int i = 0;
 
-    if (dev != NULL)
+    if(dev != NULL)
     {
         list = iscapture ? &(dev->AudioSDL3RecordingDevices) : &(dev->AudioSDL3PlaybackDevices);
     }
 
     /* SDL_GetNumAudioDevices triggers a device redetect in sdl3, so we'll just build our list from here. */
     devices = iscapture ? SDL_GetAudioRecordingDevices(&num_devices) : SDL_GetAudioPlaybackDevices(&num_devices);
-    if (!devices) {
+
+    if(!devices)
+    {
         return list->num_devices;  /* just return the existing one for now. Oh well. */
     }
 
     SDL_zero(newlist);
-    if (num_devices > 0) {
+
+    if(num_devices > 0)
+    {
         newlist.num_devices = num_devices;
-        newlist.devices = (AudioDeviceInfo *) SDL_malloc(sizeof (AudioDeviceInfo) * num_devices);
-        if (!newlist.devices) {
+        newlist.devices = (AudioDeviceInfo *) SDL_malloc(sizeof(AudioDeviceInfo) * num_devices);
+
+        if(!newlist.devices)
+        {
             SDL_free(devices);
             return list->num_devices;  /* just return the existing one for now. Oh well. */
         }
 
-        for (i = 0; i < num_devices; i++) {
+        for(i = 0; i < num_devices; i++)
+        {
             const char *newname = SDL_GetAudioDeviceName(devices[i]);
             char *fullname = NULL;
-            if (newname == NULL) {
+
+            if(newname == NULL)
+            {
                 /* ugh, whatever, just make up a name. */
                 newname = "Unidentified device";
             }
@@ -120,12 +135,16 @@ static int GetNumAudioDevices(int iscapture, fluid_sdl3_audio_driver_t *dev)
             /* Device names must be unique in sdl3, as that's how we open them.
                sdl3 took serious pains to try to add numbers to the end of duplicate device names ("SoundBlaster Pro" and then "SoundBlaster Pro (2)"),
                but here we're just putting the actual SDL3 instance id at the end of everything. Good enough. I hope. */
-            if (!newname || (SDL_asprintf(&fullname, "%s (id=%u)", newname, (unsigned int) devices[i]) < 0)) {
+            if(!newname || (SDL_asprintf(&fullname, "%s (id=%u)", newname, (unsigned int) devices[i]) < 0))
+            {
                 /* we're in real trouble now.  :/  */
                 int j;
-                for (j = 0; j < i; j++) {
+
+                for(j = 0; j < i; j++)
+                {
                     SDL_free(newlist.devices[i].name);
                 }
+
                 SDL_free(fullname);
                 SDL_free(devices);
                 return list->num_devices;  /* just return the existing one for now. Oh well. */
@@ -136,19 +155,21 @@ static int GetNumAudioDevices(int iscapture, fluid_sdl3_audio_driver_t *dev)
         }
     }
 
-    if (list != NULL)
+    if(list != NULL)
     {
-        for (i = 0; i < list->num_devices; i++) {
+        for(i = 0; i < list->num_devices; i++)
+        {
             SDL_free(list->devices[i].name);
         }
+
         SDL_free(list->devices);
     }
 
     SDL_free(devices);
 
-    if (list != NULL)
+    if(list != NULL)
     {
-        SDL_memcpy(list, &newlist, sizeof (AudioDeviceList));
+        SDL_memcpy(list, &newlist, sizeof(AudioDeviceList));
     }
 
     return num_devices;
@@ -159,7 +180,7 @@ SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 {
     fluid_sdl3_audio_driver_t *dev = (fluid_sdl3_audio_driver_t *)data;
 
-    while (add_len > 0)
+    while(add_len > 0)
     {
         buf_len = SDL_min(add_len, dev->period_size * dev->frame_size);
         dev->write_ptr(dev->synth, buf_len / dev->frame_size, dev->render_buf, 0, 2, dev->render_buf, 1, 2);
@@ -190,63 +211,76 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         return;
     }
 
-    list= SDL_malloc(sizeof(AudioDeviceList));
+    list = SDL_malloc(sizeof(AudioDeviceList));
     devices = SDL_GetAudioPlaybackDevices(&nDevs);
 
-    if (list == NULL)
+    if(list == NULL)
     {
         return;
     }
 
-    if (nDevs > 0) {
+    if(nDevs > 0)
+    {
         list->num_devices = nDevs;
-        list->devices = (AudioDeviceInfo *)SDL_malloc(sizeof (AudioDeviceInfo) * nDevs);
-        if (!list->devices) {
+        list->devices = (AudioDeviceInfo *)SDL_malloc(sizeof(AudioDeviceInfo) * nDevs);
+
+        if(!list->devices)
+        {
             SDL_free(devices);
         }
-        
-        for (n = 0; n < nDevs; n++) {
+
+        for(n = 0; n < nDevs; n++)
+        {
             const char *newname = SDL_GetAudioDeviceName(devices[n]);
             char *fullname = NULL;
-            if (newname == NULL) {
+
+            if(newname == NULL)
+            {
                 /* ugh, whatever, just make up a name. */
                 newname = "Unidentified device";
             }
-            
+
             /* Device names must be unique in sdl3, as that's how we open them.
              sdl3 took serious pains to try to add numbers to the end of duplicate device names ("SoundBlaster Pro" and then "SoundBlaster Pro (2)"),
              but here we're just putting the actual SDL3 instance id at the end of everything. Good enough. I hope. */
-            if (!newname || (SDL_asprintf(&fullname, "%s (id=%u)", newname, (unsigned int) devices[n]) < 0)) {
+            if(!newname || (SDL_asprintf(&fullname, "%s (id=%u)", newname, (unsigned int) devices[n]) < 0))
+            {
                 /* we're in real trouble now.  :/  */
-                for (j = 0; j < n; j++) {
+                for(j = 0; j < n; j++)
+                {
                     SDL_free(list->devices[n].name);
                 }
 
                 SDL_free(fullname);
                 SDL_free(devices);
             }
-            
+
             list->devices[n].devid = devices[n];
             list->devices[n].name = fullname;
         }
     }
 
-    for (n = 0; n < nDevs; n++)
+    for(n = 0; n < nDevs; n++)
     {
         const char *dev_name = NULL;
-        
-        if (!SDL_GetCurrentAudioDriver()) {
+
+        if(!SDL_GetCurrentAudioDriver())
+        {
             SDL_SetError("Audio subsystem is not initialized");
             return;
         }
 
         SDL_LockMutex(AudioDeviceLock);
 
-        if ((n < 0) || (n >= list->num_devices)) {
+        if((n < 0) || (n >= list->num_devices))
+        {
             SDL_InvalidParamError("index");
-        } else {
+        }
+        else
+        {
             dev_name = list->devices[n].name;
         }
+
         SDL_UnlockMutex(AudioDeviceLock);
 
         if(dev_name != NULL)
@@ -305,6 +339,7 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
             return NULL;
         }
     }
+
     /* Clear the format buffer */
     FLUID_MEMSET(&aspec, 0, sizeof(aspec));
 
@@ -395,7 +430,8 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         dev->frame_size = sample_size * aspec.channels;
         dev->period_size = period_size;
         dev->render_buf = FLUID_MALLOC(dev->period_size * dev->frame_size);
-        if (dev->render_buf == NULL)
+
+        if(dev->render_buf == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
             break;
@@ -415,7 +451,8 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         SDL_ResumeAudioStreamDevice(dev->stream);
 
         return (fluid_audio_driver_t *) dev;
-    } while(0);
+    }
+    while(0);
 
     delete_fluid_sdl3_audio_driver(&dev->driver);
     return NULL;
