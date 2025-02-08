@@ -156,12 +156,12 @@ static void
 SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 {
     fluid_sdl3_audio_driver_t *dev = (fluid_sdl3_audio_driver_t *)data;
-    unsigned int buffer[dev->period_size * dev->frame_size];
+    unsigned int buffer[(dev->period_size * dev->frame_size) == 0 ? 512 : dev->period_size * dev->frame_size];
     int buf_len = 0;
 
     while (add_len > 0)
     {
-        buf_len = SDL_min(add_len, dev->period_size * dev->frame_size);
+        buf_len = SDL_min(add_len, (dev->period_size * dev->frame_size) == 0 ? 2048 : dev->period_size * dev->frame_size);
         dev->write_ptr(dev->synth, buf_len / dev->frame_size, buffer, 0, 2, buffer, 1, 2);
         SDL_PutAudioStreamData(stream, buffer, buf_len);
         add_len -= buf_len;  /* subtract what we've just fed the stream. */
