@@ -3135,9 +3135,13 @@ fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
             /* Percussion: Fallback to preset 0 in percussion bank */
             if(channel->channel_type == CHANNEL_TYPE_DRUM)
             {
-                subst_prog = 0;
                 subst_bank = DRUM_INST_BANK;
                 preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+                if(!preset)
+                {
+                    subst_prog = 0;
+                    preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+                }
             }
             /* Melodic instrument */
             else
