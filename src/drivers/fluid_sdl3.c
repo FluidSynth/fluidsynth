@@ -52,6 +52,7 @@ typedef struct
     AudioDeviceList AudioSDL3RecordingDevices;
 
     int frame_size;
+    int period_size;
 } fluid_sdl3_audio_driver_t;
 
 const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_driver_t *dev)
@@ -154,9 +155,9 @@ static int GetNumAudioDevices(int iscapture, fluid_sdl3_audio_driver_t *dev)
 static void
 SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 {
-    unsigned int buffer[512];
-    int buf_len = 0;
     fluid_sdl3_audio_driver_t *dev = (fluid_sdl3_audio_driver_t *)data;
+    unsigned int buffer[dev->period_size * dev->frame_size];
+    int buf_len = 0;
 
     while (add_len > 0)
     {
@@ -392,6 +393,7 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         /* Save copy of other variables */
         dev->write_ptr = write_ptr;
         dev->frame_size = sample_size * aspec.channels;
+        dev->period_size = period_size;
 
         /* Open audio device */
         dev->stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &aspec, SDLAudioCallback, dev);
