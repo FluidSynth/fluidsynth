@@ -224,6 +224,7 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         /* Start to play */
         SDL_PauseAudioDevice(dev->devid, 0);
 
+        FLUID_LOG(FLUID_WARN, "SDL2 support has been deprecated and will be removed in fluidsynth 2.5.0! Pls. use sdl3.");
         return (fluid_audio_driver_t *) dev;
     }
     while(0);

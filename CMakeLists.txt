@@ -666,6 +666,7 @@ endif ( enable-libinstpatch )
 
 unset ( SDL2_SUPPORT CACHE )
 if ( enable-sdl2 )
+    message ( WARNING "SDL2 support is deprecated and will be removed in fluidsynth 2.5.0! Pls. use sdl3.")
     find_package ( SDL2 QUIET )
     if ( SDL2_FOUND )
         if ( NOT DEFINED SDL2_VERSION )
