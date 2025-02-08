@@ -159,6 +159,12 @@ SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
     unsigned int *buffer = SDL_malloc(dev->period_size * dev->frame_size);
     int buf_len = 0;
 
+    if (buffer == NULL)
+    {
+        FLUID_LOG(FLUID_WARN, "Audio callback buffer allocation has failed");
+        return;
+    }
+
     while (add_len > 0)
     {
         buf_len = SDL_min(add_len, dev->period_size * dev->frame_size);
