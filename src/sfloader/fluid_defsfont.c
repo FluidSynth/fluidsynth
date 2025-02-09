@@ -317,25 +317,9 @@ const char *fluid_defsfont_get_name(fluid_defsfont_t *defsfont)
 int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, fluid_sample_t *sample)
 {
     int num_samples;
-    unsigned int source_end = sample->source_end;
-
-    /* For uncompressed samples we want to include the 46 zero sample word area following each sample
-     * in the Soundfont. Otherwise samples with loopend > end, which we have decided not to correct, would
-     * be corrected after all in fluid_sample_sanitize_loop */
-    if(!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
-    {
-        source_end += 46;  /* Length of zero sample word after each sample, according to SF specs */
-
-        /* Safeguard against Soundfonts that are not quite valid and don't include 46 sample words after the
-         * last sample */
-        if(source_end >= (defsfont->samplesize  / sizeof(short)))
-        {
-            source_end = defsfont->samplesize  / sizeof(short);
-        }
-    }
 
     num_samples = fluid_samplecache_load(
-                      sfdata, sample->source_start, source_end, sample->sampletype,
+                      sfdata, sample->source_start, sample->source_end, sample->sampletype,
                       defsfont->mlock, &sample->data, &sample->data24);
 
     if(num_samples < 0)
