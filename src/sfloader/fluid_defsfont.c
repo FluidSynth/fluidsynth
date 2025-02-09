@@ -2097,6 +2097,8 @@ fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defs
         sample->notify = dynamic_samples_sample_notify;
     }
 
+    FLUID_LOG(FLUID_DBG, "Discovering sample '%s', src_start %d, loop_start %d, loop_end %d, src_end %d", sample->name, sample->source_start, sample->loopstart, sample->loopend, sample->source_end);
+
     if(fluid_sample_validate(sample, defsfont->samplesize) == FLUID_FAILED)
     {
         return FLUID_FAILED;
