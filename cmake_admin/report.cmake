@@ -26,6 +26,18 @@ else ( DSOUND_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  DSound:                no\n" )
 endif ( DSOUND_SUPPORT )
 
+if ( HAIKU_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  Haiku:                 yes\n" )
+else ( HAIKU_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  Haiku:                 no\n" )
+endif ( HAIKU_SUPPORT )
+
+if ( MIDIKIT2_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  Haiku MidiKit2:        yes\n" )
+else ( MIDIKIT2_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  Haiku MidiKit2:        no\n" )
+endif ( MIDIKIT2_SUPPORT )
+
 if ( JACK_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  JACK:                  yes\n" )
 else ( JACK_SUPPORT )
