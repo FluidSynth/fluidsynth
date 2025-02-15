@@ -58,6 +58,7 @@ else()
     set(REVERB_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/reverb")
     set(EXCL_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/exclusive_class")
     set(DSPINTERP_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dsp_interp")
+    set(DYNSAM_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dynamic-sample-loading")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -69,7 +70,7 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -219,6 +220,15 @@ else()
         VERBATIM
     )
 
+    add_custom_target(render1484
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/dynamic-sample-loading_on.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/dynamic-sample-loading_off.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
+        COMMENT "Rendering dynamic sample loading test"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
+        VERBATIM
+    )
+
     # Add a dependency so that rendering targets depends on check_manual
     add_dependencies(check_manual render1415)
     add_dependencies(check_manual render1417)
@@ -233,5 +243,8 @@ else()
     add_dependencies(check_manual render1455)
     add_dependencies(check_manual renderDK64JJU)
     add_dependencies(check_manual renderExcl)
+    add_dependencies(check_manual rendere1m1)
+    add_dependencies(check_manual renderdspInterp)
+    add_dependencies(check_manual render1484)
 
 endif()
