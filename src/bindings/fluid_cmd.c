@@ -120,7 +120,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "load", "general", fluid_handle_load,
-        "load file [reset] [bankofs] Loads SoundFont (reset=0|1, def 1; bankofs=n, def 0)"
+        "load file [reset] [bankofs] Loads SoundFont (reset=0|1, def=1; bankofs=n, n!=0)"
     },
     {
         "unload", "general", fluid_handle_unload,
@@ -985,11 +985,21 @@ fluid_handle_load(void *data, int ac, char **av, fluid_ostream_t out)
     if(ac == 2)
     {
         reset = atoi(av[1]);
+        if (reset != 0 && reset != 1)
+        {
+            fluid_ostream_printf(out, "load: invalid reset argument %d, only 1 or 0 are allowed\n", reset);
+            return FLUID_FAILED;
+        }
     }
 
     if(ac == 3)
     {
         offset = atoi(av[2]);
+        if (offset == 0)
+        {
+            fluid_ostream_printf(out, "load: only non-zero bank offsets are allowed, omit this parameter if zero was intended\n", offset);
+            return FLUID_FAILED;
+        }
     }
 
     /* Load the SoundFont without resetting the programs. The reset will
@@ -1003,7 +1013,7 @@ fluid_handle_load(void *data, int ac, char **av, fluid_ostream_t out)
     }
     else
     {
-        fluid_ostream_printf(out, "loaded SoundFont has ID %d\n", id);
+        fluid_ostream_printf(out, "loaded SoundFont has ID %d and bankofs=%d\n", id, offset);
     }
 
     if(offset)

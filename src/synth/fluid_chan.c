@@ -334,8 +334,7 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
         return;
     }
 
-    if(style == FLUID_BANK_STYLE_GM ||
-            chan->channel_type == CHANNEL_TYPE_DRUM)
+    if(style == FLUID_BANK_STYLE_GM )
     {
         return;    /* ignored */
     }
@@ -344,6 +343,10 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
 
     if(style == FLUID_BANK_STYLE_GS)
     {
+        if(chan->channel_type == CHANNEL_TYPE_DRUM)
+        {
+            bankmsb += DRUM_INST_BANK;
+        }
         newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
     }
     else /* style == FLUID_BANK_STYLE_MMA */

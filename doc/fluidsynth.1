@@ -13,7 +13,7 @@
 .\" along with this program; see the file LICENSE.  If not, write to
 .\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\"
-.TH FluidSynth 1 "Jan 1, 2025"
+.TH FluidSynth 1 "Feb 2, 2025"
 .\" Please update the above date whenever this man page is modified.
 .\"
 .\" Some roff macros, for reference:
@@ -155,8 +155,10 @@ Quit the synthesizer
 .TP
 .B SOUNDFONTS
 .TP
-.B load filename
-Load a SoundFont
+.B load filename [reset] [bankofs]
+Load a SoundFont onto the SoundFont stack. If reset is 1 (which is the implicit default), all currently in-use SoundFont presets will be re-evaluated with the newly loaded SoundFont taken into account.
+Optionally, you can specify a non-zero bank offset for the new SoundFont. For example the command
+load soundfont.sf2 0 10 will load the soundfont.sf2 with a bank offset of 10 without re-evaluating the presets.
 .TP
 .B unload number
 Unload a SoundFont. The number is the index of the SoundFont on the stack.
