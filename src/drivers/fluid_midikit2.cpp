@@ -19,7 +19,6 @@
  */
 
 /* Parts of code taken from the CoreMIDI driver. */
-#include <type_traits>
 
 extern "C" {
 #include "fluid_midi.h"
