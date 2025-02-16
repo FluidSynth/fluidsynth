@@ -7799,7 +7799,8 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_FILTERQ:
             FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data_lsb);
             synth->channel[chan]->awe32_filter_coeff = data_lsb;
-            return;
+            is_realtime = TRUE;
+            break;
 
         // Note: The description in the official "SB AWE32 Developer's Information Pack" is probably wrong.
         // There it says: "Positive data value causes a positive phase (from 0 to maximum) filter modulation
@@ -7853,9 +7854,19 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
 
         converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
-
-        // Safe the "true initial Q"
-        fluid_channel_set_override_gen_default(synth->channel[chan], GEN_FILTERQ, q);
+    }
+    else if(sf2_gen == GEN_FILTERQ)
+    {
+        int coef = synth->channel[chan]->awe32_filter_coeff;
+        
+        fluid_real_t filter_fc_ct, filter_fc_hz;
+        if(!fluid_channel_get_override_gen_default(synth->channel[chan], GEN_FILTERFC, &filter_fc_ct))
+        {
+            filter_fc_ct = fluid_channel_get_gen(synth->channel[chan], GEN_FILTERFC);
+        }
+        filter_fc_hz = fluid_ct2hz(filter_fc_ct);
+        
+        converted_sf2_generator_value = calc_awe32_filter_q(coef, &filter_fc_hz);
     }
     
     fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
@@ -7871,12 +7882,6 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             fluid_voice_update_param(voice, sf2_gen);
             
             FLUID_LOG(FLUID_DBG, "AWE32 Realtime: adjusting voice id %d, generator %d, chan %d", fluid_voice_get_id(voice), sf2_gen, chan);
-            if(sf2_gen == GEN_FILTERFC)
-            {
-                // also sets the calculated Q
-                fluid_voice_gen_set(voice, GEN_FILTERQ, q);
-                fluid_voice_update_param(voice, GEN_FILTERQ);
-            }
         }
     }
 }
