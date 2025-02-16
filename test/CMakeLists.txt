@@ -132,6 +132,14 @@ else()
         VERBATIM
     )
 
+    add_custom_target(renderChrisNRPN
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F ${AWE32_NRPN_RENDER_DIR}/filter_NRPN_test.${FEXT} "filter_NRPN_test.mid" "filter_NRPN_test.sf2"
+        COMMENT "Rendering AWE32 NRPN test file Uplift.mid"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/NRPN test - filter/"
+        VERBATIM
+    )
+
     add_custom_target(render1TOWOW
         COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
         COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
@@ -237,6 +245,7 @@ else()
     add_dependencies(check_manual renderAltitude)
     add_dependencies(check_manual renderFilter)
     add_dependencies(check_manual renderUplift)
+    add_dependencies(check_manual renderChrisNRPN)
     add_dependencies(check_manual render1TOWOW)
     add_dependencies(check_manual renderDescent8)
     add_dependencies(check_manual renderSfSpecTest)
