@@ -51,8 +51,6 @@ static void playerProc(void *cookie, void *buffer, size_t len, const media_raw_a
 
 void fluid_haiku_audio_driver_settings(fluid_settings_t *settings)
 {
-    fluid_settings_register_str(settings, "audio.haiku.device", "default", 0);
-    fluid_settings_add_option(settings, "audio.haiku.device", "default");
 }
 
 fluid_audio_driver_t *
@@ -65,9 +63,6 @@ new_fluid_haiku_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     int period_size;
     int periods;
     int sample_size;
-    
-    char *device;
-    const char *dev_name;
 
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_getint(settings, "audio.periods", &periods);

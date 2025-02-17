@@ -68,7 +68,7 @@ void fluid_midikit2_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "midi.midikit2.id", "pid", 0);
 }
 
-static void fluid_coremidi_autoconnect(fluid_midikit2_driver_t *dev)
+static void fluid_midikit2_autoconnect(fluid_midikit2_driver_t *dev)
 {
     int32 id = 0;
     BMidiProducer* producer = NULL;
@@ -86,7 +86,7 @@ new_fluid_midikit2_driver(fluid_settings_t *settings, handle_midi_event_func_t h
     char* id = NULL;
     char clientid[128];
 
-    memset(clientid, 0, sizeof(clientid));
+    FLUID_MEMSET(clientid, 0, sizeof(clientid));
     driver = FLUID_MALLOC(sizeof(fluid_midikit2_driver_t));
 
     if(driver == NULL)
@@ -140,7 +140,7 @@ new_fluid_midikit2_driver(fluid_settings_t *settings, handle_midi_event_func_t h
 
     if (driver->autoconn_inputs)
     {
-        fluid_coremidi_autoconnect(driver);
+        fluid_midikit2_autoconnect(driver);
     }
 
     return (fluid_midi_driver_t *)driver;
@@ -154,7 +154,7 @@ delete_fluid_midikit2_driver(fluid_midi_driver_t *p)
     {
         fluid_midikit2_driver_t* driver = (fluid_midikit2_driver_t*)p;
         driver->m_consumer->Unregister();
-        driver->m_consumer->Release();
+        driver->m_consumer->Release(); // Will delete itself
         delete_fluid_midi_parser(driver->parser);
         FLUID_FREE(driver);
     }
