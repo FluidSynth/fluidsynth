@@ -268,8 +268,15 @@ enum fluid_interp
 {
     FLUID_INTERP_NONE = 0,        /**< No interpolation: Fastest, but questionable audio quality */
     FLUID_INTERP_LINEAR = 1,      /**< Straight-line interpolation: A bit slower, reasonable audio quality */
-    FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, good quality, the default */
-    FLUID_INTERP_7THORDER = 7,    /**< Seventh-order interpolation */
+    FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, best quality, the default */
+
+    /**
+     * Seventh-point sinc interpolation
+     * @note This interpolation method was believed to provide highest quality. However, in Feb. 2025 it was discovered
+     * that for certain samples it does introduce ringing artifacts, which
+     * are not present in the 4th order interpolation. This is not a bug, it's rather a limitation of only using 7 points for the sinc interpolation.
+     */
+    FLUID_INTERP_7THORDER = 7,
 
     FLUID_INTERP_DEFAULT = FLUID_INTERP_4THORDER, /**< Default interpolation method */
     FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
