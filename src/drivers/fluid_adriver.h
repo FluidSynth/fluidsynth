@@ -61,6 +61,13 @@ void delete_fluid_alsa_audio_driver(fluid_audio_driver_t *p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
+#if HAIKU_SUPPORT
+fluid_audio_driver_t *new_fluid_haiku_audio_driver(fluid_settings_t *settings,
+        fluid_synth_t *synth);
+void delete_fluid_haiku_audio_driver(fluid_audio_driver_t *p);
+void fluid_haiku_audio_driver_settings(fluid_settings_t *settings);
+#endif
+
 #if OSS_SUPPORT
 fluid_audio_driver_t *new_fluid_oss_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);

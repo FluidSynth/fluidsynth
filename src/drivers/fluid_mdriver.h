@@ -88,6 +88,15 @@ fluid_midi_driver_t *new_fluid_midishare_midi_driver(fluid_settings_t *settings,
 void delete_fluid_midishare_midi_driver(fluid_midi_driver_t *p);
 #endif
 
+/* definitions for the MidiKit2 driver */
+#if MIDIKIT2_SUPPORT
+fluid_midi_driver_t *new_fluid_midikit2_driver(fluid_settings_t *settings,
+        handle_midi_event_func_t handler,
+        void *event_handler_data);
+void delete_fluid_midikit2_driver(fluid_midi_driver_t *p);
+void fluid_midikit2_driver_settings(fluid_settings_t *settings);
+#endif
+
 /* definitions for the CoreMidi driver */
 #if COREMIDI_SUPPORT
 fluid_midi_driver_t *new_fluid_coremidi_driver(fluid_settings_t *settings,
