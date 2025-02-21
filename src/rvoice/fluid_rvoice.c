@@ -490,11 +490,13 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     fluid_check_fpe("voice_write interpolation");
 
-    if(count == 0)
+    if (count == 0)
     {
         // voice has finished
         return count;
     }
+    
+    fluid_iir_filter_apply(&voice->resonant_filter, &voice->resonant_custom_filter, dsp_buf, count, voice->dsp.output_rate);
 
     return count;
 }

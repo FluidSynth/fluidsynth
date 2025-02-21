@@ -125,7 +125,7 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
 /* No interpolation. Just take the sample, which is closest to
   * the playback pointer.  Questionable quality, but very
   * efficient. */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+template<bool IS_24BIT, bool LOOPING>
 static int
 fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
@@ -153,12 +153,6 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
         {
             fluid_real_t sample = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index);
-            
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             
             dsp_buf[dsp_i] = dsp_amp * sample;
 
@@ -198,7 +192,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
  * Returns number of samples processed (usually FLUID_BUFSIZE but could be
  * smaller if end of sample occurs).
  */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+template<bool IS_24BIT, bool LOOPING>
 static int
 fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
@@ -243,13 +237,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
             
             sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1));
-            
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
-            
+                        
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -274,12 +262,6 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
             
             sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
                      + coeffs[1] * point);
-
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
 
             dsp_buf[dsp_i] = dsp_amp * sample;
 
@@ -320,7 +302,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
  * Returns number of samples processed (usually FLUID_BUFSIZE but could be
  * smaller if end of sample occurs).
  */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+template<bool IS_24BIT, bool LOOPING>
 static int
 fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
@@ -380,13 +362,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
                      + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
                      + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2));
-            
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
-            
+                        
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -405,12 +381,6 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
                      + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
                      + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2));
-
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
 
             dsp_buf[dsp_i] = dsp_amp * sample;
 
@@ -439,12 +409,6 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
                      + coeffs[3] * end_point1);
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
-
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -466,12 +430,6 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
                      + coeffs[2] * end_point1
                      + coeffs[3] * end_point2);
-
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
 
             dsp_buf[dsp_i] = dsp_amp * sample;
 
@@ -518,7 +476,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
  * Returns number of samples processed (usually FLUID_BUFSIZE but could be
  * smaller if end of sample occurs).
  */
-template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+template<bool IS_24BIT, bool LOOPING>
 static int
 fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
@@ -592,11 +550,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2)
                      + coeffs[6] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 3));
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -621,11 +574,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2)
                      + coeffs[6] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 3));
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -650,11 +598,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2)
                      + coeffs[6] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 3));
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -680,11 +623,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2)
                      + coeffs[6] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 3));
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -715,11 +653,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2)
                      + coeffs[6] * end_points[0]);
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -744,11 +677,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * end_points[0]
                      + coeffs[6] * end_points[1]);
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -773,11 +701,6 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                      + coeffs[5] * end_points[1]
                      + coeffs[6] * end_points[2]);
 
-            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
-            if (ENABLE_CUSTOM_FILTER)
-            {
-                fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
-            }
             dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
@@ -827,7 +750,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
 
 struct ProcessSilence
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    template<bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
         return fluid_rvoice_dsp_silence_local<LOOPING>(rvoice, dsp_buf);
@@ -836,37 +759,37 @@ struct ProcessSilence
 
 struct InterpolateNone
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    template<bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_none_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_none_local<IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
 struct InterpolateLinear
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    template<bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_linear_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_linear_local<IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
 struct Interpolate4thOrder
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    template<bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_4th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_4th_order_local<IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
 struct Interpolate7thOrder
 {
-    template<bool ENABLE_CUSTOM_FILTER, bool IS_24BIT, bool LOOPING>
+    template<bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_7th_order_local<ENABLE_CUSTOM_FILTER, IS_24BIT, LOOPING>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_7th_order_local<IS_24BIT, LOOPING>(rvoice, dsp_buf);
     }
 };
 
@@ -876,55 +799,27 @@ int dsp_invoker(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, in
     T func;
     bool is_24bit = rvoice->dsp.sample->data24 != NULL;
 
-    if (rvoice->resonant_custom_filter.type == FLUID_IIR_DISABLED)
+    if (is_24bit)
     {
-        if (is_24bit)
+        if (looping)
         {
-            if(looping)
-            {
-                return func.template operator()<false, true, true>(rvoice, dsp_buf);
-            }
-            else
-            {
-                return func.template operator()<false, true, false>(rvoice, dsp_buf);
-            }
+            return func.template operator()<true, true>(rvoice, dsp_buf);
         }
         else
         {
-            // This case is most common, thanks to templating it will also become the fastest one
-            if (looping)
-            {
-                return func.template operator()<false, false, true>(rvoice, dsp_buf);
-            }
-            else
-            {
-                return func.template operator()<false, false, false>(rvoice, dsp_buf);
-            }
+            return func.template operator()<true, false>(rvoice, dsp_buf);
         }
     }
     else
     {
-        if (is_24bit)
+        // This case is most common, thanks to templating it will also become the fastest one
+        if (looping)
         {
-            if (looping)
-            {
-                return func.template operator()<true, true, true>(rvoice, dsp_buf);
-            }
-            else
-            {
-                return func.template operator()<true, true, false>(rvoice, dsp_buf);
-            }
+            return func.template operator()<false, true>(rvoice, dsp_buf);
         }
         else
         {
-            if (looping)
-            {
-                return func.template operator()<true, false, true>(rvoice, dsp_buf);
-            }
-            else
-            {
-                return func.template operator()<true, false, false>(rvoice, dsp_buf);
-            }
+            return func.template operator()<false, false>(rvoice, dsp_buf);
         }
     }
 }
