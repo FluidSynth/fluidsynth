@@ -177,9 +177,11 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         {
             /* The filter is implemented in Direct-II form. */
             dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-            dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+            fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
             dsp_hist2 = dsp_hist1;
             dsp_hist1 = dsp_centernode;
+
+            dsp_buf[dsp_i] = AMPLIFY ? dsp_amp * sample : sample;
             /* Alternatively, it could be implemented in Transposed Direct Form II */
             // fluid_real_t dsp_input = dsp_buf[dsp_i];
             // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
