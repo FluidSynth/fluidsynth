@@ -201,13 +201,9 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopend);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_samplemode);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
 
-/* defined in fluid_rvoice_dsp.c */
-void fluid_rvoice_dsp_config(void);
+
 int fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping);
-int fluid_rvoice_dsp_interpolate_none(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
-int fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
-int fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
-int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
+int fluid_rvoice_dsp_interpolate(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
 
 
 /*

@@ -831,24 +831,21 @@ fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT ds
 }
 
 extern "C" int
-fluid_rvoice_dsp_interpolate_none(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
-    return dsp_invoker<InterpolateNone>(rvoice, dsp_buf, looping);
-}
+    switch (rvoice->dsp.interp_method)
+    {
+        case FLUID_INTERP_NONE:
+            return dsp_invoker<InterpolateNone>(rvoice, dsp_buf, looping);
 
-extern "C" int
-fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
-{
-    return dsp_invoker<InterpolateLinear>(rvoice, dsp_buf, looping);
-}
+        case FLUID_INTERP_LINEAR:
+            return dsp_invoker<InterpolateLinear>(rvoice, dsp_buf, looping);
 
-extern "C" int
-fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
-{
-    return dsp_invoker<Interpolate4thOrder>(rvoice, dsp_buf, looping);
-}
+        case FLUID_INTERP_4THORDER:
+        default:
+            return dsp_invoker<Interpolate4thOrder>(rvoice, dsp_buf, looping);
 
-extern "C" int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
-{
-    return dsp_invoker<Interpolate7thOrder>(rvoice, dsp_buf, looping);
+        case FLUID_INTERP_7THORDER:
+            return dsp_invoker<Interpolate7thOrder>(rvoice, dsp_buf, looping);
+    }
 }
