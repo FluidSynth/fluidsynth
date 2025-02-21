@@ -96,12 +96,12 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
     }
 
     /* Volume increment to go from voice->amp to target_amp in FLUID_BUFSIZE steps */
-    voice->dsp.amp_incr = (target_amp - voice->dsp.amp) / FLUID_BUFSIZE;
+    voice->resonant_filter.amp_incr = (target_amp - voice->resonant_filter.amp) / FLUID_BUFSIZE;
 
     fluid_check_fpe("voice_write amplitude calculation");
 
     /* no volume and not changing? - No need to process */
-    if((voice->dsp.amp == 0.0f) && (voice->dsp.amp_incr == 0.0f))
+    if ((voice->resonant_filter.amp == 0.0f) && (voice->resonant_filter.amp_incr == 0.0f))
     {
         return -1;
     }
@@ -545,9 +545,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset)
     voice->dsp.has_looped = 0;
     voice->envlfo.ticks = 0;
     voice->envlfo.noteoff_ticks = 0;
-    voice->dsp.amp = 0.0f; /* The last value of the volume envelope, used to
-                            calculate the volume increment during
-                            processing */
 
     /* legato initialization */
     voice->dsp.pitchoffset = 0.0;   /* portamento initialization */

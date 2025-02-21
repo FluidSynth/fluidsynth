@@ -46,6 +46,8 @@ fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter)
     iir_filter->last_fres = -1.;
     iir_filter->last_q = 0;
     iir_filter->filter_startup = 1;
+    iir_filter->amp = 0;
+    iir_filter->amp_incr = 0;
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres)

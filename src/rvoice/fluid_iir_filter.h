@@ -60,7 +60,7 @@ struct _fluid_iir_filter_t
     fluid_real_t last_fres;         /* The filter's current (smoothed out) resonance frequency in Hz, which will converge towards its target fres once fres_incr_count has become zero */
     fluid_real_t fres_incr;         /* The linear increment of fres each sample */
     int fres_incr_count;            /* The number of samples left for the smoothed last_fres adjustment to complete */
-    
+
     fluid_real_t last_q;            /* The filter's current (smoothed) Q-factor (or "bandwidth", or "resonance-friendlyness") on a linear scale. Just like fres, this will converge towards its target Q once q_incr_count has become zero. */
     fluid_real_t q_incr;            /* The linear increment of q each sample */
     int q_incr_count;               /* The number of samples left for the smoothed Q adjustment to complete */
@@ -68,6 +68,11 @@ struct _fluid_iir_filter_t
     fluid_real_t target_fres;       /* The filter's target fres, that last_fres should converge towards - for debugging only */
     fluid_real_t target_q;          /* The filter's target Q - for debugging only */
 #endif
+
+    // the final gain amplifier to be applied by the last filter in the chain, zero for all other filters
+    fluid_real_t amp;                /* current linear amplitude */
+    fluid_real_t amp_incr;           /* amplitude increment value for the next FLUID_BUFSIZE samples */
+
 };
 
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;

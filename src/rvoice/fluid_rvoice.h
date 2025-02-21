@@ -127,9 +127,6 @@ struct _fluid_rvoice_dsp_t
 
     /* Dynamic input to the interpolator below */
 
-    fluid_real_t amp;                /* current linear amplitude */
-    fluid_real_t amp_incr;		/* amplitude increment value for the next FLUID_BUFSIZE samples */
-
     fluid_phase_t phase;             /* the phase (current sample offset) of the sample wave */
     fluid_real_t phase_incr;	/* the phase increment for the next FLUID_BUFSIZE samples */
 };

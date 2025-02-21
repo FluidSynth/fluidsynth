@@ -156,9 +156,9 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 
         int fres_incr_count = iir_filter->fres_incr_count;
         int q_incr_count = iir_filter->q_incr_count;
-
-        fluid_real_t dsp_centernode;
-        int dsp_i;
+        
+        fluid_real_t dsp_amp = iir_filter->amp;
+        fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
 
         /* filter (implement the voice filter according to SoundFont standard) */
 
@@ -173,20 +173,29 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
          * doesn't change.
          */
 
-        for (dsp_i = 0; dsp_i < count; dsp_i++)
+        for (int dsp_i = 0; dsp_i < count; dsp_i++)
         {
             /* The filter is implemented in Direct-II form. */
-            dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+            fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
             fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
             dsp_hist2 = dsp_hist1;
             dsp_hist1 = dsp_centernode;
 
-            dsp_buf[dsp_i] = AMPLIFY ? dsp_amp * sample : sample;
             /* Alternatively, it could be implemented in Transposed Direct Form II */
             // fluid_real_t dsp_input = dsp_buf[dsp_i];
             // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
             // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
             // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
+
+            if(AMPLIFY)
+            {
+                dsp_buf[dsp_i] = dsp_amp * sample;
+                dsp_amp += dsp_amp_incr;
+            }
+            else
+            {
+                dsp_buf[dsp_i] = sample;
+            }
 
             if (fres_incr_count > 0 || q_incr_count > 0)
             {
@@ -221,6 +230,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 
         iir_filter->fres_incr_count = fres_incr_count;
         iir_filter->q_incr_count = q_incr_count;
+        iir_filter->amp = dsp_amp;
 
         fluid_check_fpe("voice_filter");
     }
@@ -232,10 +242,8 @@ extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
                                        int count,
                                        fluid_real_t output_rate)
 {
-    if (resonant_custom_filter->type != FLUID_IIR_DISABLED)
-    {
-        fluid_iir_filter_apply_local<false>(resonant_custom_filter, dsp_buf, count, output_rate);
-    }
+    fluid_iir_filter_apply_local<false>(resonant_custom_filter, dsp_buf, count, output_rate);
+    // This is the last filter in the chain, the default SF2 filter that always runs. This one must apply the final envelope gain.
     fluid_iir_filter_apply_local<true>(resonant_filter, dsp_buf, count, output_rate);
 }
 
