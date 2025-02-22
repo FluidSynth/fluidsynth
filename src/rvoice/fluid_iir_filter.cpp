@@ -22,15 +22,19 @@
 #include "fluid_sys.h"
 #include "fluid_conv.h"
 
-static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
-                                                                 fluid_real_t output_rate,
-                                                                 fluid_real_t *a1_out,
-                                                                 fluid_real_t *a2_out,
-                                                                 fluid_real_t *b02_out,
-                                                                 fluid_real_t *b1_out)
+#include <algorithm>
+#include <cmath>
+
+template<typename R, bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
+static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(R fres,
+                                                                 R q,
+                                                                 R output_rate,
+                                                                 R *FLUID_RESTRICT a1_out,
+                                                                 R *FLUID_RESTRICT a2_out,
+                                                                 R *FLUID_RESTRICT b02_out,
+                                                                 R *FLUID_RESTRICT b1_out)
 {
-    int flags = iir_filter->flags;
-    fluid_real_t filter_gain = 1.0f;
+    R filter_gain = 1.0f;
 
     /*
      * Those equations from Robert Bristow-Johnson's `Cookbook
@@ -41,11 +45,11 @@ static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(fluid_iir_filte
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    fluid_real_t omega = (fluid_real_t)(2.0 * M_PI) * (iir_filter->last_fres / output_rate);
-    fluid_real_t sin_coeff = FLUID_SIN(omega);
-    fluid_real_t cos_coeff = FLUID_COS(omega);
-    fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->last_q);
-    fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
+    R omega = (R)(2.0 * M_PI) * (fres / output_rate);
+    R sin_coeff = std::sin(omega);
+    R cos_coeff = std::cos(omega);
+    R alpha_coeff = sin_coeff / (2.0f * q);
+    R a0_inv = 1.0f / (1.0f + alpha_coeff);
 
     /* Calculate the filter coefficients. All coefficients are
      * normalized by a0. Think of `a1' as `a1/a0'.
@@ -57,11 +61,11 @@ static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(fluid_iir_filte
      *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*filter_gain; */
 
     /* "a" coeffs are same for all 3 available filter types */
-    fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
-    fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-    fluid_real_t b02_temp, b1_temp;
+    R a1_temp = -2.0f * cos_coeff * a0_inv;
+    R a2_temp = (1.0f - alpha_coeff) * a0_inv;
+    R b02_temp, b1_temp;
 
-    if (!(flags & FLUID_IIR_NO_GAIN_AMP))
+    if (GAIN_NORM)
     {
         /* SF 2.01 page 59:
          *
@@ -74,27 +78,27 @@ static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(fluid_iir_filte
          *  (numerator of the filter equation).  This gain factor depends
          *  only on Q, so this is the right place to calculate it.
          */
-        filter_gain /= FLUID_SQRT(iir_filter->last_q);
+        filter_gain /= std::sqrt(q);
     }
 
-    switch (iir_filter->type)
+    switch (TYPE)
     {
         case FLUID_IIR_HIGHPASS:
             b1_temp = (1.0f + cos_coeff) * a0_inv * filter_gain;
-
+    
             /* both b0 -and- b2 */
             b02_temp = b1_temp * 0.5f;
-
+    
             b1_temp *= -1.0f;
             break;
-
+    
         case FLUID_IIR_LOWPASS:
             b1_temp = (1.0f - cos_coeff) * a0_inv * filter_gain;
-
+    
             /* both b0 -and- b2 */
             b02_temp = b1_temp * 0.5f;
             break;
-
+    
         default:
             /* filter disabled, should never get here */
             return;
@@ -132,9 +136,9 @@ static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(fluid_iir_filte
  * - dsp_hist1: same
  * - dsp_hist2: same
  */
-template<bool AMPLIFY>
+template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, int count, fluid_real_t output_rate)
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, unsigned int count, fluid_real_t output_rate)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -149,16 +153,30 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         fluid_real_t dsp_hist2 = iir_filter->hist2;
 
         /* IIR filter coefficients */
-        fluid_real_t dsp_a1 = iir_filter->a1;
-        fluid_real_t dsp_a2 = iir_filter->a2;
-        fluid_real_t dsp_b02 = iir_filter->b02;
-        fluid_real_t dsp_b1 = iir_filter->b1;
+        enum { N_COEFFS =
+#ifdef DBG_FILTER
+            1
+#else
+            16
+#endif       
+        };
+        
+        float dsp_a1[N_COEFFS], dsp_a2[N_COEFFS], dsp_b02[N_COEFFS], dsp_b1[N_COEFFS];
+        dsp_a1[0] = iir_filter->a1;
+        dsp_a2[0] = iir_filter->a2;
+        dsp_b02[0] = iir_filter->b02;
+        dsp_b1[0] = iir_filter->b1;
 
         int fres_incr_count = iir_filter->fres_incr_count;
         int q_incr_count = iir_filter->q_incr_count;
         
         fluid_real_t dsp_amp = iir_filter->amp;
         fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
+        const float fres = iir_filter->last_fres;
+        const float q = iir_filter->last_q;
+        
+        const float fres_incr = iir_filter->fres_incr;
+        const float q_incr = iir_filter->q_incr;
 
         /* filter (implement the voice filter according to SoundFont standard) */
 
@@ -173,11 +191,12 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
          * doesn't change.
          */
 
-        for (int dsp_i = 0; dsp_i < count; dsp_i++)
+        unsigned int dsp_i;
+        for (dsp_i = 0; dsp_i < count; dsp_i++)
         {
             /* The filter is implemented in Direct-II form. */
-            fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-            fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+            fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1[dsp_i % N_COEFFS] * dsp_hist1 - dsp_a2[dsp_i % N_COEFFS] * dsp_hist2;
+            fluid_real_t sample = dsp_b02[dsp_i % N_COEFFS] * (dsp_centernode + dsp_hist2) + dsp_b1[dsp_i % N_COEFFS] * dsp_hist1;
             dsp_hist2 = dsp_hist1;
             dsp_hist1 = dsp_centernode;
 
@@ -197,38 +216,42 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                 dsp_buf[dsp_i] = sample;
             }
 
-            if (fres_incr_count > 0 || q_incr_count > 0)
+            // We must recalculate the filter coefficients for the first iteration, and for every N_COEFFS 's iteration, unless we are about to exit the loop because we've reached count.
+            if(dsp_i == 0 || ((dsp_i+1) < count && (dsp_i+1) % N_COEFFS == 0))
             {
-                if (fres_incr_count > 0)
+                #pragma omp simd
+                for(unsigned j = 0; j < N_COEFFS; j++)
                 {
-                    --fres_incr_count;
-                    iir_filter->last_fres += iir_filter->fres_incr;
-                }
-                if (q_incr_count > 0)
-                {
-                    --q_incr_count;
-                    iir_filter->last_q += iir_filter->q_incr;
-                }
+                    unsigned fres_j = std::min<int>(fres_incr_count, j);
+                    unsigned q_j = std::min<int>(q_incr_count, j);
 
-                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  "
-                           "target_q: %.4f",
-                           iir_filter->last_fres,
-                           iir_filter->target_fres,
-                           iir_filter->last_q,
-                           iir_filter->target_q);
+                    float cur_fres = fres + (dsp_i + fres_j) * fres_incr;
+                    float cur_q = q + (dsp_i + q_j) * q_incr;
+                    fluid_iir_filter_calculate_coefficients<float, GAIN_NORM, TYPE>(cur_fres, cur_q, output_rate, &dsp_a1[j], &dsp_a2[j], &dsp_b02[j], &dsp_b1[j]);
 
-                fluid_iir_filter_calculate_coefficients(iir_filter, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
+                    LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  "
+                            "target_q: %.4f",
+                            cur_fres,
+                            iir_filter->target_fres,
+                            cur_q,
+                            iir_filter->target_q);
+                }
+                // decrement linear step count and make sure it doesn't become negative
+                fres_incr_count = std::max(fres_incr_count - N_COEFFS, 0);
+                q_incr_count = std::max(q_incr_count - N_COEFFS, 0);
             }
         }
 
         iir_filter->hist1 = dsp_hist1;
         iir_filter->hist2 = dsp_hist2;
-        iir_filter->a1 = dsp_a1;
-        iir_filter->a2 = dsp_a2;
-        iir_filter->b02 = dsp_b02;
-        iir_filter->b1 = dsp_b1;
+        iir_filter->a1 = dsp_a1[dsp_i % N_COEFFS];
+        iir_filter->a2 = dsp_a2[dsp_i % N_COEFFS];
+        iir_filter->b02= dsp_b02[dsp_i % N_COEFFS];
+        iir_filter->b1 = dsp_b1[dsp_i % N_COEFFS];
 
+        iir_filter->last_fres = fres + std::min<int>(iir_filter->fres_incr_count, count) * fres_incr;
         iir_filter->fres_incr_count = fres_incr_count;
+        iir_filter->last_q = q + std::min<int>(iir_filter->q_incr_count, count) * q_incr;
         iir_filter->q_incr_count = q_incr_count;
         iir_filter->amp = dsp_amp;
 
@@ -239,12 +262,34 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
                                        fluid_iir_filter_t *resonant_custom_filter,
                                        fluid_real_t *dsp_buf,
-                                       int count,
+                                       unsigned int count,
                                        fluid_real_t output_rate)
 {
-    fluid_iir_filter_apply_local<false>(resonant_custom_filter, dsp_buf, count, output_rate);
-    // This is the last filter in the chain, the default SF2 filter that always runs. This one must apply the final envelope gain.
-    fluid_iir_filter_apply_local<true>(resonant_filter, dsp_buf, count, output_rate);
+    if(resonant_custom_filter->flags & FLUID_IIR_NO_GAIN_AMP)
+    {
+        if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
+        {
+            fluid_iir_filter_apply_local<false, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+        }
+        else
+        {
+            fluid_iir_filter_apply_local<false, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+        }
+    }
+    else
+    {
+        if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
+        {
+            fluid_iir_filter_apply_local<true, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+        }
+        else
+        {
+            fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+        }
+    }
+
+    // This is the last filter in the chain - the default SF2 filter that always runs. This one must apply the final envelope gain.
+    fluid_iir_filter_apply_local<true, true, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count, output_rate);
 }
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
@@ -320,7 +365,28 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
 
     if (calc_coeff_flag && !iir_filter->filter_startup)
     {
-        fluid_iir_filter_calculate_coefficients(iir_filter, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+        if((iir_filter->flags & FLUID_IIR_NO_GAIN_AMP))
+        {
+            if(iir_filter->type == FLUID_IIR_HIGHPASS)
+            {
+                fluid_iir_filter_calculate_coefficients<float, false, FLUID_IIR_HIGHPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+            }
+            else
+            {
+                fluid_iir_filter_calculate_coefficients<float, false, FLUID_IIR_LOWPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+            }
+        }
+        else
+        {
+            if(iir_filter->type == FLUID_IIR_HIGHPASS)
+            {
+                fluid_iir_filter_calculate_coefficients<float, true, FLUID_IIR_HIGHPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+            }
+            else
+            {
+                fluid_iir_filter_calculate_coefficients<float, true, FLUID_IIR_LOWPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+            }
+        }
     }
 
     fluid_check_fpe("voice_write DSP coefficients");

@@ -48,10 +48,10 @@ struct _fluid_iir_filter_t
     /* filter coefficients */
     /* The coefficients are normalized to a0. */
     /* b0 and b2 are identical => b02 */
-    fluid_real_t b02;              /* b0 / a0 */
-    fluid_real_t b1;              /* b1 / a0 */
-    fluid_real_t a1;              /* a0 / a0 */
-    fluid_real_t a2;              /* a1 / a0 */
+    float b02;             /* b0 / a0 */
+    float b1;              /* b1 / a0 */
+    float a1;              /* a0 / a0 */
+    float a2;              /* a1 / a0 */
 
     fluid_real_t hist1, hist2;      /* Sample history for the IIR filter */
     int filter_startup;             /* Flag: If set, the filter parameters will be set directly. Else it changes smoothly. */
@@ -89,7 +89,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
 void fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                             fluid_iir_filter_t *custom_filter,
                             fluid_real_t *dsp_buf,
-                            int count,
+                            unsigned int count,
                             fluid_real_t output_rate);
 
 #ifdef __cplusplus

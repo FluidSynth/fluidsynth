@@ -106,7 +106,7 @@ else()
     )
 
     add_custom_target(renderRealtimeIIR
-        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -niq "high poly audio breakup.mid" "high poly preset test.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -niq "high poly audio breakup.mid" "high poly preset test.sf2" # -F "${IIR_FILTER_RENDER_DIR}/1481 high poly audio breakup.${FEXT}"
         COMMENT "Realtime-Rendering testfile of issue 1481"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1481_realtime-playback/
