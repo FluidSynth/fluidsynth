@@ -105,6 +105,14 @@ else()
         VERBATIM
     )
 
+    add_custom_target(renderRealtimeIIR
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -niq "high poly audio breakup.mid" "high poly preset test.sf2"
+        COMMENT "Realtime-Rendering testfile of issue 1481"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1481_realtime-playback/
+        VERBATIM
+    )
+
 
     add_custom_target(renderAltitude
         COMMAND fluidsynth -R 1 -C 1 -f fluidsynth.cfg -o synth.default-soundfont="../../sf2/synthgs-sf2_04-compat.sf2" -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid 
@@ -246,5 +254,6 @@ else()
     add_dependencies(check_manual rendere1m1)
     add_dependencies(check_manual renderdspInterp)
     add_dependencies(check_manual render1484)
+    add_dependencies(check_manual renderRealtimeIIR)
 
 endif()
