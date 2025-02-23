@@ -24,6 +24,10 @@
 #include <algorithm>
 #include <cmath>
 
+
+// Calculate the filter coefficients with single precision
+typedef float IIR_COEFF_T;
+
 template<typename R, bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
 static inline void fluid_iir_filter_calculate_coefficients(R fres,
                                                                  R q,
@@ -155,7 +159,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
             1
 #else
             16
-#endif       
+#endif
         };
         
         float dsp_a1[N_COEFFS], dsp_a2[N_COEFFS], dsp_b02[N_COEFFS], dsp_b1[N_COEFFS];
@@ -224,7 +228,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 
                     float cur_fres = fres + (dsp_i + fres_j) * fres_incr;
                     float cur_q = q + (dsp_i + q_j) * q_incr;
-                    fluid_iir_filter_calculate_coefficients<float, GAIN_NORM, TYPE>(cur_fres, cur_q, output_rate, &dsp_a1[j], &dsp_a2[j], &dsp_b02[j], &dsp_b1[j]);
+                    fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(cur_fres, cur_q, output_rate, &dsp_a1[j], &dsp_a2[j], &dsp_b02[j], &dsp_b1[j]);
 
                     LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  "
                             "target_q: %.4f",
@@ -344,7 +348,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         // 5 was chosen because the phase doesn't really get any steeper when continuing to increase Q.
         fres_incr_count *= num_buffers;
         iir_filter->fres_incr = fres_diff / (fres_incr_count);
-        iir_filter->fres_incr_count = fres_incr_count;
+        iir_filter->fres_incr_count = static_cast<int>(fres_incr_count + 0.5);
 #ifdef DBG_FILTER
         iir_filter->target_fres = fres;
 #endif
@@ -358,28 +362,59 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         // will be taken care of in fluid_iir_filter_apply().
     }
 
+    IIR_COEFF_T output_rate_f = static_cast<IIR_COEFF_T>(output_rate);
+    IIR_COEFF_T last_fres_f = static_cast<IIR_COEFF_T>(iir_filter->last_fres);
+    IIR_COEFF_T last_q_f = static_cast<IIR_COEFF_T>(iir_filter->last_q);
     if (calc_coeff_flag && !iir_filter->filter_startup)
     {
         if((iir_filter->flags & FLUID_IIR_NO_GAIN_AMP))
         {
             if(iir_filter->type == FLUID_IIR_HIGHPASS)
             {
-                fluid_iir_filter_calculate_coefficients<float, false, FLUID_IIR_HIGHPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, false, FLUID_IIR_HIGHPASS>(
+                last_fres_f,
+                last_q_f,
+                output_rate_f,
+                &iir_filter->a1,
+                &iir_filter->a2,
+                &iir_filter->b02,
+                &iir_filter->b1);
             }
             else
             {
-                fluid_iir_filter_calculate_coefficients<float, false, FLUID_IIR_LOWPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, false, FLUID_IIR_LOWPASS>(
+                last_fres_f,
+                last_q_f,
+                output_rate_f,
+                &iir_filter->a1,
+                &iir_filter->a2,
+                &iir_filter->b02,
+                &iir_filter->b1);
             }
         }
         else
         {
             if(iir_filter->type == FLUID_IIR_HIGHPASS)
             {
-                fluid_iir_filter_calculate_coefficients<float, true, FLUID_IIR_HIGHPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, true, FLUID_IIR_HIGHPASS>(
+                last_fres_f,
+                last_q_f,
+                output_rate_f,
+                &iir_filter->a1,
+                &iir_filter->a2,
+                &iir_filter->b02,
+                &iir_filter->b1);
             }
             else
             {
-                fluid_iir_filter_calculate_coefficients<float, true, FLUID_IIR_LOWPASS>(iir_filter->last_fres, iir_filter->last_q, output_rate, &iir_filter->a1, &iir_filter->a2, &iir_filter->b02, &iir_filter->b1);
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, true, FLUID_IIR_LOWPASS>(
+                last_fres_f,
+                last_q_f,
+                output_rate_f,
+                &iir_filter->a1,
+                &iir_filter->a2,
+                &iir_filter->b02,
+                &iir_filter->b1);
             }
         }
     }
