@@ -37,7 +37,7 @@ struct sincos_t
 enum
 {
     CENTS_STEP = 10 /* cents */,
-    SINCOS_TAB_SIZE = (13500+1 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP,
+    SINCOS_TAB_SIZE = ((13500 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP) + 1 /* add one because asking for 13500 cents must yield a valid coefficient */,
 };
 
 sincos_t sincos_table[SINCOS_TAB_SIZE];
@@ -191,19 +191,19 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 #endif
         };
         
-        float dsp_a1[N_COEFFS], dsp_a2[N_COEFFS], dsp_b02[N_COEFFS], dsp_b1[N_COEFFS];
-        dsp_a1[0] = iir_filter->a1;
-        dsp_a2[0] = iir_filter->a2;
-        dsp_b02[0] = iir_filter->b02;
-        dsp_b1[0] = iir_filter->b1;
+        /* IIR filter coefficients */
+        float dsp_a1 = iir_filter->a1;
+        float dsp_a2 = iir_filter->a2;
+        float dsp_b02 = iir_filter->b02;
+        float dsp_b1 = iir_filter->b1;
 
         int fres_incr_count = iir_filter->fres_incr_count;
         int q_incr_count = iir_filter->q_incr_count;
         
         fluid_real_t dsp_amp = iir_filter->amp;
         fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
-        const float fres = iir_filter->last_fres;
-        const float q = iir_filter->last_q;
+        float fres = iir_filter->last_fres;
+        float q = iir_filter->last_q;
         
         const float fres_incr = iir_filter->fres_incr;
         const float q_incr = iir_filter->q_incr;
@@ -225,8 +225,8 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         for (dsp_i = 0; dsp_i < count; dsp_i++)
         {
             /* The filter is implemented in Direct-II form. */
-            fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1[dsp_i % N_COEFFS] * dsp_hist1 - dsp_a2[dsp_i % N_COEFFS] * dsp_hist2;
-            fluid_real_t sample = dsp_b02[dsp_i % N_COEFFS] * (dsp_centernode + dsp_hist2) + dsp_b1[dsp_i % N_COEFFS] * dsp_hist1;
+            fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+            fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
             dsp_hist2 = dsp_hist1;
             dsp_hist1 = dsp_centernode;
 
@@ -246,42 +246,35 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                 dsp_buf[dsp_i] = sample;
             }
 
-            // We must recalculate the filter coefficients for the first iteration, and for every N_COEFFS 's iteration, unless we are about to exit the loop because we've reached count.
-            if(dsp_i == 0 || ((dsp_i+1) < count && (dsp_i+1) % N_COEFFS == 0))
+            if(fres_incr_count > 0 || q_incr_count > 0)
             {
-                #pragma omp simd
-                for(unsigned j = 0; j < N_COEFFS; j++)
+                if(fres_incr_count > 0)
                 {
-                    unsigned fres_j = std::min<int>(fres_incr_count, j);
-                    unsigned q_j = std::min<int>(q_incr_count, j);
-
-                    float cur_fres = fres + (dsp_i + fres_j) * fres_incr;
-                    float cur_q = q + (dsp_i + q_j) * q_incr;
-                    fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(cur_fres, cur_q, output_rate, &dsp_a1[j], &dsp_a2[j], &dsp_b02[j], &dsp_b1[j]);
-
-                    LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  "
-                            "target_q: %.4f",
-                            cur_fres,
-                            iir_filter->target_fres,
-                            cur_q,
-                            iir_filter->target_q);
+                    --fres_incr_count;
+                    fres += fres_incr;
                 }
-                // decrement linear step count and make sure it doesn't become negative
-                fres_incr_count = std::max(fres_incr_count - N_COEFFS, 0);
-                q_incr_count = std::max(q_incr_count - N_COEFFS, 0);
+                if(q_incr_count > 0)
+                {
+                    --q_incr_count;
+                    q += q_incr;
+                }
+                
+                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
+                
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
         }
 
         iir_filter->hist1 = dsp_hist1;
         iir_filter->hist2 = dsp_hist2;
-        iir_filter->a1 = dsp_a1[dsp_i % N_COEFFS];
-        iir_filter->a2 = dsp_a2[dsp_i % N_COEFFS];
-        iir_filter->b02= dsp_b02[dsp_i % N_COEFFS];
-        iir_filter->b1 = dsp_b1[dsp_i % N_COEFFS];
+        iir_filter->a1 = dsp_a1;
+        iir_filter->a2 = dsp_a2;
+        iir_filter->b02= dsp_b02;
+        iir_filter->b1 = dsp_b1;
 
-        iir_filter->last_fres = fres + std::min<int>(iir_filter->fres_incr_count, count) * fres_incr;
+        iir_filter->last_fres = fres;
         iir_filter->fres_incr_count = fres_incr_count;
-        iir_filter->last_q = q + std::min<int>(iir_filter->q_incr_count, count) * q_incr;
+        iir_filter->last_q = q;
         iir_filter->q_incr_count = q_incr_count;
         iir_filter->amp = dsp_amp;
     }
