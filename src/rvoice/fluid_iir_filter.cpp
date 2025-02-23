@@ -78,10 +78,6 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * bandwidth readjustment'. */
 
     unsigned tab_idx = (fres - 1500) / CENTS_STEP;
-    R rem = (fres - 1500) / (unsigned int)CENTS_STEP;
-    LOG_FILTER("%f hz vs. %f hz",
-              fluid_ct2hz((tab_idx * CENTS_STEP) + 1500),
-              fluid_ct2hz(fres));
     R sin_coeff = sincos_table[tab_idx].sin;
     R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
@@ -185,6 +181,15 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         /* IIR filter sample history */
         fluid_real_t dsp_hist1 = iir_filter->hist1;
         fluid_real_t dsp_hist2 = iir_filter->hist2;
+
+        /* IIR filter coefficients */
+        enum { N_COEFFS =
+#ifdef DBG_FILTER
+            1
+#else
+            16
+#endif
+        };
         
         /* IIR filter coefficients */
         float dsp_a1 = iir_filter->a1;
@@ -199,11 +204,6 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
         float fres = iir_filter->last_fres;
         float q = iir_filter->last_q;
-        float filter_gain = 1.0f;
-        if (GAIN_NORM)
-        {
-            filter_gain /= std::sqrt(q);
-        }
         
         const float fres_incr = iir_filter->fres_incr;
         const float q_incr = iir_filter->q_incr;
@@ -253,27 +253,15 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                     --fres_incr_count;
                     fres += fres_incr;
                 }
-                if (q_incr_count > 0)
+                if(q_incr_count > 0)
                 {
                     --q_incr_count;
                     q += q_incr;
-                    if (GAIN_NORM)
-                    {
-                        filter_gain = 1.0f / std::sqrt(q);
-                    }
-                }
-                
-                // Recalculate the filter coefficients without computing the inverse sqrt for the filter gain.
-                // Recalculating the filter gain is only required, when the Q value changes. When only fres changes, use the last filter gain.
-                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, false /*GAIN_NORM*/, TYPE>(fres, q, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
-                if (GAIN_NORM)
-                {
-                    // b1 must always be written back to global memory with the gain factor multiplied in
-                    dsp_b1 *= filter_gain;
                 }
                 
                 LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
                 
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
         }
 
