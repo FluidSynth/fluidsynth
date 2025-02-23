@@ -182,7 +182,7 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.h
 )
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-  set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno")
+  set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
 elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
   set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "/fp:fast")
 endif ( )
