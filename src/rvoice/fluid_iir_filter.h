@@ -22,7 +22,6 @@
 #define _FLUID_IIR_FILTER_H
 
 #include "fluidsynth_priv.h"
-#include "fluid_sys.h"
 
 // Uncomment to get debug logging for filter parameters
 // #define DBG_FILTER

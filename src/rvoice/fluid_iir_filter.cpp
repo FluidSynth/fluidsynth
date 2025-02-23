@@ -19,14 +19,13 @@
  */
 
 #include "fluid_iir_filter.h"
-#include "fluid_sys.h"
 #include "fluid_conv.h"
 
 #include <algorithm>
 #include <cmath>
 
 template<typename R, bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
-static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(R fres,
+static inline void fluid_iir_filter_calculate_coefficients(R fres,
                                                                  R q,
                                                                  R output_rate,
                                                                  R *FLUID_RESTRICT a1_out,
@@ -108,8 +107,6 @@ static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(R fres,
     *a2_out = a2_temp;
     *b02_out = b02_temp;
     *b1_out = b1_temp;
-
-    fluid_check_fpe("voice_write filter calculation");
 }
 
 /**
@@ -254,8 +251,6 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         iir_filter->last_q = q + std::min<int>(iir_filter->q_incr_count, count) * q_incr;
         iir_filter->q_incr_count = q_incr_count;
         iir_filter->amp = dsp_amp;
-
-        fluid_check_fpe("voice_filter");
     }
 }
 
@@ -388,7 +383,4 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
             }
         }
     }
-
-    fluid_check_fpe("voice_write DSP coefficients");
-
 }
