@@ -80,6 +80,8 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q);
 
+void fluid_iir_filter_init_table(fluid_real_t sample_rate);
+
 void fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter);
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,

@@ -301,6 +301,7 @@ fluid_synth_init(void)
 #endif
 
     init_dither();
+    fluid_iir_filter_init_table(44100);
 
     /* custom_breath2att_mod is not a default modulator specified in SF2.01.
      it is intended to replace default_vel2att_mod on demand using
@@ -3511,7 +3512,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
- * @warning This function is broken-by-design! Don't use it! Instead, specify the sample-rate when creating the synth.
+ * @warning This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
  * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.
@@ -3539,14 +3540,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 void
 fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate)
 {
-    fluid_return_if_fail(synth != NULL);
-    fluid_synth_api_enter(synth);
-
-    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
-
-    fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate,
-                             0, synth->sample_rate);
-    fluid_synth_api_exit(synth);
+    FLUID_LOG(FLUID_ERR, "fluid_synth_set_sample_rate() is no longer supported in this version of fluidsynth!");
 }
 
 // internal sample rate change function for the jack driver

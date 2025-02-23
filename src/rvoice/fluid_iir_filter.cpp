@@ -28,6 +28,35 @@
 // Calculate the filter coefficients with single precision
 typedef float IIR_COEFF_T;
 
+struct sincos_t
+{
+    IIR_COEFF_T sin;
+    IIR_COEFF_T cos;
+};
+
+enum
+{
+    CENTS_STEP = 10 /* cents */,
+    SINCOS_TAB_SIZE = (13500+1 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP,
+};
+
+sincos_t sincos_table[SINCOS_TAB_SIZE];
+
+extern "C" void fluid_iir_filter_init_table(fluid_real_t sample_rate)
+{
+    for(int fres_cents = 1500, i=0; fres_cents <= 13500; fres_cents += CENTS_STEP, i++)
+    {
+        fluid_real_t fres = fluid_ct2hz(fres_cents);
+        IIR_COEFF_T omega = (IIR_COEFF_T)(2.0 * M_PI) * (fres / sample_rate);
+        IIR_COEFF_T sin_coeff = std::sin(omega);
+        IIR_COEFF_T cos_coeff = std::cos(omega);
+        // i == (fres_cents - 1500) / CENTS_STEP;
+        sincos_table[i].sin = sin_coeff;
+        sincos_table[i].cos = cos_coeff;
+    }
+}
+
+
 template<typename R, bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
 static inline void fluid_iir_filter_calculate_coefficients(R fres,
                                                                  R q,
@@ -48,9 +77,9 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    R omega = (R)(2.0 * M_PI) * (fres / output_rate);
-    R sin_coeff = std::sin(omega);
-    R cos_coeff = std::cos(omega);
+    unsigned tab_idx = (fres - 1500) / CENTS_STEP;
+    R sin_coeff = sincos_table[tab_idx].sin;
+    R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
     R a0_inv = 1.0f / (1.0f + alpha_coeff);
 
@@ -326,6 +355,8 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     }
 
     LOG_FILTER("%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->last_q);
+    
+    fres = fluid_hz2ct(fres);
     
     /* if filter enabled and there is a significant frequency change.. */
     fres_diff = fres - iir_filter->last_fres;
