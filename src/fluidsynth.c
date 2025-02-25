@@ -1137,6 +1137,10 @@ cleanup:
 #endif
         delete_fluid_server(server);
     }
+    else if(with_server)
+    {
+        result = 1;
+    }
 
 #endif	/* NETWORK_SUPPORT */
 
