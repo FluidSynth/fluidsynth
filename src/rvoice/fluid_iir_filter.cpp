@@ -23,7 +23,8 @@
 
 #include <algorithm>
 #include <cmath>
-
+#include <iostream>
+#include <iomanip>
 
 // Calculate the filter coefficients with single precision
 typedef float IIR_COEFF_T;
@@ -56,6 +57,30 @@ extern "C" void fluid_iir_filter_init_table(fluid_real_t sample_rate)
     }
 }
 
+template<typename R>
+static R interp_lin(R y0, R y1, R x0, R x1, R x)
+{
+    return (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
+}
+
+template<typename R>
+static void interp_sin_cos(R fres, sincos_t *coeff)
+{
+    R diff = (fres - 1500.0f) / CENTS_STEP;
+
+    unsigned idx_prev = std::max(std::min(static_cast<int>(std::floor(diff)), SINCOS_TAB_SIZE - 1), 0);
+    unsigned idx_next = std::max(std::min(static_cast<int>(std::ceil(diff)), SINCOS_TAB_SIZE - 1), 0);
+
+    sincos_t prev = sincos_table[idx_prev];
+    sincos_t next = sincos_table[idx_next];
+
+    R x0 = idx_prev * CENTS_STEP + 1500;
+    R x1 = idx_next * CENTS_STEP + 1500;
+
+    coeff->sin = interp_lin<R>(prev.sin, next.sin, x0, x1, fres);
+    coeff->cos = interp_lin<R>(prev.cos, next.cos, x0, x1, fres);
+}
+
 
 template<typename R, bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
 static inline void fluid_iir_filter_calculate_coefficients(R fres,
@@ -77,10 +102,32 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    unsigned tab_idx = (fres - 1500) / CENTS_STEP;
-    R sin_coeff = sincos_table[tab_idx].sin;
-    R cos_coeff = sincos_table[tab_idx].cos;
-    R alpha_coeff = sin_coeff / (2.0f * q);
+    sincos_t coeff;
+    interp_sin_cos<R>(fres, &coeff);
+
+#ifdef DBG_FILTER
+    {
+        sincos_t coeff_accurate;
+        fluid_real_t fres_hz = fluid_ct2hz(fres);
+        R omega = (R)(2.0 * M_PI) * (fres_hz / output_rate);
+        coeff_accurate.sin = std::sin(omega);
+        coeff_accurate.cos = std::cos(omega);
+        
+        std::cerr << "fres: " << std::fixed << std::setprecision(2) << fres_hz << " Hz  |  "
+                  << "fres: " << std::fixed << std::setprecision(2) << fres << " Cents  |  "
+                  << "sin: " << std::fixed << std::setprecision(6) << coeff.sin << "  |  "
+                  << "sin_accurate: " << std::fixed << std::setprecision(6) << coeff_accurate.sin << "  |  "
+                  << "abs(sin_diff): " << std::fixed << std::setprecision(6)
+                  << std::fabs(coeff.sin - coeff_accurate.sin) << "   |  "
+                  << "cos: " << std::fixed << std::setprecision(6) << coeff.cos << "  |  "
+                  << "cos_accurate: " << std::fixed << std::setprecision(6) << coeff_accurate.cos << "  |  "
+                  << "abs(cos_diff): " << std::fixed << std::setprecision(6)
+                  << std::fabs(coeff.cos - coeff_accurate.cos) << std::endl;
+    }
+#endif
+
+
+    R alpha_coeff = coeff.sin / (2.0f * q);
     R a0_inv = 1.0f / (1.0f + alpha_coeff);
 
     /* Calculate the filter coefficients. All coefficients are
@@ -93,7 +140,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*filter_gain; */
 
     /* "a" coeffs are same for all 3 available filter types */
-    R a1_temp = -2.0f * cos_coeff * a0_inv;
+    R a1_temp = -2.0f * coeff.cos * a0_inv;
     R a2_temp = (1.0f - alpha_coeff) * a0_inv;
     R b02_temp, b1_temp;
 
@@ -116,7 +163,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
     switch (TYPE)
     {
         case FLUID_IIR_HIGHPASS:
-            b1_temp = (1.0f + cos_coeff) * a0_inv * filter_gain;
+            b1_temp = (1.0f + coeff.cos) * a0_inv * filter_gain;
     
             /* both b0 -and- b2 */
             b02_temp = b1_temp * 0.5f;
@@ -125,7 +172,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
             break;
     
         case FLUID_IIR_LOWPASS:
-            b1_temp = (1.0f - cos_coeff) * a0_inv * filter_gain;
+            b1_temp = (1.0f - coeff.cos) * a0_inv * filter_gain;
     
             /* both b0 -and- b2 */
             b02_temp = b1_temp * 0.5f;
@@ -259,7 +306,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                     q += q_incr;
                 }
                 
-                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
+                LOG_FILTER("last_fres: %.2f Cents  |  target_fres: %.2f Cents  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
                 
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
