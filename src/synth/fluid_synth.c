@@ -2088,6 +2088,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
             fluid_synth_api_enter(synth);
             synth->bank_select = FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
+            if(synth->verbose)
+            {
+                FLUID_LOG(FLUID_INFO, "Processing SysEX GM / GM2 System ON message, bank selection mode is now gm.");
+            }
             FLUID_API_RETURN(result);
         }
         return FLUID_OK;
@@ -2104,6 +2108,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
                                           response_len, avail_response,
                                           handled, dryrun);
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "Processing SysEX GS DT1 message, bank selection mode might have been changed.");
+        }
         FLUID_API_RETURN(result);
     }
 
@@ -2117,6 +2125,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_xg(synth, data, len, response,
                                       response_len, avail_response,
                                       handled, dryrun);
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "Processing SysEX XG message, bank selection mode is now xg.");
+        }
         FLUID_API_RETURN(result);
     }
 
