@@ -3,6 +3,8 @@ Description=FluidSynth Daemon
 Documentation=man:fluidsynth(1)
 After=sound.target
 After=pipewire.service
+# If you need more than one instance, use `systemctl edit` to override this:
+ConditionPathExists=!/run/lock/fluidsynth.lock
 
 [Service]
 # added automatically, for details please see
@@ -23,6 +25,8 @@ Environment=OTHER_OPTS= SOUND_FONT=
 EnvironmentFile=@FLUID_DAEMON_ENV_FILE@
 EnvironmentFile=-%h/.config/fluidsynth
 ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/fluidsynth -is $OTHER_OPTS $SOUND_FONT
+ExecStartPre=touch /run/lock/fluidsynth.lock
+ExecStopPost=rm -f /run/lock/fluidsynth.lock
 
 [Install]
 WantedBy=default.target
