@@ -60,7 +60,7 @@ extern "C" void fluid_iir_filter_init_table(fluid_real_t sample_rate)
 template<typename R>
 static R interp_lin(R y0, R y1, R x0, R x1, R x)
 {
-    return std::fabs(x1 - x0 < 1) // do not interpolate, if difference is less than a single cent
+    return std::fabs(x1 - x0) < 1 // do not interpolate, if difference is less than a single cent
     ? y0
     : (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
 }
