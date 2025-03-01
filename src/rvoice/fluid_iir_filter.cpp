@@ -60,7 +60,9 @@ extern "C" void fluid_iir_filter_init_table(fluid_real_t sample_rate)
 template<typename R>
 static R interp_lin(R y0, R y1, R x0, R x1, R x)
 {
-    return (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
+    return std::fabs(x1 - x0 < 1) // do not interpolate, if difference is less than a single cent
+    ? y0
+    : (y0 * (x1 - x) + y1 * (x - x0)) / (x1 - x0);
 }
 
 template<typename R>
@@ -112,7 +114,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
         R omega = (R)(2.0 * M_PI) * (fres_hz / output_rate);
         coeff_accurate.sin = std::sin(omega);
         coeff_accurate.cos = std::cos(omega);
-        
+
         std::cerr << "fres: " << std::fixed << std::setprecision(2) << fres_hz << " Hz  |  "
                   << "fres: " << std::fixed << std::setprecision(2) << fres << " Cents  |  "
                   << "sin: " << std::fixed << std::setprecision(6) << coeff.sin << "  |  "
