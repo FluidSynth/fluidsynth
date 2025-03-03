@@ -27,6 +27,10 @@
 #include "fluid_defsfont.h"
 #include "fluid_instpatch.h"
 
+#ifdef __HAIKU__
+#include <FindDirectory.h>
+#endif
+
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
 #include <fenv.h>
@@ -218,8 +222,25 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_str(settings, "midi.portname", "", 0);
 
+#ifdef __HAIKU__
+	char midiSettings[PATH_MAX] = "";
+	if (find_directory(B_USER_SETTINGS_DIRECTORY, -1, false, midiSettings, sizeof(midiSettings)) == B_OK) {
+		strcat(midiSettings, "/Media/midi_settings");
+		if( access( midiSettings, F_OK ) != -1 ) {
+			FILE *inFile = fopen(midiSettings, "rt");
+			if (inFile) {
+				char sf2file[PATH_MAX];
+				if (fscanf(inFile, "# Midi\n\tsoundfont \"%[^\"]\"", sf2file)) {
+					fluid_settings_register_str(settings, "synth.default-soundfont", sf2file, 0);
+				}
+				fclose(inFile);
+			}
+		}
+	}
+#else
 #ifdef DEFAULT_SOUNDFONT
     fluid_settings_register_str(settings, "synth.default-soundfont", DEFAULT_SOUNDFONT, 0);
+#endif
 #endif
 
     fluid_settings_register_int(settings, "synth.polyphony", 256, 1, 65535, 0);
