@@ -92,6 +92,12 @@ else ( SDL2_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  no\n" )
 endif ( SDL2_SUPPORT )
 
+if ( SDL3_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL3:                  yes\n" )
+else ( SDL3_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL3:                  no\n" )
+endif ( SDL3_SUPPORT )
+
 if ( WASAPI_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WASAPI:                yes\n" )
 else ( WASAPI_SUPPORT )

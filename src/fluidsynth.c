@@ -33,6 +33,10 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#if SDL3_SUPPORT
+#include <SDL3/SDL.h>
+#endif
+
 #if SDL2_SUPPORT
 #include <SDL.h>
 #endif
