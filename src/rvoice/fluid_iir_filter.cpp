@@ -36,7 +36,7 @@ struct sincos_t
 
 enum
 {
-    CENTS_STEP = 10 /* cents */,
+    CENTS_STEP = 1 /* cents */,
     SINCOS_TAB_SIZE = ((13500 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP) + 1 /* add one because asking for 13500 cents must yield a valid coefficient */,
 };
 
