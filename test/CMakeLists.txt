@@ -59,6 +59,7 @@ else()
     set(EXCL_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/exclusive_class")
     set(DSPINTERP_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dsp_interp")
     set(DYNSAM_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dynamic-sample-loading")
+    set(STACKEDSF_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/stacked_sf2")
 
     if(LIBSNDFILE_SUPPORT)
       set(FEXT "wav")
@@ -70,7 +71,7 @@ else()
     add_custom_target(check_manual)
 
     add_custom_target(create_iir_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -113,6 +114,13 @@ else()
         VERBATIM
     )
 
+    add_custom_target(render1481
+        COMMAND fluidsynth -R 0 -C 0 -g 1.8 -F ${IIR_FILTER_RENDER_DIR}/1481_cutoff-resolution.${FEXT} "filter resolution test.mid" "filter resolution test.sf2"
+        COMMENT "Rendering testfile of issue 1481"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1481_cutoff-resolution/
+        VERBATIM
+    )
 
     add_custom_target(renderAltitude
         COMMAND fluidsynth -R 1 -C 1 -f fluidsynth.cfg -o synth.default-soundfont="../../sf2/synthgs-sf2_04-compat.sf2" -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid 
@@ -237,6 +245,21 @@ else()
         VERBATIM
     )
 
+    if ( LIBINSTPATCH_SUPPORT )
+        add_custom_target(renderStreetwise
+            COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${STACKEDSF_RENDER_DIR}/Streetwise.${FEXT}" "Streetwise.mid" ${GENERAL_USER_GS2} "Streetwise.dls"
+            COMMENT "Rendering testcase for stacked soundfonts"
+            DEPENDS fluidsynth create_iir_dir
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/stacked_sf2/Streetwise/
+            VERBATIM
+        )
+    else ( LIBINSTPATCH_SUPPORT )
+        add_custom_target(renderStreetwise
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --red "Cannot render Streetwise, no DLS support!"
+            COMMENT "Rendering testcase for stacked soundfonts"
+        )
+    endif (LIBINSTPATCH_SUPPORT )
+
     # Add a dependency so that rendering targets depends on check_manual
     add_dependencies(check_manual render1415)
     add_dependencies(check_manual render1417)
@@ -255,5 +278,7 @@ else()
     add_dependencies(check_manual renderdspInterp)
     add_dependencies(check_manual render1484)
     add_dependencies(check_manual renderRealtimeIIR)
+    add_dependencies(check_manual render1481)
+    add_dependencies(check_manual renderStreetwise)
 
 endif()
