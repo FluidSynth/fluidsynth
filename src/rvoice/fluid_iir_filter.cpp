@@ -355,7 +355,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     fres_diff = fres - iir_filter->last_fres;
     if(iir_filter->filter_startup)
     {
-        // The filer was just starting up, make sure to calculate initial coefficients for the initial Q value, even though the fres may not have changed
+        // The filter was just starting up, make sure to calculate initial coefficients for the initial Q value, even though the fres may not have changed
         calc_coeff_flag = TRUE;
         
         iir_filter->fres_incr_count = 0;
