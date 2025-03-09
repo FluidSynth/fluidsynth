@@ -1004,7 +1004,7 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
-    fluid_iir_filter_init_table(&synth->iir_sincos_table, synth->sample_rate);
+    fluid_iir_filter_init_table(synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
     /* FIXME */
