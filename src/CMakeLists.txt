@@ -133,6 +133,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_adsr_env.h
     rvoice/fluid_chorus.c
     rvoice/fluid_chorus.h
+    rvoice/fluid_iir_filter.cpp
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
     rvoice/fluid_lfo.c
@@ -180,6 +181,12 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.c
     bindings/fluid_ladspa.h
 )
+if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+  set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
+elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
+  set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "/fp:fast")
+endif ( )
+
 
 set ( public_HEADERS
     ${FluidSynth_SOURCE_DIR}/include/fluidsynth/audio.h
