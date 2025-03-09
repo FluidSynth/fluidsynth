@@ -87,9 +87,11 @@ struct _fluid_iir_filter_t
 enum
 {
     CENTS_STEP = 1 /* cents */,
-    SINCOS_TAB_SIZE = ((13500 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP)
+    FRES_MIN = 1500 /* cents */,
+    FRES_MAX = 13500 /* cents */,
+    SINCOS_TAB_SIZE = ((FRES_MAX /* upper fc in cents */ - FRES_MIN /* lower fc in cents */) / CENTS_STEP)
                       +
-                      1 /* add one because asking for 13500 cents must yield a valid coefficient */,
+                      1 /* add one because asking for FRES_MAX cents must yield a valid coefficient */,
 };
 
 

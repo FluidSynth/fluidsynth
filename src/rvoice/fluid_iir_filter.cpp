@@ -30,13 +30,13 @@
 extern "C" void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t sample_rate)
 {
     const IIR_COEFF_T period = (IIR_COEFF_T)(2.0 * M_PI / sample_rate);
-    for(int fres_cents = 1500, i=0; fres_cents <= 13500; fres_cents += CENTS_STEP, i++)
+    for(int fres_cents = FRES_MIN, i=0; fres_cents <= FRES_MAX; fres_cents += CENTS_STEP, i++)
     {
         fluid_real_t fres = fluid_ct2hz(fres_cents);
         IIR_COEFF_T omega = period * fres;
         IIR_COEFF_T sin_coeff = std::sin(omega);
         IIR_COEFF_T cos_coeff = std::cos(omega);
-        // i == (fres_cents - 1500) / CENTS_STEP;
+        // i == (fres_cents - FRES_MIN) / CENTS_STEP;
         sincos_table[i].sin = sin_coeff;
         sincos_table[i].cos = cos_coeff;
     }
@@ -62,7 +62,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    unsigned tab_idx = (fres - 1500) / CENTS_STEP;
+    unsigned tab_idx = (fres - FRES_MIN) / CENTS_STEP;
     R sin_coeff = sincos_table[tab_idx].sin;
     R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
