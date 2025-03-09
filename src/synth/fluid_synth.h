@@ -171,6 +171,8 @@ struct _fluid_synth_t
     enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
     enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
     enum fluid_msgs_note_cut msgs_note_cut_mode;
+
+    fluid_iir_sincos_t iir_sincos_table[SINCOS_TAB_SIZE]; /**< Table of sin/cos values for IIR filter */
 };
 
 /**

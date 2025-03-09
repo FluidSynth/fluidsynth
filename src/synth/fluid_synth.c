@@ -301,7 +301,6 @@ fluid_synth_init(void)
 #endif
 
     init_dither();
-    fluid_iir_filter_init_table(44100);
 
     /* custom_breath2att_mod is not a default modulator specified in SF2.01.
      it is intended to replace default_vel2att_mod on demand using
@@ -934,7 +933,7 @@ new_fluid_synth(fluid_settings_t *settings)
     FLUID_MEMSET(synth->voice, 0, synth->nvoice * sizeof(*synth->voice));
     for(i = 0; i < synth->nvoice; i++)
     {
-        synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
+        synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate, synth->iir_sincos_table);
 
         if(synth->voice[i] == NULL)
         {
@@ -1005,6 +1004,7 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
+    fluid_iir_filter_init_table(&synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
     /* FIXME */
@@ -3689,7 +3689,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t *synth, int new_polyphony)
 
         for(i = synth->nvoice; i < new_polyphony; i++)
         {
-            synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
+            synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate, synth->iir_sincos_table);
 
             if(synth->voice[i] == NULL)
             {

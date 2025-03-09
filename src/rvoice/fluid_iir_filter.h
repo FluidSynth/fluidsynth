@@ -37,6 +37,15 @@
 extern "C" {
 #endif
 
+// Calculate the filter coefficients with single precision
+typedef float IIR_COEFF_T;
+
+typedef struct _sincos_t
+{
+    IIR_COEFF_T sin;
+    IIR_COEFF_T cos;
+} fluid_iir_sincos_t;
+
 /* We can't do information hiding here, as fluid_voice_t includes the struct
    without a pointer. */
 struct _fluid_iir_filter_t
@@ -72,7 +81,17 @@ struct _fluid_iir_filter_t
     fluid_real_t amp;                /* current linear amplitude */
     fluid_real_t amp_incr;           /* amplitude increment value for the next FLUID_BUFSIZE samples */
 
+    fluid_iir_sincos_t *sincos_table; /* pointer to the precalculated sin and cos values, owned by the synth */
 };
+
+enum
+{
+    CENTS_STEP = 1 /* cents */,
+    SINCOS_TAB_SIZE = ((13500 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP)
+                      +
+                      1 /* add one because asking for 13500 cents must yield a valid coefficient */,
+};
+
 
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
@@ -80,7 +99,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q);
 
-void fluid_iir_filter_init_table(fluid_real_t sample_rate);
+void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t sample_rate);
 
 void fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter);
 
@@ -90,8 +109,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
 void fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                             fluid_iir_filter_t *custom_filter,
                             fluid_real_t *dsp_buf,
-                            unsigned int count,
-                            fluid_real_t output_rate);
+                            unsigned int count);
 
 #ifdef __cplusplus
 }

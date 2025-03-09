@@ -25,29 +25,15 @@
 #include <cmath>
 
 
-// Calculate the filter coefficients with single precision
-typedef float IIR_COEFF_T;
-
-struct sincos_t
+// Calculating the sine and cosine coefficients for every possible cutoff frequency is too CPU expensive and can harm real-time playback.
+// Therefore, we precalculate the coefficients with a precision of CENTS_STEP and store them in a table.
+extern "C" void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t sample_rate)
 {
-    IIR_COEFF_T sin;
-    IIR_COEFF_T cos;
-};
-
-enum
-{
-    CENTS_STEP = 1 /* cents */,
-    SINCOS_TAB_SIZE = ((13500 /* upper fc in cents */ - 1500 /* lower fc in cents */) / CENTS_STEP) + 1 /* add one because asking for 13500 cents must yield a valid coefficient */,
-};
-
-sincos_t sincos_table[SINCOS_TAB_SIZE];
-
-extern "C" void fluid_iir_filter_init_table(fluid_real_t sample_rate)
-{
+    const IIR_COEFF_T period = (IIR_COEFF_T)(2.0 * M_PI / sample_rate);
     for(int fres_cents = 1500, i=0; fres_cents <= 13500; fres_cents += CENTS_STEP, i++)
     {
         fluid_real_t fres = fluid_ct2hz(fres_cents);
-        IIR_COEFF_T omega = (IIR_COEFF_T)(2.0 * M_PI) * (fres / sample_rate);
+        IIR_COEFF_T omega = period * fres;
         IIR_COEFF_T sin_coeff = std::sin(omega);
         IIR_COEFF_T cos_coeff = std::cos(omega);
         // i == (fres_cents - 1500) / CENTS_STEP;
@@ -56,15 +42,14 @@ extern "C" void fluid_iir_filter_init_table(fluid_real_t sample_rate)
     }
 }
 
-
 template<typename R, bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
 static inline void fluid_iir_filter_calculate_coefficients(R fres,
-                                                                 R q,
-                                                                 R output_rate,
-                                                                 R *FLUID_RESTRICT a1_out,
-                                                                 R *FLUID_RESTRICT a2_out,
-                                                                 R *FLUID_RESTRICT b02_out,
-                                                                 R *FLUID_RESTRICT b1_out)
+                                                           R q,
+                                                           fluid_iir_sincos_t *sincos_table,
+                                                           R *FLUID_RESTRICT a1_out,
+                                                           R *FLUID_RESTRICT a2_out,
+                                                           R *FLUID_RESTRICT b02_out,
+                                                           R *FLUID_RESTRICT b1_out)
 {
     R filter_gain = 1.0f;
 
@@ -168,7 +153,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  */
 template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, unsigned int count, fluid_real_t output_rate)
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, unsigned int count)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -261,7 +246,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                 
                 LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
                 
-                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, output_rate, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
+                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
         }
 
@@ -283,34 +268,33 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
                                        fluid_iir_filter_t *resonant_custom_filter,
                                        fluid_real_t *dsp_buf,
-                                       unsigned int count,
-                                       fluid_real_t output_rate)
+                                       unsigned int count)
 {
     if(resonant_custom_filter->flags & FLUID_IIR_NO_GAIN_AMP)
     {
         if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
         {
-            fluid_iir_filter_apply_local<false, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+            fluid_iir_filter_apply_local<false, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
         }
         else
         {
-            fluid_iir_filter_apply_local<false, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+            fluid_iir_filter_apply_local<false, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
         }
     }
     else
     {
         if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
         {
-            fluid_iir_filter_apply_local<true, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+            fluid_iir_filter_apply_local<true, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
         }
         else
         {
-            fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count, output_rate);
+            fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
         }
     }
 
     // This is the last filter in the chain - the default SF2 filter that always runs. This one must apply the final envelope gain.
-    fluid_iir_filter_apply_local<true, true, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count, output_rate);
+    fluid_iir_filter_apply_local<true, true, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
 }
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
@@ -386,7 +370,6 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         // will be taken care of in fluid_iir_filter_apply().
     }
 
-    IIR_COEFF_T output_rate_f = static_cast<IIR_COEFF_T>(output_rate);
     IIR_COEFF_T last_fres_f = static_cast<IIR_COEFF_T>(iir_filter->last_fres);
     IIR_COEFF_T last_q_f = static_cast<IIR_COEFF_T>(iir_filter->last_q);
     if (calc_coeff_flag && !iir_filter->filter_startup)
@@ -398,7 +381,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, false, FLUID_IIR_HIGHPASS>(
                 last_fres_f,
                 last_q_f,
-                output_rate_f,
+                iir_filter->sincos_table,
                 &iir_filter->a1,
                 &iir_filter->a2,
                 &iir_filter->b02,
@@ -409,7 +392,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, false, FLUID_IIR_LOWPASS>(
                 last_fres_f,
                 last_q_f,
-                output_rate_f,
+                iir_filter->sincos_table,
                 &iir_filter->a1,
                 &iir_filter->a2,
                 &iir_filter->b02,
@@ -423,7 +406,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, true, FLUID_IIR_HIGHPASS>(
                 last_fres_f,
                 last_q_f,
-                output_rate_f,
+                iir_filter->sincos_table,
                 &iir_filter->a1,
                 &iir_filter->a2,
                 &iir_filter->b02,
@@ -434,7 +417,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, true, FLUID_IIR_LOWPASS>(
                 last_fres_f,
                 last_q_f,
-                output_rate_f,
+                iir_filter->sincos_table,
                 &iir_filter->a1,
                 &iir_filter->a2,
                 &iir_filter->b02,
