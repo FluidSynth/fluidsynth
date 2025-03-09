@@ -359,10 +359,6 @@ if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
 endif()
 
-if ( TARGET OpenMP::OpenMP_CXX AND HAVE_OPENMP )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_CXX )
-endif()
-
 target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::glib-2 GLib2::gthread-2 )
 
 if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
