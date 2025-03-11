@@ -30,58 +30,73 @@
 FluidSynth \- a SoundFont synthesizer
 .SH SYNOPSIS
 .B fluidsynth
-.RI [ options ] 
-[ SoundFonts ] 
-[ midifiles ] 
+.RI [ options ]
+[ SoundFonts ]
+[ midifiles ]
 .SH DESCRIPTION
 \fBFluidSynth\fP is a real-time MIDI synthesizer based on the
-SoundFont(R) 2 specifications. It can be used to render MIDI input or
-MIDI files to audio.  The MIDI events are read from a MIDI device. The
-sound is rendered in real-time to the sound output device.
+SoundFont(R) 2 specifications.
+It can be used to render MIDI input or MIDI files to audio.
+The MIDI events are read from a MIDI device.
+The sound is rendered in real-time to the sound output device.
 .PP
 The easiest way to start the synthesizer is to give it a SoundFont on
-the command line: 'fluidsynth soundfont.sf2'. fluidsynth will load the
-SoundFont and read MIDI events from the default MIDI device using the
-default MIDI driver.  Once FluidSynth is running, it reads commands
-from the stdin. There are commands to send MIDI events manually, to
-load or unload SoundFonts, and so forth. All the available commands are
-discussed below.
+the command line:
+\&'fluidsynth soundfont.sf2'.
+fluidsynth will load the SoundFont
+and read MIDI events from the default MIDI device using the default MIDI
+driver.
+Once FluidSynth is running,
+it reads commands from the stdin.
+There are commands to send MIDI events manually,
+to load or unload SoundFonts,
+and so forth.
+All the available commands are discussed below.
 .PP
-FluidSynth can also be used to play a list of MIDI files. Simply run
-FluidSynth with the SoundFont and the list of MIDI files to play. In
-this case you might not want to open the MIDI device to read external
-events. Use the \-n option to deactivate MIDI input. If you also
-want to deactivate the use of the shell, start FluidSynth with the \-i
-option: 'fluidsynth \-ni soundfont.sf2 midifile1.mid midifile2.mid'.
+FluidSynth can also be used to play a list of MIDI files.
+Simply run FluidSynth with the SoundFont
+and the list of MIDI files to play.
+In this case you might not want to open the MIDI device to read external
+events.
+Use the \-n option to deactivate MIDI input.
+If you also want to deactivate the use of the shell,
+start FluidSynth with the \-i option:
+\&'fluidsynth \-ni soundfont.sf2 midifile1.mid midifile2.mid'.
 .PP
-Run fluidsynth with the \-\-help option to check for changes in the list of options.
+Run fluidsynth with the \-\-help option to check for changes in the list
+of options.
 .SH OPTIONS
 \fBfluidsynth\fP accepts the following options:
 
 .TP
 .B \-a, \-\-audio\-driver=[label]
-The audio driver to use. "\-a help" to list valid options
+The audio driver to use.
+"\-a help" to list valid options
 .TP
 .B \-c, \-\-audio\-bufcount=[count]
 Number of audio buffers
 .TP
 .B \-C, \-\-chorus
-Turn the chorus on or off [0|1|yes|no, default = on]
+Turn the chorus on or off
+[0|1|yes|no, default = on]
 .TP
 .B \-d, \-\-dump
 Dump incoming and outgoing MIDI events to stdout
 .TP
 .B \-E, \-\-audio\-file\-endian
-Audio file endian for fast rendering or aufile driver ("\-E help" for list)
+Audio file endian for fast rendering or aufile driver
+("\-E help" for list)
 .TP
 .B \-f, \-\-load\-config
-Load command configuration file (shell commands)
+Load command configuration file
+(shell commands)
 .TP
 .B \-F, \-\-fast\-render=[file]
 Render MIDI file to raw audio data and store in [file]
 .TP
 .B \-g, \-\-gain
-Set the master gain [0 < gain < 10, default = 0.2]
+Set the master gain
+[0 < gain < 10, default = 0.2]
 .TP
 .B \-G, \-\-audio\-groups
 Defines the number of LADSPA audio nodes
@@ -102,19 +117,23 @@ The number of midi channels [default = 16]
 The number of stereo audio channels [default = 1]
 .TP
 .B \-m, \-\-midi\-driver=[label]
-The name of the midi driver to use. "\-m help" to list valid options.
+The name of the midi driver to use.
+"\-m help" to list valid options.
 .TP
 .B \-n, \-\-no\-midi\-in
 Don't create a midi driver to read MIDI input events [default = yes]
 .TP
 .B \-o
-Define a setting, \-o name=value ("\-o help" to dump current values)
+Define a setting, \-o name=value
+("\-o help" to dump current values)
 .TP
 .B \-O, \-\-audio\-file\-format
-Audio file format for fast rendering or aufile driver ("\-O help" for list)
+Audio file format for fast rendering or aufile driver
+("\-O help" for list)
 .TP
 .B \-p, \-\-portname=[label]
-Set MIDI port name (alsa_seq, coremidi drivers)
+Set MIDI port name
+(alsa_seq, coremidi drivers)
 .TP
 .B \-q, \-\-quiet
 Do not print welcome message or other informational output
@@ -123,16 +142,20 @@ Do not print welcome message or other informational output
 Set the sample rate
 .TP
 .B \-R, \-\-reverb
-Turn the reverb on or off [0|1|yes|no, default = on]
+Turn the reverb on or off
+[0|1|yes|no, default = on]
 .TP
 .B \-s, \-\-server
 Start FluidSynth as a server process
 .TP
 .B \-T, \-\-audio\-file\-type
-Audio file type for fast rendering or aufile driver ("\T help" for list)
+Audio file type for fast rendering or aufile driver
+("\-T help" for list)
 .TP
 .B \-v, \-\-verbose
-Print out verbose messages about midi events (synth.verbose=1) as well as other debug messages
+Print out verbose messages about midi events
+(synth.verbose=1)
+as well as other debug messages
 .TP
 .B \-V, \-\-version
 Show version of program
@@ -141,14 +164,22 @@ Show version of program
 Size of each audio buffer
 
 .SH SETTINGS
-The settings to be specified with \-o are documented in the fluidsettings.xml hopefully shipped with this distribution or online at https://www.fluidsynth.org/api/fluidsettings.xml . We recommend viewing this file in a webbrowser, favourably Firefox.
+The settings to be specified with \-o are documented in the
+fluidsettings.xml
+hopefully shipped with this distribution
+or online at
+https://www.fluidsynth.org/api/fluidsettings.xml .
+We recommend viewing this file in a webbrowser,
+favourably Firefox.
 
 .SH SHELL COMMANDS
 .TP
 .B GENERAL
 .TP
 .B help
-Prints out list of help topics (type "help <topic>" to view details on available commands)
+Prints out list of help topics
+(type "help <topic>"
+to view details on available commands)
 .TP
 .B quit
 Quit the synthesizer
@@ -159,7 +190,8 @@ Quit the synthesizer
 Load a SoundFont
 .TP
 .B unload number
-Unload a SoundFont. The number is the index of the SoundFont on the stack.
+Unload a SoundFont.
+The number is the index of the SoundFont on the stack.
 .TP
 .B fonts
 Lists the current SoundFonts on the stack
@@ -169,7 +201,7 @@ Print out the available instruments for the SoundFont.
 .TP
 .B MIDI MESSAGES
 .TP
-.B noteon channel key velocity 
+.B noteon channel key velocity
 Send a note-on event
 .TP
 .B noteoff channel key
@@ -190,7 +222,8 @@ Print out the presets of all channels.
 .B AUDIO SYNTHESIS
 .TP
 .B gain value
-Set the master gain (0 < gain < 5)
+Set the master gain
+(0 < gain < 5)
 .TP
 .B interp num
 Choose interpolation method for all channels
@@ -221,7 +254,8 @@ Change reverb level
 Turn the chorus on or off
 .TP
 .B set synth.chorus.nr n
-Use n delay lines (default 3)
+Use n delay lines
+(default 3)
 .TP
 .B set synth.chorus.level num
 Set output level of each chorus line to num
@@ -235,8 +269,8 @@ Set chorus modulation depth to num (ms)
 .B MIDI ROUTER
 .TP
 .B router_default
-Reloads the default MIDI routing rules (input channels are mapped 1:1
-to the synth)
+Reloads the default MIDI routing rules
+(input channels are mapped 1:1 to the synth)
 .TP
 .B router_clear
 Deletes all MIDI routing rules.
@@ -246,14 +280,19 @@ Starts a new routing rule for events of the given type
 .TP
 .B router_chan min max mul add
 Limits the rule for events on min <= chan <= max.
-If the channel falls into the window, it is multiplied by 'mul', then 'add' is added.
+If the channel falls into the window,
+it is multiplied by 'mul',
+then 'add' is added.
 .TP
 .B router_par1 min max mul add
-Limits parameter 1 (for example note number in a note events). Similar
-to router_chan.
+Limits parameter 1
+(for example note number in a note events).
+Similar to router_chan.
 .TP
 .B router_par2 min max mul add
-Limits parameter 2 (for example velocity in a note event). Similar to router_chan 
+Limits parameter 2
+(for example velocity in a note event).
+Similar to router_chan
 .TP
 .B router_end
 Finishes the current rule and adds it to the router.
@@ -267,10 +306,11 @@ router_begin note
 router_chan 0 7 0 15
 .TP
 router_end
-.TP
-Will accept only note events from the lower 8 MIDI
-channels. Regardless of the channel, the synthesizer plays the note on
-ch 15 (synthchannel=midichannel*0+15)
+.\".TP
+Will accept only note events from the lower 8 MIDI channels.
+Regardless of the channel,
+the synthesizer plays the note on ch 15
+(synthchannel=midichannel*0+15)
 .TP
 router_begin cc
 .TP
@@ -279,22 +319,23 @@ router_chan 0 7 0 15
 router_par1 1 1 0 64
 .TP
 router_add
-Configures the modulation wheel to act as sustain pedal (transforms CC
-1 to CC 64 on the lower 8 MIDI channels, routes to ch 15) 
+Configures the modulation wheel to act as sustain pedal
+(transforms CC 1 to CC 64 on the lower 8 MIDI channels,
+routes to ch 15)
 
 .SH AUTHORS
-Peter Hanappe <hanappe@fluid-synth.org> 
-.br 
+Peter Hanappe <hanappe@fluid-synth.org>
+.br
 Markus Nentwig <nentwig@users.sourceforge.net>
-.br 
+.br
 Antoine Schmitt <as@gratin.org>
-.br 
+.br
 Josh Green <jgreen@users.sourceforge.net>
-.br 
+.br
 Stephane Letz <letz@grame.fr>
-.br 
+.br
 Tom Moebert <tom[d0t]mbrt[ÄT]gmail[d0t]com>
 
 Please check the AUTHORS and THANKS files for all credits
 .SH DISCLAIMER
-SoundFont(R) is a registered trademark of E-mu Systems, Inc. 
+SoundFont(R) is a registered trademark of E-mu Systems, Inc.
