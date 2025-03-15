@@ -168,15 +168,6 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         fluid_real_t dsp_hist2 = iir_filter->hist2;
 
         /* IIR filter coefficients */
-        enum { N_COEFFS =
-#ifdef DBG_FILTER
-            1
-#else
-            16
-#endif
-        };
-        
-        /* IIR filter coefficients */
         float dsp_a1 = iir_filter->a1;
         float dsp_a2 = iir_filter->a2;
         float dsp_b02 = iir_filter->b02;
