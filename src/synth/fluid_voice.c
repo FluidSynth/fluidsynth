@@ -177,7 +177,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t *voice)
     voice->overflow_sample = voice->sample;
 }
 
-static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t output_rate)
+static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t output_rate, fluid_iir_sincos_t* sincos_table)
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
@@ -200,9 +200,11 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t out
     param[0].i = FLUID_IIR_LOWPASS;
     param[1].i = 0;
     fluid_iir_filter_init(&voice->rvoice->resonant_filter, param);
+    voice->rvoice->resonant_filter.sincos_table = sincos_table;
 
     param[0].i = FLUID_IIR_DISABLED;
     fluid_iir_filter_init(&voice->rvoice->resonant_custom_filter, param);
+    voice->rvoice->resonant_custom_filter.sincos_table = sincos_table;
 
     param[0].real = output_rate;
     fluid_rvoice_set_output_rate(voice->rvoice, param);
@@ -212,7 +214,7 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t out
  * new_fluid_voice
  */
 fluid_voice_t *
-new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate)
+new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate, fluid_iir_sincos_t *sincos_table)
 {
     fluid_voice_t *voice;
     voice = FLUID_NEW(fluid_voice_t);
@@ -247,9 +249,9 @@ new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate)
     voice->output_rate = output_rate;
 
     /* Initialize both the rvoice and overflow_rvoice */
-    fluid_voice_initialize_rvoice(voice, output_rate);
+    fluid_voice_initialize_rvoice(voice, output_rate, sincos_table);
     fluid_voice_swap_rvoice(voice);
-    fluid_voice_initialize_rvoice(voice, output_rate);
+    fluid_voice_initialize_rvoice(voice, output_rate, sincos_table);
 
     return voice;
 }

@@ -127,9 +127,6 @@ struct _fluid_rvoice_dsp_t
 
     /* Dynamic input to the interpolator below */
 
-    fluid_real_t amp;                /* current linear amplitude */
-    fluid_real_t amp_incr;		/* amplitude increment value for the next FLUID_BUFSIZE samples */
-
     fluid_phase_t phase;             /* the phase (current sample offset) of the sample wave */
     fluid_real_t phase_incr;	/* the phase increment for the next FLUID_BUFSIZE samples */
 };
@@ -201,13 +198,9 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopend);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_samplemode);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
 
-/* defined in fluid_rvoice_dsp.c */
-void fluid_rvoice_dsp_config(void);
+
 int fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping);
-int fluid_rvoice_dsp_interpolate_none(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
-int fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
-int fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
-int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
+int fluid_rvoice_dsp_interpolate(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
 
 
 /*

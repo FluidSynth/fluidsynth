@@ -438,7 +438,7 @@ unset ( WITH_PROFILING CACHE )
 if ( enable-profiling )
     set ( WITH_PROFILING 1 )
     if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
-      set ( OPT_FLAGS "-Rpass=loop-vectorize" ) # -Rpass-analysis=loop-vectorize" )
+      set ( OPT_FLAGS "-Rpass=loop-vectorize -Rpass-analysis=loop-vectorize" )
       find_program( CLANG_TIDY
                     NAMES "clang-tidy"
                     DOC "Path to clang-tidy executable" )
@@ -452,6 +452,8 @@ if ( enable-profiling )
       set ( OPT_FLAGS "-qopt-report=3" )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
       set ( OPT_FLAGS "-fopt-info -fopt-info-vec-missed" )
+	elseif ( CMAKE_C_COMPILER_ID STREQUAL "MSVC" )
+	  set ( OPT_FLAGS "/Qvec-report:2" )
     endif ( )
 
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )

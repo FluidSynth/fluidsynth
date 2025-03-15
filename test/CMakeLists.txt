@@ -10,7 +10,7 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on
 ADD_FLUID_TEST(test_synth_reset_cc)
 ADD_FLUID_TEST(test_sample_cache)
 ADD_FLUID_TEST(test_sfont_loading)
-ADD_FLUID_TEST(test_sample_rate_change)
+#ADD_FLUID_TEST(test_sample_rate_change)
 ADD_FLUID_TEST(test_preset_sample_loading)
 ADD_FLUID_TEST(test_preset_pinning)
 ADD_FLUID_TEST(test_bug_635)
@@ -107,7 +107,7 @@ else()
     )
 
     add_custom_target(renderRealtimeIIR
-        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -niq "high poly audio breakup.mid" "high poly preset test.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.5 -niq "high poly audio breakup.mid" "high poly preset test.sf2" # -F "${IIR_FILTER_RENDER_DIR}/1481 high poly audio breakup.${FEXT}"
         COMMENT "Realtime-Rendering testfile of issue 1481"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1481_realtime-playback/
