@@ -2,9 +2,11 @@
 Description=FluidSynth Daemon
 Documentation=man:fluidsynth(1)
 After=sound.target
-After=pipewire.service
+After=pipewire.service pulseaudio.service
+Wants=pipewire.service pulseaudio.service
 # If you need more than one instance, use `systemctl edit` to override this:
 ConditionPathExists=!/run/lock/fluidsynth.lock
+ConditionUser=!@system
 
 [Service]
 # added automatically, for details please see
