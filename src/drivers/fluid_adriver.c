@@ -190,6 +190,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if SDL3_SUPPORT
+    {
+        "sdl3",
+        new_fluid_sdl3_audio_driver,
+        NULL,
+        delete_fluid_sdl3_audio_driver,
+        fluid_sdl3_audio_driver_settings
+    },
+#endif
+
 #if SDL2_SUPPORT
     {
         "sdl2",
