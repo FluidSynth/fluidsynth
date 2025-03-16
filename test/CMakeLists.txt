@@ -186,6 +186,14 @@ else()
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
         VERBATIM
     )
+    
+    add_custom_target(render1496
+        COMMAND fluidsynth -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.0 -F ${REVERB_RENDER_DIR}/1496.${FEXT} mrbumpys_rev_width_test.mid 1496.sf2
+        COMMENT "Rendering reverb test issue 1496"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
+        VERBATIM
+    )
 
     set(DK64SF2 "../sf2/ANMP-data/soundfonts/N64/DK64.sf2")
     add_custom_target(renderDK64JJU
@@ -237,8 +245,16 @@ else()
     )
 
     add_custom_target(render1484
-        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/dynamic-sample-loading_on.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
-        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/dynamic-sample-loading_off.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/DrTebz_dynamic-sample-loading_on.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/DrTebz_dynamic-sample-loading_off.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
+        COMMENT "Rendering dynamic sample loading test"
+        DEPENDS fluidsynth create_iir_dir
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
+        VERBATIM
+    )
+    add_custom_target(render1505
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_on.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
+        COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_off.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
         COMMENT "Rendering dynamic sample loading test"
         DEPENDS fluidsynth create_iir_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
