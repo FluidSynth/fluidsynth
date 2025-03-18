@@ -374,7 +374,14 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont,
 
     if(bank)
     {
-        *bank = (sfont_bank_prog & BANK_MASKVAL) >> BANK_SHIFTVAL;
+        if (chan->channel_type == CHANNEL_TYPE_DRUM && chan->synth->bank_select == FLUID_BANK_STYLE_XG)
+        {
+            *bank = XG_DRUM_INST_BANK;
+        }
+        else
+        {
+            *bank = (sfont_bank_prog & BANK_MASKVAL) >> BANK_SHIFTVAL;
+        }
     }
 
     if(prog)
