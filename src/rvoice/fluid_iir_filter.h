@@ -56,10 +56,10 @@ struct _fluid_iir_filter_t
     /* filter coefficients */
     /* The coefficients are normalized to a0. */
     /* b0 and b2 are identical => b02 */
-    float b02;             /* b0 / a0 */
-    float b1;              /* b1 / a0 */
-    float a1;              /* a0 / a0 */
-    float a2;              /* a1 / a0 */
+    IIR_COEFF_T b02;             /* b0 / a0 */
+    IIR_COEFF_T b1;              /* b1 / a0 */
+    IIR_COEFF_T a1;              /* a0 / a0 */
+    IIR_COEFF_T a2;              /* a1 / a0 */
 
     fluid_real_t hist1, hist2;      /* Sample history for the IIR filter */
     int filter_startup;             /* Flag: If set, the filter parameters will be set directly. Else it changes smoothly. */
