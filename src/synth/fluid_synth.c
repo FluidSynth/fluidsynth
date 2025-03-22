@@ -7616,66 +7616,6 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
     }
 }
 
-// The "SB AWE32 Developer's Information Pack" provides a lookup table for the filter resonance.
-// Instead of a single Q value, a high and low Q value is given. This suggests a variable-Q filter design, which is
-// incompatible to fluidsynth's IIR filter. Therefore we need to somehow derive a single Q value.
-// Options are:
-// * mean
-// * geometric distance (sqrt(q_lo * q_hi))
-// * either q_lo or q_hi
-// * linear interpolation between low and high fc
-// * log interpolation between low and high fc
-static fluid_real_t
-calc_awe32_filter_q(int data, fluid_real_t* fc)
-{
-    typedef struct
-    {
-        fluid_real_t fc_lo;
-        fluid_real_t fc_hi;
-        fluid_real_t q_lo;
-        fluid_real_t q_hi;
-        fluid_real_t dc_atten;
-    } awe32_q;
-
-    // Q in dB
-    static const awe32_q awe32_q_table[] =
-    {
-        {92, 22000, 5.f, 0.f, -0.0f },  /* coef 0 */
-        {93, 8500, 6.f, 0.5f, -0.5f },  /* coef 1 */
-        {94, 8300, 8.f, 1.f, -1.2f },   /* coef 2 */
-        {95, 8200, 10.f, 2.f, -1.8f },  /* coef 3 */
-        {96, 8100, 11.f, 3.f, -2.5f },  /* coef 4 */
-        {97, 8000, 13.f, 4.f, -3.3f },  /* coef 5 */
-        {98, 7900, 14.f, 5.f, -4.1f },  /* coef 6 */
-        {99, 7800, 16.f, 6.f, -5.5f},   /* coef 7 */
-        {100, 7700, 17.f, 7.f, -6.0f },  /* coef 8 */
-        {100, 7500, 19.f, 9.f, -6.6f },  /* coef 9 */
-        {100, 7400, 20.f, 10.f, -7.2f }, /* coef 10 */
-        {100, 7300, 22.f, 11.f, -7.9f }, /* coef 11 */
-        {100, 7200, 23.f, 13.f, -8.5f }, /* coef 12 */
-        {100, 7100, 25.f, 15.f, -9.3f }, /* coef 13 */
-        {100, 7100, 26.f, 16.f, -10.1f },/* coef 14 */
-        {100, 7000, 28.f, 18.f, -11.0f}, /* coef 15 */
-    };
-
-    const awe32_q* tab;
-    fluid_real_t alpha;
-
-    fluid_clip(data, 0, 127);
-    data /= 8;
-    tab = &awe32_q_table[data];
-    
-    fluid_clip(*fc, tab->fc_lo, tab->fc_hi);
-    
-    alpha = (*fc - tab->fc_lo) / (tab->fc_hi - tab->fc_lo);
-
-    // linearly interpolate between high and low Q
-    return 10 * /* cB */ (tab->q_lo * (1.0f - alpha) + tab->q_hi * alpha);
-
-    // alternatively: log interpolation
-    // return 10 * /* cB */ FLUID_POW(tab->q_hi, alpha) * FLUID_POW(tab->q_lo, 1.0f - alpha);
-}
-
 /**
  * This implementation is based on "Frequently Asked Questions for SB AWE32" http://archive.gamedev.net/archive/reference/articles/article445.html
  * as well as on the "SB AWE32 Developer's Information Pack" https://github.com/user-attachments/files/15757220/adip301.pdf
@@ -7720,7 +7660,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
     int is_realtime = FALSE, i;
-    fluid_real_t converted_sf2_generator_value, q;
+    fluid_real_t converted_sf2_generator_value;
 
     // The AWE32 NRPN docs say that a value of 8192 is considered to be the middle, i.e. zero.
     // However, it looks like for those generators which work in range [0,127], the AWE32 only inspects the DATA_LSB, i.e. and not doing this subtraction. Found while investigating Uplift.mid.
@@ -7797,14 +7737,17 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             // Yes, DO NOT use data here, Uplift.mid doesn't set DATA_MSB=64, therefore we would always get a negative value after subtracting 8192.
             // Since Uplift.mid sounds fine on hardware though, it seems like AWE32 only inspects DATA_LSB in this case.
             // conversion continues below!
-            converted_sf2_generator_value = (data_lsb * 62 /* Hz */);
-            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc: %f Hz",converted_sf2_generator_value);
+            converted_sf2_generator_value = (data_lsb * 59 /* cents! not as stated Hz by the AWE32 docs!!! */);
+            converted_sf2_generator_value += 4500 /* cents */; // minimum should be around 110 Hz, derived by experiments, see #1473
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc: %f cents", converted_sf2_generator_value);
             is_realtime = TRUE;
             break;
 
         case GEN_FILTERQ:
             FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data_lsb);
-            synth->channel[chan]->awe32_filter_coeff = data_lsb;
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.158 /* dB */ * 10.0) /* cB */;
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", converted_sf2_generator_value);
             is_realtime = TRUE;
             break;
 
@@ -7848,31 +7791,6 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             // should not happen
             FLUID_LOG(FLUID_WARN, "AWE32 NPRN %d conversion not implemented", gen);
             return;
-    }
-    
-    if(sf2_gen == GEN_FILTERFC)
-    {
-        int coef = synth->channel[chan]->awe32_filter_coeff;
-        // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 1000Hz gives a closer signal to the SB! hardware filter...
-        converted_sf2_generator_value -= 1000;
-        q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
-        FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc (corrected): %f Hz", converted_sf2_generator_value);
-        FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
-
-        converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
-    }
-    else if(sf2_gen == GEN_FILTERQ)
-    {
-        int coef = synth->channel[chan]->awe32_filter_coeff;
-        
-        fluid_real_t filter_fc_ct, filter_fc_hz;
-        if(!fluid_channel_get_override_gen_default(synth->channel[chan], GEN_FILTERFC, &filter_fc_ct))
-        {
-            filter_fc_ct = fluid_channel_get_gen(synth->channel[chan], GEN_FILTERFC);
-        }
-        filter_fc_hz = fluid_ct2hz(filter_fc_ct);
-        
-        converted_sf2_generator_value = calc_awe32_filter_q(coef, &filter_fc_hz);
     }
     
     fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);

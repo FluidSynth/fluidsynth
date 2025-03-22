@@ -150,8 +150,8 @@ add_custom_target(renderUplift
 )
 
 add_custom_target(renderChrisNRPN
-    COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F ${AWE32_NRPN_RENDER_DIR}/filter_NRPN_test.${FEXT} "filter_NRPN_test.mid" "filter_NRPN_test.sf2"
-    COMMENT "Rendering AWE32 NRPN test file Uplift.mid"
+    COMMAND fluidsynth -R 0 -C 0 -g 1.8 -F ${AWE32_NRPN_RENDER_DIR}/filter_NRPN_test.${FEXT} "filter_NRPN_test.mid" "filter_NRPN_test.sf2"
+    COMMENT "Rendering Chris' AWE32 NRPN filter test file"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/NRPN test - filter/"
     VERBATIM
