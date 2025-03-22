@@ -33,6 +33,10 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#if SDL3_SUPPORT
+#include <SDL3/SDL.h>
+#endif
+
 #if SDL2_SUPPORT
 #include <SDL.h>
 #endif
@@ -1136,6 +1140,10 @@ cleanup:
         sd_notify(0, "STOPPING=1");
 #endif
         delete_fluid_server(server);
+    }
+    else if(with_server)
+    {
+        result = 1;
     }
 
 #endif	/* NETWORK_SUPPORT */

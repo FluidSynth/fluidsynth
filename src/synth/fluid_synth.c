@@ -933,7 +933,7 @@ new_fluid_synth(fluid_settings_t *settings)
     FLUID_MEMSET(synth->voice, 0, synth->nvoice * sizeof(*synth->voice));
     for(i = 0; i < synth->nvoice; i++)
     {
-        synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
+        synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate, synth->iir_sincos_table);
 
         if(synth->voice[i] == NULL)
         {
@@ -1004,6 +1004,7 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
+    fluid_iir_filter_init_table(synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
     /* FIXME */
@@ -2088,6 +2089,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
             fluid_synth_api_enter(synth);
             synth->bank_select = FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
+            if(synth->verbose)
+            {
+                FLUID_LOG(FLUID_INFO, "Processing SysEX GM / GM2 System ON message, bank selection mode is now gm.");
+            }
             FLUID_API_RETURN(result);
         }
         return FLUID_OK;
@@ -2104,6 +2109,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
                                           response_len, avail_response,
                                           handled, dryrun);
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "Processing SysEX GS DT1 message, bank selection mode might have been changed.");
+        }
         FLUID_API_RETURN(result);
     }
 
@@ -2117,6 +2126,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_xg(synth, data, len, response,
                                       response_len, avail_response,
                                       handled, dryrun);
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "Processing SysEX XG message, bank selection mode is now xg.");
+        }
         FLUID_API_RETURN(result);
     }
 
@@ -3511,7 +3524,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
- * @warning This function is broken-by-design! Don't use it! Instead, specify the sample-rate when creating the synth.
+ * @warning This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
  * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.
@@ -3539,14 +3552,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 void
 fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate)
 {
-    fluid_return_if_fail(synth != NULL);
-    fluid_synth_api_enter(synth);
-
-    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
-
-    fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate,
-                             0, synth->sample_rate);
-    fluid_synth_api_exit(synth);
+    FLUID_LOG(FLUID_ERR, "fluid_synth_set_sample_rate() is no longer supported in this version of fluidsynth!");
 }
 
 // internal sample rate change function for the jack driver
@@ -3683,7 +3689,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t *synth, int new_polyphony)
 
         for(i = synth->nvoice; i < new_polyphony; i++)
         {
-            synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
+            synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate, synth->iir_sincos_table);
 
             if(synth->voice[i] == NULL)
             {
