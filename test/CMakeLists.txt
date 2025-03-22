@@ -149,6 +149,14 @@ add_custom_target(renderUplift
     VERBATIM
 )
 
+add_custom_target(renderChrisNRPN
+    COMMAND fluidsynth -R 0 -C 0 -g 1.8 -F ${AWE32_NRPN_RENDER_DIR}/filter_NRPN_test.${FEXT} "filter_NRPN_test.mid" "filter_NRPN_test.sf2"
+    COMMENT "Rendering Chris' AWE32 NRPN filter test file"
+    DEPENDS fluidsynth create_iir_dir
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/NRPN test - filter/"
+    VERBATIM
+)
+
 add_custom_target(render1TOWOW
     COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
     COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
@@ -253,6 +261,7 @@ add_custom_target(render1484
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
     VERBATIM
 )
+
 add_custom_target(render1505
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_on.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_off.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
@@ -313,6 +322,7 @@ add_dependencies(check_manual render1427)
 add_dependencies(check_manual renderAltitude)
 add_dependencies(check_manual renderFilter)
 add_dependencies(check_manual renderUplift)
+add_dependencies(check_manual renderChrisNRPN)
 add_dependencies(check_manual render1TOWOW)
 add_dependencies(check_manual renderDescent8)
 add_dependencies(check_manual renderSfSpecTest)
