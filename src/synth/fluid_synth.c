@@ -7744,7 +7744,6 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             break;
 
         case GEN_FILTERQ:
-            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data_lsb);
             fluid_clip(data_lsb, 0, 127);
             converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.158 /* dB */ * 10.0) /* cB */;
             FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", converted_sf2_generator_value);
