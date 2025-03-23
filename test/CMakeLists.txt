@@ -335,4 +335,6 @@ add_dependencies(check_manual render1484)
 add_dependencies(check_manual renderRealtimeIIR)
 add_dependencies(check_manual render1481)
 add_dependencies(check_manual renderStreetwise)
+add_dependencies(check_manual renderGeneralUserDemo)
+add_dependencies(check_manual renderBankSelect)
 
