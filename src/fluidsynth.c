@@ -400,12 +400,12 @@ int main(int argc, char **argv)
     }
 #endif
 
-#if SDL2_SUPPORT
+#if SDL2_SUPPORT || SDL3_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if(SDL_Init(SDL_INIT_AUDIO) != 0)
     {
-        fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
+        fprintf(stderr, "Warning: Unable to initialize SDL3 Audio: %s", SDL_GetError());
     }
     else
     {

@@ -199,15 +199,9 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.sdl3.device", "default", 0);
     fluid_settings_add_option(settings, "audio.sdl3.device", "default");
 
-    if(!SDL_InitSubSystem(SDL_INIT_AUDIO))
-    {
-        FLUID_LOG(FLUID_WARN, "SDL3 subsystem not initialized, SDL3 audio driver won't be usable");
-        return;
-    }
-
     if(!SDL_WasInit(SDL_INIT_AUDIO))
     {
-        FLUID_LOG(FLUID_WARN, "SDL3 not initialized, SDL3 audio driver won't be usable");
+        FLUID_LOG(FLUID_WARN, "SDL3 not initialized, SDL3 audio driver won't be usable. Have you called SDL_Init(SDL_INIT_AUDIO) ?");
         return;
     }
 
@@ -308,16 +302,9 @@ new_fluid_sdl3_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     char *device;
     const char *dev_name;
 
-    /* Check if SDL library has been started */
-    if(!SDL_InitSubSystem(SDL_INIT_AUDIO))
-    {
-        FLUID_LOG(FLUID_WARN, "SDL3 subsystem not initialized, SDL3 audio driver won't be usable");
-        return NULL;
-    }
-
     if(!SDL_WasInit(SDL_INIT_AUDIO))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create SDL3 audio driver, because the audio subsystem of SDL3 is not initialized.");
+        FLUID_LOG(FLUID_ERR, "Failed to create SDL3 audio driver, because the audio subsystem of SDL3 is not initialized. Have you called SDL_Init(SDL_INIT_AUDIO) ?");
         return NULL;
     }
 
@@ -474,10 +461,7 @@ void delete_fluid_sdl3_audio_driver(fluid_audio_driver_t *d)
 
         FLUID_FREE(dev->render_buf);
         FLUID_FREE(dev);
-
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
     }
-
 }
 
 #endif /* SDL3_SUPPORT */
