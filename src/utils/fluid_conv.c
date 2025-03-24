@@ -48,6 +48,7 @@ fluid_ct2hz_real(fluid_real_t cents)
 {
     if(FLUID_UNLIKELY(cents < 0))
     {
+        FLUID_LOG(FLUID_INFO, "EXPENSIVE CALL! cents was negative: %f", cents);
         return fluid_act2hz(cents);
     }
     else

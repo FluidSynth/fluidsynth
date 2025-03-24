@@ -379,7 +379,8 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_pitch
                             + fluid_lfo_get_val(&voice->envlfo.viblfo) * voice->envlfo.viblfo_to_pitch
                             + modenv_val * voice->envlfo.modenv_to_pitch)
-                            / voice->dsp.root_pitch_hz;
+                            / 
+                            fluid_ct2hz_real(voice->dsp.root_pitch);
 
     /******************* portamento ****************/
     /* pitchoffset is updated if enabled.
@@ -450,8 +451,8 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     fluid_check_fpe("voice_write IIR coefficients");
 
-    /* additional custom filter - only uses the fixed modulator, no lfos... */
-    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
+    /* additional custom filter */
+    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, (voice->dsp.pitch + voice->dsp.pitchoffset) - voice->dsp.root_pitch);
 
     fluid_check_fpe("voice_write IIR (custom) coefficients");
 
@@ -778,12 +779,12 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_interp_method)
     voice->dsp.interp_method = value;
 }
 
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch_hz)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch)
 {
     fluid_rvoice_t *voice = obj;
     fluid_real_t value = param[0].real;
 
-    voice->dsp.root_pitch_hz = value;
+    voice->dsp.root_pitch = value;
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_pitch)
