@@ -299,7 +299,7 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned ch
 
     if(FLUID_UNLIKELY((mod_flags & FLUID_MOD_CUSTOM) != 0))
     {
-        if(mod->mapping_func == NULL)
+        if(mod == NULL || mod->mapping_func == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Modulator has FLUID_MOD_CUSTOM flag set, but doesn't provide a mapping function, disabling modulator.");
             val = 0.0f;
