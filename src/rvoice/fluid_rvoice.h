@@ -111,6 +111,7 @@ struct _fluid_rvoice_dsp_t
     /* Stuff needed for phase calculations */
 
     fluid_real_t pitch;              /* the pitch in midicents */
+    fluid_real_t root_pitch_hz;      /* the base note of the note in hz */
     fluid_real_t root_pitch;         /* the base note of the note in absolute cents */
     fluid_real_t output_rate;
 
@@ -180,7 +181,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_multi_retrigger_attack);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_portamento);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_output_rate);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_interp_method);
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch_hz);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_pitch);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_attenuation);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_min_attenuation_cB);

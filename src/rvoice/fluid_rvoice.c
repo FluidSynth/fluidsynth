@@ -779,12 +779,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_interp_method)
     voice->dsp.interp_method = value;
 }
 
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch_hz)
 {
     fluid_rvoice_t *voice = obj;
     fluid_real_t value = param[0].real;
 
-    voice->dsp.root_pitch = value;
+    voice->dsp.root_pitch = fluid_hz2ct(value);
+    voice->dsp.root_pitch_hz = value;
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_pitch)
