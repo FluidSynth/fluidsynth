@@ -400,6 +400,12 @@ int main(int argc, char **argv)
     }
 #endif
 
+#ifdef __ANDROID__
+    if (setenv("KMP_AFFINITY", "disabled", 1) != 0) {
+        fprintf(stderr, "Warning: Failed to disable KMP_AFFINITY, OpenMP crashes may occur on some devices\n");
+    }
+#endif
+
 #if SDL2_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
