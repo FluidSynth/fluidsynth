@@ -41,6 +41,7 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
     mod->amount = src->amount;
     mod->trans = src->trans;
     mod->mapping_func = src->mapping_func;
+    mod->data = src->data;
 }
 
 /**
@@ -104,11 +105,13 @@ fluid_mod_set_amount(fluid_mod_t *mod, double amount)
  * To use this function, specify #FLUID_MOD_CUSTOM as source flag.
  * @param mod The modulator instance
  * @param mapping_function Pointer to the mapping function to assign
+ * @param data User defined data pointer that will be passed into the mapping function, or NULL if not needed
  */
 void
-fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function)
+fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function, void* data)
 {
     mod->mapping_func = mapping_function;
+    mod->data = data;
 }
 
 /**
@@ -299,14 +302,18 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned ch
 
     if(FLUID_UNLIKELY((mod_flags & FLUID_MOD_CUSTOM) != 0))
     {
-        if(mod == NULL || mod->mapping_func == NULL)
+        if(FLUID_UNLIKELY(mod == NULL || mod->mapping_func == NULL))
         {
             FLUID_LOG(FLUID_ERR, "Modulator has FLUID_MOD_CUSTOM flag set, but doesn't provide a mapping function, disabling modulator.");
             val = 0.0f;
+            if (mod)
+            {
+                mod->amount = 0.0f;
+            }
         }
         else
         {
-            val = mod->mapping_func(mod, val_norm);
+            val = mod->mapping_func(mod, val_norm, mod->data);
         }
     }
     else
