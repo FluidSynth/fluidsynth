@@ -1870,6 +1870,44 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                     }
                 }
             }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 1 && synth->bank_select == FLUID_BANK_STYLE_GS)
+            {
+                int nrpn2cc = -1;
+                int nrpn_lsb = fluid_channel_get_cc(chan, NRPN_LSB);
+                // cf. SC8850 owner's manual pages 227 + 228
+                switch(nrpn_lsb)
+                {
+                case 8:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL7;
+                    break;
+                case 9:
+                    // vibrato depth
+                    nrpn2cc = SOUND_CTRL8;
+                    break;
+                case 10:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL9;
+                    break;
+                default:
+                    break;
+                }
+                if(nrpn2cc != -1)
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Translating Roland GS NRPN %d to CC %d", nrpn_lsb, nrpn2cc);
+                    }
+                    fluid_synth_cc(synth, channum, nrpn2cc, msb_value);
+                }
+                else
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown Roland GS NRPN %d", nrpn_lsb);
+                    }
+                }
+            }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
         {
