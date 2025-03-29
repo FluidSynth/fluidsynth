@@ -400,20 +400,6 @@ int main(int argc, char **argv)
     }
 #endif
 
-/* 
- * Disable OpenMP thread affinity on Android to prevent crashes.
- * 
- * On several Android devices (particularly Xiaomi), OpenMP's attempt to set thread 
- * affinity fails with EINVAL, causing process abortion during parallel SoundFont loading. 
- * This is due to an unresolved bug in Android NDK's OpenMP implementation 
- * (see https://github.com/android/ndk/issues/1180).
- */
-#ifdef __ANDROID__
-    if (setenv("KMP_AFFINITY", "disabled", 1) != 0) {
-        fprintf(stderr, "Warning: Failed to disable KMP_AFFINITY, OpenMP crashes may occur on some devices\n");
-    }
-#endif
-
 #if SDL2_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
