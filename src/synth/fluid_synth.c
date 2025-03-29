@@ -309,8 +309,9 @@ fluid_synth_init(void)
  * (see https://github.com/android/ndk/issues/1180).
  */
 #ifdef __ANDROID__
-    if (setenv("KMP_AFFINITY", "disabled", 1) != 0) {
-        fprintf(stderr, "Warning: Failed to disable KMP_AFFINITY, OpenMP crashes may occur on some devices\n");
+    if (setenv("KMP_AFFINITY", "disabled", 1) != 0)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to disable KMP_AFFINITY, OpenMP crashes may occur on some devices!");
     }
 #endif
 
