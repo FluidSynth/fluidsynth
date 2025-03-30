@@ -452,7 +452,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     fluid_check_fpe("voice_write IIR coefficients");
 
     /* additional custom filter */
-    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, (voice->dsp.pitch + voice->dsp.pitchoffset) - voice->dsp.root_pitch);
+    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, (voice->dsp.pitch + voice->dsp.pitchoffset) - (voice->dsp.sample->origpitch * 100 + voice->dsp.sample->pitchadj));
 
     fluid_check_fpe("voice_write IIR (custom) coefficients");
 
@@ -784,7 +784,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch_hz)
     fluid_rvoice_t *voice = obj;
     fluid_real_t value = param[0].real;
 
-    voice->dsp.root_pitch = fluid_hz2ct(value);
     voice->dsp.root_pitch_hz = value;
 }
 

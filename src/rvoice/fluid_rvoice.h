@@ -112,7 +112,6 @@ struct _fluid_rvoice_dsp_t
 
     fluid_real_t pitch;              /* the pitch in midicents */
     fluid_real_t root_pitch_hz;      /* the base note of the note in hz */
-    fluid_real_t root_pitch;         /* the base note of the note in absolute cents */
     fluid_real_t output_rate;
 
     /* Stuff needed for amplitude calculations */
