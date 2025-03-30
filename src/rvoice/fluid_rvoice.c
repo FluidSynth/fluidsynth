@@ -380,7 +380,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             + fluid_lfo_get_val(&voice->envlfo.viblfo) * voice->envlfo.viblfo_to_pitch
                             + modenv_val * voice->envlfo.modenv_to_pitch)
                             / 
-                            fluid_ct2hz_real(voice->dsp.root_pitch);
+                            voice->dsp.root_pitch_hz;
 
     /******************* portamento ****************/
     /* pitchoffset is updated if enabled.
@@ -447,8 +447,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
                           fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
-                          modenv_val * voice->envlfo.modenv_to_fc
-                          + (voice->dsp.pitch - fluid_hz2ct(voice->dsp.root_pitch_hz)) / 1 +500);
+                          modenv_val * voice->envlfo.modenv_to_fc);
 
     fluid_check_fpe("voice_write IIR coefficients");
 
