@@ -917,6 +917,9 @@ if ( UNIX )
         configure_file ( fluidsynth.service.in
         ${FluidSynth_BINARY_DIR}/fluidsynth.service @ONLY )
 
+        configure_file ( fluidsynth.tmpfiles.in
+        ${FluidSynth_BINARY_DIR}/fluidsynth.tmpfiles @ONLY )
+
         configure_file ( fluidsynth.conf.in
         ${FluidSynth_BINARY_DIR}/fluidsynth.conf @ONLY )
 
