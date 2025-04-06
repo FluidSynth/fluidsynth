@@ -154,6 +154,14 @@ add_custom_target(renderChrisNRPN
     COMMENT "Rendering Chris' AWE32 NRPN filter test file"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/NRPN test - filter/"
+)
+
+add_custom_target(renderHybridCol
+    COMMAND fluidsynth -R 1 -C 1 -g 0.7 -F "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage NRPN.${FEXT}" "HYBRID Collage NRPN.mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 1 -C 1 -g 1.5 -F "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage wah-guitar.${FEXT}" "HYBRID Collage wah-guitar.mid" ${GENERAL_USER_GS2}
+    COMMENT "Rendering Christian's HYBRID Collage"
+    DEPENDS fluidsynth create_iir_dir
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/HYBRID.Collage/
     VERBATIM
 )
 
@@ -323,6 +331,7 @@ add_dependencies(check_manual renderAltitude)
 add_dependencies(check_manual renderFilter)
 add_dependencies(check_manual renderUplift)
 add_dependencies(check_manual renderChrisNRPN)
+add_dependencies(check_manual renderHybridCol)
 add_dependencies(check_manual render1TOWOW)
 add_dependencies(check_manual renderDescent8)
 add_dependencies(check_manual renderSfSpecTest)
