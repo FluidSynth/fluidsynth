@@ -7745,7 +7745,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_FILTERQ:
             fluid_clip(data_lsb, 0, 127);
-            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.158 /* dB */ * 10.0) /* cB */;
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)((20.0 /* dB */ / 127.0 /* NPRN steps*/) * 10.0) /* cB */;
             FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", converted_sf2_generator_value);
             is_realtime = TRUE;
             break;
