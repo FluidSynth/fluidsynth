@@ -341,10 +341,9 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
             return;
         }
 
-        // ...but for drum channels, we use bankMSB as bank number. It is likely, that the Soundfont does not
-        // provide a bank for 127,126,120, in which case we will fallback to default drum bank 128 and everything
-        // will sound just fine.
-        newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
+        // ...but for drum channels, hardcode SF2 drum bank 128. Ideally, we should use bankMSB as bank number.
+        // But we'd need to ensure that it's not a melodic preset, see #1524.
+        newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
     }
     else if(style == FLUID_BANK_STYLE_GM )
     {
