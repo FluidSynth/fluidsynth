@@ -649,7 +649,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     }
 
     /*
-      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid, yet it's pretty unusal
+      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid, yet it's pretty unusual
       which is why it deserves a warning. However, it's totally legal. A use-case could be a
       constant modulator that is meant to apply some offset to a generator.
     */
