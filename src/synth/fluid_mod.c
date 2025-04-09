@@ -635,7 +635,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     static const char invalid_cc_src[] =
         "Invalid modulator, using CC source %s.src%d=%d";
     static const char src1_is_none[] =
-        "Modulator with source 1 none %s.src1=%d";
+        "Modulator with source 1 set to none %s.src1=%d";
 
     /* checks valid non cc sources */
     if(!fluid_mod_check_non_cc_source(mod, 1)) /* check src1 */
@@ -649,12 +649,9 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     }
 
     /*
-      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid but
-      the output of this modulator will be forced to 0 at synthesis time.
-      Also this modulator cannot be used to overwrite a default modulator (as
-      there is no default modulator with src1 source equal to FLUID_MOD_NONE).
-      Consequently it is useful to return FALSE to indicate this modulator
-      being useless. It will be removed later with others invalid modulators.
+      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid, yet it's pretty unusual
+      which is why it deserves a warning. However, it's totally legal. A use-case could be a
+      constant modulator that is meant to apply some offset to a generator.
     */
     if(fluid_mod_is_src1_none(mod))
     {
@@ -663,7 +660,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
             FLUID_LOG(FLUID_WARN, src1_is_none, name, mod->src1);
         }
 
-        return FALSE;
+        return TRUE;
     }
 
     if(!fluid_mod_check_non_cc_source(mod, 0)) /* check src2 */
