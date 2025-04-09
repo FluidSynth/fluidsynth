@@ -300,6 +300,21 @@ fluid_synth_init(void)
   #endif
 #endif
 
+/*
+ * Disable OpenMP thread affinity on Android to prevent crashes.
+ *
+ * On several Android devices (particularly Xiaomi), OpenMP's attempt to set thread
+ * affinity fails with EINVAL, causing process abortion during parallel SoundFont loading.
+ * This is due to an unresolved bug in Android NDK's OpenMP implementation
+ * (see https://github.com/android/ndk/issues/1180).
+ */
+#ifdef __ANDROID__
+    if (setenv("KMP_AFFINITY", "disabled", 1) != 0)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to disable KMP_AFFINITY, OpenMP crashes may occur on some devices!");
+    }
+#endif
+
     init_dither();
 
     /* custom_breath2att_mod is not a default modulator specified in SF2.01.
