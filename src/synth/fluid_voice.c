@@ -861,10 +861,12 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_FILTERFC:
+        fluid_clip(x, FRES_MIN, FRES_MAX);
         UPDATE_RVOICE_GENERIC_R1(fluid_iir_filter_set_fres, &voice->rvoice->resonant_filter, x);
         break;
 
     case GEN_FILTERQ:
+        fluid_clip(x, 0.f, 960.f);
         UPDATE_RVOICE_GENERIC_R1(fluid_iir_filter_set_q, &voice->rvoice->resonant_filter, x);
         break;
 
