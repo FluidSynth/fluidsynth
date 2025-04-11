@@ -1836,6 +1836,11 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
             if((fluid_channel_get_cc(chan, NRPN_MSB) == 120)
                     && (fluid_channel_get_cc(chan, NRPN_LSB) < 100))
             {
+                if(num == DATA_ENTRY_LSB)
+                {
+                    // SF2 NRPNs must be processed, after having received DATA_LSB and DATA_MSB in that order.
+                    break;
+                }
                 nrpn_select = chan->nrpn_select;
 
                 if(nrpn_select < GEN_LAST)
