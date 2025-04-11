@@ -142,10 +142,26 @@ add_custom_target(renderFilter
 )
 
 add_custom_target(renderUplift
-    COMMAND fluidsynth -R 1 -C 0 -g 0.7 -F ${AWE32_NRPN_RENDER_DIR}/Uplift-fixed.${FEXT} Uplift-fixed.mid Uplift.sf2
+    COMMAND fluidsynth -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -o "synth.default-soundfont=../../sf2/synthgs-sf2_04-compat.sf2" -F ${AWE32_NRPN_RENDER_DIR}/Uplift-fixed.${FEXT} Uplift-fixed.mid
     COMMENT "Rendering AWE32 NRPN test file Uplift.mid"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/
+    VERBATIM
+)
+
+add_custom_target(renderChrisNRPN
+    COMMAND fluidsynth -R 0 -C 0 -g 1.8 -F ${AWE32_NRPN_RENDER_DIR}/filter_NRPN_test.${FEXT} "filter_NRPN_test.mid" "filter_NRPN_test.sf2"
+    COMMENT "Rendering Chris' AWE32 NRPN filter test file"
+    DEPENDS fluidsynth create_iir_dir
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/NRPN test - filter/"
+)
+
+add_custom_target(renderHybridCol
+    COMMAND fluidsynth -R 1 -C 1 -g 0.7 -F "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage NRPN.${FEXT}" "HYBRID Collage NRPN.mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 1 -C 1 -g 1.5 -F "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage wah-guitar.${FEXT}" "HYBRID Collage wah-guitar.mid" ${GENERAL_USER_GS2}
+    COMMENT "Rendering Christian's HYBRID Collage"
+    DEPENDS fluidsynth create_iir_dir
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/HYBRID.Collage/
     VERBATIM
 )
 
@@ -253,6 +269,7 @@ add_custom_target(render1484
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
     VERBATIM
 )
+
 add_custom_target(render1505
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_on.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_off.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
@@ -313,6 +330,8 @@ add_dependencies(check_manual render1427)
 add_dependencies(check_manual renderAltitude)
 add_dependencies(check_manual renderFilter)
 add_dependencies(check_manual renderUplift)
+add_dependencies(check_manual renderChrisNRPN)
+add_dependencies(check_manual renderHybridCol)
 add_dependencies(check_manual render1TOWOW)
 add_dependencies(check_manual renderDescent8)
 add_dependencies(check_manual renderSfSpecTest)
@@ -325,4 +344,6 @@ add_dependencies(check_manual render1484)
 add_dependencies(check_manual renderRealtimeIIR)
 add_dependencies(check_manual render1481)
 add_dependencies(check_manual renderStreetwise)
+add_dependencies(check_manual renderGeneralUserDemo)
+add_dependencies(check_manual renderBankSelect)
 
