@@ -288,7 +288,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
  * transforms the initial value retrieved by \c fluid_mod_get_source_value into [0.0;1.0]
  */
 fluid_real_t
-fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned char mod_flags, const fluid_real_t range)
+fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned char mod_flags, const fluid_real_t range, int is_src1)
 {
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
@@ -313,7 +313,7 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned ch
         }
         else
         {
-            val = mod->mapping_func(mod, val_norm, mod->data);
+            val = mod->mapping_func(mod, val_norm, is_src1, mod->data);
         }
     }
     else
@@ -499,13 +499,13 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
     /* transform the input value */
-    v1 = fluid_mod_transform_source_value(mod, v1, mod->flags1, range1);
+    v1 = fluid_mod_transform_source_value(mod, v1, mod->flags1, range1, TRUE);
 
     /* get the second input source */
     v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
     /* transform the second input value */
-    v2 = fluid_mod_transform_source_value(mod, v2, mod->flags2, range2);
+    v2 = fluid_mod_transform_source_value(mod, v2, mod->flags2, range2, FALSE);
 
     /* it indeed is as simple as that: */
     final_value = (fluid_real_t) mod->amount * v1 * v2;
