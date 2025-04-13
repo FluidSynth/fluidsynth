@@ -305,7 +305,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 {
     int ticks = voice->envlfo.ticks;
     int count, is_looping;
-    fluid_real_t modenv_val;
+    fluid_real_t modenv_val, fmod;
 
     /******************* sample sanity check **********/
 
@@ -445,14 +445,16 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     // Note that at this point we are using voice->dsp.output_rate which is set to the synth's output rate, because
     // the filter will receive the interpolated waveform.
 
-    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
-                          fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
-                          modenv_val * voice->envlfo.modenv_to_fc);
+    fmod = fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc + modenv_val * voice->envlfo.modenv_to_fc;
+    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate, fmod);
 
     fluid_check_fpe("voice_write IIR coefficients");
 
     /* additional custom filter */
-    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, (voice->dsp.pitch + voice->dsp.pitchoffset) - (voice->dsp.sample->origpitch * 100 + voice->dsp.sample->pitchadj));
+    fmod = voice->resonant_custom_filter.flags & FLUID_IIR_BEANLAND
+         ? (voice->dsp.pitch + voice->dsp.pitchoffset) - (voice->dsp.sample->origpitch * 100 + voice->dsp.sample->pitchadj)
+         : 0;
+    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, fmod);
 
     fluid_check_fpe("voice_write IIR (custom) coefficients");
 

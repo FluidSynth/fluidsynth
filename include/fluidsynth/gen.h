@@ -120,22 +120,6 @@ enum fluid_gen_type
     /* non-standard generator for an additional custom high- or low-pass filter */
     GEN_CUSTOM_FILTERFC,		/**< Filter cutoff frequency in absolute cents used for custom IIR filter, see fluid_synth_set_custom_filter(). @note Not a "standard" SoundFont generator */
     GEN_CUSTOM_FILTERQ,		/**< Filter Q used for custom IIR filter, see fluid_synth_set_custom_filter(). @note Not a "standard" SoundFont generator */
-
-    /**
-     * Filter cutoff frequency for custom filter only. Unlike the other FILTERFC generators,
-     * the cutoff frequency dynamically adjusts to the notes played, so that it is possible to
-     * filter at the same spot relative to the sound of the sample playing. In this sense, the filter fc
-     * honors the key and pitch of a note relative to sample's root_key: if the key of a note is 2 semitones
-     * above the sample's root_key and additionally it's pitched up by 30 cents, the cutoff frequency would
-     * be adjusted by +230 cents. E.g. for horns, one can add an 
-     * emphasis on tones that would "stick to" the horn as it played different notes (given that these notes use
-     * the same sample).
-     * The enum is named after Robin Beanland, who has used this technique in Conker's Bad Fur Day and
-     * (together with other composers) in Jet Force Gemini, implemented by Mike Currington on the N64.
-     * @note Not a "standard" SoundFont generator
-     */
-//     GEN_BEANLAND_FILTERFC,
-
     GEN_LAST			/**< @internal Value defines the count of generators (#fluid_gen_type)
                           @warning This symbol is not part of the public API and ABI
                           stability guarantee and may change at any time! */
