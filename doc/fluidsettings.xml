@@ -181,7 +181,7 @@ Developers:
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
                     <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
-                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum and the bank number is set to 128 (CC32 is ignored). Otherwise the channel is set to melodic and CC32 is the bank number. Note that you need fluidsynth &gt;=2.3.5 for this to work correctly, previous versions behaved incorrectly.</li>
+                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic and CC32 becomes the bank number. Note that before fluidsynth 2.3.5 the logic for CC0 was broken.</li>
                 </ul>
             </desc>
         </setting>

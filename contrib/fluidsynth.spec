@@ -95,9 +95,10 @@ This package contains the shared library for Fluidsynth.
 
 %if 0%{?suse_version}
 
-# manually install systemd service files
+# manually install systemd files
 install -Dm 644 build/fluidsynth.conf %{buildroot}%{_fillupdir}/sysconfig.%{name}
 install -Dm 644 build/fluidsynth.service %{buildroot}%{_unitdir}/%{name}.service
+install -Dm 644 build/fluidsynth.tmpfiles %{buildroot}%{_tmpfilesdir}/%{name}.conf
 install -d %{buildroot}%{_sbindir}
 ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 

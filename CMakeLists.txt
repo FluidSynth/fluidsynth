@@ -47,7 +47,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 4 )
-set ( FLUIDSYNTH_VERSION_MICRO 4 )
+set ( FLUIDSYNTH_VERSION_MICRO 5 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION ${VERSION} )
 
@@ -62,7 +62,7 @@ set ( FLUIDSYNTH_VERSION ${VERSION} )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 3 )
-set ( LIB_VERSION_REVISION 4 )
+set ( LIB_VERSION_REVISION 5 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -679,7 +679,7 @@ if ( enable-sdl2 )
             message ( STATUS "Found SDL2 version ${SDL2_VERSION}, but the minimum required is 2.0.4" )
         else ( SDL2_VERSION VERSION_LESS "2.0.4" )
             message ( STATUS "Found SDL2: ${SDL2_LIBRARIES} (version: ${SDL2_VERSION})" )
-            set ( SDL2_SUPPORT TRUE )
+            set ( SDL2_SUPPORT ${SDL2_FOUND} )
             list ( APPEND PC_REQUIRES_PRIV "sdl2")
         endif ( SDL2_VERSION VERSION_LESS "2.0.4" )
     else ( SDL2_FOUND )
@@ -692,7 +692,7 @@ if ( enable-sdl3 )
     find_package ( SDL3 QUIET CONFIG COMPONENTS SDL3 )
     if ( SDL3_FOUND )
         message ( STATUS "Found SDL3: ${SDL3_LIBRARIES} (version: ${SDL3_VERSION})" )
-        set ( SDL3_SUPPORT TRUE )
+        set ( SDL3_SUPPORT ${SDL3_FOUND} )
         list ( APPEND PC_REQUIRES_PRIV "sdl3")
     endif ( SDL3_FOUND )
 endif ( enable-sdl3 )
@@ -916,6 +916,9 @@ if ( UNIX )
     if ( DEFINED FLUID_DAEMON_ENV_FILE)
         configure_file ( fluidsynth.service.in
         ${FluidSynth_BINARY_DIR}/fluidsynth.service @ONLY )
+
+        configure_file ( fluidsynth.tmpfiles.in
+        ${FluidSynth_BINARY_DIR}/fluidsynth.tmpfiles @ONLY )
 
         configure_file ( fluidsynth.conf.in
         ${FluidSynth_BINARY_DIR}/fluidsynth.conf @ONLY )

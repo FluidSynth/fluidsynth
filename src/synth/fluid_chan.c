@@ -131,9 +131,6 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
         chan->override_gen_default[i].flags = GEN_UNUSED;
         chan->override_gen_default[i].val = 0.0f;
     }
-    // Not all MIDIs initialize the IIR filter coefficient, e.g. Uplift.mid.
-    // A default value is not documented, hence I'm assuming zero here.
-    chan->awe32_filter_coeff = 0;
 
     if(is_all_ctrl_off)
     {
@@ -297,8 +294,7 @@ fluid_channel_set_bank_lsb(fluid_channel_t *chan, int banklsb)
 
     style = chan->synth->bank_select;
 
-    if(style == FLUID_BANK_STYLE_GM ||
-            style == FLUID_BANK_STYLE_GS)
+    if(style == FLUID_BANK_STYLE_GM || style == FLUID_BANK_STYLE_GS)
     {
         return;    /* ignored */
     }
@@ -307,6 +303,10 @@ fluid_channel_set_bank_lsb(fluid_channel_t *chan, int banklsb)
 
     if(style == FLUID_BANK_STYLE_XG)
     {
+        if(chan->channel_type == CHANNEL_TYPE_DRUM)
+        {
+            return; // bankLSB is ignored for drum channels
+        }
         newval = (oldval & ~BANK_MASKVAL) | (banklsb << BANK_SHIFTVAL);
     }
     else /* style == FLUID_BANK_STYLE_MMA */
@@ -324,6 +324,7 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
     int oldval, newval, style;
 
     style = chan->synth->bank_select;
+    oldval = chan->sfont_bank_prog;
 
     if(style == FLUID_BANK_STYLE_XG)
     {
@@ -331,17 +332,21 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
         /* The number "120" was based on several keyboards having drums at 120 - 127,
            reference: https://lists.nongnu.org/archive/html/fluid-dev/2011-02/msg00003.html */
         chan->channel_type = (120 == bankmsb || 126 == bankmsb || 127 == bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
-        return;
-    }
+        if(chan->channel_type == CHANNEL_TYPE_MELODIC)
+        {
+            // bankMSB is ignored for meldodic channels
+            return;
+        }
 
-    if(style == FLUID_BANK_STYLE_GM )
+        // ...but for drum channels, hardcode SF2 drum bank 128. Ideally, we should use bankMSB as bank number.
+        // But we'd need to ensure that it's not a melodic preset, see #1524.
+        newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
+    }
+    else if(style == FLUID_BANK_STYLE_GM )
     {
         return;    /* ignored */
     }
-
-    oldval = chan->sfont_bank_prog;
-
-    if(style == FLUID_BANK_STYLE_GS)
+    else if(style == FLUID_BANK_STYLE_GS)
     {
         if(chan->channel_type == CHANNEL_TYPE_DRUM)
         {
@@ -355,7 +360,6 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
     }
 
     chan->sfont_bank_prog = newval;
-
 }
 
 /* Get SoundFont ID, MIDI bank and/or program.  Use NULL to ignore a value. */

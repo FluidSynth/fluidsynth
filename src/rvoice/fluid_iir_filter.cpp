@@ -32,7 +32,7 @@ extern "C" void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fl
     const IIR_COEFF_T period = (IIR_COEFF_T)(2.0 * M_PI / sample_rate);
     for(int fres_cents = FRES_MIN, i=0; fres_cents <= FRES_MAX; fres_cents += CENTS_STEP, i++)
     {
-        fluid_real_t fres = fluid_ct2hz(fres_cents);
+        IIR_COEFF_T fres = static_cast<IIR_COEFF_T>(fluid_ct2hz(static_cast<fluid_real_t>(fres_cents)));
         IIR_COEFF_T omega = period * fres;
         IIR_COEFF_T sin_coeff = std::sin(omega);
         IIR_COEFF_T cos_coeff = std::cos(omega);
@@ -62,7 +62,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    unsigned tab_idx = (fres - FRES_MIN) / CENTS_STEP;
+    unsigned tab_idx = (static_cast<unsigned>(fres) - FRES_MIN) / CENTS_STEP;
     R sin_coeff = sincos_table[tab_idx].sin;
     R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
@@ -168,21 +168,21 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         fluid_real_t dsp_hist2 = iir_filter->hist2;
 
         /* IIR filter coefficients */
-        float dsp_a1 = iir_filter->a1;
-        float dsp_a2 = iir_filter->a2;
-        float dsp_b02 = iir_filter->b02;
-        float dsp_b1 = iir_filter->b1;
+        IIR_COEFF_T dsp_a1 = iir_filter->a1;
+        IIR_COEFF_T dsp_a2 = iir_filter->a2;
+        IIR_COEFF_T dsp_b02 = iir_filter->b02;
+        IIR_COEFF_T dsp_b1 = iir_filter->b1;
 
         int fres_incr_count = iir_filter->fres_incr_count;
         int q_incr_count = iir_filter->q_incr_count;
         
         fluid_real_t dsp_amp = iir_filter->amp;
         fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
-        float fres = iir_filter->last_fres;
-        float q = iir_filter->last_q;
+        IIR_COEFF_T fres = static_cast<IIR_COEFF_T>(iir_filter->last_fres);
+        IIR_COEFF_T q = static_cast<IIR_COEFF_T>(iir_filter->last_q);
         
-        const float fres_incr = iir_filter->fres_incr;
-        const float q_incr = iir_filter->q_incr;
+        const IIR_COEFF_T fres_incr = static_cast<IIR_COEFF_T>(iir_filter->fres_incr);
+        const IIR_COEFF_T q_incr = static_cast<IIR_COEFF_T>(iir_filter->q_incr);
 
         /* filter (implement the voice filter according to SoundFont standard) */
 
