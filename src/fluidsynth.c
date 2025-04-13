@@ -404,14 +404,21 @@ int main(int argc, char **argv)
 
 #if SDL2_SUPPORT || SDL3_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
-    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
+    i = SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
+    if(i != SDL_OK)
+    {
+        fprintf(stderr, "Warning: Unable disable SDL3 signal handlers: %s\n", SDL_GetError());
+    }
     if(SDL_Init(SDL_INIT_AUDIO) != SDL_OK)
     {
-        fprintf(stderr, "Warning: Unable to initialize SDL3 Audio: %s", SDL_GetError());
+        fprintf(stderr, "Warning: Unable to initialize SDL3 Audio: %s\n", SDL_GetError());
     }
     else
     {
-        atexit(SDL_Quit);
+        if(atexit(SDL_Quit))
+        {
+            fprintf(stderr, "Warning: Unable register SDL_Quit exit handler");
+        }
     }
 #endif
 
