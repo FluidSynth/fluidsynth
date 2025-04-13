@@ -91,11 +91,12 @@ enum fluid_mod_src
  * @param value The input value, which will be in range [0;16383/16384] (if the input value originates from the
  * pitch wheel, or [0;127/128] otherwise.
  * @param data Custom data pointer, as set by fluid_mod_set_custom_mapping().
+ * @param is_src1 A boolean, which, if true, indicates that the mapping function is called for source1. Otherwise, it's called for source2. Only useful if two sources have been specified with the #FLUID_MOD_CUSTOM flag set.
  * @return A value mapped into range [-1.0;+1.0].
  * @note For return values that exceed the mentioned range, the behavior is unspecified
  * (i.e. it may be honored, it may be clipped, ignored, the entire modulator may be disabled, etc.).
  */
-typedef double (*fluid_mod_mapping_t)(fluid_mod_t* mod, double value, void* data);
+typedef double (*fluid_mod_mapping_t)(fluid_mod_t* mod, double value, int is_src1, void* data);
 
 /** @startlifecycle{Modulator} */
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);
