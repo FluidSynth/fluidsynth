@@ -403,8 +403,6 @@ int main(int argc, char **argv)
 #endif
 
 #if SDL2_SUPPORT || SDL3_SUPPORT
-#warning "sdl hint true"
-    fprintf(stdout, "initing SDL3\n");
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
     i = SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if(i != SDL_OK)
@@ -418,9 +416,9 @@ int main(int argc, char **argv)
     else
     {
         if(atexit(SDL_Quit))
-	{
-	    fprintf(stderr, "Warning: Unable register SDL_Quit exit handler");
-	}
+        {
+            fprintf(stderr, "Warning: Unable register SDL_Quit exit handler");
+        }
     }
 #endif
 
