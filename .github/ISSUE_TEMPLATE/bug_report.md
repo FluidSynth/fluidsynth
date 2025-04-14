@@ -26,7 +26,7 @@ We strongly recommend to use it! Feel free to edit or remove inapplicable/unneed
 -->
 
 ### FluidSynth version
-_Execute `fluidsynth --version` and provide the output._
+_Execute `fluidsynth -V` and provide the output._
 
 ### Describe the bug
 _Provide a clear and concise description of the current situation, e.g. how the bug manifests._
