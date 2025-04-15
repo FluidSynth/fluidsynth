@@ -77,6 +77,8 @@ struct _fluid_iir_filter_t
     fluid_real_t target_q;          /* The filter's target Q - for debugging only */
 #endif
 
+    short qMod;
+
     // the final gain amplifier to be applied by the last filter in the chain, zero for all other filters
     fluid_real_t amp;                /* current linear amplitude */
     fluid_real_t amp_incr;           /* amplitude increment value for the next FLUID_BUFSIZE samples */
