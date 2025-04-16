@@ -333,6 +333,7 @@ elseif ( WIN32 )
 	  # In order to name everything "libfluidsynth" consistently, specify an empty prefix.
 	  # See #1546.
       PREFIX ""
+      IMPORT_PREFIX ""
       VERSION ${LIB_VERSION_INFO}
       SOVERSION ${LIB_VERSION_CURRENT}
     )
