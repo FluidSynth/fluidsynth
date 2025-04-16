@@ -323,17 +323,10 @@ elseif ( WIN32 )
   set_target_properties ( libfluidsynth
     PROPERTIES
       PUBLIC_HEADER "${public_HEADERS}"
-      ARCHIVE_OUTPUT_NAME "libfluidsynth-${LIB_VERSION_CURRENT}"
-      OUTPUT_NAME "libfluidsynth-${LIB_VERSION_CURRENT}"
-	  # Do NOT use prefix!
-	  # PREFIX applies to
-	  # import lib + static lib of MinGW, and
-	  # the DLL itself obviously.
-	  # But it does not apply to the import lib MSVC!
-	  # In order to name everything "libfluidsynth" consistently, specify an empty prefix.
-	  # See #1546.
-      PREFIX ""
-      IMPORT_PREFIX ""
+      ARCHIVE_OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
+      OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
+      PREFIX "lib"
+      IMPORT_PREFIX "lib"
       VERSION ${LIB_VERSION_INFO}
       SOVERSION ${LIB_VERSION_CURRENT}
     )
