@@ -64,6 +64,16 @@ jobs:
     - name: '${{ matrix.icon }} Install'
       run: cmake --install build && ls -la $INSTALL_LOCATION
 
+    - name:  ''
+      shell: bash
+      working-directory: ${{env.INSTALL_LOCATION}}
+      run: |
+        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.dll.a" ]; then
+          echo "Fluidsynth library has unexpected filename!"
+          ls -la . bin lib
+          exit -1
+        fi
+
     - name: '${{ matrix.icon }} Upload Artifacts'
       uses: actions/upload-artifact@v4
       with:
