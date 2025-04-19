@@ -871,6 +871,12 @@ else ()
   set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
 endif ()
 
+if (WIN32)
+  set ( implibname "fluidsynth-${LIB_VERSION_CURRENT}" )
+else
+  set ( implibname "fluidsynth" )
+endif()
+
 generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
