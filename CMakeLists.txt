@@ -873,9 +873,9 @@ endif ()
 
 if (WIN32)
   set ( implibname "fluidsynth-${LIB_VERSION_CURRENT}" )
-else
+else ()
   set ( implibname "fluidsynth" )
-endif()
+endif ()
 
 generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
