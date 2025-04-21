@@ -945,7 +945,7 @@ int main(int argc, char **argv)
     {
         int option_index = 0;
 
-        static const char positional_optchars[] = "-b:";
+        static const char positional_optchars[] = "+b:";
         static const struct option long_positional_options[] =
         {
             {"bank-offset", 1, 0, 'b'},
@@ -963,7 +963,7 @@ int main(int argc, char **argv)
             printf("?? getopt returned character code 0%o ??\n", c);
             break;
         case '?':
-            fprintf(stderr, "%s is an illegal option at this place.\n", argv[optind-1]);
+            fprintf(stderr, "error: '%s' is an illegal option at this place, only -b option is allowed here.\n", argv[optind-1]);
             break;
         case -1: // not an option
         {
