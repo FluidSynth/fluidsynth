@@ -341,7 +341,7 @@ int main(int argc, char **argv)
     int result = -1;
     int arg1 = 1;
     char buf[512];
-    int c, i;
+    int c, i, bank_ofs=0;
     int interactive = 1;
     int quiet = 0;
     int midi_in = 1;
@@ -360,7 +360,7 @@ int main(int argc, char **argv)
     int audio_channels = 0;
     int dump = 0;
     int fast_render = 0;
-    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
+    static const char optchars[] = "+a:b:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:QqR:r:sT:Vvz:";
 
 #if defined(_WIN32) && defined(_UNICODE)
 // WC_ERR_INVALID_CHARS is only supported on Windows Vista and newer. To support older Windows, our only chance is to use zero for this flag.
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
     {
         int option_index = 0;
 
-        static struct option long_options[] =
+        static const struct option long_options[] =
         {
             {"audio-bufcount", 1, 0, 'c'},
             {"audio-bufsize", 1, 0, 'z'},
@@ -448,6 +448,7 @@ int main(int argc, char **argv)
             {"audio-file-format", 1, 0, 'O'},
             {"audio-file-type", 1, 0, 'T'},
             {"audio-groups", 1, 0, 'G'},
+            {"bank-offset", 1, 0, 'b'},
             {"chorus", 1, 0, 'C'},
             {"connect-jack-outputs", 0, 0, 'j'},
             {"disable-lash", 0, 0, 'l'},
@@ -554,6 +555,10 @@ int main(int argc, char **argv)
                 }
             }
 
+            break;
+
+        case 'b':
+            bank_ofs = atoi(optarg);
             break;
 
         case 'C':
@@ -935,24 +940,57 @@ int main(int argc, char **argv)
     }
 
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
-    for(i = arg1; i < argc; i++)
+    for(; optind < argc;)
     {
-        const char *u8_path = argv[i];
-        if(fluid_is_midifile(u8_path))
-        {
-            continue;
-        }
+        int option_index = 0;
 
-        if(fluid_is_soundfont(u8_path))
+        static const char positional_optchars[] = "-b:";
+        static const struct option long_positional_options[] =
         {
-            if(fluid_synth_sfload(synth, u8_path, 1) == -1)
+            {"bank-offset", 1, 0, 'b'},
+            {0, 0, 0, 0}
+        };
+
+        c = getopt_long(argc, argv, positional_optchars, long_positional_options, &option_index);
+ 
+        switch(c)
+        {
+        case 'b':
+            bank_ofs = atoi(optarg);
+            printf("bankofs=%d\n", bank_ofs);
+            break;
+        default:
+            printf("?? getopt returned character code 0%o ??\n", c);
+            break;
+        case '?':
+            fprintf(stderr, "%s is an illegal option at this place.\n", argv[optind-1]);
+            break;
+        case -1: // not an option
+        {
+            const char *u8_path = argv[optind];
+
+            fprintf(stdout, "now procesing %s\n", u8_path);
+            if(fluid_is_midifile(u8_path))
+            {}
+            else if(fluid_is_soundfont(u8_path))
             {
-                fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
+                int id = fluid_synth_sfload(synth, u8_path, 1);
+                if(id == FLUID_FAILED)
+                {
+                    fprintf(stderr, "Failed to load the SoundFont %s\n", argv[optind]);
+                }
+                else
+                {
+                    fluid_synth_set_bank_offset(synth, id, bank_ofs);
+                }
             }
+            else
+            {
+                fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[optind]);
+            }
+            ++optind;
+            break;
         }
-        else
-        {
-            fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
         }
     }
 
@@ -1252,6 +1290,9 @@ print_help(fluid_settings_t *settings)
     printf(" -a, --audio-driver=[label]\n"
            "    The name of the audio driver to use.\n"
            "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
+    printf("-b, --bank-offset=[num]\n"
+           "    A positional flag that specifies the bank-offset for any Soundfonts\n"
+           "    following that flag. Can be specified multiple times.\n");
     printf(" -c, --audio-bufcount=[count]\n"
            "    Number of audio buffers\n");
     printf(" -C, --chorus\n"
