@@ -11,8 +11,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Run Codespell to check for typos
       - name: Run Codespell
         uses: codespell-project/actions-codespell@v2
+        with:
+            only_warn: 1
+            ignore_words_list: READD,caf
+            skip: ./.git,*.pdf,./AUTHORS,./THANKS,./contrib
