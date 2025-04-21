@@ -341,7 +341,7 @@ int main(int argc, char **argv)
     int result = -1;
     int arg1 = 1;
     char buf[512];
-    int c, i, bank_ofs=0;
+    int c, i, bank_ofs=0, verbose = FALSE;
     int interactive = 1;
     int quiet = 0;
     int midi_in = 1;
@@ -811,6 +811,7 @@ int main(int argc, char **argv)
             goto cleanup;
 
         case 'v':
+            verbose = TRUE;
             fluid_settings_setint(settings, "synth.verbose", TRUE);
             fluid_set_log_function(FLUID_DBG, fluid_default_log_function, NULL);
             break;
@@ -940,7 +941,7 @@ int main(int argc, char **argv)
     }
 
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
-    for(; optind < argc;)
+    while(optind < argc)
     {
         int option_index = 0;
 
@@ -957,7 +958,6 @@ int main(int argc, char **argv)
         {
         case 'b':
             bank_ofs = atoi(optarg);
-            printf("bankofs=%d\n", bank_ofs);
             break;
         default:
             printf("?? getopt returned character code 0%o ??\n", c);
@@ -969,24 +969,27 @@ int main(int argc, char **argv)
         {
             const char *u8_path = argv[optind];
 
-            fprintf(stdout, "now procesing %s\n", u8_path);
             if(fluid_is_midifile(u8_path))
             {}
             else if(fluid_is_soundfont(u8_path))
             {
-                int id = fluid_synth_sfload(synth, u8_path, 1);
-                if(id == FLUID_FAILED)
+                if(verbose)
                 {
-                    fprintf(stderr, "Failed to load the SoundFont %s\n", argv[optind]);
+                    fprintf(stdout, "Now loading '%s' with bank-offset=%d\n", u8_path, bank_ofs);
+                }
+                i = fluid_synth_sfload(synth, u8_path, 1);
+                if(i == FLUID_FAILED)
+                {
+                    fprintf(stderr, "Failed to load the SoundFont %s\n", u8_path);
                 }
                 else
                 {
-                    fluid_synth_set_bank_offset(synth, id, bank_ofs);
+                    fluid_synth_set_bank_offset(synth, i, bank_ofs);
                 }
             }
             else
             {
-                fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[optind]);
+                fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", u8_path);
             }
             ++optind;
             break;
