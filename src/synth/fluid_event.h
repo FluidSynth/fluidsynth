@@ -35,7 +35,7 @@ typedef int fluid_note_id_t;
 struct _fluid_event_t
 {
     unsigned int time;
-    int type;
+    unsigned char type;
     fluid_seq_id_t src;
     fluid_seq_id_t dest;
     int channel;

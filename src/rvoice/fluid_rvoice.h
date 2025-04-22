@@ -44,7 +44,7 @@ typedef struct _fluid_rvoice_t fluid_rvoice_t;
  */
 #define FLUID_NOISE_FLOOR ((fluid_real_t)2.e-7)
 
-enum fluid_loop
+enum fluid_loop : unsigned char
 {
     FLUID_UNLOOPED = 0,
     FLUID_LOOP_DURING_RELEASE = 1,

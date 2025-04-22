@@ -28,7 +28,7 @@
 typedef struct _fluid_chorus_t fluid_chorus_t;
 
 /* enum describing each chorus parameter */
-enum fluid_chorus_param
+enum fluid_chorus_param : unsigned char
 {
     FLUID_CHORUS_NR,        /**< number of delay line */
     FLUID_CHORUS_LEVEL,     /**< output level */
@@ -42,7 +42,7 @@ enum fluid_chorus_param
 #define FLUID_CHORPARAM_TO_SETFLAG(param) (1 << param)
 
 /** Flags for fluid_chorus_set() */
-typedef enum
+typedef enum : unsigned char
 {
     FLUID_CHORUS_SET_NR    = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_NR),
     FLUID_CHORUS_SET_LEVEL = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_LEVEL),
@@ -65,7 +65,7 @@ fluid_chorus_t *new_fluid_chorus(fluid_real_t sample_rate);
 void delete_fluid_chorus(fluid_chorus_t *chorus);
 void fluid_chorus_reset(fluid_chorus_t *chorus);
 
-void fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
+void fluid_chorus_set(fluid_chorus_t *chorus, unsigned char set, int nr, fluid_real_t level,
                       fluid_real_t speed, fluid_real_t depth_ms, int type);
 void
 fluid_chorus_samplerate_change(fluid_chorus_t *chorus, fluid_real_t sample_rate);

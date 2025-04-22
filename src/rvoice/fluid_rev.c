@@ -1162,7 +1162,7 @@ delete_fluid_revmodel(fluid_revmodel_t *rev)
 * fluid_revmodel_set().
 *
 * @param rev Reverb instance.
-* @param set One or more flags from #fluid_revmodel_set_t indicating what
+* @param set One or more flags from uchar (#fluid_revmodel_set_t) indicating what
 *   parameters to set (#FLUID_REVMODEL_SET_ALL to set all parameters).
 * @param roomsize Reverb room size.
 * @param damping Reverb damping.
@@ -1172,7 +1172,7 @@ delete_fluid_revmodel(fluid_revmodel_t *rev)
 * Reverb API.
 */
 void
-fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
+fluid_revmodel_set(fluid_revmodel_t *rev, unsigned char set, fluid_real_t roomsize,
                    fluid_real_t damping, fluid_real_t width, fluid_real_t level)
 {
     fluid_return_if_fail(rev != NULL);

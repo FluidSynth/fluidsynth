@@ -49,7 +49,7 @@ typedef struct _fluid_gen_t
 /*
  * Enum value for 'flags' field of #fluid_gen_t (not really flags).
  */
-enum fluid_gen_flags
+enum fluid_gen_flags : unsigned char
 {
     GEN_UNUSED,		/**< Generator value is not set */
     GEN_SET,		/**< Generator value is set */

@@ -47,7 +47,7 @@ struct _fluid_overflow_prio_t
     int num_important_channels; /**< Number of elements in the important_channels array */
 };
 
-enum fluid_voice_status
+enum fluid_voice_status : unsigned char
 {
     FLUID_VOICE_CLEAN,
     FLUID_VOICE_ON,

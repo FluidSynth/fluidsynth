@@ -41,7 +41,7 @@ fluid_midi_event_t *fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigne
 #define MAX_NUMBER_OF_TRACKS 128
 #define MAX_NUMBER_OF_CHANNELS 16
 
-enum fluid_midi_event_type
+enum fluid_midi_event_type : unsigned char
 {
     /* channel messages */
     NOTE_OFF = 0x80,
@@ -71,7 +71,7 @@ enum fluid_midi_event_type
     MIDI_META_EVENT = 0xff
 };
 
-enum fluid_midi_control_change
+enum fluid_midi_control_change : unsigned char
 {
     BANK_SELECT_MSB = 0x00,
     MODULATION_MSB = 0x01,
@@ -148,7 +148,7 @@ enum fluid_midi_control_change
 };
 
 /* General MIDI RPN event numbers (LSB, MSB = 0) */
-enum midi_rpn_event
+enum midi_rpn_event : unsigned char
 {
     RPN_PITCH_BEND_RANGE = 0x00,
     RPN_CHANNEL_FINE_TUNE = 0x01,
@@ -158,7 +158,7 @@ enum midi_rpn_event
     RPN_MODULATION_DEPTH_RANGE = 0x05
 };
 
-enum midi_meta_event
+enum midi_meta_event : unsigned char
 {
     MIDI_TEXT = 0x01,
     MIDI_COPYRIGHT = 0x02,
@@ -176,7 +176,7 @@ enum midi_meta_event
 };
 
 /* MIDI SYSEX useful manufacturer values */
-enum midi_sysex_manuf
+enum midi_sysex_manuf : unsigned char
 {
     MIDI_SYSEX_MANUF_ROLAND       = 0x41,         /**< Roland manufacturer ID */
     MIDI_SYSEX_MANUF_YAMAHA       = 0x43,
@@ -195,7 +195,7 @@ enum midi_sysex_manuf
 /**
  * SYSEX tuning message IDs.
  */
-enum midi_sysex_tuning_msg_id
+enum midi_sysex_tuning_msg_id : unsigned char
 {
     MIDI_SYSEX_TUNING_BULK_DUMP_REQ       = 0x00, /**< Bulk tuning dump request (non-realtime) */
     MIDI_SYSEX_TUNING_BULK_DUMP           = 0x01, /**< Bulk tuning dump response (non-realtime) */
@@ -215,7 +215,7 @@ enum midi_sysex_tuning_msg_id
 #define MIDI_SYSEX_GM2_ON               0x03    /**< Enable GM2 mode */
 #define MIDI_SYSEX_GS_DT1               0x12    /**< GS DT1 command */
 
-enum fluid_driver_status
+enum fluid_driver_status : unsigned char
 {
     FLUID_MIDI_READY,
     FLUID_MIDI_LISTENING,

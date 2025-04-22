@@ -504,11 +504,11 @@ fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
  * @param seq Sequencer object
  * @param source Source client ID to match or -1 for wildcard
  * @param dest Destination client ID to match or -1 for wildcard
- * @param type Event type to match or -1 for wildcard (#fluid_seq_event_type)
+ * @param type Event type to match or -1 for wildcard uchar (#fluid_seq_event_type)
  */
 void
 fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
-                              fluid_seq_id_t dest, int type)
+                              fluid_seq_id_t dest, unsigned char type)
 {
     fluid_return_if_fail(seq != NULL);
 

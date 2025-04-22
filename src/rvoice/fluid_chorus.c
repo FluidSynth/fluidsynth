@@ -707,7 +707,7 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
  * Set one or more chorus parameters.
  *
  * @param chorus Chorus instance.
- * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t).
+ * @param set Flags indicating which chorus parameters to set uchar (#fluid_chorus_set_t).
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value).
  * @param level Chorus level (0.0-10.0).
@@ -717,7 +717,7 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
  * @param type Chorus waveform type (#fluid_chorus_mod).
  */
 void
-fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
+fluid_chorus_set(fluid_chorus_t *chorus, unsigned char set, int nr, fluid_real_t level,
                  fluid_real_t speed, fluid_real_t depth_ms, int type)
 {
     if(set & FLUID_CHORUS_SET_NR) /* number of block */

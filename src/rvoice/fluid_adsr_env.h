@@ -40,7 +40,7 @@ struct _fluid_env_data_t
 };
 
 /* Indices for envelope tables */
-enum fluid_voice_envelope_index
+enum fluid_voice_envelope_index : unsigned char
 {
     FLUID_VOICE_ENVDELAY=0,
     FLUID_VOICE_ENVATTACK,

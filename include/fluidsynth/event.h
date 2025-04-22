@@ -37,7 +37,7 @@ extern "C" {
 /**
  * Sequencer event type enumeration.
  */
-enum fluid_seq_event_type
+enum fluid_seq_event_type : unsigned char
 {
     FLUID_SEQ_NOTE = 0,		/**< Note event with duration */
     FLUID_SEQ_NOTEON,		/**< Note on event */
@@ -120,7 +120,7 @@ FLUIDSYNTH_API void fluid_event_scale(fluid_event_t *evt, double new_scale);
 FLUIDSYNTH_API int fluid_event_from_midi_event(fluid_event_t *, const fluid_midi_event_t *);
 
 /* Accessing event data */
-FLUIDSYNTH_API int fluid_event_get_type(fluid_event_t *evt);
+FLUIDSYNTH_API unsigned char fluid_event_get_type(fluid_event_t *evt);
 FLUIDSYNTH_API fluid_seq_id_t fluid_event_get_source(fluid_event_t *evt);
 FLUIDSYNTH_API fluid_seq_id_t fluid_event_get_dest(fluid_event_t *evt);
 FLUIDSYNTH_API int fluid_event_get_channel(fluid_event_t *evt);

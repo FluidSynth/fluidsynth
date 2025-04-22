@@ -393,11 +393,11 @@ fluid_voice_set_output_rate(fluid_voice_t *voice, fluid_real_t value)
  * Set the value of a generator.
  *
  * @param voice Voice instance
- * @param i Generator ID (#fluid_gen_type)
+ * @param i Generator ID uchar (#fluid_gen_type)
  * @param val Generator value
  */
 void
-fluid_voice_gen_set(fluid_voice_t *voice, int i, float val)
+fluid_voice_gen_set(fluid_voice_t *voice, unsigned char i, float val)
 {
     voice->gen[i].val = val;
     voice->gen[i].flags = GEN_SET;
@@ -412,11 +412,11 @@ fluid_voice_gen_set(fluid_voice_t *voice, int i, float val)
  * Offset the value of a generator.
  *
  * @param voice Voice instance
- * @param i Generator ID (#fluid_gen_type)
+ * @param i Generator ID uchar (#fluid_gen_type)
  * @param val Value to add to the existing value
  */
 void
-fluid_voice_gen_incr(fluid_voice_t *voice, int i, float val)
+fluid_voice_gen_incr(fluid_voice_t *voice, unsigned char i, float val)
 {
     voice->gen[i].val += val;
     voice->gen[i].flags = GEN_SET;
@@ -426,11 +426,11 @@ fluid_voice_gen_incr(fluid_voice_t *voice, int i, float val)
  * Get the value of a generator.
  *
  * @param voice Voice instance
- * @param gen Generator ID (#fluid_gen_type)
+ * @param gen Generator ID uchar (#fluid_gen_type)
  * @return Current generator value
  */
 float
-fluid_voice_gen_get(fluid_voice_t *voice, int gen)
+fluid_voice_gen_get(fluid_voice_t *voice, unsigned char gen)
 {
     return voice->gen[gen].val;
 }

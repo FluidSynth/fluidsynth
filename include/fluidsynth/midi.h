@@ -155,7 +155,7 @@ FLUIDSYNTH_API int fluid_midi_event_get_lyrics(fluid_midi_event_t *evt,
  *
  * @since 1.1.0
  */
-typedef enum
+typedef enum : unsigned char
 {
     FLUID_MIDI_ROUTER_RULE_NOTE,                  /**< MIDI note rule */
     FLUID_MIDI_ROUTER_RULE_CC,                    /**< MIDI controller rule */
@@ -242,7 +242,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
  * MIDI File Player status enum.
  * @since 1.1.0
  */
-enum fluid_player_status
+enum fluid_player_status : unsigned char
 {
     FLUID_PLAYER_READY,           /**< Player is ready */
     FLUID_PLAYER_PLAYING,         /**< Player is currently playing */
@@ -254,7 +254,7 @@ enum fluid_player_status
  * MIDI File Player tempo enum.
  * @since 2.2.0
  */
-enum fluid_player_set_tempo_type
+enum fluid_player_set_tempo_type : unsigned char
 {
     FLUID_PLAYER_TEMPO_INTERNAL,      /**< Use midi file tempo set in midi file (120 bpm by default). Multiplied by a factor */
     FLUID_PLAYER_TEMPO_EXTERNAL_BPM,  /**< Set player tempo in bpm, supersede midi file tempo */

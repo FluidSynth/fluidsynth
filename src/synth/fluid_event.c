@@ -666,11 +666,11 @@ int fluid_event_from_midi_event(fluid_event_t *evt, const fluid_midi_event_t *ev
  */
 
 /**
- * Get the event type (#fluid_seq_event_type) field from a sequencer event structure.
+ * Get the event type uchar (#fluid_seq_event_type) field from a sequencer event structure.
  * @param evt Sequencer event structure
- * @return Event type (#fluid_seq_event_type).
+ * @return Event type uchar (#fluid_seq_event_type).
  */
-int fluid_event_get_type(fluid_event_t *evt)
+unsigned char fluid_event_get_type(fluid_event_t *evt)
 {
     return evt->type;
 }

@@ -92,7 +92,7 @@ enum
  * This enum corresponds to the \c SFSampleLink enum in the SoundFont spec.
  * One \c flag may be bit-wise OR-ed with one \c value.
  */
-enum fluid_sample_type
+enum fluid_sample_type : unsigned short
 {
     FLUID_SAMPLETYPE_MONO = 0x1, /**< Value used for mono samples */
     FLUID_SAMPLETYPE_RIGHT = 0x2, /**< Value used for right samples of a stereo pair */

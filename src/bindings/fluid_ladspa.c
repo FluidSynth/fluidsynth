@@ -34,7 +34,7 @@
 #include <ladspa.h>
 
 
-typedef enum _fluid_ladspa_state_t
+typedef enum _fluid_ladspa_state_t : unsigned char
 {
     FLUID_LADSPA_INACTIVE = 0,
     FLUID_LADSPA_ACTIVE,
@@ -42,14 +42,14 @@ typedef enum _fluid_ladspa_state_t
 
 } fluid_ladspa_state_t;
 
-typedef enum _fluid_ladspa_dir_t
+typedef enum _fluid_ladspa_dir_t : unsigned char
 {
     FLUID_LADSPA_INPUT,
     FLUID_LADSPA_OUTPUT,
 
 } fluid_ladspa_dir_t;
 
-typedef enum _fluid_ladspa_node_type_t
+typedef enum _fluid_ladspa_node_type_t : unsigned char
 {
     FLUID_LADSPA_NODE_AUDIO = 1,
     FLUID_LADSPA_NODE_CONTROL = 2,
@@ -62,7 +62,7 @@ typedef enum _fluid_ladspa_node_type_t
 typedef struct _fluid_ladspa_node_t
 {
     char *name;
-    fluid_ladspa_node_type_t type;
+    unsigned char type; /* Type of the node (#fluid_ladspa_node_type_t) */
 
     /* The buffer that LADSPA effects read and/or write to.
      * If FluidSynth has been compiled WITH_FLOAT, then this

@@ -27,7 +27,7 @@
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
 /* enum describing each reverb parameter */
-enum fluid_reverb_param
+enum fluid_reverb_param : unsigned char
 {
     FLUID_REVERB_ROOMSIZE,  /**< reverb time */
     FLUID_REVERB_DAMP,      /**< high frequency damping */
@@ -40,7 +40,7 @@ enum fluid_reverb_param
 #define FLUID_REVPARAM_TO_SETFLAG(param) (1 << param)
 
 /** Flags for fluid_revmodel_set() */
-typedef enum
+typedef enum : unsigned char
 {
     FLUID_REVMODEL_SET_ROOMSIZE       = FLUID_REVPARAM_TO_SETFLAG(FLUID_REVERB_ROOMSIZE),
     FLUID_REVMODEL_SET_DAMPING        = FLUID_REVPARAM_TO_SETFLAG(FLUID_REVERB_DAMP),
@@ -83,7 +83,7 @@ void fluid_revmodel_processreplace(fluid_revmodel_t *rev, const fluid_real_t *in
 
 void fluid_revmodel_reset(fluid_revmodel_t *rev);
 
-void fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
+void fluid_revmodel_set(fluid_revmodel_t *rev, unsigned char set, fluid_real_t roomsize,
                         fluid_real_t damping, fluid_real_t width, fluid_real_t level);
 
 int fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate);

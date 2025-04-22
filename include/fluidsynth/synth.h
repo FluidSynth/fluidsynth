@@ -100,8 +100,8 @@ FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t *synth, int chan);
 
 FLUIDSYNTH_API int fluid_synth_set_gen(fluid_synth_t *synth, int chan,
-                                       int param, float value);
-FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param);
+                                       unsigned char param, float value);
+FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, unsigned char param);
 /** @} MIDI Channel Messages */
 
 
@@ -198,7 +198,7 @@ FLUIDSYNTH_API int fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int 
 /**
  * Chorus modulation waveform type.
  */
-enum fluid_chorus_mod
+enum fluid_chorus_mod : unsigned char
 {
     FLUID_CHORUS_MOD_SINE = 0,            /**< Sine wave chorus modulation */
     FLUID_CHORUS_MOD_TRIANGLE = 1         /**< Triangle wave chorus modulation */
@@ -264,7 +264,7 @@ int fluid_synth_set_interp_method(fluid_synth_t *synth, int chan, int interp_met
 /**
  * Synthesis interpolation method.
  */
-enum fluid_interp
+enum fluid_interp : unsigned char
 {
     FLUID_INTERP_NONE = 0,        /**< No interpolation: Fastest, but questionable audio quality */
     FLUID_INTERP_LINEAR = 1,      /**< Straight-line interpolation: A bit slower, reasonable audio quality */
@@ -285,7 +285,7 @@ enum fluid_interp
 /**
  * Enum used with fluid_synth_add_default_mod() to specify how to handle duplicate modulators.
  */
-enum fluid_synth_add_mod
+enum fluid_synth_add_mod : unsigned char
 {
     FLUID_SYNTH_OVERWRITE,        /**< Overwrite any existing matching modulator */
     FLUID_SYNTH_ADD,              /**< Sum up modulator amounts */
@@ -379,7 +379,7 @@ FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t *synth, int len,
 /**
  * Specifies the type of filter to use for the custom IIR filter
  */
-enum fluid_iir_filter_type
+enum fluid_iir_filter_type : unsigned char
 {
     FLUID_IIR_DISABLED = 0, /**< Custom IIR filter is not operating */
     FLUID_IIR_LOWPASS, /**< Custom IIR filter is operating as low-pass filter */
@@ -390,7 +390,7 @@ enum fluid_iir_filter_type
 /**
  * Specifies optional settings to use for the custom IIR filter. Can be bitwise ORed.
  */
-enum fluid_iir_filter_flags
+enum fluid_iir_filter_flags : unsigned char
 {
     FLUID_IIR_Q_LINEAR = 1 << 0, /**< The Soundfont spec requires the filter Q to be interpreted in dB. If this flag is set the filter Q is instead assumed to be in a linear range */
     FLUID_IIR_Q_ZERO_OFF = 1 << 1, /**< If this flag the filter is switched off if Q == 0 (prior to any transformation) */
@@ -420,7 +420,7 @@ FLUIDSYNTH_API int fluid_synth_set_custom_filter(fluid_synth_t *, int type, int 
 /**
  * The midi channel type used by fluid_synth_set_channel_type()
  */
-enum fluid_midi_channel_type
+enum fluid_midi_channel_type : unsigned char
 {
     CHANNEL_TYPE_MELODIC = 0, /**< Melodic midi channel */
     CHANNEL_TYPE_DRUM = 1 /**< Drum midi channel */
@@ -437,7 +437,7 @@ FLUIDSYNTH_API int fluid_synth_set_channel_type(fluid_synth_t *synth, int chan, 
 /**
  * Channel mode bits OR-ed together so that it matches with the midi spec: poly omnion (0), mono omnion (1), poly omnioff (2), mono omnioff (3)
  */
-enum fluid_channel_mode_flags
+enum fluid_channel_mode_flags : unsigned char
 {
     FLUID_CHANNEL_POLY_OFF = 0x01, /**< if flag is set, the basic channel is in mono on state, if not set poly is on */
     FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag is set, the basic channel is in omni off state, if not set omni is on */
@@ -446,7 +446,7 @@ enum fluid_channel_mode_flags
 /**
  * Indicates the mode a basic channel is set to
  */
-enum fluid_basic_channel_modes
+enum fluid_basic_channel_modes : unsigned char
 {
     FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags, usually only used internally */
     FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 0 */
@@ -473,7 +473,7 @@ FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan,
 /**
  * Indicates the legato mode a channel is set to
  * n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played legato with previous note. */
-enum fluid_channel_legato_mode
+enum fluid_channel_legato_mode : unsigned char
 {
     FLUID_CHANNEL_LEGATO_MODE_RETRIGGER, /**< Mode 0 - Release previous note, start a new note */
     FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER, /**< Mode 1 - On contiguous notes retrigger in attack section using current value, shape attack using current dynamic and make use of previous voices if any */
@@ -491,7 +491,7 @@ FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t *synth, int chan, i
 /**
  * Indicates the portamento mode a channel is set to
  */
-enum fluid_channel_portamento_mode
+enum fluid_channel_portamento_mode : unsigned char
 {
     FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE, /**< Mode 0 - Portamento on each note (staccato or legato) */
     FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY, /**< Mode 1 - Portamento only on legato note */
@@ -514,7 +514,7 @@ FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t *synth,
 /**
  * Indicates the breath mode a channel is set to
  */
-enum fluid_channel_breath_flags
+enum fluid_channel_breath_flags : unsigned char
 {
     FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< when channel is poly, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath to initial attenuation modulator */
     FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< when channel is mono, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath modulator */

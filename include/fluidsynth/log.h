@@ -58,7 +58,7 @@ extern "C" {
 /**
  * FluidSynth log levels.
  */
-enum fluid_log_level
+enum fluid_log_level : unsigned char
 {
     FLUID_PANIC,   /**< The synth can't function correctly any more */
     FLUID_ERR,     /**< Serious error occurred */

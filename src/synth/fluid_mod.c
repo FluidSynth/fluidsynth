@@ -78,10 +78,10 @@ fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags)
  * Set the destination effect of a modulator.
  *
  * @param mod The modulator instance
- * @param dest Destination generator (#fluid_gen_type)
+ * @param dest Destination generator uchar (#fluid_gen_type)
  */
 void
-fluid_mod_set_dest(fluid_mod_t *mod, int dest)
+fluid_mod_set_dest(fluid_mod_t *mod, unsigned char dest)
 {
     mod->dest = dest;
 }
@@ -168,9 +168,9 @@ fluid_mod_get_flags2(const fluid_mod_t *mod)
  * Get destination effect from a modulator.
  *
  * @param mod The modulator instance
- * @return Destination generator (#fluid_gen_type)
+ * @return Destination generator uchar (#fluid_gen_type)
  */
-int
+unsigned char
 fluid_mod_get_dest(const fluid_mod_t *mod)
 {
     return mod->dest;
@@ -745,10 +745,10 @@ int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl)
  * Check if the modulator has the given destination.
  *
  * @param mod The modulator instance
- * @param gen The destination generator of type #fluid_gen_type to check for
+ * @param gen The destination generator of type uchar (#fluid_gen_type) to check for
  * @return TRUE if the modulator has the given destination, FALSE otherwise.
  */
-int fluid_mod_has_dest(const fluid_mod_t *mod, int gen)
+int fluid_mod_has_dest(const fluid_mod_t *mod, unsigned char gen)
 {
     return mod->dest == gen;
 }

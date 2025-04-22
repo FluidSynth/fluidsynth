@@ -7602,11 +7602,11 @@ fluid_synth_get_settings(fluid_synth_t *synth)
  * generator parameters and valid ranges, as well as paragraph 9.6 for details on NRPN messages.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param param SoundFont generator ID (#fluid_gen_type)
+ * @param param SoundFont generator ID uchar (#fluid_gen_type)
  * @param value Offset value (in native units of the generator) to assign to the MIDI channel
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_gen(fluid_synth_t *synth, int chan, int param, float value)
+int fluid_synth_set_gen(fluid_synth_t *synth, int chan, unsigned char param, float value)
 {
     fluid_return_val_if_fail(param >= 0 && param < GEN_LAST, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
@@ -7835,11 +7835,11 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
  * The value returned is in native units of the generator. By default, the offset is zero.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param param SoundFont generator ID (#fluid_gen_type)
+ * @param param SoundFont generator ID uchar (#fluid_gen_type)
  * @return Current NRPN generator offset value assigned to the MIDI channel
  */
 float
-fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param)
+fluid_synth_get_gen(fluid_synth_t *synth, int chan, unsigned char param)
 {
     float result;
     fluid_return_val_if_fail(param >= 0 && param < GEN_LAST, FLUID_FAILED);

@@ -79,7 +79,7 @@ FLUIDSYNTH_API
 int fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
                             unsigned int time, int absolute);
 FLUIDSYNTH_API
-void fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source, fluid_seq_id_t dest, int type);
+void fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source, fluid_seq_id_t dest, unsigned char type);
 FLUIDSYNTH_API unsigned int fluid_sequencer_get_tick(fluid_sequencer_t *seq);
 FLUIDSYNTH_API void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale);
 FLUIDSYNTH_API double fluid_sequencer_get_time_scale(fluid_sequencer_t *seq);

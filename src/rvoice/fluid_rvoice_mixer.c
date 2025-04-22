@@ -995,12 +995,12 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
  * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
- * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
+ * @param set Flags indicating which parameters should be set uchar (#fluid_revmodel_set_t)
  * @param values table of parameters values.
  */
 void
 fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group, int set, const double values[])
+                                   int fx_group, unsigned char set, const double values[])
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
@@ -1059,12 +1059,12 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
  *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
- * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
+ * @param set Flags indicating which parameters to set uchar (#fluid_chorus_set_t)
  * @param values table of pararameters.
  */
 void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group, int set, const double values[])
+                                   int fx_group, unsigned char set, const double values[])
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
@@ -1099,7 +1099,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
  * @param mixer that contains all fx groups units.
  * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param get Flags indicating which parameter to get (#fluid_chorus_set_t)
+ * @param get Flags indicating which parameter to get uchar (#fluid_chorus_set_t)
  * @return the parameter value (0.0 is returned if error)
  */
 double

@@ -65,7 +65,7 @@
 /**
  * Bank Select MIDI message styles. Default style is GS.
  */
-enum fluid_midi_bank_select
+enum fluid_midi_bank_select : unsigned char
 {
     FLUID_BANK_STYLE_GM,  /**< GM style, bank = 0 always (CC0/MSB and CC32/LSB ignored) */
     FLUID_BANK_STYLE_GS,  /**< GS style, bank = CC0/MSB (CC32/LSB ignored) */
@@ -73,7 +73,7 @@ enum fluid_midi_bank_select
     FLUID_BANK_STYLE_MMA  /**< MMA style bank = 128*MSB+LSB */
 };
 
-enum fluid_synth_status
+enum fluid_synth_status : unsigned char
 {
     FLUID_SYNTH_CLEAN,
     FLUID_SYNTH_PLAYING,
@@ -81,7 +81,7 @@ enum fluid_synth_status
     FLUID_SYNTH_STOPPED
 };
 
-enum fluid_msgs_note_cut
+enum fluid_msgs_note_cut : unsigned char
 {
     FLUID_MSGS_DISABLED = 0,
     FLUID_MSGS_DRUM_CUT = 1,

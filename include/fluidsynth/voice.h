@@ -44,7 +44,7 @@ extern "C" {
 /**
  * Enum used with fluid_voice_add_mod() to specify how to handle duplicate modulators.
  */
-enum fluid_voice_add_mod
+enum fluid_voice_add_mod : unsigned char
 {
     FLUID_VOICE_OVERWRITE,        /**< Overwrite any existing matching modulator */
     FLUID_VOICE_ADD,              /**< Add (sum) modulator amounts */
@@ -52,9 +52,9 @@ enum fluid_voice_add_mod
 };
 
 FLUIDSYNTH_API void fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode);
-FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t *voice, int gen);
-FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t *voice, int gen, float val);
-FLUIDSYNTH_API void fluid_voice_gen_incr(fluid_voice_t *voice, int gen, float val);
+FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t *voice, unsigned char gen);
+FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t *voice, unsigned char gen, float val);
+FLUIDSYNTH_API void fluid_voice_gen_incr(fluid_voice_t *voice, unsigned char gen, float val);
 
 FLUIDSYNTH_API unsigned int fluid_voice_get_id(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_get_channel(const fluid_voice_t *voice);

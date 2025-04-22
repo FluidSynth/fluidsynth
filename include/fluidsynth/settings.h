@@ -93,7 +93,7 @@ extern "C" {
  * set of values. The type of each setting can be retrieved using the
  * function fluid_settings_get_type()
  */
-enum fluid_types_enum
+enum fluid_types_enum : short
 {
     FLUID_NO_TYPE = -1, /**< Undefined type */
     FLUID_NUM_TYPE,     /**< Numeric (double) */

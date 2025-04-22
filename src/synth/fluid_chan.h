@@ -122,7 +122,7 @@ struct _fluid_channel_t
     int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
 
     /* NRPN system */
-    enum fluid_gen_type nrpn_select;      /* Generator ID of SoundFont NRPN message */
+    unsigned char nrpn_select;      /* Generator ID of SoundFont NRPN message */
     char nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
     
     /* The values of the generators, set by NRPN messages, or by
@@ -248,7 +248,7 @@ fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key);
 #define fluid_channel_prev_note(chan)	(chan->prev_note)
 
 /* Interface to poly/mono mode variables */
-enum fluid_channel_mode_flags_internal
+enum fluid_channel_mode_flags_internal : unsigned char
 {
     FLUID_CHANNEL_BASIC = 0x04,    /**< if flag set the corresponding midi channel is a basic channel */
     FLUID_CHANNEL_ENABLED = 0x08,  /**< if flag set the corresponding midi channel is enabled, else disabled, i.e. channel ignores any MIDI messages */
