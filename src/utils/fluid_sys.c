@@ -107,11 +107,11 @@ static const char fluid_libname[] = "fluidsynth";
  * @return The previously installed function.
  */
 fluid_log_function_t
-fluid_set_log_function(int level, fluid_log_function_t fun, void *data)
+fluid_set_log_function(unsigned char level, fluid_log_function_t fun, void *data)
 {
     fluid_log_function_t old = NULL;
 
-    if((level >= 0) && (level < LAST_LOG_LEVEL))
+    if(level < LAST_LOG_LEVEL)
     {
         old = fluid_log_function[level];
         fluid_log_function[level] = fun;
@@ -128,7 +128,7 @@ fluid_set_log_function(int level, fluid_log_function_t fun, void *data)
  * @param data User supplied data (not used)
  */
 void
-fluid_default_log_function(int level, const char *message, void *data)
+fluid_default_log_function(unsigned char  level, const char *message, void *data)
 {
     FILE *out;
 
@@ -170,15 +170,15 @@ fluid_default_log_function(int level, const char *message, void *data)
 
 /**
  * Print a message to the log.
- * @param level Log level (#fluid_log_level).
+ * @param level Log level uchar (#fluid_log_level).
  * @param fmt Printf style format string for log message
  * @param ... Arguments for printf 'fmt' message string
  * @return Always returns #FLUID_FAILED
  */
 int
-fluid_log(int level, const char *fmt, ...)
+fluid_log(unsigned char level, const char *fmt, ...)
 {
-    if((level >= 0) && (level < LAST_LOG_LEVEL))
+    if(level < LAST_LOG_LEVEL)
     {
         fluid_log_function_t fun = fluid_log_function[level];
 

@@ -108,7 +108,7 @@ FLUIDSYNTH_API void delete_fluid_settings(fluid_settings_t *settings);
 /** @endlifecycle */
 
 FLUIDSYNTH_API
-int fluid_settings_get_type(fluid_settings_t *settings, const char *name);
+short fluid_settings_get_type(fluid_settings_t *settings, const char *name);
 
 FLUIDSYNTH_API
 int fluid_settings_get_hints(fluid_settings_t *settings, const char *name, int *val);
@@ -181,9 +181,9 @@ FLUIDSYNTH_API char *fluid_settings_option_concat(fluid_settings_t *settings,
  *
  * @param data User defined data pointer
  * @param name Setting name
- * @param type Setting type (#fluid_types_enum)
+ * @param type Setting type short (#fluid_types_enum)
  */
-typedef void (*fluid_settings_foreach_t)(void *data, const char *name, int type);
+typedef void (*fluid_settings_foreach_t)(void *data, const char *name, short type);
 
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t *settings, void *data,

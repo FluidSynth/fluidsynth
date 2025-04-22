@@ -187,7 +187,7 @@ settings_option_foreach_func(void *data, const char *name, const char *option)
 
 /* fluid_settings_foreach function for displaying option help  "-o help" */
 static void
-settings_foreach_func(void *data, const char *name, int type)
+settings_foreach_func(void *data, const char *name, short type)
 {
     fluid_settings_t *settings = (fluid_settings_t *)data;
     double dmin, dmax, ddef;

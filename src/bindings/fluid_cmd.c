@@ -2157,7 +2157,7 @@ struct _fluid_handle_settings_data_t
     fluid_ostream_t out;
 };
 
-static void fluid_handle_settings_iter1(void *data, const char *name, int type)
+static void fluid_handle_settings_iter1(void *data, const char *name, short type)
 {
     struct _fluid_handle_settings_data_t *d = (struct _fluid_handle_settings_data_t *) data;
 
@@ -2169,7 +2169,7 @@ static void fluid_handle_settings_iter1(void *data, const char *name, int type)
     }
 }
 
-static void fluid_handle_settings_iter2(void *data, const char *name, int type)
+static void fluid_handle_settings_iter2(void *data, const char *name, short type)
 {
     struct _fluid_handle_settings_data_t *d = (struct _fluid_handle_settings_data_t *) data;
 

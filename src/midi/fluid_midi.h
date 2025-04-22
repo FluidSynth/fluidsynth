@@ -285,7 +285,7 @@ typedef struct
  */
 struct _fluid_player_t
 {
-    fluid_atomic_int_t status;
+    unsigned char status; /* Type of the status uchar (#fluid_player_status) */
     fluid_atomic_int_t stopping; /* Flag for sending all_notes_off when player is stopped */
     int ntracks;
     fluid_track_t *track[MAX_NUMBER_OF_TRACKS];

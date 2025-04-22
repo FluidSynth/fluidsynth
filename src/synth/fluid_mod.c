@@ -46,13 +46,13 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
  * Set a modulator's primary source controller and flags.
  *
  * @param mod The modulator instance
- * @param src Modulator source (#fluid_mod_src or a MIDI controller number)
+ * @param src Modulator source uchar (#fluid_mod_src or a MIDI controller number)
  * @param flags Flags determining mapping function and whether the source
  *   controller is a general controller (#FLUID_MOD_GC) or a MIDI CC controller
- *   (#FLUID_MOD_CC), see #fluid_mod_flags.
+ *   (#FLUID_MOD_CC), see uchar (#fluid_mod_flags).
  */
 void
-fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
+fluid_mod_set_source1(fluid_mod_t *mod, unsigned char src, unsigned char flags)
 {
     mod->src1 = src;
     mod->flags1 = flags;
@@ -62,13 +62,13 @@ fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
  * Set a modulator's secondary source controller and flags.
  *
  * @param mod The modulator instance
- * @param src Modulator source (#fluid_mod_src or a MIDI controller number)
+ * @param src Modulator source uchar (#fluid_mod_src or a MIDI controller number)
  * @param flags Flags determining mapping function and whether the source
  *   controller is a general controller (#FLUID_MOD_GC) or a MIDI CC controller
- *   (#FLUID_MOD_CC), see #fluid_mod_flags.
+ *   (#FLUID_MOD_CC), see uchar (#fluid_mod_flags).
  */
 void
-fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags)
+fluid_mod_set_source2(fluid_mod_t *mod, unsigned char src, unsigned char flags)
 {
     mod->src2 = src;
     mod->flags2 = flags;
@@ -102,12 +102,12 @@ fluid_mod_set_amount(fluid_mod_t *mod, double amount)
  * Set the transform type of a modulator.
  *
  * @param mod The modulator instance
- * @param type Transform type, see #fluid_mod_transforms
+ * @param type Transform type, see uchar (#fluid_mod_transforms)
  */
 void
-fluid_mod_set_transform(fluid_mod_t *mod, int type)
+fluid_mod_set_transform(fluid_mod_t *mod, unsigned char type)
 {
-    unsigned char flag = (unsigned char) type;
+    unsigned char flag = type;
     if(flag != FLUID_MOD_TRANSFORM_LINEAR && flag != FLUID_MOD_TRANSFORM_ABS)
     {
         FLUID_LOG(FLUID_ERR, "fluid_mod_set_transform() called with invalid transform type %d", type);
@@ -120,9 +120,9 @@ fluid_mod_set_transform(fluid_mod_t *mod, int type)
  * Get the primary source value from a modulator.
  *
  * @param mod The modulator instance
- * @return The primary source value (#fluid_mod_src or a MIDI CC controller value).
+ * @return The primary source value uchar (#fluid_mod_src or a MIDI CC controller value).
  */
-int
+unsigned char
 fluid_mod_get_source1(const fluid_mod_t *mod)
 {
     return mod->src1;
@@ -144,9 +144,9 @@ fluid_mod_get_flags1(const fluid_mod_t *mod)
  * Get the secondary source value from a modulator.
  *
  * @param mod The modulator instance
- * @return The secondary source value (#fluid_mod_src or a MIDI CC controller value).
+ * @return The secondary source value uchar (#fluid_mod_src or a MIDI CC controller value).
  */
-int
+unsigned char
 fluid_mod_get_source2(const fluid_mod_t *mod)
 {
     return mod->src2;
@@ -192,12 +192,12 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
  * Get the transform type of a modulator.
  *
  * @param mod The modulator instance
- * @param type Transform type, see #fluid_mod_transforms
+ * @param type Transform type, see uchar (#fluid_mod_transforms)
  */
-int
+unsigned char
 fluid_mod_get_transform(fluid_mod_t *mod)
 {
-    return (int) mod->trans;
+    return mod->trans;
 }
 
 /*
@@ -721,11 +721,11 @@ fluid_mod_test_identity(const fluid_mod_t *mod1, const fluid_mod_t *mod2)
  *
  * @param mod The modulator instance
  * @param cc Boolean value indicating if ctrl is a CC controller or not
- * @param ctrl The source to check for (if \c cc == FALSE : a value of type #fluid_mod_src, else the value of the MIDI CC to check for)
+ * @param ctrl The source to check for (if \c cc == FALSE : a value of type uchar (#fluid_mod_src), else the value of the MIDI CC to check for)
  *
  * @return TRUE if the modulator has the given source, FALSE otherwise.
  */
-int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl)
+int fluid_mod_has_source(const fluid_mod_t *mod, int cc, unsigned char ctrl)
 {
     return
         (

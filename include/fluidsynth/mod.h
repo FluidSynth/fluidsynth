@@ -88,22 +88,22 @@ FLUIDSYNTH_API void delete_fluid_mod(fluid_mod_t *mod);
 
 FLUIDSYNTH_API size_t fluid_mod_sizeof(void);
 
-FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags);
-FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags);
+FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t *mod, unsigned char src, unsigned char flags);
+FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t *mod, unsigned char src, unsigned char flags);
 FLUIDSYNTH_API void fluid_mod_set_dest(fluid_mod_t *mod, unsigned char dst);
 FLUIDSYNTH_API void fluid_mod_set_amount(fluid_mod_t *mod, double amount);
-FLUIDSYNTH_API void fluid_mod_set_transform(fluid_mod_t *mod, int type);
+FLUIDSYNTH_API void fluid_mod_set_transform(fluid_mod_t *mod, unsigned char type);
 
-FLUIDSYNTH_API int fluid_mod_get_source1(const fluid_mod_t *mod);
+FLUIDSYNTH_API unsigned char fluid_mod_get_source1(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags1(const fluid_mod_t *mod);
-FLUIDSYNTH_API int fluid_mod_get_source2(const fluid_mod_t *mod);
+FLUIDSYNTH_API unsigned char fluid_mod_get_source2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags2(const fluid_mod_t *mod);
 FLUIDSYNTH_API unsigned char fluid_mod_get_dest(const fluid_mod_t *mod);
 FLUIDSYNTH_API double fluid_mod_get_amount(const fluid_mod_t *mod);
-FLUIDSYNTH_API int fluid_mod_get_transform(fluid_mod_t *mod);
+FLUIDSYNTH_API unsigned char fluid_mod_get_transform(fluid_mod_t *mod);
 
 FLUIDSYNTH_API int fluid_mod_test_identity(const fluid_mod_t *mod1, const fluid_mod_t *mod2);
-FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl);
+FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, unsigned char ctrl);
 FLUIDSYNTH_API int fluid_mod_has_dest(const fluid_mod_t *mod, unsigned char gen);
 
 FLUIDSYNTH_API void fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src);

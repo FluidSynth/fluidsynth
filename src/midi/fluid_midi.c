@@ -2337,13 +2337,13 @@ fluid_player_stop(fluid_player_t *player)
 /**
  * Get MIDI player status.
  * @param player MIDI player instance
- * @return Player status (#fluid_player_status)
+ * @return Player status uchar (#fluid_player_status)
  * @since 1.1.0
  */
-int
+unsigned char
 fluid_player_get_status(fluid_player_t *player)
 {
-    return fluid_atomic_int_get(&player->status);
+    return player->status; // needs fluid_atomic_int_get with uchar ???
 }
 
 /**
@@ -2459,7 +2459,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * per quarter note.
  *
  * @param player MIDI player instance. Must be a valid pointer.
- * @param tempo_type Must a be value of #fluid_player_set_tempo_type and indicates the
+ * @param tempo_type Must a be value of uchar (#fluid_player_set_tempo_type) and indicates the
  *  meaning of tempo value and how the player will be controlled, see below.
  * @param tempo Tempo value or multiplier.
  * 
@@ -2496,7 +2496,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * @return #FLUID_OK if success or #FLUID_FAILED otherwise (incorrect parameters).
  * @since 2.2.0
  */
-int fluid_player_set_tempo(fluid_player_t *player, int tempo_type, double tempo)
+int fluid_player_set_tempo(fluid_player_t *player, unsigned char tempo_type, double tempo)
 {
     fluid_return_val_if_fail(player != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(tempo_type >= FLUID_PLAYER_TEMPO_INTERNAL, FLUID_FAILED);

@@ -76,7 +76,7 @@ typedef struct
 
 typedef struct
 {
-    int type;             /**< fluid_types_enum */
+    short type;             /* Type of the fluid short (#fluid_types_enum) */
 
     union
     {
@@ -833,13 +833,13 @@ void* fluid_settings_get_user_data(fluid_settings_t * settings, const char *name
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the type for the named setting (see #fluid_types_enum), or #FLUID_NO_TYPE when it does not exist
+ * @return the type for the named setting see short (#fluid_types_enum), or #FLUID_NO_TYPE when it does not exist
  */
-int
+short
 fluid_settings_get_type(fluid_settings_t *settings, const char *name)
 {
     fluid_setting_node_t *node;
-    int type = FLUID_NO_TYPE;
+    short type = FLUID_NO_TYPE;
 
     fluid_return_val_if_fail(settings != NULL, type);
     fluid_return_val_if_fail(name != NULL, type);
