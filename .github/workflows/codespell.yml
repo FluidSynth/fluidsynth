@@ -17,6 +17,5 @@ jobs:
       - name: Run Codespell
         uses: codespell-project/actions-codespell@v2
         with:
-            only_warn: 1
             ignore_words_list: READD,caf,rin,datas,Claus
             skip: ./.git,*.pdf,./AUTHORS,./THANKS,./contrib
