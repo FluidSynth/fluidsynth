@@ -49,6 +49,10 @@ fluid_ct2hz_real(fluid_real_t cents)
     fluid_real_t mult;
     int fac, rem;
     int icents = (int)cents;
+
+    // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
+    // which is nicely divisble by 1200 and yields 2^6, which just perfectly matches the
+    // 440/2^6 Hz refernce value of our lookup table. Magic.
     icents += 300u;
 
     // don't use stdlib div() here, it turned out have poor performance
@@ -87,14 +91,20 @@ fluid_ct2hz_real(fluid_real_t cents)
         // safely wrap around (the & is just a replacement for the quick
         // modulo operation % 32).
         mult = 1u << (fac & (sizeof(unsigned int)*8u - 1u));
+
+        // don't use ldexp() either (poor performance)
+        return mult * fluid_ct2hz_tab[rem];
     }
     else
     {
-        mult = 1.0 / (fluid_real_t)(1u << ((-fac) & (sizeof(unsigned int) * 8u - 1u)));
+        // Same mult calculation as for positive case, but here we need to take the inverse from it.
+        // We could do:
+        // mult = 1.0 / fast_shift
+        // return mult * lookuptable
+        // instead, already multiply in the lookup table here, do the division and save the multiplication
+        mult = fluid_ct2hz_tab[rem] / (fluid_real_t)(1u << ((-fac) & (sizeof(unsigned int) * 8u - 1u)));
+        return mult;
     }
-
-    // don't use ldexp() either (poor performance)
-    return mult * fluid_ct2hz_tab[rem];
 }
 
 /*

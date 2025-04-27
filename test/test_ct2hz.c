@@ -45,9 +45,9 @@ int main(void)
     TEST_ASSERT(float_eq(fluid_ct2hz_real(-15900), fluid_act2hz(-15900)));
 
     // Test the entire possible range: from lowest permitted value of MODLFOFREQ up to filter fc limit
-    for(i = -16000*100; i < 13500*100; i++)
+    for(i = -16000*1000; i < 13500*1000; i++)
     {
-        TEST_ASSERT(float_eq(fluid_ct2hz_real(i/100.0), fluid_act2hz(i/100.0)));
+        TEST_ASSERT(float_eq(fluid_ct2hz_real(i/1000.0), fluid_act2hz(i/1000.0)));
     }
     return EXIT_SUCCESS;
 }
