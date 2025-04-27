@@ -9,8 +9,13 @@
 int float_eq(double x, double y)
 {
     static const double EPS = 1e-3;
-    FLUID_LOG(FLUID_INFO, "Comparing %.9f and %.9f", x, y);
-    return fabs(x-y) < EPS;
+    double diff = (x - y) / fmax(y,x);
+    int ok = fabs(diff) < EPS;
+    if(!ok)
+    {
+        FLUID_LOG(FLUID_INFO, "Comparing %.9f and %.9f failed, diff is %.9f", x, y, diff);
+    }
+    return ok;
 }
 
 int main(void)
@@ -35,10 +40,14 @@ int main(void)
     TEST_ASSERT(float_eq(fluid_ct2hz_real(1), 8.1805228064648688650522010380302841769481091116));
     TEST_ASSERT(float_eq(fluid_ct2hz_real(0), 8.1757989156437073336828122976032719176391831357)); // often referred to as Absolute zero in the SF2 spec
 
+    TEST_ASSERT(float_eq(fluid_ct2hz_real(-725), fluid_act2hz(-725)));
+    TEST_ASSERT(float_eq(fluid_ct2hz_real(-14700), fluid_act2hz(-14700)));
+    TEST_ASSERT(float_eq(fluid_ct2hz_real(-15900), fluid_act2hz(-15900)));
+
     // Test the entire possible range: from lowest permitted value of MODLFOFREQ up to filter fc limit
-    for(i = -16000; i < 13500; i++)
+    for(i = -16000*100; i < 13500*100; i++)
     {
-        TEST_ASSERT(float_eq(fluid_ct2hz_real(i), fluid_act2hz(i)));
+        TEST_ASSERT(float_eq(fluid_ct2hz_real(i/100.0), fluid_act2hz(i/100.0)));
     }
     return EXIT_SUCCESS;
 }
