@@ -51,8 +51,8 @@ fluid_ct2hz_real(fluid_real_t cents)
     int icents = (int)cents;
 
     // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
-    // which is nicely divisble by 1200 and yields 2^6, which just perfectly matches the
-    // 440/2^6 Hz refernce value of our lookup table. Magic.
+    // which is nicely divisible by 1200 and yields 2^6, which just perfectly matches the
+    // 440/2^6 Hz reference value of our lookup table. Magic.
     icents += 300u;
 
     // don't use stdlib div() here, it turned out have poor performance
