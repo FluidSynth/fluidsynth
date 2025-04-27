@@ -18,5 +18,5 @@ jobs:
         uses: codespell-project/actions-codespell@v2
         with:
             only_warn: 1
-            ignore_words_list: READD,caf
+            ignore_words_list: READD,caf,rin
             skip: ./.git,*.pdf,./AUTHORS,./THANKS,./contrib
