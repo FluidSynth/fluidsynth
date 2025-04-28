@@ -66,7 +66,7 @@ fluid_ct2hz_real(fluid_real_t cents)
     }
     else
     {
-        rem = icents % 1200u;
+        rem = ((unsigned)icents) % 1200u;
     }
 
     // Handle negative remainder values
