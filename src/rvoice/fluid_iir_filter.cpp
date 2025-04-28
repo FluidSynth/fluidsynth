@@ -62,7 +62,10 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    unsigned tab_idx = (static_cast<unsigned>(fres) - FRES_MIN) / CENTS_STEP;
+    signed tab_idx = (static_cast<signed>(fres) - FRES_MIN) / CENTS_STEP;
+#ifndef DBG_FILTER
+    fluid_clip(tab_idx, 0, SINCOS_TAB_SIZE - 1);
+#endif
     R sin_coeff = sincos_table[tab_idx].sin;
     R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
