@@ -62,7 +62,7 @@ fluid_ct2hz_real(fluid_real_t cents)
     // So make sure all these calculations are unsigned!
     if(icents < 0)
     {
-        rem = -(-icents % 1200u);
+        rem = -(((unsigned)-icents) % 1200u);
     }
     else
     {
