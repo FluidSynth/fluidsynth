@@ -58,15 +58,15 @@ fluid_ct2hz_real(fluid_real_t cents)
     // don't use stdlib div() here, it turned out have poor performance
     fac = icents / 1200;
 
-    // Calculating the modulo of negative numbers is implementation defined behavior in C!
+    // Calculating the modulo of negative numbers is implementation-defined behavior in C!
     // So make sure all these calculations are unsigned!
     if(icents < 0)
     {
-        rem = -(((unsigned)-icents) % 1200u);
+        rem = -(signed)(((unsigned)-icents) % 1200u);
     }
     else
     {
-        rem = ((unsigned)icents) % 1200u;
+        rem = (signed)((unsigned)icents) % 1200u;
     }
 
     // Handle negative remainder values
@@ -74,7 +74,7 @@ fluid_ct2hz_real(fluid_real_t cents)
     {
         // Bump rem back into positive range so that it fits our lookup table indexing below
         rem += 1200;
-        // Since we've bump the reminder up by a whole, we need to decrement the factor
+        // Since we've bumped the reminder up by a whole, we need to decrement the factor
         --fac;
     }
 
@@ -97,7 +97,7 @@ fluid_ct2hz_real(fluid_real_t cents)
     }
     else
     {
-        // Same mult calculation as for positive case, but here we need to take the inverse from it.
+        // Same mult calculation as for positive case, but here we need to take the inverse of it.
         // We could do:
         // mult = 1.0 / fast_shift
         // return mult * lookuptable
