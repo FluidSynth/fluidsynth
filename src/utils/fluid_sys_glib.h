@@ -267,6 +267,9 @@ typedef GThread fluid_thread_t;
 #define fluid_thread_id_t               GThread *               /* Data type for a thread ID */
 #define fluid_thread_get_id()           g_thread_self()         /* Get unique "ID" for current thread */
 
+/* whether or not the implementation can be thread safe at all */
+#define FLUID_THREAD_SAFE_CAPABLE 1
+
 
 /* Dynamic Module Loading, currently only used by LADSPA subsystem */
 #ifdef LADSPA

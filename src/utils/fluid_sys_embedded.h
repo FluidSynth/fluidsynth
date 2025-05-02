@@ -210,6 +210,9 @@ typedef int fluid_thread_t;
 #define fluid_thread_id_t               void *                  /* Data type for a thread ID */
 #define fluid_thread_get_id()           NULL                    /* Get unique "ID" for current thread */
 
+/* whether or not the implementation can be thread safe at all */
+#define FLUID_THREAD_SAFE_CAPABLE 0
+
 STUB_FUNCTION(new_fluid_thread, fluid_thread_t *, NULL, const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach)
 STUB_FUNCTION_VOID_SILENT(delete_fluid_thread, fluid_thread_t *thread)
 STUB_FUNCTION_SILENT(fluid_thread_join, int, FLUID_OK, fluid_thread_t *thread)
