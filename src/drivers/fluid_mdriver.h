@@ -97,4 +97,4 @@ void delete_fluid_coremidi_driver(fluid_midi_driver_t *p);
 void fluid_coremidi_driver_settings(fluid_settings_t *settings);
 #endif
 
-#endif  /* _FLUID_AUDRIVER_H */
+#endif  /* _FLUID_MDRIVER_H */
