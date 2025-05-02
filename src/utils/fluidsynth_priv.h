@@ -31,7 +31,17 @@
 
 #include "config.h"
 
+#define FLUID_LIKELY(x) (x)
+#define FLUID_UNLIKELY(x) (x)
+
+#if OSAL_glib
 #include <glib.h>
+
+#undef FLUID_LIKELY
+#undef FLUID_UNLIKELY
+#define FLUID_LIKELY G_LIKELY
+#define FLUID_UNLIKELY G_UNLIKELY
+#endif
 
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
@@ -291,15 +301,14 @@ do { strncpy(_dst,_src,_n-1); \
 #endif
 
 #if defined(DEBUG) && !defined(NDEBUG)
-#define FLUID_ASSERT(a) g_assert(a)
+#define FLUID_ASSERT(a) fluid_assert(a)
 #else
 #define FLUID_ASSERT(a)
 #endif
 
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
-
 /* Misc */
+#define FLUID_INLINE inline
+
 #if defined(__INTEL_COMPILER)
 #define FLUID_RESTRICT restrict
 #elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)

@@ -212,6 +212,8 @@ endif ( WIN32 OR CYGWIN )
 
 set ( DEVEL_REPORT "\nDeveloper nerds info:\n" )
 
+set ( DEVEL_REPORT "${DEVEL_REPORT}  OS abstraction:        ${osal}\n" )
+
 if ( WITH_FLOAT )
   set ( DEVEL_REPORT "${DEVEL_REPORT}  Samples type:          float\n" )
 else ( WITH_FLOAT )
