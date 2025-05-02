@@ -60,7 +60,7 @@ struct _fluid_mixer_buffers_t
      */
     fluid_real_t *left_buf;
 
-    /** dito, but for right part of a stereo channel */
+    /** ditto, but for right part of a stereo channel */
     fluid_real_t *right_buf;
 
     /** buffer to store the left part of a stereo effects channel to.
