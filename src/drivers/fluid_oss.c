@@ -194,13 +194,13 @@ new_fluid_oss_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     if(dev->dspfd == -1)
     {
         FLUID_LOG(FLUID_ERR, "Device <%s> could not be opened for writing: %s",
-                  devname, g_strerror(errno));
+                  devname, fluid_strerror(errno));
         goto error_recovery;
     }
 
     if(fstat(dev->dspfd, &devstat) == -1)
     {
-        FLUID_LOG(FLUID_ERR, "fstat failed on device <%s>: %s", devname, g_strerror(errno));
+        FLUID_LOG(FLUID_ERR, "fstat failed on device <%s>: %s", devname, fluid_strerror(errno));
         goto error_recovery;
     }
 
@@ -340,13 +340,13 @@ new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func,
     if(dev->dspfd == -1)
     {
         FLUID_LOG(FLUID_ERR, "Device <%s> could not be opened for writing: %s",
-                  devname, g_strerror(errno));
+                  devname, fluid_strerror(errno));
         goto error_recovery;
     }
 
     if(fstat(dev->dspfd, &devstat) == -1)
     {
-        FLUID_LOG(FLUID_ERR, "fstat failed on device <%s>: %s", devname, g_strerror(errno));
+        FLUID_LOG(FLUID_ERR, "fstat failed on device <%s>: %s", devname, fluid_strerror(errno));
         goto error_recovery;
     }
 
@@ -543,7 +543,7 @@ fluid_oss_audio_run(void *d)
         if(write(dev->dspfd, buffer, dev->buffer_byte_size) < 0)
         {
             FLUID_LOG(FLUID_ERR, "Error writing to OSS sound device: %s",
-                      g_strerror(errno));
+                      fluid_strerror(errno));
             break;
         }
     }
@@ -583,7 +583,7 @@ fluid_oss_audio_run2(void *d)
         if(write(dev->dspfd, buffer, dev->buffer_byte_size) < 0)
         {
             FLUID_LOG(FLUID_ERR, "Error writing to OSS sound device: %s",
-                      g_strerror(errno));
+                      fluid_strerror(errno));
             break;
         }
     }
@@ -669,7 +669,7 @@ new_fluid_oss_midi_driver(fluid_settings_t *settings,
     if(fcntl(dev->fd, F_SETFL, O_NONBLOCK) == -1)
     {
         FLUID_LOG(FLUID_ERR, "Failed to set OSS MIDI device to non-blocking: %s",
-                  g_strerror(errno));
+                  fluid_strerror(errno));
         goto error_recovery;
     }
 
@@ -758,7 +758,7 @@ fluid_oss_midi_run(void *d)
 
         if(n < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Error waiting for MIDI input: %s", g_strerror(errno));
+            FLUID_LOG(FLUID_ERR, "Error waiting for MIDI input: %s", fluid_strerror(errno));
             break;
         }
 

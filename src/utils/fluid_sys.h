@@ -229,6 +229,9 @@ char *fluid_strtok(char **str, char *delim);
 #define fluid_shell_parse_argv(command_line, argcp, argvp) g_shell_parse_argv(command_line, argcp, argvp, NULL)
 #define fluid_strfreev g_strfreev
 
+#define fluid_strerror g_strerror
+#define fluid_setenv g_setenv
+
 #if defined(__OS2__)
 #define INCL_DOS
 #include <os2.h>
