@@ -27,6 +27,10 @@ if ( DOXYGEN_FOUND )
     set ( DOC_API_GROUP_TYPE "modules" )
   endif ( DOXYGEN_VERSION VERSION_GREATER_EQUAL "1.9.8" )
 
+  if ( DOXYGEN_VERSION VERSION_GREATER_EQUAL "1.9.5" )
+    set ( DOC_COLORSTYLE_CONFIG "HTML_COLORSTYLE = LIGHT" )
+  endif ( DOXYGEN_VERSION VERSION_GREATER_EQUAL "1.9.5" )
+
   configure_file ( Doxyfile.cmake 
     ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile )
   configure_file ( doxygen/layout.xml.cmake

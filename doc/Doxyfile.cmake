@@ -141,6 +141,7 @@ LAYOUT_FILE = @CMAKE_CURRENT_BINARY_DIR@/layout.xml
 HTML_HEADER =
 HTML_FOOTER = @CMAKE_SOURCE_DIR@/doc/doxygen/footer.html
 HTML_EXTRA_STYLESHEET = @CMAKE_SOURCE_DIR@/doc/doxygen/custom.css
+@DOC_COLORSTYLE_CONFIG@
 # end FluidSynth styling and layout
 
 GENERATE_HTMLHELP = NO
