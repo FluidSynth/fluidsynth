@@ -313,18 +313,13 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
      * clipping the maximum filter frequency at 0.45*srate, the filter
      * is used as an anti-aliasing filter. */
 
-    if(fres > 22018.0/2)
+    if(fres > 0.45f * output_rate)
     {
-        fres = (22018.0/2) / (fres / (22018.0/2));
-        iir_filter->qMod = 1;
+        fres = 0.45f * output_rate;
     }
     else if(fres < 5.f)
     {
         fres = 5.f;
-    }
-    else
-    {
-        iir_filter->qMod = 1;
     }
 
     LOG_FILTER("%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->last_q);

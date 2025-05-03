@@ -48,7 +48,6 @@ fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter)
     iir_filter->filter_startup = 1;
     iir_filter->amp = 0;
     iir_filter->amp_incr = 0;
-    iir_filter->qMod = 1;
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres)
@@ -115,7 +114,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
 
     LOG_FILTER("fluid_iir_filter_set_q: Q= %f [linear]",q);
     
-    q *= iir_filter->qMod;
     if(iir_filter->filter_startup)
     {
         iir_filter->last_q = q;
