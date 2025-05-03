@@ -1575,7 +1575,10 @@ fluid_track_send_events(fluid_track_t *track,
     {
         ticks = seek_ticks; /* update target ticks */
 
-        if(track->ticks > ticks)
+        // the track ticks is beyond the current ticks,
+        // or if the track ticks is equal to the current ticks,
+        // we want to play all events from the beginning of that tick
+        if(track->ticks >= ticks)
         {
             fluid_track_reset(track);    /* reset track if seeking backwards */
         }

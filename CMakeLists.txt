@@ -47,7 +47,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 4 )
-set ( FLUIDSYNTH_VERSION_MICRO 5 )
+set ( FLUIDSYNTH_VERSION_MICRO 6 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION ${VERSION} )
 
@@ -62,7 +62,7 @@ set ( FLUIDSYNTH_VERSION ${VERSION} )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 3 )
-set ( LIB_VERSION_REVISION 5 )
+set ( LIB_VERSION_REVISION 6 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -869,6 +869,12 @@ if ( IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}" )
   set ( includedir "${CMAKE_INSTALL_INCLUDEDIR}" )
 else ()
   set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
+endif ()
+
+if (WIN32)
+  set ( implibname "fluidsynth-${LIB_VERSION_CURRENT}" )
+else ()
+  set ( implibname "fluidsynth" )
 endif ()
 
 generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)

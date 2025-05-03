@@ -46,21 +46,41 @@
 fluid_real_t
 fluid_ct2hz_real(fluid_real_t cents)
 {
-    if(FLUID_UNLIKELY(cents < 0))
+    fluid_real_t mult;
+    int fac, rem;
+    int icents = (int)cents;
+
+    // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
+    // which is nicely divisible by 1200 and yields 2^6, which just perfectly matches the
+    // 440/2^6 Hz reference value of our lookup table. Magic.
+    icents += 300u;
+
+    // don't use stdlib div() here, it turned out have poor performance
+    fac = icents / 1200;
+
+    // Calculating the modulo of negative numbers is implementation-defined behavior in C!
+    // So make sure all these calculations are unsigned!
+    if(icents < 0)
     {
-        FLUID_LOG(FLUID_INFO, "EXPENSIVE CALL! cents was negative: %f", cents);
-        return fluid_act2hz(cents);
+        rem = -(signed)(((unsigned)-icents) % 1200u);
     }
     else
     {
-        unsigned int mult, fac, rem;
-        unsigned int icents = (unsigned int)cents;
-        icents += 300u;
+        rem = (signed)((unsigned)icents) % 1200u;
+    }
 
-        // don't use stdlib div() here, it turned out have poor performance
-        fac = icents / 1200u;
-        rem = icents % 1200u;
+    // Handle negative remainder values
+    if (rem < 0)
+    {
+        // Bump rem back into positive range so that it fits our lookup table indexing below
+        rem += 1200;
+        // Since we've bumped the reminder up by a whole, we need to decrement the factor
+        --fac;
+    }
 
+    // Compute the first factor (mult) using powers of two
+    if (fac >= 0)
+    {
         // Think of "mult" as the factor that we multiply (440/2^6)Hz with,
         // or in other words mult is the "first factor" of the above
         // functions comment.
@@ -70,10 +90,20 @@ fluid_ct2hz_real(fluid_real_t cents)
         // which is much more than ever needed. For bigger values, just
         // safely wrap around (the & is just a replacement for the quick
         // modulo operation % 32).
-        mult = 1u << (fac & (sizeof(mult)*8u - 1u));
+        mult = 1u << (fac & (sizeof(unsigned int)*8u - 1u));
 
         // don't use ldexp() either (poor performance)
         return mult * fluid_ct2hz_tab[rem];
+    }
+    else
+    {
+        // Same mult calculation as for positive case, but here we need to take the inverse of it.
+        // We could do:
+        // mult = 1.0 / fast_shift
+        // return mult * lookuptable
+        // instead, already multiply in the lookup table here, do the division and save the multiplication
+        mult = fluid_ct2hz_tab[rem] / (fluid_real_t)(1u << ((-fac) & (sizeof(unsigned int) * 8u - 1u)));
+        return mult;
     }
 }
 

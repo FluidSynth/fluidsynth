@@ -230,8 +230,8 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
 -----------------------------------------------------------------------------*/
 
 /*-- Reverberation time settings ----------------------------------
- MIN_DC_REV_TIME est defined egal to the minimum value of freeverb:
- MAX_DC_REV_TIME est defined egal to the maximum value of freeverb:
+ MIN_DC_REV_TIME est defined equal to the minimum value of freeverb:
+ MAX_DC_REV_TIME est defined equal to the maximum value of freeverb:
  T60DC is computed from gi and the longest delay line in freeverb: L8 = 1617
  T60 = -3 * Li * T / log10(gi)
  T60 = -3 * Li *  / (log10(gi) * sr)

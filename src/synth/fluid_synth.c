@@ -1886,7 +1886,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                     }
                     else
                     {
-                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targeting effect %d", gen);
                     }
                 }
             }
@@ -3832,9 +3832,9 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
  * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
- * @param right Array of float buffers to store right channel of planar audio (size: dito)
+ * @param right Array of float buffers to store right channel of planar audio (size: ditto)
  * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
- * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
+ * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: ditto)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * First effect channel used by reverb, second for chorus.
@@ -4301,7 +4301,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     /* Then, render blocks and copy till we have 'len' samples  */
     while(count < len)
     {
-        /* always render full bloc multiple of FLUID_BUFSIZE */
+        /* always render full block multiple of FLUID_BUFSIZE */
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
         /* render audio (dry and effect) to respective internal dry and effect buffers */
         int blockcount = block_render_func(synth, blocksleft);
@@ -4507,7 +4507,7 @@ fluid_synth_write_float_channels_LOCAL(fluid_synth_t *synth, int len,
         if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocs multiple of FLUID_BUFSIZE */
+            /* always render full blocks multiple of FLUID_BUFSIZE */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
 
@@ -4785,7 +4785,7 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
         if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocs multiple of FLUID_BUFSIZE */
+            /* always render full blocks multiple of FLUID_BUFSIZE */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
 

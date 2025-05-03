@@ -137,7 +137,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_adsr_env.h
     rvoice/fluid_chorus.c
     rvoice/fluid_chorus.h
-    rvoice/fluid_iir_filter.cpp
+    rvoice/fluid_iir_filter_impl.cpp
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
     rvoice/fluid_lfo.c
@@ -323,7 +323,10 @@ elseif ( WIN32 )
   set_target_properties ( libfluidsynth
     PROPERTIES
       PUBLIC_HEADER "${public_HEADERS}"
+      PREFIX "lib"
       OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
+      IMPORT_PREFIX "lib"
+      ARCHIVE_OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
       VERSION ${LIB_VERSION_INFO}
       SOVERSION ${LIB_VERSION_CURRENT}
     )
