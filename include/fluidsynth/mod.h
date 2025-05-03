@@ -88,8 +88,8 @@ enum fluid_mod_src
  * See fluid_mod_set_custom_mapping().
  *
  * @param mod The modulator instance. The behavior is undefined if you modify @mod through any of the fluid_mod_set*() functions from within the callback.
- * @param value The input value, which will be in range [0;16383/16384] (if the input value originates from the
- * pitch wheel, or [0;127/128] otherwise.
+ * @param value The input value, which will be in range [0;16383.f/16384.f] (if the input value originates from the
+ * pitch wheel), or [0;127.f/128.f] otherwise.
  * @param data Custom data pointer, as set by fluid_mod_set_custom_mapping().
  * @param is_src1 A boolean, which, if true, indicates that the mapping function is called for source1. Otherwise, it's called for source2. Only useful if two sources have been specified with the #FLUID_MOD_CUSTOM flag set.
  * @return A value mapped into range [-1.0;+1.0].
