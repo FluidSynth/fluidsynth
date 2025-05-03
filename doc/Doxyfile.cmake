@@ -137,7 +137,7 @@ HTML_EXTRA_FILES = \
 # FluidSynth specific layout and style customizations.
 # Comment the following four lines to return to the
 # default doxygen styling and layout
-LAYOUT_FILE = @CMAKE_SOURCE_DIR@/doc/doxygen/layout.xml
+LAYOUT_FILE = @CMAKE_CURRENT_BINARY_DIR@/layout.xml
 HTML_HEADER =
 HTML_FOOTER = @CMAKE_SOURCE_DIR@/doc/doxygen/footer.html
 HTML_EXTRA_STYLESHEET = @CMAKE_SOURCE_DIR@/doc/doxygen/custom.css

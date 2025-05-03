@@ -21,8 +21,16 @@
 
 find_package ( Doxygen )
 if ( DOXYGEN_FOUND )
+  if ( DOXYGEN_VERSION VERSION_GREATER_EQUAL "1.9.8" )
+    set ( DOC_API_GROUP_TYPE "topics" )
+  else ( DOXYGEN_VERSION VERSION_GREATER_EQUAL "1.9.8" )
+    set ( DOC_API_GROUP_TYPE "modules" )
+  endif ( DOXYGEN_VERSION VERSION_GREATER_EQUAL "1.9.8" )
+
   configure_file ( Doxyfile.cmake 
     ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile )
+  configure_file ( doxygen/layout.xml.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/layout.xml )
   add_custom_target ( doxygen
     ${DOXYGEN} Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
