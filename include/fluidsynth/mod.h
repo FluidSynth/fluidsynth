@@ -55,7 +55,7 @@ enum fluid_mod_flags
     FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
 
     FLUID_MOD_CUSTOM = 0x40,       /**< Custom mapping function */
-    FLUID_MOD_SIN = 0x80,          /**< Custom non-standard sinus mapping function @deprecated Deprecated since 2.3.1, use #FLUID_MOD_CUSTOM and fluid_mod_set_custom_mapping() instead. */
+    FLUID_MOD_SIN = 0x80,          /**< Custom non-standard sinus mapping function @deprecated Deprecated since 2.5.0, use #FLUID_MOD_CUSTOM and fluid_mod_set_custom_mapping() instead. */
 };
 
 /**
