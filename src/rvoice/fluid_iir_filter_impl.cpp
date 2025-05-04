@@ -304,7 +304,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     }
 
     /* calculate the frequency of the resonant filter in Hz */
-    fres = fluid_ct2hz(iir_filter->fres + fres_mod) + 10;
+    fres = fluid_ct2hz(iir_filter->fres + fres_mod);
 
     /* I removed the optimization of turning the filter off when the
      * resonance frequency is above the maximum frequency. Instead, the
