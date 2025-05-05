@@ -124,9 +124,7 @@ set ( libfluidsynth_SOURCES
     utils/fluid_settings.h
     utils/fluidsynth_priv.h
     utils/fluid_sys.c
-    utils/fluid_sys_${osal}.c
     utils/fluid_sys.h
-    utils/fluid_sys_${osal}.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h
@@ -187,6 +185,9 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.c
     bindings/fluid_ladspa.h
 )
+
+file ( GLOB fluid_osal_SOURCES utils/fluid_sys_${osal}.* )
+
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
 elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
@@ -255,6 +256,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_sdl2_SOURCES}
     ${fluid_sdl3_SOURCES}
     ${fluid_libinstpatch_SOURCES}
+    ${fluid_osal_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -456,6 +458,10 @@ target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
 # ************ CLI program ************
 
 set ( fluidsynth_SOURCES fluidsynth.c )
+
+if ( osal STREQUAL "cpp11" )
+  set_source_files_properties(${fluid_osal_SOURCES} PROPERTIES COMPILE_FLAGS "--std=c++11")
+endif ( osal STREQUAL "cpp11" )
 
 if ( WASAPI_SUPPORT )
   set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} fluid_wasapi_device_enumerate.c )

@@ -118,6 +118,8 @@
 #include "fluid_sys_glib.h"
 #elif OSAL_embedded
 #include "fluid_sys_embedded.h"
+#elif OSAL_cpp11
+#include "fluid_sys_cpp11.h"
 #else
 #error "no OS abstraction configured"
 #endif
