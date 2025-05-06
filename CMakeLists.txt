@@ -547,6 +547,11 @@ if ( osal STREQUAL "glib" )
     endif ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
 endif ( osal STREQUAL "glib" )
 
+if ( osal STREQUAL "cpp11" )
+    # Will silently fall back to a lower standard version if not available
+    set( CMAKE_CXX_STANDARD 17 )
+endif ( osal STREQUAL "cpp11" )
+
 # Optional features
 unset ( LIBSNDFILE_SUPPORT CACHE )
 unset ( LIBSNDFILE_HASVORBIS CACHE )

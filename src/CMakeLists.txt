@@ -459,10 +459,6 @@ target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
 
 set ( fluidsynth_SOURCES fluidsynth.c )
 
-if ( osal STREQUAL "cpp11" )
-  set_source_files_properties(${fluid_osal_SOURCES} PROPERTIES COMPILE_FLAGS "--std=c++11")
-endif ( osal STREQUAL "cpp11" )
-
 if ( WASAPI_SUPPORT )
   set ( fluidsynth_SOURCES ${fluidsynth_SOURCES} fluid_wasapi_device_enumerate.c )
 endif ( WASAPI_SUPPORT )
