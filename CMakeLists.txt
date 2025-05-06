@@ -157,6 +157,7 @@ include ( DefaultDirs )
 include ( CheckCCompilerFlag )
 include ( CheckSTDC )
 include ( CheckIncludeFile )
+include ( CheckIncludeFileCXX )
 include ( CheckSymbolExists )
 include ( CheckTypeSize )
 check_include_file ( string.h HAVE_STRING_H )
@@ -547,8 +548,14 @@ if ( osal STREQUAL "glib" )
     endif ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
 endif ( osal STREQUAL "glib" )
 
+unset ( HAVE_CXX_FILESYSTEM CACHE )
 if ( osal STREQUAL "cpp11" )
-    set ( CMAKE_CXX_STANDARD 11 )
+    # Will silently fall back to a lower standard version if not available
+    set( CMAKE_CXX_STANDARD 17 )
+    check_include_file_cxx ( filesystem HAVE_CXX_FILESYSTEM )
+    if ( NOT HAVE_CXX_FILESYSTEM )
+        message ( WARNING "C++ filesystem support not found, some file operations will be stubs" )
+    endif ( NOT HAVE_CXX_FILESYSTEM )
 endif ( osal STREQUAL "cpp11" )
 
 # Optional features

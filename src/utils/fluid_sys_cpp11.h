@@ -54,10 +54,6 @@ extern "C" {
  * Utility functions
  */
 
-#define FLUID_FILE_TEST_EXISTS      1
-#define FLUID_FILE_TEST_IS_REGULAR  2
-
-STUB_FUNCTION(fluid_file_test, bool, true, const char *path, int flags)
 STUB_FUNCTION(fluid_shell_parse_argv, bool, false, const char *command_line, int *argcp, char ***argvp)
 STUB_FUNCTION_VOID(fluid_strfreev, char **argvp)
 STUB_FUNCTION(fluid_strerror, const char *, "stub", int error)
@@ -142,12 +138,16 @@ typedef void fluid_thread_t;
 #define FLUID_THREAD_SAFE_CAPABLE 1
 
 /* File access */
+#define FLUID_FILE_TEST_EXISTS      1
+#define FLUID_FILE_TEST_IS_REGULAR  2
+
 typedef struct {
     #undef st_mtime
     int st_mtime;
 } fluid_stat_buf_t;
 
-STUB_FUNCTION(fluid_stat, int, -1, const char *path, fluid_stat_buf_t *buffer)
+bool fluid_file_test(const char *path, int flags);
+int fluid_stat(const char *path, fluid_stat_buf_t *buffer);
 
 
 /* Debug functions */
