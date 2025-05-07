@@ -62,9 +62,10 @@ typedef void *fluid_pointer_t;
 #define FLUID_FILE_TEST_EXISTS 0
 #define FLUID_FILE_TEST_IS_REGULAR 1
 
+#define fluid_shell_parse_argv  fluid_shell_parse_argv_internal
+#define fluid_strfreev          fluid_strfreev_internal
+
 STUB_FUNCTION(fluid_file_test, bool, true, const char *path, int flags)
-STUB_FUNCTION(fluid_shell_parse_argv, bool, false, const char *command_line, int *argcp, char ***argvp)
-STUB_FUNCTION_VOID(fluid_strfreev, char **argvp)
 STUB_FUNCTION(fluid_strerror, const char *, "stub", int error)
 STUB_FUNCTION(fluid_setenv, int, -1, const char *name, const char *value, int overwrite)
 

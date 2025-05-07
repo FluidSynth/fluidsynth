@@ -54,8 +54,9 @@ extern "C" {
  * Utility functions
  */
 
-STUB_FUNCTION(fluid_shell_parse_argv, bool, false, const char *command_line, int *argcp, char ***argvp)
-STUB_FUNCTION_VOID(fluid_strfreev, char **argvp)
+#define fluid_shell_parse_argv  fluid_shell_parse_argv_internal
+#define fluid_strfreev          fluid_strfreev_internal
+
 STUB_FUNCTION(fluid_strerror, const char *, "stub", int error)
 STUB_FUNCTION(fluid_setenv, int, -1, const char *name, const char *value, int overwrite)
 
