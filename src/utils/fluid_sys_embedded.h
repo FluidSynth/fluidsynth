@@ -59,13 +59,9 @@ typedef void *fluid_pointer_t;
  * Utility functions
  */
 
-#define FLUID_FILE_TEST_EXISTS 0
-#define FLUID_FILE_TEST_IS_REGULAR 1
-
 #define fluid_shell_parse_argv  fluid_shell_parse_argv_internal
 #define fluid_strfreev          fluid_strfreev_internal
 
-STUB_FUNCTION(fluid_file_test, bool, true, const char *path, int flags)
 STUB_FUNCTION(fluid_strerror, const char *, "stub", int error)
 STUB_FUNCTION(fluid_setenv, int, -1, const char *name, const char *value, int overwrite)
 
@@ -220,11 +216,15 @@ STUB_FUNCTION_SILENT(fluid_thread_join, int, FLUID_OK, fluid_thread_t *thread)
 
 
 /* File access */
+#define FLUID_FILE_TEST_EXISTS      1
+#define FLUID_FILE_TEST_IS_REGULAR  2
+
 typedef struct {
     #undef st_mtime
     int st_mtime;
 } fluid_stat_buf_t;
 
+STUB_FUNCTION(fluid_file_test, bool, true, const char *path, int flags)
 STUB_FUNCTION(fluid_stat, int, -1, const char *path, fluid_stat_buf_t *buffer)
 
 
