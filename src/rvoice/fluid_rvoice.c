@@ -94,13 +94,15 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
         }
     }
 
+    voice->dsp.target_amp = target_amp;
+
     /* Volume increment to go from voice->amp to target_amp in FLUID_BUFSIZE steps */
-    voice->resonant_filter.amp_incr = (target_amp - voice->resonant_filter.amp) / FLUID_BUFSIZE;
+    //voice->resonant_filter.amp_incr = (target_amp - voice->resonant_filter.amp) / FLUID_BUFSIZE;
 
     fluid_check_fpe("voice_write amplitude calculation");
 
     /* no volume and not changing? - No need to process */
-    if ((voice->resonant_filter.amp == 0.0f) && (voice->resonant_filter.amp_incr == 0.0f))
+    if ((target_amp == 0.0f) && (voice->dsp.amp == 0.0f))
     {
         return -1;
     }
@@ -481,6 +483,17 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     fluid_iir_filter_apply(&voice->resonant_filter, &voice->resonant_custom_filter, dsp_buf, count);
     fluid_check_fpe("voice_filter fluid_iir_filter_apply()");
 
+    fluid_real_t current_amp = voice->dsp.amp;
+    fluid_real_t amp_incr = (voice->dsp.target_amp - current_amp) / FLUID_BUFSIZE;
+    #pragma omp simd aligned(dsp_buf : FLUID_DEFAULT_ALIGNMENT) default(shared)
+    for (int dsp_i = 0; dsp_i < count; dsp_i++)
+    {
+        // We cannot simply increment current_amp by amp_incr during every iteration, as this would create a dependency and prevent vectorization.
+        dsp_buf[dsp_i] *= (current_amp + amp_incr * dsp_i);
+    }
+
+    voice->dsp.amp = voice->dsp.target_amp;
+
     return count;
 }
 
@@ -549,10 +562,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset)
     voice->dsp.has_looped = 0;
     voice->envlfo.ticks = 0;
     voice->envlfo.noteoff_ticks = 0;
+    voice->dsp.amp = 0.0f; /* The last value of the volume envelope, used to
+                            calculate the volume increment during
+                            processing */
 
     /* legato initialization */
-    voice->dsp.pitchoffset = 0.0;   /* portamento initialization */
-    voice->dsp.pitchinc = 0.0;
+    voice->dsp.pitchoffset = 0.0f;   /* portamento initialization */
+    voice->dsp.pitchinc = 0.0f;
 
     /* mod env initialization*/
     fluid_adsr_env_reset(&voice->envlfo.modenv);
