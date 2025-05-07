@@ -272,4 +272,7 @@
 /* Define to 1 if you have the socklen_t type. */
 #cmakedefine HAVE_SOCKLEN_T @HAVE_SOCKLEN_T@
 
+/* OS abstraction to use. */
+#define OSAL_@osal@ 1
+
 #endif /* CONFIG_H */

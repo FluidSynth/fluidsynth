@@ -30,7 +30,17 @@
 
 #include "config.h"
 
+#define FLUID_LIKELY(x) (x)
+#define FLUID_UNLIKELY(x) (x)
+
+#if OSAL_glib
 #include <glib.h>
+
+#undef FLUID_LIKELY
+#undef FLUID_UNLIKELY
+#define FLUID_LIKELY G_LIKELY
+#define FLUID_UNLIKELY G_UNLIKELY
+#endif
 
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
@@ -88,7 +98,7 @@ typedef struct _fluid_env_data_t fluid_env_data_t;
 typedef struct _fluid_adriver_definition_t fluid_adriver_definition_t;
 typedef struct _fluid_channel_t fluid_channel_t;
 typedef struct _fluid_tuning_t fluid_tuning_t;
-typedef struct _fluid_hashtable_t  fluid_hashtable_t;
+typedef struct _fluid_hashtable_t fluid_hashtable_t;
 typedef struct _fluid_client_t fluid_client_t;
 typedef struct _fluid_server_socket_t fluid_server_socket_t;
 typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
@@ -290,15 +300,14 @@ do { strncpy(_dst,_src,_n-1); \
 #endif
 
 #if defined(DEBUG) && !defined(NDEBUG)
-#define FLUID_ASSERT(a) g_assert(a)
+#define FLUID_ASSERT(a) fluid_assert(a)
 #else
 #define FLUID_ASSERT(a)
 #endif
 
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
-
 /* Misc */
+#define FLUID_INLINE inline
+
 #if defined(__INTEL_COMPILER)
 #define FLUID_RESTRICT restrict
 #elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)

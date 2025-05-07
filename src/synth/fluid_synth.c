@@ -238,7 +238,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
 
-    fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_int(settings, "synth.threadsafe-api", FLUID_THREAD_SAFE_CAPABLE, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
     fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
