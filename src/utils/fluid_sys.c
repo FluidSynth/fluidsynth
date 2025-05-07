@@ -1631,3 +1631,224 @@ char* fluid_get_windows_error(void)
 #endif
 }
 #endif
+
+static int fluid_strallocv_internal(char ***current, int *count, int add)
+{
+    int i;
+    char **new;
+
+    new = FLUID_REALLOC(*current, sizeof(char *) * (*count + add));
+    if (new == NULL)
+    {
+        if (*current != NULL)
+            fluid_strfreev_internal(*current);
+        return FALSE;
+    }
+
+    for (i = 0; i < add; i++)
+        new[*count + i] = NULL;
+
+    *current = new;
+    *count += add;
+    return TRUE;
+}
+
+int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
+{
+    enum parse_state {
+        NORMAL,
+        ESCAPE_NORMAL,
+        ESCAPE_DOUBLE_QUOTE,
+        SINGLE_QUOTE,
+        DOUBLE_QUOTE,
+        COMMENT
+    };
+
+    enum parse_state state = NORMAL;
+    size_t line_length;
+    char *buffer = NULL;
+    char *token = NULL;
+    int length = 0;
+    int max = 0;
+    char current;
+
+    if (line == NULL || argcp == NULL || argvp == NULL)
+        return FALSE;
+
+    line_length = strlen(line);
+    if (line_length == 0)
+        return FALSE;
+
+    buffer = (char *)FLUID_MALLOC(line_length + 1);
+    if (buffer == NULL)
+        return FALSE;
+
+    *argcp = 0;
+    *argvp = NULL;
+
+    #define append() buffer[length++] = current;
+
+    do
+    {
+        current = *line++;
+        if (current == 0 && state != NORMAL)
+            break;
+
+        switch (state)
+        {
+        case NORMAL:
+        {
+            switch (current)
+            {
+            case '\\':
+                state = ESCAPE_NORMAL;
+                break;
+            case '\'':
+                state = SINGLE_QUOTE;
+                break;
+            case '"':
+                state = DOUBLE_QUOTE;
+                break;
+
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\0':
+                if (length == 0)
+                    break;
+
+                buffer[length] = 0;
+                token = FLUID_STRDUP(buffer);
+
+                if (token == NULL || (*argcp >= max && !fluid_strallocv_internal(argvp, &max, 10)))
+                {
+                    FLUID_FREE(token);
+                    FLUID_FREE(buffer);
+                    return FALSE;
+                }
+
+                buffer[length] = 0;
+                (*argvp)[(*argcp)++] = token;
+                length = 0;
+                break;
+
+            case '#':
+                if (length == 0)
+                {
+                    state = COMMENT;
+                    break;
+                }
+
+                // fall through
+
+            default:
+                append();
+                break;
+            }
+
+            break;
+        }
+
+        case ESCAPE_NORMAL:
+        {
+            state = NORMAL;
+            switch (current)
+            {
+            case '\n':
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case ESCAPE_DOUBLE_QUOTE:
+        {
+            state = DOUBLE_QUOTE;
+            switch (current)
+            {
+            case '"':
+            case '\\':
+            /* the ones below aren't useful, they are only here to mimic GLib */
+            case '`':
+            case '$':
+            case '\n':
+            {
+                append();
+                break;
+            }
+
+            default:
+            {
+                /* fill back the dropped backslash, this does not increase length  */
+                buffer[length++] = '\\';
+                append();
+                break;
+            }
+            }
+
+            break;
+        }
+
+        case SINGLE_QUOTE:
+        {
+            switch (current)
+            {
+            case '\'':
+                state = NORMAL;
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case DOUBLE_QUOTE:
+        {
+            switch (current)
+            {
+            case '\\':
+                state = ESCAPE_DOUBLE_QUOTE;
+                break;
+            case '"':
+                state = NORMAL;
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case COMMENT:
+            break;
+        }
+    } while (current != 0);
+
+    FLUID_FREE(buffer);
+
+    if (state != NORMAL && state != COMMENT)
+    {
+        fluid_strfreev_internal(*argvp);
+        return FALSE;
+    }
+
+    return *argcp > 0;
+}
+
+void fluid_strfreev_internal(char **argvp)
+{
+    int i = 0;
+
+    if (argvp == NULL)
+        return;
+
+    for (; argvp[i] != NULL; i++)
+    {
+        FLUID_FREE(argvp[i]);
+    }
+
+    FLUID_FREE(argvp);
+}

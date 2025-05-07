@@ -538,10 +538,12 @@ if ( CMAKE_VERSION VERSION_GREATER_EQUAL 3.15 AND VCPKG_TOOLCHAIN )
   set ( CMAKE_FIND_PACKAGE_PREFER_CONFIG ON )
 endif ()
 
+unset ( GLIB_SUPPORT CACHE )
 if ( osal STREQUAL "glib" )
     # Mandatory libraries: glib and gthread
     find_package ( GLib2 ${GLIB2_MINUMUM_VERSION} REQUIRED )
     list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
+    set ( GLIB_SUPPORT 1 )
 
     if ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
         message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
@@ -794,6 +796,7 @@ set(TEST_SOUNDFONT_UTF8_2 "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvè
 set(TEST_SOUNDFONT_SF3 "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid")
 set(TEST_WAV_UTF8 "${FluidSynth_BINARY_DIR}/test/ⓉⒺⓈⓉ.wav")
+set(TEST_COMMAND_LINES "${FluidSynth_SOURCE_DIR}/test/command-lines.txt")
 
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )

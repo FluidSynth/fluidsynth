@@ -562,6 +562,11 @@ static FLUID_INLINE void *fluid_align_ptr(const void *ptr, unsigned int alignmen
 
 #define FLUID_DEFAULT_ALIGNMENT (64U)
 
+
+/* Shell parsing */
+int fluid_shell_parse_argv_internal(const char *command_line, int *argcp, char ***argvp);
+void fluid_strfreev_internal(char **argvp);
+
 #ifdef __cplusplus
 }
 #endif
