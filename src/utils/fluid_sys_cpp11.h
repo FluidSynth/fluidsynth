@@ -57,8 +57,8 @@ extern "C" {
 #define fluid_shell_parse_argv  fluid_shell_parse_argv_internal
 #define fluid_strfreev          fluid_strfreev_internal
 
-STUB_FUNCTION(fluid_strerror, const char *, "stub", int error)
-STUB_FUNCTION(fluid_setenv, int, -1, const char *name, const char *value, int overwrite)
+STUB_FUNCTION(fluid_strerror, const char *, "stub", (int error))
+STUB_FUNCTION(fluid_setenv, int, -1, (const char *name, const char *value, int overwrite))
 
 
 /* Time functions */
