@@ -153,7 +153,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  * - dsp_hist1: same
  * - dsp_hist2: same
  */
-template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
+template<bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
 static void
 fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, unsigned int count)
 {
@@ -178,8 +178,6 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         int fres_incr_count = iir_filter->fres_incr_count;
         int q_incr_count = iir_filter->q_incr_count;
         
-        fluid_real_t dsp_amp = iir_filter->amp;
-        fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
         IIR_COEFF_T fres = static_cast<IIR_COEFF_T>(iir_filter->last_fres);
         IIR_COEFF_T q = static_cast<IIR_COEFF_T>(iir_filter->last_q);
         
@@ -214,15 +212,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
             // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
             // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
 
-            if(AMPLIFY)
-            {
-                dsp_buf[dsp_i] = dsp_amp * sample;
-                dsp_amp += dsp_amp_incr;
-            }
-            else
-            {
-                dsp_buf[dsp_i] = sample;
-            }
+            dsp_buf[dsp_i] = sample;
 
             if(fres_incr_count > 0 || q_incr_count > 0)
             {
@@ -254,7 +244,6 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
         iir_filter->fres_incr_count = fres_incr_count;
         iir_filter->last_q = q;
         iir_filter->q_incr_count = q_incr_count;
-        iir_filter->amp = dsp_amp;
     }
 }
 
@@ -267,27 +256,27 @@ extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
     {
         if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
         {
-            fluid_iir_filter_apply_local<false, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
         }
         else
         {
-            fluid_iir_filter_apply_local<false, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
         }
     }
     else
     {
         if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
         {
-            fluid_iir_filter_apply_local<true, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<true, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
         }
         else
         {
-            fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<true, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
         }
     }
 
     // This is the last filter in the chain - the default SF2 filter that always runs. This one must apply the final envelope gain.
-    fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
+    fluid_iir_filter_apply_local<true, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
 }
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
