@@ -30,16 +30,8 @@
 
 #include "config.h"
 
-#define FLUID_LIKELY(x) (x)
-#define FLUID_UNLIKELY(x) (x)
-
 #if OSAL_glib
 #include <glib.h>
-
-#undef FLUID_LIKELY
-#undef FLUID_UNLIKELY
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
 #endif
 
 #if HAVE_STDLIB_H
@@ -309,6 +301,14 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_ASSERT(a) fluid_assert(a)
 #else
 #define FLUID_ASSERT(a)
+#endif
+
+#if OSAL_glib
+#define FLUID_LIKELY G_LIKELY
+#define FLUID_UNLIKELY G_UNLIKELY
+#else
+#define FLUID_LIKELY(x) (x)
+#define FLUID_UNLIKELY(x) (x)
 #endif
 
 /* Misc */
