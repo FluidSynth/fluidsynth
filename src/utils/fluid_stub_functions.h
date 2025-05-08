@@ -31,30 +31,30 @@
 #include "fluidsynth_priv.h"
 
 
-#define STUB_FUNCTION_VOID(function, args...) \
+#define STUB_FUNCTION_VOID(function, ...) \
     static FLUID_INLINE void \
-    function(args) \
+    function(__VA_ARGS__) \
     { \
         FLUID_LOG(FLUID_ERR, "function " # function " is a stub"); \
     }
 
-#define STUB_FUNCTION(function, type, result, args...) \
+#define STUB_FUNCTION(function, type, result, ...) \
     static FLUID_INLINE type \
-    function(args) \
+    function(__VA_ARGS__) \
     { \
         FLUID_LOG(FLUID_ERR, "function " # function " is a stub, always returning " # result); \
         return result; \
     }
 
-#define STUB_FUNCTION_VOID_SILENT(function, args...) \
+#define STUB_FUNCTION_VOID_SILENT(function, ...) \
     static FLUID_INLINE void \
-    function(args) \
+    function(__VA_ARGS__) \
     { \
     }
 
-#define STUB_FUNCTION_SILENT(function, type, result, args...) \
+#define STUB_FUNCTION_SILENT(function, type, result, ...) \
     static FLUID_INLINE type \
-    function(args) \
+    function(__VA_ARGS__) \
     { \
         return result; \
     }
