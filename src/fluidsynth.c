@@ -888,41 +888,36 @@ int main(int argc, char **argv)
         fluid_settings_setint(settings, "synth.lock-memory", 0);
     }
 
-    if(config_file == NULL)
+    cmd_handler = new_fluid_cmd_handler2(settings, NULL, NULL, NULL);
+    if(cmd_handler == NULL)
     {
-        config_file = fluid_get_userconf(buf, sizeof(buf));
-        if(config_file == NULL || !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
+        fprintf(stderr, "Failed to create the early command handler\n");
+        goto cleanup;
+    }
+
+    for(i = 0; i < 3; i++)
+    {
+        /* Handle set commands before creating the synth */
+        if(config_file != NULL && fluid_source(cmd_handler, config_file) == 0)
+            break;
+
+        switch(i)
         {
+        case 0:
+            config_file = fluid_get_userconf(buf, sizeof(buf));
+            break;
+        case 1:
             config_file = fluid_get_sysconf(buf, sizeof(buf));
-        }
-
-        /* if the automatically selected command file does not exist, do not even attempt to open it */
-        if(config_file != NULL && !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
-        {
+            break;
+        default:
+            /* the command file does not exist or is broken, don't read it again */
             config_file = NULL;
+            break;
         }
     }
 
-    /* Handle set commands before creating the synth */
-    if(config_file != NULL)
-    {
-        cmd_handler = new_fluid_cmd_handler2(settings, NULL, NULL, NULL);
-        if(cmd_handler == NULL)
-        {
-            fprintf(stderr, "Failed to create the early command handler\n");
-            goto cleanup;
-        }
-
-        if(fluid_source(cmd_handler, config_file) < 0)
-        {
-            fprintf(stderr, "Failed to early-execute command configuration file '%s'\n", config_file);
-            /* the command file seems broken, don't read it again */
-            config_file = NULL;
-        }
-
-        delete_fluid_cmd_handler(cmd_handler);
-        cmd_handler = NULL;
-    }
+    delete_fluid_cmd_handler(cmd_handler);
+    cmd_handler = NULL;
 
     /* create the synthesizer */
     synth = new_fluid_synth(settings);
