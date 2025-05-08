@@ -244,7 +244,7 @@ void fluid_private_set(fluid_private_t priv, void *value)
     _private_data.emplace(priv, value);
 }
 
-#if __cplusplus >= 201703L
+#if HAVE_CXX_FILESYSTEM
 
 #include <filesystem>
 
