@@ -78,9 +78,15 @@ typedef double fluid_real_t;
 #if defined(SUPPORTS_VLA)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
-#else
+#elif OSAL_glib
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type* _name = g_newa(_type, (_len))
+#else
+#  ifdef _WIN32
+#    define alloca _alloca
+#  endif
+#  define FLUID_DECLARE_VLA(_type, _name, _len) \
+     _type *_name = (_type *)alloca(_len * sizeof(_type))
 #endif
 
 
