@@ -254,7 +254,7 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_SPRINTF                sprintf
 #define FLUID_FPRINTF                fprintf
 
-#if (defined(_WIN32) && _MSC_VER < 1900) || defined(MINGW32)
+#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1900) || defined(MINGW32)
 /* need to make sure we use a C99 compliant implementation of (v)snprintf(),
  * i.e. not microsofts non compliant extension _snprintf() as it doesn't
  * reliably null-terminate the buffer
@@ -264,7 +264,7 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_SNPRINTF           snprintf
 #endif
 
-#if (defined(_WIN32) && _MSC_VER < 1500) || defined(MINGW32)
+#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1500) || defined(MINGW32)
 #define FLUID_VSNPRINTF          g_vsnprintf
 #else
 #define FLUID_VSNPRINTF          vsnprintf
