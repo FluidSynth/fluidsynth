@@ -254,20 +254,57 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_SPRINTF                sprintf
 #define FLUID_FPRINTF                fprintf
 
-#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1900) || defined(MINGW32)
-/* need to make sure we use a C99 compliant implementation of (v)snprintf(),
- * i.e. not microsofts non compliant extension _snprintf() as it doesn't
- * reliably null-terminate the buffer
+#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1500) || defined(MINGW32)
+/* Need to make sure we use a C99 compliant implementation of [v]snprintf(),
+ * i.e. not Microsofts non conformant extension _[v]snprintf() as it doesn't
+ * null-terminate the buffer when the formatted string does not fit into the
+ * buffer.
  */
-#define FLUID_SNPRINTF           g_snprintf
+#if OSAL_glib
+#define FLUID_VSNPRINTF        g_vsnprintf
 #else
-#define FLUID_SNPRINTF           snprintf
+
+#include <stdarg.h>
+
+#define FLUID_VSNPRINTF        _fluid_vsnprintf
+
+static inline int
+_fluid_vsnprintf(char *buffer, size_t count, const char *format, va_list args)
+{
+    /* This implementation ensures proper termination when a buffer was supplied
+     * and therefore makes it conformant.
+     */
+    int length = _vsnprintf(buffer, count, format, args);
+    if (count > 0)
+        buffer[count - 1] = 0;
+    return length;
+}
 #endif
 
-#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1500) || defined(MINGW32)
-#define FLUID_VSNPRINTF          g_vsnprintf
 #else
 #define FLUID_VSNPRINTF          vsnprintf
+#endif
+
+#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1900) || defined(MINGW32)
+#if OSAL_glib
+#define FLUID_SNPRINTF         g_snprintf
+#else
+#define FLUID_SNPRINTF         _fluid_snprintf
+
+static inline int
+_fluid_snprintf(char *buffer, size_t count, const char *format, ...)
+{
+    int length;
+    va_list args;
+    va_start(args, format);
+    length = FLUID_VSNPRINTF(buffer, count, format, args);
+    va_end(args);
+    return length;
+}
+#endif
+
+#else
+#define FLUID_SNPRINTF           snprintf
 #endif
 
 #if defined(_WIN32) && !defined(MINGW32)
