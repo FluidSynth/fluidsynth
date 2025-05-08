@@ -4878,6 +4878,7 @@ void fluid_client_quit(fluid_client_t *client)
     FLUID_LOG(FLUID_DBG, "fluid_client_quit: joining");
     fluid_thread_join(client->thread);
     FLUID_LOG(FLUID_DBG, "fluid_client_quit: done");
+    delete_fluid_thread(client->thread);
 }
 
 void delete_fluid_client(fluid_client_t *client)
