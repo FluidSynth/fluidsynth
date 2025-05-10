@@ -36,6 +36,10 @@ if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
     ADD_FLUID_TEST(test_shell_parse_argv_internal)
 endif ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
 
+if ( NOT OSAL STREQUAL "embedded" )
+    ADD_FLUID_TEST(test_threading)
+endif ( NOT OSAL STREQUAL "embedded" )
+
 if( LIBSNDFILE_SUPPORT )
     ADD_FLUID_TEST(test_fast_render)
 endif()
