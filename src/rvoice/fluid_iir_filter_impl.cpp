@@ -155,7 +155,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  */
 template<bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, unsigned int count)
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, int count)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -196,41 +196,55 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
          * changing towards its new setting. The other, if the filter
          * doesn't change.
          */
-
-        unsigned int dsp_i;
-        for (dsp_i = 0; dsp_i < count; dsp_i++)
+        
+        enum { OUTSIZE = FLUID_DEFAULT_ALIGNMENT / sizeof(fluid_real_t) };
+        
+        while(count > 0)
         {
-            /* The filter is implemented in Direct-II form. */
-            fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-            fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-            dsp_hist2 = dsp_hist1;
-            dsp_hist1 = dsp_centernode;
-
-            /* Alternatively, it could be implemented in Transposed Direct Form II */
-            // fluid_real_t dsp_input = dsp_buf[dsp_i];
-            // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
-            // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
-            // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
-
-            dsp_buf[dsp_i] = sample;
-
-            if(fres_incr_count > 0 || q_incr_count > 0)
+            fluid_real_t output_buf[OUTSIZE]; // Separate output buffer to avoid read-after-write dependency
+            int dsp_i;
+            for (dsp_i = 0; dsp_i < OUTSIZE && dsp_i < count; dsp_i++)
             {
-                if(fres_incr_count > 0)
+                /* The filter is implemented in Direct-II form. */
+                fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+                fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+                dsp_hist2 = dsp_hist1;
+                dsp_hist1 = dsp_centernode;
+
+                /* Alternatively, it could be implemented in Transposed Direct Form II */
+                // fluid_real_t dsp_input = dsp_buf[dsp_i];
+                // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
+                // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
+                // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
+
+                output_buf[dsp_i] = sample;
+
+                if(fres_incr_count > 0 || q_incr_count > 0)
                 {
-                    --fres_incr_count;
-                    fres += fres_incr;
+                    if(fres_incr_count > 0)
+                    {
+                        --fres_incr_count;
+                        fres += fres_incr;
+                    }
+                    if(q_incr_count > 0)
+                    {
+                        --q_incr_count;
+                        q += q_incr;
+                    }
+                    
+                    LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
+                    
+                    fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
                 }
-                if(q_incr_count > 0)
-                {
-                    --q_incr_count;
-                    q += q_incr;
-                }
-                
-                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
-                
-                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
+
+            #pragma omp simd aligned(dsp_buf : FLUID_DEFAULT_ALIGNMENT)
+            for (dsp_i = 0; dsp_i < OUTSIZE; dsp_i++)
+            {
+                dsp_buf[dsp_i] = output_buf[dsp_i];
+            }
+            dsp_buf += OUTSIZE;
+            count -= OUTSIZE;
         }
 
         iir_filter->hist1 = dsp_hist1;

@@ -485,8 +485,9 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     fluid_real_t current_amp = voice->dsp.amp;
     fluid_real_t amp_incr = (voice->dsp.target_amp - current_amp) / FLUID_BUFSIZE;
-    #pragma omp simd aligned(dsp_buf : FLUID_DEFAULT_ALIGNMENT) default(shared)
-    for (int dsp_i = 0; dsp_i < count; dsp_i++)
+    int dsp_i;
+    #pragma omp simd aligned(dsp_buf : FLUID_DEFAULT_ALIGNMENT)
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
     {
         // We cannot simply increment current_amp by amp_incr during every iteration, as this would create a dependency and prevent vectorization.
         dsp_buf[dsp_i] *= (current_amp + amp_incr * dsp_i);

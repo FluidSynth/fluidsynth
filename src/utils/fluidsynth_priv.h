@@ -322,6 +322,7 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
 #define FLUID_MEMBER_SIZE(struct, member)  ( sizeof (((struct *)0)->member) )
 
+#define FLUID_DEFAULT_ALIGNMENT (64U)
 
 #define fluid_return_if_fail(cond) \
 if(cond) \
