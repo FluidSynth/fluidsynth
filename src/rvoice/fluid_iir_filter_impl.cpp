@@ -153,9 +153,9 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  * - dsp_hist1: same
  * - dsp_hist2: same
  */
-template<bool GAIN_NORM, enum fluid_iir_filter_type TYPE>
+template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, int count)
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, short count)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -175,9 +175,12 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
         IIR_COEFF_T dsp_b02 = iir_filter->b02;
         IIR_COEFF_T dsp_b1 = iir_filter->b1;
 
-        int fres_incr_count = iir_filter->fres_incr_count;
-        int q_incr_count = iir_filter->q_incr_count;
+        short fres_incr_count = iir_filter->fres_incr_count;
+        short q_incr_count = iir_filter->q_incr_count;
         
+        fluid_real_t dsp_amp = iir_filter->amp;
+        fluid_real_t dsp_amp_incr = (iir_filter->target_amp - dsp_amp) * (1.0f / FLUID_BUFSIZE);
+
         IIR_COEFF_T fres = static_cast<IIR_COEFF_T>(iir_filter->last_fres);
         IIR_COEFF_T q = static_cast<IIR_COEFF_T>(iir_filter->last_q);
         
@@ -199,14 +202,15 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
         
         enum { OUTSIZE = FLUID_DEFAULT_ALIGNMENT / sizeof(fluid_real_t) };
         
-        while(count > 0)
+        short dsp_i = 0;
+        fluid_real_t output_buf[OUTSIZE]; // Separate output buffer to avoid read-after-write dependency
+        while(dsp_i < count)
         {
-            fluid_real_t output_buf[OUTSIZE]; // Separate output buffer to avoid read-after-write dependency
-            int dsp_i;
-            for (dsp_i = 0; dsp_i < OUTSIZE && dsp_i < count; dsp_i++)
+            int j;
+            for (j = 0; j < OUTSIZE && dsp_i+j < count; ++j)
             {
                 /* The filter is implemented in Direct-II form. */
-                fluid_real_t dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+                fluid_real_t dsp_centernode = dsp_buf[dsp_i + j] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
                 fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
                 dsp_hist2 = dsp_hist1;
                 dsp_hist1 = dsp_centernode;
@@ -217,7 +221,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
                 // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
                 // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
 
-                output_buf[dsp_i] = sample;
+                output_buf[j] = sample;
 
                 if(fres_incr_count > 0 || q_incr_count > 0)
                 {
@@ -239,12 +243,18 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
             }
 
             #pragma omp simd aligned(dsp_buf : FLUID_DEFAULT_ALIGNMENT)
-            for (dsp_i = 0; dsp_i < OUTSIZE; dsp_i++)
+            for (j = 0; j < OUTSIZE && dsp_i < count; ++j, ++dsp_i)
             {
-                dsp_buf[dsp_i] = output_buf[dsp_i];
+                if(AMPLIFY)
+                {
+                    // We cannot simply increment current_amp by amp_incr during every iteration, as this would create a dependency and prevent vectorization.
+                    dsp_buf[dsp_i] = (dsp_amp + dsp_amp_incr * dsp_i) * output_buf[j];
+                }
+                else
+                {
+                    dsp_buf[dsp_i] = output_buf[j];
+                }
             }
-            dsp_buf += OUTSIZE;
-            count -= OUTSIZE;
         }
 
         iir_filter->hist1 = dsp_hist1;
@@ -258,6 +268,11 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
         iir_filter->fres_incr_count = fres_incr_count;
         iir_filter->last_q = q;
         iir_filter->q_incr_count = q_incr_count;
+
+        if(AMPLIFY)
+        {
+            iir_filter->amp = iir_filter->target_amp;
+        }
     }
 }
 
@@ -270,27 +285,27 @@ extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
     {
         if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
         {
-            fluid_iir_filter_apply_local<false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<false, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
         }
         else
         {
-            fluid_iir_filter_apply_local<false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<false, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
         }
     }
     else
     {
         if(resonant_custom_filter->type == FLUID_IIR_HIGHPASS)
         {
-            fluid_iir_filter_apply_local<true, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<true, false, FLUID_IIR_HIGHPASS>(resonant_custom_filter, dsp_buf, count);
         }
         else
         {
-            fluid_iir_filter_apply_local<true, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
+            fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_custom_filter, dsp_buf, count);
         }
     }
 
     // This is the last filter in the chain - the default SF2 filter that always runs. This one must apply the final envelope gain.
-    fluid_iir_filter_apply_local<true, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
+    fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
 }
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
