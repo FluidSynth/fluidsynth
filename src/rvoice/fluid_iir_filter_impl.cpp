@@ -155,7 +155,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  */
 template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, short count)
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, unsigned char count)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -200,13 +200,13 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
          * doesn't change.
          */
         
-        enum { OUTSIZE = FLUID_DEFAULT_ALIGNMENT / sizeof(fluid_real_t) };
+        enum { OUTSIZE = 4 };
         
-        short dsp_i = 0;
+        unsigned char dsp_i = 0;
         fluid_real_t output_buf[OUTSIZE]; // Separate output buffer to avoid read-after-write dependency
         while(dsp_i < count)
         {
-            int j;
+            unsigned char j;
             for (j = 0; j < OUTSIZE && dsp_i+j < count; ++j)
             {
                 /* The filter is implemented in Direct-II form. */
@@ -242,6 +242,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
                 }
             }
 
+            // Write the output_buf back to dsp_buf and potentially do the final gain amplification on-the-fly
             #pragma omp simd aligned(dsp_buf : FLUID_DEFAULT_ALIGNMENT)
             for (j = 0; j < OUTSIZE && dsp_i < count; ++j, ++dsp_i)
             {
