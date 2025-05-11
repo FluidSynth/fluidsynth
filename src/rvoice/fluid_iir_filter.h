@@ -78,7 +78,7 @@ struct _fluid_iir_filter_t
 
     // the final gain amplifier to be applied by the last filter in the chain, zero for all other filters
     fluid_real_t amp;                /* current linear amplitude */
-    fluid_real_t amp_incr;           /* amplitude increment value for the next FLUID_BUFSIZE samples */
+    fluid_real_t target_amp;         /* target amplitude */
 
     fluid_iir_sincos_t *sincos_table; /* pointer to the precalculated sin and cos values, owned by the synth */
 };

@@ -305,7 +305,7 @@ extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
     }
 
     // This is the last filter in the chain - the default SF2 filter that always runs. This one must apply the final envelope gain.
-    fluid_iir_filter_apply_local<true, false, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
+    fluid_iir_filter_apply_local<true, true, FLUID_IIR_LOWPASS>(resonant_filter, dsp_buf, count);
 }
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
