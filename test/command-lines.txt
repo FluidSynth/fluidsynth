@@ -1,0 +1,24 @@
+help
+set synth.reverb.room-size 1
+load soundfont.sf2 0 10
+load 'test file name with single quotes' 0
+load "test file name with double quotes" 1
+load 'test unterminated single quote
+load "test \"escaped quotes\"   inside quotes"
+load 'test \' impossible embedded single quote
+load 'test \' unterminated non-escaped'
+comment#inside
+comment #outside
+use	tabs	also
+escape\ space
+escape \normal ch\ars
+escape \\backslash
+escape \' single quote
+escape \" double quote
+escape \\\ too
+escape \	a tab
+escape "normal \chars and \\$ \\\$ special double quotes"
+"embed "double quotes" and \'single quotes\' and \" \'nested\'"
+trailing escape \
+
+# comment only
