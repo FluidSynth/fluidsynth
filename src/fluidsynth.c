@@ -306,6 +306,34 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     delete_fluid_file_renderer(renderer);
 }
 
+static void load_and_execute_config_file(fluid_cmd_handler_t *cmd_handler, const char *config_file, int verbose, int early)
+{
+    if(config_file != NULL)
+    {
+        if(fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
+        {
+            if(verbose)
+            {
+                fprintf(stdout, "Attempting to %sload config file '%s'\n",
+                        early ? "early-" : "", config_file);
+            }
+            if(fluid_source(cmd_handler, config_file) < 0)
+            {
+                fprintf(stderr, "Failed to %sexecute command configuration file '%s'\n",
+                        early ? "early-" : "", config_file);
+            }
+        }
+        else
+        {
+            if(verbose)
+            {
+                fprintf(stderr, "Failed to %sload config file '%s' - file doesn't exist.\n",
+                        early ? "early-" : "", config_file);
+            }
+        }
+    }
+}
+
 /*
  * main
  * Process initialization steps in the following order:
@@ -894,41 +922,19 @@ int main(int argc, char **argv)
         fluid_settings_setint(settings, "synth.lock-memory", 0);
     }
 
-    if(config_file == NULL)
+    cmd_handler = new_fluid_cmd_handler2(settings, NULL, NULL, NULL);
+    if(cmd_handler == NULL)
     {
-        config_file = fluid_get_userconf(buf, sizeof(buf));
-        if(config_file == NULL || !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
-        {
-            config_file = fluid_get_sysconf(buf, sizeof(buf));
-        }
-
-        /* if the automatically selected command file does not exist, do not even attempt to open it */
-        if(config_file != NULL && !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
-        {
-            config_file = NULL;
-        }
+        fprintf(stderr, "Failed to create the early command handler\n");
+        goto cleanup;
     }
+    
+    load_and_execute_config_file(cmd_handler, fluid_get_sysconf(buf, sizeof(buf)), verbose, TRUE);
+    load_and_execute_config_file(cmd_handler, fluid_get_userconf(buf, sizeof(buf)), verbose, TRUE);
+    load_and_execute_config_file(cmd_handler, config_file, verbose, TRUE);
 
-    /* Handle set commands before creating the synth */
-    if(config_file != NULL)
-    {
-        cmd_handler = new_fluid_cmd_handler2(settings, NULL, NULL, NULL);
-        if(cmd_handler == NULL)
-        {
-            fprintf(stderr, "Failed to create the early command handler\n");
-            goto cleanup;
-        }
-
-        if(fluid_source(cmd_handler, config_file) < 0)
-        {
-            fprintf(stderr, "Failed to early-execute command configuration file '%s'\n", config_file);
-            /* the command file seems broken, don't read it again */
-            config_file = NULL;
-        }
-
-        delete_fluid_cmd_handler(cmd_handler);
-        cmd_handler = NULL;
-    }
+    delete_fluid_cmd_handler(cmd_handler);
+    cmd_handler = NULL;
 
     /* create the synthesizer */
     synth = new_fluid_synth(settings);
@@ -1081,10 +1087,9 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    if(config_file != NULL && fluid_source(cmd_handler, config_file) < 0)
-    {
-        fprintf(stderr, "Failed to execute command configuration file '%s'\n", config_file);
-    }
+    load_and_execute_config_file(cmd_handler, fluid_get_sysconf(buf, sizeof(buf)), verbose, FALSE);
+    load_and_execute_config_file(cmd_handler, fluid_get_userconf(buf, sizeof(buf)), verbose, FALSE);
+    load_and_execute_config_file(cmd_handler, config_file, verbose, FALSE);
 
     /* start the player. Must be done after executing commands configuration file.
        This allows any existing player commands to be run prior the player is started.
