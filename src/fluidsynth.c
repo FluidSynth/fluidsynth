@@ -1292,7 +1292,7 @@ print_help(fluid_settings_t *settings)
     printf(" -a, --audio-driver=[label]\n"
            "    The name of the audio driver to use.\n"
            "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
-    printf("-b, --bank-offset=[num]\n"
+    printf(" -b, --bank-offset=[num]\n"
            "    A positional flag that specifies the bank-offset for any Soundfonts\n"
            "    following that flag. Can be specified multiple times.\n");
     printf(" -c, --audio-bufcount=[count]\n"
