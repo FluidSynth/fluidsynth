@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_synth.h"
@@ -239,7 +238,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
 
-    fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_int(settings, "synth.threadsafe-api", FLUID_THREAD_SAFE_CAPABLE, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
     fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
@@ -1886,7 +1885,45 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                     }
                     else
                     {
-                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targeting effect %d", gen);
+                    }
+                }
+            }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 1 && synth->bank_select == FLUID_BANK_STYLE_GS)
+            {
+                int nrpn2cc = -1;
+                int nrpn_lsb = fluid_channel_get_cc(chan, NRPN_LSB);
+                // cf. SC8850 owner's manual pages 227 + 228
+                switch(nrpn_lsb)
+                {
+                case 8:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL7;
+                    break;
+                case 9:
+                    // vibrato depth
+                    nrpn2cc = SOUND_CTRL8;
+                    break;
+                case 10:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL9;
+                    break;
+                default:
+                    break;
+                }
+                if(nrpn2cc != -1)
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Translating Roland GS NRPN %d to CC %d", nrpn_lsb, nrpn2cc);
+                    }
+                    fluid_synth_cc(synth, channum, nrpn2cc, msb_value);
+                }
+                else
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown Roland GS NRPN %d", nrpn_lsb);
                     }
                 }
             }
@@ -3832,9 +3869,9 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
  * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
- * @param right Array of float buffers to store right channel of planar audio (size: dito)
+ * @param right Array of float buffers to store right channel of planar audio (size: ditto)
  * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
- * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
+ * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: ditto)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * First effect channel used by reverb, second for chorus.
@@ -4301,7 +4338,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     /* Then, render blocks and copy till we have 'len' samples  */
     while(count < len)
     {
-        /* always render full bloc multiple of FLUID_BUFSIZE */
+        /* always render full block multiple of FLUID_BUFSIZE */
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
         /* render audio (dry and effect) to respective internal dry and effect buffers */
         int blockcount = block_render_func(synth, blocksleft);
@@ -4507,7 +4544,7 @@ fluid_synth_write_float_channels_LOCAL(fluid_synth_t *synth, int len,
         if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocs multiple of FLUID_BUFSIZE */
+            /* always render full blocks multiple of FLUID_BUFSIZE */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
 
@@ -4785,7 +4822,7 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
         if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocs multiple of FLUID_BUFSIZE */
+            /* always render full blocks multiple of FLUID_BUFSIZE */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
 

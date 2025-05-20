@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_rvoice_mixer.h"
@@ -60,7 +59,7 @@ struct _fluid_mixer_buffers_t
      */
     fluid_real_t *left_buf;
 
-    /** dito, but for right part of a stereo channel */
+    /** ditto, but for right part of a stereo channel */
     fluid_real_t *right_buf;
 
     /** buffer to store the left part of a stereo effects channel to.

@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_midi.h"
@@ -1575,7 +1574,10 @@ fluid_track_send_events(fluid_track_t *track,
     {
         ticks = seek_ticks; /* update target ticks */
 
-        if(track->ticks > ticks)
+        // the track ticks is beyond the current ticks,
+        // or if the track ticks is equal to the current ticks,
+        // we want to play all events from the beginning of that tick
+        if(track->ticks >= ticks)
         {
             fluid_track_reset(track);    /* reset track if seeking backwards */
         }

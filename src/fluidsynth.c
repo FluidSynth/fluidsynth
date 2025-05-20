@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_sys.h"
@@ -898,7 +897,7 @@ int main(int argc, char **argv)
     if(config_file == NULL)
     {
         config_file = fluid_get_userconf(buf, sizeof(buf));
-        if(config_file == NULL || !g_file_test(config_file, G_FILE_TEST_EXISTS))
+        if(config_file == NULL || !fluid_file_test(config_file, FLUID_FILE_TEST_EXISTS))
         {
             config_file = fluid_get_sysconf(buf, sizeof(buf));
         }

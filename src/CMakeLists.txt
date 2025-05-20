@@ -124,7 +124,9 @@ set ( libfluidsynth_SOURCES
     utils/fluid_settings.h
     utils/fluidsynth_priv.h
     utils/fluid_sys.c
+    utils/fluid_sys_${osal}.c
     utils/fluid_sys.h
+    utils/fluid_sys_${osal}.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h
@@ -137,7 +139,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_adsr_env.h
     rvoice/fluid_chorus.c
     rvoice/fluid_chorus.h
-    rvoice/fluid_iir_filter.cpp
+    rvoice/fluid_iir_filter_impl.cpp
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
     rvoice/fluid_lfo.c
@@ -367,7 +369,9 @@ if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
 endif()
 
-target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::glib-2 GLib2::gthread-2 )
+if ( TARGET GLib2::glib-2 )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::glib-2 GLib2::gthread-2 )
+endif()
 
 if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SndFile::sndfile )

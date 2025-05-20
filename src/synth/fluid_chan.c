@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_chan.h"
@@ -570,7 +569,7 @@ fluid_channel_remove_monolist(fluid_channel_t *chan, int i, int *i_prev)
     }
 
     /* The element is about to be removed and inserted between i_last and next */
-    /* Note: when i is egal to i_last or egal to i_first, removing/inserting
+    /* Note: when i is equal to i_last or equal to i_first, removing/inserting
        isn't necessary */
     if(i == i_last)
     {

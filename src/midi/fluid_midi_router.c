@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* Original author: Markus Nentwig, nentwig@users.sourceforge.net
@@ -128,8 +127,6 @@ error_recovery:
 /**
  * Delete a MIDI router instance.
  * @param router MIDI router to delete
- * @return Returns #FLUID_OK on success, #FLUID_FAILED otherwise (only if NULL
- *   \a router passed really)
  */
 void
 delete_fluid_midi_router(fluid_midi_router_t *router)

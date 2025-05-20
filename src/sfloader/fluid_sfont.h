@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -165,13 +164,13 @@ struct _fluid_sample_t
     unsigned int loopstart;       /**< Loop start index */
     unsigned int loopend;         /**< Loop end index, first point following the loop (superimposed on loopstart) */
 
+    short *data;                  /**< Pointer to the sample's 16 bit PCM data */
+    char *data24;                 /**< If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples */
     unsigned int samplerate;      /**< Sample rate */
     int origpitch;                /**< Original pitch (MIDI note number, 0-127) */
     int pitchadj;                 /**< Fine pitch adjustment (+/- 99 cents) */
     int sampletype;               /**< Specifies the type of this sample as indicated by the #fluid_sample_type enum */
     int auto_free;                /**< TRUE if _fluid_sample_t::data and _fluid_sample_t::data24 should be freed upon sample destruction */
-    short *data;                  /**< Pointer to the sample's 16 bit PCM data */
-    char *data24;                 /**< If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples */
 
     int amplitude_that_reaches_noise_floor_is_valid;      /**< Indicates if \a amplitude_that_reaches_noise_floor is valid (TRUE), set to FALSE initially to calculate. */
     double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */

@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_iir_filter.h"
@@ -62,7 +61,10 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    unsigned tab_idx = (static_cast<unsigned>(fres) - FRES_MIN) / CENTS_STEP;
+    signed tab_idx = (static_cast<signed>(fres) - FRES_MIN) / CENTS_STEP;
+#ifndef DBG_FILTER
+    fluid_clip(tab_idx, 0, SINCOS_TAB_SIZE - 1);
+#endif
     R sin_coeff = sincos_table[tab_idx].sin;
     R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
@@ -292,7 +294,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                            fluid_real_t output_rate,
                            fluid_real_t fres_mod)
 {
-    unsigned int calc_coeff_flag = FALSE;
+    bool calc_coeff_flag = false;
     fluid_real_t fres, fres_diff;
     
     if(iir_filter->type == FLUID_IIR_DISABLED)
@@ -331,13 +333,13 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     if(iir_filter->filter_startup)
     {
         // The filter was just starting up, make sure to calculate initial coefficients for the initial Q value, even though the fres may not have changed
-        calc_coeff_flag = TRUE;
+        calc_coeff_flag = true;
         
         iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
         iir_filter->filter_startup = (FLUID_FABS(iir_filter->last_q) < Q_MIN); // filter coefficients will not be initialized when Q is small
     }
-    else if(FLUID_FABS(fres_diff) > 0.01f)
+    else if(FLUID_FABS(fres_diff) > (fluid_real_t)CENTS_STEP) // only smooth out fres when difference is "significant"
     {
         fluid_real_t fres_incr_count = FLUID_BUFSIZE;
         fluid_real_t num_buffers = iir_filter->last_q;
@@ -348,15 +350,19 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres_incr_count *= num_buffers;
         iir_filter->fres_incr = fres_diff / (fres_incr_count);
         iir_filter->fres_incr_count = static_cast<int>(fres_incr_count + 0.5);
+
 #ifdef DBG_FILTER
         iir_filter->target_fres = fres;
 #endif
 
         // The filter coefficients have to be recalculated (filter cutoff has changed).
-        calc_coeff_flag = TRUE;
+        calc_coeff_flag = true;
     }
     else
     {
+        // difference in fres is small, so set it directly
+        iir_filter->fres_incr_count = 0;
+        iir_filter->last_fres = fres;
         // We do not account for any change of Q here - if it was changed q_incro_count will be non-zero and recalculating the coeffs
         // will be taken care of in fluid_iir_filter_apply().
     }
