@@ -124,7 +124,7 @@ add_custom_target(render1481
 )
 
 add_custom_target(renderAltitude
-    COMMAND fluidsynth -R 1 -C 1 -f fluidsynth.cfg -o "synth.default-soundfont=../../sf2/synthgs-sf2_04-compat.sf2" -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} Altitude.mid
+    COMMAND fluidsynth -R 1 -C 1 -g 0.5 -f fluidsynth.cfg -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Altitude.sf2 Altitude.mid
     COMMENT "Rendering AWE32 NRPN test file Altitude.mid"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Altitude/
@@ -142,7 +142,7 @@ add_custom_target(renderFilter
 )
 
 add_custom_target(renderUplift
-    COMMAND fluidsynth -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -o "synth.default-soundfont=../../sf2/synthgs-sf2_04-compat.sf2" -F ${AWE32_NRPN_RENDER_DIR}/Uplift-fixed.${FEXT} Uplift-fixed.mid
+    COMMAND fluidsynth -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${AWE32_NRPN_RENDER_DIR}/Uplift-fixed.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
     COMMENT "Rendering AWE32 NRPN test file Uplift.mid"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/
