@@ -50,10 +50,17 @@ extern "C" {
 typedef void *fluid_pointer_t;
 
 /* Endian detection */
+#ifdef WORDS_BIGENDIAN
+#define FLUID_IS_BIG_ENDIAN       true
+
+#define FLUID_LE32TOH(x)          (((0xFF000000 & (x)) >> 24) | ((0x00FF0000 & (x)) >> 8) | ((0x0000FF00 & (x)) << 8) | ((0x000000FF & (x)) << 24));
+#define FLUID_LE16TOH(x)          (((0xFF00 & (x)) >> 8) | ((0x00FF & (x)) << 8))
+#else
 #define FLUID_IS_BIG_ENDIAN       false
 
 #define FLUID_LE32TOH(x)          (x)
 #define FLUID_LE16TOH(x)          (x)
+#endif
 
 /*
  * Utility functions
