@@ -713,13 +713,25 @@ static int process_info(SFData *sf, int size)
             sf->romver.minor = ver;
             FLUID_LOG(FLUID_DBG, "ROM Version: %hu.%hu", sf->version.major, sf->version.minor);
         }
-        else if(chunkid(chunk.id) != UNKN_ID)
+        else
         {
-            if((chunk.id != ICMT_FCC && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
+            if(chunkid(chunk.id) != UNKN_ID)
             {
-                FLUID_LOG(FLUID_ERR, "INFO sub chunk %.4s has invalid chunk size of %d bytes",
-                          (char*)&chunk.id, chunk.size);
-                return FALSE;
+                if((chunk.id != ICMT_FCC && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
+                {
+                    FLUID_LOG(FLUID_ERR, "INFO sub chunk %.4s has invalid chunk size of %d bytes",
+                              (char*)&chunk.id, chunk.size);
+                    return FALSE;
+                }
+            }
+            else
+            {
+                /* SF 2.04 specification, section 10.2:
+                 * 10.2 Unknown chunks
+                 * within the INFO-list chunk should simply be ignored.
+                 * Other unknown chunks or sub-chunks are illegal and should be
+                 * treated as structural errors.*/
+                FLUID_LOG(FLUID_WARN, "Ignoring unknown chunk ID in INFO chunk");
             }
 
             /* alloc for chunk fcc and da chunk */
@@ -742,11 +754,6 @@ static int process_info(SFData *sf, int size)
 
             /* force terminate info item */
             item.chr[chunk.size] = '\0';
-        }
-        else
-        {
-            FLUID_LOG(FLUID_ERR, "Invalid chunk id in INFO chunk");
-            return FALSE;
         }
 
         size -= chunk.size;
