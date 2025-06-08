@@ -714,7 +714,7 @@ static int process_info(SFData *sf, int size)
         }
         else
         {
-            if (chunkid(chunk.id) != UNKN_ID)
+            if(chunkid(chunk.id) != UNKN_ID)
             {
                 if((chunk.id != ICMT_FCC && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
                 {
