@@ -22,11 +22,15 @@ jobs:
         fail-fast: false
         matrix:
           include:
-            - { icon: '⬛', sys: mingw32 }
-            - { icon: '🟦', sys: mingw64 }
-            - { icon: '🟨', sys: ucrt64  }
-            - { icon: '🟧', sys: clang64 }
-    name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
+            - { icon: '⬛', sys: mingw32, osal: glib }
+            - { icon: '🟦', sys: mingw64, osal: glib }
+            - { icon: '🟨', sys: ucrt64, osal: glib }
+            - { icon: '🟧', sys: clang64, osal: glib }
+            - { icon: '⬛', sys: mingw32, osal: cpp11 }
+            - { icon: '🟦', sys: mingw64, osal: cpp11 }
+            - { icon: '🟨', sys: ucrt64, osal: cpp11 }
+            - { icon: '🟧', sys: clang64, osal: cpp11 }
+    name: 🚧${{ matrix.icon }} ${{ matrix.sys }} ${{ matrix.osal }}
     defaults:
       run:
         shell: msys2 {0}
@@ -50,7 +54,7 @@ jobs:
           libsndfile:p
 
     - name: '${{ matrix.icon }} Configure CMake'
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
+      run: cmake -B build -Dosal=${{matrix.osal}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
 
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
@@ -77,7 +81,7 @@ jobs:
     - name: '${{ matrix.icon }} Upload Artifacts'
       uses: actions/upload-artifact@v4
       with:
-        name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}
+        name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}-${{matrix.osal}}
         path: ${{env.INSTALL_LOCATION}}
         retention-days: 14
         overwrite: true

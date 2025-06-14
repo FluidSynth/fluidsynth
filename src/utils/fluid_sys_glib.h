@@ -66,10 +66,6 @@ extern "C" {
  * Utility functions
  */
 
-#define FLUID_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
-#define FLUID_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
-#define fluid_file_test(path, flags) g_file_test(path, flags)
-
 #define fluid_shell_parse_argv(command_line, argcp, argvp) g_shell_parse_argv(command_line, argcp, argvp, NULL)
 #define fluid_strfreev g_strfreev
 
@@ -285,6 +281,10 @@ typedef GModule fluid_module_t;
 #endif /* LADSPA */
 
 /* File access */
+#define FLUID_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
+#define FLUID_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
+
+#define fluid_file_test(path, flags) g_file_test(path, flags)
 #define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 #if !GLIB_CHECK_VERSION(2, 26, 0)
     /* GStatBuf has not been introduced yet, manually typedef to what they had at that time:
