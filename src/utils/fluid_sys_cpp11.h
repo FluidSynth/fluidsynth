@@ -31,6 +31,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_stub_functions.h"
 
+#include <assert.h>
 #include <stdbool.h>
 
 #define FALSE (0)
