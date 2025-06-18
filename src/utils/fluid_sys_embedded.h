@@ -50,10 +50,17 @@ extern "C" {
 typedef void *fluid_pointer_t;
 
 /* Endian detection */
+#ifdef WORDS_BIGENDIAN
+#define FLUID_IS_BIG_ENDIAN       true
+
+#define FLUID_LE32TOH(x)          (((0xFF000000 & (x)) >> 24) | ((0x00FF0000 & (x)) >> 8) | ((0x0000FF00 & (x)) << 8) | ((0x000000FF & (x)) << 24));
+#define FLUID_LE16TOH(x)          (((0xFF00 & (x)) >> 8) | ((0x00FF & (x)) << 8))
+#else
 #define FLUID_IS_BIG_ENDIAN       false
 
 #define FLUID_LE32TOH(x)          (x)
 #define FLUID_LE16TOH(x)          (x)
+#endif
 
 /*
  * Utility functions
@@ -213,6 +220,7 @@ typedef int fluid_thread_t;
 STUB_FUNCTION(new_fluid_thread, fluid_thread_t *, NULL, (const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach))
 STUB_FUNCTION_VOID_SILENT(delete_fluid_thread, (fluid_thread_t *thread))
 STUB_FUNCTION_SILENT(fluid_thread_join, int, FLUID_OK, (fluid_thread_t *thread))
+STUB_FUNCTION_VOID_SILENT(fluid_thread_self_set_prio, (int))
 
 
 /* File access */

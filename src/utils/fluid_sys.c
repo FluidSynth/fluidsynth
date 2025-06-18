@@ -407,7 +407,7 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#else   /* POSIX stuff..  Nice POSIX..  Good POSIX. */
+#elif !OSAL_embedded  /* POSIX stuff..  Nice POSIX..  Good POSIX. */
 
 void
 fluid_thread_self_set_prio(int prio_level)

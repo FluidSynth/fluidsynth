@@ -359,14 +359,17 @@ if ( WIN32 )
 endif ( WIN32 )
 
 # Check for threads and math
-find_package ( Threads REQUIRED )
+if (NOT osal STREQUAL "embedded" )
+  find_package ( Threads REQUIRED )
+  set ( LIBFLUID_LIBS Threads::Threads )
+endif()
 
 find_library ( HAS_LIBM NAMES "m" )
 if ( HAS_LIBM )
   set ( MATH_LIBRARY "m" )
 endif ( HAS_LIBM )
 
-set ( LIBFLUID_LIBS ${MATH_LIBRARY} Threads::Threads )
+set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};${MATH_LIBRARY}" )
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )

@@ -278,7 +278,10 @@ typedef struct
 fluid_thread_t *new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
                                  int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t *thread);
+#if !OSAL_embedded
 void fluid_thread_self_set_prio(int prio_level);
+#endif
+
 int fluid_thread_join(fluid_thread_t *thread);
 
 
