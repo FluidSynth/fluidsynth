@@ -384,6 +384,8 @@ unsigned int fluid_curtime(void)
 }
 
 
+#if !OSAL_embedded
+
 #if defined(_WIN32)      /* Windoze specific stuff */
 
 void
@@ -407,7 +409,7 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#elif !OSAL_embedded  /* POSIX stuff..  Nice POSIX..  Good POSIX. */
+#else /* POSIX stuff..  Nice POSIX..  Good POSIX. */
 
 void
 fluid_thread_self_set_prio(int prio_level)
@@ -438,7 +440,13 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#ifdef FPE_CHECK
+
+#endif	// #else    (its POSIX)
+
+#endif	// #if !OSAL_embedded
+
+
+#if defined(FPE_CHECK) && !defined(_WIN32) && !defined(__OS2__)
 
 /***************************************************************
  *
@@ -505,10 +513,7 @@ void fluid_clear_fpe_i386(void)
     _FPU_CLR_SW();
 }
 
-#endif	// ifdef FPE_CHECK
-
-
-#endif	// #else    (its POSIX)
+#endif	// #if defined(FPE_CHECK) && !defined(_WIN32) && !defined(__OS2__)
 
 
 /***************************************************************
