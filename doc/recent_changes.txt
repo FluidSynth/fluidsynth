@@ -1,6 +1,9 @@
 /*!
 
 \page RecentChanges Recent Changes
+\section NewIn2_4_5 What's new in 2.4.5?
+- In order to use the SDL3 audio driver, the downstream application is responsible for calling <code>SDL_Init()</code> and <code>SDL_Quit()</code>, just like it was practice for the SDL2 audio driver. Fluidsynth may raise a warning if this isn't done, see \ref CreatingAudioDriver
+
 \section NewIn2_4_3 What's new in 2.4.3?
 - synth.note-cut has been introduced
 
