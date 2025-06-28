@@ -235,15 +235,15 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                     q += q_incr;
                     if(q < Q_MIN)
                     {
-                        LOG_FILTER("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", q);
+                        LOG_FILTER("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                         LOG_FILTER("!!!OOPS!!! limited Q to its minimum value, was: %f", q);
-                        LOG_FILTER("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", q);
+                        LOG_FILTER("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                         q_incr_count = 0;
                         q = Q_MIN;
                     }
                 }
 
-                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
+                LOG_FILTER("fres: %.2f Hz  | target_fres: %.2f Hz | fres_incr: %f\t| fres_incr_count: %d\t|---| q: %f\t| target_q: %f\t| q_incr: %f\t| q_incr_count: %d", fres, iir_filter->target_fres, fres_incr, fres_incr_count, q, iir_filter->target_q, q_incr, q_incr_count);
                 
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
