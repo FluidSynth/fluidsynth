@@ -2508,7 +2508,8 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         checksum += data[i];
     }
     checksum = 0x80 - (checksum & 0x7F);
-    if (checksum != data[len - 1])
+    // An intermediate checksum of 0x80 must be treated as zero! #1578
+    if ((checksum & 0x7F) != data[len - 1])
     {
         FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;
