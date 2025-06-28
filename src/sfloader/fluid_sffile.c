@@ -731,7 +731,9 @@ static int process_info(SFData *sf, int size)
                  * within the INFO-list chunk should simply be ignored.
                  * Other unknown chunks or sub-chunks are illegal and should be
                  * treated as structural errors.*/
-                FLUID_LOG(FLUID_WARN, "Ignoring unknown chunk ID in INFO chunk");
+                unsigned char *p = (unsigned char *)&chunk.id;
+                FLUID_LOG(FLUID_WARN, "Ignoring unknown chunk ID '%c%c%c%c' in INFO chunk",
+                          p[0], p[1], p[2], p[3]);
             }
 
             /* alloc for chunk fcc and da chunk */
