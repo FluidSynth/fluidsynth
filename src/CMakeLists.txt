@@ -69,10 +69,6 @@ if ( WINMIDI_SUPPORT )
   set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
 endif ( WINMIDI_SUPPORT )
 
-if ( SDL2_SUPPORT )
-  set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
-endif ( SDL2_SUPPORT )
-
 if ( SDL3_SUPPORT )
   set ( fluid_sdl3_SOURCES drivers/fluid_sdl3.c )
 endif ( SDL3_SUPPORT )
@@ -258,7 +254,6 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_wasapi_SOURCES}
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
-    ${fluid_sdl2_SOURCES}
     ${fluid_sdl3_SOURCES}
     ${fluid_libinstpatch_SOURCES}
     ${fluid_osal_SOURCES}
@@ -418,11 +413,6 @@ if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
 endif()
 
-if ( SDL2_SUPPORT )
-    target_include_directories ( libfluidsynth-OBJ PRIVATE ${SDL2_INCLUDE_DIRS} )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${SDL2_LIBRARIES} )
-endif()
-
 if ( SDL3_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
 endif()
@@ -517,11 +507,6 @@ endif()
 
 if ( TARGET GLib2::glib-2 ) # because g_file_test()
     target_link_libraries ( fluidsynth PRIVATE GLib2::glib-2 )
-endif()
-
-if ( SDL2_SUPPORT ) # because SDL_Init() etc.
-    target_include_directories ( fluidsynth PRIVATE ${SDL2_INCLUDE_DIRS} )
-    target_link_libraries ( fluidsynth PRIVATE ${SDL2_LIBRARIES} )
 endif()
 
 if ( SDL3_SUPPORT )

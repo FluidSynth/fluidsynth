@@ -37,11 +37,6 @@
 #define SDL_OK 1
 #endif
 
-#if SDL2_SUPPORT
-#include <SDL.h>
-#define SDL_OK 0
-#endif
-
 #if PIPEWIRE_SUPPORT
 #include <pipewire/pipewire.h>
 #endif
@@ -401,7 +396,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#if SDL2_SUPPORT || SDL3_SUPPORT
+#if SDL3_SUPPORT
     // Tell SDL that it shouldn't intercept signals, otherwise SIGINT and SIGTERM won't quit fluidsynth
     i = SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     if(i != SDL_OK)

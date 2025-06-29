@@ -205,9 +205,6 @@
 /* Define to enable Windows MIDI driver */
 #cmakedefine WINMIDI_SUPPORT @WINMIDI_SUPPORT@
 
-/* Define to enable SDL2 audio driver */
-#cmakedefine SDL2_SUPPORT @SDL2_SUPPORT@
-
 /* Define to enable SDL3 audio driver */
 #cmakedefine SDL3_SUPPORT @SDL3_SUPPORT@
 
