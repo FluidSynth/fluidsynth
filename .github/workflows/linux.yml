@@ -59,6 +59,7 @@ jobs:
       run: |
         sudo apt-get -yq --no-install-suggests --no-install-recommends install \
           clang-12 \
+          libclang-rt-12-dev
           clang-tidy \
           cmake \
           cmake-data \
