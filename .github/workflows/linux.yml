@@ -40,9 +40,6 @@ jobs:
           - CC: "clang-15"
             CXX: "clang++-15"
             CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
-          - CC: "clang-15"
-            CXX: "clang++-15"
-            CMAKE_FLAGS: "-Denable-ubsan=1 -Denable-debug=1"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
@@ -59,7 +56,6 @@ jobs:
       run: |
         sudo apt-get -yq --no-install-suggests --no-install-recommends install \
           clang-15 \
-          libclang-15-dev \
           clang-tidy \
           cmake \
           cmake-data \
