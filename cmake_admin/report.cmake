@@ -86,12 +86,6 @@ else ( PULSE_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PulseAudio:            no\n" )
 endif ( PULSE_SUPPORT )
 
-if ( SDL2_SUPPORT )
-    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  yes\n" )
-else ( SDL2_SUPPORT )
-    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  no\n" )
-endif ( SDL2_SUPPORT )
-
 if ( SDL3_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL3:                  yes\n" )
 else ( SDL3_SUPPORT )
