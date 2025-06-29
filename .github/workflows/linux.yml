@@ -34,14 +34,14 @@ jobs:
         CXX: [""]
         CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold", "-Dosal=cpp11 -Denable-libinstpatch=0 -Denable-ladspa=0"]
         include:
-          - CC: "clang-12"
-            CXX: "clang++-12"
+          - CC: "clang-15"
+            CXX: "clang++-15"
             CMAKE_FLAGS: ""
-          - CC: "clang-12"
-            CXX: "clang++-12"
+          - CC: "clang-15"
+            CXX: "clang++-15"
             CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
-          - CC: "clang-12"
-            CXX: "clang++-12"
+          - CC: "clang-15"
+            CXX: "clang++-15"
             CMAKE_FLAGS: "-Denable-ubsan=1 -Denable-debug=1"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
@@ -58,8 +58,8 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get -yq --no-install-suggests --no-install-recommends install \
-          clang-12 \
-          libclang-rt-12-dev
+          clang-15 \
+          libclang-15-dev \
           clang-tidy \
           cmake \
           cmake-data \
