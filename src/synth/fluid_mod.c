@@ -210,7 +210,7 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
  * @return Transform type, see #fluid_mod_transforms
  */
 int
-fluid_mod_get_transform(fluid_mod_t *mod)
+fluid_mod_get_transform(const fluid_mod_t *mod)
 {
     return (int) mod->trans;
 }

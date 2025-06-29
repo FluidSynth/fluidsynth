@@ -95,7 +95,7 @@ enum fluid_mod_src
  * @note For return values that exceed the mentioned range, the behavior is unspecified
  * (i.e. it may be honored, it may be clipped, ignored, the entire modulator may be disabled, etc.).
  */
-typedef double (*fluid_mod_mapping_t)(fluid_mod_t* mod, double value, int is_src1, void* data);
+typedef double (*fluid_mod_mapping_t)(const fluid_mod_t* mod, double value, int is_src1, void* data);
 
 /** @startlifecycle{Modulator} */
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);
@@ -117,7 +117,7 @@ FLUIDSYNTH_API int fluid_mod_get_source2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_dest(const fluid_mod_t *mod);
 FLUIDSYNTH_API double fluid_mod_get_amount(const fluid_mod_t *mod);
-FLUIDSYNTH_API int fluid_mod_get_transform(fluid_mod_t *mod);
+FLUIDSYNTH_API int fluid_mod_get_transform(const fluid_mod_t *mod);
 
 FLUIDSYNTH_API int fluid_mod_test_identity(const fluid_mod_t *mod1, const fluid_mod_t *mod2);
 FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl);
