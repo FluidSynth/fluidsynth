@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_midi.h"
@@ -2688,8 +2687,8 @@ int fluid_player_get_midi_tempo(fluid_player_t *player)
     /* look if the player is internally synced */
     if(fluid_atomic_int_get(&player->sync_mode))
     {
-        midi_tempo = (int)((float)fluid_atomic_int_get(&player->miditempo)/
-                           fluid_atomic_float_get(&player->multempo));
+        int tempo = fluid_atomic_int_get(&player->miditempo);
+        midi_tempo = (float)tempo / fluid_atomic_float_get(&player->multempo);
     }
 
     return midi_tempo;

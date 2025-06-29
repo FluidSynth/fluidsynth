@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_iir_filter.h"
@@ -295,7 +294,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
                            fluid_real_t output_rate,
                            fluid_real_t fres_mod)
 {
-    unsigned int calc_coeff_flag = FALSE;
+    bool calc_coeff_flag = false;
     fluid_real_t fres, fres_diff;
     
     if(iir_filter->type == FLUID_IIR_DISABLED)
@@ -334,7 +333,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     if(iir_filter->filter_startup)
     {
         // The filter was just starting up, make sure to calculate initial coefficients for the initial Q value, even though the fres may not have changed
-        calc_coeff_flag = TRUE;
+        calc_coeff_flag = true;
         
         iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
@@ -357,7 +356,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
 #endif
 
         // The filter coefficients have to be recalculated (filter cutoff has changed).
-        calc_coeff_flag = TRUE;
+        calc_coeff_flag = true;
     }
     else
     {

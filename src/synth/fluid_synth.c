@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_synth.h"
@@ -239,7 +238,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
 
-    fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_int(settings, "synth.threadsafe-api", FLUID_THREAD_SAFE_CAPABLE, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
     fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
@@ -1890,6 +1889,44 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                     }
                 }
             }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 1 && synth->bank_select == FLUID_BANK_STYLE_GS)
+            {
+                int nrpn2cc = -1;
+                int nrpn_lsb = fluid_channel_get_cc(chan, NRPN_LSB);
+                // cf. SC8850 owner's manual pages 227 + 228
+                switch(nrpn_lsb)
+                {
+                case 8:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL7;
+                    break;
+                case 9:
+                    // vibrato depth
+                    nrpn2cc = SOUND_CTRL8;
+                    break;
+                case 10:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL9;
+                    break;
+                default:
+                    break;
+                }
+                if(nrpn2cc != -1)
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Translating Roland GS NRPN %d to CC %d", nrpn_lsb, nrpn2cc);
+                    }
+                    fluid_synth_cc(synth, channum, nrpn2cc, msb_value);
+                }
+                else
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown Roland GS NRPN %d", nrpn_lsb);
+                    }
+                }
+            }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
         {
@@ -2471,7 +2508,8 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         checksum += data[i];
     }
     checksum = 0x80 - (checksum & 0x7F);
-    if (checksum != data[len - 1])
+    // An intermediate checksum of 0x80 must be treated as zero! #1578
+    if ((checksum & 0x7F) != data[len - 1])
     {
         FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;

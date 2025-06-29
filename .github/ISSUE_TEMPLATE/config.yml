@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "📖 Fluidsynth Wiki"
+    url: "https://github.com/FluidSynth/fluidsynth/wiki"
+    about: "Looking for documentation or developer resources?"
+  - name: "⁉️ GitHub Community Support"
+    url: "https://github.com/FluidSynth/fluidsynth/discussions"
+    about: "Need help or want to discuss ideas?"
+  - name: "✉️ Mailing List"
+    url: "https://lists.nongnu.org/mailman/listinfo/fluid-dev"
+    about: "Still need help or want to discuss ideas, but you prefer EMails or don't have a Github account?"
