@@ -1661,15 +1661,15 @@ static int fluid_strallocv_internal(char ***current, int *count, int add)
 int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
 {
     enum parse_state {
-        NORMAL,
-        ESCAPE_NORMAL,
-        ESCAPE_DOUBLE_QUOTE,
-        SINGLE_QUOTE,
-        DOUBLE_QUOTE,
-        COMMENT
+        STATE_NORMAL,
+        STATE_ESCAPE_NORMAL,
+        STATE_ESCAPE_DOUBLE_QUOTE,
+        STATE_SINGLE_QUOTE,
+        STATE_DOUBLE_QUOTE,
+        STATE_COMMENT
     };
 
-    enum parse_state state = NORMAL;
+    enum parse_state state = STATE_NORMAL;
     size_t line_length;
     char *buffer = NULL;
     char *token = NULL;
@@ -1696,23 +1696,23 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
     do
     {
         current = *line++;
-        if (current == 0 && state != NORMAL)
+        if (current == 0 && state != STATE_NORMAL)
             break;
 
         switch (state)
         {
-        case NORMAL:
+        case STATE_NORMAL:
         {
             switch (current)
             {
             case '\\':
-                state = ESCAPE_NORMAL;
+                state = STATE_ESCAPE_NORMAL;
                 break;
             case '\'':
-                state = SINGLE_QUOTE;
+                state = STATE_SINGLE_QUOTE;
                 break;
             case '"':
-                state = DOUBLE_QUOTE;
+                state = STATE_DOUBLE_QUOTE;
                 break;
 
             case ' ':
@@ -1740,7 +1740,7 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
             case '#':
                 if (length == 0)
                 {
-                    state = COMMENT;
+                    state = STATE_COMMENT;
                     break;
                 }
 
@@ -1754,9 +1754,9 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
             break;
         }
 
-        case ESCAPE_NORMAL:
+        case STATE_ESCAPE_NORMAL:
         {
-            state = NORMAL;
+            state = STATE_NORMAL;
             switch (current)
             {
             case '\n':
@@ -1768,9 +1768,9 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
             break;
         }
 
-        case ESCAPE_DOUBLE_QUOTE:
+        case STATE_ESCAPE_DOUBLE_QUOTE:
         {
-            state = DOUBLE_QUOTE;
+            state = STATE_DOUBLE_QUOTE;
             switch (current)
             {
             case '"':
@@ -1796,12 +1796,12 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
             break;
         }
 
-        case SINGLE_QUOTE:
+        case STATE_SINGLE_QUOTE:
         {
             switch (current)
             {
             case '\'':
-                state = NORMAL;
+                state = STATE_NORMAL;
                 break;
             default:
                 append();
@@ -1810,15 +1810,15 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
             break;
         }
 
-        case DOUBLE_QUOTE:
+        case STATE_DOUBLE_QUOTE:
         {
             switch (current)
             {
             case '\\':
-                state = ESCAPE_DOUBLE_QUOTE;
+                state = STATE_ESCAPE_DOUBLE_QUOTE;
                 break;
             case '"':
-                state = NORMAL;
+                state = STATE_NORMAL;
                 break;
             default:
                 append();
@@ -1827,14 +1827,14 @@ int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
             break;
         }
 
-        case COMMENT:
+        case STATE_COMMENT:
             break;
         }
     } while (current != 0);
 
     FLUID_FREE(buffer);
 
-    if (state != NORMAL && state != COMMENT)
+    if (state != STATE_NORMAL && state != STATE_COMMENT)
     {
         fluid_strfreev_internal(*argvp);
         return FALSE;
