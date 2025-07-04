@@ -107,16 +107,17 @@ struct _fluid_defsfont_t
     unsigned int samplesize;  /* the size of the sample data in bytes */
     short *sampledata;        /* the sample data, loaded in ram */
 
-    unsigned int sample24pos;		/* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
-    unsigned int sample24size;		/* length within sffd of the sm24 chunk */
+    unsigned int sample24pos;       /* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
+    unsigned int sample24size;      /* length within sffd of the sm24 chunk */
     char *sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
 
-    fluid_sfont_t *sfont;      /* pointer to parent sfont */
-    fluid_list_t *sample;      /* the samples in this soundfont */
-    fluid_list_t *preset;      /* the presets of this soundfont */
-    fluid_list_t *inst;        /* the instruments of this soundfont */
-    int mlock;                 /* Should we try memlock (avoid swapping)? */
-    int dynamic_samples;       /* Enables dynamic sample loading if set */
+    fluid_sfont_t *sfont;           /* pointer to parent sfont */
+    fluid_list_t *sample;           /* the samples in this soundfont */
+    fluid_list_t *preset;           /* the presets of this soundfont */
+    fluid_list_t *inst;             /* the instruments of this soundfont */
+    fluid_mod_t *default_mod_list;  /* the default modulator list of this soundfont */
+    int mlock;                      /* Should we try memlock (avoid swapping)? */
+    int dynamic_samples;            /* Enables dynamic sample loading if set */
 
     fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 };
@@ -147,6 +148,7 @@ struct _fluid_defpreset_t
     unsigned int num;                     /* the preset number */
     fluid_preset_zone_t *global_zone;        /* the global zone of the preset */
     fluid_preset_zone_t *zone;               /* the chained list of preset zones */
+    fluid_mod_t *default_mod;             /* default mods for the soundfont */
     int pinned;                           /* preset samples pinned to sample cache? */
 };
 
