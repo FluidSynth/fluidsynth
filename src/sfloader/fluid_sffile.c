@@ -56,6 +56,7 @@
 #define ICOP_FCC    FLUID_FOURCC('I','C','O','P')
 #define ICMT_FCC    FLUID_FOURCC('I','C','M','T')
 #define ISFT_FCC    FLUID_FOURCC('I','S','F','T') /* and yet more info ids */
+#define DMOD_FCC    FLUID_FOURCC('D','M','O','D') // Default Modulators (https://github.com/spessasus/soundfont-proposals/blob/main/default_modulators.md)
 
 #define SNAM_FCC    FLUID_FOURCC('s','n','a','m')
 #define SMPL_FCC    FLUID_FOURCC('s','m','p','l') /* sample ids */
@@ -96,6 +97,7 @@ static const uint32_t idlist[] =
     ICOP_FCC,
     ICMT_FCC,
     ISFT_FCC,
+    DMOD_FCC,
 
     SNAM_FCC,
     SMPL_FCC,
@@ -649,11 +651,18 @@ static int process_info(SFData *sf, int size)
         uint32_t *fcc;
     } item;
     unsigned short ver;
+    fluid_list_t *dmod_list = new_fluid_list();
+    SFMod *dmod;
+    unsigned int count;
+    unsigned char *p;
+    sf->default_mod_list = dmod_list;
 
     while(size > 0)
     {
         READCHUNK(sf, &chunk);
         size -= 8;
+        // read the fourcc for debugging
+        p = (unsigned char *)&chunk.id;
 
         if(chunk.id == IFIL_FCC)
         {
@@ -712,6 +721,43 @@ static int process_info(SFData *sf, int size)
             sf->romver.minor = ver;
             FLUID_LOG(FLUID_DBG, "ROM Version: %hu.%hu", sf->version.major, sf->version.minor);
         }
+        else if (chunk.id == DMOD_FCC)
+        {
+            /* Default modulators chunk
+             * https://github.com/spessasus/soundfont-proposals/blob/main/default_modulators.md
+             */
+            if (chunk.size % SF_MOD_SIZE != 0 || size == 0)
+            {
+                FLUID_LOG(FLUID_ERR, "DMOD chunk has invalid size (%d bytes)", chunk.size);
+                return FALSE;
+            }
+
+
+            // read the modulators sequentially
+            count = (int)(chunk.size / SF_MOD_SIZE) - 1; // minus the terminal record
+            FLUID_LOG(FLUID_DBG, "Detected the DMOD chunk with %d modulators", count);
+            for(; count > 0; count--)
+            {
+
+                if((dmod = FLUID_NEW(SFMod)) == NULL)
+                {
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    return FALSE;
+                }
+
+                dmod_list->data = dmod;
+                READW(sf, dmod->src);
+                READW(sf, dmod->dest);
+                READW(sf, dmod->amount);
+                READW(sf, dmod->amtsrc);
+                READW(sf, dmod->trans);
+                dmod_list = fluid_list_next(dmod_list);
+            }
+
+            // terminal record
+            FSKIP(sf, SF_MOD_SIZE);
+
+        }
         else
         {
             if(chunkid(chunk.id) != UNKN_ID)
@@ -730,7 +776,6 @@ static int process_info(SFData *sf, int size)
                  * within the INFO-list chunk should simply be ignored.
                  * Other unknown chunks or sub-chunks are illegal and should be
                  * treated as structural errors.*/
-                unsigned char *p = (unsigned char *)&chunk.id;
                 FLUID_LOG(FLUID_WARN, "Ignoring unknown chunk ID '%c%c%c%c' in INFO chunk",
                           p[0], p[1], p[2], p[3]);
             }
@@ -752,6 +797,7 @@ static int process_info(SFData *sf, int size)
             {
                 return FALSE;
             }
+            FLUID_LOG(FLUID_DBG, "INFO chunk %c%c%c%c (%d bytes) -> %s", p[0], p[1], p[2], p[3], chunk.size, item.chr);
 
             /* force terminate info item */
             item.chr[chunk.size] = '\0';

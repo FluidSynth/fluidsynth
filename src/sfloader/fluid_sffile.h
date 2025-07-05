@@ -157,6 +157,7 @@ struct _SFData
     fluid_list_t *preset; /* linked list of preset info */
     fluid_list_t *inst; /* linked list of instrument info */
     fluid_list_t *sample; /* linked list of sample info */
+    fluid_list_t *default_mod_list; /* default modulator list */
 };
 
 /* functions */

@@ -175,8 +175,9 @@ struct _fluid_sample_t
     int amplitude_that_reaches_noise_floor_is_valid;      /**< Indicates if \a amplitude_that_reaches_noise_floor is valid (TRUE), set to FALSE initially to calculate. */
     double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */
 
-    unsigned int refcount;        /**< Count of voices using this sample */
-    int preset_count;             /**< Count of selected presets using this sample (used for dynamic sample loading) */
+    unsigned int refcount;             /**< Count of voices using this sample */
+    int preset_count;                  /**< Count of selected presets using this sample (used for dynamic sample loading) */
+    fluid_mod_t *default_modulators;   /**< Default soundfont modulators for this sample to allocate the voice for it. NULL will use the synth's defaults. */
 
     /**
      * Implement this function to receive notification when sample is no longer used.
