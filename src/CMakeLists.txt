@@ -449,11 +449,6 @@ install( TARGETS libfluidsynth-OBJ
 # Here are applied/linked the OBJECT library dependencies
 target_link_libraries ( libfluidsynth PRIVATE libfluidsynth-OBJ )
 
-if ( ANDROID )
-  target_link_options(libfluidsynth PRIVATE "-Wl,-z,max-page-size=16384")
-  target_link_options(libfluidsynth PRIVATE "-Wl,-z,common-page-size=16384")
-endif ( ANDROID )
-
 # ************ CLI program ************
 
 set ( fluidsynth_SOURCES fluidsynth.c )
