@@ -663,7 +663,7 @@ static int process_info(SFData *sf, int size)
     } item;
     unsigned short ver;
     unsigned char *p;
-    sf->default_mod_list = new_fluid_list();
+    sf->default_mod_list = NULL;
 
     while(size > 0)
     {

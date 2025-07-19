@@ -273,6 +273,8 @@ int delete_fluid_defsfont(fluid_defsfont_t *defsfont)
         delete_fluid_sample(sample);
     }
 
+    delete_fluid_list_mod(defsfont->default_mod_list);
+
     if(defsfont->sample)
     {
         delete_fluid_list(defsfont->sample);
