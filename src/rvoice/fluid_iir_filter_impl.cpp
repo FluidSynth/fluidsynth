@@ -17,6 +17,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+#include "fluid_sys.h"
 #include "fluid_iir_filter.h"
 #include "fluid_conv.h"
 
