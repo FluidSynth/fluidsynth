@@ -148,7 +148,6 @@ struct _fluid_defpreset_t
     unsigned int num;                     /* the preset number */
     fluid_preset_zone_t *global_zone;        /* the global zone of the preset */
     fluid_preset_zone_t *zone;               /* the chained list of preset zones */
-    fluid_mod_t *default_mod;             /* default mods for the soundfont */
     int pinned;                           /* preset samples pinned to sample cache? */
 };
 

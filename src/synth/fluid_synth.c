@@ -5298,12 +5298,10 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
     */
     {
         int mono = fluid_channel_is_playing_mono(channel);
-        int override_default_modulators = FALSE;
         fluid_mod_t *default_mod;
         if (sample->default_modulators != NULL)
         {
             default_mod = sample->default_modulators;
-            override_default_modulators = TRUE;
         }
         else
         {
@@ -5313,9 +5311,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
         while(default_mod != NULL)
         {
             if(
-                /* if SF explicitly wants the default vel2att modulator, keep it*/
-                override_default_modulators != TRUE &&
-                /* Otherwise, see if default_mod is the velocity_to_attenuation modulator */
+                /* See if default_mod is the velocity_to_attenuation modulator */
                 fluid_mod_test_identity(default_mod, &default_vel2att_mod) &&
                 // See if a replacement by custom_breath2att_modulator has been demanded
                 // for this channel

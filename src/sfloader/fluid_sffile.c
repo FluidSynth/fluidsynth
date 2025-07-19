@@ -471,6 +471,17 @@ void fluid_sffile_close(SFData *sf)
 
     delete_fluid_list(sf->info);
 
+    // clean up default modulators
+    entry = sf->default_mod_list;
+
+    while (entry)
+    {
+        FLUID_FREE(fluid_list_get(entry));
+        entry = fluid_list_next(entry);
+    }
+
+    delete_fluid_list(sf->default_mod_list);
+
     entry = sf->preset;
 
     while(entry)
@@ -651,11 +662,8 @@ static int process_info(SFData *sf, int size)
         uint32_t *fcc;
     } item;
     unsigned short ver;
-    fluid_list_t *dmod_list = new_fluid_list();
-    SFMod *dmod;
-    unsigned int count;
     unsigned char *p;
-    sf->default_mod_list = dmod_list;
+    sf->default_mod_list = new_fluid_list();
 
     while(size > 0)
     {
@@ -726,6 +734,8 @@ static int process_info(SFData *sf, int size)
             /* Default modulators chunk
              * https://github.com/spessasus/soundfont-proposals/blob/main/default_modulators.md
              */
+            SFMod *dmod;
+            unsigned int count;
             if (chunk.size % SF_MOD_SIZE != 0 || size == 0)
             {
                 FLUID_LOG(FLUID_ERR, "DMOD chunk has invalid size (%d bytes)", chunk.size);
@@ -734,7 +744,7 @@ static int process_info(SFData *sf, int size)
 
 
             // read the modulators sequentially
-            count = (int)(chunk.size / SF_MOD_SIZE) - 1; // minus the terminal record
+            count = chunk.size / SF_MOD_SIZE - 1; // minus the terminal record
             FLUID_LOG(FLUID_DBG, "Detected the DMOD chunk with %d modulators", count);
             for(; count > 0; count--)
             {
@@ -745,13 +755,12 @@ static int process_info(SFData *sf, int size)
                     return FALSE;
                 }
 
-                dmod_list->data = dmod;
                 READW(sf, dmod->src);
                 READW(sf, dmod->dest);
                 READW(sf, dmod->amount);
                 READW(sf, dmod->amtsrc);
                 READW(sf, dmod->trans);
-                dmod_list = fluid_list_next(dmod_list);
+                sf->default_mod_list = fluid_list_prepend(sf->default_mod_list, dmod);
             }
 
             // terminal record
