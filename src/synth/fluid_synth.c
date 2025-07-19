@@ -5298,7 +5298,15 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
     */
     {
         int mono = fluid_channel_is_playing_mono(channel);
-        fluid_mod_t *default_mod = synth->default_mod;
+        fluid_mod_t *default_mod;
+        if (sample->default_modulators != NULL)
+        {
+            default_mod = sample->default_modulators;
+        }
+        else
+        {
+            default_mod = synth->default_mod;
+        }
 
         while(default_mod != NULL)
         {
