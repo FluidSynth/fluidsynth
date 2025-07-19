@@ -70,6 +70,7 @@ set(DSPINTERP_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dsp_interp")
 set(DYNSAM_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dynamic-sample-loading")
 set(BANKSELECT_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/midi-bank-select")
 set(STACKEDSF_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/stacked_sf2")
+set(SFE_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/sfe")
 
 if(LIBSNDFILE_SUPPORT)
     set(FEXT "wav")
@@ -81,7 +82,7 @@ endif()
 add_custom_target(check_manual)
 
 add_custom_target(create_iir_dir
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR} ${SFE_RENDER_DIR}
     VERBATIM)
 
 add_custom_target(render1415
@@ -316,6 +317,14 @@ add_custom_target(renderBankSelect
     VERBATIM
 )
 
+add_custom_target(renderDMOD
+    COMMAND fluidsynth -R 0 -C 0 -g 0.2 -F "${SFE_RENDER_DIR}/DMOD.${FEXT}" DMOD.sf2 "test-rpn-00-00-pitch-bend-range.mid"
+    COMMENT "Rendering Test MIDI for DMOD SF2"
+    DEPENDS fluidsynth create_iir_dir
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sfe/dmod"
+    VERBATIM
+)
+
 if ( LIBINSTPATCH_SUPPORT )
     add_custom_target(renderStreetwise
         COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${STACKEDSF_RENDER_DIR}/Streetwise.${FEXT}" "Streetwise.mid" ${GENERAL_USER_GS2} "Streetwise.dls"
@@ -355,4 +364,5 @@ add_dependencies(check_manual render1481)
 add_dependencies(check_manual renderStreetwise)
 add_dependencies(check_manual renderGeneralUserDemo)
 add_dependencies(check_manual renderBankSelect)
+add_dependencies(check_manual renderDMOD)
 
