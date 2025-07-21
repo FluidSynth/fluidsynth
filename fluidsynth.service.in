@@ -26,7 +26,7 @@ NotifyAccess=main
 Environment=OTHER_OPTS= SOUND_FONT=
 EnvironmentFile=@FLUID_DAEMON_ENV_FILE@
 EnvironmentFile=-%h/.config/fluidsynth
-ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/fluidsynth -is $OTHER_OPTS "$SOUND_FONT"
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/fluidsynth -is $OTHER_OPTS "${SOUND_FONT}"
 ExecStartPre=touch /run/lock/fluidsynth/fluidsynth.lock
 ExecStopPost=rm -f /run/lock/fluidsynth/fluidsynth.lock
 
