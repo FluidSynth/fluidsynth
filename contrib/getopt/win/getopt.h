@@ -44,11 +44,13 @@ EXPRESSLY ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 		#undef _GETOPT_API
 	#endif
 
+	// Mod for fluidsynth: define STATIC_GETOPT to force internal linkage of getopt and uncomment the warning below
+	// (we are also an LGPL project, static linking is absolutely fine for us)
 	#define STATIC_GETOPT 1
 	#if defined(EXPORTS_GETOPT) && defined(STATIC_GETOPT)
 		#error "The preprocessor definitions of EXPORTS_GETOPT and STATIC_GETOPT can only be used individually"
 	#elif defined(STATIC_GETOPT)
-		#pragma message("Warning static builds of getopt violate the Lesser GNU Public License")
+		//#pragma message("Warning static builds of getopt violate the Lesser GNU Public License")
 		#define _GETOPT_API
 	#elif defined(EXPORTS_GETOPT)
 		#pragma message("Exporting getopt library")
@@ -123,7 +125,9 @@ _END_EXTERN_C
 	#undef _GETOPT_THROW
 	#undef _GETOPT_API
 
-	#ifdef _UNICODE
+	// Mod for fluidsynth: we do not deal with wchar, all args are converted to UTF8 multibyte
+	//#ifdef _UNICODE
+	#if 0
 		#define getopt getopt_w
 		#define getopt_long getopt_long_w
 		#define getopt_long_only getopt_long_only_w
