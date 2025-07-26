@@ -115,11 +115,10 @@ enum fluid_gen_type
      */
     GEN_PITCH,
 
-    GEN_CUSTOM_BALANCE,          /**< Balance @note Not a real SoundFont generator */
+    GEN_CUSTOM_BALANCE,          /**< Balance @note Not a "standard" SoundFont generator */
     /* non-standard generator for an additional custom high- or low-pass filter */
-    GEN_CUSTOM_FILTERFC,		/**< Custom filter cutoff frequency */
-    GEN_CUSTOM_FILTERQ,		/**< Custom filter Q */
-
+    GEN_CUSTOM_FILTERFC,		/**< Filter cutoff frequency in absolute cents used for custom IIR filter, see fluid_synth_set_custom_filter(). @note Not a "standard" SoundFont generator */
+    GEN_CUSTOM_FILTERQ,		/**< Filter Q used for custom IIR filter, see fluid_synth_set_custom_filter(). @note Not a "standard" SoundFont generator */
     GEN_LAST			/**< @internal Value defines the count of generators (#fluid_gen_type)
                           @warning This symbol is not part of the public API and ABI
                           stability guarantee and may change at any time! */

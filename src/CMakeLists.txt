@@ -69,10 +69,6 @@ if ( WINMIDI_SUPPORT )
   set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
 endif ( WINMIDI_SUPPORT )
 
-if ( SDL2_SUPPORT )
-  set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
-endif ( SDL2_SUPPORT )
-
 if ( SDL3_SUPPORT )
   set ( fluid_sdl3_SOURCES drivers/fluid_sdl3.c )
 endif ( SDL3_SUPPORT )
@@ -124,9 +120,7 @@ set ( libfluidsynth_SOURCES
     utils/fluid_settings.h
     utils/fluidsynth_priv.h
     utils/fluid_sys.c
-    utils/fluid_sys_${osal}.c
     utils/fluid_sys.h
-    utils/fluid_sys_${osal}.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h
@@ -187,10 +181,18 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.c
     bindings/fluid_ladspa.h
 )
+
+set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
+if ( osal STREQUAL "cpp11" )
+  set ( fluid_osal_SOURCES ${fluid_osal_SOURCES} utils/fluid_sys_${osal}.cpp )
+else ( )
+  set ( fluid_osal_SOURCES ${fluid_osal_SOURCES} utils/fluid_sys_${osal}.c )
+endif ( )
+
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-  set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
+  set_source_files_properties(rvoice/fluid_iir_filter_impl.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
 elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
-  set_source_files_properties(rvoice/fluid_iir_filter.cpp PROPERTIES COMPILE_FLAGS "/fp:fast")
+  set_source_files_properties(rvoice/fluid_iir_filter_impl.cpp PROPERTIES COMPILE_FLAGS "/fp:fast")
 endif ( )
 
 
@@ -252,9 +254,9 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_wasapi_SOURCES}
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
-    ${fluid_sdl2_SOURCES}
     ${fluid_sdl3_SOURCES}
     ${fluid_libinstpatch_SOURCES}
+    ${fluid_osal_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -411,11 +413,6 @@ if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
 endif()
 
-if ( SDL2_SUPPORT )
-    target_include_directories ( libfluidsynth-OBJ PRIVATE ${SDL2_INCLUDE_DIRS} )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC ${SDL2_LIBRARIES} )
-endif()
-
 if ( SDL3_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
 endif()
@@ -510,11 +507,6 @@ endif()
 
 if ( TARGET GLib2::glib-2 ) # because g_file_test()
     target_link_libraries ( fluidsynth PRIVATE GLib2::glib-2 )
-endif()
-
-if ( SDL2_SUPPORT ) # because SDL_Init() etc.
-    target_include_directories ( fluidsynth PRIVATE ${SDL2_INCLUDE_DIRS} )
-    target_link_libraries ( fluidsynth PRIVATE ${SDL2_LIBRARIES} )
 endif()
 
 if ( SDL3_SUPPORT )

@@ -384,6 +384,8 @@ unsigned int fluid_curtime(void)
 }
 
 
+#if !OSAL_embedded
+
 #if defined(_WIN32)      /* Windoze specific stuff */
 
 void
@@ -407,7 +409,7 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#else   /* POSIX stuff..  Nice POSIX..  Good POSIX. */
+#else /* POSIX stuff..  Nice POSIX..  Good POSIX. */
 
 void
 fluid_thread_self_set_prio(int prio_level)
@@ -438,7 +440,13 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#ifdef FPE_CHECK
+
+#endif	// #else    (its POSIX)
+
+#endif	// #if !OSAL_embedded
+
+
+#if defined(FPE_CHECK) && !defined(_WIN32) && !defined(__OS2__)
 
 /***************************************************************
  *
@@ -505,10 +513,7 @@ void fluid_clear_fpe_i386(void)
     _FPU_CLR_SW();
 }
 
-#endif	// ifdef FPE_CHECK
-
-
-#endif	// #else    (its POSIX)
+#endif	// #if defined(FPE_CHECK) && !defined(_WIN32) && !defined(__OS2__)
 
 
 /***************************************************************
@@ -1079,12 +1084,14 @@ int
 fluid_timer_is_running(const fluid_timer_t *timer)
 {
     // for unit test usage only
-    return timer->callback != NULL;
+    return timer != NULL && timer->callback != NULL;
 }
 
 long fluid_timer_get_interval(const fluid_timer_t * timer)
 {
     // for unit test usage only
+    if (timer == NULL)
+        return 0;
     return timer->msec;
 }
 
@@ -1629,3 +1636,224 @@ char* fluid_get_windows_error(void)
 #endif
 }
 #endif
+
+static int fluid_strallocv_internal(char ***current, int *count, int add)
+{
+    int i;
+    char **new;
+
+    new = FLUID_REALLOC(*current, sizeof(char *) * (*count + add));
+    if (new == NULL)
+    {
+        if (*current != NULL)
+            fluid_strfreev_internal(*current);
+        return FALSE;
+    }
+
+    for (i = 0; i < add; i++)
+        new[*count + i] = NULL;
+
+    *current = new;
+    *count += add;
+    return TRUE;
+}
+
+int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
+{
+    enum parse_state {
+        STATE_NORMAL,
+        STATE_ESCAPE_NORMAL,
+        STATE_ESCAPE_DOUBLE_QUOTE,
+        STATE_SINGLE_QUOTE,
+        STATE_DOUBLE_QUOTE,
+        STATE_COMMENT
+    };
+
+    enum parse_state state = STATE_NORMAL;
+    size_t line_length;
+    char *buffer = NULL;
+    char *token = NULL;
+    int length = 0;
+    int max = 0;
+    char current;
+
+    if (line == NULL || argcp == NULL || argvp == NULL)
+        return FALSE;
+
+    line_length = strlen(line);
+    if (line_length == 0)
+        return FALSE;
+
+    buffer = (char *)FLUID_MALLOC(line_length + 1);
+    if (buffer == NULL)
+        return FALSE;
+
+    *argcp = 0;
+    *argvp = NULL;
+
+    #define append() buffer[length++] = current;
+
+    do
+    {
+        current = *line++;
+        if (current == 0 && state != STATE_NORMAL)
+            break;
+
+        switch (state)
+        {
+        case STATE_NORMAL:
+        {
+            switch (current)
+            {
+            case '\\':
+                state = STATE_ESCAPE_NORMAL;
+                break;
+            case '\'':
+                state = STATE_SINGLE_QUOTE;
+                break;
+            case '"':
+                state = STATE_DOUBLE_QUOTE;
+                break;
+
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\0':
+                if (length == 0)
+                    break;
+
+                buffer[length] = 0;
+                token = FLUID_STRDUP(buffer);
+
+                if (token == NULL || (*argcp >= max && !fluid_strallocv_internal(argvp, &max, 10)))
+                {
+                    FLUID_FREE(token);
+                    FLUID_FREE(buffer);
+                    return FALSE;
+                }
+
+                buffer[length] = 0;
+                (*argvp)[(*argcp)++] = token;
+                length = 0;
+                break;
+
+            case '#':
+                if (length == 0)
+                {
+                    state = STATE_COMMENT;
+                    break;
+                }
+
+                // fall through
+
+            default:
+                append();
+                break;
+            }
+
+            break;
+        }
+
+        case STATE_ESCAPE_NORMAL:
+        {
+            state = STATE_NORMAL;
+            switch (current)
+            {
+            case '\n':
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case STATE_ESCAPE_DOUBLE_QUOTE:
+        {
+            state = STATE_DOUBLE_QUOTE;
+            switch (current)
+            {
+            case '"':
+            case '\\':
+            /* the ones below aren't useful, they are only here to mimic GLib */
+            case '`':
+            case '$':
+            case '\n':
+            {
+                append();
+                break;
+            }
+
+            default:
+            {
+                /* fill back the dropped backslash, this does not increase length  */
+                buffer[length++] = '\\';
+                append();
+                break;
+            }
+            }
+
+            break;
+        }
+
+        case STATE_SINGLE_QUOTE:
+        {
+            switch (current)
+            {
+            case '\'':
+                state = STATE_NORMAL;
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case STATE_DOUBLE_QUOTE:
+        {
+            switch (current)
+            {
+            case '\\':
+                state = STATE_ESCAPE_DOUBLE_QUOTE;
+                break;
+            case '"':
+                state = STATE_NORMAL;
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case STATE_COMMENT:
+            break;
+        }
+    } while (current != 0);
+
+    FLUID_FREE(buffer);
+
+    if (state != STATE_NORMAL && state != STATE_COMMENT)
+    {
+        fluid_strfreev_internal(*argvp);
+        return FALSE;
+    }
+
+    return *argcp > 0;
+}
+
+void fluid_strfreev_internal(char **argvp)
+{
+    int i = 0;
+
+    if (argvp == NULL)
+        return;
+
+    for (; argvp[i] != NULL; i++)
+    {
+        FLUID_FREE(argvp[i]);
+    }
+
+    FLUID_FREE(argvp);
+}

@@ -17,6 +17,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+#include "fluid_sys.h"
 #include "fluid_iir_filter.h"
 #include "fluid_conv.h"
 
@@ -159,7 +160,7 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
-    if (iir_filter->type == FLUID_IIR_DISABLED || FLUID_FABS(iir_filter->last_q) < Q_MIN)
+    if (iir_filter->type == FLUID_IIR_DISABLED || iir_filter->last_q < Q_MIN)
     {
         return;
     }
@@ -188,17 +189,6 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
 
         /* filter (implement the voice filter according to SoundFont standard) */
 
-        /* Check for denormal number (too close to zero). */
-        if (FLUID_FABS(dsp_hist1) < 1e-20f)
-        {
-            dsp_hist1 = 0.0f; /* FIXME JMG - Is this even needed? */
-        }
-
-        /* Two versions of the filter loop. One, while the filter is
-         * changing towards its new setting. The other, if the filter
-         * doesn't change.
-         */
-
         unsigned int dsp_i;
         for (dsp_i = 0; dsp_i < count; dsp_i++)
         {
@@ -207,6 +197,14 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
             fluid_real_t sample = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
             dsp_hist2 = dsp_hist1;
             dsp_hist1 = dsp_centernode;
+
+            FLUID_ASSERT(dsp_hist1 == dsp_hist1);
+            FLUID_ASSERT(sample == sample);
+            FLUID_ASSERT(dsp_a1 == dsp_a1);
+            FLUID_ASSERT(dsp_a2 == dsp_a2);
+            FLUID_ASSERT(dsp_b02 == dsp_b02);
+            FLUID_ASSERT(dsp_b1 == dsp_b1);
+            FLUID_ASSERT(q >= Q_MIN);
 
             /* Alternatively, it could be implemented in Transposed Direct Form II */
             // fluid_real_t dsp_input = dsp_buf[dsp_i];
@@ -235,20 +233,38 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_b
                 {
                     --q_incr_count;
                     q += q_incr;
+                    if(q < Q_MIN)
+                    {
+                        LOG_FILTER("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        LOG_FILTER("!!!OOPS!!! limited Q to its minimum value, was: %f", q);
+                        LOG_FILTER("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                        q_incr_count = 0;
+                        q = Q_MIN;
+                    }
                 }
-                
-                LOG_FILTER("last_fres: %.2f Hz  |  target_fres: %.2f Hz  |---|  last_q: %.4f  |  target_q: %.4f", iir_filter->last_fres, iir_filter->target_fres, iir_filter->last_q, iir_filter->target_q);
+
+                LOG_FILTER("fres: %.2f Hz  | target_fres: %.2f Hz | fres_incr: %f\t| fres_incr_count: %d\t|---| q: %f\t| target_q: %f\t| q_incr: %f\t| q_incr_count: %d", fres, iir_filter->target_fres, fres_incr, fres_incr_count, q, iir_filter->target_q, q_incr, q_incr_count);
                 
                 fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
             }
         }
 
-        iir_filter->hist1 = dsp_hist1;
-        iir_filter->hist2 = dsp_hist2;
         iir_filter->a1 = dsp_a1;
         iir_filter->a2 = dsp_a2;
         iir_filter->b02= dsp_b02;
         iir_filter->b1 = dsp_b1;
+
+        /* Check for denormal number (too close to zero). */
+        if (FLUID_FABS(dsp_hist1) < 1e-20f)
+        {
+            dsp_hist1 = 0.0f;
+        }
+        if (FLUID_FABS(dsp_hist2) < 1e-20f)
+        {
+            dsp_hist2 = 0.0f;
+        }
+        iir_filter->hist1 = dsp_hist1;
+        iir_filter->hist2 = dsp_hist2;
 
         iir_filter->last_fres = fres;
         iir_filter->fres_incr_count = fres_incr_count;
@@ -337,7 +353,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         
         iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
-        iir_filter->filter_startup = (FLUID_FABS(iir_filter->last_q) < Q_MIN); // filter coefficients will not be initialized when Q is small
+        iir_filter->filter_startup = (iir_filter->last_q < Q_MIN); // filter coefficients will not be initialized when Q is small
     }
     else if(FLUID_FABS(fres_diff) > (fluid_real_t)CENTS_STEP) // only smooth out fres when difference is "significant"
     {

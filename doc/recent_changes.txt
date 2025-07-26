@@ -1,6 +1,14 @@
 /*!
 
 \page RecentChanges Recent Changes
+\section NewIn2_5_0 What's new in 2.5.0?
+- #FLUID_MOD_SIN is now deprecated, use the newly added fluid_mod_set_custom_mapping()
+- A new mode for the custom IIR filter has been added: #FLUID_IIR_BEANLAND
+- fluid_mod_get_transform() now receives a <code>const</code> argument
+
+\section NewIn2_4_5 What's new in 2.4.5?
+- In order to use the sdl3 audio driver, the downstream application is responsible for calling <code>SDL_Init()</code> and <code>SDL_Quit()</code>, just like it was practice for the sdl2 audio driver. Fluidsynth may raise a warning if this isn't done, see \ref CreatingAudioDriver
+
 \section NewIn2_4_3 What's new in 2.4.3?
 - synth.note-cut has been introduced
 
