@@ -234,12 +234,12 @@ if ( WIN32 )
 endif ( WIN32 )
 
 set ( getopt_SOURCES "")
-if ( NOT HAVE_GETOPT_H )
+if ( WIN32 AND NOT HAVE_GETOPT_H )
     set ( getopt_SOURCES
-        "${FluidSynth_SOURCE_DIR}/contrib/getopt.c"
-        "${FluidSynth_SOURCE_DIR}/contrib/getopt.h"
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt_win.c"
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt_win.h"
     )
-endif ( NOT HAVE_GETOPT_H )
+endif ( WIN32 AND NOT HAVE_GETOPT_H )
 
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
