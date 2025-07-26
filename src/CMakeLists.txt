@@ -239,7 +239,7 @@ if ( NOT HAVE_GETOPT_H )
         "${FluidSynth_SOURCE_DIR}/contrib/getopt.c"
         "${FluidSynth_SOURCE_DIR}/contrib/getopt.h"
     )
-endif ( HAVE_GETOPT_H )
+endif ( NOT HAVE_GETOPT_H )
 
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
