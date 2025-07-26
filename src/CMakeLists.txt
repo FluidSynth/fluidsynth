@@ -234,10 +234,10 @@ if ( WIN32 )
 endif ( WIN32 )
 
 set ( getopt_SOURCES "")
-if ( HAVE_GETOPT_H )
+if ( NOT HAVE_GETOPT_H )
     set ( getopt_SOURCES
-        "contrib/getopt.c"
-        "contrib/getopt.h"
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt.c"
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt.h"
     )
 endif ( HAVE_GETOPT_H )
 
