@@ -233,14 +233,6 @@ if ( WIN32 )
     configure_file(${FluidSynth_SOURCE_DIR}/cmake_admin/VersionResource.rc.in ${VersionFilesOutputVariable} @ONLY)
 endif ( WIN32 )
 
-set ( getopt_SOURCES "")
-if ( WIN32 AND NOT HAVE_GETOPT_H )
-    set ( getopt_SOURCES
-        "${FluidSynth_SOURCE_DIR}/contrib/getopt_win.c"
-        "${FluidSynth_SOURCE_DIR}/contrib/getopt_win.h"
-    )
-endif ( WIN32 AND NOT HAVE_GETOPT_H )
-
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
     ${fluid_alsa_SOURCES}
@@ -266,7 +258,6 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_libinstpatch_SOURCES}
     ${fluid_osal_SOURCES}
     ${libfluidsynth_SOURCES}
-    ${getopt_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
@@ -475,8 +466,17 @@ if ( WIN32 )
     configure_file(${FluidSynth_SOURCE_DIR}/cmake_admin/VersionResource.rc.in ${VersionFilesOutputVariable} @ONLY)
 endif ( WIN32 )
 
+set ( getopt_SOURCES "")
+if ( WIN32 AND NOT HAVE_GETOPT_H )
+    set ( getopt_SOURCES
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt/win/getopt.c"
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt/win/getopt.h"
+    )
+endif ( WIN32 AND NOT HAVE_GETOPT_H )
+
 add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
+    ${getopt_SOURCES}
     ${VersionFilesOutputVariable}
 )
 
