@@ -501,6 +501,11 @@ target_include_directories ( fluidsynth PRIVATE
     ${FluidSynth_SOURCE_DIR}/include
 )
 
+if ( WIN32 AND NOT HAVE_GETOPT_H )
+  target_include_directories ( fluidsynth PRIVATE
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt/win"
+endif ( WIN32 AND NOT HAVE_GETOPT_H )
+
 target_link_libraries ( fluidsynth PRIVATE
     libfluidsynth
     ${FLUID_LIBS}
