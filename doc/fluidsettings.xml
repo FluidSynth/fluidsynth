@@ -402,9 +402,9 @@ Developers:
                   coreaudio (Mac OS X),<br />
                   dart (OS/2)
             </def>
-            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl2, sndman, wasapi, waveout</vals>
+            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl3, sndman, wasapi, waveout</vals>
             <desc>
-                The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> sdl2 and waveout are available since fluidsynth 2.1.
+                The audio system to be used. In order to use sdl3 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> waveout is available since fluidsynth 2.1.0, sdl3 since fluidsynth 2.4.4.
             </desc>
         </setting>
         <setting>
@@ -707,11 +707,11 @@ Developers:
             </desc>
         </setting>
         <setting>
-            <name>sdl2.device</name>
+            <name>sdl3.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for SDL2 driver output.
+                Device to use for SDL3 driver output.
             </desc>
         </setting>
         <setting>

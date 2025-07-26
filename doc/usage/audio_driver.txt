@@ -29,7 +29,7 @@ and a description.
   Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
   and later)
 - file: Driver to output audio to a file
-- sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
+- sdl3*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
   FreeBSD, Haiku, etc.)
 - pipewire**: PipeWire (Linux)
 
@@ -74,11 +74,12 @@ scheduling delays. There are additional settings for the audio subsystems used.
 For a full list of available <strong>audio driver settings</strong>, please
 refer to the \setting{audio} documentation.
 
-<strong>*Note:</strong> In order to use sdl2 as audio driver, the application
+<strong>*Note:</strong> In order to use sdl3 as audio driver, the application
 is responsible for initializing SDL (e.g. with SDL_Init()). This must be done
 <strong>before</strong> the first call to <code>new_fluid_settings()</code>!
 Also make sure to call SDL_Quit() after all fluidsynth instances have been
-destroyed.
+destroyed. A warning may be printed if sdl3 is available, but no such call
+has been made.
 
 <strong>**Note:</strong> In order to use pipeiwre as audio driver, the application
 is responsible for initializing PipeWire (e.g. with pw_init()). This must be done
@@ -86,4 +87,6 @@ is responsible for initializing PipeWire (e.g. with pw_init()). This must be don
 Also make sure to call pw_deinit() after all fluidsynth instances have been
 destroyed.
 
+Warnings raised by audio drivers during initialization via new_fluid_settings() can
+be suppressed by disabling those audio drivers with fluid_audio_driver_register().
 */

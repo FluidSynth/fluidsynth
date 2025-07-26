@@ -2687,8 +2687,8 @@ int fluid_player_get_midi_tempo(fluid_player_t *player)
     /* look if the player is internally synced */
     if(fluid_atomic_int_get(&player->sync_mode))
     {
-        midi_tempo = (int)((float)fluid_atomic_int_get(&player->miditempo)/
-                           fluid_atomic_float_get(&player->multempo));
+        int tempo = fluid_atomic_int_get(&player->miditempo);
+        midi_tempo = (float)tempo / fluid_atomic_float_get(&player->multempo);
     }
 
     return midi_tempo;

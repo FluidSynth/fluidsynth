@@ -172,13 +172,6 @@ void delete_fluid_dart_audio_driver(fluid_audio_driver_t *p);
 void fluid_dart_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
-#if SDL2_SUPPORT
-fluid_audio_driver_t *new_fluid_sdl2_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
-void delete_fluid_sdl2_audio_driver(fluid_audio_driver_t *p);
-void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings);
-#endif
-
 #if SDL3_SUPPORT
 fluid_audio_driver_t *new_fluid_sdl3_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);

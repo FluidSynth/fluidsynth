@@ -199,16 +199,6 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
-#if SDL2_SUPPORT
-    {
-        "sdl2",
-        new_fluid_sdl2_audio_driver,
-        NULL,
-        delete_fluid_sdl2_audio_driver,
-        fluid_sdl2_audio_driver_settings
-    },
-#endif
-
 #if AUFILE_SUPPORT
     {
         "file",

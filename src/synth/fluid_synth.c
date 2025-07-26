@@ -2508,7 +2508,8 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         checksum += data[i];
     }
     checksum = 0x80 - (checksum & 0x7F);
-    if (checksum != data[len - 1])
+    // An intermediate checksum of 0x80 must be treated as zero! #1578
+    if ((checksum & 0x7F) != data[len - 1])
     {
         FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;
@@ -5297,7 +5298,15 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
     */
     {
         int mono = fluid_channel_is_playing_mono(channel);
-        fluid_mod_t *default_mod = synth->default_mod;
+        fluid_mod_t *default_mod;
+        if (sample->default_modulators != NULL)
+        {
+            default_mod = sample->default_modulators;
+        }
+        else
+        {
+            default_mod = synth->default_mod;
+        }
 
         while(default_mod != NULL)
         {
@@ -7830,7 +7839,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod.flags1, 256);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(NULL, data, default_reverb_mod.flags1, 256, TRUE);
             FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
             break;
@@ -7838,7 +7847,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_CHORUSSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_chorus_mod.flags1, 256);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(NULL, data, default_chorus_mod.flags1, 256, TRUE);
             FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
             break;

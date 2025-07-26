@@ -50,29 +50,33 @@ extern "C" {
 typedef void *fluid_pointer_t;
 
 /* Endian detection */
+#ifdef WORDS_BIGENDIAN
+#define FLUID_IS_BIG_ENDIAN       true
+
+#define FLUID_LE32TOH(x)          (((0xFF000000 & (x)) >> 24) | ((0x00FF0000 & (x)) >> 8) | ((0x0000FF00 & (x)) << 8) | ((0x000000FF & (x)) << 24));
+#define FLUID_LE16TOH(x)          (((0xFF00 & (x)) >> 8) | ((0x00FF & (x)) << 8))
+#else
 #define FLUID_IS_BIG_ENDIAN       false
 
 #define FLUID_LE32TOH(x)          (x)
 #define FLUID_LE16TOH(x)          (x)
+#endif
 
 /*
  * Utility functions
  */
 
-#define FLUID_FILE_TEST_EXISTS 0
-#define FLUID_FILE_TEST_IS_REGULAR 1
+#define fluid_shell_parse_argv  fluid_shell_parse_argv_internal
+#define fluid_strfreev          fluid_strfreev_internal
 
-STUB_FUNCTION(fluid_file_test, bool, true, const char *path, int flags)
-STUB_FUNCTION(fluid_shell_parse_argv, bool, false, const char *command_line, int *argcp, char ***argvp)
-STUB_FUNCTION_VOID(fluid_strfreev, char **argvp)
-STUB_FUNCTION(fluid_strerror, const char *, "stub", int error)
-STUB_FUNCTION(fluid_setenv, int, -1, const char *name, const char *value, int overwrite)
+STUB_FUNCTION(fluid_strerror, const char *, "stub", (int error))
+STUB_FUNCTION(fluid_setenv, int, -1, (const char *name, const char *value, int overwrite))
 
 
 /* Time functions */
 
-STUB_FUNCTION_VOID(fluid_msleep, unsigned int msecs)
-STUB_FUNCTION_SILENT(fluid_utime, double, 0, void)
+STUB_FUNCTION_VOID(fluid_msleep, (unsigned int msecs))
+STUB_FUNCTION_SILENT(fluid_utime, double, 0, (void))
 
 
 /* Muteces */
@@ -213,18 +217,23 @@ typedef int fluid_thread_t;
 /* whether or not the implementation can be thread safe at all */
 #define FLUID_THREAD_SAFE_CAPABLE 0
 
-STUB_FUNCTION(new_fluid_thread, fluid_thread_t *, NULL, const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach)
-STUB_FUNCTION_VOID_SILENT(delete_fluid_thread, fluid_thread_t *thread)
-STUB_FUNCTION_SILENT(fluid_thread_join, int, FLUID_OK, fluid_thread_t *thread)
+STUB_FUNCTION(new_fluid_thread, fluid_thread_t *, NULL, (const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach))
+STUB_FUNCTION_VOID_SILENT(delete_fluid_thread, (fluid_thread_t *thread))
+STUB_FUNCTION_SILENT(fluid_thread_join, int, FLUID_OK, (fluid_thread_t *thread))
+STUB_FUNCTION_VOID_SILENT(fluid_thread_self_set_prio, (int prio_level))
 
 
 /* File access */
+#define FLUID_FILE_TEST_EXISTS      1
+#define FLUID_FILE_TEST_IS_REGULAR  2
+
 typedef struct {
     #undef st_mtime
     int st_mtime;
 } fluid_stat_buf_t;
 
-STUB_FUNCTION(fluid_stat, int, -1, const char *path, fluid_stat_buf_t *buffer)
+STUB_FUNCTION(fluid_file_test, bool, true, (const char *path, int flags))
+STUB_FUNCTION(fluid_stat, int, -1, (const char *path, fluid_stat_buf_t *buffer))
 
 
 /* Debug functions */
