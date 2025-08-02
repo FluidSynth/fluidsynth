@@ -5385,10 +5385,14 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
 }
 
 /**
- * Load a SoundFont file (filename is interpreted by SoundFont loaders).
- * The newly loaded SoundFont will be put on top of the SoundFont
+ * Load a SoundFont file.
+ *
+ * The @p filename is passed onto and interpreted by the SoundFont loaders.
+ * On success, the newly loaded SoundFont will be put on top of the SoundFont
  * stack. Presets are searched starting from the SoundFont on the
  * top of the stack, working the way down the stack until a preset is found.
+ *
+ * If the SoundFont is structural defect, it will be rejected and the function will fail.
  *
  * @param synth FluidSynth instance
  * @param filename File to load
