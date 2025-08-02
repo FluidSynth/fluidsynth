@@ -32,6 +32,7 @@
 
 #include "fluidsynth_priv.h"
 #include "fluid_stub_functions.h"
+#include "fluid_file.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -224,9 +225,6 @@ STUB_FUNCTION_VOID_SILENT(fluid_thread_self_set_prio, (int prio_level))
 
 
 /* File access */
-#define FLUID_FILE_TEST_EXISTS      1
-#define FLUID_FILE_TEST_IS_REGULAR  2
-
 typedef struct {
     #undef st_mtime
     int st_mtime;

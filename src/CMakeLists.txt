@@ -189,6 +189,11 @@ else ( )
   set ( fluid_osal_SOURCES ${fluid_osal_SOURCES} utils/fluid_sys_${osal}.c )
 endif ( )
 
+set ( fluid_file_SOURCES
+    utils/fluid_file.h
+    utils/fluid_file.cpp
+)
+
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set_source_files_properties(rvoice/fluid_iir_filter_impl.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
 elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
@@ -257,6 +262,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_sdl3_SOURCES}
     ${fluid_libinstpatch_SOURCES}
     ${fluid_osal_SOURCES}
+    ${fluid_file_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -477,6 +483,7 @@ endif ( WIN32 AND NOT HAVE_GETOPT_H )
 add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
     ${getopt_SOURCES}
+    ${fluid_file_SOURCES}
     ${VersionFilesOutputVariable}
 )
 

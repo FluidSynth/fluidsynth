@@ -30,6 +30,7 @@
 
 #include "fluidsynth_priv.h"
 #include "fluid_stub_functions.h"
+#include "fluid_file.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -139,16 +140,11 @@ typedef void fluid_thread_t;
 /* whether or not the implementation can be thread safe at all */
 #define FLUID_THREAD_SAFE_CAPABLE 1
 
-/* File access */
-#define FLUID_FILE_TEST_EXISTS      1
-#define FLUID_FILE_TEST_IS_REGULAR  2
-
 typedef struct {
     #undef st_mtime
     int st_mtime;
 } fluid_stat_buf_t;
 
-bool fluid_file_test(const char *path, int flags);
 int fluid_stat(const char *path, fluid_stat_buf_t *buffer);
 
 
