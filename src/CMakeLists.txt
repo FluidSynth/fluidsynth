@@ -466,8 +466,17 @@ if ( WIN32 )
     configure_file(${FluidSynth_SOURCE_DIR}/cmake_admin/VersionResource.rc.in ${VersionFilesOutputVariable} @ONLY)
 endif ( WIN32 )
 
+set ( getopt_SOURCES "")
+if ( WIN32 AND NOT HAVE_GETOPT_H )
+    set ( getopt_SOURCES
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt/win/getopt.c"
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt/win/getopt.h"
+    )
+endif ( WIN32 AND NOT HAVE_GETOPT_H )
+
 add_executable ( fluidsynth
     ${fluidsynth_SOURCES}
+    ${getopt_SOURCES}
     ${VersionFilesOutputVariable}
 )
 
@@ -491,6 +500,12 @@ target_include_directories ( fluidsynth PRIVATE
     ${FluidSynth_SOURCE_DIR}/src/
     ${FluidSynth_SOURCE_DIR}/include
 )
+
+if ( WIN32 AND NOT HAVE_GETOPT_H )
+  target_include_directories ( fluidsynth PRIVATE
+        "${FluidSynth_SOURCE_DIR}/contrib/getopt/win"
+  )
+endif ( WIN32 AND NOT HAVE_GETOPT_H )
 
 target_link_libraries ( fluidsynth PRIVATE
     libfluidsynth

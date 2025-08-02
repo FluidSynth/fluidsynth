@@ -23,10 +23,7 @@
 #define _GNU_SOURCE
 #endif
 
-#if defined(HAVE_GETOPT_H)
 #include <getopt.h>
-#define GETOPT_SUPPORT 1
-#endif
 
 #ifdef SYSTEMD_SUPPORT
 #include <systemd/sd-daemon.h>
@@ -425,7 +422,6 @@ int main(int argc, char **argv)
     settings = new_fluid_settings();
 
     /* reading / setting options from the command line */
-#ifdef GETOPT_SUPPORT	/* pre section of GETOPT supported argument handling */
     opterr = 0;
 
     while(1)
@@ -474,53 +470,8 @@ int main(int argc, char **argv)
             break;
         }
 
-#else	/* "pre" section to non getopt argument handling */
-
-    for(i = 1; i < argc; i++)
-    {
-        char *optarg;
-
-        /* Skip non switch arguments (assume they are file names) */
-        if((argv[i][0] != '-') || (argv[i][1] == '\0'))
-        {
-            break;
-        }
-
-        c = argv[i][1];
-
-        optarg = strchr(optchars, c);	/* find the option character in optchars */
-
-        if(optarg && optarg[1] == ':')	/* colon follows if switch argument expected */
-        {
-            if(++i >= argc)
-            {
-                printf("Option -%c requires an argument\n", c);
-                print_usage();
-                goto cleanup;
-            }
-            else
-            {
-                optarg = argv[i];
-
-                if((optarg[0] == '-') && ((optarg[1] != '\0') || (c != 'F')))
-                {
-                    printf("Expected argument to option -%c found switch instead\n", c);
-                    print_usage();
-                    goto cleanup;
-                }
-            }
-        }
-        else
-        {
-            optarg = "";
-        }
-
-#endif
-
         switch(c)
         {
-#ifdef GETOPT_SUPPORT
-
         case 0:	/* shouldn't normally happen, a long option's flag is set to NULL */
             printf("option %s", long_options[option_index].name);
 
@@ -531,7 +482,6 @@ int main(int argc, char **argv)
 
             printf("\n");
             break;
-#endif
 
         case 'a':
             if(FLUID_STRCMP(optarg, "help") == 0)
@@ -816,7 +766,6 @@ int main(int argc, char **argv)
                 goto cleanup;
             }
             break;
-#ifdef GETOPT_SUPPORT
 
         case '?':
             printf("Unknown option %c\n", optopt);
@@ -826,21 +775,10 @@ int main(int argc, char **argv)
         default:
             printf("?? getopt returned character code 0%o ??\n", c);
             break;
-#else			/* Non getopt default case */
-
-        default:
-            printf("Unknown switch '%c'\n", c);
-            print_usage();
-            goto cleanup;
-#endif
         }	/* end of switch statement */
     }	/* end of loop */
 
-#ifdef GETOPT_SUPPORT
     arg1 = optind;
-#else
-    arg1 = i;
-#endif
 
     if (!quiet)
     {
@@ -1273,11 +1211,6 @@ print_help(fluid_settings_t *settings)
 
     printf("Usage: \n");
     printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
-#ifndef GETOPT_SUPPORT
-    printf("\nNote:"
-           "\n  This version of fluidsynth was compiled without getopt support."
-           "\n  Thus, the long options are not supported.\n\n");
-#endif
     printf("Possible options:\n");
     printf(" -a, --audio-driver=[label]\n"
            "    The name of the audio driver to use.\n"
