@@ -268,23 +268,6 @@ void fluid_private_set(fluid_private_t priv, void *value)
 
 #include <filesystem>
 
-bool fluid_file_test(const char *_path, int flags)
-{
-    try
-    {
-        std::filesystem::path path = std::filesystem::u8path(_path);
-        if ((flags & FLUID_FILE_TEST_EXISTS) != 0)
-            return std::filesystem::exists(path);
-        if ((flags & FLUID_FILE_TEST_IS_REGULAR) != 0)
-            return std::filesystem::is_regular_file(path);
-    }
-    catch (...)
-    {
-    }
-
-    return false;
-}
-
 int fluid_stat(const char *_path, fluid_stat_buf_t *buffer)
 {
     try
@@ -298,22 +281,12 @@ int fluid_stat(const char *_path, fluid_stat_buf_t *buffer)
     {
     }
 
+#else
+
+int fluid_stat(const char *_path, fluid_stat_buf_t *buffer)
+{
+    FLUID_LOG(FLUID_ERR, "fluid_stat is unavailable, returning -1");
+#endif
     buffer->st_mtime = 0;
     return FLUID_FAILED;
 }
-
-#else
-
-bool fluid_file_test(const char *path, int flags)
-{
-    FLUID_LOG(FLUID_ERR, "fluid_file_test is unavailable, returning true");
-    return true;
-}
-
-int fluid_stat(const char *path, fluid_stat_buf_t *buffer)
-{
-    FLUID_LOG(FLUID_ERR, "fluid_stat is unavailable, returning -1");
-    return -1;
-}
-
-#endif
