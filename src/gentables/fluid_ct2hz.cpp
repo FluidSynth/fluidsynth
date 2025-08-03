@@ -13,7 +13,7 @@ struct Ct2HzFunctor
 {
     static constexpr REAL calc(int i)
     {
-        return 6.875L * gcem::pow<double,double>(2.0, static_cast<REAL>(i) / 1200.0);
+        return 6.875 * gcem::pow(2.0, static_cast<REAL>(i) / 1200.0);
     }
 };
 
