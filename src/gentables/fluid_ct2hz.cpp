@@ -9,7 +9,7 @@ using REAL = double;
 
 struct Ct2HzFunctor {
     static constexpr REAL calc(int i) {
-        return i;
+        return 6.875L /** constexpr_pow(2.0L, static_cast<REAL>(i) / 1200.0L)*/;
     }
 };
 
