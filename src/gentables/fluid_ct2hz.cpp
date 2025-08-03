@@ -7,8 +7,10 @@ using REAL = float;
 using REAL = double;
 #endif
 
-struct Ct2HzFunctor {
-    static constexpr REAL calc(int i) {
+struct Ct2HzFunctor
+{
+    static constexpr REAL calc(int i)
+    {
         return 6.875L /** constexpr_pow(2.0L, static_cast<REAL>(i) / 1200.0L)*/;
     }
 };
@@ -18,8 +20,9 @@ struct Ct2HzFunctor {
 // Each instantiation pushes N onto the Rest... pack, so eventually the values are collected as N, N-1, ..., 1
 // in Rest..., until we reach N = 0.
 template<typename F, int N, int... Rest>
-struct ConstExprArr_impl {
-    static constexpr auto& value = ConstExprArr_impl<F, N - 1, N, Rest...>::value;
+struct ConstExprArr_impl
+{
+    static constexpr auto &value = ConstExprArr_impl < F, N - 1, N, Rest... >::value;
 };
 
 // === Partial Specialization for N==0 ===
@@ -27,7 +30,8 @@ struct ConstExprArr_impl {
 // It defines a static constant array value containing the values as calculated by the functor.
 // At this point, Rest... actually contains all previous N values, so the array will be { 0, 1, 2, ..., N }
 template<typename F, int... Rest>
-struct ConstExprArr_impl<F, 0, Rest...> {
+struct ConstExprArr_impl<F, 0, Rest...>
+{
     static constexpr REAL value[] = { F::calc(0), F::calc(Rest)... };
 };
 
@@ -36,20 +40,21 @@ template<typename F, int... Rest>
 constexpr REAL ConstExprArr_impl<F, 0, Rest...>::value[];
 
 template<typename F, int N>
-struct ConstExprArr {
+struct ConstExprArr
+{
     static_assert(N >= 0, "N must be at least 0");
 
     // invokes the Recursive Template Struct
     // N-1 because we want to exclude the last element, i.e. only from 0 to N-1
-    static constexpr auto& value = ConstExprArr_impl<F, N-1>::value;
+    static constexpr auto &value = ConstExprArr_impl < F, N - 1 >::value;
 
     ConstExprArr() = delete;
-    ConstExprArr(const ConstExprArr&) = delete;
-    ConstExprArr(ConstExprArr&&) = delete;
+    ConstExprArr(const ConstExprArr &) = delete;
+    ConstExprArr(ConstExprArr &&) = delete;
 };
 
 
 extern const constexpr auto fluid_ct2hz_tab_cpp = ConstExprArr<Ct2HzFunctor, FLUID_CENTS_HZ_SIZE>::value;
 
 
-extern "C" const double* fluid_ct2hz_tab_cpp_ex = fluid_ct2hz_tab_cpp;
+extern "C" const double *fluid_ct2hz_tab_cpp_ex = fluid_ct2hz_tab_cpp;
