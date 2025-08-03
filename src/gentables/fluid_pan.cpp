@@ -9,8 +9,7 @@ struct PanFunctor
     static constexpr fluid_real_t calc(int i)
     {
         /* initialize the pan conversion table */
-        constexpr long double x = GCEM_HALF_PI / (FLUID_PAN_SIZE - 1.0L);
-        return static_cast<fluid_real_t>(gcem::sin(i * x));
+        return static_cast<fluid_real_t>(gcem::sin(i * (GCEM_HALF_PI / (FLUID_PAN_SIZE - 1.0L))));
     }
 };
 
