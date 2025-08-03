@@ -14,14 +14,14 @@ struct InterpLinearFunctor
     //}
     static constexpr fluid_real_t calc(int i)
     {
-#define I_NUM (i / 2)
-#define I_REM (i % 2)
+#define I_NUM (i / LINEAR_INTERP_ORDER)
+#define I_REM (i % LINEAR_INTERP_ORDER)
 #define x ((fluid_real_t)I_NUM / (fluid_real_t)FLUID_INTERP_MAX)
 
         return (I_REM == 0 ? (1.0 - x) : x);
     }
 };
 
-extern "C" const constexpr auto interp_coeff_linear_cpp = ConstExprArr<InterpLinearFunctor, FLUID_INTERP_MAX * 2>::value;
+extern "C" const constexpr auto interp_coeff_linear_cpp = ConstExprArr<InterpLinearFunctor, FLUID_INTERP_MAX * LINEAR_INTERP_ORDER>::value;
 
 extern "C" const fluid_real_t *const interp_coeff_linear = interp_coeff_linear_cpp;

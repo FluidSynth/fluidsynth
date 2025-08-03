@@ -48,7 +48,7 @@
 
 extern "C" const fluid_real_t *const interp_coeff_linear;
 extern "C" const fluid_real_t *const interp_coeff;
-extern "C" const fluid_real_t *const interp_coeff_sinc7;
+extern "C" const fluid_real_t *const sinc_table7;
 
 template<bool IS_24BIT>
 static FLUID_INLINE fluid_real_t
@@ -525,7 +525,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * start_points[2]
                      + coeffs[1] * start_points[1]
@@ -548,7 +548,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * start_points[1]
                      + coeffs[1] * start_points[0]
@@ -571,7 +571,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * start_points[0]
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 2)
@@ -595,7 +595,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 3)
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 2)
@@ -624,7 +624,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 3)
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 2)
@@ -647,7 +647,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 3)
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 2)
@@ -670,7 +670,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
+            coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
             sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 3)
                      + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 2)

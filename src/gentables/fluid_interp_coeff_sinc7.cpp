@@ -76,4 +76,4 @@ struct InterpSincFunctor
 
 extern "C" const constexpr auto interp_coeff_sinc7_cpp = ConstExprArr<InterpSincFunctor, FLUID_INTERP_MAX * SINC_INTERP_ORDER>::value;
 
-extern "C" const fluid_real_t *const interp_coeff_sinc7 = interp_coeff_sinc7_cpp;
+extern "C" const fluid_real_t *const sinc_table7 = interp_coeff_sinc7_cpp;
