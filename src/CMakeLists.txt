@@ -109,6 +109,11 @@ set ( config_SOURCES ${FluidSynth_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
     gentables/fluid_ct2hz.cpp
+    gentables/fluid_cb2amp.cpp
+    gentables/fluid_concave.cpp
+    gentables/fluid_convex.cpp
+    gentables/fluid_pan.cpp
+    gentables/ConstExprArr.hpp
     utils/fluid_conv.c
     utils/fluid_conv.h
     utils/fluid_hash.c
