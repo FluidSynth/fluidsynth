@@ -113,6 +113,9 @@ set ( libfluidsynth_SOURCES
     gentables/fluid_concave.cpp
     gentables/fluid_convex.cpp
     gentables/fluid_pan.cpp
+    gentables/fluid_interp_coeff.cpp
+    gentables/fluid_interp_coeff_linear.cpp
+    gentables/fluid_interp_coeff_sinc7.cpp
     gentables/ConstExprArr.hpp
     utils/fluid_conv.c
     utils/fluid_conv.h
