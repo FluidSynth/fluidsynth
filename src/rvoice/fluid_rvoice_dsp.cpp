@@ -20,7 +20,6 @@
 #include "fluid_sys.h"
 #include "fluid_phase.h"
 #include "fluid_rvoice.h"
-#include "fluid_rvoice_dsp_tables.inc.h"
 
 /* Purpose:
  *
@@ -45,6 +44,10 @@
  */
 
 /* Interpolation (find a value between two samples of the original waveform) */
+
+extern "C" const fluid_real_t *const interp_coeff_linear;
+extern "C" const fluid_real_t *const interp_coeff;
+extern "C" const fluid_real_t *const interp_coeff_sinc7;
 
 template<bool IS_24BIT>
 static FLUID_INLINE fluid_real_t

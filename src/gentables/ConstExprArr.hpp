@@ -6,7 +6,7 @@
 
 struct IsBoundary
 {
-    // Checks wheter N is a multiple of 10
+    // Checks whether N is a multiple of 10
     static constexpr bool chunk10(int N)
     {
         return (N >= 0) && (N % 10 == 0);
