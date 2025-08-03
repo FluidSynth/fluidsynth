@@ -108,6 +108,7 @@ endif ( OBOE_SUPPORT )
 set ( config_SOURCES ${FluidSynth_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
+    gentables/fluid_ct2hz.cpp
     utils/fluid_conv.c
     utils/fluid_conv.h
     utils/fluid_hash.c
@@ -287,6 +288,9 @@ if ( LIBFLUID_CPPFLAGS )
   set_target_properties ( libfluidsynth-OBJ
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS )
+
+target_compile_options ( libfluidsynth-OBJ PRIVATE
+    "-ftemplate-depth=10000" )
 
 # The CMake Xcode generator fails to build the framework unless it references
 # a source file. Create an empty one in the build directory to use for this
