@@ -256,10 +256,11 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
  * @param filename Path to the file to check
  * @return TRUE if it could be a SF2, SF3 or DLS file, FALSE otherwise
  *
+ * This function uses regular <code>fopen()</code>, <code>fread()</code> and <code>fseek()</code> to identify known Soundfont formats.
  * If fluidsynth was built with DLS support, this function will also identify DLS files.
  *
- * @note This function only checks whether header(s) in the RIFF chunk are present.
- * A call to fluid_synth_sfload() might still fail.
+ * @note This function only checks whether certain RIFF chunks are present in the file.
+ * A call to fluid_synth_sfload() might still fail, as it imposes much stricter structural checks.
  */
 int fluid_is_soundfont(const char *filename)
 {
