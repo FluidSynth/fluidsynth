@@ -289,9 +289,6 @@ if ( LIBFLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS )
 
-target_compile_options ( libfluidsynth-OBJ PRIVATE
-    "-ftemplate-depth=10000" )
-
 # The CMake Xcode generator fails to build the framework unless it references
 # a source file. Create an empty one in the build directory to use for this
 # purpose.
