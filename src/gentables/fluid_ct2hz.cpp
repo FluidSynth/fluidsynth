@@ -42,7 +42,7 @@ constexpr REAL ConstExprArr_impl<F, 0, Rest...>::value[];
 template<typename F, int N>
 struct ConstExprArr
 {
-    static_assert(N >= 0, "N must be at least 0");
+    static_assert(N > 0, "N must be greater 0");
 
     // invokes the Recursive Template Struct
     // N-1 because we want to exclude the last element, i.e. only from 0 to N-1
