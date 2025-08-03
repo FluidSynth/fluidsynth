@@ -1,6 +1,8 @@
 
 #include "utils/fluid_conv_tables.h"
 
+#include "gcem.hpp"
+
 #ifdef WITH_FLOAT
 using REAL = float;
 #else
@@ -11,12 +13,13 @@ struct Ct2HzFunctor
 {
     static constexpr REAL calc(int i)
     {
-        return 6.875L /** constexpr_pow(2.0L, static_cast<REAL>(i) / 1200.0L)*/;
+        return 6.875L * gcem::pow<double,double>(2.0, static_cast<REAL>(i) / 1200.0);
     }
 };
 
 struct IsBoundary
 {
+    // Checks wheter N is a multiple of 10
     static constexpr bool chunk10(int N)
     {
         return (N >= 0) && (N % 10 == 0);
@@ -25,7 +28,7 @@ struct IsBoundary
 
 // === Recursive Template Struct: ConstExprArr_impl ===
 // This struct recursively instantiates itself, decrementing N and accumulating template parameters in Rest...
-// Each instantiation pushes N onto the Rest... pack, so eventually the values are collected as N, N-1, ..., 1
+// Each instantiation pushes N onto the Rest... pack, so eventually the values are collected as 1, 2, ..., N-1, N
 // in Rest..., until we reach N = 0.
 template<typename F, bool NisMult10, int N, int... Rest>
 struct ConstExprArr_impl
@@ -61,7 +64,7 @@ constexpr REAL ConstExprArr_impl<F, true, 0, Rest...>::value[];
 template<typename F, int N>
 struct ConstExprArr
 {
-    static_assert(N > 0, "N must be divisable by 10");
+    static_assert(N > 0, "N must be greater 0");
 
     // invokes the Recursive Template Struct
     // N-1 because we want to exclude the last element, i.e. only from 0 to N-1
