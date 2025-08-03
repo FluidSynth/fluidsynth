@@ -10,12 +10,11 @@ struct ConcaveFunctor
        implemented according to the pictures on SF2.01 page 73. */
     static constexpr fluid_real_t calc(int i)
     {
-        constexpr fluid_real_t x = (-200.0L * 2 / FLUID_PEAK_ATTENUATION) * gcem::log(i / (FLUID_VEL_CB_SIZE - 1.0L)) / M_LN10;
         return ((i == 0)
             ? 0
             : ((i == FLUID_VEL_CB_SIZE - 1)
-                ? 1
-                : (x)
+                ? 1 :
+                 ((-200.0L * 2 / FLUID_PEAK_ATTENUATION) * gcem::log(i / (FLUID_VEL_CB_SIZE - 1.0L)) / GCEM_LOG_10)
                 ));
     }
 };
