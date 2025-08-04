@@ -35,6 +35,10 @@
 #include <pthread.h>
 #endif
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 /* WIN32 HACK - Flag used to differentiate between a file descriptor and a socket.
  * Should work, so long as no SOCKET or file descriptor ends up with this bit set. - JG */
 #ifdef _WIN32
@@ -122,6 +126,35 @@ fluid_set_log_function(int level, fluid_log_function_t fun, void *data)
 void
 fluid_default_log_function(int level, const char *message, void *data)
 {
+#ifdef __ANDROID__
+    switch(level)
+    {
+    case FLUID_PANIC:
+        __android_log_print(ANDROID_LOG_FATAL, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_ERR:
+        __android_log_print(ANDROID_LOG_ERROR, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_WARN:
+        __android_log_print(ANDROID_LOG_WARN, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_INFO:
+        __android_log_print(ANDROID_LOG_INFO, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_DBG:
+        __android_log_print(ANDROID_LOG_DEBUG, fluid_libname, "%s", message);
+        break;
+
+    default:
+        // is not expected to be used
+        __android_log_print(ANDROID_LOG_VERBOSE, fluid_libname, "%s", message);
+        break;
+    }
+#else
     FILE *out;
 
 #if defined(_WIN32)
@@ -158,6 +191,7 @@ fluid_default_log_function(int level, const char *message, void *data)
     }
 
     fflush(out);
+#endif
 }
 
 /**

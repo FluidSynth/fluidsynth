@@ -433,6 +433,11 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
   endif ( enable-framework )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
+# Android
+if ( ANDROID_ABI )
+  set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};log" )
+endif ( ANDROID_ABI )
+
 unset ( NETWORK_SUPPORT )
 if ( enable-network )
     set ( NETWORK_SUPPORT 1 )
