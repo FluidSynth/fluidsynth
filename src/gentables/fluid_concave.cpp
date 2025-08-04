@@ -13,8 +13,8 @@ struct ConcaveFunctor
         return ((i == 0)
             ? 0
             : ((i == FLUID_VEL_CB_SIZE - 1)
-                ? 1 :
-                 ((-200.0L * 2 / FLUID_PEAK_ATTENUATION) * gcem::log(i / (FLUID_VEL_CB_SIZE - 1.0L)) / GCEM_LOG_10)
+                ? 1
+                : ((-200.0L * 2 / FLUID_PEAK_ATTENUATION) * gcem::log(((FLUID_VEL_CB_SIZE - 1) - i) / (FLUID_VEL_CB_SIZE - 1.0L)) / GCEM_LOG_10)
                 ));
     }
 };
