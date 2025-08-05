@@ -359,7 +359,7 @@ if ( WIN32 )
   endif  ( MINGW )
 endif ( WIN32 )
 
-if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "SunOS"))
+if (NOT (CMAKE_SYSTEM_NAME MATCHES "SunOS"))
   # Check for threads and math
   find_package ( Threads REQUIRED )
   set ( LIBFLUID_LIBS Threads::Threads )
