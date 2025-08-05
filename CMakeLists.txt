@@ -197,12 +197,13 @@ unset ( FLUID_LIBS CACHE )
 unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
-  if ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
+  # If we ever bump to CMake 3.29+, replace this with CMAKE_LANG_COMPILER_LINKER_ID
+  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|OS2|Emscripten|SunOS") )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
-  endif ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
+  endif ()
 
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
@@ -358,8 +359,11 @@ if ( WIN32 )
   endif  ( MINGW )
 endif ( WIN32 )
 
-# Check for threads and math
-find_package ( Threads REQUIRED )
+if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "SunOS"))
+  # Check for threads and math
+  find_package ( Threads REQUIRED )
+  set ( LIBFLUID_LIBS Threads::Threads )
+endif ()
 
 find_library ( HAS_LIBM NAMES "m" )
 if ( HAS_LIBM )
