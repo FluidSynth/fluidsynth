@@ -8,6 +8,8 @@ on:
       - '.azure/**'
       - '.circleci/**'
       - '.github/workflows/linux.yml'
+      - '.github/workflows/solaris.yml'
+      - '.github/workflows/windows.yml'
       - '.cirrus.yml'
       - 'README.md'
   pull_request:

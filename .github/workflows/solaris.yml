@@ -1,0 +1,59 @@
+name: FluidSynth Solaris
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/linux.yml'
+      - '.cirrus.yml'
+      - 'README.md'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: RelWithDebInfo
+
+# Use a bash shell so we can use the same syntax for environment variable
+# access regardless of the host operating system
+defaults:
+  run:
+    shell: bash
+
+jobs:
+    solaris:
+        name: Solaris
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            submodules: true
+
+        - name: Build & test
+          uses: vmactions/solaris-vm@v1.1.4
+          with:
+            envs: 'CFLAGS_SOLARIS_CC'
+            usesh: true
+            release: "11.4-gcc"
+            prepare: |
+                pwd
+                ls -la
+                gcc --version
+                g++ --version
+                cmake --version
+                ld --version
+                exit 0
+
+            run: |
+                set -ex
+                cmake -S . \
+                  -B build \
+                  -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                  -DCMAKE_VERBOSE_MAKEFILE=1 \
+                  -Denable-readline=0 \
+                  -Werror=dev
+                cmake --build build
+                cmake --build build --target check
+                cmake --build build --target demo
+
