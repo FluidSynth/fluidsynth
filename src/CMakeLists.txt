@@ -108,6 +108,15 @@ endif ( OBOE_SUPPORT )
 set ( config_SOURCES ${FluidSynth_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
+    gentables/fluid_ct2hz.cpp
+    gentables/fluid_cb2amp.cpp
+    gentables/fluid_concave.cpp
+    gentables/fluid_convex.cpp
+    gentables/fluid_pan.cpp
+    gentables/fluid_interp_coeff.cpp
+    gentables/fluid_interp_coeff_linear.cpp
+    gentables/fluid_interp_coeff_sinc7.cpp
+    gentables/ConstExprArr.hpp
     utils/fluid_conv.c
     utils/fluid_conv.h
     utils/fluid_hash.c
@@ -281,6 +290,7 @@ target_include_directories ( libfluidsynth-OBJ PRIVATE
     ${FluidSynth_SOURCE_DIR}/src/sfloader
     ${FluidSynth_SOURCE_DIR}/src/bindings
     ${FluidSynth_SOURCE_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/gcem/include
 )
 
 if ( LIBFLUID_CPPFLAGS )
@@ -576,27 +586,3 @@ install(EXPORT FluidSynthTargets
         NAMESPACE FluidSynth::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
 )
-
-# ******* Auto Generated Lookup Tables ******
-
-include(ExternalProject)
-
-set (GENTAB_SDIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables)
-set (GENTAB_BDIR ${CMAKE_CURRENT_BINARY_DIR}/gentables)
-
-# Use external project to ensure that cmake uses the host compiler when building make_tables.exe
-# To fix cross-compiling fluidsynth from Win32 to ARM (using vcpkg), we need to pass the current generator
-# on to the external project, otherwise (for some unknown reason) the target compiler will be used rather
-# than the host compiler.
-
-ExternalProject_Add(gentables
-    DOWNLOAD_COMMAND ""
-    SOURCE_DIR ${GENTAB_SDIR}
-    BINARY_DIR ${GENTAB_BDIR}
-    CONFIGURE_COMMAND
-        "${CMAKE_COMMAND}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}" "${GENTAB_SDIR}"
-    BUILD_COMMAND
-        "${CMAKE_COMMAND}" --build "${GENTAB_BDIR}"
-    INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${FluidSynth_BINARY_DIR}/"
-)
-add_dependencies(libfluidsynth-OBJ gentables)
