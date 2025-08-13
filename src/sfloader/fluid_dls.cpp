@@ -1,3 +1,5 @@
+#define NOMINMAX // std::numeric_limits::max
+
 #include "fluid_dls.h"
 
 #include "fluid_sys.h"
