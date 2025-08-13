@@ -22,11 +22,13 @@ extern "C" {
 #include <functional>
 #include <algorithm>
 
-using std::int16_t;
-using std::size_t;
-using std::uint16_t;
-using std::uint32_t;
+using std::int8_t;
 using std::uint8_t;
+using std::int16_t;
+using std::uint16_t;
+using std::int32_t;
+using std::uint32_t;
+using std::size_t;
 
 #define FMT_4CC_SPEC "%c%c%c%c"
 #define FMT_4CC_ARG(x)                                                                    \
@@ -566,11 +568,11 @@ static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_
         throw std::runtime_error{ "Unsupported bitdepth" };
     }
 
-    const auto *src = static_cast<const int8_t *>(data);
+    const auto *src = static_cast<const uint8_t *>(data);
     auto *dest16 = static_cast<int16_t *>(dest);
     for (fluid_long_long_t i = 0; i < size; ++i)
     {
-        dest16[i] = (src[i] << 8);
+        dest16[i] = (static_cast<int8_t>(src[i] - 128) << 8);
     }
 }
 
