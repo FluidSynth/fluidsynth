@@ -2411,7 +2411,9 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     {
         if (inst->is_drums)
         {
-            return DRUM_INST_BANK;
+            // see https://github.com/FluidSynth/fluidsynth/issues/1524
+            // see fluid_chan.c fluid_channel_set_bank_msb()
+            return 128;
         }
         return inst->banklsb;
     }
