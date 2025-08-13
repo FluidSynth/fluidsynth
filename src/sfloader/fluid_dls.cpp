@@ -2409,15 +2409,11 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     }
     if (synth->bank_select == FLUID_BANK_STYLE_XG)
     {
-        // if (inst->is_drums)
-        // {
-        //     return DRUM_INST_BANK;
-        // }
-        // return inst->banklsb;
-        
-        // Yamaha's DLS seems to use the same bank select mode as GS
-        // see https://github.com/FluidSynth/fluidsynth/pull/1626
-        return inst->bankmsb + (inst->is_drums ? DRUM_INST_BANK : 0);
+        if (inst->is_drums)
+        {
+            return DRUM_INST_BANK;
+        }
+        return inst->banklsb;
     }
     // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
     if (inst->is_drums)
