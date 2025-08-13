@@ -74,6 +74,7 @@ option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
+option ( enable-native-dls "compile native DLS support" off )
 
 # Options enabled by default
 option ( enable-alsa "compile ALSA support (if it is available)" on )
@@ -776,6 +777,12 @@ elseif (enable-openmp AND OpenMP_C_FOUND )
     else()
         message(STATUS "  OpenMP version is not supported. Feature disabled.")
     endif()
+endif()
+
+unset ( ENABLE_NATIVE_DLS CACHE )
+if (enable-native-dls)
+  set ( ENABLE_NATIVE_DLS 1 )
+  set ( CMAKE_CXX_STANDARD 17 )
 endif()
 
 # manipulate some variables to setup a proper test env
