@@ -1,15 +1,12 @@
 #include "fluid_dls.h"
 
-extern "C" {
+#include "fluid_sys.h"
+#include "fluid_sfont.h"
+#include "fluidsynth_priv.h"
 #include "fluid_defsfont.h"
 #include "fluid_mod.h"
 #include "fluid_synth.h"
 #include "fluid_chan.h"
-}
-
-#include "fluid_sys.h"
-#include "fluid_sfont.h"
-#include "fluidsynth_priv.h"
 
 #include "pcm_aulaw.h"
 
@@ -21,6 +18,7 @@ extern "C" {
 #include <utility>
 #include <functional>
 #include <algorithm>
+#include <limits>
 
 using std::int8_t;
 using std::uint8_t;

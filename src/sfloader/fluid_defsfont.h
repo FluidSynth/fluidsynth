@@ -43,6 +43,10 @@
 
 #define SF_MIN_SAMPLE_LENGTH	32
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /***************************************************************
  *
  *       FORWARD DECLARATIONS
@@ -228,5 +232,8 @@ fluid_sample_t *fluid_inst_zone_get_sample(fluid_inst_zone_t *zone);
 int fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defsfont_t *defsfont);
 int fluid_sample_in_rom(fluid_sample_t *sample);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _FLUID_SFONT_H */
