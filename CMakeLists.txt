@@ -74,7 +74,7 @@ option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
-option ( enable-native-dls "compile native DLS support" off )
+option ( enable-native-dls "compile native DLS support" on )
 
 # Options enabled by default
 option ( enable-alsa "compile ALSA support (if it is available)" on )
