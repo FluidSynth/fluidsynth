@@ -560,9 +560,13 @@ inline static void READGUID(fluid_dls_font *sf, DLSID &id)
     }
 }
 
+#ifndef WAVE_FORMAT_PCM
 constexpr uint16_t WAVE_FORMAT_PCM = 0x0001;
+#endif
+#ifndef WAVE_FORMAT_ALAW
 constexpr uint16_t WAVE_FORMAT_ALAW = 0x0006;
 constexpr uint16_t WAVE_FORMAT_MULAW = 0x0007;
+#endif
 
 static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_t size, int bitdepth)
 {
