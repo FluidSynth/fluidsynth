@@ -402,6 +402,14 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 #define FACT_FCC FLUID_FOURCC('f', 'a', 'c', 't')
 #define CUE_FCC FLUID_FOURCC('c', 'u', 'e', ' ')
 
+// this is seen as another 'dlid' in LIST[wave]
+#define GUID_FCC FLUID_FOURCC('g', 'u', 'i', 'd')
+
+// The 'crs1' chunk is seen in Crystal's DLS (The CrysDLS, see https://www.vogons.org/viewtopic.php?f=62&t=70307)
+// It has wrong size and need manual fix
+// See https://github.com/spessasus/spessasynth_core/issues/5 and https://github.com/FluidSynth/fluidsynth/pull/1626
+#define CRS1_FCC FLUID_FOURCC('c', 'r', 's', '1')
+
 // info
 #define INAM_FCC FLUID_FOURCC('I', 'N', 'A', 'M')
 
@@ -464,6 +472,11 @@ static inline int READCHUNK(fluid_dls_font *dlsfont, RIFFChunk &chunk)
         READID(dlsfont, &chunk.id);
         chunk.size -= 4;
         return 12;
+    }
+    if (chunk.id == CRS1_FCC)
+    {
+        // see CRS1_FCC comment
+        chunk.size = 28;
     }
     return 8;
 }
@@ -1682,6 +1695,9 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 sample.name = read_name_from_info_entries(pos, subchunk.size);
                 break;
             case DLID_FCC:
+            case GUID_FCC:
+            case FACT_FCC:
+            case CUE_FCC:
                 break;
             case FMT_FCC: { // See WAVEFORMAT struct (mmreg.h)
                 uint16_t temp16;
@@ -1796,8 +1812,9 @@ inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_w
     READ32(this, cbsize);
     if (cbsize < 20)
     {
-        FLUID_LOG(FLUID_ERR, "DLS wsmp chunk cbSize < 20");
-        throw std::exception{};
+        // This is seen in Crystal's DLS. See CRS1_FCC comment.
+        FLUID_LOG(FLUID_WARN, "DLS wsmp chunk cbSize < 20. The file is probably corrupted.");
+        cbsize = 20;
     }
     READ16(this, wsmp.unity_note);
     READ16(this, wsmp.fine_tune);
@@ -1819,8 +1836,9 @@ inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_w
     READ32(this, loopcbsize);
     if (loopcbsize < 16)
     {
+        // This is also seen in Crystal's DLS. See CRS1_FCC comment.
         FLUID_LOG(FLUID_ERR, "DLS wsmp chunk loop cbSize < 16");
-        throw std::exception{};
+        loopcbsize = 16;
     }
     READ32(this, wsmp.loop_type);
     READ32(this, wsmp.loop_start);
