@@ -783,6 +783,7 @@ unset ( ENABLE_NATIVE_DLS CACHE )
 if (enable-native-dls)
   set ( ENABLE_NATIVE_DLS 1 )
   set ( CMAKE_CXX_STANDARD 17 )
+  set ( CMAKE_CXX_STANDARD_REQUIRED ON )
 endif()
 
 # manipulate some variables to setup a proper test env
