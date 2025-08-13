@@ -2352,6 +2352,12 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
         {
             return &inst.fluid;
         }
+
+        // Drum bank fallback for MMA bank style
+        if (inst.synth->bank_select == FLUID_BANK_STYLE_MMA && bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
+        {
+            return &inst.fluid;
+        }
     }
 
     return nullptr;
@@ -2420,7 +2426,7 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
     if (inst->is_drums)
     {
-        return DRUM_INST_BANK;
+        return DRUM_INST_BANK * 128;
     }
     return inst->banklsb + (128 * inst->bankmsb);
 }
