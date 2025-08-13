@@ -275,7 +275,7 @@ struct fluid_dls_font
     fluid_dls_font(fluid_dls_font &&) = delete;
     fluid_dls_font &operator=(fluid_dls_font &&) noexcept = delete;
 
-    ~fluid_dls_font() noexcept = default;
+    ~fluid_dls_font() = default;
 
     // parsing functions
 
@@ -365,7 +365,11 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
         return;
     }
 
-    dlsfont->~fluid_dls_font();
+    try {
+        dlsfont->~fluid_dls_font();
+    } catch (const std::exception &err) {
+        FLUID_LOG(FLUID_ERR, "Exception thrown in fluid_dls_font destructor: %s: %s", typeid(err).name(), err.what());
+    }
     FLUID_FREE(dlsfont);
 }
 
