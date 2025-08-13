@@ -19,6 +19,7 @@
 #include <functional>
 #include <algorithm>
 #include <limits>
+#include <string>
 
 using std::int8_t;
 using std::uint8_t;
