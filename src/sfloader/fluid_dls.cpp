@@ -21,13 +21,13 @@
 #include <limits>
 #include <string>
 
-using std::int8_t;
-using std::uint8_t;
 using std::int16_t;
-using std::uint16_t;
 using std::int32_t;
-using std::uint32_t;
+using std::int8_t;
 using std::size_t;
+using std::uint16_t;
+using std::uint32_t;
+using std::uint8_t;
 
 #define FMT_4CC_SPEC "%c%c%c%c"
 #define FMT_4CC_ARG(x)                                                                    \
@@ -366,10 +366,16 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
         return;
     }
 
-    try {
+    try
+    {
         dlsfont->~fluid_dls_font();
-    } catch (const std::exception &err) {
-        FLUID_LOG(FLUID_ERR, "Exception thrown in fluid_dls_font destructor: %s: %s", typeid(err).name(), err.what());
+    }
+    catch (const std::exception &err)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "Exception thrown in fluid_dls_font destructor: %s: %s",
+                  typeid(err).name(),
+                  err.what());
     }
     FLUID_FREE(dlsfont);
 }
@@ -2359,7 +2365,8 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
         }
 
         // Drum bank fallback for MMA bank style
-        if (inst.synth->bank_select == FLUID_BANK_STYLE_MMA && bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
+        if (inst.synth->bank_select == FLUID_BANK_STYLE_MMA && bank == DRUM_INST_BANK &&
+            inst.is_drums && inst.pcnum == prenum)
         {
             return &inst.fluid;
         }
