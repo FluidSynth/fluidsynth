@@ -1035,7 +1035,7 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
     {
         if (!trans.src_bip)
         {
-            FLUID_LOG(FLUID_DBG, "Non bipolar LFO source is not supported, replacing with bipolar");
+            FLUID_LOG(FLUID_DBG, "Non bipolar LFO source is not supported, set to bipolar");
         }
         if (trans.src_inv || trans.src_trans != CONN_TRN_NONE)
         {
@@ -1069,7 +1069,7 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
     {
         if (!trans.src_bip)
         {
-            FLUID_LOG(FLUID_WARN, "Non bipolar vibrato LFO source is not supported, forcing bipolar");
+            FLUID_LOG(FLUID_DBG, "Non bipolar vibrato LFO source is not supported, set to bipolar");
         }
         if (trans.src_inv || trans.src_trans != CONN_TRN_NONE)
         {
@@ -1396,9 +1396,9 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                     else
                     {
                         FLUID_LOG(FLUID_WARN,
-                                  "Invalid loop type %u, defaulting to forward loop",
+                                  "Invalid loop type %u, defaulting to loop and release",
                                   static_cast<unsigned int>(wsmp.loop_type));
-                        region.samplemode_inherited = 1;
+                        region.samplemode_inherited = 3;
                     }
                 }
                 region.gain_inherited = static_cast<fluid_real_t>(wsmp.gain) / 65536;
@@ -2523,7 +2523,8 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                 }
                 else
                 {
-                    FLUID_LOG(FLUID_WARN, "invalid loop type of region wsmp");
+                    FLUID_LOG(FLUID_WARN, "invalid loop type of region wsmp, set to loop and release");
+                    fluid_voice_gen_set(voice, GEN_SAMPLEMODE, 3);
                 }
             }
             else
