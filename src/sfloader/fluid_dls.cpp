@@ -2389,6 +2389,13 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
         {
             return &inst.fluid;
         }
+
+        // melodic bank fallback for GM2 DLS
+        if (inst.synth->bank_select == FLUID_BANK_STYLE_GM && bank == 0 && !inst.is_drums &&
+            inst.bankmsb == 0x79 && inst.pcnum == prenum)
+        {
+            return &inst.fluid;
+        }
     }
 
     return nullptr;
