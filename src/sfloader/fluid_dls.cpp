@@ -878,6 +878,23 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
         return;
     }
 
+    // DLS-2 1.6.5.5 Output Transforms
+    // There are no output transforms defined in the DLS Level 2. The bits in the output transform
+    // field must all be set to zero for compatibility with future versions of DLS.
+
+    // if output transform is set to something else, but input transform is none, and the connection
+    // block does not have a control source, apply the output transform to the input instead.
+    if (transform.out_trans != CONN_TRN_NONE && transform.src_trans == CONN_TRN_NONE && control_dls == CONN_SRC_NONE)
+    {
+        transform.src_trans = transform.out_trans;
+        transform.out_trans = CONN_TRN_NONE;
+    }
+
+    if (transform.out_trans != CONN_TRN_NONE)
+    {
+        FLUID_LOG(FLUID_WARN, "Output transform in connection block is not supported, set to to linear");
+    }
+
     fluid_mod_t mod{};
     auto src = convert_dls_mod_gsrc(src_dls);
     if (src.has_value())
@@ -951,7 +968,7 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
 
     mod.amount = scale;
 
-    // mod.out_trans is ignored because unsupported
+    // transform.out_trans is ignored because unsupported
     mod.trans = FLUID_MOD_TRANSFORM_LINEAR;
 
     for (auto &existing_mod : art.mods)
@@ -1014,11 +1031,6 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
 
     auto trans = DLSTransform{ transform };
     fluid_real_t scale = static_cast<fluid_real_t>(scale_16) / 65536;
-
-    if (trans.out_trans != CONN_TRN_NONE)
-    {
-        FLUID_LOG(FLUID_WARN, "Output transform in connection block is not supported, forcing to linear");
-    }
 
     // keynum * scale -> keynum, linear
     if (source == CONN_SRC_KEYNUMBER && control == CONN_SRC_NONE &&
