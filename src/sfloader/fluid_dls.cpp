@@ -967,6 +967,7 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
     }
 
     mod.amount = scale;
+    mod.dest = dest_gen;
 
     // transform.out_trans is ignored because unsupported
     mod.trans = FLUID_MOD_TRANSFORM_LINEAR;
@@ -2544,10 +2545,10 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                 fluid_voice_gen_set(voice, GEN_SAMPLEMODE, 0);
             }
 
-            fluid_voice_gen_set(voice, GEN_STARTLOOPADDROFS, sample.start + wsmp.loop_start - sample.loopstart);
+            fluid_voice_gen_set(voice, GEN_STARTLOOPADDROFS, static_cast<int>(sample.start + wsmp.loop_start) - static_cast<int>(sample.loopstart));
             fluid_voice_gen_set(voice,
                                 GEN_ENDLOOPADDROFS,
-                                sample.start + wsmp.loop_start + wsmp.loop_length - sample.loopend);
+                                static_cast<int>(sample.start + wsmp.loop_start + wsmp.loop_length) - static_cast<int>(sample.loopend));
         }
         else
         {
