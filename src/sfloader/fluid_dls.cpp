@@ -1867,7 +1867,7 @@ inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_w
     if (loopcbsize < 16)
     {
         // This is also seen in Crystal's DLS. See CRS1_FCC comment.
-        FLUID_LOG(FLUID_ERR, "DLS wsmp chunk loop cbSize < 16");
+        FLUID_LOG(FLUID_WARN, "DLS wsmp chunk loop cbSize < 16. The file is probably corrupted.");
         loopcbsize = 16;
     }
     READ32(this, wsmp.loop_type);
