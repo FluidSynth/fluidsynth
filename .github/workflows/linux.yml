@@ -45,6 +45,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Add apt-get repositories
       run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test

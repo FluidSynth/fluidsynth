@@ -19,7 +19,12 @@
 
 #include "fluid_conv.h"
 #include "fluid_sys.h"
-#include "fluid_conv_tables.inc.h"
+
+extern const fluid_real_t *const fluid_cb2amp_tab;
+extern const fluid_real_t *const fluid_ct2hz_tab;
+extern const fluid_real_t *const fluid_concave_tab;
+extern const fluid_real_t *const fluid_convex_tab;
+extern const fluid_real_t *const fluid_pan_tab;
 
 /*
  * Converts absolute cents to Hertz
