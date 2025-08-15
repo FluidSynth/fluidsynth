@@ -359,18 +359,17 @@ if ( WIN32 )
   endif  ( MINGW )
 endif ( WIN32 )
 
+set ( LIBFLUID_LIBS ${MATH_LIBRARY} )
 if (NOT (CMAKE_SYSTEM_NAME MATCHES "SunOS"))
   # Check for threads and math
   find_package ( Threads REQUIRED )
-  set ( LIBFLUID_LIBS Threads::Threads )
+  list ( APPEND LIBFLUID_LIBS "Threads::Threads" )
 endif ()
 
 find_library ( HAS_LIBM NAMES "m" )
 if ( HAS_LIBM )
   set ( MATH_LIBRARY "m" )
 endif ( HAS_LIBM )
-
-set ( LIBFLUID_LIBS ${MATH_LIBRARY} Threads::Threads )
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )

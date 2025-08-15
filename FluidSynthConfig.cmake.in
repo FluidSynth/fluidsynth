@@ -68,7 +68,7 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   include(CMakeFindDependencyMacro)
 
   # Mandatory dependencies
-  if(NOT TARGET Threads::Threads)
+  if(NOT TARGET Threads::Threads AND NOT (CMAKE_SYSTEM_NAME MATCHES "SunOS"))
     find_dependency(Threads)
   endif()
 
