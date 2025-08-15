@@ -756,6 +756,7 @@ if ( enable-opensles )
   find_package( OpenSLES )
   if ( OpenSLES_FOUND )
     set ( OPENSLES_SUPPORT 1 )
+    list ( APPEND PC_LIBS_PRIV "-lOpenSLES" )
   endif ( OpenSLES_FOUND )
 endif ( enable-opensles )
 
