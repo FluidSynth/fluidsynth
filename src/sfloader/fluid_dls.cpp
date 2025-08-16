@@ -10,8 +10,11 @@
 #include "fluid_synth.h"
 #include "fluid_chan.h"
 
-#include "pcm_aulaw.h"
+#if LIBSNDFILE_SUPPORT
+#include <sndfile.h>
+#endif
 
+#include <algorithm>
 #include <cstring>
 #include <vector>
 #include <cstdint>
@@ -293,6 +296,10 @@ struct fluid_dls_font
     // offset is at wsmpnnnn^... (chunk data)
     inline uint32_t parse_wsmp(fluid_long_long_t offset, fluid_dls_wsmp &wsmp);
 
+#if LIBSNDFILE_SUPPORT
+    inline void parse_wave_sndfile(fluid_long_long_t offset, fluid_dls_sample &sample);
+#endif
+
     // lins, offset is at chunk header
     inline void parse_lins(fluid_long_long_t offset);
     inline void parse_ins(fluid_long_long_t offset, fluid_dls_instrument &instrument);
@@ -565,10 +572,6 @@ inline static void READGUID(fluid_dls_font *sf, DLSID &id)
 #ifndef WAVE_FORMAT_PCM
 constexpr uint16_t WAVE_FORMAT_PCM = 0x0001;
 #endif
-#ifndef WAVE_FORMAT_ALAW
-constexpr uint16_t WAVE_FORMAT_ALAW = 0x0006;
-constexpr uint16_t WAVE_FORMAT_MULAW = 0x0007;
-#endif
 
 static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_t size, int bitdepth)
 {
@@ -588,31 +591,6 @@ static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_
     for (fluid_long_long_t i = 0; i < size; ++i)
     {
         dest16[i] = (static_cast<int8_t>(src[i] - 128) << 8);
-    }
-}
-
-static inline void read_data_xlaw(void *dest, const void *data, fluid_long_long_t size, uint16_t format)
-{
-    const auto *src = static_cast<const int8_t *>(data);
-    auto *dest16 = static_cast<int16_t *>(dest);
-    if (format == WAVE_FORMAT_ALAW)
-    {
-        for (fluid_long_long_t i = 0; i < size; ++i)
-        {
-            dest16[i] = alaw2linear(src[i]);
-        }
-    }
-    else if (format == WAVE_FORMAT_MULAW)
-    {
-        for (fluid_long_long_t i = 0; i < size; ++i)
-        {
-            dest16[i] = ulaw2linear(src[i]);
-        }
-    }
-    else
-    {
-        // this should never happen!
-        throw std::runtime_error{ "Unsupported xlaw format" };
     }
 }
 
@@ -1733,12 +1711,14 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 uint16_t temp16;
                 uint32_t temp32;
                 READ16(this, temp16); // read formatTag
-                if (temp16 != WAVE_FORMAT_PCM && temp16 != WAVE_FORMAT_ALAW && temp16 != WAVE_FORMAT_MULAW)
-                {
-                    FLUID_LOG(FLUID_ERR, "Unsupported wave format %04x", temp16);
-                    throw std::exception{};
-                }
                 fmtTag = temp16;
+                if (fmtTag != WAVE_FORMAT_PCM)
+                {
+#if !LIBSNDFILE_SUPPORT
+                    FLUID_LOG(FLUID_ERR, "Unsupported wave format %u (without libsndfile)", fmtTag);
+                    throw std::exception{};
+#endif
+                }
                 READ16(this, temp16); // read channels
                 if (temp16 != 1)
                 {
@@ -1756,12 +1736,7 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                     throw std::exception{};
                 }
                 bitsPerSample = temp16;
-                if ((fmtTag == WAVE_FORMAT_ALAW || fmtTag == WAVE_FORMAT_MULAW) && bitsPerSample != 8)
-                {
-                    FLUID_LOG(FLUID_ERR, "A-law/u-law DLS wave must be 8-bit");
-                    throw std::exception{};
-                }
-                // probably a cbSize field for WAVEFORMATEX, but it is zero for alaw/mulaw
+                // probably a cbSize field for WAVEFORMATEX
                 break;
             }
             case WSMP_FCC:
@@ -1777,6 +1752,10 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 {
                     FLUID_LOG(FLUID_ERR, "DLS fmt chunk must exist in wave chunk and be prior to data chunk");
                     throw std::exception{};
+                }
+                if (fmtTag != WAVE_FORMAT_PCM)
+                {
+                    break; // leave data to libsndfile
                 }
                 if (subchunk.size % (bitsPerSample / 8) != 0)
                 {
@@ -1800,14 +1779,7 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                         throw std::exception{};
                     }
 
-                    if (fmtTag == WAVE_FORMAT_PCM)
-                    {
-                        read_data_lpcm(destination, buffer, c, bitsPerSample);
-                    }
-                    else
-                    {
-                        read_data_xlaw(destination, buffer, c, fmtTag);
-                    }
+                    read_data_lpcm(destination, buffer, c, bitsPerSample);
 
                     destination += c / (bitsPerSample / 8);
                     remaining -= c;
@@ -1832,6 +1804,15 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
         FLUID_LOG(FLUID_ERR, "DLS data chunk must exist in wave chunk");
         throw std::exception{};
     }
+
+    if (fmtTag == WAVE_FORMAT_PCM)
+    {
+        return;
+    }
+
+#if LIBSNDFILE_SUPPORT
+    parse_wave_sndfile(offset, sample);
+#endif
 }
 
 inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_wsmp &wsmp)
@@ -2290,6 +2271,150 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
     return true;
 }
 
+// libsndfile
+#if LIBSNDFILE_SUPPORT
+struct sfvio_data
+{
+    fluid_dls_font *font;
+    fluid_long_long_t offset; // offset in file to wave file
+    fluid_long_long_t pos;    // cursor pos in wave file
+    fluid_long_long_t size;   // wave file size (including RIFF header)
+};
+
+static sf_count_t sfvio_get_filelen(void *user_data) noexcept
+{
+    auto *data = static_cast<sfvio_data *>(user_data);
+    return data->size;
+}
+
+static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data) noexcept
+{
+    auto *data = static_cast<sfvio_data *>(user_data);
+
+    fluid_long_long_t newpos = data->pos;
+
+    switch (whence)
+    {
+        case SEEK_SET:
+            newpos = offset;
+            break;
+        case SEEK_CUR:
+            newpos += offset;
+            break;
+        case SEEK_END:
+            newpos = data->size + offset;
+            break;
+        default:
+            return data->pos;
+    }
+
+    newpos = std::clamp(newpos, 0LL, data->size);
+
+    if (data->font->fcbs->fseek(data->font->file, data->offset + newpos, SEEK_SET) == FLUID_OK)
+    {
+        data->pos = newpos;
+    }
+
+    return data->pos;
+}
+
+static sf_count_t sfvio_tell(void *user_data) noexcept
+{
+    auto *data = static_cast<sfvio_data *>(user_data);
+    return data->pos;
+}
+
+static sf_count_t sfvio_read(void *buffer, sf_count_t count, void *user_data) noexcept
+{
+    auto *data = static_cast<sfvio_data *>(user_data);
+
+    if (data->pos + count > data->size)
+    {
+        count = data->size - data->pos;
+    }
+
+    if (count == 0)
+    {
+        return 0;
+    }
+
+    if (data->font->fcbs->fread(buffer, count, data->font->file) != FLUID_OK)
+    {
+        return 0;
+    }
+
+    // here is a hack to trick libsndfile to recognize DLS LIST[wave] as Microsoft WAVE (.wav)
+    // the only difference is the header
+    // origin: LISTnnnnwave...
+    // wave  : RIFFnnnnWAVE...
+
+    const char RIFF[4] = { 'R', 'I', 'F', 'F' };
+    const char WAVE[4] = { 'W', 'A', 'V', 'E' };
+
+    if (data->pos < 4)
+    {
+        memcpy(buffer, RIFF + data->pos, std::min(4LL - data->pos, static_cast<long long>(count)));
+    }
+
+    if (data->pos < 12 && data->pos + count > 8)
+    {
+        memcpy(static_cast<char *>(buffer) + std::max(0LL, 8 - data->pos),
+               WAVE + std::max(0LL, data->pos - 8),
+               std::min({ 4LL, count - std::max(0LL, 8 - data->pos), 12 - data->pos }));
+    }
+
+    data->pos += count;
+    return count;
+}
+
+static SF_VIRTUAL_IO sfvio = { sfvio_get_filelen, sfvio_seek, sfvio_read, nullptr, sfvio_tell };
+
+inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_dls_sample &sample)
+{
+    RIFFChunk chunk;
+    fseek(offset, SEEK_SET);
+    auto headersize = READCHUNK(this, chunk);
+    if (headersize != 12)
+    {
+        FLUID_LOG(FLUID_ERR, "Invalid 'wave' chunk instead of LIST[wave]");
+        throw std::exception{};
+    }
+
+    sfvio_data data{ this, offset, 0, chunk.size + 12 };
+    sfvio_seek(0, SEEK_SET, &data);
+
+    SF_INFO sfinfo{};
+    auto *sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, &data);
+
+    if (sndfile == nullptr)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to open 'wave' chunk using libsndfile: %s", sf_strerror(sndfile));
+        sf_close(sndfile);
+        throw std::exception{};
+    }
+
+    sample.samplerate = sfinfo.samplerate;
+    if (sfinfo.channels != 1)
+    {
+        FLUID_LOG(FLUID_ERR, "Unsupported wave channel count: %d (libsndfile)", sfinfo.channels);
+        sf_close(sndfile);
+        throw std::exception{};
+    }
+
+    sample.start = sampledata.size();
+    sample.end = sample.start + sfinfo.frames;
+    sampledata.resize(sampledata.size() + sfinfo.frames);
+
+    auto count = sf_read_short(sndfile, sampledata.data() + sample.start, sfinfo.frames);
+    if (count != sfinfo.frames)
+    {
+        FLUID_LOG(FLUID_WARN, "Read 'wave' using libsndfile reached unexpected EOF");
+    }
+
+    sf_close(sndfile);
+}
+#endif
+
 // fluid sfloader interfaces implementation
 
 struct fluid_dls_loader_data
@@ -2381,20 +2506,20 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
         if (fluid_dls_preset_get_banknum(&inst.fluid) == bank && inst.pcnum == prenum)
         {
             return &inst.fluid;
-        }
+    }
 
-        // Drum bank fallback for MMA bank style
+            // Drum bank fallback for MMA bank style
         if (inst.synth->bank_select == FLUID_BANK_STYLE_MMA && bank == DRUM_INST_BANK &&
             inst.is_drums && inst.pcnum == prenum)
-        {
-            return &inst.fluid;
-        }
+            {
+                return &inst.fluid;
+            }
 
         // melodic bank fallback for GM2 DLS
         if (inst.synth->bank_select == FLUID_BANK_STYLE_GM && bank == 0 && !inst.is_drums &&
             inst.bankmsb == 0x79 && inst.pcnum == prenum)
-        {
-            return &inst.fluid;
+            {
+                return &inst.fluid;
         }
     }
 
