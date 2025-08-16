@@ -21,6 +21,10 @@
 
 #include "fluidsynth_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *
  * Lists
@@ -58,5 +62,9 @@ int fluid_list_size(fluid_list_t *list);
 #define fluid_list_get(slist)	((slist) ? ((slist)->data) : NULL)
 
 int fluid_list_str_compare_func(const void *a, const void *b);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _FLUID_LIST_H */

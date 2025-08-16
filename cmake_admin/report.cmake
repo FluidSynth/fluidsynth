@@ -124,10 +124,20 @@ endif ( LIBSNDFILE_HASVORBIS )
 
 
 set ( INPUTS_REPORT "${INPUTS_REPORT}Support for DLS files:   " )
-if ( LIBINSTPATCH_SUPPORT )
+if ( ENABLE_NATIVE_DLS OR LIBINSTPATCH_SUPPORT )
     set ( INPUTS_REPORT "${INPUTS_REPORT}yes\n" )
+else()
+    set ( INPUTS_REPORT "${INPUTS_REPORT}no\n" )
+endif()
+if ( ENABLE_NATIVE_DLS )
+    set ( INPUTS_REPORT "${INPUTS_REPORT}  native:                yes\n" )
+else()
+    set ( INPUTS_REPORT "${INPUTS_REPORT}  native:                no\n" )
+endif()
+if ( LIBINSTPATCH_SUPPORT )
+    set ( INPUTS_REPORT "${INPUTS_REPORT}  libinstpatch:          yes\n" )
 else ( LIBINSTPATCH_SUPPORT )
-    set ( INPUTS_REPORT "${INPUTS_REPORT}no (libinstpatch not found)\n" )
+    set ( INPUTS_REPORT "${INPUTS_REPORT}  libinstpatch:          no\n" )
 endif ( LIBINSTPATCH_SUPPORT )
 
 
