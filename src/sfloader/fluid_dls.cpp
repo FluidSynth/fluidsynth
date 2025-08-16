@@ -2506,20 +2506,30 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
         if (fluid_dls_preset_get_banknum(&inst.fluid) == bank && inst.pcnum == prenum)
         {
             return &inst.fluid;
+        }
     }
 
+    if (dlsfont->synth->bank_select == FLUID_BANK_STYLE_MMA)
+    {
+        for (auto &inst : dlsfont->instruments)
+        {
             // Drum bank fallback for MMA bank style
-        if (inst.synth->bank_select == FLUID_BANK_STYLE_MMA && bank == DRUM_INST_BANK &&
-            inst.is_drums && inst.pcnum == prenum)
+            if (bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
             {
                 return &inst.fluid;
             }
+        }
+    }
 
-        // melodic bank fallback for GM2 DLS
-        if (inst.synth->bank_select == FLUID_BANK_STYLE_GM && bank == 0 && !inst.is_drums &&
-            inst.bankmsb == 0x79 && inst.pcnum == prenum)
+    if (dlsfont->synth->bank_select == FLUID_BANK_STYLE_GM)
+    {
+        for (auto &inst : dlsfont->instruments)
+        {
+            // Melodic bank fallback for GM2 bank style
+            if (bank == 0 && !inst.is_drums && inst.bankmsb == 0x79 && inst.pcnum == prenum)
             {
                 return &inst.fluid;
+            }
         }
     }
 
@@ -2677,10 +2687,14 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                 fluid_voice_gen_set(voice, GEN_SAMPLEMODE, 0);
             }
 
-            fluid_voice_gen_set(voice, GEN_STARTLOOPADDROFS, static_cast<int>(sample.start + wsmp.loop_start) - static_cast<int>(sample.loopstart));
+            fluid_voice_gen_set(voice,
+                                GEN_STARTLOOPADDROFS,
+                                static_cast<int>(sample.start + wsmp.loop_start) -
+                                static_cast<int>(sample.loopstart));
             fluid_voice_gen_set(voice,
                                 GEN_ENDLOOPADDROFS,
-                                static_cast<int>(sample.start + wsmp.loop_start + wsmp.loop_length) - static_cast<int>(sample.loopend));
+                                static_cast<int>(sample.start + wsmp.loop_start + wsmp.loop_length) -
+                                static_cast<int>(sample.loopend));
         }
         else
         {
