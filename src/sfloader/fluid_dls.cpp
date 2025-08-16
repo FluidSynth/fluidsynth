@@ -250,17 +250,17 @@ struct fluid_dls_font
     fluid_long_long_t linsoffset{};
     fluid_long_long_t wvploffset{};
 
-    // this MUST NOT be modified after initalization, because of probable mlock
+    // this MUST NOT be modified after initialization, because of probable mlock
     std::vector<int16_t> sampledata;
     mlock_guard sampledata_mlock;
     std::vector<uint32_t> poolcues; // data of ptbl
 
     std::vector<fluid_dls_sample> samples;
-    // this MUST NOT be modified after initalization, because of instrument.articulations pointer
+    // this MUST NOT be modified after initialization, because of instrument.articulations pointer
     std::vector<fluid_dls_articulation> articulations;
-    // this MUST NOT be modified after initalization, because of instrument.fluid self-reference
+    // this MUST NOT be modified after initialization, because of instrument.fluid self-reference
     std::vector<fluid_dls_instrument> instruments;
-    // this MUST NOT be modified after initalization, because of instrument.samples_fluid pointer
+    // this MUST NOT be modified after initialization, because of instrument.samples_fluid pointer
     std::vector<fluid_sample_t> samples_fluid;
 
     decltype(instruments)::iterator fluid_preset_iterator;
@@ -1016,7 +1016,7 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
         }
         if (trans.src_inv || trans.src_trans != CONN_TRN_NONE)
         {
-            FLUID_LOG(FLUID_WARN, "LFO source is inverted or transformed, ignoring trnasform");
+            FLUID_LOG(FLUID_WARN, "LFO source is inverted or transformed, ignoring transform");
         }
         switch (destination)
         {
@@ -1050,7 +1050,7 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
         }
         if (trans.src_inv || trans.src_trans != CONN_TRN_NONE)
         {
-            FLUID_LOG(FLUID_WARN, "Inverted or transformed vibrato LFO source is not supported, ignoring trnasform");
+            FLUID_LOG(FLUID_WARN, "Inverted or transformed vibrato LFO source is not supported, ignoring transform");
         }
         switch (destination)
         {
@@ -1069,7 +1069,7 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
     {
         if (trans.src_inv || trans.src_bip || trans.src_trans != CONN_TRN_NONE)
         {
-            FLUID_LOG(FLUID_WARN, "EG2 source is transformed, ignoring trnasform");
+            FLUID_LOG(FLUID_WARN, "EG2 source is transformed, ignoring transform");
         }
         switch (destination)
         {
