@@ -22,7 +22,6 @@
 #include <optional>
 #include <utility>
 #include <functional>
-#include <algorithm>
 #include <limits>
 #include <string>
 
@@ -331,39 +330,27 @@ template<class... Args>
 static std::enable_if_t<std::is_constructible_v<fluid_dls_font, Args...>, fluid_dls_font *> // definitely there should be a requires clause
 new_fluid_dls_font(Args &&...args) noexcept
 {
-    auto *dlsfont = FLUID_NEW(fluid_dls_font);
-    if (dlsfont == nullptr)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        return nullptr;
-    }
-
     try
     {
-        new (dlsfont) fluid_dls_font(std::forward<Args>(args)...);
-        return dlsfont;
+        return new fluid_dls_font(std::forward<Args>(args)...);
     }
     catch (const std::bad_alloc &)
     {
-        FLUID_FREE(dlsfont);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return nullptr;
     }
     catch (const std::out_of_range &err)
     {
-        FLUID_FREE(dlsfont);
         FLUID_LOG(FLUID_ERR, "std::out_of_range thrown: %s", err.what());
         return nullptr;
     }
     catch (const std::runtime_error &err)
     {
-        FLUID_FREE(dlsfont);
         FLUID_LOG(FLUID_ERR, "%s", err.what());
         return nullptr;
     }
     catch (...)
     {
-        FLUID_FREE(dlsfont);
         return nullptr;
     }
 }
@@ -377,7 +364,7 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 
     try
     {
-        dlsfont->~fluid_dls_font();
+        delete dlsfont;
     }
     catch (const std::exception &err)
     {
@@ -386,7 +373,6 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
                   typeid(err).name(),
                   err.what());
     }
-    FLUID_FREE(dlsfont);
 }
 
 // Basic structures for DLS
