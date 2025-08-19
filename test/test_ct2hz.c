@@ -4,6 +4,8 @@
 #include "utils/fluid_conv_tables.h"
 #include "utils/fluid_sys.h"
 
+// this test makes sure FLUID_SNPRINTF uses a proper C99 compliant implementation
+
 int float_eq(double x, double y)
 {
     static const double EPS = 1e-3;
