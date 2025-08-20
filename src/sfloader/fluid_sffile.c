@@ -1299,7 +1299,7 @@ int load_pgen(SFData *sf, int size)
     SFPreset *preset;
     SFGenAmount genval;
     unsigned short genid;
-    int level, skip, drop, discarded;
+    int level, skip, drop, discarded, z;
 
     preset_list = sf->preset;
 
@@ -1310,6 +1310,7 @@ int load_pgen(SFData *sf, int size)
         /* traverse through all presets */
         discarded = FALSE;
         zone_list = preset->zone;
+        z = 0;
 
         /* traverse preset's zones */
         while(zone_list)
@@ -1345,6 +1346,9 @@ int load_pgen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
+                        FLUID_LOG(FLUID_INFO,
+                            "Discarding out of order generator KeyRange in preset '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
+                            preset->name, z);
                     }
                 }
                 else if(genid == GEN_VELRANGE)
@@ -1359,6 +1363,9 @@ int load_pgen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
+                        FLUID_LOG(FLUID_INFO,
+                            "Discarding out of order generator VelRange in preset '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
+                            preset->name, z);
                     }
                 }
                 else if(genid == GEN_INSTRUMENT)
@@ -1376,10 +1383,20 @@ int load_pgen(SFData *sf, int size)
                         /* generator valid? */
                         READW(sf, genval.sword);
                         dup = find_gen_by_id(genid, zone->gen);
+                        if (dup)
+                        {
+                            FLUID_LOG(FLUID_INFO,
+                                "Duplicate generator ID %s in preset '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
+                                fluid_gen_name(genid), preset->name, z);
+                        }
                     }
                     else
                     {
                         skip = TRUE;
+                        FLUID_LOG(FLUID_INFO,
+                        "Generator ID %s encountered in preset '%s' of zone %d is either not valid for a preset zone or unknown; discarding.",
+                        fluid_gen_name(genid), preset->name, z);
+
                     }
                 }
 
@@ -1438,7 +1455,7 @@ int load_pgen(SFData *sf, int size)
                 /* advance to next zone before deleting the current list element */
                 zone_list = fluid_list_next(zone_list);
 
-                FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone",
+                FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone (global zones must appear first in presets per SoundFont spec 7.3)",
                             preset->name);
                 preset->zone = fluid_list_remove(preset->zone, zone);
                 delete_zone(zone);
@@ -1800,7 +1817,7 @@ int load_igen(SFData *sf, int size)
     SFInst *inst;
     SFGenAmount genval;
     unsigned short genid;
-    int level, skip, drop, discarded;
+    int level, skip, drop, discarded, z;
 
     inst_list = sf->inst;
 
@@ -1811,6 +1828,7 @@ int load_igen(SFData *sf, int size)
 
         discarded = FALSE;
         zone_list = inst->zone;
+        z = 0;
 
         /* traverse this instrument's zones */
         while(zone_list)
@@ -1829,7 +1847,7 @@ int load_igen(SFData *sf, int size)
 
                 if((size -= SF_GEN_SIZE) < 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "IGEN chunk size mismatch");
+                    FLUID_LOG(FLUID_ERR, "IGEN chunk size mismatch, rejecting SoundFont as structurally defective.");
                     return FALSE;
                 }
 
@@ -1847,6 +1865,9 @@ int load_igen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
+                        FLUID_LOG(FLUID_INFO,
+                            "Discarding out of order generator KeyRange in instrument '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
+                            inst->name, z);
                     }
                 }
                 else if(genid == GEN_VELRANGE)
@@ -1861,6 +1882,9 @@ int load_igen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
+                        FLUID_LOG(FLUID_INFO,
+                            "Discarding out of order generator VelRange in instrument '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
+                            inst->name, z);
                     }
                 }
                 else if(genid == GEN_SAMPLEID)
@@ -1868,6 +1892,14 @@ int load_igen(SFData *sf, int size)
                     /* sample is last gen */
                     level = 3;
                     READW(sf, genval.uword);
+
+                    if (fluid_list_next(gen_list)) {
+                        FLUID_LOG(FLUID_INFO,
+                            "Generator SampleID in instrument '%s' of zone %d is followed by additional generators. "
+                            "Per SoundFont spec 8.1.2, SampleID must be the last generator in the zone. "
+                            "All subsequent generators will be discarded.",
+                            inst->name, z);
+                    }
                 }
                 else
                 {
@@ -1878,10 +1910,19 @@ int load_igen(SFData *sf, int size)
                         /* gen valid? */
                         READW(sf, genval.sword);
                         dup = find_gen_by_id(genid, zone->gen);
+
+                        if (dup) {
+                            FLUID_LOG(FLUID_INFO,
+                                "Duplicate generator ID %s in instrument '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
+                                fluid_gen_name(genid), inst->name, z);
+                        }
                     }
                     else
                     {
                         skip = TRUE;
+                        FLUID_LOG(FLUID_INFO,
+                            "Generator ID %s in instrument '%s' of zone %d is invalid for instruments per SoundFont spec 8.1.2. Discarding.",
+                            fluid_gen_name(genid), inst->name, z);
                     }
                 }
 
@@ -1892,7 +1933,7 @@ int load_igen(SFData *sf, int size)
                         /* if gen ! dup alloc new */
                         if((g = FLUID_NEW(SFGen)) == NULL)
                         {
-                            FLUID_LOG(FLUID_ERR, "Out of memory");
+                            FLUID_LOG(FLUID_PANIC, "Out of memory");
                             return FALSE;
                         }
 
@@ -1913,6 +1954,17 @@ int load_igen(SFData *sf, int size)
                     discarded = TRUE;
                     drop = TRUE;
                     FSKIPW(sf);
+                }
+
+                if(drop)
+                {
+                    // If a generator is dropped (duplicate or invalid), explain why.
+                    if (dup)
+                    {
+                        FLUID_LOG(FLUID_INFO,
+                            "Dropping previous instance of generator ID %s in instrument '%s' of zone %d due to duplicate definition (last one kept).",
+                            fluid_gen_name(genid), inst->name, z);
+                    }
                 }
 
                 if(!drop)
@@ -1940,11 +1992,12 @@ int load_igen(SFData *sf, int size)
                 /* advance to next zone before deleting the current list element */
                 zone_list = fluid_list_next(zone_list);
 
-                FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone",
+                FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone (global zones must appear first in instruments per SoundFont spec 7.7).",
                             inst->name);
                 inst->zone = fluid_list_remove(inst->zone, zone);
                 delete_zone(zone);
 
+                z++;
                 /* we have already advanced the zone_list pointer, so continue with next zone */
                 continue;
             }
@@ -1957,21 +2010,26 @@ int load_igen(SFData *sf, int size)
 
                 if((size -= SF_GEN_SIZE) < 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "Instrument generator chunk size mismatch");
+                    FLUID_LOG(FLUID_ERR, "Instrument generator chunk size mismatch, rejecting SoundFont as structurally defective.");
                     return FALSE;
                 }
+
+                FLUID_LOG(FLUID_DBG,
+                    "Generator ID %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
+                    fluid_gen_name(((SFGen *)(gen_list->data))->id), inst->name, z);
 
                 FSKIP(sf, SF_GEN_SIZE);
                 SLADVREM(zone->gen, gen_list);
             }
 
+            z++;
             zone_list = fluid_list_next(zone_list); /* next zone */
         }
 
         if(discarded)
         {
             FLUID_LOG(FLUID_WARN,
-                      "Instrument '%s': Some invalid generators were discarded",
+                      "Instrument '%s': Some invalid generators were discarded, audible glitches are to be expected! See previous FLUID_INFO logs for details.",
                       inst->name);
         }
 
