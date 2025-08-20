@@ -135,6 +135,6 @@ const char *fluid_gen_name(int gen)
         return fluid_gen_info[gen].name;
     }
 
-    FLUID_SNPRINTF(num, sizeof(num) / sizeof(char), "%s", gen);
+    FLUID_SNPRINTF(num, sizeof(num) / sizeof(char), "%d", gen);
     return num;
 }
