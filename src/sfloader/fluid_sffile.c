@@ -338,7 +338,7 @@ SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs)
 
     if(!(sf = FLUID_NEW(SFData)))
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -357,7 +357,7 @@ SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs)
 
     if(sf->fname == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_exit;
     }
 
@@ -740,7 +740,7 @@ static int process_info(SFData *sf, int size)
             /* alloc for chunk fcc and da chunk */
             if(!(item.fcc = FLUID_MALLOC(chunk.size + sizeof(uint32_t) + 1)))
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 return FALSE;
             }
 
@@ -1007,7 +1007,7 @@ static int load_phdr(SFData *sf, unsigned int size)
         /* load all preset headers */
         if((preset = FLUID_NEW(SFPreset)) == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FALSE;
         }
 
@@ -1100,7 +1100,7 @@ static int load_pbag(SFData *sf, int size)
 
             if((z = FLUID_NEW(SFZone)) == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 return FALSE;
             }
 
@@ -1235,7 +1235,7 @@ static int load_pmod(SFData *sf, int size)
 
                 if((m = FLUID_NEW(SFMod)) == NULL)
                 {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
                     return FALSE;
                 }
 
@@ -1364,7 +1364,7 @@ int load_pgen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Discarding out of order generator VelRange in preset '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
+                            "Discarding out of order generator VelRange in preset '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
                             preset->name, z);
                     }
                 }
@@ -1386,7 +1386,7 @@ int load_pgen(SFData *sf, int size)
                         if (dup)
                         {
                             FLUID_LOG(FLUID_INFO,
-                                "Duplicate generator ID %s in preset '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
+                                "Duplicate generator %s in preset '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
                                 fluid_gen_name(genid), preset->name, z);
                         }
                     }
@@ -1394,7 +1394,7 @@ int load_pgen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                        "Generator ID %s encountered in preset '%s' of zone %d is either not valid for a preset zone or unknown; discarding.",
+                        "Generator %s encountered in preset '%s' of zone %d is either not valid for a preset zone or unknown; discarding.",
                         fluid_gen_name(genid), preset->name, z);
 
                     }
@@ -1407,7 +1407,7 @@ int load_pgen(SFData *sf, int size)
                         /* if gen ! dup alloc new */
                         if((g = FLUID_NEW(SFGen)) == NULL)
                         {
-                            FLUID_LOG(FLUID_ERR, "Out of memory");
+                            FLUID_LOG(FLUID_PANIC, "Out of memory");
                             return FALSE;
                         }
 
@@ -1541,7 +1541,7 @@ static int load_ihdr(SFData *sf, unsigned int size)
         /* load all instrument headers */
         if((inst = FLUID_NEW(SFInst)) == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FALSE;
         }
 
@@ -1628,7 +1628,7 @@ static int load_ibag(SFData *sf, int size)
 
             if((z = FLUID_NEW(SFZone)) == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 return FALSE;
             }
 
@@ -1764,7 +1764,7 @@ static int load_imod(SFData *sf, int size)
 
                 if((m = FLUID_NEW(SFMod)) == NULL)
                 {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
                     return FALSE;
                 }
 
@@ -1913,7 +1913,7 @@ int load_igen(SFData *sf, int size)
 
                         if (dup) {
                             FLUID_LOG(FLUID_INFO,
-                                "Duplicate generator ID %s in instrument '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
+                                "Duplicate generator %s in instrument '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
                                 fluid_gen_name(genid), inst->name, z);
                         }
                     }
@@ -1921,7 +1921,7 @@ int load_igen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Generator ID %s in instrument '%s' of zone %d is invalid for instruments per SoundFont spec 8.1.2. Discarding.",
+                            "Generator %s in instrument '%s' of zone %d is invalid for instruments per SoundFont spec 8.1.2. Discarding.",
                             fluid_gen_name(genid), inst->name, z);
                     }
                 }
@@ -1962,7 +1962,7 @@ int load_igen(SFData *sf, int size)
                     if (dup)
                     {
                         FLUID_LOG(FLUID_INFO,
-                            "Dropping previous instance of generator ID %s in instrument '%s' of zone %d due to duplicate definition (last one kept).",
+                            "Dropping previous instance of generator %s in instrument '%s' of zone %d due to duplicate definition (last one kept).",
                             fluid_gen_name(genid), inst->name, z);
                     }
                 }
@@ -2015,7 +2015,7 @@ int load_igen(SFData *sf, int size)
                 }
 
                 FLUID_LOG(FLUID_DBG,
-                    "Generator ID %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
+                    "Generator %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
                     fluid_gen_name(((SFGen *)(gen_list->data))->id), inst->name, z);
 
                 FSKIP(sf, SF_GEN_SIZE);
@@ -2082,7 +2082,7 @@ static int load_shdr(SFData *sf, unsigned int size)
     {
         if((p = FLUID_NEW(SFSample)) == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FALSE;
         }
         p->idx = i;
@@ -2301,7 +2301,7 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
     loaded_data = FLUID_ARRAY(short, num_samples);
     if(loaded_data == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_exit_unlock;
     }
 
@@ -2349,7 +2349,7 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
         loaded_data24 = FLUID_ARRAY(char, num_samples);
         if(loaded_data24 == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory reading 24-bit sample data");
+            FLUID_LOG(FLUID_PANIC, "Out of memory reading 24-bit sample data");
             goto error24_exit;
         }
 
@@ -2577,7 +2577,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     if(!wav_data)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_exit;
     }
 
