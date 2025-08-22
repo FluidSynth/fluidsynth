@@ -266,7 +266,7 @@ int fluid_is_soundfont(const char *filename)
     FILE    *fp;
     uint32_t fcc;
     int      retcode = FALSE;
-    const char* err_msg;
+    const char *err_msg;
 
     do
     {
@@ -301,20 +301,24 @@ int fluid_is_soundfont(const char *filename)
         }
 
         retcode = (fcc == SFBK_FCC);
+
         if(retcode)
         {
             break;  // seems to be SF2, stop here
         }
+
 #ifdef LIBINSTPATCH_SUPPORT
         else
         {
             IpatchFileHandle *fhandle = ipatch_file_identify_open(filename, NULL);
+
             if(fhandle != NULL)
             {
                 retcode = (ipatch_file_identify(fhandle->file, NULL) == IPATCH_TYPE_DLS_FILE);
                 ipatch_file_close(fhandle);
             }
         }
+
 #endif
     }
     while(0);
@@ -454,6 +458,7 @@ void fluid_sffile_close(SFData *sf)
     SFInst *inst;
 
     fluid_rec_mutex_destroy(sf->mtx);
+
     if(sf->sffd)
     {
         sf->fcbs->fclose(sf->sffd);
@@ -721,7 +726,7 @@ static int process_info(SFData *sf, int size)
                 if((chunk.id != ICMT_FCC && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
                 {
                     FLUID_LOG(FLUID_ERR, "INFO sub chunk %.4s has invalid chunk size of %d bytes",
-                              (char*)&chunk.id, chunk.size);
+                              (char *)&chunk.id, chunk.size);
                     return FALSE;
                 }
             }
@@ -862,19 +867,19 @@ static int pdtahelper(SFData *sf, unsigned int expid, unsigned int reclen, SFChu
 
     if(chunk->id != expid)
     {
-        FLUID_LOG(FLUID_ERR, "Expected PDTA sub-chunk '%.4s' found invalid id instead", (char*)&expid);
+        FLUID_LOG(FLUID_ERR, "Expected PDTA sub-chunk '%.4s' found invalid id instead", (char *)&expid);
         return FALSE;
     }
 
     if(chunk->size % reclen)  /* valid chunk size? */
     {
-        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size is not a multiple of %d bytes", (char*)&expid, reclen);
+        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size is not a multiple of %d bytes", (char *)&expid, reclen);
         return FALSE;
     }
 
     if((*size -= chunk->size) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size exceeds remaining PDTA chunk size", (char*)&expid);
+        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size exceeds remaining PDTA chunk size", (char *)&expid);
         return FALSE;
     }
 
@@ -1347,8 +1352,8 @@ int load_pgen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Discarding out of order generator KeyRange in preset '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
-                            preset->name, z);
+                                  "Discarding out of order generator KeyRange in preset '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
+                                  preset->name, z);
                     }
                 }
                 else if(genid == GEN_VELRANGE)
@@ -1364,8 +1369,8 @@ int load_pgen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Discarding out of order generator VelRange in preset '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
-                            preset->name, z);
+                                  "Discarding out of order generator VelRange in preset '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
+                                  preset->name, z);
                     }
                 }
                 else if(genid == GEN_INSTRUMENT)
@@ -1383,19 +1388,20 @@ int load_pgen(SFData *sf, int size)
                         /* generator valid? */
                         READW(sf, genval.sword);
                         dup = find_gen_by_id(genid, zone->gen);
-                        if (dup)
+
+                        if(dup)
                         {
                             FLUID_LOG(FLUID_INFO,
-                                "Duplicate generator %s in preset '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
-                                fluid_gen_name(genid), preset->name, z);
+                                      "Duplicate generator %s in preset '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
+                                      fluid_gen_name(genid), preset->name, z);
                         }
                     }
                     else
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                        "Generator %s encountered in preset '%s' of zone %d is either not valid for a preset zone or unknown; discarding.",
-                        fluid_gen_name(genid), preset->name, z);
+                                  "Generator %s encountered in preset '%s' of zone %d is either not valid for a preset zone or unknown; discarding.",
+                                  fluid_gen_name(genid), preset->name, z);
 
                     }
                 }
@@ -1440,7 +1446,7 @@ int load_pgen(SFData *sf, int size)
                 }
 
                 /* GEN_INSTRUMENT should be the last generator */
-                if (level == 3)
+                if(level == 3)
                 {
                     break;
                 }
@@ -1456,7 +1462,7 @@ int load_pgen(SFData *sf, int size)
                 zone_list = fluid_list_next(zone_list);
 
                 FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone (global zones must appear first in presets per SoundFont spec 7.3)",
-                            preset->name);
+                          preset->name);
                 preset->zone = fluid_list_remove(preset->zone, zone);
                 delete_zone(zone);
 
@@ -1479,14 +1485,14 @@ int load_pgen(SFData *sf, int size)
                 if(gen_list->data)
                 {
                     FLUID_LOG(FLUID_DBG,
-                        "Generator %s in preset '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
-                        fluid_gen_name(((SFGen *)(gen_list->data))->id), preset->name, z);
+                              "Generator %s in preset '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
+                              fluid_gen_name(((SFGen *)(gen_list->data))->id), preset->name, z);
                 }
                 else
                 {
                     FLUID_LOG(FLUID_DBG,
-                        "Empty generator in preset '%s' of zone %d; discarding.",
-                        preset->name, z);
+                              "Empty generator in preset '%s' of zone %d; discarding.",
+                              preset->name, z);
                 }
 
                 FSKIP(sf, SF_GEN_SIZE);
@@ -1879,8 +1885,8 @@ int load_igen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Discarding out of order generator KeyRange in instrument '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
-                            inst->name, z);
+                                  "Discarding out of order generator KeyRange in instrument '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
+                                  inst->name, z);
                     }
                 }
                 else if(genid == GEN_VELRANGE)
@@ -1896,8 +1902,8 @@ int load_igen(SFData *sf, int size)
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Discarding out of order generator VelRange in instrument '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
-                            inst->name, z);
+                                  "Discarding out of order generator VelRange in instrument '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
+                                  inst->name, z);
                     }
                 }
                 else if(genid == GEN_SAMPLEID)
@@ -1906,12 +1912,13 @@ int load_igen(SFData *sf, int size)
                     level = 3;
                     READW(sf, genval.uword);
 
-                    if (fluid_list_next(gen_list)) {
+                    if(fluid_list_next(gen_list))
+                    {
                         FLUID_LOG(FLUID_INFO,
-                            "Generator SampleID in instrument '%s' of zone %d is followed by additional generators. "
-                            "Per SoundFont spec 8.1.2, SampleID must be the last generator in the zone. "
-                            "All subsequent generators will be discarded.",
-                            inst->name, z);
+                                  "Generator SampleID in instrument '%s' of zone %d is followed by additional generators. "
+                                  "Per SoundFont spec 8.1.2, SampleID must be the last generator in the zone. "
+                                  "All subsequent generators will be discarded.",
+                                  inst->name, z);
                     }
                 }
                 else
@@ -1924,18 +1931,19 @@ int load_igen(SFData *sf, int size)
                         READW(sf, genval.sword);
                         dup = find_gen_by_id(genid, zone->gen);
 
-                        if (dup) {
+                        if(dup)
+                        {
                             FLUID_LOG(FLUID_INFO,
-                                "Duplicate generator %s in instrument '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
-                                fluid_gen_name(genid), inst->name, z);
+                                      "Duplicate generator %s in instrument '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
+                                      fluid_gen_name(genid), inst->name, z);
                         }
                     }
                     else
                     {
                         skip = TRUE;
                         FLUID_LOG(FLUID_INFO,
-                            "Generator %s in instrument '%s' of zone %d is invalid for instruments per SoundFont spec 8.1.2. Discarding.",
-                            fluid_gen_name(genid), inst->name, z);
+                                  "Generator %s in instrument '%s' of zone %d is invalid for instruments per SoundFont spec 8.1.2. Discarding.",
+                                  fluid_gen_name(genid), inst->name, z);
                     }
                 }
 
@@ -1972,11 +1980,11 @@ int load_igen(SFData *sf, int size)
                 if(drop)
                 {
                     // If a generator is dropped (duplicate or invalid), explain why.
-                    if (dup)
+                    if(dup)
                     {
                         FLUID_LOG(FLUID_INFO,
-                            "Dropping previous instance of generator %s in instrument '%s' of zone %d due to duplicate definition (last one kept).",
-                            fluid_gen_name(genid), inst->name, z);
+                                  "Dropping previous instance of generator %s in instrument '%s' of zone %d due to duplicate definition (last one kept).",
+                                  fluid_gen_name(genid), inst->name, z);
                     }
                 }
 
@@ -1990,7 +1998,7 @@ int load_igen(SFData *sf, int size)
                 }
 
                 /* GEN_SAMPLEID should be last generator */
-                if (level == 3)
+                if(level == 3)
                 {
                     break;
                 }
@@ -2006,7 +2014,7 @@ int load_igen(SFData *sf, int size)
                 zone_list = fluid_list_next(zone_list);
 
                 FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone (global zones must appear first in instruments per SoundFont spec 7.7).",
-                            inst->name);
+                          inst->name);
                 inst->zone = fluid_list_remove(inst->zone, zone);
                 delete_zone(zone);
 
@@ -2030,14 +2038,14 @@ int load_igen(SFData *sf, int size)
                 if(gen_list->data)
                 {
                     FLUID_LOG(FLUID_DBG,
-                        "Generator %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
-                        fluid_gen_name(((SFGen *)(gen_list->data))->id), inst->name, z);
+                              "Generator %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
+                              fluid_gen_name(((SFGen *)(gen_list->data))->id), inst->name, z);
                 }
                 else
                 {
                     FLUID_LOG(FLUID_DBG,
-                        "Empty generator in instrument '%s' of zone %d; discarding.",
-                        inst->name, z);
+                              "Empty generator in instrument '%s' of zone %d; discarding.",
+                              inst->name, z);
                 }
 
                 FSKIP(sf, SF_GEN_SIZE);
@@ -2107,6 +2115,7 @@ static int load_shdr(SFData *sf, unsigned int size)
             FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FALSE;
         }
+
         p->idx = i;
 
         sf->sample = fluid_list_prepend(sf->sample, p);
@@ -2264,7 +2273,7 @@ static int valid_inst_genid(unsigned short genid)
 
     for(i = 0; i < FLUID_N_ELEMENTS(invalid_inst_gen); i++)
     {
-        if (invalid_inst_gen[i] == genid)
+        if(invalid_inst_gen[i] == genid)
         {
             return FALSE;
         }
@@ -2285,7 +2294,7 @@ static int valid_preset_genid(unsigned short genid)
 
     for(i = 0; i < FLUID_N_ELEMENTS(invalid_preset_gen); i++)
     {
-        if (invalid_preset_gen[i] == genid)
+        if(invalid_preset_gen[i] == genid)
         {
             return FALSE;
         }
@@ -2301,7 +2310,7 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
     char *loaded_data24 = NULL;
     unsigned int num_samples;
 
-    fluid_return_val_if_fail((end + 1) > start , -1);
+    fluid_return_val_if_fail((end + 1) > start, -1);
 
     num_samples = (end + 1) - start;
 
@@ -2321,22 +2330,26 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
     }
 
     loaded_data = FLUID_ARRAY(short, num_samples);
+
     if(loaded_data == NULL)
     {
         FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_exit_unlock;
     }
 
-    FLUID_LOG(FLUID_DBG, "ftell(): %llu, fread(): %ld bytes", sf->fcbs->ftell(sf->sffd), num_samples*sizeof(short));
+    FLUID_LOG(FLUID_DBG, "ftell(): %llu, fread(): %ld bytes", sf->fcbs->ftell(sf->sffd), num_samples * sizeof(short));
+
     if(sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
     {
 #if FLUID_VERSION_CHECK(FLUIDSYNTH_VERSION_MAJOR, FLUIDSYNTH_VERSION_MINOR, FLUIDSYNTH_VERSION_MICRO) < FLUID_VERSION_CHECK(2,2,0)
+
         if((int)(num_samples * sizeof(short)) < 0)
         {
             FLUID_LOG(FLUID_INFO,
                       "This SoundFont seems to be bigger than 2GB, which is not supported in this version of fluidsynth. "
                       "You need to use at least fluidsynth 2.2.0");
         }
+
 #endif
         FLUID_LOG(FLUID_ERR, "Failed to read sample data");
         goto error_exit_unlock;
@@ -2369,6 +2382,7 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
         }
 
         loaded_data24 = FLUID_ARRAY(char, num_samples);
+
         if(loaded_data24 == NULL)
         {
             FLUID_LOG(FLUID_PANIC, "Out of memory reading 24-bit sample data");
@@ -2461,11 +2475,13 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
 
     new_offset += data->start;
     fluid_rec_mutex_lock(sf->mtx);
-    if (data->start <= new_offset && new_offset <= data->end &&
-        sf->fcbs->fseek(sf->sffd, new_offset, SEEK_SET) != FLUID_FAILED)
+
+    if(data->start <= new_offset && new_offset <= data->end &&
+            sf->fcbs->fseek(sf->sffd, new_offset, SEEK_SET) != FLUID_FAILED)
     {
         data->offset = new_offset - data->start;
     }
+
     fluid_rec_mutex_unlock(sf->mtx);
 
 fail:
@@ -2491,19 +2507,21 @@ static sf_count_t sfvio_read(void *ptr, sf_count_t count, void *user_data)
     }
 
     fluid_rec_mutex_lock(sf->mtx);
-    if (sf->fcbs->fseek(sf->sffd, data->start + data->offset, SEEK_SET) == FLUID_FAILED)
+
+    if(sf->fcbs->fseek(sf->sffd, data->start + data->offset, SEEK_SET) == FLUID_FAILED)
     {
         FLUID_LOG(FLUID_ERR, "This should never happen: fseek failed in sfvoid_read()");
         count = 0;
     }
     else
     {
-        if (sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
+        if(sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
         {
             FLUID_LOG(FLUID_ERR, "Failed to read compressed sample data");
             count = 0;
         }
     }
+
     fluid_rec_mutex_unlock(sf->mtx);
 
     data->offset += count;
@@ -2557,7 +2575,8 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     /* Seek to sfdata.start, the beginning of Ogg Vorbis data in Soundfont */
     sfvio_seek(0, SEEK_SET, &sfdata);
-    if (sfdata.offset != 0)
+
+    if(sfdata.offset != 0)
     {
         FLUID_LOG(FLUID_ERR, "Failed to seek to compressed sample position");
         return -1;
