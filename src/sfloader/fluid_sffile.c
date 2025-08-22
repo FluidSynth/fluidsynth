@@ -1328,7 +1328,7 @@ int load_pgen(SFData *sf, int size)
 
                 if((size -= SF_GEN_SIZE) < 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "Preset generator chunk size mismatch");
+                    FLUID_LOG(FLUID_ERR, "Preset generator chunk size mismatch, rejecting SoundFont as structurally defective.");
                     return FALSE;
                 }
 
@@ -1472,8 +1472,21 @@ int load_pgen(SFData *sf, int size)
 
                 if((size -= SF_GEN_SIZE) < 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "Preset generator chunk size mismatch");
+                    FLUID_LOG(FLUID_ERR, "Preset generator chunk size mismatch, rejecting SoundFont as structurally defective.");
                     return FALSE;
+                }
+
+                if(gen_list->data)
+                {
+                    FLUID_LOG(FLUID_DBG,
+                        "Generator %s in preset '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
+                        fluid_gen_name(((SFGen *)(gen_list->data))->id), preset->name, z);
+                }
+                else
+                {
+                    FLUID_LOG(FLUID_DBG,
+                        "Empty generator in preset '%s' of zone %d; discarding.",
+                        preset->name, z);
                 }
 
                 FSKIP(sf, SF_GEN_SIZE);
@@ -2014,9 +2027,18 @@ int load_igen(SFData *sf, int size)
                     return FALSE;
                 }
 
-                FLUID_LOG(FLUID_DBG,
-                    "Generator %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
-                    fluid_gen_name(((SFGen *)(gen_list->data))->id), inst->name, z);
+                if(gen_list->data)
+                {
+                    FLUID_LOG(FLUID_DBG,
+                        "Generator %s in instrument '%s' of zone %d appears after SampleID, in violation of SoundFont spec 8.1.2; discarding.",
+                        fluid_gen_name(((SFGen *)(gen_list->data))->id), inst->name, z);
+                }
+                else
+                {
+                    FLUID_LOG(FLUID_DBG,
+                        "Empty generator in instrument '%s' of zone %d; discarding.",
+                        inst->name, z);
+                }
 
                 FSKIP(sf, SF_GEN_SIZE);
                 SLADVREM(zone->gen, gen_list);
