@@ -1979,7 +1979,6 @@ int load_igen(SFData *sf, int size)
 
                 if(drop)
                 {
-                    // If a generator is dropped (duplicate or invalid), explain why.
                     if(dup)
                     {
                         FLUID_LOG(FLUID_INFO,
