@@ -1466,6 +1466,7 @@ int load_pgen(SFData *sf, int size)
                 preset->zone = fluid_list_remove(preset->zone, zone);
                 delete_zone(zone);
 
+                z++;
                 /* we have already advanced the zone_list pointer, so continue with next zone */
                 continue;
             }
@@ -1499,6 +1500,7 @@ int load_pgen(SFData *sf, int size)
                 SLADVREM(zone->gen, gen_list);
             }
 
+            z++;
             zone_list = fluid_list_next(zone_list);
         }
 
