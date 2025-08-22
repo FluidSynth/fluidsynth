@@ -1351,7 +1351,7 @@ int load_pgen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Discarding out of order generator KeyRange in preset '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
                                   preset->name, z);
                     }
@@ -1368,7 +1368,7 @@ int load_pgen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Discarding out of order generator VelRange in preset '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
                                   preset->name, z);
                     }
@@ -1391,7 +1391,7 @@ int load_pgen(SFData *sf, int size)
 
                         if(dup)
                         {
-                            FLUID_LOG(FLUID_INFO,
+                            FLUID_LOG(FLUID_DBG,
                                       "Duplicate generator %s in preset '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
                                       fluid_gen_name(genid), preset->name, z);
                         }
@@ -1399,7 +1399,7 @@ int load_pgen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Generator %s encountered in preset '%s' of zone %d is either not valid for a preset zone or unknown; discarding.",
                                   fluid_gen_name(genid), preset->name, z);
 
@@ -1505,7 +1505,7 @@ int load_pgen(SFData *sf, int size)
         if(discarded)
         {
             FLUID_LOG(FLUID_WARN,
-                      "Preset '%s': Some invalid generators were discarded",
+                      "Preset '%s': Some invalid generators were discarded, potentially resulting in a different timbre. Run fluidsynth in verbose mode for detailed information.",
                       preset->name);
         }
 
@@ -1884,7 +1884,7 @@ int load_igen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Discarding out of order generator KeyRange in instrument '%s' of zone %d (must be the first generator per SoundFont spec 8.1.2).",
                                   inst->name, z);
                     }
@@ -1901,7 +1901,7 @@ int load_igen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Discarding out of order generator VelRange in instrument '%s' of zone %d (must only be preceded by the KeyRange generator per SoundFont spec 8.1.2).",
                                   inst->name, z);
                     }
@@ -1914,7 +1914,7 @@ int load_igen(SFData *sf, int size)
 
                     if(fluid_list_next(gen_list))
                     {
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Generator SampleID in instrument '%s' of zone %d is followed by additional generators. "
                                   "Per SoundFont spec 8.1.2, SampleID must be the last generator in the zone. "
                                   "All subsequent generators will be discarded.",
@@ -1933,7 +1933,7 @@ int load_igen(SFData *sf, int size)
 
                         if(dup)
                         {
-                            FLUID_LOG(FLUID_INFO,
+                            FLUID_LOG(FLUID_DBG,
                                       "Duplicate generator %s in instrument '%s' of zone %d found. Only the last occurrence is kept, previous one(s) will be dropped.",
                                       fluid_gen_name(genid), inst->name, z);
                         }
@@ -1941,7 +1941,7 @@ int load_igen(SFData *sf, int size)
                     else
                     {
                         skip = TRUE;
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Generator %s in instrument '%s' of zone %d is invalid for instruments per SoundFont spec 8.1.2. Discarding.",
                                   fluid_gen_name(genid), inst->name, z);
                     }
@@ -1981,7 +1981,7 @@ int load_igen(SFData *sf, int size)
                 {
                     if(dup)
                     {
-                        FLUID_LOG(FLUID_INFO,
+                        FLUID_LOG(FLUID_DBG,
                                   "Dropping previous instance of generator %s in instrument '%s' of zone %d due to duplicate definition (last one kept).",
                                   fluid_gen_name(genid), inst->name, z);
                     }
@@ -2058,7 +2058,7 @@ int load_igen(SFData *sf, int size)
         if(discarded)
         {
             FLUID_LOG(FLUID_WARN,
-                      "Instrument '%s': Some invalid generators were discarded, audible glitches are to be expected! See previous FLUID_INFO logs for details.",
+                      "Instrument '%s': Some invalid generators were discarded, audible glitches are to be expected! Run fluidsynth in verbose mode for detailed information.",
                       inst->name);
         }
 
@@ -2340,16 +2340,6 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
 
     if(sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
     {
-#if FLUID_VERSION_CHECK(FLUIDSYNTH_VERSION_MAJOR, FLUIDSYNTH_VERSION_MINOR, FLUIDSYNTH_VERSION_MICRO) < FLUID_VERSION_CHECK(2,2,0)
-
-        if((int)(num_samples * sizeof(short)) < 0)
-        {
-            FLUID_LOG(FLUID_INFO,
-                      "This SoundFont seems to be bigger than 2GB, which is not supported in this version of fluidsynth. "
-                      "You need to use at least fluidsynth 2.2.0");
-        }
-
-#endif
         FLUID_LOG(FLUID_ERR, "Failed to read sample data");
         goto error_exit_unlock;
     }
