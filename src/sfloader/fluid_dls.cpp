@@ -33,29 +33,35 @@ using std::uint16_t;
 using std::uint32_t;
 using std::uint8_t;
 
+// format specifier and arguments used for printing FOURCCs
 #define FMT_4CC_SPEC "%c%c%c%c"
 #define FMT_4CC_ARG(x)                                                                    \
     (reinterpret_cast<const char *>(&(x)))[0], (reinterpret_cast<const char *>(&(x)))[1], \
     (reinterpret_cast<const char *>(&(x)))[2], (reinterpret_cast<const char *>(&(x)))[3]
 
+// RAII wrapper for scope defer execution
 template<class Callable> struct scope_guard
 {
-    Callable on_exit;
+    explicit scope_guard(Callable on_exit) noexcept : on_exit(std::move(on_exit))
+    {
+    }
+
     ~scope_guard() noexcept(noexcept(on_exit()))
     {
         on_exit();
     }
+
+private:
+    Callable on_exit;
 };
 
+// RAII wrapper for mlock
 struct mlock_guard
 {
-    void *ptr;
-    fluid_long_long_t size;
-    bool locked;
-
     mlock_guard() noexcept : ptr(nullptr), size(0), locked(false)
     {
     }
+
     mlock_guard(void *ptr, fluid_long_long_t size) noexcept : ptr(ptr), size(size), locked(false)
     {
     }
@@ -67,6 +73,7 @@ struct mlock_guard
       locked(std::exchange(other.locked, false))
     {
     }
+
     mlock_guard &operator=(mlock_guard &&other) noexcept
     {
         if (this == &other)
@@ -108,6 +115,11 @@ struct mlock_guard
     {
         unlock();
     }
+
+private:
+    void *ptr;
+    fluid_long_long_t size;
+    bool locked;
 };
 
 // fluid_sfloader_t interface
@@ -130,7 +142,7 @@ static void fluid_dls_preset_free(fluid_preset_t *preset) noexcept;
 
 // internal struct for keeping some nice information of the DLS
 
-// note that it is at the level of lart
+// note that it is at the level of lart (one fluid_dls_articulation per instrument (region))
 struct fluid_dls_articulation
 {
     std::optional<fluid_real_t> gens[GEN_LAST];
@@ -237,6 +249,7 @@ struct fluid_dls_font
     std::string filename;
 
     void *file{};
+    // this RAII wrapper is used to provide exception safety (initializer may throws!)
     scope_guard<std::function<void()>> on_file_exit{ [this]() { // Once `this` is captured, it must not be copied or moved
         if (file != nullptr)
         {
@@ -325,7 +338,7 @@ struct fluid_dls_font
     }
 };
 
-// helper function to create a new fluid_dls_font_t using fluid_new
+// helper function to create a new fluid_dls_font_t
 template<class... Args>
 static std::enable_if_t<std::is_constructible_v<fluid_dls_font, Args...>, fluid_dls_font *> // definitely there should be a requires clause
 new_fluid_dls_font(Args &&...args) noexcept
@@ -375,7 +388,7 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
     }
 }
 
-// Basic structures for DLS
+// Basic DLS structures
 
 #define RIFF_FCC FLUID_FOURCC('R', 'I', 'F', 'F')
 #define LIST_FCC FLUID_FOURCC('L', 'I', 'S', 'T')
@@ -517,6 +530,7 @@ inline std::string fluid_dls_font::read_name_from_info_entries(fluid_long_long_t
     return "";
 }
 
+// DLS-2.2 2.5 <dlid-ck>, DLSID Chunk
 struct DLSID
 {
     uint32_t Data1;
@@ -534,6 +548,9 @@ struct DLSID
 #define DEFINE_DLSID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
     const DLSID name = { l, w1, w2, { b1, b2, b3, b4, b5, b6, b7, b8 } }
 
+// Specified in DLS-2.2 2.6 <cdl-ck>, Conditional Chunk
+// From DLS-2.2 4.2 DLS Level 2 Header File (dls2.h)
+// Copyright: Written by Microsoft 1998. Released for public use.
 DEFINE_DLSID(DLSID_GMInHardware, 0x178f2f24, 0xc364, 0x11d1, 0xa7, 0x60, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12);
 DEFINE_DLSID(DLSID_GSInHardware, 0x178f2f25, 0xc364, 0x11d1, 0xa7, 0x60, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12);
 DEFINE_DLSID(DLSID_XGInHardware, 0x178f2f26, 0xc364, 0x11d1, 0xa7, 0x60, 0x00, 0x00, 0xf8, 0x75, 0xac, 0x12);
@@ -555,6 +572,7 @@ inline static void READGUID(fluid_dls_font *sf, DLSID &id)
     }
 }
 
+// macro WAVE_FORMAT_PCM is defined in some Windows headers
 #ifndef WAVE_FORMAT_PCM
 constexpr uint16_t WAVE_FORMAT_PCM = 0x0001;
 #endif
@@ -580,8 +598,10 @@ static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_
     }
 }
 
+// DLS-2.2 2.8 <rgnh-ck>, Region Header Chunk
 constexpr uint16_t F_RGN_OPTION_SELFNONEXCLUSIVE = 0x0001;
 
+// DLS-2.2 2.10 <art2-ck>, Level 2 Articulator Chunk; Table 9 and 10
 // DLS Level 2 (1 is included) Sources, Controls, Destinations and Transforms
 // Modulator Sources
 constexpr uint16_t CONN_SRC_NONE = 0x0000;            // No Source
@@ -662,6 +682,7 @@ constexpr uint16_t CONN_TRN_CONCAVE = 0x0001; // Concave Transform
 constexpr uint16_t CONN_TRN_CONVEX = 0x0002;  // Convex Transform
 constexpr uint16_t CONN_TRN_SWITCH = 0x0003;  // Switch Transform
 
+// DLS-2.2 2.10 <art2-ck>, Level 2 Articulator Chunk
 // transform mask
 constexpr uint16_t TRN_SRC_INV_MASK = 0b100000'000000'0000;
 constexpr uint16_t TRN_SRC_BIP_MASK = 0b010000'000000'0000;
@@ -1141,19 +1162,16 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     if (fcbs->fseek(file, 0L, SEEK_END) == FLUID_FAILED)
     {
-        FLUID_LOG(FLUID_ERR, "Seek to end of file failed");
-        throw std::exception{};
+        throw std::runtime_error{ "Seek to end of file failed" };
     }
     filesize = fcbs->ftell(file);
     if (filesize == FLUID_FAILED)
     {
-        FLUID_LOG(FLUID_ERR, "Get end of file position failed");
-        throw std::exception{};
+        throw std::runtime_error{ "Get end of file position failed" };
     }
     if (fcbs->fseek(file, 0, SEEK_SET) == FLUID_FAILED)
     {
-        FLUID_LOG(FLUID_ERR, "Rewind to start of file failed");
-        throw std::exception{};
+        throw std::runtime_error{ "Rewind to start of file failed" };
     }
 
     // Parse DLS
@@ -1165,21 +1183,18 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     READCHUNK(this, chunk); // load RIFF chunk
     if (chunk.id != RIFF_FCC)
     {
-        FLUID_LOG(FLUID_ERR, "Not a RIFF file");
-        throw std::exception{};
+        throw std::runtime_error{ "Not a RIFF file" };
     }
 
     READID(this, &chunk.id); // load file ID
     if (chunk.id != DLS_FCC)
     {
-        FLUID_LOG(FLUID_ERR, "Not a DLS file");
-        throw std::exception{};
+        throw std::runtime_error{ "Not a DLS file" };
     }
 
     if (chunk.size + 8 > filesize)
     {
-        FLUID_LOG(FLUID_ERR, "DLS file early EOF");
-        throw std::exception{};
+        throw std::runtime_error{ "DLS file early EOF" };
     }
     if (chunk.size + 8 < filesize)
     {
@@ -1206,16 +1221,14 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             case CDL_FCC:
                 if (!execute_cdls(pos, subchunk.size))
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS toplevel CDL bypasses the sound library");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS toplevel CDL bypasses the sound library" };
                 }
                 break;
             case COLH_FCC: {
                 // read it now to preserve the instrument vector
                 if (subchunk.size != 4)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS colh chunk size is not 4 bytes");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS colh chunk size is not 4 bytes" };
                 }
                 uint32_t colh;
                 READ32(this, colh);
@@ -1228,16 +1241,14 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                 READ32(this, cbsize);
                 if (cbsize < 8)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS ptbl chunk has invalid cbSize");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
                 }
 
                 uint32_t cues; // sample count
                 READ32(this, cues);
                 if (cues * 4 + cbsize != subchunk.size)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS ptbl chunk has corrupted size");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
                 }
 
                 fskip(cbsize - 8); // usually cbsize == 8
@@ -1285,8 +1296,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     // Parse samples (LIST[wvpl])
     if (wvploffset == 0)
     {
-        FLUID_LOG(FLUID_ERR, "DLS does not contain a LIST[wvpl] chunk");
-        throw std::exception{};
+        throw std::runtime_error{ "DLS does not contain a LIST[wvpl] chunk" };
     }
     parse_wvpl(wvploffset);
     // reading sample data is now completed
@@ -1310,8 +1320,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     if (linsoffset == 0)
     {
-        FLUID_LOG(FLUID_ERR, "DLS does not contain a LIST[lins] chunk");
-        throw std::exception{};
+        throw std::runtime_error{ "DLS does not contain a LIST[lins] chunk" };
     }
     parse_lins(linsoffset);
 
@@ -1638,8 +1647,7 @@ inline void fluid_dls_font::parse_wvpl(fluid_long_long_t offset)
     const int headersize = READCHUNK(this, chunk);
     if (offset + headersize + chunk.size > filesize)
     {
-        FLUID_LOG(FLUID_ERR, "DLS wvpl chunk exceeds file size");
-        throw std::exception{};
+        throw std::runtime_error{ "DLS wvpl chunk exceeds file size" };
     }
     if (headersize != 12)
     {
@@ -1728,8 +1736,7 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
             case WSMP_FCC:
                 if (parse_wsmp(pos, sample.wsmp.emplace()) != subchunk.size)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS wsmp chunk in wave chunk has corrupted size");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS wsmp chunk in wave chunk has corrupted size" };
                 }
                 break;
             case DATA_FCC: {
@@ -1787,8 +1794,7 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
 
     if (!contains_data)
     {
-        FLUID_LOG(FLUID_ERR, "DLS data chunk must exist in wave chunk");
-        throw std::exception{};
+        throw std::runtime_error{ "DLS data chunk must exist in wave chunk" };
     }
 
     if (fmtTag == WAVE_FORMAT_PCM)
@@ -1927,8 +1933,7 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
             case INSH_FCC: {
                 if (subchunk.size != 12)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS insh chunk size != 12");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS insh chunk size != 12" };
                 }
                 uint32_t temp;
                 READ32(this, temp); // cRegions
@@ -2056,15 +2061,13 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
     READ32(this, cbsize);
     if (cbsize < 8)
     {
-        FLUID_LOG(FLUID_ERR, "art chunk cbSize < 8");
-        throw std::exception{};
+        throw std::runtime_error{ "art chunk cbSize < 8" };
     }
     uint32_t connblocks;
     READ32(this, connblocks);
     if (cbsize + connblocks * 12 != chunk.size)
     {
-        FLUID_LOG(FLUID_ERR, "art chunk has corrupted size");
-        throw std::exception{};
+        throw std::runtime_error{ "art chunk has corrupted size" };
     }
     fskip(cbsize - 8);
 
@@ -2362,8 +2365,7 @@ inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_d
     auto headersize = READCHUNK(this, chunk);
     if (headersize != 12)
     {
-        FLUID_LOG(FLUID_ERR, "Invalid 'wave' chunk instead of LIST[wave]");
-        throw std::exception{};
+        throw std::runtime_error{ "Invalid 'wave' chunk instead of LIST[wave]" };
     }
 
     sfvio_data data{ this, offset, 0, chunk.size + 12 };
