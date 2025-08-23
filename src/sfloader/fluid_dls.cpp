@@ -14,11 +14,13 @@
 #include <sndfile.h>
 #endif
 
+#include <cstdlib>
 #include <algorithm>
 #include <cstring>
 #include <vector>
 #include <cstdint>
 #include <stdexcept>
+#include <exception>
 #include <optional>
 #include <utility>
 #include <functional>
@@ -33,11 +35,71 @@ using std::uint16_t;
 using std::uint32_t;
 using std::uint8_t;
 
+// based of https://stackoverflow.com/a/26221725
+// original license: CC0 1.0
+template<size_t N, typename... Args>
+static inline std::string string_format(const char (&format)[N], Args... args)
+{
+    int size_s = std::snprintf(nullptr, 0, format, args...);
+    if (size_s < 0)
+    {
+        throw std::runtime_error("Error while formatting a message (dry)");
+    }
+    auto size = static_cast<size_t>(size_s);
+    std::string result;
+    result.resize(size);
+    size_s = std::snprintf(result.data(), size + 1, format, args...); // snprintf writes \0 into buffer
+    if (size_s < 0)
+    {
+        throw std::runtime_error("Error while formatting a message");
+    }
+    return result;
+}
+
+static inline void log_exception(int level, const std::exception &exc, int nest_level = 0)
+{
+    const auto &exc_type = typeid(exc);
+    std::string prefix;
+    if (nest_level > 0)
+    {
+        prefix = std::string(1 * nest_level, ' ');
+    }
+
+    if (exc_type == typeid(std::bad_alloc))
+    {
+        FLUID_LOG(FLUID_PANIC, "%sOut of memory!!: %s", prefix.c_str(), exc.what());
+    }
+    else
+    {
+        FLUID_LOG(level, "%sexc: %s", prefix.c_str(), exc.what());
+    }
+
+    try
+    {
+        std::rethrow_if_nested(exc);
+    }
+    catch (const std::exception &nested)
+    {
+        if (nest_level + 1 >= 16)
+        {
+            FLUID_LOG(level, "%s...", prefix.c_str());
+            return;
+        }
+        log_exception(level, nested, nest_level + 1);
+    }
+}
+
 // format specifier and arguments used for printing FOURCCs
 #define FMT_4CC_SPEC "%c%c%c%c"
 #define FMT_4CC_ARG(x)                                                                    \
     (reinterpret_cast<const char *>(&(x)))[0], (reinterpret_cast<const char *>(&(x)))[1], \
     (reinterpret_cast<const char *>(&(x)))[2], (reinterpret_cast<const char *>(&(x)))[3]
+
+struct RIFFChunk
+{
+    uint32_t id;   // char[4]
+    uint32_t size; // native endian
+};
 
 // RAII wrapper for scope defer execution
 template<class Callable> struct scope_guard
@@ -297,6 +359,11 @@ struct fluid_dls_font
 
     // parsing functions
 
+    // visitor(RIFFChunk chunk, int headersize, fluid_long_long_t pos)
+    template<class Visitor>
+    inline std::enable_if_t<std::is_invocable_v<Visitor, RIFFChunk, int, fluid_long_long_t>, RIFFChunk>
+    visit_subchunks(fluid_long_long_t offset, uint32_t expected_4cc, Visitor &&visitor);
+
     // cdl
     inline std::optional<uint32_t> eval_dlsid_query(const DLSID &dlsid);
     // offset is at chunk data
@@ -349,21 +416,13 @@ new_fluid_dls_font(Args &&...args) noexcept
     }
     catch (const std::bad_alloc &)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory when allocing fluid_dls_font");
         return nullptr;
     }
-    catch (const std::out_of_range &err)
+    catch (const std::exception &exc)
     {
-        FLUID_LOG(FLUID_ERR, "std::out_of_range thrown: %s", err.what());
-        return nullptr;
-    }
-    catch (const std::runtime_error &err)
-    {
-        FLUID_LOG(FLUID_ERR, "%s", err.what());
-        return nullptr;
-    }
-    catch (...)
-    {
+        FLUID_LOG(FLUID_ERR, "Exception thrown in fluid_dls_font constructor");
+        log_exception(FLUID_ERR, exc);
         return nullptr;
     }
 }
@@ -381,41 +440,43 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
     }
     catch (const std::exception &err)
     {
-        FLUID_LOG(FLUID_ERR,
-                  "Exception thrown in fluid_dls_font destructor: %s: %s",
-                  typeid(err).name(),
-                  err.what());
+        FLUID_LOG(FLUID_ERR, "Exception thrown in fluid_dls_font destructor");
+        log_exception(FLUID_ERR, err);
     }
 }
 
 // Basic DLS structures
 
+// non-LIST chunks
 #define RIFF_FCC FLUID_FOURCC('R', 'I', 'F', 'F')
 #define LIST_FCC FLUID_FOURCC('L', 'I', 'S', 'T')
-#define INFO_FCC FLUID_FOURCC('I', 'N', 'F', 'O')
-#define DLS_FCC FLUID_FOURCC('D', 'L', 'S', ' ')
-#define LINS_FCC FLUID_FOURCC('l', 'i', 'n', 's')
 #define DLID_FCC FLUID_FOURCC('d', 'l', 'i', 'd')
 #define CDL_FCC FLUID_FOURCC('c', 'd', 'l', ' ')
 #define PTBL_FCC FLUID_FOURCC('p', 't', 'b', 'l')
 #define VERS_FCC FLUID_FOURCC('v', 'e', 'r', 's')
-#define WVPL_FCC FLUID_FOURCC('w', 'v', 'p', 'l')
 #define COLH_FCC FLUID_FOURCC('c', 'o', 'l', 'h')
-#define INS_FCC FLUID_FOURCC('i', 'n', 's', ' ')
-#define WAVE_FCC FLUID_FOURCC('w', 'a', 'v', 'e')
-#define LART_FCC FLUID_FOURCC('l', 'a', 'r', 't')
 #define INSH_FCC FLUID_FOURCC('i', 'n', 's', 'h')
-#define LRGN_FCC FLUID_FOURCC('l', 'r', 'g', 'n')
-#define LAR2_FCC FLUID_FOURCC('l', 'a', 'r', '2')
 #define WSMP_FCC FLUID_FOURCC('w', 's', 'm', 'p')
 #define FMT_FCC FLUID_FOURCC('f', 'm', 't', ' ')
 #define DATA_FCC FLUID_FOURCC('d', 'a', 't', 'a')
 #define ART1_FCC FLUID_FOURCC('a', 'r', 't', '1')
 #define ART2_FCC FLUID_FOURCC('a', 'r', 't', '2')
-#define RGN_FCC FLUID_FOURCC('r', 'g', 'n', ' ')
-#define RGN2_FCC FLUID_FOURCC('r', 'g', 'n', '2')
 #define RGNH_FCC FLUID_FOURCC('r', 'g', 'n', 'h')
 #define WLNK_FCC FLUID_FOURCC('w', 'l', 'n', 'k')
+
+// LIST chunks
+#define INFO_FCC FLUID_FOURCC('I', 'N', 'F', 'O')
+#define LINS_FCC FLUID_FOURCC('l', 'i', 'n', 's')
+#define WVPL_FCC FLUID_FOURCC('w', 'v', 'p', 'l')
+#define INS_FCC FLUID_FOURCC('i', 'n', 's', ' ')
+#define WAVE_FCC FLUID_FOURCC('w', 'a', 'v', 'e')
+#define LART_FCC FLUID_FOURCC('l', 'a', 'r', 't')
+#define LRGN_FCC FLUID_FOURCC('l', 'r', 'g', 'n')
+#define LAR2_FCC FLUID_FOURCC('l', 'a', 'r', '2')
+#define RGN_FCC FLUID_FOURCC('r', 'g', 'n', ' ')
+#define RGN2_FCC FLUID_FOURCC('r', 'g', 'n', '2')
+
+#define DLS_FCC FLUID_FOURCC('D', 'L', 'S', ' ')
 
 // not required but recognized
 #define FACT_FCC FLUID_FOURCC('f', 'a', 'c', 't')
@@ -432,11 +493,6 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 // info
 #define INAM_FCC FLUID_FOURCC('I', 'N', 'A', 'M')
 
-struct RIFFChunk
-{
-    uint32_t id;   // char[4]
-    uint32_t size; // native endian
-};
 
 #define READCHUNK_RAW(sf, var)                                                  \
     do                                                                          \
@@ -492,12 +548,93 @@ static inline int READCHUNK(fluid_dls_font *dlsfont, RIFFChunk &chunk)
         chunk.size -= 4;
         return 12;
     }
+    if (chunk.id == RIFF_FCC)
+    {
+        if (chunk.size < 4)
+        {
+            throw std::runtime_error{ "Bad RIFF header: size < 4" };
+        }
+        READID(dlsfont, &chunk.id);
+        chunk.size -= 4;
+        return 12;
+    }
     if (chunk.id == CRS1_FCC)
     {
         // see CRS1_FCC comment
         chunk.size = 28;
     }
     return 8;
+}
+
+template<class Visitor>
+inline std::enable_if_t<std::is_invocable_v<Visitor, RIFFChunk, int, fluid_long_long_t>, RIFFChunk>
+fluid_dls_font::visit_subchunks(fluid_long_long_t offset, uint32_t expected_4cc, Visitor &&visitor)
+{
+    fseek(offset, SEEK_SET);
+    RIFFChunk chunk;
+    if (READCHUNK(this, chunk) != 12) // only LIST chunks contains subchunks
+    {
+        if (expected_4cc == 0)
+        {
+            // clang-format off
+            throw std::runtime_error{ string_format(
+                "Expected chunk LIST[....], got " FMT_4CC_SPEC,
+                FMT_4CC_ARG(chunk.id)
+            )};
+            // clang-format on
+        }
+        // clang-format off
+        throw std::runtime_error{ string_format(
+            "Expected chunk LIST[" FMT_4CC_SPEC "], got " FMT_4CC_SPEC,
+            FMT_4CC_ARG(expected_4cc), // 0x20202020 is '    ' (four spaces)
+            FMT_4CC_ARG(chunk.id)
+        )};
+        // clang-format on
+    }
+    if (expected_4cc != 0 && chunk.id != expected_4cc)
+    {
+        // clang-format off
+        throw std::runtime_error{ string_format(
+            "Expected chunk LIST[" FMT_4CC_SPEC "], got LIST[" FMT_4CC_SPEC "]",
+            FMT_4CC_ARG(expected_4cc),
+            FMT_4CC_ARG(chunk.id)
+        )};
+        // clang-format on
+    }
+
+    fluid_long_long_t pos = offset + 12;
+    while (pos < offset + 12 + chunk.size)
+    {
+        RIFFChunk subchunk;
+        fseek(pos, SEEK_SET);
+        auto subchunkpos = pos;
+        auto headersize = READCHUNK(this, subchunk);
+        pos += headersize;
+        try
+        {
+            visitor(subchunk, headersize, subchunkpos);
+        }
+        catch (...)
+        {
+            // clang-format off
+            std::throw_with_nested(std::runtime_error{string_format(
+                "visit in LIST '" FMT_4CC_SPEC "' ofs=0x%llx -> %s'" FMT_4CC_SPEC "' ofs=0x%llx",
+                FMT_4CC_ARG(chunk.id),
+                static_cast<unsigned long long>(offset),
+                (headersize == 12) ? "LIST " : "",
+                FMT_4CC_ARG(subchunk.id),
+                static_cast<unsigned long long>(subchunkpos)
+            )});
+            // clang-format on
+        }
+        pos += subchunk.size;
+        if (subchunk.size % 2 != 0)
+        {
+            pos++;
+        }
+    }
+
+    return chunk;
 }
 
 inline std::string fluid_dls_font::read_name_from_info_entries(fluid_long_long_t offset, uint32_t size)
@@ -1156,8 +1293,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     file = fcbs->fopen(filename); // NOLINT(cppcoreguidelines-prefer-member-initializer)
     if (file == nullptr)
     {
-        FLUID_LOG(FLUID_ERR, "Unable to open file '%s'", filename);
-        throw std::exception{};
+        throw std::runtime_error{ string_format("Unable to open file '%s'", filename) };
     }
 
     if (fcbs->fseek(file, 0L, SEEK_END) == FLUID_FAILED)
@@ -1180,7 +1316,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     RIFFChunk chunk{};
 
-    READCHUNK(this, chunk); // load RIFF chunk
+    READCHUNK_RAW(this, &chunk); // load RIFF chunk
     if (chunk.id != RIFF_FCC)
     {
         throw std::runtime_error{ "Not a RIFF file" };
@@ -1205,103 +1341,100 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     filesize = chunk.size + 8;
 
     // iterate over chunks in the RIFF form
-    RIFFChunk subchunk{};
-    fluid_long_long_t pos = 12;  // RIFF u32 DLS_ 12 bytes
-    while (pos < chunk.size + 8) // absolute pos
+    try
     {
-        fseek(pos, SEEK_SET);
-        READCHUNK_RAW(this, &subchunk);
-        pos += 8; // <ID> u32
+        visit_subchunks(0, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos) {
+            switch (subchunk.id) // toplevel chunk
+            {
+                case DLID_FCC:
+                case VERS_FCC:
+                    break;
+                case CDL_FCC:
+                    if (!execute_cdls(pos + headersize, subchunk.size))
+                    {
+                        throw std::runtime_error{ "DLS toplevel CDL bypasses the sound library" };
+                    }
+                    break;
+                case COLH_FCC: {
+                    // read it now to preserve the instrument vector
+                    if (subchunk.size != 4)
+                    {
+                        throw std::runtime_error{ "DLS colh chunk size is not 4 bytes" };
+                    }
+                    uint32_t colh;
+                    READ32(this, colh);
+                    instruments.reserve(colh);
+                    break;
+                }
+                case PTBL_FCC: {
+                    // read ptbl now
+                    uint32_t cbsize;
+                    READ32(this, cbsize);
+                    if (cbsize < 8)
+                    {
+                        throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
+                    }
 
-        switch (subchunk.id) // toplevel chunk
-        {
-            case DLID_FCC:
-            case VERS_FCC:
-                break;
-            case CDL_FCC:
-                if (!execute_cdls(pos, subchunk.size))
-                {
-                    throw std::runtime_error{ "DLS toplevel CDL bypasses the sound library" };
+                    uint32_t cues; // sample count
+                    READ32(this, cues);
+                    if (cues * 4 + cbsize != subchunk.size)
+                    {
+                        throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
+                    }
+
+                    fskip(cbsize - 8); // usually cbsize == 8
+
+                    poolcues.resize(cues);
+                    for (uint32_t i = 0; i < cues; i++)
+                    {
+                        READ32(this, poolcues[i]);
+                    }
+                    samples.reserve(cues);
+                    break;
                 }
-                break;
-            case COLH_FCC: {
-                // read it now to preserve the instrument vector
-                if (subchunk.size != 4)
-                {
-                    throw std::runtime_error{ "DLS colh chunk size is not 4 bytes" };
-                }
-                uint32_t colh;
-                READ32(this, colh);
-                instruments.reserve(colh);
-                break;
+                case INFO_FCC:
+                    read_name_from_info_entries(pos + headersize, subchunk.size);
+                    break;
+                case LINS_FCC:
+                    linsoffset = pos;
+                    break;
+                case WVPL_FCC:
+                    wvploffset = pos;
+                    break;
+                default:
+                    // clang-format off
+                    FLUID_LOG(FLUID_WARN,
+                        "Ignoring unknown top-level DLS chunk %s'" FMT_4CC_SPEC "' ofs=0x%llx",
+                        headersize == 12 ? "LIST " : "",
+                        FMT_4CC_ARG(subchunk.id),
+                        pos
+                    );
+                    // clang-format on
+                    break;
             }
-            case PTBL_FCC: {
-                // read ptbl now
-                uint32_t cbsize;
-                READ32(this, cbsize);
-                if (cbsize < 8)
-                {
-                    throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
-                }
-
-                uint32_t cues; // sample count
-                READ32(this, cues);
-                if (cues * 4 + cbsize != subchunk.size)
-                {
-                    throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
-                }
-
-                fskip(cbsize - 8); // usually cbsize == 8
-
-                poolcues.resize(cues);
-                for (uint32_t i = 0; i < cues; i++)
-                {
-                    READ32(this, poolcues[i]);
-                }
-                samples.reserve(cues);
-                break;
-            }
-            case LIST_FCC:
-                READID(this, &subchunk.id); // read list type
-                switch (subchunk.id)
-                {
-                    case INFO_FCC:
-                        read_name_from_info_entries(pos + 4, subchunk.size - 4);
-                        break;
-                    case LINS_FCC:
-                        linsoffset = pos - 8;
-                        break;
-                    case WVPL_FCC:
-                        wvploffset = pos - 8;
-                        break;
-                    default:
-                        FLUID_LOG(FLUID_WARN,
-                                  "Ignoring unknown LIST chunk '" FMT_4CC_SPEC "'",
-                                  FMT_4CC_ARG(subchunk.id));
-                }
-                break;
-            default:
-                FLUID_LOG(FLUID_WARN,
-                          "Ignoring unknown top-level DLS chunk '" FMT_4CC_SPEC "'",
-                          FMT_4CC_ARG(subchunk.id));
-        }
-
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
-        {
-            pos++;
-        }
+        });
+    }
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error{ "Exception thrown while reading RIFF form" });
     }
 
     // Parse samples (LIST[wvpl])
-    if (wvploffset == 0)
+    try
     {
-        throw std::runtime_error{ "DLS does not contain a LIST[wvpl] chunk" };
+        if (wvploffset == 0)
+        {
+            throw std::runtime_error{ "DLS does not contain a LIST[wvpl] chunk" };
+        }
+        parse_wvpl(wvploffset);
     }
-    parse_wvpl(wvploffset);
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error{ "Exception thrown while parsing samples" });
+    }
     // reading sample data is now completed
 
-    FLUID_LOG(FLUID_DBG, "DLS %zu samples read", samples.size());
+    FLUID_LOG(FLUID_DBG, "DLS %zu samples read, %zu bytes", samples.size(), sampledata.size());
 
     sampledata_mlock = mlock_guard{ sampledata.data(), static_cast<fluid_long_long_t>(sampledata.size()) };
     if (try_mlock && !sampledata.empty())
@@ -1317,18 +1450,32 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     }
 
     // Parse LIST[lins]
-
-    if (linsoffset == 0)
+    try
     {
-        throw std::runtime_error{ "DLS does not contain a LIST[lins] chunk" };
+        if (linsoffset == 0)
+        {
+            throw std::runtime_error{ "DLS does not contain a LIST[lins] chunk" };
+        }
+        parse_lins(linsoffset);
     }
-    parse_lins(linsoffset);
+    catch (...)
+    {
+        std::throw_with_nested(std::runtime_error{ "Exception thrown while parsing instruments" });
+    }
 
     FLUID_LOG(FLUID_DBG, "DLS %zu instruments read", instruments.size());
 
     // convert dls samples to fluid samples
 
-    samples_fluid.reserve(samples.size());
+    try
+    {
+        samples_fluid.reserve(samples.size());
+    }
+    catch (...)
+    {
+        std::throw_with_nested(
+        std::runtime_error{ "Exception thrown while allocating fluid_sample_t" });
+    }
 
     for (auto &sample : samples)
     {
@@ -1357,6 +1504,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         fluid.sampletype = FLUID_SAMPLETYPE_MONO;
     }
 
+    // put info in dls_sample into region
     for (auto &instrument : instruments)
     {
         for (auto &region : instrument.regions)
@@ -1492,8 +1640,7 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
     auto push = [&](uint32_t value) {
         if (sp >= sizeof(stack) / sizeof(stack[0]))
         {
-            FLUID_LOG(FLUID_ERR, "CDL stack overflow");
-            throw std::exception{};
+            throw std::runtime_error{ "CDL stack overflow" };
         }
         stack[sp++] = value;
     };
@@ -1501,16 +1648,14 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
     auto pop = [&]() -> uint32_t {
         if (sp == 0)
         {
-            FLUID_LOG(FLUID_ERR, "CDL stack underflow");
-            throw std::exception{};
+            throw std::runtime_error{ "CDL stack underflow" };
         }
         return stack[--sp];
     };
 
     if (fcbs->fseek(file, offset, SEEK_SET) != FLUID_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to seek to CDL operations");
-        throw std::exception{};
+        throw std::runtime_error{ "Failed to seek to CDL operations" };
     }
 
     int pc = 0;
@@ -1520,14 +1665,13 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
     while (pc < size)
     {
         READ16(this, opcode);
-        pc += 2;
         switch (opcode)
         {
             // Assign
             case 0x0010: // DLS_CDL_CONST
                 READ32(this, rax);
-                pc += 4;
                 push(rax);
+                pc += 4;
                 break;
             // Unary operators
             case 0x000F: // DLS_CDL_NOT (logical)
@@ -1569,8 +1713,7 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
                 rbx = pop();
                 if (rbx == 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "CDL division by zero");
-                    throw std::exception{};
+                    throw std::runtime_error{ "CDL division by zero" };
                 }
                 push(rax / rbx);
                 break;
@@ -1615,24 +1758,34 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
             {
                 DLSID dlsid{};
                 READGUID(this, dlsid);
-                pc += sizeof(DLSID);
                 auto result = eval_dlsid_query(dlsid);
                 if (opcode == 0x0011) // Query
                 {
-                    push(result.value()); // or std::bad_optional_access
+                    if (result.has_value())
+                    {
+                        push(result.value());
+                    }
+                    else
+                    {
+                        throw std::runtime_error{
+                            string_format("CDL query for unsupported DLSID, pc=0x%x", pc)
+                        };
+                    }
                 }
                 push(result.has_value() ? 1 : 0); // Query_Supported
+                pc += sizeof(DLSID);
                 break;
             }
             default:
-                FLUID_LOG(FLUID_ERR, "Unknown CDL opcode 0x%04x", opcode);
-                throw std::exception{};
+                // SIGILL lol
+                throw std::runtime_error{ string_format("Unknown CDL opcode 0x%04x", opcode) };
         } // switch(opcode) end
+        pc += 2;
     } // while pc end
+
     if (pc > size)
     {
-        FLUID_LOG(FLUID_ERR, "CDL chunk too early end of chunk");
-        throw std::exception{};
+        throw std::runtime_error{ "CDL chunk too early end of chunk" };
     }
 
     return pop() != 0;
@@ -1655,46 +1808,33 @@ inline void fluid_dls_font::parse_wvpl(fluid_long_long_t offset)
     }
 
     // iterate ptbl
-    for (auto pos : poolcues)
+    for (unsigned i = 0; i < poolcues.size(); i++)
     {
+        auto pos = poolcues[i];
         auto &sample = samples.emplace_back();
-        parse_wave(offset + headersize + pos, sample);
+        try
+        {
+            parse_wave(offset + headersize + pos, sample);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error{ string_format(
+            "Exception thrown while parsing LIST[wave] at offset 0x%llx, ptbl index %u", offset + headersize + pos, i) });
+        }
     }
 }
 
 inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sample &sample)
 {
-    fseek(offset, SEEK_SET);
-
-    RIFFChunk chunk;
-    const int headersize = READCHUNK(this, chunk);
-    if (chunk.id != WAVE_FCC)
-    {
-        FLUID_LOG(FLUID_WARN,
-                  "Ignoring unexcepted subchunk in DLS wvpl chunk pointed by ptbl: '" FMT_4CC_SPEC "'",
-                  FMT_4CC_ARG(chunk.id));
-        return;
-    }
-    if (headersize != 12)
-    {
-        fluid_log(FLUID_WARN, "Nonstandard 'wave' chunk; 'LIST[wave]' is legal");
-    }
-
     bool contains_data = false;
     uint16_t fmtTag{};
     uint16_t bitsPerSample{};
 
-    uint32_t pos = offset + headersize;
-    RIFFChunk subchunk{};
-    while (pos < offset + headersize + chunk.size) // pos is absolute
-    {
-        fseek(pos, SEEK_SET);
-        pos += READCHUNK(this, subchunk);
-
+    visit_subchunks(offset, WAVE_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
         switch (subchunk.id)
         {
             case INFO_FCC:
-                sample.name = read_name_from_info_entries(pos, subchunk.size);
+                sample.name = read_name_from_info_entries(pos + headersize, subchunk.size);
                 break;
             case DLID_FCC:
             case GUID_FCC:
@@ -1709,15 +1849,15 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 if (fmtTag != WAVE_FORMAT_PCM)
                 {
 #if !LIBSNDFILE_SUPPORT
-                    FLUID_LOG(FLUID_ERR, "Unsupported wave format %u (without libsndfile)", fmtTag);
-                    throw std::exception{};
+                    throw std::runtime_error{
+                        string_format("Unsupported wave format %u (without libsndfile)", fmtTag)
+                    };
 #endif
                 }
                 READ16(this, temp16); // read channels
                 if (temp16 != 1)
                 {
-                    FLUID_LOG(FLUID_ERR, "Unsupported wave channel count %u", temp16);
-                    throw std::exception{};
+                    throw std::runtime_error{ string_format("Unsupported wave channel count %u", temp16) };
                 }
                 READ32(this, temp32); // read sampleRate
                 sample.samplerate = temp32;
@@ -1726,15 +1866,14 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 READ16(this, temp16); // read bitsPerSample
                 if (temp16 != 8 && temp16 != 16)
                 {
-                    FLUID_LOG(FLUID_ERR, "Unsupported wave bits per sample %u", temp16);
-                    throw std::exception{};
+                    throw std::runtime_error{ string_format("Unsupported wave bits per sample %u", temp16) };
                 }
                 bitsPerSample = temp16;
                 // probably a cbSize field for WAVEFORMATEX
                 break;
             }
             case WSMP_FCC:
-                if (parse_wsmp(pos, sample.wsmp.emplace()) != subchunk.size)
+                if (parse_wsmp(pos + headersize, sample.wsmp.emplace()) != subchunk.size)
                 {
                     throw std::runtime_error{ "DLS wsmp chunk in wave chunk has corrupted size" };
                 }
@@ -1743,8 +1882,8 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 contains_data = true;
                 if (fmtTag == 0 || bitsPerSample == 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS fmt chunk must exist in wave chunk and be prior to data chunk");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS fmt chunk must exist in wave chunk and be prior "
+                                              "to data chunk" };
                 }
                 if (fmtTag != WAVE_FORMAT_PCM)
                 {
@@ -1752,8 +1891,7 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 }
                 if (subchunk.size % (bitsPerSample / 8) != 0)
                 {
-                    FLUID_LOG(FLUID_ERR, "DLS data chunk not align to bitsPerSample");
-                    throw std::exception{};
+                    throw std::runtime_error{ "DLS data chunk not align to bitsPerSample" };
                 }
                 auto samplelen = subchunk.size / (bitsPerSample / 8);
                 sample.start = sampledata.size();
@@ -1784,13 +1922,8 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                           "Ignoring unexcepted DLS chunk in LIST[wave] '" FMT_4CC_SPEC "'",
                           FMT_4CC_ARG(subchunk.id));
         }
+    });
 
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
-        {
-            pos++;
-        }
-    } // end for each subchunk in LIST[wave]
 
     if (!contains_data)
     {
@@ -1803,7 +1936,15 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
     }
 
 #if LIBSNDFILE_SUPPORT
-    parse_wave_sndfile(offset, sample);
+    try
+    {
+        parse_wave_sndfile(offset, sample);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(
+        std::runtime_error{ "Exception thrown while parsing LIST[wave] using libsndfile" });
+    }
 #endif
 }
 
@@ -1827,8 +1968,7 @@ inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_w
     READ32(this, loops);
     if (loops > 1)
     {
-        FLUID_LOG(FLUID_ERR, "DLS wsmp chunk has more than one loop");
-        throw std::exception{};
+        throw std::runtime_error{ "DLS wsmp chunk has more than one loop" };
     }
     if (loops == 0)
     {
@@ -1853,82 +1993,37 @@ inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_w
 
 inline void fluid_dls_font::parse_lins(fluid_long_long_t offset)
 {
-    fseek(offset, SEEK_SET);
-    RIFFChunk chunk;
-    auto headersize = READCHUNK(this, chunk);
-    if (chunk.id != LINS_FCC)
-    {
-        // this should never happen!
-        FLUID_LOG(FLUID_ERR, "Expected 'lins' chunk");
-        throw std::exception{};
-    }
-    if (headersize != 12)
-    {
-        FLUID_LOG(FLUID_WARN, "Nonstandard 'lins' chunk; LIST[lins] is legal");
-    }
-
-    fluid_long_long_t pos = offset + headersize; // absolute pos
-    while (pos < offset + headersize + chunk.size)
-    {
-        RIFFChunk subchunk;
-        fseek(pos, SEEK_SET);
-        auto subchunkpos = pos;
-        pos += READCHUNK(this, subchunk);
-
+    // clang-format off
+    visit_subchunks(offset, LINS_FCC,
+    [this](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos [[maybe_unused]]) {
         if (subchunk.id != INS_FCC)
         {
             FLUID_LOG(FLUID_WARN,
-                      "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' in LIST[lins]",
-                      FMT_4CC_ARG(subchunk.id));
-            goto skip_lins_subchunk;
+                        "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC
+                        "' ofs=0x%llx in LIST[lins]",
+                        FMT_4CC_ARG(subchunk.id),
+                        pos);
+            return;
         }
 
-        {
-            auto &instrument = instruments.emplace_back();
-            parse_ins(subchunkpos, instrument);
-        }
-
-    skip_lins_subchunk:
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
-        {
-            pos++;
-        }
+        auto &instrument = instruments.emplace_back();
+        parse_ins(pos, instrument);
     }
+    );
+    // clang-format on
 }
 
 inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instrument &instrument)
 {
-    fseek(offset, SEEK_SET);
-    RIFFChunk chunk;
-    auto headersize = READCHUNK(this, chunk);
-    if (chunk.id != INS_FCC)
-    {
-        // this should never happen!
-        FLUID_LOG(FLUID_ERR, "Expected 'ins' chunk");
-        throw std::exception{};
-    }
-    if (headersize != 12)
-    {
-        FLUID_LOG(FLUID_WARN, "Nonstandard 'ins' chunk; LIST[ins] is legal");
-    }
-
     size_t articulation_index = -1; // in C++26 we can do std::optional<T&>
 
-    fluid_long_long_t pos = offset + headersize; // absolute pos
-    while (pos < offset + headersize + chunk.size)
-    {
-        RIFFChunk subchunk;
-        fseek(pos, SEEK_SET);
-        auto subchunkpos = pos;
-        pos += READCHUNK(this, subchunk);
-
+    visit_subchunks(offset, INS_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
         switch (subchunk.id)
         {
             case DLID_FCC:
                 break;
             case INFO_FCC:
-                instrument.name = read_name_from_info_entries(pos, subchunk.size);
+                instrument.name = read_name_from_info_entries(pos + headersize, subchunk.size);
                 break;
             case INSH_FCC: {
                 if (subchunk.size != 12)
@@ -1951,7 +2046,7 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
                 if (articulation_index == static_cast<size_t>(-1))
                 {
                     articulation_index = articulations.size();
-                    if (!parse_lart(subchunkpos, articulations.emplace_back())) // bypassed by cdl
+                    if (!parse_lart(pos, articulations.emplace_back())) // bypassed by cdl
                     {
                         FLUID_LOG(FLUID_DBG, "A instrument lart chunk is bypassed by cdl");
                         articulations.pop_back();
@@ -1959,23 +2054,19 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
                     }
                     break;
                 }
-                parse_lart(subchunkpos, articulations[articulation_index]);
+                parse_lart(pos, articulations[articulation_index]);
                 break;
             case LRGN_FCC:
-                parse_lrgn(subchunkpos, instrument);
+                parse_lrgn(pos, instrument);
                 break;
             default:
                 FLUID_LOG(FLUID_WARN,
-                          "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' in LIST[ins]",
-                          FMT_4CC_ARG(subchunk.id));
+                          "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC
+                          "' ofs=0x%llx in LIST[ins]",
+                          FMT_4CC_ARG(subchunk.id),
+                          pos);
         }
-
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
-        {
-            pos++;
-        }
-    }
+    });
 
     for (auto &region : instrument.regions)
     {
@@ -1988,52 +2079,41 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
 
 inline bool fluid_dls_font::parse_lart(fluid_long_long_t offset, fluid_dls_articulation &articulation)
 {
-    fseek(offset, SEEK_SET);
-    RIFFChunk chunk;
-    auto headersize = READCHUNK(this, chunk);
-    if (chunk.id != LART_FCC && chunk.id != LAR2_FCC)
-    {
-        // this should never happen!
-        FLUID_LOG(FLUID_ERR, "Expected 'lart' or 'lar2' chunk");
-        throw std::exception{};
-    }
-    if (headersize != 12)
-    {
-        FLUID_LOG(FLUID_WARN, "Nonstandard 'lart' chunk; LIST[lart] is legal");
-    }
+    bool bypassed{};
 
-    fluid_long_long_t pos = offset + headersize; // absolute pos
-    while (pos < offset + headersize + chunk.size)
+    try
     {
-        RIFFChunk subchunk;
-        fseek(pos, SEEK_SET);
-        auto subchunkpos = pos;
-        pos += READCHUNK(this, subchunk);
-
-        if (subchunk.id == CDL_FCC)
-        {
-            if (!execute_cdls(pos, subchunk.size))
+        visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
+            if (subchunk.id == CDL_FCC)
             {
-                return false;
+                if (!execute_cdls(pos + headersize, subchunk.size))
+                {
+                    bypassed = false;
+                    throw std::exception{};
+                }
+                return;
             }
-        }
 
-        if (subchunk.id != ART1_FCC && subchunk.id != ART2_FCC)
+            if (subchunk.id != ART1_FCC && subchunk.id != ART2_FCC)
+            {
+                // clang-format off
+                FLUID_LOG(FLUID_WARN,
+                          "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lart]",
+                          FMT_4CC_ARG(subchunk.id), pos);
+                return;
+                // clang-format on
+            }
+
+            parse_art(pos, articulation);
+        });
+    }
+    catch (...)
+    {
+        if (bypassed)
         {
-            FLUID_LOG(FLUID_WARN,
-                      "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' in LIST[lart]",
-                      FMT_4CC_ARG(subchunk.id));
-            goto skip_lart_subchunk;
+            return false;
         }
-
-        parse_art(subchunkpos, articulation);
-
-    skip_lart_subchunk:
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
-        {
-            pos++;
-        }
+        throw;
     }
 
     return true;
@@ -2047,12 +2127,11 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
     if (chunk.id != ART1_FCC && chunk.id != ART2_FCC)
     {
         // this should never happen!
-        FLUID_LOG(FLUID_ERR, "Expected 'art1' or 'art2' chunk");
-        throw std::exception{};
+        throw std::runtime_error{ "Expected 'art1' or 'art2' chunk" };
     }
     if (headersize != 8)
     {
-        FLUID_LOG(FLUID_WARN, "Nonstandard LIST[art1/2] chunk; 'art1/2' is legal");
+        FLUID_LOG(FLUID_WARN, "Nonstandard LIST[art1/2] chunk; 'art1/2' is legal ofs=0x%llx", offset);
     }
 
     bool isArt1 = chunk.id == ART1_FCC;
@@ -2104,155 +2183,117 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
 
 inline void fluid_dls_font::parse_lrgn(fluid_long_long_t offset, fluid_dls_instrument &instrument)
 {
-    fseek(offset, SEEK_SET);
-    RIFFChunk chunk;
-    auto headersize = READCHUNK(this, chunk);
-    if (chunk.id != LRGN_FCC)
-    {
-        // this should never happen!
-        FLUID_LOG(FLUID_ERR, "Expected 'lrgn' chunk");
-        throw std::exception{};
-    }
-    if (headersize != 12)
-    {
-        FLUID_LOG(FLUID_WARN, "Nonstandard 'lrgn' chunk; LIST[lrgn] is legal");
-    }
-
-    fluid_long_long_t pos = offset + headersize; // absolute pos
-    while (pos < offset + headersize + chunk.size)
-    {
-        RIFFChunk subchunk;
-        fseek(pos, SEEK_SET);
-        auto subchunkpos = pos;
-        pos += READCHUNK(this, subchunk);
-
+    visit_subchunks(offset, LRGN_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
         if (subchunk.id != RGN_FCC && subchunk.id != RGN2_FCC)
         {
             FLUID_LOG(FLUID_WARN,
-                      "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' in LIST[lrgn]",
-                      FMT_4CC_ARG(subchunk.id));
-            goto skip_lrgn_subchunk;
+                      "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lrgn]",
+                      FMT_4CC_ARG(subchunk.id),
+                      pos);
+            return;
         }
-
+        auto &region = instrument.regions.emplace_back();
+        if (!parse_rgn(pos, region)) // bypassed by cdl
         {
-            auto &region = instrument.regions.emplace_back();
-            if (!parse_rgn(subchunkpos, region)) // bypassed by cdl
-            {
-                FLUID_LOG(FLUID_DBG, "A region is bypassed by cdl");
-                instrument.regions.pop_back();
-            }
+            FLUID_LOG(FLUID_DBG, "Region ofs=0x%llx is bypassed by cdl", pos);
+            instrument.regions.pop_back();
         }
-
-    skip_lrgn_subchunk:
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
-        {
-            pos++;
-        }
-    }
+    });
 }
 
 inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region &region)
 {
     static int self_exclusive_class [[maybe_unused]] = 65536; // exclusive number for self-exclusive regions
-
-    fseek(offset, SEEK_SET);
-    RIFFChunk chunk;
-    auto headersize = READCHUNK(this, chunk);
-    if (chunk.id != RGN_FCC && chunk.id != RGN2_FCC)
-    {
-        // this should never happen!
-        FLUID_LOG(FLUID_ERR, "Expected 'rgn' chunk");
-        return false;
-    }
-    if (headersize != 12)
-    {
-        FLUID_LOG(FLUID_WARN, "Nonstandard 'rgn' chunk; LIST[rgn] is legal");
-    }
-
     size_t articulation_index = -1;
 
-    fluid_long_long_t pos = offset + headersize; // absolute pos
-    while (pos < offset + headersize + chunk.size)
-    {
-        RIFFChunk subchunk;
-        fseek(pos, SEEK_SET);
-        auto subchunkpos = pos;
-        pos += READCHUNK(this, subchunk);
+    bool bypassed{};
 
-        switch (subchunk.id)
-        {
-            case INFO_FCC:
-                break;
-            case WLNK_FCC:
-                fskip(8); // fluidsynth does not implement phase-locking and multichannel output
-                READ32(this, region.sampleindex);
-                break;
-            case CDL_FCC:
-                if (!execute_cdls(pos, subchunk.size))
-                {
-                    return false;
-                }
-                break;
-            case LART_FCC:
-            case LAR2_FCC:
-                if (articulation_index == static_cast<size_t>(-1))
-                {
-                    articulation_index = articulations.size();
-                    if (!parse_lart(subchunkpos, articulations.emplace_back()))
+    try
+    {
+        visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize, fluid_long_long_t pos) {
+            switch (subchunk.id)
+            {
+                case INFO_FCC:
+                    break;
+                case WLNK_FCC:
+                    fskip(8); // fluidsynth does not implement phase-locking and multichannel output
+                    READ32(this, region.sampleindex);
+                    if (region.sampleindex >= samples.size())
                     {
-                        FLUID_LOG(FLUID_DBG, "A region lart chunk is bypassed by cdl");
-                        articulations.pop_back();
-                        articulation_index = static_cast<size_t>(-1);
+                        throw std::runtime_error{ string_format("Sample index %u is out of range",
+                                                                static_cast<unsigned>(region.sampleindex)) };
                     }
                     break;
+                case CDL_FCC:
+                    if (!execute_cdls(pos + headersize, subchunk.size))
+                    {
+                        bypassed = true;
+                        throw std::exception{};
+                    }
+                    break;
+                case LART_FCC:
+                case LAR2_FCC:
+                    if (articulation_index == static_cast<size_t>(-1))
+                    {
+                        articulation_index = articulations.size();
+                        if (!parse_lart(pos, articulations.emplace_back()))
+                        {
+                            FLUID_LOG(FLUID_DBG, "A region lart chunk is bypassed by cdl");
+                            articulations.pop_back();
+                            articulation_index = static_cast<size_t>(-1);
+                        }
+                        break;
+                    }
+                    parse_lart(pos, articulations[articulation_index]);
+                    break;
+                case RGNH_FCC: {
+                    uint16_t temp;
+                    READ16(this, temp); // key low
+                    region.range.keylo = temp;
+                    READ16(this, temp); // key high
+                    region.range.keyhi = temp;
+                    READ16(this, temp); // vel low
+                    region.range.vello = temp;
+                    READ16(this, temp); // vel high
+                    region.range.velhi = temp;
+                    READ16(this, temp);                              // fusOptions
+                    if ((temp & F_RGN_OPTION_SELFNONEXCLUSIVE) == 0) // self-exclusive
+                    {
+                        // implement this flag doesn't make sense
+                        // region.exclusive_class = self_exclusive_class++;
+                    }
+                    READ16(this, temp); // keyGroup
+                    if (temp != 0)
+                    {
+                        region.exclusive_class = temp;
+                    }
+                    // usLayer is useless
+                    break;
                 }
-                parse_lart(subchunkpos, articulations[articulation_index]);
-                break;
-            case RGNH_FCC: {
-                uint16_t temp;
-                READ16(this, temp); // key low
-                region.range.keylo = temp;
-                READ16(this, temp); // key high
-                region.range.keyhi = temp;
-                READ16(this, temp); // vel low
-                region.range.vello = temp;
-                READ16(this, temp); // vel high
-                region.range.velhi = temp;
-                READ16(this, temp);                              // fusOptions
-                if ((temp & F_RGN_OPTION_SELFNONEXCLUSIVE) == 0) // self-exclusive
-                {
-                    // implement this flag doesn't make sense
-                    // region.exclusive_class = self_exclusive_class++;
-                }
-                READ16(this, temp); // keyGroup
-                if (temp != 0)
-                {
-                    region.exclusive_class = temp;
-                }
-                // usLayer is useless
-                break;
+                // DLS-2 1.14.6 Each region contains at minimum a <rgnh-ck> region header chunk and a <wlnk-ck> wave link chunk.
+                // It may also **optionally** contain a <wsmp-ck> wave sample chunk. ...
+                // DLS-2 2.2 <rgn-list> -> ... <wsmp-ck> ...
+                // DLS-2 2.2 "the structure tree" ... rgn -> ... wsmp (optional) ...
+                // DLS-2 2.8 Other chunks at the same nesting level include a <wsmp-ck> wave sample chunk.
+                case WSMP_FCC:
+                    parse_wsmp(pos + headersize, region.wsmp.emplace());
+                    break;
+                default:
+                    FLUID_LOG(FLUID_WARN,
+                              "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[rgn]",
+                              FMT_4CC_ARG(subchunk.id),
+                              pos);
+                    break;
             }
-            // DLS-2 1.14.6 Each region contains at minimum a <rgnh-ck> region header chunk and a <wlnk-ck> wave link chunk.
-            // It may also **optionally** contain a <wsmp-ck> wave sample chunk. ...
-            // DLS-2 2.2 <rgn-list> -> ... <wsmp-ck> ...
-            // DLS-2 2.2 "the structure tree" ... rgn -> ... wsmp (optional) ...
-            // DLS-2 2.8 Other chunks at the same nesting level include a <wsmp-ck> wave sample chunk.
-            case WSMP_FCC:
-                parse_wsmp(pos, region.wsmp.emplace());
-                break;
-            default:
-                FLUID_LOG(FLUID_WARN,
-                          "Unknown DLS chunk '" FMT_4CC_SPEC "' in LIST[rgn]",
-                          FMT_4CC_ARG(subchunk.id));
-                break;
-        }
-
-        pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
+        });
+    }
+    catch (...)
+    {
+        if (bypassed)
         {
-            pos++;
+            return false;
         }
+        throw;
     }
 
     region.artindex = articulation_index;
@@ -2376,17 +2417,17 @@ inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_d
 
     if (sndfile == nullptr)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to open 'wave' chunk using libsndfile: %s", sf_strerror(sndfile));
         sf_close(sndfile);
-        throw std::exception{};
+        throw std::runtime_error{ string_format("Failed to open 'wave' chunk using libsndfile: %s",
+                                                sf_strerror(sndfile)) };
     }
 
     sample.samplerate = sfinfo.samplerate;
     if (sfinfo.channels != 1)
     {
-        FLUID_LOG(FLUID_ERR, "Unsupported wave channel count: %d (libsndfile)", sfinfo.channels);
         sf_close(sndfile);
-        throw std::exception{};
+        throw std::runtime_error{ string_format("Unsupported wave channel count: %d (libsndfile)",
+                                                sfinfo.channels) };
     }
 
     sample.start = sampledata.size();
@@ -2419,7 +2460,7 @@ fluid_sfloader_t *new_fluid_dls_loader(fluid_synth_t *synth, fluid_settings_t *s
 
     if (loader == nullptr)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return nullptr;
     }
 
