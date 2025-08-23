@@ -14,6 +14,7 @@
 #include <sndfile.h>
 #endif
 
+#include <cstdio>
 #include <cstdlib>
 #include <algorithm>
 #include <cstring>
