@@ -2432,6 +2432,7 @@ fluid_sfloader_t *new_fluid_dls_loader(fluid_synth_t *synth, fluid_settings_t *s
 void fluid_dls_loader_delete(fluid_sfloader_t *loader) noexcept
 {
     delete static_cast<fluid_dls_loader_data *>(fluid_sfloader_get_data(loader));
+    delete_fluid_sfloader(loader);
 }
 
 static fluid_sfont_t *fluid_dls_loader_load(fluid_sfloader_t *loader, const char *filename) noexcept
