@@ -23,6 +23,7 @@
 #include <sndfile.h>
 #endif
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -228,7 +229,10 @@ struct fluid_dls_articulation
     std::optional<fluid_real_t> gens[GEN_LAST];
     std::vector<fluid_mod_t> mods;
 
-    fluid_real_t keynum_scale = 1.0; // this is not scaletuning
+    // Scale of the Key Num Generator, "MIDI Note to Key", divided by 12800.
+    // note that this is only valid at instrument level, as it affects region selection process.
+    fluid_real_t keynum_scale = 1.0;
+
     fluid_mod_t keyToPitch {
         GEN_PITCH,
         FLUID_MOD_KEY,
@@ -348,6 +352,9 @@ struct fluid_dls_instrument
     fluid_sample_t *samples_fluid;
     fluid_dls_articulation *articulations;
     fluid_synth_t *synth;
+
+    // see fluid_dls_articulation::keynum_scale
+    fluid_real_t keynum_scale = 1.0;
 };
 
 struct DLSID;
@@ -2096,6 +2103,7 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
                     break;
                 }
                 parse_lart(pos, articulations[articulation_index]);
+                instrument.keynum_scale = articulations[articulation_index].keynum_scale;
                 break;
             case LRGN_FCC:
                 parse_lrgn(pos, instrument);
@@ -2286,6 +2294,10 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
                         break;
                     }
                     parse_lart(pos, articulations[articulation_index]);
+                    if (articulations[articulation_index].keynum_scale != 1.0f)
+                    {
+                        FLUID_LOG(FLUID_WARN, "Key Number Generator is not allowed in region articulation, ignoring");
+                    }
                     break;
                 case RGNH_FCC: {
                     uint16_t temp;
@@ -2684,17 +2696,20 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
 {
     auto *dlspreset = static_cast<fluid_dls_instrument *>(fluid_preset_get_data(preset));
 
-    int tuned_key;
+    // Things affect region selection process:
+    // 1. Subtonal tuning, see https://github.com/FluidSynth/fluidsynth/issues/926
+    // 2. Key Number Generator
+    fluid_real_t tuned_key_f = key;
 
     // this is copied from fluid_defsfont
     if (synth->channel[chan]->channel_type == CHANNEL_TYPE_MELODIC)
     {
-        tuned_key = (int)(fluid_channel_get_key_pitch(synth->channel[chan], key) / 100.0f + 0.5f);
+        tuned_key_f = fluid_channel_get_key_pitch(synth->channel[chan], key) / 100.0f;
     }
-    else
-    {
-        tuned_key = key;
-    }
+
+    tuned_key_f *= dlspreset->keynum_scale;
+
+    const int tuned_key = static_cast<int>(std::round(tuned_key_f));
 
     for (auto &region : dlspreset->regions)
     {
@@ -2704,7 +2719,7 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
         }
 
         auto *voice = fluid_synth_alloc_voice_LOCAL(
-        synth, dlspreset->samples_fluid + region.sampleindex, chan, key, vel, &region.range);
+        synth, dlspreset->samples_fluid + region.sampleindex, chan, std::round(key * dlspreset->keynum_scale), vel, &region.range);
 
         if (voice == nullptr)
         {
