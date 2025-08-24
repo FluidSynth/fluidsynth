@@ -7,7 +7,7 @@
 // formatter for msvcrt in a backward-compatible way is by using %I64. Use %I64u on Windows, or just
 // use inttypes.h PRIuMAX. If you must use %llu, define __USE_MINGW_ANSI_STDIO macro before
 // including stdio.h. Be aware that if you do this, MS type %I64* format will no longer work.
-#define __USE_MINGW_ANSI_STDIO
+#define __USE_MINGW_ANSI_STDIO 1
 
 #include "fluid_dls.h"
 
@@ -114,21 +114,25 @@ struct RIFFChunk
 // RAII wrapper for scope defer execution
 template<class Callable> struct scope_guard
 {
+private:
+    Callable on_exit;
+
+public:
     explicit scope_guard(Callable on_exit) noexcept : on_exit(std::move(on_exit))
     {
     }
 
-    ~scope_guard() noexcept(noexcept(this->on_exit()))
-    // There seems to be a bug in GCC 8.1.0 when "this->" is removed
-    // > error: there are no arguments to 'on_exit' that depend on a template parameter, so a
-    // declaration of 'on_exit' must be available But on_exit should lookup to the member definition
-    // (see [temp.dep] 4 https://eel.is/c++draft/temp.dep#type-4). It compiles fine with GCC 15.2.1.
+    ~scope_guard() noexcept(noexcept(on_exit()))
+    // clang-format off
+    // There seems to be a bug in GCC 8.1.0 when the definition of on_exit is put after the exception-spec.
+    // > error: there are no arguments to 'on_exit' that depend on a template parameter, so a declaration of 'on_exit' must be available.
+    // But on_exit should lookup to the member definition wherever the definition is put in the template definition.
+    // see [temp.dep] 4 https://eel.is/c++draft/temp.dep#type-4
+    // It compiles fine with GCC 15.2.1.
+    // clang-format on
     {
         on_exit();
     }
-
-private:
-    Callable on_exit;
 };
 
 // RAII wrapper for mlock
