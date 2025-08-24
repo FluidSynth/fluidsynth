@@ -229,9 +229,23 @@ struct fluid_dls_articulation
     std::vector<fluid_mod_t> mods;
 
     fluid_real_t keynum_scale = 1.0; // this is not scaletuning
+    fluid_mod_t keyToPitch {
+        GEN_PITCH,
+        FLUID_MOD_KEY,
+        FLUID_MOD_GC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE,
+        0,
+        0,
+        FLUID_MOD_TRANSFORM_LINEAR,
+        12800,
+        nullptr,
+        nullptr,
+        nullptr
+    }; // DLS articulator Key Number to Pitch (default 12800 cents)
 
     fluid_dls_articulation()
     {
+        // overriding default gens and mods
+
         gens[GEN_MODLFOFREQ] = -851.3179423647571;  // 5 Hz
         gens[GEN_MODLFODELAY] = -7972.627427729669; // 10 ms
         gens[GEN_VIBLFOFREQ] = -851.3179423647571;  // 5 Hz
@@ -262,6 +276,24 @@ struct fluid_dls_articulation
                                     nullptr,
                                     nullptr,
                                     nullptr });
+    }
+
+    void add_mod(const fluid_mod_t &mod)
+    {
+        if (fluid_mod_test_identity(&keyToPitch, &mod))
+        {
+            keyToPitch.amount = mod.amount;
+            return;
+        }
+
+        for (auto &existing_mod : mods)
+        {
+            if (fluid_mod_test_identity(&existing_mod, &mod))
+            {
+                existing_mod.amount += mod.amount;
+                return;
+            }
+        }
     }
 };
 
@@ -296,7 +328,7 @@ struct fluid_dls_region
 
     uint32_t artindex = -1;
     uint32_t sampleindex{};
-    unsigned char samplemode_inherited{}; // loop_type from sample's wsmp
+    unsigned char samplemode_inherited{}; // loop_type from sample's wsmp, converted to SF2 sample mode
     fluid_real_t gain_inherited{};        // gain from sample's wsmp, in cB
 };
 
@@ -1112,16 +1144,7 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
     // transform.out_trans is ignored because unsupported
     mod.trans = FLUID_MOD_TRANSFORM_LINEAR;
 
-    for (auto &existing_mod : art.mods)
-    {
-        if (fluid_mod_test_identity(&existing_mod, &mod))
-        {
-            existing_mod.amount += mod.amount;
-            return;
-        }
-    }
-
-    art.mods.push_back(mod);
+    art.add_mod(mod);
 }
 
 void add_dls_connectionblock_to_art(fluid_dls_articulation &art, uint16_t dest_gen, uint16_t src_dls, fluid_real_t scale, DLSTransform transform)
@@ -2688,6 +2711,9 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
             return FLUID_FAILED;
         }
 
+        float rootkey = dlspreset->samples_fluid[region.sampleindex].origpitch;
+        float keyNumToPitch = 12800.0f;
+
         if (region.artindex != static_cast<uint32_t>(-1))
         {
             auto &art = dlspreset->articulations[region.artindex];
@@ -2703,6 +2729,7 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                 // there is only 10 standard default modulators
                 fluid_voice_add_mod_local(voice, &mod, FLUID_VOICE_OVERWRITE, 10);
             }
+            keyNumToPitch = art.keyToPitch.amount;
         }
 
         if (region.wsmp.has_value())
@@ -2710,6 +2737,7 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
             const auto &wsmp = region.wsmp.value();
             const auto &sample = dlspreset->samples_fluid[region.sampleindex];
 
+            rootkey = wsmp.unity_note;
             fluid_voice_gen_set(voice, GEN_OVERRIDEROOTKEY, wsmp.unity_note);
             fluid_voice_gen_incr(voice, GEN_FINETUNE, wsmp.fine_tune - sample.pitchadj);
             fluid_voice_gen_incr(voice, GEN_ATTENUATION, -wsmp.gain / 65536.0f);
@@ -2751,6 +2779,12 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
         }
 
         fluid_voice_gen_set(voice, GEN_EXCLUSIVECLASS, region.exclusive_class);
+
+        // pitch adjustment of keyNumToPitch
+        // sf2: tuning = scaletuning * (key - rootkey)
+        // dls: tuning = keynumtopitch / 128 * key - 100 * rootkey
+        fluid_voice_gen_set(voice, GEN_SCALETUNE, keyNumToPitch / 128.0f);
+        fluid_voice_gen_incr(voice, GEN_FINETUNE, (keyNumToPitch / 128.0f * rootkey) - (100.0f * rootkey));
 
         fluid_synth_start_voice(synth, voice);
     }
