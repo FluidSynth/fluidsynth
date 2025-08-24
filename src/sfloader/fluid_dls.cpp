@@ -1,4 +1,13 @@
-#define NOMINMAX // std::numeric_limits::max
+// for <Windows.h> max macro, std::numeric_limits::max
+#define NOMINMAX
+// for mingw-w64 <stdio.h> %ll, see
+// https://sourceforge.net/p/mingw-w64/mailman/mingw-w64-public/thread/20120411101049.GA4263%40glandium.org/#msg29128250
+// the issue is that formatter-width specifier %ll isn't supported for all msvcrt-DLL versions,
+// therefore gcc warns about its use. The variant for specifying 64-bit integer-scalar-width in
+// formatter for msvcrt in a backward-compatible way is by using %I64. Use %I64u on Windows, or just
+// use inttypes.h PRIuMAX. If you must use %llu, define __USE_MINGW_ANSI_STDIO macro before
+// including stdio.h. Be aware that if you do this, MS type %I64* format will no longer work.
+#define __USE_MINGW_ANSI_STDIO
 
 #include "fluid_dls.h"
 
@@ -109,7 +118,11 @@ template<class Callable> struct scope_guard
     {
     }
 
-    ~scope_guard() noexcept(noexcept(on_exit()))
+    ~scope_guard() noexcept(noexcept(this->on_exit()))
+    // There seems to be a bug in GCC 8.1.0 when "this->" is removed
+    // > error: there are no arguments to 'on_exit' that depend on a template parameter, so a
+    // declaration of 'on_exit' must be available But on_exit should lookup to the member definition
+    // (see [temp.dep] 4 https://eel.is/c++draft/temp.dep#type-4). It compiles fine with GCC 15.2.1.
     {
         on_exit();
     }
