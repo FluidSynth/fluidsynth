@@ -24,6 +24,10 @@
 #include "fluid_sys.h"
 #include "fluid_list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fluid_midi_parser_t fluid_midi_parser_t;
 
 fluid_midi_parser_t *new_fluid_midi_parser(void);
@@ -379,5 +383,8 @@ struct _fluid_midi_parser_t
     fluid_midi_event_t event;        /* The event, that is returned to the MIDI driver. */
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_MIDI_H */

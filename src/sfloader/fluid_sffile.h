@@ -30,6 +30,9 @@
 #include "fluidsynth.h"
 #include "fluid_sys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Sound Font structure defines */
 
@@ -190,5 +193,9 @@ int load_pgen(SFData *sf, int size);
 void delete_preset(SFPreset *preset);
 void delete_inst(SFInst *inst);
 void delete_zone(SFZone *zone);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_SFFILE_H */
