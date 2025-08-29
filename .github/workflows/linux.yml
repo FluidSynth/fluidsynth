@@ -141,3 +141,58 @@ jobs:
           -DFluidSynth_DIR="$INSTALL_LOCATION/lib/cmake/fluidsynth" \
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
         cmake --build consume-install
+
+  # Tests to see if FluidSynth will build with GCC for PowerPC targets that use the IBM long double ABI
+  build-ibm-long-double:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      options: -u root
+      volumes:
+        - /etc/ssl/certs:/etc/ssl/certs
+
+    steps:
+    - name: Update apt
+      run: |
+        dpkg --add-architecture ppc64el
+        apt-get update -y
+
+    - name: Install Dependencies
+      run: |
+        apt-get -yq --no-install-suggests --no-install-recommends install \
+          git \
+          gcc-powerpc64le-linux-gnu \
+          g++-powerpc64le-linux-gnu \
+          cmake \
+          cmake-data \
+          ninja-build
+
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - name: Configure CMake
+      run: |
+        export CC=${{ matrix.CC }}
+        export CXX=${{ matrix.CXX }}
+        export CFLAGS="$CFLAGS -mabi=ibmlongdouble -Wno-psabi"
+        export CXXFLAGS="$CXXFLAGS -mabi=ibmlongdouble -Wno-psabi"
+        cmake -S . \
+          -B build \
+          -G Ninja \
+          -DCMAKE_SYSTEM_NAME=Linux \
+          -DCMAKE_SYSTEM_PROCESSOR=ppc64le \
+          -DCMAKE_C_COMPILER=powerpc64le-linux-gnu-gcc \
+          -DCMAKE_CXX_COMPILER=powerpc64le-linux-gnu-g++ \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_VERBOSE_MAKEFILE=1 \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=1 \
+          -Werror=dev \
+          -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
+          -Dosal=embedded \
+          -Denable-libinstpatch=0 \
+          -DNO_GUI=1 \
+          ${{ matrix.CMAKE_FLAGS }}
+
+    - name: Build
+      run: cmake --build build
