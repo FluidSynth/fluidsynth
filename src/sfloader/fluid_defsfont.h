@@ -118,6 +118,7 @@ struct _fluid_defsfont_t
     fluid_mod_t *default_mod_list;  /* the default modulator list of this soundfont */
     int mlock;                      /* Should we try memlock (avoid swapping)? */
     int dynamic_samples;            /* Enables dynamic sample loading if set */
+    int is_xg_bank;                 /* Set to TRUE if this soundfont is validated as XG compatible */
 
     fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 };
@@ -135,6 +136,7 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
 
 int fluid_defsfont_add_sample(fluid_defsfont_t *defsfont, fluid_sample_t *sample);
 int fluid_defsfont_add_preset(fluid_defsfont_t *defsfont, fluid_defpreset_t *defpreset);
+void fluid_defsfont_validate_xg(fluid_defsfont_t *defsfont);
 
 
 /*

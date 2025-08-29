@@ -21,6 +21,7 @@
 #include "fluid_mod.h"
 #include "fluid_synth.h"
 #include "fluid_sfont.h"
+#include "fluid_defsfont.h"
 
 /* Field shift amounts for sfont_bank_prog bit field integer */
 #define PROG_SHIFTVAL   0
@@ -337,9 +338,27 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
             return;
         }
 
-        // ...but for drum channels, hardcode SF2 drum bank 128. Ideally, we should use bankMSB as bank number.
-        // But we'd need to ensure that it's not a melodic preset, see #1524.
-        newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
+        /* For drum channels, check if the current SoundFont is XG compatible.
+         * If yes, use the actual bank MSB. If no, fall back to bank 128. */
+        if(chan->preset && chan->preset->sfont)
+        {
+            fluid_defsfont_t *defsfont = (fluid_defsfont_t *)fluid_sfont_get_data(chan->preset->sfont);
+            if(defsfont && defsfont->is_xg_bank)
+            {
+                /* SoundFont is XG compatible, use the actual bank MSB */
+                newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
+            }
+            else
+            {
+                /* SoundFont is not XG compatible, fall back to SF2 drum bank 128 */
+                newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
+            }
+        }
+        else
+        {
+            /* No preset or SoundFont, fall back to SF2 drum bank 128 */
+            newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
+        }
     }
     else if(style == FLUID_BANK_STYLE_GM )
     {
