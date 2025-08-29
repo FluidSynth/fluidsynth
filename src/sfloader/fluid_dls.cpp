@@ -548,6 +548,10 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 // See https://github.com/spessasus/spessasynth_core/issues/5 and https://github.com/FluidSynth/fluidsynth/pull/1626
 #define CRS1_FCC FLUID_FOURCC('c', 'r', 's', '1')
 
+// The 'crs2' chunk is also seen in Crystal's DLS.
+// But it has correct size (0 bytes!)
+#define CRS2_FCC FLUID_FOURCC('c', 'r', 's', '2')
+
 // info
 #define INAM_FCC FLUID_FOURCC('I', 'N', 'A', 'M')
 
@@ -1968,7 +1972,7 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
             }
             default:
                 FLUID_LOG(FLUID_WARN,
-                          "Ignoring unexcepted DLS chunk in LIST[wave] '" FMT_4CC_SPEC "'",
+                          "Unknown DLS chunk in LIST[wave] '" FMT_4CC_SPEC "'",
                           FMT_4CC_ARG(subchunk.id));
         }
     });
@@ -2045,10 +2049,14 @@ inline void fluid_dls_font::parse_lins(fluid_long_long_t offset)
     // clang-format off
     visit_subchunks(offset, LINS_FCC,
     [this](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos [[maybe_unused]]) {
+        if (subchunk.id == CRS1_FCC || subchunk.id == CRS2_FCC)
+        {
+            return;
+        }
         if (subchunk.id != INS_FCC)
         {
             FLUID_LOG(FLUID_WARN,
-                        "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC
+                        "Unknown DLS chunk '" FMT_4CC_SPEC
                         "' ofs=0x%llx in LIST[lins]",
                         FMT_4CC_ARG(subchunk.id),
                         pos);
@@ -2070,6 +2078,8 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
         switch (subchunk.id)
         {
             case DLID_FCC:
+            case CRS1_FCC:
+            case CRS2_FCC:
                 break;
             case INFO_FCC:
                 instrument.name = read_name_from_info_entries(pos + headersize, subchunk.size);
@@ -2111,7 +2121,7 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
                 break;
             default:
                 FLUID_LOG(FLUID_WARN,
-                          "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC
+                          "Unknown DLS chunk '" FMT_4CC_SPEC
                           "' ofs=0x%llx in LIST[ins]",
                           FMT_4CC_ARG(subchunk.id),
                           pos);
@@ -2148,7 +2158,7 @@ inline bool fluid_dls_font::parse_lart(fluid_long_long_t offset, fluid_dls_artic
             {
                 // clang-format off
                 FLUID_LOG(FLUID_WARN,
-                          "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lart]",
+                          "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lart]",
                           FMT_4CC_ARG(subchunk.id), pos);
                 return;
                 // clang-format on
@@ -2227,6 +2237,10 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
             trans = static_cast<uint16_t>(dlsv2trans);
         }
         READ32(this, scale);
+        if (source == CONN_SRC_KEYNUMBER && dest == CONN_DST_PITCH)
+        {
+            FLUID_LOG(FLUID_WARN, "found keyNumToPitch at 0x%llx, %u", offset, i);
+        }
         convert_dls_connectionblock_to_art(articulation, source, control, dest, trans, scale);
     }
 }
@@ -2234,19 +2248,29 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
 inline void fluid_dls_font::parse_lrgn(fluid_long_long_t offset, fluid_dls_instrument &instrument)
 {
     visit_subchunks(offset, LRGN_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
-        if (subchunk.id != RGN_FCC && subchunk.id != RGN2_FCC)
+        switch (subchunk.id)
         {
-            FLUID_LOG(FLUID_WARN,
-                      "Ignoring unexcepted DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lrgn]",
-                      FMT_4CC_ARG(subchunk.id),
-                      pos);
-            return;
-        }
-        auto &region = instrument.regions.emplace_back();
-        if (!parse_rgn(pos, region)) // bypassed by cdl
-        {
-            FLUID_LOG(FLUID_DBG, "Region ofs=0x%llx is bypassed by cdl", pos);
-            instrument.regions.pop_back();
+            case RGN_FCC:
+            case RGN2_FCC: {
+                auto &region = instrument.regions.emplace_back();
+                if (!parse_rgn(pos, region)) // bypassed by cdl
+                {
+                    FLUID_LOG(FLUID_DBG, "Region ofs=0x%llx is bypassed by cdl", pos);
+                    instrument.regions.pop_back();
+                }
+                break;
+            }
+            case CRS1_FCC:
+            case CRS2_FCC:
+                // see CRS1 and CRS2_FCC's comment
+                break;
+            default:
+                FLUID_LOG(FLUID_WARN,
+                          "Unknown DLS chunk '" FMT_4CC_SPEC
+                          "' ofs=0x%llx in LIST[lrgn]",
+                          FMT_4CC_ARG(subchunk.id),
+                          pos);
+                break;
         }
     });
 }
@@ -2264,6 +2288,8 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
             switch (subchunk.id)
             {
                 case INFO_FCC:
+                case CRS1_FCC:
+                case CRS2_FCC:
                     break;
                 case WLNK_FCC:
                     fskip(8); // fluidsynth does not implement phase-locking and multichannel output
@@ -2738,12 +2764,8 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
             adjusted_key = static_cast<int>(std::round(adjusted_key * keyNumToPitch / 12800.0f));
         }
 
-        auto *voice = fluid_synth_alloc_voice_LOCAL(synth,
-                                                    dlspreset->samples_fluid + region.sampleindex,
-                                                    chan,
-                                                    adjusted_key,
-                                                    vel,
-                                                    &region.range);
+        auto *voice = fluid_synth_alloc_voice_LOCAL(
+        synth, dlspreset->samples_fluid + region.sampleindex, chan, adjusted_key, vel, &region.range);
 
         if (voice == nullptr)
         {
