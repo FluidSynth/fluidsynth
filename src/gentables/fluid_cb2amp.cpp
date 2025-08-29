@@ -2,6 +2,7 @@
 #include "utils/fluid_conv_tables.h"
 #include "gentables/ConstExprArr.hpp"
 
+#define GCEM_E static_cast<double>(2.7182818284590452353602874713526624977572L)
 #include "gcem.hpp"
 
 struct Cb2AmpFunctor
@@ -13,7 +14,7 @@ struct Cb2AmpFunctor
          * between 0 and 144 dB. Therefore a negative attenuation is
          * not allowed.
          */
-       return gcem::pow(10.0L, static_cast<fluid_real_t>(i) / -200.0L);
+       return gcem::pow(10.0, static_cast<fluid_real_t>(i) / -200.0);
     }
 };
 

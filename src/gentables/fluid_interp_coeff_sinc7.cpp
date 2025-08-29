@@ -66,7 +66,7 @@ struct InterpSincFunctor
 #define I (i % SINC_INTERP_ORDER)
 #define x ((fluid_real_t)I_NUM / (fluid_real_t)FLUID_INTERP_MAX)
 #define I_SHIFTED ((fluid_real_t)I - ((fluid_real_t)SINC_INTERP_ORDER / 2.0) + (fluid_real_t)(FLUID_INTERP_MAX - I2 - 1) / (fluid_real_t)FLUID_INTERP_MAX)
-#define ARG (GCEM_PI * I_SHIFTED)
+#define ARG (static_cast<double>(GCEM_PI) * I_SHIFTED)
 
         return gcem::fabs(I_SHIFTED) > 0.000001
         ? (gcem::sin(ARG) / (ARG)) * (0.5 * (1.0 + gcem::cos(2.0 * ARG / (fluid_real_t)SINC_INTERP_ORDER)))
