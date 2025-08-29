@@ -333,13 +333,16 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
         chan->channel_type = (120 == bankmsb || 126 == bankmsb || 127 == bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
         if(chan->channel_type == CHANNEL_TYPE_MELODIC)
         {
-            // bankMSB is ignored for meldodic channels
+            // bankMSB is ignored for melodic channels
             return;
         }
 
-        // ...but for drum channels, hardcode SF2 drum bank 128. Ideally, we should use bankMSB as bank number.
-        // But we'd need to ensure that it's not a melodic preset, see #1524.
-        newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
+        /* For drum channels, try the actual XG drum bank first.
+         * The fallback logic in fluid_synth_program_change will handle
+         * cases where no valid preset is found, including falling back to bank 128.
+         * See #1524.
+         */
+        newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
     }
     else if(style == FLUID_BANK_STYLE_GM )
     {

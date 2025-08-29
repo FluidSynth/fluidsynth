@@ -124,6 +124,7 @@ static int fluid_synth_set_tuning_LOCAL(fluid_synth_t *synth, int chan,
 static void fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan,
                                       int param, float value);
 static void fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id);
+static int fluid_preset_is_drum_preset(fluid_preset_t *preset);
 
 
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
@@ -3157,6 +3158,59 @@ fluid_synth_find_preset(fluid_synth_t *synth, int banknum,
 }
 
 /**
+ * Check if a preset appears to be a drum preset by analyzing its zones.
+ * This is a heuristic check - drum presets typically have multiple zones
+ * with specific key ranges (often single keys or small ranges).
+ * 
+ * @param preset The preset to check
+ * @return TRUE if it appears to be a drum preset, FALSE otherwise
+ */
+static int 
+fluid_preset_is_drum_preset(fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset;
+    fluid_preset_zone_t *zone;
+    int zone_count = 0;
+    int single_key_zones = 0;
+    int total_key_range = 0;
+    
+    if (!preset || !preset->data) {
+        return FALSE;
+    }
+    
+    defpreset = (fluid_defpreset_t *)preset->data;
+    zone = fluid_defpreset_get_zone(defpreset);
+    
+    /* Count zones and analyze their key ranges */
+    while (zone != NULL) {
+        int range_size = zone->range.keyhi - zone->range.keylo + 1;
+        zone_count++;
+        total_key_range += range_size;
+        
+        /* Single key zones are very typical for drum presets */
+        if (range_size == 1) {
+            single_key_zones++;
+        }
+        
+        zone = zone->next;
+    }
+    
+    /* Heuristic: if we have multiple zones and a good portion are single-key zones,
+     * or if the average key range per zone is small, it's likely a drum preset */
+    if (zone_count >= 3) {
+        float avg_range = (float)total_key_range / zone_count;
+        float single_key_ratio = (float)single_key_zones / zone_count;
+        
+        /* If most zones are single keys, or average range is small, likely drums */
+        if (single_key_ratio >= 0.5 || avg_range <= 2.0) {
+            return TRUE;
+        }
+    }
+    
+    return FALSE;
+}
+
+/**
  * Send a program change event on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -3199,6 +3253,18 @@ fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
         subst_prog = prognum;
 
         preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+
+        /* For XG drum channels, validate that the found preset is actually a drum preset.
+         * If not, apply fallback logic as if no preset was found. See #1524. */
+        if(preset && channel->channel_type == CHANNEL_TYPE_DRUM && 
+           synth->bank_select == FLUID_BANK_STYLE_XG &&
+           (subst_bank == 120 || subst_bank == 126 || subst_bank == 127) &&
+           !fluid_preset_is_drum_preset(preset))
+        {
+            FLUID_LOG(FLUID_DBG, "XG drum bank %d contains non-drum preset [prog=%d], applying fallback", 
+                      subst_bank, subst_prog);
+            preset = NULL; /* Trigger fallback logic */
+        }
 
         /* Fallback to another preset if not found */
         if(!preset)
