@@ -32,6 +32,7 @@ ADD_FLUID_TEST(test_jack_obtaining_synth)
 ADD_FLUID_TEST(test_utf8_open)
 ADD_FLUID_TEST(test_xg_bank_validation)
 ADD_FLUID_TEST(test_xg_bank_selection)
+ADD_FLUID_TEST(test_xg_integration)
 
 if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
     # Earlier versions of GLib had broken comment handling and should not be compared to
