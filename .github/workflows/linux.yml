@@ -173,8 +173,6 @@ jobs:
 
     - name: Configure CMake
       run: |
-        export CC=${{ matrix.CC }}
-        export CXX=${{ matrix.CXX }}
         export CFLAGS="$CFLAGS -mabi=ibmlongdouble -Wno-psabi"
         export CXXFLAGS="$CXXFLAGS -mabi=ibmlongdouble -Wno-psabi"
         cmake -S . \
@@ -191,8 +189,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
           -Dosal=embedded \
           -Denable-libinstpatch=0 \
-          -DNO_GUI=1 \
-          ${{ matrix.CMAKE_FLAGS }}
+          -DNO_GUI=1
 
     - name: Build
       run: cmake --build build
