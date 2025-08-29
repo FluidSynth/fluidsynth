@@ -14,7 +14,7 @@ struct ConvexFunctor
             ? 0
             : ((i == FLUID_VEL_CB_SIZE - 1)
                 ? 1
-                : (1.0L - ((-200.0L * 2 / FLUID_PEAK_ATTENUATION) * gcem::log(i / (FLUID_VEL_CB_SIZE - 1.0L)) / GCEM_LOG_10))
+                : (1.0 - ((-200.0 * 2 / FLUID_PEAK_ATTENUATION) * gcem::log(i / (FLUID_VEL_CB_SIZE - 1.0)) / static_cast<double>(GCEM_LOG_10)))
                 ));
     }
 };
