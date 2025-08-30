@@ -39,3 +39,4 @@ install_manifest.txt
 # ProjectFiles
 *.pro.user*
 *.user
+build-android-test/

@@ -1,1 +1,0 @@
-cmd='/usr/local/bin/cmake;-DCMAKE_VERBOSE_MAKEFILE=FALSE;-G;Unix Makefiles;-B;/home/runner/work/fluidsynth/fluidsynth/build-android-test/src/gentables;/home/runner/work/fluidsynth/fluidsynth/src/gentables'
