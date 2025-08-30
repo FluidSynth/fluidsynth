@@ -234,7 +234,7 @@ struct fluid_dls_articulation
 
     // clang-format off
     fluid_mod_t keyToPitch {
-        GEN_PITCH,
+        GEN_FINETUNE,
         FLUID_MOD_KEY,
         FLUID_MOD_GC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE,
         0,
