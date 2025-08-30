@@ -131,6 +131,7 @@ typedef struct
     fluid_atomic_int_t should_quit;
     int port_count;
     int autoconn_inputs;
+    int dyn_sample_loading_is_active;
     snd_seq_addr_t autoconn_dest;
 } fluid_alsa_seq_driver_t;
 
@@ -1237,6 +1238,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
     }
 
     fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconn_inputs);
+    fluid_settings_getint(settings, "synth.dynamic-sample-loading", &dev->dyn_sample_loading_is_active);
 
     if(dev->autoconn_inputs)
     {
@@ -1358,11 +1360,20 @@ fluid_alsa_seq_run(void *d)
                  * (-EPERM) and input event buffer overrun (-ENOSPC) */
                 if(ev < 0)
                 {
-                    /* FIXME - report buffer overrun? */
                     if(ev != -EPERM && ev != -ENOSPC)
                     {
                         FLUID_LOG(FLUID_ERR, "Error while reading ALSA sequencer (code=%d)", ev);
                         fluid_atomic_int_set(&dev->should_quit, 1);
+                    }
+                    else
+                    {
+                        FLUID_LOG(FLUID_WARN, "ALSA sequencer buffer overrun, some MIDI events where lost (code=%d)", ev);
+                        if(dev->dyn_sample_loading_is_active)
+                        {
+                            FLUID_LOG(FLUID_INFO, "Hint: To mitigate buffer overruns, you should consider to disable synth.dynamic-sample-loading!");
+                            // avoid spamming those hints
+                            dev->dyn_sample_loading_is_active = 0;
+                        }
                     }
 
                     break;

@@ -70,7 +70,7 @@ if(NOT FLUIDSYNTH_IS_SHARED)
   include(CMakeFindDependencyMacro)
 
   # Optional dependencies
-  if(NOT TARGET Threads::Threads AND NOT FLUIDSYNTH_OSAL STREQUAL "embedded")
+  if(NOT TARGET Threads::Threads AND NOT ((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR (FLUIDSYNTH_OSAL STREQUAL "embedded")))
     find_dependency(Threads)
   endif()
 

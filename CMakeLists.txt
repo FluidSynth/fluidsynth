@@ -47,7 +47,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 4 )
-set ( FLUIDSYNTH_VERSION_MICRO 7 )
+set ( FLUIDSYNTH_VERSION_MICRO 8 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION ${VERSION} )
 
@@ -62,7 +62,7 @@ set ( FLUIDSYNTH_VERSION ${VERSION} )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
 set ( LIB_VERSION_AGE 3 )
-set ( LIB_VERSION_REVISION 7 )
+set ( LIB_VERSION_REVISION 8 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -199,12 +199,13 @@ unset ( FLUID_LIBS CACHE )
 unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
-  if ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
+  # If we ever bump to CMake 3.29+, replace this with CMAKE_LANG_COMPILER_LINKER_ID
+  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|OS2|Emscripten|SunOS") )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
-  endif ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
+  endif ()
 
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
@@ -360,18 +361,17 @@ if ( WIN32 )
   endif  ( MINGW )
 endif ( WIN32 )
 
-# Check for threads and math
-if (NOT osal STREQUAL "embedded" )
+set ( LIBFLUID_LIBS ${MATH_LIBRARY} )
+if (NOT ((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR (osal STREQUAL "embedded")))
+  # Check for threads and math
   find_package ( Threads REQUIRED )
-  set ( LIBFLUID_LIBS Threads::Threads )
-endif()
+  list ( APPEND LIBFLUID_LIBS "Threads::Threads" )
+endif ()
 
 find_library ( HAS_LIBM NAMES "m" )
 if ( HAS_LIBM )
   set ( MATH_LIBRARY "m" )
 endif ( HAS_LIBM )
-
-set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};${MATH_LIBRARY}" )
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )
