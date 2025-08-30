@@ -35,6 +35,7 @@ macro ( ADD_FLUID_TEST _test )
         
         if(QEMU_BINARY)
             ADD_TEST(NAME ${_test} COMMAND ${QEMU_BINARY} ${_test})
+            # Note: QEMU_LD_PREFIX environment variable will be set by the CI script
             message(STATUS "Android test ${_test} will be run with ${QEMU_BINARY}")
         else()
             ADD_TEST(NAME ${_test} COMMAND ${_test})
