@@ -130,7 +130,7 @@ fluid_real_t fluid_gen_scale_nrpn(int gen, int data)
 const char *fluid_gen_name(int gen)
 {
     static char num[12];
-    if (0 < gen && gen < GEN_LAST)
+    if (0 <= gen && gen < GEN_LAST)
     {
         return fluid_gen_info[gen].name;
     }
