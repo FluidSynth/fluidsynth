@@ -21,6 +21,12 @@ macro ( ADD_FLUID_ANDROID_TEST _test )
         # Link against the object library and its dependencies
         target_link_libraries( ${_test}_android libfluidsynth-OBJ )
 
+        # Add system libraries that may be needed on Android
+        target_link_libraries(${_test}_android 
+            ${LIBFLUID_LIBS}  # Standard fluid libs (math, pthread, etc.)
+            log               # Android logging
+        )
+
         # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
         target_include_directories(${_test}_android
         PUBLIC
@@ -29,11 +35,6 @@ macro ( ADD_FLUID_ANDROID_TEST _test )
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src> # include private headers
         $<TARGET_PROPERTY:libfluidsynth-OBJ,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
         )
-
-        # For Android, we might need additional system libraries
-        if(ANDROID)
-            target_link_libraries(${_test}_android log)
-        endif()
 
         # append the current unit test to check-android target as dependency
         add_dependencies(check-android ${_test}_android)

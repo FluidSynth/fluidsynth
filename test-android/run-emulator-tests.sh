@@ -32,15 +32,29 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Function to cleanup on exit
+cleanup() {
+    if [ ! -z "$emulator_pid" ] && ps -p "$emulator_pid" > /dev/null 2>&1; then
+        print_status "Cleaning up emulator process..."
+        kill -9 "$emulator_pid" 2>/dev/null || true
+    fi
+}
+
+# Set up cleanup trap
+trap cleanup EXIT
+
 # Check if ADB is available
 if ! command -v adb &> /dev/null; then
     print_error "ADB command not found. Please ensure Android SDK is installed and ADB is in PATH."
     exit 1
 fi
 
-# Wait for device
+# Wait for device with timeout
 print_status "Waiting for Android device/emulator..."
-adb wait-for-device
+timeout 60 adb wait-for-device || {
+    print_error "Timeout waiting for device/emulator"
+    exit 1
+}
 
 # Check if device is ready
 if ! adb shell echo "Device ready" &> /dev/null; then
@@ -49,6 +63,17 @@ if ! adb shell echo "Device ready" &> /dev/null; then
 fi
 
 print_status "Device ready"
+
+# Get device info for debugging
+print_status "Device information:"
+adb shell "uname -a" 2>/dev/null || print_warning "Could not get kernel info"
+DEVICE_ABI=$(adb shell "getprop ro.product.cpu.abi" 2>/dev/null | tr -d '\r\n' || echo "unknown")
+print_status "Device ABI: $DEVICE_ABI"
+
+# Warn if ABI mismatch
+if [ "$DEVICE_ABI" != "$ANDROID_ABI_CMAKE" ] && [ "$DEVICE_ABI" != "unknown" ]; then
+    print_warning "ABI mismatch: building for $ANDROID_ABI_CMAKE but device is $DEVICE_ABI"
+fi
 
 # Create test directory on device
 print_status "Creating test directory on device: ${TEST_DIR}"
@@ -87,24 +112,40 @@ if [ -d "$LIB_DIR" ]; then
     adb shell "mkdir -p ${TEST_DIR}/lib" || true
     
     # Push essential libraries (only the ones that exist)
-    for lib in libfluidsynth.so libglib-2.0.so libgobject-2.0.so libgio-2.0.so libgmodule-2.0.so libgthread-2.0.so libsndfile.so libinstpatch-1.0.so; do
+    # Order matters for dependencies
+    for lib in \
+        libpcre.so \
+        libglib-2.0.so \
+        libgobject-2.0.so \
+        libgio-2.0.so \
+        libgmodule-2.0.so \
+        libgthread-2.0.so \
+        libogg.so \
+        libvorbis.so \
+        libvorbisenc.so \
+        libFLAC.so \
+        libsndfile.so \
+        libinstpatch-1.0.so \
+        liboboe.so \
+        libfluidsynth.so; do
         if [ -f "${LIB_DIR}/${lib}" ]; then
             print_status "  Pushing $lib"
             adb push "${LIB_DIR}/${lib}" "${TEST_DIR}/lib/" || print_warning "Failed to push $lib"
         fi
     done
+    
+    # Verify libraries are available
+    adb shell "ls -la ${TEST_DIR}/lib/" 2>/dev/null | head -5 || true
+else
+    print_warning "Library directory ${LIB_DIR} not found - tests may fail if they need shared libraries"
 fi
-
-# Get device info for debugging
-print_status "Device information:"
-adb shell "uname -a" || true
-adb shell "getprop ro.product.cpu.abi" || true
 
 # Initialize results
 adb shell "echo 'FluidSynth Test Results' > ${RESULTS_FILE}"
 adb shell "echo '======================' >> ${RESULTS_FILE}"
 adb shell "echo 'Date: '$(date) >> ${RESULTS_FILE}"
 adb shell "echo 'Architecture: ${ANDROID_ABI_CMAKE}' >> ${RESULTS_FILE}"
+adb shell "echo 'Device ABI: ${DEVICE_ABI}' >> ${RESULTS_FILE}"
 adb shell "echo '' >> ${RESULTS_FILE}"
 
 # Run tests
@@ -120,23 +161,20 @@ for test_exe in $TEST_EXECUTABLES; do
     total_tests=$((total_tests + 1))
     
     # Set library path and run test
-    test_command="cd ${TEST_DIR} && LD_LIBRARY_PATH=${TEST_DIR}/lib:\$LD_LIBRARY_PATH ./${test_name}"
+    # Use a more robust library path setup
+    test_command="cd ${TEST_DIR} && export LD_LIBRARY_PATH=${TEST_DIR}/lib:/system/lib64:/system/lib:/vendor/lib64:/vendor/lib && ./${test_name}"
     
-    # Run the test and capture both exit code and output
-    if adb shell "$test_command" 2>&1; then
-        test_exit_code=$?
-        if [ $test_exit_code -eq 0 ]; then
-            print_status "  ✓ $test_name PASSED"
-            adb shell "echo '[PASS] $test_name' >> ${RESULTS_FILE}"
-            passed_tests=$((passed_tests + 1))
-        else
-            print_error "  ✗ $test_name FAILED (exit code: $test_exit_code)"
-            adb shell "echo '[FAIL] $test_name (exit code: $test_exit_code)' >> ${RESULTS_FILE}"
-            failed_tests=$((failed_tests + 1))
-        fi
+    # Run the test and capture exit code properly
+    if adb shell "$test_command" >/dev/null 2>&1; then
+        print_status "  ✓ $test_name PASSED"
+        adb shell "echo '[PASS] $test_name' >> ${RESULTS_FILE}"
+        passed_tests=$((passed_tests + 1))
     else
-        print_error "  ✗ $test_name FAILED (could not execute)"
-        adb shell "echo '[FAIL] $test_name (could not execute)' >> ${RESULTS_FILE}"
+        print_error "  ✗ $test_name FAILED"
+        # Try to get more detailed error info
+        error_output=$(adb shell "$test_command" 2>&1 | head -3 || echo "Unknown error")
+        print_error "    Error: $error_output"
+        adb shell "echo '[FAIL] $test_name - $error_output' >> ${RESULTS_FILE}"
         failed_tests=$((failed_tests + 1))
     fi
 done
@@ -150,7 +188,7 @@ adb shell "echo 'Failed: ${failed_tests}' >> ${RESULTS_FILE}"
 
 # Pull results file
 print_status "Retrieving test results..."
-adb pull "${RESULTS_FILE}" "./android_test_results.txt" || true
+adb pull "${RESULTS_FILE}" "./android_test_results.txt" || print_warning "Could not retrieve results file"
 
 # Display summary
 echo ""
@@ -158,6 +196,13 @@ print_status "Test Summary:"
 echo "Total tests: $total_tests"
 echo "Passed: $passed_tests"
 echo "Failed: $failed_tests"
+
+# Display results file if available
+if [ -f "./android_test_results.txt" ]; then
+    echo ""
+    print_status "Detailed results:"
+    cat "./android_test_results.txt"
+fi
 
 if [ $failed_tests -eq 0 ]; then
     print_status "All tests passed! ✓"

@@ -821,9 +821,13 @@ ENABLE_TESTING()
 # Process subdirectories
 add_subdirectory ( src )
 add_subdirectory ( test )
-if ( ANDROID )
+
+# Legacy Android Gradle-based testing (deprecated in favor of emulator-based approach)
+# Enable with -DENABLE_ANDROID_GRADLE_TESTS=ON if needed for compatibility
+if ( ANDROID AND ENABLE_ANDROID_GRADLE_TESTS )
   add_subdirectory ( test-android/app/src/main/cpp )
-endif (ANDROID)
+endif ()
+
 add_subdirectory ( doc )
 
 # pkg-config support
