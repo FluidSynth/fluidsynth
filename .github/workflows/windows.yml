@@ -18,12 +18,11 @@ name: Fluidsynth Windows
 env:
   BUILD_TYPE: RelWithDebInfo
   INSTALL_LOCATION: fluidsynth_install
-  # Unresolvable pipeline variables - to be populated by maintainers
-  GTK_BUNDLE_X86: ${{ vars.GTK_BUNDLE_X86 || '' }}
-  GTK_BUNDLE_X64: ${{ vars.GTK_BUNDLE_X64 || '' }}
-  LIBSNDFILE_URL_X86: ${{ vars.LIBSNDFILE_URL_X86 || '' }}
-  LIBSNDFILE_URL_X64: ${{ vars.LIBSNDFILE_URL_X64 || '' }}
-  MINGW_URL_X64: ${{ vars.MINGW_URL_X64 || '' }}
+  GTK_BUNDLE_X86: 'http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip'
+  GTK_BUNDLE_X64: 'http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip'
+  LIBSNDFILE_URL_X86: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win32.zip'
+  LIBSNDFILE_URL_X64: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win64.zip'
+  MINGW_URL_X64: 'https://sourceforge.net/projects/mingw-w64/files/Toolchains%%20targetting%%20Win64/Personal%%20Builds/mingw-builds/8.1.0/threads-win32/sjlj/x86_64-8.1.0-release-win32-sjlj-rt_v6-rev0.7z'
   SDL3_URL: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-VC.zip'
 
 jobs:
@@ -465,7 +464,6 @@ jobs:
         retention-days: 14
         overwrite: true
 
-  # Legacy MSYS2 builds (keeping for compatibility)
   msys2-build:
     runs-on: windows-latest
     strategy:
