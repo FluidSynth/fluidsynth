@@ -52,7 +52,7 @@ jobs:
             artifactPrefix: "fluidsynth"
             CFLAGS: ""
             CXXFLAGS: ""
-            CMAKEFLAGS: ""
+            CMAKEFLAGS: "-Denable-libinstpatch=0"
             dep_arch: "x64"
           - platform: x64
             platformAlt: x64
@@ -70,17 +70,6 @@ jobs:
       with:
         submodules: true
 
-    - name: Download libinstpatch artifact
-      uses: dawidd6/action-download-artifact@v6
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        workflow: azure-pipelines-win.yml
-        name: libinstpatch-XP-${{ matrix.platform }}
-        path: ${{ github.workspace }}/libinstpatch
-        repo: FluidSynth/fluidsynth
-        branch: master
-      continue-on-error: true
-        
     - name: Setup dependencies
       shell: cmd
       run: |
@@ -110,9 +99,6 @@ jobs:
           xcopy /E /I /Y * ..
           cd ..
           rmdir /S /Q libsndfile-*
-        )
-        if exist "${{ github.workspace }}\libinstpatch" (
-          xcopy /E /I /Y "${{ github.workspace }}\libinstpatch\*" d:\deps\
         )
         cd SDL3-*
         COPY lib\${{ matrix.platformAlt }}\SDL3.dll d:\deps\bin\ || echo SDL3.dll copy failed
@@ -169,11 +155,8 @@ jobs:
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\instpatch*.lib" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\pkgconfig\libinstpatch*.pc" 2>nul
         rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x86" 2>nul
         rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x64" 2>nul
-        rmdir /S /Q "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\include\libinstpatch-2" 2>nul
 
     - name: Validate library
       shell: bash
@@ -313,17 +296,6 @@ jobs:
       with:
         submodules: true
 
-    - name: Download libinstpatch artifact
-      uses: dawidd6/action-download-artifact@v6
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        workflow: azure-pipelines-win.yml
-        name: libinstpatch-${{ matrix.platform }}
-        path: ${{ github.workspace }}/libinstpatch
-        repo: FluidSynth/fluidsynth
-        branch: master
-      continue-on-error: true
-        
     - name: Setup dependencies
       shell: cmd
       run: |
@@ -362,9 +334,6 @@ jobs:
           xcopy /E /I /Y * ..
           cd ..
           rmdir /S /Q mingw*
-        )
-        if exist "${{ github.workspace }}\libinstpatch" (
-          xcopy /E /I /Y "${{ github.workspace }}\libinstpatch\*" d:\deps\
         )
         DEL /F C:\Strawberry\perl\bin\pkg-config.bat
 
@@ -430,9 +399,6 @@ jobs:
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\instpatch*.lib" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\pkgconfig\libinstpatch*.pc" 2>nul
-        rmdir /S /Q "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\include\libinstpatch-2" 2>nul
 
     - name: Validate library (shared)
       if: ${{ !contains(matrix.artifactPrefix, 'static') }}
