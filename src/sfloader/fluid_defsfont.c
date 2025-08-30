@@ -110,6 +110,9 @@ fluid_sfont_t *fluid_defsfloader_load(fluid_sfloader_t *loader, const char *file
         return NULL;
     }
 
+    /* Validate if this SoundFont is XG compatible */
+    fluid_defsfont_validate_xg(defsfont);
+
     return sfont;
 }
 
@@ -2383,4 +2386,74 @@ static fluid_inst_t *find_inst_by_idx(fluid_defsfont_t *defsfont, int idx)
     }
 
     return NULL;
+}
+
+/*
+ * fluid_defsfont_validate_xg
+ *
+ * Validates if this SoundFont is XG compatible by checking if it has
+ * presets in XG drum banks (120, 126, 127) with only allowed XG programs.
+ * Based on XG specification and SpessaSynth implementation.
+ */
+void fluid_defsfont_validate_xg(fluid_defsfont_t *defsfont)
+{
+    fluid_list_t *list;
+    fluid_preset_t *preset;
+    int bank, prog;
+    int has_xg_drums = FALSE;
+    int i;
+    int program_allowed;
+    
+    /* XG allowed programs for drum banks (per XG specification) */
+    static const int xg_allowed_programs[] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 24,
+        25, 27, 28, 29, 30, 31, 32, 33, 40, 41, 48,
+        64, 65, 66, 126, 127
+    };
+    static const int xg_allowed_programs_count = sizeof(xg_allowed_programs) / sizeof(xg_allowed_programs[0]);
+    
+    /* Default to not XG compatible */
+    defsfont->is_xg_bank = FALSE;
+    
+    if (!defsfont->preset)
+    {
+        return;
+    }
+    
+    /* Check all presets */
+    for (list = defsfont->preset; list != NULL; list = fluid_list_next(list))
+    {
+        preset = (fluid_preset_t *)fluid_list_get(list);
+        bank = fluid_preset_get_banknum(preset);
+        prog = fluid_preset_get_num(preset);
+        
+        /* Check if this preset is in an XG drum bank */
+        if (bank == 120 || bank == 126 || bank == 127)
+        {
+            has_xg_drums = TRUE;
+            
+            /* Verify the program is allowed for XG drums */
+            program_allowed = FALSE;
+            for (i = 0; i < xg_allowed_programs_count; i++)
+            {
+                if (prog == xg_allowed_programs[i])
+                {
+                    program_allowed = TRUE;
+                    break;
+                }
+            }
+            
+            if (!program_allowed)
+            {
+                /* Found invalid XG program, this is not a valid XG bank */
+                return;
+            }
+        }
+    }
+    
+    /* If we found XG drum banks and all programs were valid, mark as XG compatible */
+    if (has_xg_drums)
+    {
+        defsfont->is_xg_bank = TRUE;
+    }
 }
