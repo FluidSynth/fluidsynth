@@ -7,12 +7,21 @@ on:
       - '.azure/**'
       - '.circleci/**'
       - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/solaris.yml'
+      - '.github/workflows/windows.yml'
       - '.cirrus.yml'
       - 'README.md'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
+  INSTALL_LOCATION: ${{github.workspace}}/fluidsynth_install
+
+# Use a bash shell so we can use the same syntax for environment variable
+# access regardless of the host operating system
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build:
@@ -20,83 +29,169 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         CC: [""]
         CXX: [""]
-        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0","-Denable-ubsan=1 -Denable-debug=1", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"]
+        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold", "-Dosal=cpp11 -Denable-libinstpatch=0 -Denable-ladspa=0"]
         include:
-          - CC: "clang-7"
-            CXX: "clang++-7"
+          - CC: "clang-15"
+            CXX: "clang++-15"
             CMAKE_FLAGS: ""
-          - CC: "clang-8"
-            CXX: "clang++-8"
-            CMAKE_FLAGS: ""
-          - CC: "clang-10"
-            CXX: "clang++-10"
-            CMAKE_FLAGS: ""
-          - CC: "clang-12"
-            CXX: "clang++-12"
-            CMAKE_FLAGS: ""
+          - CC: "clang-15"
+            CXX: "clang++-15"
+            CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
 # clang9 is covered by openSUSE Leap 15.2
 # clang11 is covered by openSUSE Leap 15.3
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
 
     - name: Add apt-get repositories
-      run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+      run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
     - name: Update apt
       run: sudo apt-get update -y
 
     - name: Install Dependencies
-      run: sudo -E apt-get -yq --no-install-suggests --no-install-recommends install cmake-data cmake libglib2.0-0 libsndfile-dev libasound2-dev libjack-dev portaudio19-dev libsdl2-dev libpulse-dev libdbus-1-dev libsystemd-dev libinstpatch-dev libreadline-dev g++-7 g++-8 clang-7 clang-8 clang-9 clang-10 clang-tidy-10
-
-    - name: Create Build Environment
-      # Some projects don't allow in-source building, so create a separate build directory
-      # We'll use this as our working directory for all subsequent commands
       run: |
-        echo Can execute `nproc` make jobs in parallel
-        cmake --version
-        cmake -E make_directory ${{github.workspace}}/build
-        which clang-tidy || true
-        ls -la `which clang-tidy` || true
-        echo $PATH
-        echo $SONARSC
+        sudo apt-get -yq --no-install-suggests --no-install-recommends install \
+          clang-15 \
+          clang-tidy \
+          cmake \
+          cmake-data \
+          ladspa-sdk \
+          libasound2-dev \
+          libdbus-1-dev \
+          libglib2.0-dev \
+          libinstpatch-dev \
+          libjack-dev \
+          libpulse-dev \
+          libreadline-dev \
+          libsdl2-dev \
+          libsndfile-dev \
+          libsystemd-dev \
+          ninja-build \
+          libomp-dev \
+          portaudio19-dev
 
     - name: Configure CMake
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
         export CC=${{ matrix.CC }}
         export CXX=${{ matrix.CXX }}
-        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev ${{ matrix.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 $GITHUB_WORKSPACE
+        cmake -S . \
+          -B build \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_VERBOSE_MAKEFILE=1 \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=1 \
+          -Werror=dev \
+          -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
+          -Denable-portaudio=1 \
+          -Denable-ladspa=1 \
+          -DNO_GUI=1 \
+          ${{ matrix.CMAKE_FLAGS }}
 
     - name: Build
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: make -j`nproc`
+      run: cmake --build build
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Execute tests defined by the CMake configuration.
-      run: make -j`nproc` check
+      run: cmake --build build --target check
 
     - name: Demo
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: make -j`nproc` demo
+      run: cmake --build build --target demo
 
     - name: Install
-      working-directory: ${{github.workspace}}/build
-      run: make install
+      run: cmake --install build && ls -la $INSTALL_LOCATION
+
+    - name: Consume from pkg-config
+      if: ${{ contains(matrix.CMAKE_FLAGS, 'BUILD_SHARED_LIBS=0') }}
+      run: |
+        set -e
+        cat << EOF > static-link-test.c
+        #include <fluidsynth.h>
+        int main() { fluid_synth_process(0,0,0,0,0,0); return 0; }
+        EOF
+        export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
+        set -x
+        gcc -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
+        ./static-link-test
+        echo $?
+
+    - name: Consume from build
+      run: |
+        set -e
+        export CC=${{ matrix.CC }}
+        export CXX=${{ matrix.CXX }}
+        cmake -S test/cmake \
+          -B consume-build \
+          -G Ninja \
+          -DFluidSynth_DIR="${{github.workspace}}/build" \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        cmake --build consume-build
+
+    - name: Consume from install
+      run: |
+        set -e
+        export CC=${{ matrix.CC }}
+        export CXX=${{ matrix.CXX }}
+        cmake -S test/cmake -B consume-install \
+          -G Ninja \
+          -DFluidSynth_DIR="$INSTALL_LOCATION/lib/cmake/fluidsynth" \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        cmake --build consume-install
+
+  # Tests to see if FluidSynth will build with GCC for PowerPC targets that use the IBM long double ABI
+  build-ibm-long-double:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      options: -u root
+      volumes:
+        - /etc/ssl/certs:/etc/ssl/certs
+
+    steps:
+    - name: Update apt
+      run: |
+        dpkg --add-architecture ppc64el
+        apt-get update -y
+
+    - name: Install Dependencies
+      run: |
+        apt-get -yq --no-install-suggests --no-install-recommends install \
+          git \
+          gcc-powerpc64le-linux-gnu \
+          g++-powerpc64le-linux-gnu \
+          cmake \
+          cmake-data \
+          ninja-build
+
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - name: Configure CMake
+      run: |
+        export CFLAGS="$CFLAGS -mabi=ibmlongdouble -Wno-psabi"
+        export CXXFLAGS="$CXXFLAGS -mabi=ibmlongdouble -Wno-psabi"
+        cmake -S . \
+          -B build \
+          -G Ninja \
+          -DCMAKE_SYSTEM_NAME=Linux \
+          -DCMAKE_SYSTEM_PROCESSOR=ppc64le \
+          -DCMAKE_C_COMPILER=powerpc64le-linux-gnu-gcc \
+          -DCMAKE_CXX_COMPILER=powerpc64le-linux-gnu-g++ \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_VERBOSE_MAKEFILE=1 \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=1 \
+          -Werror=dev \
+          -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
+          -Dosal=embedded \
+          -Denable-libinstpatch=0 \
+          -DNO_GUI=1
+
+    - name: Build
+      run: cmake --build build

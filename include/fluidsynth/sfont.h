@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_SFONT_H
@@ -268,7 +267,7 @@ typedef const char *(*fluid_preset_get_name_t)(fluid_preset_t *preset);
  * Method to get a virtual SoundFont preset MIDI bank number.
  *
  * @param preset Virtual SoundFont preset
- * @param return The bank number of the preset
+ * @return The bank number of the preset
  */
 typedef int (*fluid_preset_get_banknum_t)(fluid_preset_t *preset);
 
@@ -276,7 +275,7 @@ typedef int (*fluid_preset_get_banknum_t)(fluid_preset_t *preset);
  * Method to get a virtual SoundFont preset MIDI program number.
  *
  * @param preset Virtual SoundFont preset
- * @param return The program number of the preset
+ * @return The program number of the preset
  */
 typedef int (*fluid_preset_get_num_t)(fluid_preset_t *preset);
 

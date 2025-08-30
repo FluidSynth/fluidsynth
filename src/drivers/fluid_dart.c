@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* fluid_dart.c
@@ -51,7 +50,7 @@ typedef struct
     USHORT usDeviceID;                          /* Amp Mixer device id     */
     MCI_MIX_BUFFER MixBuffers[NUM_MIX_BUFS];    /* Device buffers          */
     MCI_MIXSETUP_PARMS MixSetupParms;           /* Mixer parameters        */
-    MCI_BUFFER_PARMS BufferParms;               /* Device buffer parms     */
+    MCI_BUFFER_PARMS BufferParms;               /* Device buffer params    */
 } fluid_dart_audio_driver_t;
 
 static HMODULE m_hmodMDM = NULLHANDLE;

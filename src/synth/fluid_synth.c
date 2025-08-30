@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_synth.h"
@@ -129,6 +128,7 @@ static void fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id);
 
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
 
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb);
 
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
@@ -202,16 +202,16 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1, FLUID_HINT_TOGGLED);
-    fluid_settings_register_num(settings, "synth.reverb.room-size", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0f, 1.0f, 0);
-    fluid_settings_register_num(settings, "synth.reverb.damp", FLUID_REVERB_DEFAULT_DAMP, 0.0f, 1.0f, 0);
-    fluid_settings_register_num(settings, "synth.reverb.width", FLUID_REVERB_DEFAULT_WIDTH, 0.0f, 100.0f, 0);
-    fluid_settings_register_num(settings, "synth.reverb.level", FLUID_REVERB_DEFAULT_LEVEL, 0.0f, 1.0f, 0);
+    fluid_settings_register_num(settings, "synth.reverb.room-size", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0, 1.0, 0);
+    fluid_settings_register_num(settings, "synth.reverb.damp", FLUID_REVERB_DEFAULT_DAMP, 0.0, 1.0, 0);
+    fluid_settings_register_num(settings, "synth.reverb.width", FLUID_REVERB_DEFAULT_WIDTH, 0.0, 100.0, 0);
+    fluid_settings_register_num(settings, "synth.reverb.level", FLUID_REVERB_DEFAULT_LEVEL, 0.0, 1.0, 0);
 
     fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.chorus.nr", FLUID_CHORUS_DEFAULT_N, 0, 99, 0);
-    fluid_settings_register_num(settings, "synth.chorus.level", FLUID_CHORUS_DEFAULT_LEVEL, 0.0f, 10.0f, 0);
-    fluid_settings_register_num(settings, "synth.chorus.speed", FLUID_CHORUS_DEFAULT_SPEED, 0.1f, 5.0f, 0);
-    fluid_settings_register_num(settings, "synth.chorus.depth", FLUID_CHORUS_DEFAULT_DEPTH, 0.0f, 256.0f, 0);
+    fluid_settings_register_num(settings, "synth.chorus.level", FLUID_CHORUS_DEFAULT_LEVEL, 0.0, 10.0, 0);
+    fluid_settings_register_num(settings, "synth.chorus.speed", FLUID_CHORUS_DEFAULT_SPEED, 0.1, 5.0, 0);
+    fluid_settings_register_num(settings, "synth.chorus.depth", FLUID_CHORUS_DEFAULT_DEPTH, 0.0, 256.0, 0);
 
     fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
@@ -223,13 +223,13 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.polyphony", 256, 1, 65535, 0);
     fluid_settings_register_int(settings, "synth.midi-channels", 16, 16, 256, 0);
-    fluid_settings_register_num(settings, "synth.gain", 0.2f, 0.0f, 10.0f, 0);
+    fluid_settings_register_num(settings, "synth.gain", 0.2, 0.0, 10.0, 0);
     fluid_settings_register_int(settings, "synth.audio-channels", 1, 1, 128, 0);
     fluid_settings_register_int(settings, "synth.audio-groups", 1, 1, 128, 0);
     fluid_settings_register_int(settings, "synth.effects-channels", 2, 2, 2, 0);
     fluid_settings_register_int(settings, "synth.effects-groups", 1, 1, 128, 0);
-    fluid_settings_register_num(settings, "synth.sample-rate", 44100.0f, 8000.0f, 96000.0f, 0);
-    fluid_settings_register_int(settings, "synth.device-id", 0, 0, 126, 0);
+    fluid_settings_register_num(settings, "synth.sample-rate", 44100.0, 8000.0, 96000.0, 0);
+    fluid_settings_register_int(settings, "synth.device-id", 16, 0, 127, 0);
 #ifdef ENABLE_MIXER_THREADS
     fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0);
 #else
@@ -238,7 +238,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
 
-    fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_int(settings, "synth.threadsafe-api", FLUID_THREAD_SAFE_CAPABLE, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
     fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
@@ -255,6 +255,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
 
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_int(settings, "synth.note-cut", 0, 0, 2, 0);
 }
 
 /**
@@ -290,8 +291,27 @@ static void
 fluid_synth_init(void)
 {
 #ifdef TRAP_ON_FPE
+  #if !defined(__GLIBC__) && defined(__linux__)
+    #warning "Trap on FPE is only supported when using glibc!"
+  #else
     /* Turn on floating point exception traps */
     feenableexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
+  #endif
+#endif
+
+/*
+ * Disable OpenMP thread affinity on Android to prevent crashes.
+ *
+ * On several Android devices (particularly Xiaomi), OpenMP's attempt to set thread
+ * affinity fails with EINVAL, causing process abortion during parallel SoundFont loading.
+ * This is due to an unresolved bug in Android NDK's OpenMP implementation
+ * (see https://github.com/android/ndk/issues/1180).
+ */
+#ifdef __ANDROID__
+    if (setenv("KMP_AFFINITY", "disabled", 1) != 0)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to disable KMP_AFFINITY, OpenMP crashes may occur on some devices!");
+    }
 #endif
 
     init_dither();
@@ -682,6 +702,9 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getnum_float(settings, "synth.overflow.volume", &synth->overflow.volume);
     fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
     fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
+    
+    fluid_settings_getint(settings, "synth.note-cut", &i);
+    synth->msgs_note_cut_mode = i;
 
     /* register the callbacks */
     fluid_settings_callback_num(settings, "synth.gain",
@@ -924,7 +947,7 @@ new_fluid_synth(fluid_settings_t *settings)
     FLUID_MEMSET(synth->voice, 0, synth->nvoice * sizeof(*synth->voice));
     for(i = 0; i < synth->nvoice; i++)
     {
-        synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
+        synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate, synth->iir_sincos_table);
 
         if(synth->voice[i] == NULL)
         {
@@ -995,6 +1018,7 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
+    fluid_iir_filter_init_table(synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
     /* FIXME */
@@ -1594,7 +1618,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
         /* chan is enabled */
         if(synth->verbose)
         {
-            FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
+            FLUID_LOG(FLUID_INFO, "cc\t\t%d\t%d\t%d", chan, num, val);
         }
 
         fluid_channel_set_cc(channel, num, val);
@@ -1628,7 +1652,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
             {
                 if(synth->verbose)
                 {
-                    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", i, num, val);
+                    FLUID_LOG(FLUID_INFO, "cc\t\t%d\t%d\t%d", i, num, val);
                 }
 
                 fluid_channel_set_cc(synth->channel[i], num, val);
@@ -1740,8 +1764,14 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 /* reset the current basic channel before changing it */
                 fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
                 fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+                FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + value, new_mode);
                 break; /* FLUID_OK */
             }
+        }
+        else
+        {
+            static const char* poly_mono_str[] = {"OMNI_OFF","OMNI_ON","POLY_OFF","POLY_ON"};
+            FLUID_LOG(FLUID_WARN, "Failed to set channel %d to %s: Operation illegal, because channel is currently no basic channel.", channum, poly_mono_str[num - OMNI_OFF]);
         }
 
         return FLUID_FAILED;
@@ -1807,11 +1837,12 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         break;
 
     case DATA_ENTRY_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
-        break;
-
     case DATA_ENTRY_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     {
-        int data = (value << 7) + fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
+        /* handle both because msb might come first */
+        int lsb_value = fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
+        int msb_value = fluid_channel_get_cc(chan, DATA_ENTRY_MSB);
+        int data = (msb_value << 7) + lsb_value;
 
         if(chan->nrpn_active)   /* NRPN is active? */
         {
@@ -1819,25 +1850,91 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
             if((fluid_channel_get_cc(chan, NRPN_MSB) == 120)
                     && (fluid_channel_get_cc(chan, NRPN_LSB) < 100))
             {
+                if(num == DATA_ENTRY_LSB)
+                {
+                    // SF2 NRPNs must be processed, after having received DATA_LSB and DATA_MSB in that order.
+                    break;
+                }
                 nrpn_select = chan->nrpn_select;
 
                 if(nrpn_select < GEN_LAST)
                 {
                     float val = fluid_gen_scale_nrpn(nrpn_select, data);
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "NRPN\t%d\t%d\t%d\t%f", channum, nrpn_select, data, val);
+                    }
                     fluid_synth_set_gen_LOCAL(synth, channum, nrpn_select, val);
                 }
 
                 chan->nrpn_select = 0;  /* Reset to 0 */
+            }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+            {
+                // ALTITUDE.MID also manipulates AWE32 NRPNs by only using DATA LSB events - seems to be legal
+                if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+                {
+                    int gen = fluid_channel_get_cc(chan, NRPN_LSB);
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "AWE32 NRPN RAW: Chan %d, Gen %d, data %d | 0x%X, MSB: %d, LSB: %d", channum, gen, data, data, msb_value, lsb_value);
+                    }
+                    if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
+                    {
+                        fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data, lsb_value);
+                    }
+                    else
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targeting effect %d", gen);
+                    }
+                }
+            }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 1 && synth->bank_select == FLUID_BANK_STYLE_GS)
+            {
+                int nrpn2cc = -1;
+                int nrpn_lsb = fluid_channel_get_cc(chan, NRPN_LSB);
+                // cf. SC8850 owner's manual pages 227 + 228
+                switch(nrpn_lsb)
+                {
+                case 8:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL7;
+                    break;
+                case 9:
+                    // vibrato depth
+                    nrpn2cc = SOUND_CTRL8;
+                    break;
+                case 10:
+                    // vibrato rate
+                    nrpn2cc = SOUND_CTRL9;
+                    break;
+                default:
+                    break;
+                }
+                if(nrpn2cc != -1)
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Translating Roland GS NRPN %d to CC %d", nrpn_lsb, nrpn2cc);
+                    }
+                    fluid_synth_cc(synth, channum, nrpn2cc, msb_value);
+                }
+                else
+                {
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown Roland GS NRPN %d", nrpn_lsb);
+                    }
+                }
             }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
         {
             switch(fluid_channel_get_cc(chan, RPN_LSB))
             {
-            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones */
-                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], value);
+            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones plus cents */
+                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], msb_value + lsb_value / 100.0f); /* 0-127 maps to 0-100 cents */
                 fluid_synth_update_pitch_wheel_sens_LOCAL(synth, channum);    /* Update bend range */
-                /* FIXME - Handle LSB? (Fine bend range in cents) */
                 break;
 
             case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
@@ -1847,18 +1944,18 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
                 fluid_synth_set_gen_LOCAL(synth, channum, GEN_COARSETUNE,
-                                          value - 64);
+                                          msb_value - 64);
                 break;
 
             case RPN_TUNING_PROGRAM_CHANGE:
-                fluid_channel_set_tuning_prog(chan, value);
+                fluid_channel_set_tuning_prog(chan, msb_value);
                 fluid_synth_activate_tuning(synth, channum,
                                             fluid_channel_get_tuning_bank(chan),
-                                            value, TRUE);
+                                            msb_value, TRUE);
                 break;
 
             case RPN_TUNING_BANK_SELECT:
-                fluid_channel_set_tuning_bank(chan, value);
+                fluid_channel_set_tuning_bank(chan, msb_value);
                 break;
 
             case RPN_MODULATION_DEPTH_RANGE:
@@ -2021,7 +2118,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* MIDI tuning SYSEX message? */
     if((data[0] == MIDI_SYSEX_UNIV_NON_REALTIME || data[0] == MIDI_SYSEX_UNIV_REALTIME)
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_MIDI_TUNING_ID)
     {
         int result;
@@ -2035,7 +2132,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* GM or GM2 system on */
     if(data[0] == MIDI_SYSEX_UNIV_NON_REALTIME
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_GM_ID)
     {
         if(handled)
@@ -2046,9 +2143,13 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                 || data[3] == MIDI_SYSEX_GM2_ON))
         {
             int result;
-            synth->bank_select = FLUID_BANK_STYLE_GM;
             fluid_synth_api_enter(synth);
+            synth->bank_select = FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
+            if(synth->verbose)
+            {
+                FLUID_LOG(FLUID_INFO, "Processing SysEX GM / GM2 System ON message, bank selection mode is now gm.");
+            }
             FLUID_API_RETURN(result);
         }
         return FLUID_OK;
@@ -2056,7 +2157,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
 
     /* GS DT1 message */
     if(data[0] == MIDI_SYSEX_MANUF_ROLAND
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_GS_ID
             && data[3] == MIDI_SYSEX_GS_DT1)
     {
@@ -2065,12 +2166,16 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
                                           response_len, avail_response,
                                           handled, dryrun);
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "Processing SysEX GS DT1 message, bank selection mode might have been changed.");
+        }
         FLUID_API_RETURN(result);
     }
 
     /* XG message */
     if(data[0] == MIDI_SYSEX_MANUF_YAMAHA
-            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
+            && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL || synth->device_id == MIDI_SYSEX_DEVICE_ID_ALL)
             && data[2] == MIDI_SYSEX_XG_ID)
     {
         int result;
@@ -2078,6 +2183,10 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_xg(synth, data, len, response,
                                       response_len, avail_response,
                                       handled, dryrun);
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "Processing SysEX XG message, bank selection mode is now xg.");
+        }
         FLUID_API_RETURN(result);
     }
 
@@ -2399,7 +2508,8 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         checksum += data[i];
     }
     checksum = 0x80 - (checksum & 0x7F);
-    if (checksum != data[len - 1])
+    // An intermediate checksum of 0x80 must be treated as zero! #1578
+    if ((checksum & 0x7F) != data[len - 1])
     {
         FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;
@@ -2662,6 +2772,11 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 {
     int i;
 
+    if(synth->verbose)
+    {
+        FLUID_LOG(FLUID_INFO, "=== systemreset ===");
+    }
+
     fluid_synth_all_sounds_off_LOCAL(synth, -1);
 
     for(i = 0; i < synth->midi_channels; i++)
@@ -2844,7 +2959,7 @@ fluid_synth_pitch_bend(fluid_synth_t *synth, int chan, int val)
 
     if(synth->verbose)
     {
-        FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+        FLUID_LOG(FLUID_INFO, "pitchb\t\t%d\t%d", chan, val);
     }
 
     fluid_channel_set_pitch_bend(synth->channel[chan], val);
@@ -3065,18 +3180,11 @@ fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
 
     channel = synth->channel[chan];
 
-    if(channel->channel_type == CHANNEL_TYPE_DRUM)
-    {
-        banknum = DRUM_INST_BANK;
-    }
-    else
-    {
-        fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
-    }
+    fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
 
     if(synth->verbose)
     {
-        FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
+        FLUID_LOG(FLUID_INFO, "prog\t\t%d\t%d\t%d", chan, banknum, prognum);
     }
 
     /* I think this is a hack for MIDI files that do bank changes in GM mode.
@@ -3098,9 +3206,13 @@ fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
             /* Percussion: Fallback to preset 0 in percussion bank */
             if(channel->channel_type == CHANNEL_TYPE_DRUM)
             {
-                subst_prog = 0;
                 subst_bank = DRUM_INST_BANK;
                 preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+                if(!preset)
+                {
+                    subst_prog = 0;
+                    preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+                }
             }
             /* Melodic instrument */
             else
@@ -3470,7 +3582,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
- * @warning This function is broken-by-design! Don't use it! Instead, specify the sample-rate when creating the synth.
+ * @warning This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
  * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.
@@ -3498,14 +3610,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 void
 fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate)
 {
-    fluid_return_if_fail(synth != NULL);
-    fluid_synth_api_enter(synth);
-
-    fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
-
-    fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate,
-                             0, synth->sample_rate);
-    fluid_synth_api_exit(synth);
+    FLUID_LOG(FLUID_ERR, "fluid_synth_set_sample_rate() is no longer supported in this version of fluidsynth!");
 }
 
 // internal sample rate change function for the jack driver
@@ -3642,7 +3747,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t *synth, int new_polyphony)
 
         for(i = synth->nvoice; i < new_polyphony; i++)
         {
-            synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
+            synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate, synth->iir_sincos_table);
 
             if(synth->voice[i] == NULL)
             {
@@ -3765,9 +3870,9 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
  * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
- * @param right Array of float buffers to store right channel of planar audio (size: dito)
+ * @param right Array of float buffers to store right channel of planar audio (size: ditto)
  * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
- * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
+ * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: ditto)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * First effect channel used by reverb, second for chorus.
@@ -4234,7 +4339,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     /* Then, render blocks and copy till we have 'len' samples  */
     while(count < len)
     {
-        /* always render full bloc multiple of FLUID_BUFSIZE */
+        /* always render full block multiple of FLUID_BUFSIZE */
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
         /* render audio (dry and effect) to respective internal dry and effect buffers */
         int blockcount = block_render_func(synth, blocksleft);
@@ -4440,7 +4545,7 @@ fluid_synth_write_float_channels_LOCAL(fluid_synth_t *synth, int len,
         if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocs multiple of FLUID_BUFSIZE */
+            /* always render full blocks multiple of FLUID_BUFSIZE */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
 
@@ -4718,7 +4823,7 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
         if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocs multiple of FLUID_BUFSIZE */
+            /* always render full blocks multiple of FLUID_BUFSIZE */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
 
@@ -5171,7 +5276,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
 
         FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d",
                   chan, key, vel, synth->storeid,
-                  (float) ticks / 44100.0f,
+                  (float) ticks / synth->sample_rate,
                   (fluid_curtime() - synth->start) / 1000.0f,
                   0.0f,
                   k);
@@ -5193,7 +5298,15 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
     */
     {
         int mono = fluid_channel_is_playing_mono(channel);
-        fluid_mod_t *default_mod = synth->default_mod;
+        fluid_mod_t *default_mod;
+        if (sample->default_modulators != NULL)
+        {
+            default_mod = sample->default_modulators;
+        }
+        else
+        {
+            default_mod = synth->default_mod;
+        }
 
         while(default_mod != NULL)
         {
@@ -5317,10 +5430,14 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
 }
 
 /**
- * Load a SoundFont file (filename is interpreted by SoundFont loaders).
- * The newly loaded SoundFont will be put on top of the SoundFont
+ * Load a SoundFont file.
+ *
+ * The @p filename is passed onto and interpreted by the SoundFont loaders.
+ * On success, the newly loaded SoundFont will be put on top of the SoundFont
  * stack. Presets are searched starting from the SoundFont on the
  * top of the stack, working the way down the stack until a preset is found.
+ *
+ * If the SoundFont is structural defect, it will be rejected and the function will fail.
  *
  * @param synth FluidSynth instance
  * @param filename File to load
@@ -5554,7 +5671,7 @@ exit:
 }
 
 /**
- * Add a SoundFont.  The SoundFont will be added to the top of the SoundFont stack.
+ * Add a SoundFont. The SoundFont will be added to the top of the SoundFont stack and ownership is transferred to @p synth.
  * @param synth FluidSynth instance
  * @param sfont SoundFont to add
  * @return New assigned SoundFont ID or #FLUID_FAILED on error
@@ -6387,7 +6504,7 @@ int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
  * @param synth FluidSynth instance
  * @param speed Chorus speed in Hz (0.1-5.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_set_chorus_group_level() in new code instead.
+ * @deprecated Use fluid_synth_set_chorus_group_speed() in new code instead.
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 {
@@ -6837,15 +6954,27 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 && (fluid_voice_get_key(voice) == key)
                 && (fluid_voice_get_id(voice) != synth->noteid))
         {
+            enum fluid_midi_channel_type type = synth->channel[chan]->channel_type;
+            enum fluid_msgs_note_cut note_cut_mode = synth->msgs_note_cut_mode;
+
             /* Id of voices that was sustained by sostenuto */
             if(fluid_voice_is_sostenuto(voice))
             {
                 synth->storeid = fluid_voice_get_id(voice);
             }
 
-            /* Force the voice into release stage except if pedaling
-               (sostenuto or sustain) is active */
-            fluid_voice_noteoff(voice);
+            if(note_cut_mode == FLUID_MSGS_DISABLED || (note_cut_mode == FLUID_MSGS_DRUM_CUT && type == CHANNEL_TYPE_MELODIC))
+            {
+                /* Force the voice into release stage except if pedaling (sostenuto or sustain) is active.
+                 * This gives a more realistic sound to pianos and possibly other instruments (see PR #905). */
+                fluid_voice_noteoff(voice);
+            }
+            else // i.e. if((note_cut_mode == FLUID_MSGS_ALL_CUT) || (note_cut_mode == FLUID_MSGS_DRUM_CUT && type == CHANNEL_TYPE_DRUM))
+            {
+                /* release the voice, this should make riding hi-hats or snares sound more realistic (Discussion #1196)
+                 * Note however, that this is not a SF2 compliant behavior, see #1466 */
+                fluid_voice_off(voice);
+            }
         }
     }
 }
@@ -7553,6 +7682,199 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
         if(fluid_voice_get_channel(voice) == chan)
         {
             fluid_voice_set_param(voice, param, value);
+        }
+    }
+}
+
+/**
+ * This implementation is based on "Frequently Asked Questions for SB AWE32" http://archive.gamedev.net/archive/reference/articles/article445.html
+ * as well as on the "SB AWE32 Developer's Information Pack" https://github.com/user-attachments/files/15757220/adip301.pdf
+ * 
+ * @param gen the AWE32 effect or generator to manipulate
+ * @param data the composed value of DATA_MSB and DATA_LSB
+ */
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb)
+{
+    static const enum fluid_gen_type awe32_to_sf2_gen[] =
+    {
+        // assuming LFO1 maps to MODLFO and LFO2 maps to VIBLFO
+        // observe how nicely most of the AWE32 generators here match up with the order of SF2 generators in fluid_gen_type
+        GEN_MODLFODELAY,		/**< Modulation LFO delay */
+        GEN_MODLFOFREQ,		/**< Modulation LFO frequency */
+        GEN_VIBLFODELAY,		/**< Vibrato LFO delay */
+        GEN_VIBLFOFREQ,		/**< Vibrato LFO frequency */
+        GEN_MODENVDELAY,		/**< Modulation envelope delay */
+        GEN_MODENVATTACK,		/**< Modulation envelope attack */
+        GEN_MODENVHOLD,		/**< Modulation envelope hold */
+        GEN_MODENVDECAY,		/**< Modulation envelope decay */
+        GEN_MODENVSUSTAIN,		/**< Modulation envelope sustain */
+        GEN_MODENVRELEASE,		/**< Modulation envelope release */
+        GEN_VOLENVDELAY,		/**< Volume envelope delay */
+        GEN_VOLENVATTACK,		/**< Volume envelope attack */
+        GEN_VOLENVHOLD,		/**< Volume envelope hold */
+        GEN_VOLENVDECAY,		/**< Volume envelope decay */
+        GEN_VOLENVSUSTAIN,		/**< Volume envelope sustain */
+        GEN_VOLENVRELEASE,		/**< Volume envelope release */
+        GEN_PITCH,              /**< Initial Pitch */
+        GEN_MODLFOTOPITCH,		/**< Modulation LFO to pitch */
+        GEN_VIBLFOTOPITCH,		/**< Vibrato LFO to pitch */
+        GEN_MODENVTOPITCH,		/**< Modulation envelope to pitch */
+        GEN_MODLFOTOVOL,		/**< Modulation LFO to volume */
+        GEN_FILTERFC,			/**< Filter cutoff */
+        GEN_FILTERQ,			/**< Filter Q */
+        GEN_MODLFOTOFILTERFC,		/**< Modulation LFO to filter cutoff */
+        GEN_MODENVTOFILTERFC,		/**< Modulation envelope to filter cutoff */
+        GEN_CHORUSSEND,		/**< Chorus send amount */
+        GEN_REVERBSEND,		/**< Reverb send amount */
+    };
+
+    enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
+    int is_realtime = FALSE, i;
+    fluid_real_t converted_sf2_generator_value;
+
+    // The AWE32 NRPN docs say that a value of 8192 is considered to be the middle, i.e. zero.
+    // However, it looks like for those generators which work in range [0,127], the AWE32 only inspects the DATA_LSB, i.e. and not doing this subtraction. Found while investigating Uplift.mid.
+    data -= 8192;
+
+    switch(sf2_gen)
+    {
+        case GEN_MODLFODELAY:
+        case GEN_VIBLFODELAY:
+        case GEN_MODENVDELAY:
+        case GEN_VOLENVDELAY:
+            fluid_clip(data, 0, 5900);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(4.0 / 1000.0));
+            break;
+
+        case GEN_MODLFOFREQ:
+        case GEN_VIBLFOFREQ:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = fluid_hz2ct(data_lsb * (fluid_real_t)0.084 /* Hz */);
+            is_realtime = TRUE;
+            break;
+
+        case GEN_MODENVATTACK:
+        case GEN_VOLENVATTACK:
+            fluid_clip(data, 0, 5940);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(1.0 / 1000.0));
+            break;
+
+        case GEN_MODENVHOLD:
+        case GEN_VOLENVHOLD:
+            fluid_clip(data, 0, 8191);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(1.0 / 1000.0));
+            break;
+
+        case GEN_MODENVDECAY:
+        case GEN_MODENVRELEASE:
+        case GEN_VOLENVDECAY:
+        case GEN_VOLENVRELEASE:
+            fluid_clip(data, 0, 5940);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(4.0 / 1000.0));
+            break;
+
+        case GEN_MODENVSUSTAIN:
+        case GEN_VOLENVSUSTAIN:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.75 /* dB */ * 10) /* cB */;
+            break;
+
+        case GEN_PITCH:
+            converted_sf2_generator_value = data + 8192;
+            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but 
+            // I'll buy it, since pitch bend is not a regular SF2 generator and we do a bit of magic there to
+            // make it work
+            fluid_synth_pitch_bend(synth, chan, converted_sf2_generator_value);
+            return;
+
+        case GEN_MODLFOTOPITCH:
+        case GEN_VIBLFOTOPITCH:
+            is_realtime = TRUE;
+            /* fallthrough */
+        case GEN_MODENVTOPITCH:
+            fluid_clip(data, -127, 127);
+            converted_sf2_generator_value = data * (fluid_real_t)9.375 /* cents */;
+            break;
+
+        case GEN_MODLFOTOVOL:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.1875 /* dB */ * 10.0) /* cB */;
+            is_realtime = TRUE;
+            break;
+
+        case GEN_FILTERFC:
+            fluid_clip(data_lsb, 0, 127);
+            // Yes, DO NOT use data here, Uplift.mid doesn't set DATA_MSB=64, therefore we would always get a negative value after subtracting 8192.
+            // Since Uplift.mid sounds fine on hardware though, it seems like AWE32 only inspects DATA_LSB in this case.
+            // conversion continues below!
+            converted_sf2_generator_value = (data_lsb * 59 /* cents! not as stated Hz by the AWE32 docs!!! */);
+            converted_sf2_generator_value += 4500 /* cents */; // minimum should be around 110 Hz, derived by experiments, see #1473
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc: %f cents", converted_sf2_generator_value);
+            is_realtime = TRUE;
+            break;
+
+        case GEN_FILTERQ:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)((22.0 /* dB */ / 127.0 /* NPRN steps*/) * 10.0) /* cB */;
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", converted_sf2_generator_value);
+            is_realtime = TRUE;
+            break;
+
+        // Note: The description in the official "SB AWE32 Developer's Information Pack" is probably wrong.
+        // There it says: "Positive data value causes a positive phase (from 0 to maximum) filter modulation
+        //  [...] negative data value causes a negative phase [...]"
+        // That doesn't make sense. A filter is a causual system - you cannot change its phase independently
+        // of the rest. The text a few section above has it correct, there they speak of the filter's
+        // cutoff frequency. In that sense, this is probably intended to behave similar to the logic in SF2.
+        // PS: Same applies to the GEN_MODENVTOFILTERFC below!
+        case GEN_MODLFOTOFILTERFC:
+            fluid_clip(data, -64, 63);
+            converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
+            FLUID_LOG(FLUID_DBG, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
+            is_realtime = TRUE;
+            break;
+
+        case GEN_MODENVTOFILTERFC:
+            fluid_clip(data, -127, 127);
+            converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
+            FLUID_LOG(FLUID_DBG, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
+            break;
+
+        case GEN_REVERBSEND:
+            fluid_clip(data, 0, 255);
+            /* transform the input value */
+            converted_sf2_generator_value = fluid_mod_transform_source_value(NULL, data, default_reverb_mod.flags1, 256, TRUE);
+            FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
+            converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
+            break;
+
+        case GEN_CHORUSSEND:
+            fluid_clip(data, 0, 255);
+            /* transform the input value */
+            converted_sf2_generator_value = fluid_mod_transform_source_value(NULL, data, default_chorus_mod.flags1, 256, TRUE);
+            FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
+            converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
+            break;
+
+        default:
+            // should not happen
+            FLUID_LOG(FLUID_WARN, "AWE32 NPRN %d conversion not implemented", gen);
+            return;
+    }
+    
+    fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
+
+    for (i = 0; is_realtime && i < synth->polyphony; i++)
+    {
+        fluid_voice_t* voice = synth->voice[i];
+
+        if (fluid_voice_is_playing(voice) && fluid_voice_get_channel(voice) == chan)
+        {
+            // sets the adjusted generator
+            fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
+            fluid_voice_update_param(voice, sf2_gen);
+            
+            FLUID_LOG(FLUID_DBG, "AWE32 Realtime: adjusting voice id %d, generator %d, chan %d", fluid_voice_get_id(voice), sf2_gen, chan);
         }
     }
 }

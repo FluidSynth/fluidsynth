@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -107,8 +106,18 @@ typedef struct
 BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
-    fluid_settings_t *settings = (fluid_settings_t *) context;
-    fluid_settings_add_option(settings, "audio.dsound.device", (const char *)description);
+    fluid_settings_t *settings = (fluid_settings_t *)context;
+    char *name;
+#if _UNICODE
+    int nsz = WideCharToMultiByte(CP_UTF8, 0, description, -1, 0, 0, 0, 0);
+    name = FLUID_ARRAY(char, nsz);
+    WideCharToMultiByte(CP_UTF8, 0, description, -1, name, nsz, 0, 0);
+#else
+    name = FLUID_STRDUP(description);
+#endif
+    FLUID_LOG(FLUID_DBG, "adding audio.dsound.device=%s", name);
+    fluid_settings_add_option(settings, "audio.dsound.device", name);
+    FLUID_FREE(name);
 
     return TRUE;
 }
@@ -121,11 +130,20 @@ fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPV
 BOOL CALLBACK
 fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
-    fluid_dsound_devsel_t *devsel = (fluid_dsound_devsel_t *) context;
-    FLUID_LOG(FLUID_DBG, "Testing audio device: %s", description);
+    fluid_dsound_devsel_t *devsel = (fluid_dsound_devsel_t *)context;
+    char *name;
+#if _UNICODE
+    int nsz = WideCharToMultiByte(CP_UTF8, 0, description, -1, 0, 0, 0, 0);
+    name = FLUID_ARRAY(char, nsz);
+    WideCharToMultiByte(CP_UTF8, 0, description, -1, name, nsz, 0, 0);
+#else
+    name = FLUID_STRDUP(description);
+#endif
+    FLUID_LOG(FLUID_DBG, "Testing audio device: %s", name);
 
-    if(FLUID_STRCASECMP(devsel->devname, description) == 0)
+    if (FLUID_STRCASECMP(devsel->devname, name) == 0)
     {
+        FLUID_FREE(name);
         /* The device exists, return a copy of its GUID */
         devsel->devGUID = FLUID_NEW(GUID);
 

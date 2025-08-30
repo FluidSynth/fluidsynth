@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* Original author: Markus Nentwig, nentwig@users.sourceforge.net
@@ -128,8 +127,6 @@ error_recovery:
 /**
  * Delete a MIDI router instance.
  * @param router MIDI router to delete
- * @return Returns #FLUID_OK on success, #FLUID_FAILED otherwise (only if NULL
- *   \a router passed really)
  */
 void
 delete_fluid_midi_router(fluid_midi_router_t *router)
@@ -369,7 +366,7 @@ fluid_midi_router_add_rule(fluid_midi_router_t *router, fluid_midi_router_rule_t
  *
  * @return Newly allocated router rule or NULL if out of memory.
  *
- * The new rule is a "unity" rule which will accept any values and wont modify
+ * The new rule is a "unity" rule which will accept any values and won't modify
  * them.
  *
  * @since 1.1.0
@@ -913,6 +910,10 @@ int fluid_midi_dump_prerouter(void *data, fluid_midi_event_t *event)
                 event->channel, event->param1, event->param2);
         break;
 
+    case MIDI_SYSTEM_RESET:
+        fprintf(stdout, "event_pre_system_reset\n");
+        break;
+
     default:
         break;
     }
@@ -964,6 +965,10 @@ int fluid_midi_dump_postrouter(void *data, fluid_midi_event_t *event)
     case KEY_PRESSURE:
         fprintf(stdout, "event_post_kpress %i %i %i\n",
                 event->channel, event->param1, event->param2);
+        break;
+
+    case MIDI_SYSTEM_RESET:
+        fprintf(stdout, "event_post_system_reset\n");
         break;
 
     default:

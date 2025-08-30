@@ -1,0 +1,35 @@
+#include "winver.h"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    @FLUIDSYNTH_VERSION_MAJOR@, @FLUIDSYNTH_VERSION_MINOR@, @FLUIDSYNTH_VERSION_MICRO@
+PRODUCTVERSION @FLUIDSYNTH_VERSION_MAJOR@, @FLUIDSYNTH_VERSION_MINOR@, @FLUIDSYNTH_VERSION_MICRO@, 0
+#ifdef DEBUG
+FILEFLAGS   VS_FF_DEBUG
+#else
+FILEFLAGS   0x0L
+#endif
+FILEOS      VOS__WINDOWS32
+FILETYPE    @TARGET_TYPE@
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName", "FluidSynth"
+            VALUE "FileDescription", "FluidSynth - A Software Synthesizer"
+            VALUE "FileVersion", "@FLUIDSYNTH_VERSION_MAJOR@.@FLUIDSYNTH_VERSION_MINOR@.@FLUIDSYNTH_VERSION_MICRO@"
+            VALUE "Full Version", "@FLUIDSYNTH_VERSION_MAJOR@.@FLUIDSYNTH_VERSION_MINOR@.@FLUIDSYNTH_VERSION_MICRO@.0"
+            VALUE "InternalName", "FluidSynth"
+            VALUE "ProductName", "@PRODUCT_NAME@"
+            VALUE "LegalCopyright", "Copyright (C) 2003-2025 Peter Hanappe and others. Licensed under the terms of the LGPL v2.1"
+            VALUE "OriginalFilename", "@TARGET_FILENAME@"
+            VALUE "ProductVersion", "@FLUIDSYNTH_VERSION_MAJOR@.@FLUIDSYNTH_VERSION_MINOR@.@FLUIDSYNTH_VERSION_MICRO@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END 
+

@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -229,13 +228,23 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
  * @param dev_name, name of the device.
  * @return the new device name (that must be freed when finish with it) or
  *  NULL if memory allocation error.
+ * Note: the returned name will be encoded in UTF8 if built with _UNICODE.
  */
-static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
+static char *fluid_winmidi_get_device_name(int dev_idx, TCHAR *input_dev_name)
 {
     char *new_dev_name;
+    char *dev_name;
 
     int i =  dev_idx;
     size_t size = 0; /* index size */
+
+#if _UNICODE
+    int nsz = WideCharToMultiByte(CP_UTF8, 0, input_dev_name, -1, 0, 0, 0, 0);
+    dev_name = FLUID_ARRAY(char, nsz);
+    WideCharToMultiByte(CP_UTF8, 0, input_dev_name, -1, dev_name, nsz, 0, 0);
+#else
+    dev_name = FLUID_STRDUP(input_dev_name);
+#endif
 
     do
     {
@@ -256,6 +265,7 @@ static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
     }
+    FLUID_FREE(dev_name);
 
     return new_dev_name;
 }
@@ -429,14 +439,7 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
                         break;
                     }
 
-#ifdef _UNICODE
-                    WCHAR wDevName[MAXPNAMELEN];
-                    MultiByteToWideChar(CP_UTF8, 0, dev_name, -1, wDevName, MAXPNAMELEN);
-
-                    str_cmp_res = wcsicmp(wDevName, new_dev_name);
-#else
                     str_cmp_res = FLUID_STRCASECMP(dev_name, new_dev_name);
-#endif
 
                     FLUID_LOG(FLUID_DBG, "Testing midi device \"%s\"", new_dev_name);
                     FLUID_FREE(new_dev_name);
@@ -477,8 +480,9 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
 static void fluid_winmidi_autoconnect_build_name(char *name)
 {
     char new_name[MAXPNAMELEN] = { 0 };
-    int i, j, n = 0;
-    int num = midiInGetNumDevs();
+    int j;
+    unsigned int i, n = 0;
+    unsigned int num = midiInGetNumDevs();
 
     for (i = 0; i < num; ++i)
     {
@@ -492,8 +496,6 @@ static void fluid_winmidi_autoconnect_build_name(char *name)
         }
         strncat(new_name, x, j);
     }
-
-    name[n - 1] = 0;
 
     FLUID_MEMSET(name, 0, MAXPNAMELEN);
     FLUID_STRCPY(name, new_name);

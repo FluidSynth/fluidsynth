@@ -14,9 +14,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  *
  *
  *                           FDN REVERB
@@ -66,7 +65,8 @@
  *  - width (0 to 100): controls the left/right output separation.
  *    When 0, there are no separation and the signal on left and right.
  *    output is the same. This sounds like a monophonic signal.
- *    When 100, the separation between left and right is maximum.
+ *    When 1, the separation between left and right is maximum.
+ *    When 100 the perception of this separation is further "exaggerated".
  *
  *  - level (0 to 1), controls the output level reverberation.
  *
@@ -229,8 +229,8 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
 -----------------------------------------------------------------------------*/
 
 /*-- Reverberation time settings ----------------------------------
- MIN_DC_REV_TIME est defined egal to the minimum value of freeverb:
- MAX_DC_REV_TIME est defined egal to the maximum value of freeverb:
+ MIN_DC_REV_TIME est defined equal to the minimum value of freeverb:
+ MAX_DC_REV_TIME est defined equal to the maximum value of freeverb:
  T60DC is computed from gi and the longest delay line in freeverb: L8 = 1617
  T60 = -3 * Li * T / log10(gi)
  T60 = -3 * Li *  / (log10(gi) * sr)

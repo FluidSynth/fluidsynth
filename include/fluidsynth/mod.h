@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_MOD_H
@@ -54,7 +53,17 @@ enum fluid_mod_flags
     FLUID_MOD_GC = 0,             /**< General controller source type (#fluid_mod_src) */
     FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
 
-    FLUID_MOD_SIN = 0x80,            /**< Custom non-standard sinus mapping function */
+    FLUID_MOD_CUSTOM = 0x40,       /**< Custom mapping function */
+    FLUID_MOD_SIN = 0x80,          /**< Custom non-standard sinus mapping function @deprecated Deprecated since 2.5.0, use #FLUID_MOD_CUSTOM and fluid_mod_set_custom_mapping() instead. */
+};
+
+/**
+ * Transform types for the SoundFont2 modulators as defined by SoundFont 2.04 section 8.3.
+ */
+enum fluid_mod_transforms
+{
+    FLUID_MOD_TRANSFORM_LINEAR = 0, /**< Linear: directly add the computed value to summing node */
+    FLUID_MOD_TRANSFORM_ABS = 2     /**< Abs: add the absolute value of the computed to summing node */
 };
 
 /**
@@ -72,6 +81,22 @@ enum fluid_mod_src
     FLUID_MOD_PITCHWHEELSENS = 16         /**< Pitch wheel sensitivity */
 };
 
+/**
+ * This function transforms or maps a normalised value into a range of [-1;+1].
+ *
+ * See fluid_mod_set_custom_mapping().
+ *
+ * @param mod The modulator instance. The behavior is undefined if you modify @mod through any of the fluid_mod_set*() functions from within the callback.
+ * @param value The input value, which will be in range [0;16383.f/16384.f] (if the input value originates from the
+ * pitch wheel), or [0;127.f/128.f] otherwise.
+ * @param data Custom data pointer, as set by fluid_mod_set_custom_mapping().
+ * @param is_src1 A boolean, which, if true, indicates that the mapping function is called for source1. Otherwise, it's called for source2. Only useful if two sources have been specified with the #FLUID_MOD_CUSTOM flag set.
+ * @return A value mapped into range [-1.0;+1.0].
+ * @note For return values that exceed the mentioned range, the behavior is unspecified
+ * (i.e. it may be honored, it may be clipped, ignored, the entire modulator may be disabled, etc.).
+ */
+typedef double (*fluid_mod_mapping_t)(const fluid_mod_t* mod, double value, int is_src1, void* data);
+
 /** @startlifecycle{Modulator} */
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);
 FLUIDSYNTH_API void delete_fluid_mod(fluid_mod_t *mod);
@@ -83,6 +108,8 @@ FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags);
 FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags);
 FLUIDSYNTH_API void fluid_mod_set_dest(fluid_mod_t *mod, int dst);
 FLUIDSYNTH_API void fluid_mod_set_amount(fluid_mod_t *mod, double amount);
+FLUIDSYNTH_API void fluid_mod_set_transform(fluid_mod_t *mod, int type);
+FLUIDSYNTH_API void fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function, void* data);
 
 FLUIDSYNTH_API int fluid_mod_get_source1(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags1(const fluid_mod_t *mod);
@@ -90,6 +117,7 @@ FLUIDSYNTH_API int fluid_mod_get_source2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_dest(const fluid_mod_t *mod);
 FLUIDSYNTH_API double fluid_mod_get_amount(const fluid_mod_t *mod);
+FLUIDSYNTH_API int fluid_mod_get_transform(const fluid_mod_t *mod);
 
 FLUIDSYNTH_API int fluid_mod_test_identity(const fluid_mod_t *mod1, const fluid_mod_t *mod2);
 FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl);

@@ -1,4 +1,4 @@
-echo "legato mode 1 (multi-retrigger), egal velocity on n1,n2,n3..."
+echo "legato mode 1 (multi-retrigger), equal velocity on n1,n2,n3..."
 echo "with portamento."
 echo "-------------------------------------------------------------"
 # Sounfont:  GeneralUser GS 1.471  S. Christian Collins

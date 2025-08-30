@@ -14,9 +14,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_synth.h"
@@ -201,9 +200,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
 void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
 {
     UINT n, nDevs = waveOutGetNumDevs();
-#ifdef _UNICODE
-    char dev_name[MAXPNAMELEN];
-#endif
+    char *dev_name;
 
     fluid_settings_register_str(settings, "audio.waveout.device", "default", 0);
     fluid_settings_add_option(settings, "audio.waveout.device", "default");
@@ -218,13 +215,15 @@ void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
         if(res == MMSYSERR_NOERROR)
         {
 #ifdef _UNICODE
-            WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, dev_name, MAXPNAMELEN, 0, 0);
+            int nsz = WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, 0, 0, 0, 0);
+            dev_name = FLUID_ARRAY(char, nsz);
+            WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, dev_name, nsz, 0, 0);
+#else
+            dev_name = FLUID_STRDUP(caps.szPname);
+#endif
             FLUID_LOG(FLUID_DBG, "Testing audio device: %s", dev_name);
             fluid_settings_add_option(settings, "audio.waveout.device", dev_name);
-#else
-            FLUID_LOG(FLUID_DBG, "Testing audio device: %s", caps.szPname);
-            fluid_settings_add_option(settings, "audio.waveout.device", caps.szPname);
-#endif
+            FLUID_FREE(dev_name);
         }
     }
 }
@@ -427,8 +426,11 @@ new_fluid_waveout_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t f
             if(res == MMSYSERR_NOERROR)
             {
 #ifdef _UNICODE
-
+#ifdef __CYGWIN__
+                if(wcscasecmp(lpwDevName, caps.szPname) == 0)
+#else
                 if(wcsicmp(lpwDevName, caps.szPname) == 0)
+#endif
 #else
                 if(FLUID_STRCASECMP(dev_name, caps.szPname) == 0)
 #endif

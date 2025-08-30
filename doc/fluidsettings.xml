@@ -47,7 +47,7 @@ Developers:
         <setting>
             <name>chorus.depth</name>
             <type>num</type>
-            <def>8.0</def>
+            <def>4.25 (since version 2.4.0),<br />8.0 (2.3.x and older)</def>
             <min>0.0</min>
             <max>256.0</max>
             <realtime/>
@@ -57,7 +57,8 @@ Developers:
         <setting>
             <name>chorus.level</name>
             <type>num</type>
-            <def>2.0</def>
+            <def>0.6 (since version 2.4.0),<br />2.0 (2.3.x and older)</def>
+            <def></def>
             <min>0.0</min>
             <max>10.0</max>
             <realtime/>
@@ -77,7 +78,7 @@ Developers:
         <setting>
             <name>chorus.speed</name>
             <type>num</type>
-            <def>0.3</def>
+            <def>0.2 (since version 2.4.0),<br />0.3 (2.3.x and older)</def>
             <min>0.1</min>
             <max>5.0</max>
             <realtime/>
@@ -108,17 +109,17 @@ Developers:
             <type>int</type>
             <def>0</def>
             <min>0</min>
-            <max>126</max>
+            <max>127</max>
             <realtime/>
             <desc>
-                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID. Broadcast commands (with ID=127) will always be processed.</desc>
+                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed. It has been observed that setting this ID to 16 provides best compatibility when playing MIDI files which contain SYSEX commands that you want to have honored.</desc>
         </setting>
         <setting>
             <name>dynamic-sample-loading</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel. PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this.
+                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel (PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this). This involves memory allocation, which is not realtime safe! So only enable this in non-realtime scenarios! E.g. when rendering to a WAVE file using the fast-file-renderer.
             </desc>
         </setting>
         <setting>
@@ -179,8 +180,8 @@ Developers:
                 <ul>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
                     <li>gm: ignores CC0 and CC32 messages.</li>
-                    <li>xg: if CC0&lt;120 then channel is set to melodic and CC32 is the bank number. If CC0&gt;=120 then channel is set to drum and the bank number is set to 128 (CC32 is ignored).</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
+                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic and CC32 becomes the bank number. Note that before fluidsynth 2.3.5 the logic for CC0 was broken.</li>
                 </ul>
             </desc>
         </setting>
@@ -192,6 +193,20 @@ Developers:
             <max>65535</max>
             <desc>
                 Sets the minimum note duration in milliseconds. This ensures that really short duration note events, such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.</desc>
+        </setting>
+        <setting>
+            <name>note-cut</name>
+            <type>int</type>
+            <def>0</def>
+            <min>0</min>
+            <max>2</max>
+            <desc>
+                This setting specifies the behavior for releasing voices, if the same note is hit twice on the same channel. Early synthesizers like the Roland SC-55 and Microsoft Wavetable GS MIDI synthesizer (MSGS) are terminating notes abruptly that have already received a noteOff after receiving a noteOn for the same key. This behavior was presumably implemented to save polyphony in these systems. This setting was introduced in fluidsynth 2.4.3 and can be enabled to mimic this behavior, to esp. play back old tunes like Doom E1M1 more accurately. Please note that using a SoundFont which makes proper use of exclusive classes for esp. percussion instruments will yield a similar or better result. Also, this approach is generally preferable because it's portable among SF2 compliant synths and can be applied more fine-grained among instruments. This setting supports the following values:
+                <ul>
+                    <li>0: A regular noteOff is applied to the previous note, which is the default SF2 compliant behavior.</li>
+                    <li>1: Note-cut is only applied on drum MIDI channels (i.e. CHANNEL_TYPE_DRUM). Fluidsynth 2.4.0, 2.4.1, and 2.4.2 unconditionally used this mode.</li>
+                    <li>2: Note-cut is applied to both, drum and melodic MIDI channels (i.e. CHANNEL_TYPE_DRUM and CHANNEL_TYPE_MELODIC).</li>
+                </ul></desc>
         </setting>
         <setting>
             <name>overflow.age</name>
@@ -312,7 +327,7 @@ Developers:
         <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0.0</def>
+            <def>0.3 (since version 2.4.0),<br />0.0 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -322,7 +337,7 @@ Developers:
         <setting>
             <name>reverb.level</name>
             <type>num</type>
-            <def>0.9</def>
+            <def>0.7 (since version 2.4.0),<br />0.9 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -332,7 +347,7 @@ Developers:
         <setting>
             <name>reverb.room-size</name>
             <type>num</type>
-            <def>0.2</def>
+            <def>0.5 (since version 2.4.0),<br />0.2 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -342,12 +357,12 @@ Developers:
         <setting>
             <name>reverb.width</name>
             <type>num</type>
-            <def>0.5</def>
+            <def>0.8 (since version 2.4.0),<br />0.5 (2.3.x and older)</def>
             <min>0.0</min>
             <max>100.0</max>
             <realtime/>
             <desc>
-                Sets the stereo spread of the reverb signal.</desc>
+                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange [0;1] is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
         </setting>
         <setting>
             <name>sample-rate</name>
@@ -387,9 +402,9 @@ Developers:
                   coreaudio (Mac OS X),<br />
                   dart (OS/2)
             </def>
-            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl2, sndman, wasapi, waveout</vals>
+            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl3, sndman, wasapi, waveout</vals>
             <desc>
-                The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> sdl2 and waveout are available since fluidsynth 2.1.
+                The audio system to be used. In order to use sdl3 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> waveout is available since fluidsynth 2.1.0, sdl3 since fluidsynth 2.4.4.
             </desc>
         </setting>
         <setting>
@@ -491,7 +506,7 @@ Developers:
             <type>str</type>
             <def>default</def>
             <desc>
-                Selects the DirectSound (Windows) device to use.
+                Selects the DirectSound (Windows) device to use. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
         <setting>
@@ -692,11 +707,11 @@ Developers:
             </desc>
         </setting>
         <setting>
-            <name>sdl2.device</name>
+            <name>sdl3.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for SDL2 driver output.
+                Device to use for SDL3 driver output.
             </desc>
         </setting>
         <setting>
@@ -704,7 +719,7 @@ Developers:
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for WASAPI driver output.
+                Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
         <setting>
@@ -720,7 +735,7 @@ Developers:
             <type>str</type>
             <def>default</def>
             <desc>
-                Device to use for WaveOut driver output.
+                Device to use for WaveOut driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
             </desc>
         </setting>
     </audio>
@@ -803,7 +818,7 @@ Developers:
             <name>winmidi.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels).</desc>
+            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels). Starting with 2.3.6 all device names are expected to be UTF8 encoded.</desc>
         </setting>
     </midi>
     

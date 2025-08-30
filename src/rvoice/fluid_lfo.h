@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_LFO_H
@@ -23,6 +22,9 @@
 
 #include "fluid_sys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct _fluid_lfo_t fluid_lfo_t;
 
 struct _fluid_lfo_t
@@ -71,5 +73,8 @@ fluid_lfo_calc(fluid_lfo_t *lfo, unsigned int cur_delay)
 
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 

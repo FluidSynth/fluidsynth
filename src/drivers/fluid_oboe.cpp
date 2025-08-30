@@ -13,9 +13,8 @@
  * Library General Public License for more details.
  *
  * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* fluid_oboe.c
@@ -46,7 +45,7 @@ class OboeAudioStreamErrorCallback;
  * This structure should not be accessed directly. Use audio port
  * functions instead.
  */
-typedef struct
+struct fluid_oboe_audio_driver_t
 {
     fluid_audio_driver_t driver;
     fluid_synth_t *synth = nullptr;
@@ -62,7 +61,7 @@ typedef struct
     int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
     oboe::SampleRateConversionQuality srate_conversion_quality;
     int error_recovery_mode; // 0: Reconnect, 1: Stop
-} fluid_oboe_audio_driver_t;
+};
 
 
 class OboeAudioStreamCallback : public AudioStreamCallback

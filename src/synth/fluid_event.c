@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -56,7 +55,7 @@ fluid_event_clear(fluid_event_t *evt)
  * @return New sequencer event structure or NULL if out of memory
  */
 fluid_event_t *
-new_fluid_event()
+new_fluid_event(void)
 {
     fluid_event_t *evt;
 

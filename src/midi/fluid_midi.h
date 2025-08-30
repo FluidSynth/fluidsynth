@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_MIDI_H
@@ -305,7 +304,7 @@ struct _fluid_player_t
     int last_callback_ticks;  /* the last tick number that was passed to player->tick_callback */
     int begin_msec;           /* the time (msec) of the beginning of the file */
     int start_msec;           /* the start time of the last tempo change */
-    int cur_msec;             /* the current time */
+    unsigned int cur_msec;    /* the current time */
     int end_msec;             /* when >=0, playback is extended until this time (for, e.g., reverb) */
     char end_pedals_disabled; /* 1 once the pedals have been released after the last midi event, 0 otherwise */
     /* sync mode: indicates the tempo mode the player is driven by (see fluid_player_set_tempo()):

@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_SYNTH_H
@@ -268,8 +267,15 @@ enum fluid_interp
 {
     FLUID_INTERP_NONE = 0,        /**< No interpolation: Fastest, but questionable audio quality */
     FLUID_INTERP_LINEAR = 1,      /**< Straight-line interpolation: A bit slower, reasonable audio quality */
-    FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, good quality, the default */
-    FLUID_INTERP_7THORDER = 7,    /**< Seventh-order interpolation */
+    FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, best quality, the default */
+
+    /**
+     * Seventh-point sinc interpolation
+     * @note This interpolation method was believed to provide highest quality. However, in Feb. 2025 it was discovered
+     * that for certain samples it does introduce ringing artifacts, which
+     * are not present in the 4th order interpolation. This is not a bug, it's rather a limitation of only using 7 points for the sinc interpolation.
+     */
+    FLUID_INTERP_7THORDER = 7,
 
     FLUID_INTERP_DEFAULT = FLUID_INTERP_4THORDER, /**< Default interpolation method */
     FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
@@ -387,7 +393,20 @@ enum fluid_iir_filter_flags
 {
     FLUID_IIR_Q_LINEAR = 1 << 0, /**< The Soundfont spec requires the filter Q to be interpreted in dB. If this flag is set the filter Q is instead assumed to be in a linear range */
     FLUID_IIR_Q_ZERO_OFF = 1 << 1, /**< If this flag the filter is switched off if Q == 0 (prior to any transformation) */
-    FLUID_IIR_NO_GAIN_AMP = 1 << 2 /**< The Soundfont spec requires to correct the gain of the filter depending on the filter's Q. If this flag is set the filter gain will not be corrected. */
+    FLUID_IIR_NO_GAIN_AMP = 1 << 2, /**< The Soundfont spec requires to correct the gain of the filter depending on the filter's Q. If this flag is set the filter gain will not be corrected. */
+    /**
+     * Setting this flag causes the custom filter's cutoff frequency (fc) to dynamically adjust to the
+     * notes played, so that it is possible to
+     * filter at the same spot relative to the sound of the sample playing. In this sense, the filter fc
+     * honors the key and pitch of a note relative to the sample's root_key: if the key of a note is 2 semitones
+     * above the sample's root_key and additionally it's pitched up by 30 cents, the cutoff frequency would
+     * be automatically adjusted by +230 cents. E.g. for horns, one can add an
+     * emphasis on tones that would "stick to" the horn as it played different notes (provided
+     * that these notes use the same sample).
+     * The enum is named after Robin Beanland, who has used this technique in Conker's Bad Fur Day and
+     * (together with other composers) in Jet Force Gemini, implemented by Mike Currington on the N64.
+     */
+    FLUID_IIR_BEANLAND = 1 << 3,
 };
 
 FLUIDSYNTH_API int fluid_synth_set_custom_filter(fluid_synth_t *, int type, int flags);

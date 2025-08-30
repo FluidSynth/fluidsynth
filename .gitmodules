@@ -1,0 +1,6 @@
+[submodule "test/manual"]
+	path = test/manual
+	url = https://github.com/FluidSynth/testdata.git
+[submodule "gcem"]
+	path = gcem
+	url = https://github.com/kthohr/gcem.git

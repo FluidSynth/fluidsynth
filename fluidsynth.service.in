@@ -2,7 +2,11 @@
 Description=FluidSynth Daemon
 Documentation=man:fluidsynth(1)
 After=sound.target
-After=pipewire.service
+After=pipewire.service pulseaudio.service
+Wants=pipewire.service pulseaudio.service
+# If you need more than one instance, use `systemctl edit` to override this:
+ConditionPathExists=!/run/lock/fluidsynth/fluidsynth.lock
+ConditionUser=!@system
 
 [Service]
 # added automatically, for details please see
@@ -19,9 +23,12 @@ ProtectControlGroups=true
 PrivateUsers=yes
 Type=notify
 NotifyAccess=main
+Environment=OTHER_OPTS= SOUND_FONT=
 EnvironmentFile=@FLUID_DAEMON_ENV_FILE@
 EnvironmentFile=-%h/.config/fluidsynth
-ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/fluidsynth -is $OTHER_OPTS $SOUND_FONT
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/fluidsynth -is $OTHER_OPTS "${SOUND_FONT}"
+ExecStartPre=touch /run/lock/fluidsynth/fluidsynth.lock
+ExecStopPost=rm -f /run/lock/fluidsynth/fluidsynth.lock
 
 [Install]
 WantedBy=default.target

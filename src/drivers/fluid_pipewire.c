@@ -14,9 +14,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* fluid_pipewire.c
@@ -154,6 +153,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     char *media_category = NULL;
     float *buffer = NULL;
     const struct spa_pod *params[1];
+    struct pw_properties *props;
 
     drv = FLUID_NEW(fluid_pipewire_audio_driver_t);
 
@@ -196,10 +196,15 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
         goto driver_cleanup;
     }
 
+    props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL);
+
+    pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", period_size, (int) sample_rate);
+    pw_properties_setf(props, PW_KEY_NODE_RATE, "1/%d", (int) sample_rate);
+
     drv->pw_stream = pw_stream_new_simple(
                          pw_thread_loop_get_loop(drv->pw_loop),
                          "FluidSynth",
-                         pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL),
+                         props,
                          drv->events,
                          drv);
 
@@ -289,6 +294,11 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
     fluid_pipewire_audio_driver_t *drv = (fluid_pipewire_audio_driver_t *)p;
     fluid_return_if_fail(drv);
 
+    if (drv->pw_loop)
+    {
+        pw_thread_loop_lock(drv->pw_loop);
+    }
+
     if(drv->pw_stream)
     {
         pw_stream_destroy(drv->pw_stream);
@@ -296,6 +306,7 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
 
     if(drv->pw_loop)
     {
+        pw_thread_loop_unlock(drv->pw_loop);
         pw_thread_loop_destroy(drv->pw_loop);
     }
 

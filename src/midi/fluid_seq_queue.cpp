@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_seq_queue.h"
@@ -74,7 +73,7 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         //  * possible values of ltype in rows,
         //  * the boolean values to indicate whether leftIsBeforeRight,
         //  * X meaning any other event type, and
-        //  * the '*' means that it could be zero, but making it 1 simplyfies the boolean expression.
+        //  * the '*' means that it could be zero, but making it 1 simplifies the boolean expression.
         //
         // | ltype \ rtype | SYSR | UNREG | BANK | PROG | NOTEON | X  |
         // |      SYSR     |  1   |   1   |   1  |   1  |   1    | 1  |

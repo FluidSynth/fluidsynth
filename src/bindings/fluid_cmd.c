@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_cmd.h"
@@ -120,7 +119,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "load", "general", fluid_handle_load,
-        "load file [reset] [bankofs] Loads SoundFont (reset=0|1, def 1; bankofs=n, def 0)"
+        "load file [reset] [bankofs] Loads SoundFont (reset=0|1, def=1; bankofs=n, n!=0)"
     },
     {
         "unload", "general", fluid_handle_unload,
@@ -620,7 +619,7 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
     fluid_shell_t shell;
     int result;
 
-#ifdef WIN32
+#ifdef _WIN32
     file = _open(filename, _O_RDONLY);
 #else
     file = open(filename, O_RDONLY);
@@ -634,7 +633,7 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
     fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
     result = (fluid_shell_run(&shell) == FLUID_THREAD_RETURN_VALUE) ? 0 : -1;
 
-#ifdef WIN32
+#ifdef _WIN32
     _close(file);
 #else
     close(file);
@@ -658,7 +657,7 @@ fluid_get_userconf(char *buf, int len)
 {
     const char *home = NULL;
     const char *config_file;
-#if defined(WIN32)
+#if defined(_WIN32)
     home = getenv("USERPROFILE");
     config_file = "\\fluidsynth.cfg";
 
@@ -693,7 +692,7 @@ fluid_get_userconf(char *buf, int len)
 char *
 fluid_get_sysconf(char *buf, int len)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     const char* program_data = getenv("ProgramData");
     if(program_data == NULL || program_data[0] == '\0')
     {
@@ -985,11 +984,21 @@ fluid_handle_load(void *data, int ac, char **av, fluid_ostream_t out)
     if(ac == 2)
     {
         reset = atoi(av[1]);
+        if (reset != 0 && reset != 1)
+        {
+            fluid_ostream_printf(out, "load: invalid reset argument %d, only 1 or 0 are allowed\n", reset);
+            return FLUID_FAILED;
+        }
     }
 
     if(ac == 3)
     {
         offset = atoi(av[2]);
+        if (offset == 0)
+        {
+            fluid_ostream_printf(out, "load: only non-zero bank offsets are allowed, omit this parameter if zero was intended\n", offset);
+            return FLUID_FAILED;
+        }
     }
 
     /* Load the SoundFont without resetting the programs. The reset will
@@ -1003,7 +1012,7 @@ fluid_handle_load(void *data, int ac, char **av, fluid_ostream_t out)
     }
     else
     {
-        fluid_ostream_printf(out, "loaded SoundFont has ID %d\n", id);
+        fluid_ostream_printf(out, "loaded SoundFont has ID %d and bankofs=%d\n", id, offset);
     }
 
     if(offset)
@@ -4502,7 +4511,7 @@ fluid_is_number(char *a)
 char *
 fluid_expand_path(char *path, char *new_path, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
+#if defined(_WIN32) || defined(MACOS9)
     FLUID_SNPRINTF(new_path, len - 1, "%s", path);
 #else
 
@@ -4869,6 +4878,7 @@ void fluid_client_quit(fluid_client_t *client)
     FLUID_LOG(FLUID_DBG, "fluid_client_quit: joining");
     fluid_thread_join(client->thread);
     FLUID_LOG(FLUID_DBG, "fluid_client_quit: done");
+    delete_fluid_thread(client->thread);
 }
 
 void delete_fluid_client(fluid_client_t *client)

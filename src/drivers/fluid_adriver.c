@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_adriver.h"
@@ -170,6 +169,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if KAI_SUPPORT
+    {
+        "kai",
+        new_fluid_kai_audio_driver,
+        NULL,
+        delete_fluid_kai_audio_driver,
+        fluid_kai_audio_driver_settings
+    },
+#endif
+
 #if DART_SUPPORT
     {
         "dart",
@@ -180,13 +189,13 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
-#if SDL2_SUPPORT
+#if SDL3_SUPPORT
     {
-        "sdl2",
-        new_fluid_sdl2_audio_driver,
+        "sdl3",
+        new_fluid_sdl3_audio_driver,
         NULL,
-        delete_fluid_sdl2_audio_driver,
-        fluid_sdl2_audio_driver_settings
+        delete_fluid_sdl3_audio_driver,
+        fluid_sdl3_audio_driver_settings
     },
 #endif
 
@@ -220,7 +229,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "audio.sample-format", "16bits");
     fluid_settings_add_option(settings, "audio.sample-format", "float");
 
-#if defined(WIN32)
+#if defined(_WIN32)
     fluid_settings_register_int(settings, "audio.period-size", 512, 64, 8192, 0);
     fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0);
 #elif defined(MACOS9)

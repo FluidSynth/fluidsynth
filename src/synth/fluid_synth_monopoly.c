@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_synth.h"
@@ -410,7 +409,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t *synth, int chan, int key)
                 fluid_channel_breath_msb(channel))
         {
             /* legato playing detection */
-            if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING)
+            if (channel->mode & FLUID_CHANNEL_LEGATO_PLAYING && channel->preset != NULL)
             {
                 /* the list contains others notes */
                 if(i_prev >= 0)
