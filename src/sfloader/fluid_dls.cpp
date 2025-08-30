@@ -927,16 +927,16 @@ constexpr static std::optional<unsigned char> convert_dls_transform_to_fluid(uin
 {
     switch (transform_mode)
     {
-        case CONN_TRN_NONE:
-            return FLUID_MOD_LINEAR;
-        case CONN_TRN_CONCAVE:
-            return FLUID_MOD_CONCAVE;
-        case CONN_TRN_CONVEX:
-            return FLUID_MOD_CONVEX;
-        case CONN_TRN_SWITCH:
-            return FLUID_MOD_SWITCH;
-        default:
-            return std::nullopt;
+    case CONN_TRN_NONE:
+        return FLUID_MOD_LINEAR;
+    case CONN_TRN_CONCAVE:
+        return FLUID_MOD_CONCAVE;
+    case CONN_TRN_CONVEX:
+        return FLUID_MOD_CONVEX;
+    case CONN_TRN_SWITCH:
+        return FLUID_MOD_SWITCH;
+    default:
+        return std::nullopt;
     }
 }
 
@@ -950,56 +950,56 @@ constexpr static std::optional<uint16_t> convert_dls_mod_dest_to_gen(uint16_t de
 
     switch (dest)
     {
-        case CONN_DST_GAIN:
-            return GEN_ATTENUATION; // NOTE: attenuation = -gain
-        case CONN_DST_EG1_SUSTAINLEVEL:
-            return GEN_VOLENVSUSTAIN; // NOTE: SF2 sustain (atten) in dB = (100% - sustainlevel) * 96 dB (or 144 dB, whatever)
-        case CONN_DST_EG2_SUSTAINLEVEL:
-            return GEN_MODENVSUSTAIN; // NOTE: SF2 sustain (atten) = 100% - sustainlevel
-        case CONN_DST_PITCH:
-            return GEN_FINETUNE;
-        case CONN_DST_PAN:
-            return GEN_PAN;
-        case CONN_DST_CHORUS:
-            return GEN_CHORUSSEND;
-        case CONN_DST_REVERB:
-            return GEN_REVERBSEND;
-        case CONN_DST_LFO_FREQUENCY:
-            return GEN_MODLFOFREQ;
-        case CONN_DST_LFO_STARTDELAY:
-            return GEN_MODLFODELAY;
-        case CONN_DST_VIB_FREQUENCY:
-            return GEN_VIBLFOFREQ;
-        case CONN_DST_VIB_STARTDELAY:
-            return GEN_VIBLFODELAY;
-        case CONN_DST_EG1_ATTACKTIME:
-            return GEN_VOLENVATTACK;
-        case CONN_DST_EG1_DECAYTIME:
-            return GEN_VOLENVDECAY;
-        case CONN_DST_EG1_RELEASETIME:
-            return GEN_VOLENVRELEASE;
-        case CONN_DST_EG1_DELAYTIME:
-            return GEN_VOLENVDELAY;
-        case CONN_DST_EG1_HOLDTIME:
-            return GEN_VOLENVHOLD;
-        case CONN_DST_EG1_SHUTDOWNTIME:
-            return std::nullopt;
-        case CONN_DST_EG2_ATTACKTIME:
-            return GEN_MODENVATTACK;
-        case CONN_DST_EG2_DECAYTIME:
-            return GEN_MODENVDECAY;
-        case CONN_DST_EG2_RELEASETIME:
-            return GEN_MODENVRELEASE;
-        case CONN_DST_EG2_DELAYTIME:
-            return GEN_MODENVDELAY;
-        case CONN_DST_EG2_HOLDTIME:
-            return GEN_MODENVHOLD;
-        case CONN_DST_FILTER_CUTOFF:
-            return GEN_FILTERFC;
-        case CONN_DST_FILTER_Q:
-            return GEN_FILTERQ;
-        default:
-            return std::nullopt;
+    case CONN_DST_GAIN:
+        return GEN_ATTENUATION; // NOTE: attenuation = -gain
+    case CONN_DST_EG1_SUSTAINLEVEL:
+        return GEN_VOLENVSUSTAIN; // NOTE: SF2 sustain (atten) in dB = (100% - sustainlevel) * 96 dB (or 144 dB, whatever)
+    case CONN_DST_EG2_SUSTAINLEVEL:
+        return GEN_MODENVSUSTAIN; // NOTE: SF2 sustain (atten) = 100% - sustainlevel
+    case CONN_DST_PITCH:
+        return GEN_FINETUNE;
+    case CONN_DST_PAN:
+        return GEN_PAN;
+    case CONN_DST_CHORUS:
+        return GEN_CHORUSSEND;
+    case CONN_DST_REVERB:
+        return GEN_REVERBSEND;
+    case CONN_DST_LFO_FREQUENCY:
+        return GEN_MODLFOFREQ;
+    case CONN_DST_LFO_STARTDELAY:
+        return GEN_MODLFODELAY;
+    case CONN_DST_VIB_FREQUENCY:
+        return GEN_VIBLFOFREQ;
+    case CONN_DST_VIB_STARTDELAY:
+        return GEN_VIBLFODELAY;
+    case CONN_DST_EG1_ATTACKTIME:
+        return GEN_VOLENVATTACK;
+    case CONN_DST_EG1_DECAYTIME:
+        return GEN_VOLENVDECAY;
+    case CONN_DST_EG1_RELEASETIME:
+        return GEN_VOLENVRELEASE;
+    case CONN_DST_EG1_DELAYTIME:
+        return GEN_VOLENVDELAY;
+    case CONN_DST_EG1_HOLDTIME:
+        return GEN_VOLENVHOLD;
+    case CONN_DST_EG1_SHUTDOWNTIME:
+        return std::nullopt;
+    case CONN_DST_EG2_ATTACKTIME:
+        return GEN_MODENVATTACK;
+    case CONN_DST_EG2_DECAYTIME:
+        return GEN_MODENVDECAY;
+    case CONN_DST_EG2_RELEASETIME:
+        return GEN_MODENVRELEASE;
+    case CONN_DST_EG2_DELAYTIME:
+        return GEN_MODENVDELAY;
+    case CONN_DST_EG2_HOLDTIME:
+        return GEN_MODENVHOLD;
+    case CONN_DST_FILTER_CUTOFF:
+        return GEN_FILTERFC;
+    case CONN_DST_FILTER_Q:
+        return GEN_FILTERQ;
+    default:
+        return std::nullopt;
     }
 }
 
@@ -1008,22 +1008,22 @@ constexpr std::optional<uint16_t> convert_dls_mod_gsrc(uint16_t source)
 {
     switch (source)
     {
-        case CONN_SRC_NONE:
-            return FLUID_MOD_NONE;
-        case CONN_SRC_KEYONVELOCITY:
-            return FLUID_MOD_VELOCITY;
-        case CONN_SRC_KEYNUMBER:
-            return FLUID_MOD_KEY;
-        case CONN_SRC_POLYPRESSURE:
-            return FLUID_MOD_KEYPRESSURE;
-        case CONN_SRC_CHANNELPRESSURE:
-            return FLUID_MOD_CHANNELPRESSURE;
-        case CONN_SRC_PITCHWHEEL:
-            return FLUID_MOD_PITCHWHEEL;
-        case CONN_SRC_RPN0:
-            return FLUID_MOD_PITCHWHEELSENS;
-        default:
-            return std::nullopt;
+    case CONN_SRC_NONE:
+        return FLUID_MOD_NONE;
+    case CONN_SRC_KEYONVELOCITY:
+        return FLUID_MOD_VELOCITY;
+    case CONN_SRC_KEYNUMBER:
+        return FLUID_MOD_KEY;
+    case CONN_SRC_POLYPRESSURE:
+        return FLUID_MOD_KEYPRESSURE;
+    case CONN_SRC_CHANNELPRESSURE:
+        return FLUID_MOD_CHANNELPRESSURE;
+    case CONN_SRC_PITCHWHEEL:
+        return FLUID_MOD_PITCHWHEEL;
+    case CONN_SRC_RPN0:
+        return FLUID_MOD_PITCHWHEELSENS;
+    default:
+        return std::nullopt;
     }
 }
 
@@ -1032,20 +1032,20 @@ constexpr std::optional<uint16_t> convert_dls_mod_csrc(uint16_t source)
 {
     switch (source)
     {
-        case CONN_SRC_CC1:
-            return 1;
-        case CONN_SRC_CC7:
-            return 7;
-        case CONN_SRC_CC10:
-            return 10;
-        case CONN_SRC_CC11:
-            return 11;
-        case CONN_SRC_CC91:
-            return 91;
-        case CONN_SRC_CC93:
-            return 93;
-        default:
-            return std::nullopt;
+    case CONN_SRC_CC1:
+        return 1;
+    case CONN_SRC_CC7:
+        return 7;
+    case CONN_SRC_CC10:
+        return 10;
+    case CONN_SRC_CC11:
+        return 11;
+    case CONN_SRC_CC91:
+        return 91;
+    case CONN_SRC_CC93:
+        return 93;
+    default:
+        return std::nullopt;
     }
 }
 
@@ -1173,14 +1173,14 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
 {
     switch (destination)
     {
-        case CONN_DST_NONE:
-        // these reserved dest are used in gm.dls, interesting
-        case CONN_DST_RESERVED:
-        case CONN_DST_EG1_RESERVED:
-        case CONN_DST_EG2_RESERVED:
-            return;
-        default:
-            break;
+    case CONN_DST_NONE:
+    // these reserved dest are used in gm.dls, interesting
+    case CONN_DST_RESERVED:
+    case CONN_DST_EG1_RESERVED:
+    case CONN_DST_EG2_RESERVED:
+        return;
+    default:
+        break;
     }
 
     if (source == CONN_SRC_NONE && control != CONN_SRC_NONE)
@@ -1231,26 +1231,23 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
         }
         switch (destination)
         {
-            case CONN_DST_PITCH:
-                add_dls_connectionblock_to_art(art,
-                                               GEN_MODLFOTOPITCH,
-                                               control,
-                                               scale,
-                                               DLSTransform{ dls_transform_ctl_to_src(transform) });
-                return;
-            case CONN_DST_FILTER_CUTOFF:
-                add_dls_connectionblock_to_art(art,
-                                               GEN_MODLFOTOFILTERFC,
-                                               control,
-                                               scale,
-                                               DLSTransform{ dls_transform_ctl_to_src(transform) });
-                return;
-            case CONN_DST_GAIN:
-                add_dls_connectionblock_to_art(
-                art, GEN_MODLFOTOVOL, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
-                return;
-            default:
-                break;
+        case CONN_DST_PITCH:
+            add_dls_connectionblock_to_art(
+            art, GEN_MODLFOTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+            return;
+        case CONN_DST_FILTER_CUTOFF:
+            add_dls_connectionblock_to_art(art,
+                                           GEN_MODLFOTOFILTERFC,
+                                           control,
+                                           scale,
+                                           DLSTransform{ dls_transform_ctl_to_src(transform) });
+            return;
+        case CONN_DST_GAIN:
+            add_dls_connectionblock_to_art(
+            art, GEN_MODLFOTOVOL, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+            return;
+        default:
+            break;
         }
     }
     else if (source == CONN_SRC_VIBRATO)
@@ -1265,15 +1262,12 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
         }
         switch (destination)
         {
-            case CONN_DST_PITCH:
-                add_dls_connectionblock_to_art(art,
-                                               GEN_VIBLFOTOPITCH,
-                                               control,
-                                               scale,
-                                               DLSTransform{ dls_transform_ctl_to_src(transform) });
-                return;
-            default:
-                break;
+        case CONN_DST_PITCH:
+            add_dls_connectionblock_to_art(
+            art, GEN_VIBLFOTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+            return;
+        default:
+            break;
         }
     }
     else if (source == CONN_SRC_EG2)
@@ -1284,22 +1278,19 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
         }
         switch (destination)
         {
-            case CONN_DST_PITCH:
-                add_dls_connectionblock_to_art(art,
-                                               GEN_MODENVTOPITCH,
-                                               control,
-                                               scale,
-                                               DLSTransform{ dls_transform_ctl_to_src(transform) });
-                return;
-            case CONN_DST_FILTER_CUTOFF:
-                add_dls_connectionblock_to_art(art,
-                                               GEN_MODENVTOFILTERFC,
-                                               control,
-                                               scale,
-                                               DLSTransform{ dls_transform_ctl_to_src(transform) });
-                return;
-            default:
-                break;
+        case CONN_DST_PITCH:
+            add_dls_connectionblock_to_art(
+            art, GEN_MODENVTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+            return;
+        case CONN_DST_FILTER_CUTOFF:
+            add_dls_connectionblock_to_art(art,
+                                           GEN_MODENVTOFILTERFC,
+                                           control,
+                                           scale,
+                                           DLSTransform{ dls_transform_ctl_to_src(transform) });
+            return;
+        default:
+            break;
         }
     }
 
@@ -1399,71 +1390,71 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         visit_subchunks(0, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos) {
             switch (subchunk.id) // toplevel chunk
             {
-                case DLID_FCC:
-                case VERS_FCC:
-                    break;
-                case CDL_FCC:
-                    if (!execute_cdls(pos + headersize, subchunk.size))
-                    {
-                        throw std::runtime_error{ "DLS toplevel CDL bypasses the sound library" };
-                    }
-                    break;
-                case COLH_FCC: {
-                    // read it now to preserve the instrument vector
-                    if (subchunk.size != 4)
-                    {
-                        throw std::runtime_error{ "DLS colh chunk size is not 4 bytes" };
-                    }
-                    uint32_t colh;
-                    READ32(this, colh);
-                    instruments.reserve(colh);
-                    break;
+            case DLID_FCC:
+            case VERS_FCC:
+                break;
+            case CDL_FCC:
+                if (!execute_cdls(pos + headersize, subchunk.size))
+                {
+                    throw std::runtime_error{ "DLS toplevel CDL bypasses the sound library" };
                 }
-                case PTBL_FCC: {
-                    // read ptbl now
-                    uint32_t cbsize;
-                    READ32(this, cbsize);
-                    if (cbsize < 8)
-                    {
-                        throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
-                    }
-
-                    uint32_t cues; // sample count
-                    READ32(this, cues);
-                    if (cues * 4 + cbsize != subchunk.size)
-                    {
-                        throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
-                    }
-
-                    fskip(cbsize - 8); // usually cbsize == 8
-
-                    poolcues.resize(cues);
-                    for (uint32_t i = 0; i < cues; i++)
-                    {
-                        READ32(this, poolcues[i]);
-                    }
-                    samples.reserve(cues);
-                    break;
+                break;
+            case COLH_FCC: {
+                // read it now to preserve the instrument vector
+                if (subchunk.size != 4)
+                {
+                    throw std::runtime_error{ "DLS colh chunk size is not 4 bytes" };
                 }
-                case INFO_FCC:
-                    read_name_from_info_entries(pos + headersize, subchunk.size);
-                    break;
-                case LINS_FCC:
-                    linsoffset = pos;
-                    break;
-                case WVPL_FCC:
-                    wvploffset = pos;
-                    break;
-                default:
-                    // clang-format off
+                uint32_t colh;
+                READ32(this, colh);
+                instruments.reserve(colh);
+                break;
+            }
+            case PTBL_FCC: {
+                // read ptbl now
+                uint32_t cbsize;
+                READ32(this, cbsize);
+                if (cbsize < 8)
+                {
+                    throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
+                }
+
+                uint32_t cues; // sample count
+                READ32(this, cues);
+                if (cues * 4 + cbsize != subchunk.size)
+                {
+                    throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
+                }
+
+                fskip(cbsize - 8); // usually cbsize == 8
+
+                poolcues.resize(cues);
+                for (uint32_t i = 0; i < cues; i++)
+                {
+                    READ32(this, poolcues[i]);
+                }
+                samples.reserve(cues);
+                break;
+            }
+            case INFO_FCC:
+                read_name_from_info_entries(pos + headersize, subchunk.size);
+                break;
+            case LINS_FCC:
+                linsoffset = pos;
+                break;
+            case WVPL_FCC:
+                wvploffset = pos;
+                break;
+            default:
+                // clang-format off
                     FLUID_LOG(FLUID_WARN,
                         "Ignoring unknown top-level DLS chunk %s'" FMT_4CC_SPEC "' ofs=0x%llx",
                         headersize == 12 ? "LIST " : "",
                         FMT_4CC_ARG(subchunk.id),
                         pos
                     );
-                    // clang-format on
-                    break;
+                // clang-format on
+                break;
             }
         });
     }
@@ -1720,118 +1711,118 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
         READ16(this, opcode);
         switch (opcode)
         {
-            // Assign
-            case 0x0010: // DLS_CDL_CONST
-                READ32(this, rax);
-                push(rax);
-                pc += 4;
-                break;
-            // Unary operators
-            case 0x000F: // DLS_CDL_NOT (logical)
-                push(!pop());
-                break;
-            // Binary operators
-            case 0x0001: // DLS_CDL_AND
-                rax = pop();
-                rbx = pop();
-                push(rax & rbx);
-                break;
-            case 0x0002: // DLS_CDL_OR
-                rax = pop();
-                rbx = pop();
-                push(rax | rbx);
-                break;
-            case 0x0003: // DLS_CDL_XOR
-                rax = pop();
-                rbx = pop();
-                push(rax ^ rbx);
-                break;
-            case 0x0004: // DLS_CDL_ADD
-                rax = pop();
-                rbx = pop();
-                push(rax + rbx);
-                break;
-            case 0x0005:     // DLS_CDL_SUBTRACT
-                rax = pop(); // X, top
-                rbx = pop(); // Y, prev
-                push(rax - rbx);
-                break;
-            case 0x0006: // DLS_CDL_MULTIPLY
-                rax = pop();
-                rbx = pop();
-                push(rax * rbx);
-                break;
-            case 0x0007: // DLS_CDL_DIVIDE
-                rax = pop();
-                rbx = pop();
-                if (rbx == 0)
-                {
-                    throw std::runtime_error{ "CDL division by zero" };
-                }
-                push(rax / rbx);
-                break;
-            case 0x0008: // DLS_CDL_LOGICAL_AND
-                rax = pop();
-                rbx = pop();
-                push(rax && rbx);
-                break;
-            case 0x0009: // DLS_CDL_LOGICAL_OR
-                rax = pop();
-                rbx = pop();
-                push(rax || rbx);
-                break;
-            case 0x000A: // DLS_CDL_LT
-                rax = pop();
-                rbx = pop();
-                push(rax < rbx);
-                break;
-            case 0x000B: // DLS_CDL_LE
-                rax = pop();
-                rbx = pop();
-                push(rax <= rbx);
-                break;
-            case 0x000C: // DLS_CDL_GT
-                rax = pop();
-                rbx = pop();
-                push(rax > rbx);
-                break;
-            case 0x000D: // DLS_CDL_GE
-                rax = pop();
-                rbx = pop();
-                push(rax >= rbx);
-                break;
-            case 0x000E: // DLS_CDL_EQ
-                rax = pop();
-                rbx = pop();
-                push(rax == rbx);
-                break;
-            // Query
-            case 0x0011: // DLS_CDL_QUERY
-            case 0x0012: // DLS_CDL_QUERY_SUPPORTED
+        // Assign
+        case 0x0010: // DLS_CDL_CONST
+            READ32(this, rax);
+            push(rax);
+            pc += 4;
+            break;
+        // Unary operators
+        case 0x000F: // DLS_CDL_NOT (logical)
+            push(!pop());
+            break;
+        // Binary operators
+        case 0x0001: // DLS_CDL_AND
+            rax = pop();
+            rbx = pop();
+            push(rax & rbx);
+            break;
+        case 0x0002: // DLS_CDL_OR
+            rax = pop();
+            rbx = pop();
+            push(rax | rbx);
+            break;
+        case 0x0003: // DLS_CDL_XOR
+            rax = pop();
+            rbx = pop();
+            push(rax ^ rbx);
+            break;
+        case 0x0004: // DLS_CDL_ADD
+            rax = pop();
+            rbx = pop();
+            push(rax + rbx);
+            break;
+        case 0x0005:     // DLS_CDL_SUBTRACT
+            rax = pop(); // X, top
+            rbx = pop(); // Y, prev
+            push(rax - rbx);
+            break;
+        case 0x0006: // DLS_CDL_MULTIPLY
+            rax = pop();
+            rbx = pop();
+            push(rax * rbx);
+            break;
+        case 0x0007: // DLS_CDL_DIVIDE
+            rax = pop();
+            rbx = pop();
+            if (rbx == 0)
             {
-                DLSID dlsid{};
-                READGUID(this, dlsid);
-                auto result = eval_dlsid_query(dlsid);
-                if (opcode == 0x0011) // Query
-                {
-                    if (result.has_value())
-                    {
-                        push(result.value());
-                    }
-                    else
-                    {
-                        throw std::runtime_error{
-                            string_format("CDL query for unsupported DLSID, pc=0x%x", pc)
-                        };
-                    }
-                }
-                push(result.has_value() ? 1 : 0); // Query_Supported
-                pc += sizeof(DLSID);
-                break;
+                throw std::runtime_error{ "CDL division by zero" };
             }
-            default:
-                // SIGILL lol
-                throw std::runtime_error{ string_format("Unknown CDL opcode 0x%04x", opcode) };
+            push(rax / rbx);
+            break;
+        case 0x0008: // DLS_CDL_LOGICAL_AND
+            rax = pop();
+            rbx = pop();
+            push(rax && rbx);
+            break;
+        case 0x0009: // DLS_CDL_LOGICAL_OR
+            rax = pop();
+            rbx = pop();
+            push(rax || rbx);
+            break;
+        case 0x000A: // DLS_CDL_LT
+            rax = pop();
+            rbx = pop();
+            push(rax < rbx);
+            break;
+        case 0x000B: // DLS_CDL_LE
+            rax = pop();
+            rbx = pop();
+            push(rax <= rbx);
+            break;
+        case 0x000C: // DLS_CDL_GT
+            rax = pop();
+            rbx = pop();
+            push(rax > rbx);
+            break;
+        case 0x000D: // DLS_CDL_GE
+            rax = pop();
+            rbx = pop();
+            push(rax >= rbx);
+            break;
+        case 0x000E: // DLS_CDL_EQ
+            rax = pop();
+            rbx = pop();
+            push(rax == rbx);
+            break;
+        // Query
+        case 0x0011: // DLS_CDL_QUERY
+        case 0x0012: // DLS_CDL_QUERY_SUPPORTED
+        {
+            DLSID dlsid{};
+            READGUID(this, dlsid);
+            auto result = eval_dlsid_query(dlsid);
+            if (opcode == 0x0011) // Query
+            {
+                if (result.has_value())
+                {
+                    push(result.value());
+                }
+                else
+                {
+                    throw std::runtime_error{
+                        string_format("CDL query for unsupported DLSID, pc=0x%x", pc)
+                    };
+                }
+            }
+            push(result.has_value() ? 1 : 0); // Query_Supported
+            pc += sizeof(DLSID);
+            break;
+        }
+        default:
+            // SIGILL lol
+            throw std::runtime_error{ string_format("Unknown CDL opcode 0x%04x", opcode) };
         } // switch(opcode) end
         pc += 2;
     } // while pc end
@@ -1886,94 +1877,94 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
     visit_subchunks(offset, WAVE_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
         switch (subchunk.id)
         {
-            case INFO_FCC:
-                sample.name = read_name_from_info_entries(pos + headersize, subchunk.size);
-                break;
-            case DLID_FCC:
-            case GUID_FCC:
-            case FACT_FCC:
-            case CUE_FCC:
-                break;
-            case FMT_FCC: { // See WAVEFORMAT struct (mmreg.h)
-                uint16_t temp16;
-                uint32_t temp32;
-                READ16(this, temp16); // read formatTag
-                fmtTag = temp16;
-                if (fmtTag != WAVE_FORMAT_PCM)
-                {
+        case INFO_FCC:
+            sample.name = read_name_from_info_entries(pos + headersize, subchunk.size);
+            break;
+        case DLID_FCC:
+        case GUID_FCC:
+        case FACT_FCC:
+        case CUE_FCC:
+            break;
+        case FMT_FCC: { // See WAVEFORMAT struct (mmreg.h)
+            uint16_t temp16;
+            uint32_t temp32;
+            READ16(this, temp16); // read formatTag
+            fmtTag = temp16;
+            if (fmtTag != WAVE_FORMAT_PCM)
+            {
 #if !LIBSNDFILE_SUPPORT
-                    throw std::runtime_error{
-                        string_format("Unsupported wave format %u (without libsndfile)", fmtTag)
-                    };
+                throw std::runtime_error{
+                    string_format("Unsupported wave format %u (without libsndfile)", fmtTag)
+                };
 #endif
-                }
-                READ16(this, temp16); // read channels
-                if (temp16 != 1)
-                {
-                    throw std::runtime_error{ string_format("Unsupported wave channel count %u", temp16) };
-                }
-                READ32(this, temp32); // read sampleRate
-                sample.samplerate = temp32;
-                READ32(this, temp32); // read avgBytesPerSec
-                READ16(this, temp32); // read blockAlign
-                READ16(this, temp16); // read bitsPerSample
-                if (temp16 != 8 && temp16 != 16)
-                {
-                    throw std::runtime_error{ string_format("Unsupported wave bits per sample %u", temp16) };
-                }
-                bitsPerSample = temp16;
-                // probably a cbSize field for WAVEFORMATEX
-                break;
             }
-            case WSMP_FCC:
-                if (parse_wsmp(pos + headersize, sample.wsmp.emplace()) != subchunk.size)
-                {
-                    throw std::runtime_error{ "DLS wsmp chunk in wave chunk has corrupted size" };
-                }
-                break;
-            case DATA_FCC: {
-                contains_data = true;
-                if (fmtTag == 0 || bitsPerSample == 0)
-                {
-                    throw std::runtime_error{ "DLS fmt chunk must exist in wave chunk and be prior "
-                                              "to data chunk" };
-                }
-                if (fmtTag != WAVE_FORMAT_PCM)
-                {
-                    break; // leave data to libsndfile
-                }
-                if (subchunk.size % (bitsPerSample / 8) != 0)
-                {
-                    throw std::runtime_error{ "DLS data chunk not align to bitsPerSample" };
-                }
-                auto samplelen = subchunk.size / (bitsPerSample / 8);
-                sample.start = sampledata.size();
-                sample.end = sample.start + samplelen;
-                sampledata.resize(sampledata.size() + samplelen);
-
-                char buffer[4096];
-                uint32_t remaining = subchunk.size;
-                int16_t *destination = sampledata.data() + sample.start;
-                while (remaining > 0)
-                {
-                    uint32_t c = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
-                    if (fcbs->fread(buffer, c, file) != FLUID_OK)
-                    {
-                        FLUID_LOG(FLUID_ERR, "fcbs->fread failed when reading DLS data chunk");
-                        throw std::exception{};
-                    }
-
-                    read_data_lpcm(destination, buffer, c, bitsPerSample);
-
-                    destination += c / (bitsPerSample / 8);
-                    remaining -= c;
-                }
-                break;
+            READ16(this, temp16); // read channels
+            if (temp16 != 1)
+            {
+                throw std::runtime_error{ string_format("Unsupported wave channel count %u", temp16) };
             }
-            default:
-                FLUID_LOG(FLUID_WARN,
-                          "Unknown DLS chunk in LIST[wave] '" FMT_4CC_SPEC "'",
-                          FMT_4CC_ARG(subchunk.id));
+            READ32(this, temp32); // read sampleRate
+            sample.samplerate = temp32;
+            READ32(this, temp32); // read avgBytesPerSec
+            READ16(this, temp32); // read blockAlign
+            READ16(this, temp16); // read bitsPerSample
+            if (temp16 != 8 && temp16 != 16)
+            {
+                throw std::runtime_error{ string_format("Unsupported wave bits per sample %u", temp16) };
+            }
+            bitsPerSample = temp16;
+            // probably a cbSize field for WAVEFORMATEX
+            break;
+        }
+        case WSMP_FCC:
+            if (parse_wsmp(pos + headersize, sample.wsmp.emplace()) != subchunk.size)
+            {
+                throw std::runtime_error{ "DLS wsmp chunk in wave chunk has corrupted size" };
+            }
+            break;
+        case DATA_FCC: {
+            contains_data = true;
+            if (fmtTag == 0 || bitsPerSample == 0)
+            {
+                throw std::runtime_error{ "DLS fmt chunk must exist in wave chunk and be prior "
+                                          "to data chunk" };
+            }
+            if (fmtTag != WAVE_FORMAT_PCM)
+            {
+                break; // leave data to libsndfile
+            }
+            if (subchunk.size % (bitsPerSample / 8) != 0)
+            {
+                throw std::runtime_error{ "DLS data chunk not align to bitsPerSample" };
+            }
+            auto samplelen = subchunk.size / (bitsPerSample / 8);
+            sample.start = sampledata.size();
+            sample.end = sample.start + samplelen;
+            sampledata.resize(sampledata.size() + samplelen);
+
+            char buffer[4096];
+            uint32_t remaining = subchunk.size;
+            int16_t *destination = sampledata.data() + sample.start;
+            while (remaining > 0)
+            {
+                uint32_t c = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
+                if (fcbs->fread(buffer, c, file) != FLUID_OK)
+                {
+                    FLUID_LOG(FLUID_ERR, "fcbs->fread failed when reading DLS data chunk");
+                    throw std::exception{};
+                }
+
+                read_data_lpcm(destination, buffer, c, bitsPerSample);
+
+                destination += c / (bitsPerSample / 8);
+                remaining -= c;
+            }
+            break;
+        }
+        default:
+            FLUID_LOG(FLUID_WARN,
+                      "Unknown DLS chunk in LIST[wave] '" FMT_4CC_SPEC "'",
+                      FMT_4CC_ARG(subchunk.id));
         }
     });
 
@@ -2077,54 +2068,53 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
     visit_subchunks(offset, INS_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
         switch (subchunk.id)
         {
-            case DLID_FCC:
-            case CRS1_FCC:
-            case CRS2_FCC:
-                break;
-            case INFO_FCC:
-                instrument.name = read_name_from_info_entries(pos + headersize, subchunk.size);
-                break;
-            case INSH_FCC: {
-                if (subchunk.size != 12)
+        case DLID_FCC:
+        case CRS1_FCC:
+        case CRS2_FCC:
+            break;
+        case INFO_FCC:
+            instrument.name = read_name_from_info_entries(pos + headersize, subchunk.size);
+            break;
+        case INSH_FCC: {
+            if (subchunk.size != 12)
+            {
+                throw std::runtime_error{ "DLS insh chunk size != 12" };
+            }
+            uint32_t temp;
+            READ32(this, temp); // cRegions
+            instrument.regions.reserve(temp);
+            READ32(this, temp); // bank
+            instrument.is_drums = (temp & 0x80000000) != 0;
+            instrument.bankmsb = (temp >> 8) & 0x7F;
+            instrument.banklsb = temp & 0x7F;
+            READ32(this, temp);
+            instrument.pcnum = temp & 0x7F;
+            break;
+        }
+        case LART_FCC:
+        case LAR2_FCC:
+            if (articulation_index == static_cast<size_t>(-1))
+            {
+                articulation_index = articulations.size();
+                if (!parse_lart(pos, articulations.emplace_back())) // bypassed by cdl
                 {
-                    throw std::runtime_error{ "DLS insh chunk size != 12" };
+                    FLUID_LOG(FLUID_DBG, "A instrument lart chunk is bypassed by cdl");
+                    articulations.pop_back();
+                    articulation_index = static_cast<size_t>(-1);
                 }
-                uint32_t temp;
-                READ32(this, temp); // cRegions
-                instrument.regions.reserve(temp);
-                READ32(this, temp); // bank
-                instrument.is_drums = (temp & 0x80000000) != 0;
-                instrument.bankmsb = (temp >> 8) & 0x7F;
-                instrument.banklsb = temp & 0x7F;
-                READ32(this, temp);
-                instrument.pcnum = temp & 0x7F;
                 break;
             }
-            case LART_FCC:
-            case LAR2_FCC:
-                if (articulation_index == static_cast<size_t>(-1))
-                {
-                    articulation_index = articulations.size();
-                    if (!parse_lart(pos, articulations.emplace_back())) // bypassed by cdl
-                    {
-                        FLUID_LOG(FLUID_DBG, "A instrument lart chunk is bypassed by cdl");
-                        articulations.pop_back();
-                        articulation_index = static_cast<size_t>(-1);
-                    }
-                    break;
-                }
-                parse_lart(pos, articulations[articulation_index]);
-                instrument.keynum_scale = articulations[articulation_index].keynum_scale;
-                break;
-            case LRGN_FCC:
-                parse_lrgn(pos, instrument);
-                break;
-            default:
-                FLUID_LOG(FLUID_WARN,
-                          "Unknown DLS chunk '" FMT_4CC_SPEC
-                          "' ofs=0x%llx in LIST[ins]",
-                          FMT_4CC_ARG(subchunk.id),
-                          pos);
+            parse_lart(pos, articulations[articulation_index]);
+            instrument.keynum_scale = articulations[articulation_index].keynum_scale;
+            break;
+        case LRGN_FCC:
+            parse_lrgn(pos, instrument);
+            break;
+        default:
+            FLUID_LOG(FLUID_WARN,
+                      "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[ins]",
+                      FMT_4CC_ARG(subchunk.id),
+                      pos);
         }
     });
 
@@ -2250,27 +2240,26 @@ inline void fluid_dls_font::parse_lrgn(fluid_long_long_t offset, fluid_dls_instr
     visit_subchunks(offset, LRGN_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
         switch (subchunk.id)
         {
-            case RGN_FCC:
-            case RGN2_FCC: {
-                auto &region = instrument.regions.emplace_back();
-                if (!parse_rgn(pos, region)) // bypassed by cdl
-                {
-                    FLUID_LOG(FLUID_DBG, "Region ofs=0x%llx is bypassed by cdl", pos);
-                    instrument.regions.pop_back();
-                }
-                break;
+        case RGN_FCC:
+        case RGN2_FCC: {
+            auto &region = instrument.regions.emplace_back();
+            if (!parse_rgn(pos, region)) // bypassed by cdl
+            {
+                FLUID_LOG(FLUID_DBG, "Region ofs=0x%llx is bypassed by cdl", pos);
+                instrument.regions.pop_back();
             }
-            case CRS1_FCC:
-            case CRS2_FCC:
-                // see CRS1 and CRS2_FCC's comment
-                break;
-            default:
-                FLUID_LOG(FLUID_WARN,
-                          "Unknown DLS chunk '" FMT_4CC_SPEC
-                          "' ofs=0x%llx in LIST[lrgn]",
-                          FMT_4CC_ARG(subchunk.id),
-                          pos);
-                break;
+            break;
+        }
+        case CRS1_FCC:
+        case CRS2_FCC:
+            // see CRS1 and CRS2_FCC's comment
+            break;
+        default:
+            FLUID_LOG(FLUID_WARN,
+                      "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lrgn]",
+                      FMT_4CC_ARG(subchunk.id),
+                      pos);
+            break;
         }
     });
 }
@@ -2287,83 +2276,83 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
         visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize, fluid_long_long_t pos) {
             switch (subchunk.id)
             {
-                case INFO_FCC:
-                case CRS1_FCC:
-                case CRS2_FCC:
-                    break;
-                case WLNK_FCC:
-                    fskip(8); // fluidsynth does not implement phase-locking and multichannel output
-                    READ32(this, region.sampleindex);
-                    if (region.sampleindex >= samples.size())
+            case INFO_FCC:
+            case CRS1_FCC:
+            case CRS2_FCC:
+                break;
+            case WLNK_FCC:
+                fskip(8); // fluidsynth does not implement phase-locking and multichannel output
+                READ32(this, region.sampleindex);
+                if (region.sampleindex >= samples.size())
+                {
+                    throw std::runtime_error{ string_format("Sample index %u is out of range",
+                                                            static_cast<unsigned>(region.sampleindex)) };
+                }
+                break;
+            case CDL_FCC:
+                if (!execute_cdls(pos + headersize, subchunk.size))
+                {
+                    bypassed = true;
+                    throw std::exception{};
+                }
+                break;
+            case LART_FCC:
+            case LAR2_FCC:
+                if (articulation_index == static_cast<size_t>(-1))
+                {
+                    articulation_index = articulations.size();
+                    if (!parse_lart(pos, articulations.emplace_back()))
                     {
-                        throw std::runtime_error{ string_format("Sample index %u is out of range",
-                                                                static_cast<unsigned>(region.sampleindex)) };
+                        FLUID_LOG(FLUID_DBG, "A region lart chunk is bypassed by cdl");
+                        articulations.pop_back();
+                        articulation_index = static_cast<size_t>(-1);
                     }
-                    break;
-                case CDL_FCC:
-                    if (!execute_cdls(pos + headersize, subchunk.size))
-                    {
-                        bypassed = true;
-                        throw std::exception{};
-                    }
-                    break;
-                case LART_FCC:
-                case LAR2_FCC:
-                    if (articulation_index == static_cast<size_t>(-1))
-                    {
-                        articulation_index = articulations.size();
-                        if (!parse_lart(pos, articulations.emplace_back()))
-                        {
-                            FLUID_LOG(FLUID_DBG, "A region lart chunk is bypassed by cdl");
-                            articulations.pop_back();
-                            articulation_index = static_cast<size_t>(-1);
-                        }
-                        break;
-                    }
-                    parse_lart(pos, articulations[articulation_index]);
-                    if (articulations[articulation_index].keynum_scale != 1.0f)
-                    {
-                        FLUID_LOG(FLUID_WARN, "Key Number Generator is not allowed in region articulation, ignoring");
-                    }
-                    break;
-                case RGNH_FCC: {
-                    uint16_t temp;
-                    READ16(this, temp); // key low
-                    region.range.keylo = temp;
-                    READ16(this, temp); // key high
-                    region.range.keyhi = temp;
-                    READ16(this, temp); // vel low
-                    region.range.vello = temp;
-                    READ16(this, temp); // vel high
-                    region.range.velhi = temp;
-                    READ16(this, temp);                              // fusOptions
-                    if ((temp & F_RGN_OPTION_SELFNONEXCLUSIVE) == 0) // self-exclusive
-                    {
-                        // implement this flag doesn't make sense
-                        // region.exclusive_class = self_exclusive_class++;
-                    }
-                    READ16(this, temp); // keyGroup
-                    if (temp != 0)
-                    {
-                        region.exclusive_class = temp;
-                    }
-                    // usLayer is useless
                     break;
                 }
-                // DLS-2 1.14.6 Each region contains at minimum a <rgnh-ck> region header chunk and a <wlnk-ck> wave link chunk.
-                // It may also **optionally** contain a <wsmp-ck> wave sample chunk. ...
-                // DLS-2 2.2 <rgn-list> -> ... <wsmp-ck> ...
-                // DLS-2 2.2 "the structure tree" ... rgn -> ... wsmp (optional) ...
-                // DLS-2 2.8 Other chunks at the same nesting level include a <wsmp-ck> wave sample chunk.
-                case WSMP_FCC:
-                    parse_wsmp(pos + headersize, region.wsmp.emplace());
-                    break;
-                default:
-                    FLUID_LOG(FLUID_WARN,
-                              "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[rgn]",
-                              FMT_4CC_ARG(subchunk.id),
-                              pos);
-                    break;
+                parse_lart(pos, articulations[articulation_index]);
+                if (articulations[articulation_index].keynum_scale != 1.0f)
+                {
+                    FLUID_LOG(FLUID_WARN, "Key Number Generator is not allowed in region articulation, ignoring");
+                }
+                break;
+            case RGNH_FCC: {
+                uint16_t temp;
+                READ16(this, temp); // key low
+                region.range.keylo = temp;
+                READ16(this, temp); // key high
+                region.range.keyhi = temp;
+                READ16(this, temp); // vel low
+                region.range.vello = temp;
+                READ16(this, temp); // vel high
+                region.range.velhi = temp;
+                READ16(this, temp);                              // fusOptions
+                if ((temp & F_RGN_OPTION_SELFNONEXCLUSIVE) == 0) // self-exclusive
+                {
+                    // implement this flag doesn't make sense
+                    // region.exclusive_class = self_exclusive_class++;
+                }
+                READ16(this, temp); // keyGroup
+                if (temp != 0)
+                {
+                    region.exclusive_class = temp;
+                }
+                // usLayer is useless
+                break;
+            }
+            // DLS-2 1.14.6 Each region contains at minimum a <rgnh-ck> region header chunk and a <wlnk-ck> wave link chunk.
+            // It may also **optionally** contain a <wsmp-ck> wave sample chunk. ...
+            // DLS-2 2.2 <rgn-list> -> ... <wsmp-ck> ...
+            // DLS-2 2.2 "the structure tree" ... rgn -> ... wsmp (optional) ...
+            // DLS-2 2.8 Other chunks at the same nesting level include a <wsmp-ck> wave sample chunk.
+            case WSMP_FCC:
+                parse_wsmp(pos + headersize, region.wsmp.emplace());
+                break;
+            default:
+                FLUID_LOG(FLUID_WARN,
+                          "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[rgn]",
+                          FMT_4CC_ARG(subchunk.id),
+                          pos);
+                break;
             }
         });
     }
@@ -2405,17 +2394,17 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data) noe
 
     switch (whence)
     {
-        case SEEK_SET:
-            newpos = offset;
-            break;
-        case SEEK_CUR:
-            newpos += offset;
-            break;
-        case SEEK_END:
-            newpos = data->size + offset;
-            break;
-        default:
-            return data->pos;
+    case SEEK_SET:
+        newpos = offset;
+        break;
+    case SEEK_CUR:
+        newpos += offset;
+        break;
+    case SEEK_END:
+        newpos = data->size + offset;
+        break;
+    default:
+        return data->pos;
     }
 
     newpos = std::clamp(newpos, 0LL, data->size);
