@@ -152,11 +152,11 @@ jobs:
         @ECHO ON
         cd build
         cmake --build . --config Release --target install || exit /b 1
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul
-        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x86" 2>nul
-        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x64" 2>nul
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul || exit 0
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul || exit 0
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul || exit 0
+        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x86" 2>nul || exit 0
+        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x64" 2>nul || exit 0
 
     - name: Validate library
       shell: bash
