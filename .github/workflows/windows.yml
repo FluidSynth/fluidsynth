@@ -76,7 +76,7 @@ jobs:
       shell: bash
       working-directory: ${{env.INSTALL_LOCATION}}
       run: |
-        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.dll.a" ]; then
+        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth.dll.a" ]; then
           echo "Fluidsynth library has unexpected filename!"
           ls -la . bin lib
           exit -1
