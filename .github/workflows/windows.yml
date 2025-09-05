@@ -8,6 +8,8 @@ on:
       - '.azure/**'
       - '.circleci/**'
       - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/solaris.yml'
+      - '.github/workflows/linux.yml'
       - '.cirrus.yml'
       - 'README.md'
 
@@ -36,7 +38,9 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
 
     - name: '${{ matrix.icon }} Setup MSYS2'
       uses: msys2/setup-msys2@v2

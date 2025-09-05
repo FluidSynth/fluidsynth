@@ -119,7 +119,7 @@ Developers:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel. PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this.
+                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel (PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this). This involves memory allocation, which is not realtime safe! So only enable this in non-realtime scenarios! E.g. when rendering to a WAVE file using the fast-file-renderer.
             </desc>
         </setting>
         <setting>
