@@ -1,6 +1,6 @@
 name: Fluidsynth Windows
 
-"on":
+on:
   workflow_dispatch:
   pull_request:
   push:
@@ -35,34 +35,34 @@ jobs:
         include:
           - platform: Win32
             platformAlt: x86
-            artifactPrefix: "fluidsynth"
+            osal: "glib"
             CFLAGS: ""
             CXXFLAGS: ""
-            CMAKEFLAGS: "-Denable-libinstpatch=0"
+            CMAKEFLAGS: ""
             dep_arch: "x86"
           - platform: Win32
             platformAlt: x86
-            artifactPrefix: "fluidsynth-cpp11"
+            osal: "cpp11"
             CFLAGS: "/arch:IA32"
             CXXFLAGS: "/arch:IA32"
-            CMAKEFLAGS: "-Denable-libinstpatch=0 -Dosal=cpp11"
+            CMAKEFLAGS: ""
             dep_arch: "x86"
           - platform: x64
             platformAlt: x64
-            artifactPrefix: "fluidsynth"
+            osal: "glib"
             CFLAGS: ""
             CXXFLAGS: ""
-            CMAKEFLAGS: "-Denable-libinstpatch=0"
+            CMAKEFLAGS: ""
             dep_arch: "x64"
           - platform: x64
             platformAlt: x64
-            artifactPrefix: "fluidsynth-cpp11"
+            osal: "cpp11"
             CFLAGS: ""
             CXXFLAGS: ""
-            CMAKEFLAGS: "-Denable-libinstpatch=0 -Dosal=cpp11"
+            CMAKEFLAGS: ""
             dep_arch: "x64"
     
-    name: 🔨 MSVC ${{ matrix.platform }} ${{ matrix.artifactPrefix }}
+    name: 🔨 MSVC ${{ matrix.platformAlt }} ${{ matrix.osal }}
     
     steps:
     - name: Checkout code
@@ -118,6 +118,7 @@ jobs:
         cmake -Werror=dev -A ${{ matrix.platform }} -T v143 ^
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
           -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl2=0 ^
+          -Dosal=${{ matrix.osal }} -Denable-libinstpatch=0 -Denable-dls=1 ^
           ${{ matrix.CMAKEFLAGS }} -DCMAKE_BUILD_TYPE=Release ^
           -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
           -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
@@ -168,10 +169,20 @@ jobs:
           exit 1
         fi
 
+    - name: Set artifact name
+      shell: bash
+      id: artifact_name
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "name=fluidsynth-${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "name=CI-${{ github.run_id }}" >> $GITHUB_OUTPUT
+        fi
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifactPrefix }}-${{ matrix.platform }}
+        name: ${{ steps.artifact_name.outputs.name }}-win10-${{ matrix.platformAlt }}-${{ matrix.osal }}
         path: ${{ env.INSTALL_LOCATION }}
         retention-days: 14
         overwrite: true
@@ -288,7 +299,7 @@ jobs:
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
             sdl3-subdir: 'x86_64-w64-mingw32'
     
-    name: 🔧 MinGW ${{ matrix.artifactPrefix }}
+    name: 🔧 MinGW ${{ matrix.artifactPrefix }} ${{ matrix.platform }}
     
     steps:
     - name: Checkout code
@@ -425,7 +436,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifactPrefix }}-${{ matrix.platform }}
+        name: CI-${{ github.run_id }}-mingw-${{ matrix.artifactPrefix }}-${{ matrix.platform }}
         path: ${{ env.INSTALL_LOCATION }}
         retention-days: 14
         overwrite: true
@@ -497,7 +508,7 @@ jobs:
     - name: '${{ matrix.icon }} Upload Artifacts'
       uses: actions/upload-artifact@v4
       with:
-        name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}-${{matrix.osal}}
+        name: CI-${{ github.run_id }}-msys2-${{matrix.sys}}-${{matrix.osal}}
         path: ${{env.INSTALL_LOCATION}}
         retention-days: 14
         overwrite: true
@@ -505,31 +516,33 @@ jobs:
   # Publish artifacts to GitHub releases (only on release events)
   publish-release:
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: [msvc-build, mingw-build]
+    needs: [msvc-build]
     runs-on: ubuntu-latest
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
         path: artifacts
+        pattern: fluidsynth-*
+        merge-multiple: false
+        tag_name: ${{ github.event.release.tag_name }}
         
     - name: Create release archives
       run: |
         cd artifacts
+        ls -la
         for dir in */; do
           if [[ "$dir" == fluidsynth* ]]; then
             echo "Creating archive for $dir"
-            tar -czf "${dir%/}.tar.gz" -C "$dir" .
             zip -r "${dir%/}.zip" "$dir"
           fi
         done
-        ls -la *.tar.gz *.zip
+        ls -la *.zip
 
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          artifacts/*.tar.gz
           artifacts/*.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -538,68 +551,41 @@ jobs:
   announce-release:
     if: github.event_name == 'release' && github.event.action == 'published'
     needs: [publish-release]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-    - name: Create announcement PR
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const { owner, repo } = context.repo;
-          const tagName = context.payload.release.tag_name;
-          const releaseName = context.payload.release.name || tagName;
-          const releaseDate = new Date().toISOString().split('T')[0];
-          
-          // Extract version from tag (remove 'v' prefix if present)
-          const version = tagName.replace(/^v/, '');
-          
-          // Create post content
-          const postContent = `---
-          title: Released FluidSynth ${version}
-          author: GitHub Actions
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Generate HTML Release Announcement
+        run: |
+          set -e
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          RELEASE_NAME="${{ github.event.release.name }}"
+          VERSION="${TAG_NAME#v}"
+          DATE="$(date +%Y-%m-%d)"
+          FILENAME="${DATE}-released-fluidsynth-${VERSION//./-}.md"
+          mkdir -p release_announcement
+          cat > release_announcement/$FILENAME <<EOF
+          ---
+          title: Released FluidSynth ${VERSION}
+          author: Tom Moebert
           layout: post
           ---
           
-          A stable version of fluidsynth ${version} has been released. Details can be found in the release notes:
+          A maintenance release for fluidsynth has been released. Details can be found in the release notes:
           
-          <https://github.com/FluidSynth/fluidsynth/releases/tag/${tagName}>
-          `;
-          
-          // Create the post filename
-          const postFilename = `${releaseDate}-released-fluidsynth-${version.replace(/\./g, '-')}.md`;
-          
-          try {
-            // Create PR in website repository
-            const pr = await github.rest.pulls.create({
-              owner: 'FluidSynth',
-              repo: 'fluidsynth.github.io',
-              title: `Add release announcement for FluidSynth ${version}`,
-              head: `release-announcement-${version}`,
-              base: 'main',
-              body: `Automated PR to announce the release of FluidSynth ${version}.
-              
-              This PR adds a new blog post announcing the release.
-              `,
-              draft: false
-            });
-            
-            console.log('Created PR:', pr.data.html_url);
-          } catch (error) {
-            console.log('Failed to create PR:', error.message);
-            // Create an issue instead if PR creation fails
-            const issue = await github.rest.issues.create({
-              owner: 'FluidSynth', 
-              repo: 'fluidsynth.github.io',
-              title: `Release announcement needed for FluidSynth ${version}`,
-              body: `A new release ${version} has been published, but automatic PR creation failed.
-              
-              Please manually create a blog post at \`_posts/${postFilename}\` with this content:
-              
-              \`\`\`markdown
-              ${postContent}
-              \`\`\`
-              
-              Release URL: ${context.payload.release.html_url}`
-            });
-            console.log('Created issue instead:', issue.data.html_url);
-          }
+          <https://github.com/FluidSynth/fluidsynth/releases/tag/${TAG_NAME}>
+
+      - name: Publish Announcement to GH Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: release_announcement
+          repository-name: FluidSynth/fluidsynth.github.io
+          branch: main
+          target-folder: _posts/
+          token: ${{ secrets.DEPLOY_API_TOKEN_NEW }}
+          clean: false
+          commit-message: Announce FluidSynth ${{ github.event.release.tag_name }}
+          git-config-name: Fluid Release Announcer
+          git-config-email: fluid-release-bot@fluidsynth.github.io
