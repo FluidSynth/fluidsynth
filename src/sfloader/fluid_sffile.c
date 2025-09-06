@@ -805,7 +805,7 @@ static int process_info(SFData *sf, int size)
                 }
             }
         }
-        ignore_chunk:
+
         size -= chunk.size;
     }
 
