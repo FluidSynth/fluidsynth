@@ -721,13 +721,70 @@ static int process_info(SFData *sf, int size)
         }
         else
         {
-            if(chunkid(chunk.id) != UNKN_ID)
+            int is_info_chunk_256 = 0;
+            switch (chunk.id)
             {
-                if((chunk.id != ICMT_FCC && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
+                default:
+                    break;
+                case ISNG_FCC:
+                case INAM_FCC:
+                case IROM_FCC:
+                case ICRD_FCC:
+                case IENG_FCC:
+                case IPRD_FCC:
+                case ICOP_FCC:
+                case ISFT_FCC:
+                    is_info_chunk_256 = 1;
+                    break;
+            }
+
+            if (chunk.size % 2)
+            {
+                FLUID_LOG(FLUID_ERR,
+                          "INFO sub chunk %.4s has odd size of %d bytes, in violation of RIFF "
+                          "spec. Rejecting file as structurally defective.",
+                          (char *)&chunk.id,
+                          chunk.size);
+                return FALSE;
+            }
+
+            if (is_info_chunk_256 || chunk.id == ICMT_FCC)
+            {
+                if ((is_info_chunk_256 && chunk.size > 256) || (chunk.id == ICMT_FCC && chunk.size > 65536))
                 {
-                    FLUID_LOG(FLUID_ERR, "INFO sub chunk %.4s has invalid chunk size of %d bytes",
-                              (char *)&chunk.id, chunk.size);
-                    return FALSE;
+                    FLUID_LOG(FLUID_WARN,
+                              "Well known INFO sub chunk %.4s has invalid chunk size of %d bytes, "
+                              "discarding chunk.",
+                              (char *)&chunk.id,
+                              chunk.size);
+
+                    if (sf->fcbs->fseek(sf->sffd, chunk.size, SEEK_CUR) == FLUID_FAILED)
+                    {
+                        return FALSE;
+                    }
+                }
+                else
+                {
+                    /* alloc for chunk fcc and da chunk */
+                    if (!(item.fcc = FLUID_MALLOC(chunk.size + sizeof(uint32_t) + 1)))
+                    {
+                        FLUID_LOG(FLUID_PANIC, "Out of memory");
+                        return FALSE;
+                    }
+
+                    /* attach to INFO list, fluid_sffile_close will cleanup if FAIL occurs */
+                    sf->info = fluid_list_append(sf->info, item.fcc);
+
+                    /* save chunk fcc and update pointer to data value */
+                    *item.fcc++ = chunk.id;
+
+                    if (sf->fcbs->fread(item.chr, chunk.size, sf->sffd) == FLUID_FAILED)
+                    {
+                        return FALSE;
+                    }
+
+                    /* force terminate info item */
+                    item.chr[chunk.size] = '\0';
                 }
             }
             else
@@ -738,32 +795,17 @@ static int process_info(SFData *sf, int size)
                  * Other unknown chunks or sub-chunks are illegal and should be
                  * treated as structural errors.*/
                 unsigned char *p = (unsigned char *)&chunk.id;
-                FLUID_LOG(FLUID_WARN, "Ignoring unknown chunk ID '%c%c%c%c' in INFO chunk",
+                FLUID_LOG(FLUID_WARN, "Ignoring %s chunk ID '%c%c%c%c' in INFO chunk",
+                          (chunkid(chunk.id) == UNKN_ID) ? "unknown" : "unexpected",
                           p[0], p[1], p[2], p[3]);
+
+                if (sf->fcbs->fseek(sf->sffd, chunk.size, SEEK_CUR) == FLUID_FAILED)
+                {
+                    return FALSE;
+                }
             }
-
-            /* alloc for chunk fcc and da chunk */
-            if(!(item.fcc = FLUID_MALLOC(chunk.size + sizeof(uint32_t) + 1)))
-            {
-                FLUID_LOG(FLUID_PANIC, "Out of memory");
-                return FALSE;
-            }
-
-            /* attach to INFO list, fluid_sffile_close will cleanup if FAIL occurs */
-            sf->info = fluid_list_append(sf->info, item.fcc);
-
-            /* save chunk fcc and update pointer to data value */
-            *item.fcc++ = chunk.id;
-
-            if(sf->fcbs->fread(item.chr, chunk.size, sf->sffd) == FLUID_FAILED)
-            {
-                return FALSE;
-            }
-
-            /* force terminate info item */
-            item.chr[chunk.size] = '\0';
         }
-
+        ignore_chunk:
         size -= chunk.size;
     }
 
