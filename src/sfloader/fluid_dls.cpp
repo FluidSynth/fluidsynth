@@ -2227,10 +2227,6 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
             trans = static_cast<uint16_t>(dlsv2trans);
         }
         READ32(this, scale);
-        if (source == CONN_SRC_KEYNUMBER && dest == CONN_DST_PITCH)
-        {
-            FLUID_LOG(FLUID_WARN, "found keyNumToPitch at 0x%llx, %u", offset, i);
-        }
         convert_dls_connectionblock_to_art(articulation, source, control, dest, trans, scale);
     }
 }
@@ -2727,30 +2723,14 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
 
     // key with subtonal tuning and key number generator applied
     const int tuned_key = static_cast<int>(std::round(tuned_key_f));
-    const bool has_tuning = synth->channel[chan]->tuning != nullptr;
     // key with only key number generator applied
-    int adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
+    const int adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
 
     for (auto &region : dlspreset->regions)
     {
         if (!fluid_zone_inside_range(&region.range, tuned_key, vel))
         {
             continue;
-        }
-
-        float keyNumToPitch = 12800.0f;
-        if (region.artindex != static_cast<uint32_t>(-1))
-        {
-            keyNumToPitch = dlspreset->articulations[region.artindex].keyToPitch.amount;
-        }
-        // when subtonal tuning is enabled, the keyNumToPitch implementation below
-        // (see the `if (!has_tuning)` line)
-        // is not correct, see the equations in the comment there.
-        // So here keyNumToPitch is implemented like Key Number Generator,
-        // but region selection is unaffected.
-        if (has_tuning)
-        {
-            adjusted_key = static_cast<int>(std::round(adjusted_key * keyNumToPitch / 12800.0f));
         }
 
         auto *voice = fluid_synth_alloc_voice_LOCAL(
@@ -2760,8 +2740,6 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
         {
             return FLUID_FAILED;
         }
-
-        float rootkey = dlspreset->samples_fluid[region.sampleindex].origpitch;
 
         if (region.artindex != static_cast<uint32_t>(-1))
         {
@@ -2778,6 +2756,11 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                 // there is only 10 standard default modulators
                 fluid_voice_add_mod_local(voice, &mod, FLUID_VOICE_OVERWRITE, 10);
             }
+
+            // See also https://github.com/FluidSynth/fluidsynth/pull/1626 conversation for "Key Number to Pitch" articulation implementation
+            fluid_voice_gen_set(voice,
+                                GEN_SCALETUNE,
+                                dlspreset->articulations[region.artindex].keyToPitch.amount / 128.0);
         }
 
         if (region.wsmp.has_value())
@@ -2785,7 +2768,6 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
             const auto &wsmp = region.wsmp.value();
             const auto &sample = dlspreset->samples_fluid[region.sampleindex];
 
-            rootkey = wsmp.unity_note;
             fluid_voice_gen_set(voice, GEN_OVERRIDEROOTKEY, wsmp.unity_note);
             fluid_voice_gen_incr(voice, GEN_FINETUNE, wsmp.fine_tune - sample.pitchadj);
             fluid_voice_gen_incr(voice, GEN_ATTENUATION, -wsmp.gain / 65536.0f);
@@ -2827,17 +2809,6 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
         }
 
         fluid_voice_gen_set(voice, GEN_EXCLUSIVECLASS, region.exclusive_class);
-
-        if (!has_tuning)
-        {
-            // pitch adjustment of keyNumToPitch
-            // sf2:               scaletuning * (key - rootkey)
-            // sf2 (with tuning): scaletuning / 100 * (tpitch(key) - tpitch(rootkey))
-            // dls:               keynumtopitch / 128 * key - 100 * rootkey
-            // dls (with tuning): tpitch(keynumtopitch / 12800 * key) - tpitch(rootkey)
-            fluid_voice_gen_set(voice, GEN_SCALETUNE, keyNumToPitch / 128.0f);
-            fluid_voice_gen_incr(voice, GEN_FINETUNE, (keyNumToPitch / 128.0f * rootkey) - (100.0f * rootkey));
-        }
 
         fluid_synth_start_voice(synth, voice);
     }
