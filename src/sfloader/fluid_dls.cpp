@@ -1157,6 +1157,17 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
     // transform.out_trans is ignored because unsupported
     mod.trans = FLUID_MOD_TRANSFORM_LINEAR;
 
+    if (mod.src1 == FLUID_MOD_VELOCITY && mod.dest == GEN_ATTENUATION && (mod.flags1 & FLUID_MOD_CONCAVE) != 0)
+    {
+        // confirmed as vel2att modulator
+        // fix when non-inverted (postive), this is seen in Fury.dls from https://www.ronimusic.com/smp_ios_dls_files.htm
+        if ((mod.flags1 & FLUID_MOD_NEGATIVE) == 0) 
+        {
+            FLUID_LOG(FLUID_DBG, "Fixing non-inverted vel2att modulator to inverted");
+            mod.flags1 |= FLUID_MOD_NEGATIVE;
+        }
+    }
+
     art.add_mod(mod);
 }
 
