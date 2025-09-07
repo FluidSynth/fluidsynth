@@ -299,6 +299,7 @@ struct fluid_dls_articulation
                 return;
             }
         }
+        mods.push_back(mod);
     }
 };
 
