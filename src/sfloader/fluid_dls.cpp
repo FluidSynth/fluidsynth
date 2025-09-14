@@ -349,14 +349,34 @@ struct fluid_dls_instrument
     std::string name;
     std::vector<fluid_dls_region> regions;
 
-    fluid_preset_t fluid{}; // its user data is `this` (fluid_dls_instrument*)
-
     fluid_sample_t *samples_fluid;
     fluid_dls_articulation *articulations;
     fluid_synth_t *synth;
+    uint8_t *drum_note_aliasing;
 
     // see fluid_dls_articulation::keynum_scale
     fluid_real_t keynum_scale = 1.0;
+
+    struct fluid_dls_instrument_alias
+    {
+        int pcnum;
+        int bankmsb;
+        int banklsb;
+    };
+
+    // for 'pgal' chunk in MobileBAE DLS banks
+    std::vector<fluid_dls_instrument_alias> aliases;
+};
+
+struct fluid_dls_instrument_fluid_data
+{
+    int pcnum;
+    int bankmsb;
+    int banklsb;
+    bool is_drums;
+
+    fluid_preset_t fluid{};           // its user data is `this` (fluid_dls_instrument_fluid_data*)
+    fluid_dls_instrument *instrument; // backing instrument
 };
 
 struct DLSID;
@@ -384,6 +404,10 @@ struct fluid_dls_font
     fluid_long_long_t linsoffset{};
     fluid_long_long_t wvploffset{};
 
+    // offset to chunk data
+    fluid_long_long_t pgaloffset{};
+    fluid_long_long_t pgalsize{};
+
     // this MUST NOT be modified after initialization, because of probable mlock
     std::vector<int16_t> sampledata;
     mlock_guard sampledata_mlock;
@@ -392,12 +416,19 @@ struct fluid_dls_font
     std::vector<fluid_dls_sample> samples;
     // this MUST NOT be modified after initialization, because of instrument.articulations pointer
     std::vector<fluid_dls_articulation> articulations;
-    // this MUST NOT be modified after initialization, because of instrument.fluid self-reference
+    // this MUST NOT be modified after initialization, because of fluid_dls_instrument_fluid_data points to this
     std::vector<fluid_dls_instrument> instruments;
+    // this MUST NOT be modified after initialization, because of self-reference
+    std::vector<fluid_dls_instrument_fluid_data> instruments_fluid_data;
     // this MUST NOT be modified after initialization, because of instrument.samples_fluid pointer
     std::vector<fluid_sample_t> samples_fluid;
 
-    decltype(instruments)::iterator fluid_preset_iterator;
+    // for 'pgal' chunk in MobileBAE DLS banks
+    std::optional<std::array<uint8_t, 128>> drum_note_aliasing;
+
+    decltype(instruments_fluid_data)::iterator fluid_preset_iterator;
+
+    fluid_long_long_t total_presets{}; // total number of presets, including aliases
 
     // ---
 
@@ -445,6 +476,10 @@ struct fluid_dls_font
     inline void parse_art(fluid_long_long_t offset, fluid_dls_articulation &articulation);
     inline void parse_lrgn(fluid_long_long_t offset, fluid_dls_instrument &instrument);
     inline bool parse_rgn(fluid_long_long_t offset, fluid_dls_region &region);
+
+    // pgal, offset is at chunk data
+    // see PGAL_FCC
+    inline void parse_pgal(fluid_long_long_t offset, int size);
 
     // info
     inline std::string read_name_from_info_entries(fluid_long_long_t offset, uint32_t size);
@@ -552,6 +587,10 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 // The 'crs2' chunk is also seen in Crystal's DLS.
 // But it has correct size (0 bytes!)
 #define CRS2_FCC FLUID_FOURCC('c', 'r', 's', '2')
+
+// MobileBAE proprietary chunk for instrument aliasing
+// https://lpcwiki.miraheze.org/wiki/MobileBAE#Proprietary_instrument_aliasing_chunk
+#define PGAL_FCC FLUID_FOURCC('p', 'g', 'a', 'l')
 
 // info
 #define INAM_FCC FLUID_FOURCC('I', 'N', 'A', 'M')
@@ -1161,7 +1200,7 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
     {
         // confirmed as vel2att modulator
         // fix when non-inverted (postive), this is seen in Fury.dls from https://www.ronimusic.com/smp_ios_dls_files.htm
-        if ((mod.flags1 & FLUID_MOD_NEGATIVE) == 0) 
+        if ((mod.flags1 & FLUID_MOD_NEGATIVE) == 0)
         {
             FLUID_LOG(FLUID_DBG, "Fixing non-inverted vel2att modulator to inverted");
             mod.flags1 |= FLUID_MOD_NEGATIVE;
@@ -1457,6 +1496,10 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             case WVPL_FCC:
                 wvploffset = pos;
                 break;
+            case PGAL_FCC:
+                pgaloffset = pos + headersize;
+                pgalsize = subchunk.size;
+                break;
             default:
                 // clang-format off
                     FLUID_LOG(FLUID_WARN,
@@ -1520,6 +1563,20 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     }
 
     FLUID_LOG(FLUID_DBG, "DLS %zu instruments read", instruments.size());
+
+    // Parse 'pgal'
+    total_presets = instruments.size();
+    if (pgalsize != 0)
+    {
+        try
+        {
+            parse_pgal(pgaloffset, pgalsize);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error{ "Exception thrown while parsing pgal" });
+        }
+    }
 
     // convert dls samples to fluid samples
 
@@ -1614,20 +1671,68 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                   return lhs.bankmsb * 128 + lhs.banklsb < rhs.bankmsb * 128 + rhs.banklsb;
               });
 
+    std::sort(instruments_fluid_data.begin(),
+              instruments_fluid_data.end(),
+              [](const fluid_dls_instrument_fluid_data &lhs, const fluid_dls_instrument_fluid_data &rhs) {
+                  if (lhs.bankmsb * 128 + lhs.banklsb == rhs.bankmsb * 128 + rhs.banklsb)
+                  {
+                      return lhs.pcnum < rhs.pcnum;
+                  }
+                  return lhs.bankmsb * 128 + lhs.banklsb < rhs.bankmsb * 128 + rhs.banklsb;
+              });
+
     // convert instruments to fluid presets
+    instruments_fluid_data.reserve(total_presets);
     for (auto &instrument : instruments)
     {
         instrument.samples_fluid = samples_fluid.data();
         instrument.articulations = articulations.data();
-
-        instrument.fluid.sfont = sfont;
         instrument.synth = synth;
-        instrument.fluid.get_name = fluid_dls_preset_get_name;
-        instrument.fluid.get_banknum = fluid_dls_preset_get_banknum;
-        instrument.fluid.get_num = fluid_dls_preset_get_num;
-        instrument.fluid.noteon = fluid_dls_preset_noteon;
-        instrument.fluid.free = fluid_dls_preset_free;
-        instrument.fluid.data = &instrument;
+        if (drum_note_aliasing.has_value())
+        {
+            instrument.drum_note_aliasing = drum_note_aliasing.value().data();
+        }
+        else
+        {
+            instrument.drum_note_aliasing = nullptr;
+        }
+
+        auto &self_data = instruments_fluid_data.emplace_back();
+        self_data.banklsb = instrument.banklsb;
+        self_data.bankmsb = instrument.bankmsb;
+        self_data.pcnum = instrument.pcnum;
+        self_data.is_drums = instrument.is_drums;
+        self_data.instrument = &instrument;
+        self_data.fluid.sfont = sfont;
+        self_data.fluid.get_name = fluid_dls_preset_get_name;
+        self_data.fluid.get_banknum = fluid_dls_preset_get_banknum;
+        self_data.fluid.get_num = fluid_dls_preset_get_num;
+        self_data.fluid.noteon = fluid_dls_preset_noteon;
+        self_data.fluid.free = fluid_dls_preset_free;
+        self_data.fluid.data = &self_data;
+        self_data.fluid.notify = nullptr;
+
+        for (auto &alias : instrument.aliases)
+        {
+            auto &alias_data = instruments_fluid_data.emplace_back();
+            alias_data.banklsb = alias.banklsb;
+            alias_data.bankmsb = alias.bankmsb;
+            alias_data.pcnum = alias.pcnum;
+            alias_data.is_drums = false;
+            alias_data.instrument = &instrument;
+            alias_data.fluid.sfont = sfont;
+            alias_data.fluid.get_name = fluid_dls_preset_get_name;
+            alias_data.fluid.get_banknum = fluid_dls_preset_get_banknum;
+            alias_data.fluid.get_num = fluid_dls_preset_get_num;
+            alias_data.fluid.noteon = fluid_dls_preset_noteon;
+            alias_data.fluid.free = fluid_dls_preset_free;
+            alias_data.fluid.data = &alias_data;
+            alias_data.fluid.notify = nullptr;
+        }
+
+        // instrument.aliases is not used anymore, free it
+        instrument.aliases.clear();
+        instrument.aliases.shrink_to_fit();
     }
 }
 
@@ -2378,6 +2483,66 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
     return true;
 }
 
+inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
+{
+    if (size < 4 + 128 + 4)
+    {
+        throw std::runtime_error{ string_format("DLS pgal chunk is too small: %d bytes", size) };
+    }
+    fseek(offset, SEEK_SET);
+
+    // drum note aliasing table
+    fskip(4);
+    drum_note_aliasing.emplace();
+    if (fcbs->fread(drum_note_aliasing->data(), 128, file) != FLUID_OK)
+    {
+        throw std::runtime_error{ "Failed to read drum note aliasing table" };
+    }
+    fskip(4);
+
+    // melodic instrument aliasing table
+    int remaining = size - (4 + 128 + 4);
+    while (remaining >= 8)
+    {
+        uint16_t bank;
+        uint8_t pc;
+        uint16_t bank2;
+        uint8_t pc2;
+
+        READ16(this, bank2);
+        READ8(this, pc2);
+        fskip(1);
+
+        READ16(this, bank);
+        READ8(this, pc);
+        fskip(1);
+
+        for (auto &instrument : instruments)
+        {
+            if (instrument.banklsb == (bank & 0x7F) && instrument.bankmsb == ((bank >> 7) & 0x7F) &&
+                instrument.pcnum == pc)
+            {
+                instrument.aliases.push_back(fluid_dls_instrument::fluid_dls_instrument_alias{
+                pc2, (bank2 >> 7) & 0x7F, bank2 & 0x7F });
+                total_presets++;
+                goto found_inst;
+            }
+        }
+        FLUID_LOG(FLUID_WARN,
+                  "DLS pgal chunk aliasing from non-existing instrument: "
+                  "bank %u/%u pc %u -> bank %u/%u pc %u",
+                  (bank >> 7) & 0x7F,
+                  bank & 0x7F,
+                  pc,
+                  (bank2 >> 7) & 0x7F,
+                  bank2 & 0x7F,
+                  pc2);
+    found_inst:
+
+        remaining -= 8;
+    }
+}
+
 // libsndfile
 #if LIBSNDFILE_SUPPORT
 struct sfvio_data
@@ -2608,7 +2773,7 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
 
-    for (auto &inst : dlsfont->instruments)
+    for (auto &inst : dlsfont->instruments_fluid_data)
     {
         if (fluid_dls_preset_get_banknum(&inst.fluid) == bank && inst.pcnum == prenum)
         {
@@ -2618,7 +2783,7 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
 
     if (dlsfont->synth->bank_select == FLUID_BANK_STYLE_MMA)
     {
-        for (auto &inst : dlsfont->instruments)
+        for (auto &inst : dlsfont->instruments_fluid_data)
         {
             // Drum bank fallback for MMA bank style
             if (bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
@@ -2630,7 +2795,7 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
 
     if (dlsfont->synth->bank_select == FLUID_BANK_STYLE_GM)
     {
-        for (auto &inst : dlsfont->instruments)
+        for (auto &inst : dlsfont->instruments_fluid_data)
         {
             // Melodic bank fallback for GM2 bank style
             if (bank == 0 && !inst.is_drums && inst.bankmsb == 0x79 && inst.pcnum == prenum)
@@ -2646,13 +2811,13 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
 static void fluid_dls_iteration_start(fluid_sfont_t *sfont) noexcept
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
-    dlsfont->fluid_preset_iterator = dlsfont->instruments.begin();
+    dlsfont->fluid_preset_iterator = dlsfont->instruments_fluid_data.begin();
 }
 
 static fluid_preset_t *fluid_dls_iteration_next(fluid_sfont_t *sfont) noexcept
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
-    if (dlsfont->fluid_preset_iterator == dlsfont->instruments.end())
+    if (dlsfont->fluid_preset_iterator == dlsfont->instruments_fluid_data.end())
     {
         return nullptr;
     }
@@ -2671,19 +2836,20 @@ static int fluid_dls_sfont_delete(fluid_sfont_t *sfont) noexcept
 
 static const char *fluid_dls_preset_get_name(fluid_preset_t *preset) noexcept
 {
-    return static_cast<const fluid_dls_instrument *>(fluid_preset_get_data(preset))->name.c_str();
+    return static_cast<const fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset))
+    ->instrument->name.c_str();
 }
 
 static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
 {
-    const auto *inst = static_cast<const fluid_dls_instrument *>(fluid_preset_get_data(preset));
-    const auto *synth = inst->synth;
+    const auto *inst = static_cast<const fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset));
+    const auto *synth = inst->instrument->synth;
 
     // see fluid_synth.h enum fluid_midi_bank_select
     // see fluid_chan.c fluid_channel_set_bank_msb()
     if (synth->bank_select == FLUID_BANK_STYLE_GM)
     {
-        if (inst->is_drums)
+        if (inst->is_drums || inst->bankmsb == 0x78) // GM2 rhythm bank
         {
             return DRUM_INST_BANK;
         }
@@ -2713,12 +2879,12 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
 
 static int fluid_dls_preset_get_num(fluid_preset_t *preset) noexcept
 {
-    return static_cast<const fluid_dls_instrument *>(fluid_preset_get_data(preset))->pcnum;
+    return static_cast<const fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset))->pcnum;
 }
 
 static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth, int chan, int key, int vel) noexcept
 {
-    auto *dlspreset = static_cast<fluid_dls_instrument *>(fluid_preset_get_data(preset));
+    auto *dlspreset = static_cast<fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset))->instrument;
 
     // Things affect region selection process:
     // 1. Subtonal tuning, see https://github.com/FluidSynth/fluidsynth/issues/926
@@ -2734,7 +2900,11 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
     tuned_key_f *= dlspreset->keynum_scale;
 
     // key with subtonal tuning and key number generator applied
-    const int tuned_key = static_cast<int>(std::round(tuned_key_f));
+    int tuned_key = static_cast<int>(std::round(tuned_key_f));
+    if (dlspreset->drum_note_aliasing != nullptr)
+    {
+        tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
+    }
     // key with only key number generator applied
     const int adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
 
@@ -2830,5 +3000,5 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
 
 static void fluid_dls_preset_free(fluid_preset_t *preset [[maybe_unused]]) noexcept
 {
-    // do nothing. preset (part of fluid_dls_instrument) is under RAII of fluid_dls_font
+    // do nothing. presets are under RAII of fluid_dls_font
 }
