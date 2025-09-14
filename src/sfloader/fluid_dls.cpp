@@ -36,6 +36,7 @@
 #include <functional>
 #include <limits>
 #include <string>
+#include <array>
 
 using std::int16_t;
 using std::int32_t;
