@@ -2493,17 +2493,23 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
     fseek(offset, SEEK_SET);
 
     // drum note aliasing table
-    fskip(4);
+    uint32_t version;
+    READ32(this, version);
+    if (version == 0x03020100)
+    {
+        // there is actually no version field, this is the drum note aliasing table
+        fseek(-4, SEEK_CUR);
+    }
     drum_note_aliasing.emplace();
     if (fcbs->fread(drum_note_aliasing->data(), 128, file) != FLUID_OK)
     {
         throw std::runtime_error{ "Failed to read drum note aliasing table" };
     }
-    fskip(4);
 
     // melodic instrument aliasing table
-    int remaining = size - (4 + 128 + 4);
-    while (remaining >= 8)
+    uint32_t nAlias;
+    READ32(this, nAlias);
+    for (uint32_t i = 0; i < nAlias; i++)
     {
         uint16_t bank;
         uint8_t pc;
@@ -2529,18 +2535,18 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
                 goto found_inst;
             }
         }
+
         FLUID_LOG(FLUID_WARN,
-                  "DLS pgal chunk aliasing from non-existing instrument: "
+                  "DLS pgal aliasing from non-existing instrument at entry %u: "
                   "bank %u/%u pc %u -> bank %u/%u pc %u",
+                  i,
                   (bank >> 7) & 0x7F,
                   bank & 0x7F,
                   pc,
                   (bank2 >> 7) & 0x7F,
                   bank2 & 0x7F,
                   pc2);
-    found_inst:
-
-        remaining -= 8;
+    found_inst:;
     }
 }
 
@@ -2902,7 +2908,8 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
 
     // key with subtonal tuning and key number generator applied
     int tuned_key = static_cast<int>(std::round(tuned_key_f));
-    if (dlspreset->drum_note_aliasing != nullptr)
+
+    if (dlspreset->drum_note_aliasing != nullptr && synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
     {
         tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
     }
