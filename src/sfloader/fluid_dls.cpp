@@ -250,38 +250,12 @@ struct fluid_dls_articulation
 
     fluid_dls_articulation()
     {
-        // overriding default gens and mods
+        // overriding default gens
 
         gens[GEN_MODLFOFREQ] = -851.3179423647571;  // 5 Hz
         gens[GEN_MODLFODELAY] = -7972.627427729669; // 10 ms
         gens[GEN_VIBLFOFREQ] = -851.3179423647571;  // 5 Hz
         gens[GEN_VIBLFODELAY] = -7972.627427729669; // 10 ms
-
-        // CC 91 -> reverb send 100%
-        mods.push_back(fluid_mod_t{
-        GEN_REVERBSEND, 91, FLUID_MOD_CC, 0, 0, FLUID_MOD_TRANSFORM_LINEAR, 1000, nullptr, nullptr, nullptr });
-        // CC 93 -> chorus send 100%
-        mods.push_back(fluid_mod_t{
-        GEN_CHORUSSEND, 93, FLUID_MOD_CC, 0, 0, FLUID_MOD_TRANSFORM_LINEAR, 1000, nullptr, nullptr, nullptr });
-        // velocity -> filter cutoff disabled
-        // actually it is already disabled by fluidsynth
-        mods.push_back(fluid_mod_t{
-        GEN_FILTERFC, FLUID_MOD_VELOCITY, FLUID_MOD_GC, 0, 0, FLUID_MOD_TRANSFORM_LINEAR, 0, nullptr, nullptr, nullptr });
-        // vib lfo --(midi channel pressure)-> pitch disabled
-        mods.push_back(fluid_mod_t{
-        GEN_VIBLFOTOPITCH, FLUID_MOD_CHANNELPRESSURE, FLUID_MOD_GC, 0, 0, FLUID_MOD_TRANSFORM_LINEAR, 0, nullptr, nullptr, nullptr });
-        // pitch wheel --(rpn 0)-> pitch 12800 cents
-        // see also the comment in gen.h about GEN_PITCH
-        mods.push_back(fluid_mod_t{ GEN_FINETUNE,
-                                    FLUID_MOD_PITCHWHEEL,
-                                    FLUID_MOD_GC | FLUID_MOD_BIPOLAR,
-                                    FLUID_MOD_PITCHWHEELSENS,
-                                    FLUID_MOD_GC,
-                                    FLUID_MOD_TRANSFORM_LINEAR,
-                                    12800,
-                                    nullptr,
-                                    nullptr,
-                                    nullptr });
     }
 
     void add_mod(const fluid_mod_t &mod)
@@ -500,7 +474,7 @@ struct fluid_dls_font
     }
 };
 
-// helper function to create a new fluid_dls_font_t
+// helper function to create a new fluid_dls_font
 template<class... Args>
 static std::enable_if_t<std::is_constructible_v<fluid_dls_font, Args...>, fluid_dls_font *> // definitely there should be a requires clause
 new_fluid_dls_font(Args &&...args) noexcept
@@ -1616,6 +1590,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         }
         fluid.data = sampledata.data();
         fluid.sampletype = FLUID_SAMPLETYPE_MONO;
+        fluid.default_modulators = this->sfont->default_mod_list;
     }
 
     // put info in dls_sample into region
@@ -2727,6 +2702,51 @@ void fluid_dls_loader_delete(fluid_sfloader_t *loader) noexcept
     delete_fluid_sfloader(loader);
 }
 
+extern "C"
+{
+    extern fluid_mod_t default_vel2att_mod;
+    extern fluid_mod_t default_mod2viblfo_mod;
+    extern fluid_mod_t default_att_mod;
+    extern fluid_mod_t default_pan_mod;
+    extern fluid_mod_t default_expr_mod;
+    extern fluid_mod_t custom_balance_mod;
+    extern fluid_mod_t DLS_default_reverb_mod;
+    extern fluid_mod_t DLS_default_chorus_mod;
+    extern fluid_mod_t DLS_default_pitch_bend_mod;
+}
+static fluid_mod_t* fluid_dls_default_mod_list()
+{
+    std::array def_mods = { // skip default_vel2filter_mod
+                                           // skip default_at2viblfo_mod
+                                           &default_vel2att_mod,
+                                           &default_mod2viblfo_mod,
+                                           &default_att_mod,
+                                           &default_pan_mod,
+                                           &default_expr_mod,
+                                           &DLS_default_reverb_mod,
+                                           &DLS_default_chorus_mod,
+                                           &DLS_default_pitch_bend_mod,
+                                           &custom_balance_mod
+    };
+
+    fluid_mod_t *list = nullptr;
+    for (unsigned int i = 0; i < def_mods.size(); i++)
+    {
+        fluid_mod_t *mod = new_fluid_mod();
+        if (mod == nullptr)
+        {
+            delete_fluid_list_mod(list);
+            throw std::bad_alloc();
+        }
+
+        fluid_mod_clone(mod, def_mods[i]);
+        mod->next = list;
+        list = mod;
+    }
+
+    return list;
+}
+
 static fluid_sfont_t *fluid_dls_loader_load(fluid_sfloader_t *loader, const char *filename) noexcept
 {
     auto *sfont = new_fluid_sfont(fluid_dls_sfont_get_name,
@@ -2739,6 +2759,8 @@ static fluid_sfont_t *fluid_dls_loader_load(fluid_sfloader_t *loader, const char
     {
         return nullptr;
     }
+
+    sfont->default_mod_list = fluid_dls_default_mod_list();
 
     uint32_t sample_rate = 44100;
     bool try_mlock = false;

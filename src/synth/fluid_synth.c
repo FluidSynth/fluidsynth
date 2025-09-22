@@ -162,23 +162,27 @@ static fluid_atomic_int_t fluid_synth_initialized = {0};
  * explicitly overridden by the sound font in order to turn them off.
  */
 
-static fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
-/*not static */ fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
-static fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
-static fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
-static fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
-static fluid_mod_t default_pan_mod;            /* SF2.01 section 8.4.6  */
-static fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
-static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
-static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
-static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
-static fluid_mod_t custom_balance_mod;         /* Non-standard modulator */
+fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
+fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
+fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
+fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
+fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
+fluid_mod_t default_pan_mod;            /* SF2.01 section 8.4.6  */
+fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
+fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
+fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
+fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
+fluid_mod_t custom_balance_mod;         /* Non-standard modulator */
 
+/* DLS specific modulators */
+fluid_mod_t DLS_default_reverb_mod;
+fluid_mod_t DLS_default_chorus_mod;
+fluid_mod_t DLS_default_pitch_bend_mod;
 
-/* custom_breath2att_modulator is not a default modulator specified in SF
-it is intended to replace default_vel2att_mod on demand using
-API fluid_set_breath_mode() or command shell setbreathmode.
-*/
+/* custom_breath2att_modulator is not a default modulator specified in SF2
+ * it is intended to replace default_vel2att_mod on demand using
+ * API fluid_set_breath_mode() or command shell setbreathmode.
+ */
 static fluid_mod_t custom_breath2att_mod;
 
 /* reverb presets */
@@ -497,6 +501,20 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
+
+    // DLS-specific default MODs below
+    // 
+    // CC 91 -> reverb send 100%
+    fluid_mod_clone(&DLS_default_reverb_mod, &default_reverb_mod);
+    fluid_mod_set_amount(&DLS_default_reverb_mod, 1000);
+
+    // CC 93 -> chorus send 100%
+    fluid_mod_clone(&DLS_default_chorus_mod, &default_chorus_mod);
+    fluid_mod_set_amount(&DLS_default_chorus_mod, 1000);
+
+    // pitch wheel --(rpn 0)-> pitch 12800 cents
+    fluid_mod_clone(&DLS_default_pitch_bend_mod, &default_pitch_bend_mod);
+    fluid_mod_set_amount(&DLS_default_pitch_bend_mod, 12800);
 
 #if defined(LIBINSTPATCH_SUPPORT)
     /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
