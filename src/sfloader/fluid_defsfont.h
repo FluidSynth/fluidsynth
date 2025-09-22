@@ -119,7 +119,6 @@ struct _fluid_defsfont_t
     fluid_list_t *sample;           /* the samples in this soundfont */
     fluid_list_t *preset;           /* the presets of this soundfont */
     fluid_list_t *inst;             /* the instruments of this soundfont */
-    fluid_mod_t *default_mod_list;  /* the default modulator list of this soundfont */
     int mlock;                      /* Should we try memlock (avoid swapping)? */
     int dynamic_samples;            /* Enables dynamic sample loading if set */
 
