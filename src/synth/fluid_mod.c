@@ -532,6 +532,21 @@ delete_fluid_mod(fluid_mod_t *mod)
     FLUID_FREE(mod);
 }
 
+/*
+ * delete list of modulators.
+ */
+void delete_fluid_list_mod(fluid_mod_t *mod)
+{
+    fluid_mod_t *tmp;
+
+    while (mod) /* delete the modulators */
+    {
+        tmp = mod;
+        mod = mod->next;
+        delete_fluid_mod(tmp);
+    }
+}
+
 /**
  * Returns the size of the fluid_mod_t structure.
  *

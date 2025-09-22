@@ -317,6 +317,7 @@ fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenu
  * @param sfont The SoundFont instance.
  * @param mod_out A reference to a fluid_mod_t buffer. The pointer will be allocated by fluidsynth, the caller is responsible for freeing the buffer with fluid_free().
  * @return FLUID_FAILED if out of memory. Otherwise it contains the number of modulators saved into the buffer. The caller must always free the buffer, even if the return value is zero!
+ * @since 2.5.0
  */
 int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
 {
@@ -332,7 +333,7 @@ int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
         res = FLUID_ARRAY(fluid_mod_t, i);
         if (res == NULL)
         {
-            mod_out = NULL;
+            *mod_out = NULL;
             FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FLUID_FAILED;
         }
@@ -342,7 +343,7 @@ int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
             fluid_mod_clone(&res[i], mod);
             mod = mod->next;
         }
-        mod_out = res;
+        *mod_out = res;
         return i;
     }
 }
@@ -350,13 +351,17 @@ int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
 /**
  * Sets the default modulators of a SoundFont instance.
  *
- * @param sfont The SoundFont instance
+ * @param sfont The SoundFont instance.
  * @param mods Pointer to an array of default modulators.
  * @param nmods Number of modulators in the provided array.
  * @return FLUID_OK on success, FLUID_FAILED otherwise.
  *
- * @note If @p mods is a zero-length array or mods is NULL the default modulators attached to this
+ * @note If @p mods is a zero-length array or @p mods is NULL the default modulators attached to this
  * SoundFont will be unset, causing the synth's default modulators to be added to voices again.
+ * The behavior is undefined if the array contains multiple identical modulators
+ * (i.e. fluid_mod_test_identity() evaluates to true).
+ *
+ * @since 2.5.0
  */
 int fluid_sfont_set_default_mod(fluid_sfont_t *sfont, const fluid_mod_t *mods, int nmods)
 {
