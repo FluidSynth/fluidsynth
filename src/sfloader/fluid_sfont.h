@@ -96,6 +96,8 @@ struct _fluid_sfont_t
     int refcount;         /**< SoundFont reference count (1 if no presets referencing it) */
     int bankofs;          /**< Bank offset */
 
+    fluid_mod_t *default_mod_list; /* If not NULL, a list of default modulators for that soundfont (e.g. read from DMOD, or DLS compatibility default mods) */
+
     fluid_sfont_free_t free;
 
     fluid_sfont_get_name_t get_name;

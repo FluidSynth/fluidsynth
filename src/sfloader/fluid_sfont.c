@@ -19,6 +19,7 @@
 
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
+#include "fluid_mod.h"
 
 
 void *default_fopen(const char *path)
@@ -306,6 +307,84 @@ fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenu
     return sfont->get_preset(sfont, bank, prenum);
 }
 
+/**
+ * Retrieve a deep copy of all default modulators attached to the provided @p sfont instance.
+ *
+ * If a SoundFont has any default modulators set, the synth's default modulators (see fluid_synth_add_default_modulator()) will be ignored.
+ * A SF2 will have default modulators attached when the file contained a DMOD chunk.
+ * For a DLS file, fluidsynth will always add (custom) default modulators to allow the file being synthesized as accurately as possible.
+ *
+ * @param sfont The SoundFont instance.
+ * @param mod_out A reference to a fluid_mod_t buffer. The pointer will be allocated by fluidsynth, the caller is responsible for freeing the buffer with fluid_free().
+ * @return FLUID_FAILED if out of memory. Otherwise it contains the number of modulators saved into the buffer. The caller must always free the buffer, even if the return value is zero!
+ */
+int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
+{
+    fluid_return_val_if_fail(sfont != NULL, FLUID_FAILED);
+    {
+        unsigned int i = 0;
+        fluid_mod_t *res = NULL, *mod = sfont->default_mod_list;
+        while (mod != NULL)
+        {
+            ++i;
+            mod = mod->next;
+        }
+        res = FLUID_ARRAY(fluid_mod_t, i);
+        if (res == NULL)
+        {
+            mod_out = NULL;
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
+            return FLUID_FAILED;
+        }
+
+        for (i = 0, mod = sfont->default_mod_list; mod != NULL; i++)
+        {
+            fluid_mod_clone(&res[i], mod);
+            mod = mod->next;
+        }
+        mod_out = res;
+        return i;
+    }
+}
+
+/**
+ * Sets the default modulators of a SoundFont instance.
+ *
+ * @param sfont The SoundFont instance
+ * @param mods Pointer to an array of default modulators.
+ * @param nmods Number of modulators in the provided array.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise.
+ *
+ * @note If @p mods is a zero-length array or mods is NULL the default modulators attached to this
+ * SoundFont will be unset, causing the synth's default modulators to be added to voices again.
+ */
+int fluid_sfont_set_default_mod(fluid_sfont_t *sfont, const fluid_mod_t *mods, int nmods)
+{
+    int i;
+    fluid_mod_t *list = NULL;
+
+    fluid_return_val_if_fail(sfont != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(nmods < 0, FLUID_FAILED);
+
+    delete_fluid_list_mod(sfont->default_mod_list);
+
+    if (mods == NULL || nmods == 0)
+    {
+        sfont->default_mod_list = NULL;
+        return FLUID_OK;
+    }
+
+    for (i = nmods - 1; i >= 0; i--) // To preserve input order
+    {
+        fluid_mod_t *r = new_fluid_mod();
+        fluid_mod_clone(r, &mods[i]);
+        r->next = list;
+        list = r;
+    }
+
+    sfont->default_mod_list = list;
+    return FLUID_OK;
+}
 
 /**
  * Starts / re-starts virtual preset iteration in a SoundFont.
@@ -349,6 +428,7 @@ int delete_fluid_sfont(fluid_sfont_t *sfont)
 {
     fluid_return_val_if_fail(sfont != NULL, 0);
 
+    delete_fluid_list_mod(sfont->default_mod_list);
     FLUID_FREE(sfont);
     return 0;
 }
