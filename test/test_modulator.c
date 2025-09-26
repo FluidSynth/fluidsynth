@@ -7,8 +7,9 @@
 // this tests ensures that samples with invalid SfSampleType flag combinations are rejected
 int main(void)
 {
-
-    static const fluid_real_t range1 = 128.0, max = 127.0/128.0;
+    // Range shall be set to 7bit resolution, i.e. 128
+    // The maximum mapped position is always 127/128, see section 9.5.3 of SF2.4
+    static const fluid_real_t Range = 128.0, Max = 127.0/128.0;
 
     static const int mapping[] = {FLUID_MOD_SWITCH, FLUID_MOD_LINEAR, FLUID_MOD_CONCAVE, FLUID_MOD_CONVEX};
     unsigned int i;
@@ -20,11 +21,11 @@ int main(void)
     fluid_mod_set_amount(mod, 1);
 
     // No secondary source given, result must be one
-    tmp = range1;
+    tmp = Range;
     v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, NULL);
-    TEST_ASSERT(tmp == range1);
-    TEST_ASSERT(v1 == range1);
-    v1 = fluid_mod_transform_source_value(mod, v1, mod->flags2, range1, TRUE);
+    TEST_ASSERT(tmp == Range);
+    TEST_ASSERT(v1 == Range);
+    v1 = fluid_mod_transform_source_value(mod, v1, mod->flags2, Range, TRUE);
     TEST_ASSERT(v1 == 1.0f);
 
     for(i = 0; i < FLUID_N_ELEMENTS(mapping); i++)
@@ -39,19 +40,19 @@ int main(void)
                             | FLUID_MOD_POSITIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, range1, TRUE);
+            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, Range, TRUE);
             TEST_ASSERT(v1 == 0.0f);
 
             // skip midpoint validation for concave and convex since we're not checking correctness of concave and convex implementations here
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, range1, TRUE);
+                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
                 tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
 
-            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, range1, TRUE);
-            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : max;
+            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, Range, TRUE);
+            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : Max;
             TEST_ASSERT(v1 == tmp);
         }
 
@@ -65,18 +66,18 @@ int main(void)
                             | FLUID_MOD_NEGATIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, range1, TRUE);
+            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, Range, TRUE);
             TEST_ASSERT(v1 == 0.0f);
 
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, range1, TRUE);
+                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
                 tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 0.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
             
-            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, range1, TRUE);
-            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : max;
+            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, Range, TRUE);
+            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : Max;
             TEST_ASSERT(v1 == tmp);
         }
 
@@ -90,23 +91,23 @@ int main(void)
                             | FLUID_MOD_POSITIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, range1, TRUE);
+            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, Range, TRUE);
             TEST_ASSERT(v1 == -1.0f);
 
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, range1, TRUE);
+                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
                 tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
 
-            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, range1, TRUE);
-            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : max;
+            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, Range, TRUE);
+            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : Max;
             TEST_ASSERT(v1 == tmp);
         }
 
         {
-            static const fluid_real_t mid = -1.0/64.0;
+            static const fluid_real_t mid = 0;
             fluid_mod_set_source1(mod,
                             FLUID_MOD_VELOCITY,
                             FLUID_MOD_GC
@@ -115,18 +116,18 @@ int main(void)
                             | FLUID_MOD_NEGATIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, range1, TRUE);
+            v1 = fluid_mod_transform_source_value(mod, 127, mod->flags1, Range, TRUE);
             TEST_ASSERT(v1 == -1.0f);
 
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, range1, TRUE);
+                v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
                 tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? -1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
-            
-            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, range1, TRUE);
-            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : max;
+
+            v1 = fluid_mod_transform_source_value(mod, 0, mod->flags1, Range, TRUE);
+            tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : Max;
             TEST_ASSERT(v1 == tmp);
         }
     }
