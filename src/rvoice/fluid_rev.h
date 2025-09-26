@@ -23,6 +23,10 @@
 
 #include "fluidsynth_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
 /* enum describing each reverb parameter */
@@ -86,5 +90,9 @@ void fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
                         fluid_real_t damping, fluid_real_t width, fluid_real_t level);
 
 int fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_REV_H */
