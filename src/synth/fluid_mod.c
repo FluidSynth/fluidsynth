@@ -218,14 +218,15 @@ fluid_mod_get_transform(const fluid_mod_t *mod)
 /*
  * retrieves the initial value from the given source of the modulator
  */
-static fluid_real_t
+fluid_real_t
 fluid_mod_get_source_value(const unsigned char mod_src,
                            const unsigned char mod_flags,
                            fluid_real_t *range,
                            const fluid_voice_t *voice
                           )
 {
-    const fluid_channel_t *chan = voice->channel;
+    // voice might be NULL in case of unit testing
+    const fluid_channel_t *chan = voice != NULL ? voice->channel : NULL;
     fluid_real_t val;
 
     if(mod_flags & FLUID_MOD_CC)
