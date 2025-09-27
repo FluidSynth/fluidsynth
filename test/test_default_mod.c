@@ -61,7 +61,7 @@ void sfont_default_mods(fluid_sfont_t *sfont)
     fluid_free(def_mod);
     def_mod = NULL;
 
-    res = fluid_sfont_set_default_mod(sfont, NULL, 0);
+    res = fluid_sfont_set_default_mod(sfont, (void*)0xE6AL, 0);
     TEST_SUCCESS(res);
     TEST_ASSERT(sfont->default_mod_list == NULL);
 }
