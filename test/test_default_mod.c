@@ -3,12 +3,8 @@
 #include "fluidsynth.h"
 #include "fluidsynth_priv.h"
 #include "fluid_synth.h"
-#include <string.h>
-
-// static const int CHANNELS=16;
-enum { SAMPLES=1024 };
-
-static int smpl;
+#include "fluid_mod.h"
+#include "fluid_sfont.h"
 
 void synth_global_default_mods(fluid_synth_t *synth)
 {
@@ -73,9 +69,9 @@ void sfont_default_mods(fluid_sfont_t *sfont)
 // this test should make sure that sample rate changed are handled correctly
 int main(void)
 {
-    int off=0;
     fluid_mod_t *mod;
     fluid_sfont_t *sfont;
+    fluid_settings_t *settings;
     fluid_synth_t *synth;
 
     mod = new_fluid_mod();
@@ -84,7 +80,7 @@ int main(void)
     sfont = new_fluid_sfont_local(NULL, NULL, NULL, NULL, NULL);
     TEST_ASSERT(sfont != NULL);
 
-    fluid_settings_t *settings = new_fluid_settings();
+    settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
 
     synth = new_fluid_synth(settings);
