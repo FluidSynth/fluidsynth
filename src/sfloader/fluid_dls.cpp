@@ -282,7 +282,7 @@ struct fluid_dls_articulation
         {
             if(fluid_mod_test_identity(&existing_mod, &mod))
             {
-                existing_mod.amount += mod.amount;
+                existing_mod.amount = mod.amount;
                 return;
             }
         }
@@ -1261,7 +1261,7 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
     if(mod.src1 == FLUID_MOD_VELOCITY && mod.dest == GEN_ATTENUATION && (mod.flags1 & FLUID_MOD_CONCAVE) != 0)
     {
         // confirmed as vel2att modulator
-        // fix when non-inverted (postive), this is seen in Fury.dls from https://www.ronimusic.com/smp_ios_dls_files.htm
+        // fix when non-inverted (positive), this is seen in Fury.dls from https://www.ronimusic.com/smp_ios_dls_files.htm
         if((mod.flags1 & FLUID_MOD_NEGATIVE) == 0)
         {
             FLUID_LOG(FLUID_DBG, "Fixing non-inverted vel2att modulator to inverted");
@@ -3264,11 +3264,11 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                     fluid_voice_gen_set(voice, i, art.gens[i].value());
                 }
             }
-
+            // this should be the count of default mods to be probably overwritten
+            auto existing_mod_count = voice->mod_count;
             for(auto &mod : art.mods)
             {
-                // there is only 10 standard default modulators
-                fluid_voice_add_mod_local(voice, &mod, FLUID_VOICE_OVERWRITE, 10);
+                fluid_voice_add_mod_local(voice, &mod, FLUID_VOICE_OVERWRITE, existing_mod_count);
             }
 
             // See also https://github.com/FluidSynth/fluidsynth/pull/1626 conversation for "Key Number to Pitch" articulation implementation
