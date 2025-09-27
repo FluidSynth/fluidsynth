@@ -219,13 +219,20 @@ fluid_sfont_t *new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                fluid_sfont_iteration_next_t iter_next,
                                fluid_sfont_free_t free)
 {
-    fluid_sfont_t *sfont;
-
     fluid_return_val_if_fail(get_name != NULL, NULL);
     fluid_return_val_if_fail(get_preset != NULL, NULL);
     fluid_return_val_if_fail(free != NULL, NULL);
 
-    sfont = FLUID_NEW(fluid_sfont_t);
+    return new_fluid_sfont_local(get_name, get_preset, iter_start, iter_next, free);
+}
+
+fluid_sfont_t *new_fluid_sfont_local(fluid_sfont_get_name_t get_name,
+                               fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_iteration_start_t iter_start,
+                               fluid_sfont_iteration_next_t iter_next,
+                               fluid_sfont_free_t free)
+{
+    fluid_sfont_t *sfont = FLUID_NEW(fluid_sfont_t);
 
     if(sfont == NULL)
     {
@@ -318,6 +325,7 @@ fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenu
  * @param mod_out A reference to a fluid_mod_t buffer. The pointer will be allocated by fluidsynth, the caller is responsible for freeing the buffer with fluid_free().
  * @return FLUID_FAILED if out of memory. Otherwise it contains the number of modulators saved into the buffer. The caller must always free the buffer, even if the return value is zero!
  * @since 2.5.0
+ * @note This function involves memory allocation and is therefore not real-time safe!
  */
 int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
 {
@@ -360,6 +368,7 @@ int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
  * SoundFont will be unset, causing the synth's default modulators to be added to voices again.
  * The behavior is undefined if the array contains multiple identical modulators
  * (i.e. fluid_mod_test_identity() evaluates to true).
+ * Further note that this function involves memory allocation and is therefore not real-time safe!
  *
  * @since 2.5.0
  */
@@ -369,7 +378,7 @@ int fluid_sfont_set_default_mod(fluid_sfont_t *sfont, const fluid_mod_t *mods, i
     fluid_mod_t *list = NULL;
 
     fluid_return_val_if_fail(sfont != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(nmods < 0, FLUID_FAILED);
+    fluid_return_val_if_fail(nmods >= 0, FLUID_FAILED);
 
     delete_fluid_list_mod(sfont->default_mod_list);
 

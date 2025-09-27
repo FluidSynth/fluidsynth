@@ -37,6 +37,12 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
 #define fluid_sfloader_load(_loader, _filename) (*(_loader)->load)(_loader, _filename)
 
 
+
+fluid_sfont_t *new_fluid_sfont_local(fluid_sfont_get_name_t get_name,
+                               fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_iteration_start_t iter_start,
+                               fluid_sfont_iteration_next_t iter_next,
+                               fluid_sfont_free_t free);
 #define fluid_sfont_delete_internal(_sf)   ( ((_sf) && (_sf)->free)? (*(_sf)->free)(_sf) : 0)
 
 

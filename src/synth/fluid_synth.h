@@ -178,6 +178,21 @@ struct _fluid_synth_t
     fluid_iir_sincos_t iir_sincos_table[SINCOS_TAB_SIZE]; /**< Table of sin/cos values for IIR filter */
 };
 
+extern fluid_mod_t default_vel2att_mod;
+extern fluid_mod_t default_at2viblfo_mod;
+extern fluid_mod_t default_mod2viblfo_mod;
+extern fluid_mod_t default_vel2filter_mod;
+extern fluid_mod_t default_att_mod;
+extern fluid_mod_t default_pan_mod;
+extern fluid_mod_t default_expr_mod;
+extern fluid_mod_t default_pitch_bend_mod;
+extern fluid_mod_t default_chorus_mod;
+extern fluid_mod_t default_reverb_mod;
+extern fluid_mod_t custom_balance_mod;
+extern fluid_mod_t DLS_default_reverb_mod;
+extern fluid_mod_t DLS_default_chorus_mod;
+extern fluid_mod_t DLS_default_pitch_bend_mod;
+
 /**
  * Type definition of the synthesizer's audio callback function.
  * @param synth FluidSynth instance
