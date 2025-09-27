@@ -119,7 +119,6 @@ struct _fluid_defsfont_t
     fluid_list_t *sample;           /* the samples in this soundfont */
     fluid_list_t *preset;           /* the presets of this soundfont */
     fluid_list_t *inst;             /* the instruments of this soundfont */
-    fluid_mod_t *default_mod_list;  /* the default modulator list of this soundfont */
     int mlock;                      /* Should we try memlock (avoid swapping)? */
     int dynamic_samples;            /* Enables dynamic sample loading if set */
 
@@ -183,7 +182,6 @@ struct _fluid_preset_zone_t
 };
 
 fluid_preset_zone_t *new_fluid_preset_zone(char *name);
-void delete_fluid_list_mod(fluid_mod_t *mod);
 void delete_fluid_preset_zone(fluid_preset_zone_t *zone);
 fluid_preset_zone_t *fluid_preset_zone_next(fluid_preset_zone_t *zone);
 int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, fluid_preset_zone_t *global_zone, SFZone *sfzone, fluid_defsfont_t *defssfont, SFData *sfdata);
