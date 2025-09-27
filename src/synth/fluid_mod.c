@@ -290,6 +290,12 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 fluid_real_t
 fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned char mod_flags, const fluid_real_t range, int is_src1)
 {
+    enum
+    {
+        FLUID_MOD_POLAR_MASK = FLUID_MOD_BIPOLAR | FLUID_MOD_UNIPOLAR,
+        FLUID_MOD_MAP_MASK = FLUID_MOD_LINEAR | FLUID_MOD_CONCAVE | FLUID_MOD_CONVEX | FLUID_MOD_SWITCH | FLUID_MOD_SIN,
+        FLUID_MOD_SIGN_MASK = FLUID_MOD_POSITIVE | FLUID_MOD_NEGATIVE,
+    };
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
     /* inverted value used for negative mapping functions */
@@ -320,106 +326,72 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned ch
     }
     else
     {
-        switch(mod_flags/* & 0x0f*/)
+        if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
         {
-            case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =0 */
-                val = val_norm;
-                break;
+            FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead.");
+        }
 
-            case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =1 */
+        if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_UNIPOLAR)
+        {
+            if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)
+            {
                 val = inv_norm;
-                break;
+            }
+            else
+            {
+                val = val_norm;
+            }
 
-            case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =2 */
-                val = -1.0f + 2.0f * val_norm;
-                break;
+            if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH)
+            {
+                val = (val >= 0.5f) ? 1.0f : 0.0f;
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONCAVE)
+            {
+                // The maximum mapped value should not be 1.0! According to sections 8.4.1 and 8.4.7 it must be 127/128 yet again.
+                // Same is assumed for convex below, though this is not explicitly said by the spec.
+                val = fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
+            {
+                val = fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+            }
+            else
+            {
+                // FLUID_MOD_LINEAR, just keep it as is
+            }
+        }
+        else if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_BIPOLAR)
+        {
+            if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)
+            {
+                val = (inv_norm == (range - 1) / range) ? inv_norm : -1.0f + 2.0f * inv_norm;
+            }
+            else
+            {
+                val = (val_norm == (range - 1) / range) ? val_norm : -1.0f + 2.0f * val_norm;
+            }
 
-            case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =3 */
-                val = -1.0f + 2.0f * inv_norm;
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =4 */
-                val = fluid_concave(127 * (val_norm));
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =5 */
-                val = fluid_concave(127 * (inv_norm));
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =6 */
-                val = (val_norm > 0.5f) ?  fluid_concave(127 * 2 * (val_norm - 0.5f))
-                        : -fluid_concave(127 * 2 * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =7 */
-                val = (inv_norm > 0.5f) ?  fluid_concave(127 * 2 * (inv_norm - 0.5f))
-                        : -fluid_concave(127 * 2 * (0.5f - inv_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =8 */
-                val = fluid_convex(127 * (val_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =9 */
-                val = fluid_convex(127 * (inv_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =10 */
-                val = (val_norm > 0.5f) ?  fluid_convex(127 * 2 * (val_norm - 0.5f))
-                        : -fluid_convex(127 * 2 * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =11 */
-                val = (inv_norm > 0.5f) ?  fluid_convex(127 * 2 * (inv_norm - 0.5f))
-                        : -fluid_convex(127 * 2 * (0.5f - inv_norm));
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =12 */
-                val = (val_norm >= 0.5f) ? 1.0f : 0.0f;
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =13 */
-                val = (inv_norm >= 0.5f) ? 1.0f : 0.0f;
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =14 */
-                val = (val_norm >= 0.5f) ? 1.0f : -1.0f;
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =15 */
-                val = (inv_norm >= 0.5f) ? 1.0f : -1.0f;
-                break;
-
-            /*
-                * MIDI CCs only have a resolution of 7 bits. The closer val_norm gets to 1,
-                * the less will be the resulting change of the sinus. When using this sin()
-                * for scaling the cutoff frequency, there will be no audible difference between
-                * MIDI CCs 118 to 127. To avoid this waste of CCs multiply with 0.87
-                * (at least for unipolar) which makes sin() never get to 1.0 but to 0.98 which
-                * is close enough.
-                */
-            case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* custom sin(x) */
-                val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * val_norm);
-                break;
-
-            case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-                val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * (inv_norm));
-                break;
-
-            case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
-                val = (val_norm > 0.5f) ?  FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
-                        : -FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-                val = (inv_norm > 0.5f) ?  FLUID_SIN(FLUID_M_PI * (inv_norm - 0.5f))
-                        : -FLUID_SIN(FLUID_M_PI * (0.5f - inv_norm));
-                break;
-
-            default:
-                FLUID_LOG(FLUID_ERR, "Unknown modulator type '%d', disabling modulator.", mod_flags);
-                val = 0.0f;
-                break;
+            if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH)
+            {
+                val = (val >= 0.0f) ? 1.0f : -1.0f;
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONCAVE)
+            {
+                // The maximum mapped value should not be 1.0! According to sections 8.4.1 and 8.4.7 it must be 127/128 yet again.
+                // Same is assumed for convex below, though this is not explicitly said by the spec.
+                val = (val >= 0.0f) ? fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range-1)/range) :
+                                      -fluid_concave(FLUID_VEL_CB_SIZE * -val);
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
+            {
+                val = (val >= 0.0f) ? fmin(fluid_convex(FLUID_VEL_CB_SIZE * val), (range-1)/range) :
+                                      -fluid_convex(FLUID_VEL_CB_SIZE * -val);
+            }
+            else
+            {
+                // FLUID_MOD_LINEAR
+            }
         }
     }
 
