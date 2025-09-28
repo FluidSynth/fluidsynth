@@ -23,6 +23,9 @@
 #include "fluidsynth_priv.h"
 #include "fluid_conv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
  */
@@ -63,5 +66,7 @@ fluid_real_t fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val
 void fluid_dump_modulator(fluid_mod_t *mod);
 #endif
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* _FLUID_MOD_H */
