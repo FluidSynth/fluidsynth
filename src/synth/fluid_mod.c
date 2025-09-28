@@ -315,7 +315,7 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned ch
         }
         else
         {
-            val = mod->mapping_func(mod, val_norm, is_src1, mod->data);
+            val = mod->mapping_func(mod, (int)(val+0.5f), (int)(range+0.5f), is_src1, mod->data);
         }
     }
     else
