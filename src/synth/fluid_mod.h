@@ -45,6 +45,13 @@ struct _fluid_mod_t
     fluid_mod_t *next;
 };
 
+enum
+{
+    FLUID_MOD_POLAR_MASK = FLUID_MOD_BIPOLAR | FLUID_MOD_UNIPOLAR,
+    FLUID_MOD_MAP_MASK = FLUID_MOD_LINEAR | FLUID_MOD_CONCAVE | FLUID_MOD_CONVEX | FLUID_MOD_SWITCH | FLUID_MOD_SIN,
+    FLUID_MOD_SIGN_MASK = FLUID_MOD_POSITIVE | FLUID_MOD_NEGATIVE,
+};
+
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 

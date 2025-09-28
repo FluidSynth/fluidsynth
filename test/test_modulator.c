@@ -8,13 +8,13 @@
 #endif
 
 // Range shall be set to 7bit resolution, i.e. 128
-static const fluid_real_t Range = 128.0
+static const fluid_real_t Range = 128.0;
 
 fluid_real_t get_mod_max(const fluid_mod_t *mod)
 {
     // The maximum mapped position is always 127/128, see section 9.5.3 of SF2.4
     // For switches however, we keep sticking to fluidsynth historical limits of +-1.0
-    return ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : (Range-1)/Range;
+    return ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : (Range-1)/Range;
 }
 
 // this tests ensures that samples with invalid SfSampleType flag combinations are rejected
@@ -56,7 +56,7 @@ int main(void)
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
-                tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : mid;
+                tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
 
@@ -81,7 +81,7 @@ int main(void)
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
-                tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 0.0f : mid;
+                tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 0.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
             
@@ -106,7 +106,7 @@ int main(void)
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
-                tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? 1.0f : mid;
+                tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
 
@@ -131,7 +131,7 @@ int main(void)
             if(mapping[i] != FLUID_MOD_CONCAVE && mapping[i] != FLUID_MOD_CONVEX)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64, mod->flags1, Range, TRUE);
-                tmp = ((mod->flags1 & FLUID_MOD_SWITCH) == FLUID_MOD_SWITCH) ? -1.0f : mid;
+                tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? -1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
 

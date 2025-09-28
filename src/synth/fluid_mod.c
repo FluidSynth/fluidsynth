@@ -290,12 +290,6 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 fluid_real_t
 fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned char mod_flags, const fluid_real_t range, int is_src1)
 {
-    enum
-    {
-        FLUID_MOD_POLAR_MASK = FLUID_MOD_BIPOLAR | FLUID_MOD_UNIPOLAR,
-        FLUID_MOD_MAP_MASK = FLUID_MOD_LINEAR | FLUID_MOD_CONCAVE | FLUID_MOD_CONVEX | FLUID_MOD_SWITCH | FLUID_MOD_SIN,
-        FLUID_MOD_SIGN_MASK = FLUID_MOD_POSITIVE | FLUID_MOD_NEGATIVE,
-    };
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
     /* inverted value used for negative mapping functions */
