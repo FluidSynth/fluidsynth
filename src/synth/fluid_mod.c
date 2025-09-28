@@ -55,6 +55,12 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
 void
 fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
 {
+    if ((flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
+    {
+        FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead. Disabling source.");
+        src = FLUID_MOD_NONE;
+    }
+
     mod->src1 = src;
     mod->flags1 = flags;
 }
@@ -71,6 +77,12 @@ fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
 void
 fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags)
 {
+    if ((flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
+    {
+        FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead. Disabling source.");
+        src = FLUID_MOD_NONE;
+    }
+
     mod->src2 = src;
     mod->flags2 = flags;
 }
@@ -328,11 +340,6 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid
     }
     else
     {
-        if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
-        {
-            FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead.");
-        }
-
         if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_UNIPOLAR)
         {
             if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)

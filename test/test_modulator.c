@@ -151,6 +151,15 @@ static void test_mod_no_source(fluid_mod_t *mod)
         v1 = fluid_mod_transform_source_value(mod, v1, Range, !TRUE);
         TEST_ASSERT(v1 == 1.0f);
     }
+
+    fluid_mod_set_source2(mod, FLUID_MOD_VELOCITY, FLUID_MOD_GC | FLUID_MOD_SIN);
+    // No secondary source given, result must be one
+    tmp = Range;
+    v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, NULL);
+    TEST_ASSERT(tmp == Range);
+    TEST_ASSERT(v1 == Range);
+    v1 = fluid_mod_transform_source_value(mod, v1, Range, !TRUE);
+    TEST_ASSERT(v1 == 1.0f);
 }
 
 // this tests ensures that samples with invalid SfSampleType flag combinations are rejected
