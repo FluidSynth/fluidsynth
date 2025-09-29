@@ -3,12 +3,14 @@
 #include "fluidsynth.h"
 #include "fluid_mod.h"
 
-// Range shall be set to 7bit resolution, i.e. 128
-static const fluid_real_t Range = 128.0;
+#include <array>
 
-static const int Mapping[] = {FLUID_MOD_SWITCH, FLUID_MOD_LINEAR, FLUID_MOD_CONCAVE, FLUID_MOD_CONVEX};
-static const int Polar[] = {FLUID_MOD_UNIPOLAR, FLUID_MOD_BIPOLAR};
-static const int Direction[] = {FLUID_MOD_POSITIVE, FLUID_MOD_NEGATIVE};
+// Range shall be set to 7bit resolution, i.e. 128
+constexpr fluid_real_t Range = 128.0;
+
+constexpr std::array<int, 4> Mapping = {FLUID_MOD_SWITCH, FLUID_MOD_LINEAR, FLUID_MOD_CONCAVE, FLUID_MOD_CONVEX};
+constexpr std::array<int, 2> Polar = {FLUID_MOD_UNIPOLAR, FLUID_MOD_BIPOLAR};
+constexpr std::array<int, 2> Direction = {FLUID_MOD_POSITIVE, FLUID_MOD_NEGATIVE};
 
 static fluid_real_t get_mod_max(const fluid_mod_t *mod)
 {
@@ -19,10 +21,9 @@ static fluid_real_t get_mod_max(const fluid_mod_t *mod)
 
 static void test_mod_source_mapping(fluid_mod_t *mod)
 {
-    unsigned int i;
     fluid_real_t v1, tmp;
 
-    for(i = 0; i < FLUID_N_ELEMENTS(Mapping); i++)
+    for(unsigned int i = 0; i < Mapping.size(); i++)
     {
         {
             static const fluid_real_t mid = 64.0/128.0;
@@ -129,29 +130,32 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
 
 static void test_mod_no_source(fluid_mod_t *mod)
 {
-    unsigned int i,j,k;
-    fluid_real_t v1, tmp;
     fluid_mod_set_dest(mod, GEN_ATTENUATION);
     fluid_mod_set_amount(mod, 1);
 
-    for(i = 0; i < FLUID_N_ELEMENTS(Mapping); i++)
-    for(j = 0; j < FLUID_N_ELEMENTS(Polar); j++)
-    for(k = 0; k < FLUID_N_ELEMENTS(Direction); k++)
+    fluid_real_t tmp, v1;
+    for (int i = 0; i < Mapping.size(); i++)
     {
-        fluid_mod_set_source2(mod, FLUID_MOD_NONE, Mapping[i] | Polar[j] | Direction[k]);
-        // No secondary source given, result must be one
-        tmp = Range;
-        v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, NULL);
-        TEST_ASSERT(tmp == Range);
-        TEST_ASSERT(v1 == Range);
-        v1 = fluid_mod_transform_source_value(mod, v1, Range, false);
-        TEST_ASSERT(v1 == 1.0f);
+        for (int j = 0; j < Polar.size(); j++)
+        {
+            for (int k = 0; k < Direction.size(); k++)
+            {
+                fluid_mod_set_source2(mod, FLUID_MOD_NONE, Mapping[i] | Polar[j] | Direction[k]);
+                // No secondary source given, result must be one
+                tmp = Range;
+                v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, nullptr);
+                TEST_ASSERT(tmp == Range);
+                TEST_ASSERT(v1 == Range);
+                v1 = fluid_mod_transform_source_value(mod, v1, Range, false);
+                TEST_ASSERT(v1 == 1.0f);
+            }
+        }
     }
 
     fluid_mod_set_source2(mod, FLUID_MOD_VELOCITY, FLUID_MOD_GC | FLUID_MOD_SIN);
     // No secondary source given, result must be one
     tmp = Range;
-    v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, NULL);
+    v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, nullptr);
     TEST_ASSERT(tmp == Range);
     TEST_ASSERT(v1 == Range);
     v1 = fluid_mod_transform_source_value(mod, v1, Range, false);
@@ -164,7 +168,7 @@ static void test_custom_mapping(fluid_mod_t *mod)
 
     fluid_real_t v;
 
-    fluid_mod_set_custom_mapping(mod, [](const fluid_mod_t* mod, int value, int range, int is_src1, void* data)
+    fluid_mod_set_custom_mapping(mod, [](const fluid_mod_t*, int value, int range, int is_src1, void* data)
     {
         fluid_real_t v = *(fluid_real_t*)data;
         TEST_ASSERT(value == (int)v);
