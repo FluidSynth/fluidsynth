@@ -1,5 +1,11 @@
 macro ( ADD_FLUID_TEST _test )
-    add_executable( ${_test} ${_test}.c )
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test}.c")
+        add_executable(${_test} ${_test}.c)
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test}.cpp")
+        add_executable(${_test} ${_test}.cpp)
+    else()
+        message(FATAL_ERROR "Neither ${_test}.c nor ${_test}.cpp found in ${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
 
     # only build this unit test when explicitly requested by "make check"
     set_target_properties(${_test} PROPERTIES EXCLUDE_FROM_ALL TRUE)
