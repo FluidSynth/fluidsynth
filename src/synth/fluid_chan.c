@@ -764,12 +764,36 @@ int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_por
 {
     int msb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_MSB);
     int lsb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_LSB);
+    int res;
+    static const int Max = 480*1000; /*ms*/
     
     switch(time_mode)
     {
         case FLUID_PORTAMENTO_TIME_MODE_XG_GS:
-            /* Always use 7-bit MSB only */
-            return msb;
+            // Produce a curve similar to:
+            /*
+                CC 5 value  Portamento time
+                ----------  ---------------
+                    0            0.000 s
+                    1            0.006 s
+                    2            0.023 s
+                    4            0.050 s
+                    8            0.110 s
+                    16           0.250 s
+                    32           0.500 s
+                    64           2.060 s
+                    80           4.200 s
+                    96           8.400 s
+                    112         19.500 s
+                    116         26.700 s
+                    120         40.000 s
+                    124         80.000 s
+                    127        480.000 s
+            */
+            // Tests were performed by John Novak
+            // https://github.com/dosbox-staging/dosbox-staging/pull/2705
+            res = (Max/2 * 2.5) * fluid_concave(msb) * fluid_concave(126 * fluid_concave(msb)) + 200 * fluid_convex(msb);
+            return res < Max ? res : Max;
             
         case FLUID_PORTAMENTO_TIME_MODE_LINEAR:
             /* Always use 14-bit MSB+LSB */

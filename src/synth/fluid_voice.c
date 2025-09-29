@@ -1280,9 +1280,8 @@ void fluid_voice_update_portamento(fluid_voice_t *voice, int fromkey, int tokey)
 
     /* Calculates increment countinc */
     /* Increment is function of PortamentoTime (ms)*/
-    unsigned int countinc = (unsigned int)(((fluid_real_t)voice->output_rate *
-                                            0.001f *
-                                            (fluid_real_t)fluid_channel_portamentotime_with_mode(channel, channel->synth->portamento_time_mode, channel->synth->portamento_time_has_seen_lsb)) /
+    fluid_real_t ms = fluid_channel_portamentotime_with_mode(channel, channel->synth->portamento_time_mode, channel->synth->portamento_time_has_seen_lsb);
+    unsigned int countinc = (unsigned int)(((fluid_real_t)voice->output_rate * 0.001f * ms) /
                                             (fluid_real_t)FLUID_BUFSIZE + 0.5f);
 
     /* Send portamento parameters to the voice dsp */
