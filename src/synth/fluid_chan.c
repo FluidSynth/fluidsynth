@@ -758,3 +758,33 @@ void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, flui
     chan->override_gen_default[gen].flags = GEN_SET;
     chan->override_gen_default[gen].val = val;
 }
+
+/* Calculate portamento time considering the synthesizer's portamento time mode */
+int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, fluid_synth_t *synth)
+{
+    int msb = chan->cc[PORTAMENTO_TIME_MSB];
+    int lsb = chan->cc[PORTAMENTO_TIME_LSB];
+    
+    switch(synth->portamento_time_mode)
+    {
+        case FLUID_PORTAMENTO_TIME_MODE_XG_GS:
+            /* Always use 7-bit MSB only */
+            return msb;
+            
+        case FLUID_PORTAMENTO_TIME_MODE_LINEAR:
+            /* Always use 14-bit MSB+LSB */
+            return msb * 128 + lsb;
+            
+        case FLUID_PORTAMENTO_TIME_MODE_AUTO:
+        default:
+            /* Use 7-bit MSB initially, switch to 14-bit if LSB has been seen */
+            if(synth->portamento_time_has_seen_lsb)
+            {
+                return msb * 128 + lsb;
+            }
+            else
+            {
+                return msb;
+            }
+    }
+}

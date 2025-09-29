@@ -63,6 +63,10 @@ static void fluid_shell_init(fluid_shell_t *shell,
                              fluid_istream_t in, fluid_ostream_t out);
 static int fluid_handle_voice_count(void *data, int ac, char **av,
                                     fluid_ostream_t out);
+int fluid_handle_portamentotimemode(void *data, int ac, char **av,
+                                   fluid_ostream_t out);
+int fluid_handle_setportamentotimemode(void *data, int ac, char **av,
+                                      fluid_ostream_t out);
 
 void fluid_shell_settings(fluid_settings_t *settings)
 {
@@ -189,6 +193,14 @@ static const fluid_cmd_t fluid_commands[] =
     {
         "setbreathmode", "polymono", fluid_handle_setbreathmode,
         "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Sets breath mode"
+    },
+    {
+        "portamentotimemode", "polymono", fluid_handle_portamentotimemode,
+        "portamentotimemode                    Prints global portamento time mode"
+    },
+    {
+        "setportamentotimemode", "polymono", fluid_handle_setportamentotimemode,
+        "setportamentotimemode mode            Sets global portamento time mode (auto/xg-gs/linear)"
     },
     /* reverb commands */
     {
@@ -3363,6 +3375,87 @@ int fluid_handle_setportamentomode(void *data, int ac, char **av,
     }
 
     return 0;
+}
+
+/*-----------------------------------------------------------------------------
+  portamentotimemode
+  Prints global portamento time mode
+*/
+int fluid_handle_portamentotimemode(void *data, int ac, char **av,
+                                   fluid_ostream_t out)
+{
+    static const char *const name_portamento_time_mode[FLUID_PORTAMENTO_TIME_MODE_LAST] =
+    { "auto", "xg-gs", "linear" };
+
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+    int mode = 0;
+
+    int result = fluid_synth_get_portamento_time_mode(synth, &mode);
+    
+    if(result == FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Global portamento time mode: %s\n", name_portamento_time_mode[mode]);
+    }
+    else
+    {
+        fluid_ostream_printf(out, "Failed to get global portamento time mode\n");
+    }
+
+    return result;
+}
+
+/*-----------------------------------------------------------------------------
+  setportamentotimemode mode
+  Sets global portamento time mode
+*/
+int fluid_handle_setportamentotimemode(void *data, int ac, char **av,
+                                      fluid_ostream_t out)
+{
+    static const char name_cde[] = "setportamentotimemode";
+    int mode;
+    int result;
+
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+
+    if(ac != 1)
+    {
+        fluid_ostream_printf(out, "%s: Invalid number of arguments. Usage: %s mode\n", name_cde, name_cde);
+        fluid_ostream_printf(out, "Valid modes: auto, xg-gs, linear\n");
+        return FLUID_FAILED;
+    }
+
+    if(FLUID_STRCMP(av[0], "auto") == 0)
+    {
+        mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
+    }
+    else if(FLUID_STRCMP(av[0], "xg-gs") == 0)
+    {
+        mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
+    }
+    else if(FLUID_STRCMP(av[0], "linear") == 0)
+    {
+        mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
+    }
+    else
+    {
+        fluid_ostream_printf(out, "%s: Invalid mode '%s'. Valid modes: auto, xg-gs, linear\n", name_cde, av[0]);
+        return FLUID_FAILED;
+    }
+
+    result = fluid_synth_set_portamento_time_mode(synth, mode);
+    
+    if(result == FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Global portamento time mode set to: %s\n", av[0]);
+    }
+    else
+    {
+        fluid_ostream_printf(out, "Failed to set global portamento time mode\n");
+    }
+
+    return result;
 }
 
 /**  commands mono/poly breath mode *******************************************/

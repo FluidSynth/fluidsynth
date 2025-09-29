@@ -171,6 +171,10 @@ struct _fluid_synth_t
     enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
     enum fluid_msgs_note_cut msgs_note_cut_mode;
 
+    /** Portamento time mode settings */
+    enum fluid_portamento_time_mode portamento_time_mode; /**< Global portamento time mode */
+    int portamento_time_has_seen_lsb; /**< Flag to track if LSB has been seen (for auto mode) */
+
     fluid_iir_sincos_t iir_sincos_table[SINCOS_TAB_SIZE]; /**< Table of sin/cos values for IIR filter */
 };
 

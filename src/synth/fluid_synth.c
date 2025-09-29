@@ -256,6 +256,11 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.note-cut", 0, 0, 2, 0);
+    
+    fluid_settings_register_str(settings, "synth.portamento-mode", "auto", 0);
+    fluid_settings_add_option(settings, "synth.portamento-mode", "auto");
+    fluid_settings_add_option(settings, "synth.portamento-mode", "xg-gs");
+    fluid_settings_add_option(settings, "synth.portamento-mode", "linear");
 }
 
 /**
@@ -828,6 +833,32 @@ new_fluid_synth(fluid_settings_t *settings)
     synth->state = FLUID_SYNTH_PLAYING;
 
     synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
+
+    /* Initialize portamento time mode */
+    {
+        char *portamento_mode_str;
+        if(fluid_settings_dupstr(settings, "synth.portamento-mode", &portamento_mode_str) == FLUID_OK)
+        {
+            if(FLUID_STRCMP(portamento_mode_str, "xg-gs") == 0)
+            {
+                synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
+            }
+            else if(FLUID_STRCMP(portamento_mode_str, "linear") == 0)
+            {
+                synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
+            }
+            else /* "auto" or any other value defaults to auto */
+            {
+                synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
+            }
+            FLUID_FREE(portamento_mode_str);
+        }
+        else
+        {
+            synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
+        }
+        synth->portamento_time_has_seen_lsb = 0; /* Start in 7-bit mode for auto */
+    }
 
     fluid_atomic_int_set(&synth->ticks_since_start, 0);
     synth->tuning = NULL;
@@ -2008,6 +2039,13 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         fluid_channel_cc_breath_note_on_off(chan, value);
 
     /* fall-through */
+    case PORTAMENTO_TIME_LSB:
+        /* Track LSB reception for auto portamento mode */
+        if(num == PORTAMENTO_TIME_LSB && synth->portamento_time_mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
+        {
+            synth->portamento_time_has_seen_lsb = 1;
+        }
+        /* fall-through */
     default:
         /* CC lsb shouldn't allowed to modulate (spec SF 2.01 - 8.2.1) */
         /* However, as long fluidsynth will use only CC 7 bits resolution, it
@@ -2790,6 +2828,12 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_reverb, 0, 0.0f);
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_chorus, 0, 0.0f);
+
+    /* Reset auto portamento mode tracking */
+    if(synth->portamento_time_mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
+    {
+        synth->portamento_time_has_seen_lsb = 0;
+    }
 
     return FLUID_OK;
 }
@@ -8399,6 +8443,66 @@ int fluid_synth_get_portamento_mode(fluid_synth_t *synth, int chan,
     /**/
     * portamentomode = synth->channel[chan]->portamentomode;
     /**/
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/*  API portamento time mode ************************************************/
+
+/**
+ * Sets the global portamento time mode of the synthesizer.
+ *
+ * @param synth the synth instance.
+ * @param mode The portamento time mode as indicated by #fluid_portamento_time_mode.
+ *
+ * @return
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED
+ *   - \a synth is NULL.
+ *   - \a mode is invalid.
+ */
+int fluid_synth_set_portamento_time_mode(fluid_synth_t *synth, int mode)
+{
+    /* checks parameters first */
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_synth_api_enter(synth);
+    
+    if(mode < 0 || mode >= FLUID_PORTAMENTO_TIME_MODE_LAST)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+    
+    synth->portamento_time_mode = (enum fluid_portamento_time_mode)mode;
+    
+    /* Reset auto mode tracking when mode changes */
+    if(mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
+    {
+        synth->portamento_time_has_seen_lsb = 0;
+    }
+    
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Gets the global portamento time mode of the synthesizer.
+ *
+ * @param synth the synth instance.
+ * @param mode the address to store the portamento time mode to.
+ *
+ * @return
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED
+ *   - \a synth is NULL.
+ *   - \a mode is NULL.
+ */
+int fluid_synth_get_portamento_time_mode(fluid_synth_t *synth, int *mode)
+{
+    /* checks parameters first */
+    fluid_return_val_if_fail(mode != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_synth_api_enter(synth);
+    
+    *mode = synth->portamento_time_mode;
+    
     FLUID_API_RETURN(FLUID_OK);
 }
 
