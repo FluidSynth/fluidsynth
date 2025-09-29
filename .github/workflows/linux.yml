@@ -117,7 +117,7 @@ jobs:
         EOF
         export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
         set -x
-        gcc -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
+        g++ -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
         ./static-link-test
         echo $?
 

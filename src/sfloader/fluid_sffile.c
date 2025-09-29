@@ -71,6 +71,8 @@
 #define SHDR_FCC    FLUID_FOURCC('s','h','d','r') /* sample info */
 #define SM24_FCC    FLUID_FOURCC('s','m','2','4')
 
+#define DLS_FCC     FLUID_FOURCC('D','L','S',' ')
+
 /* Set when the FCC code is unknown */
 #define UNKN_ID     FLUID_N_ELEMENTS(idlist)
 
@@ -308,8 +310,15 @@ int fluid_is_soundfont(const char *filename)
             break;  // seems to be SF2, stop here
         }
 
+#ifdef ENABLE_NATIVE_DLS
+        retcode = (fcc == DLS_FCC);
+        if(retcode)
+        {
+            break;  // seems to be DLS, stop here
+        }
+#endif
+
 #ifdef LIBINSTPATCH_SUPPORT
-        else
         {
             IpatchFileHandle *fhandle = ipatch_file_identify_open(filename, NULL);
 
@@ -317,6 +326,10 @@ int fluid_is_soundfont(const char *filename)
             {
                 retcode = (ipatch_file_identify(fhandle->file, NULL) == IPATCH_TYPE_DLS_FILE);
                 ipatch_file_close(fhandle);
+            }
+            if(retcode)
+            {
+                break;
             }
         }
 

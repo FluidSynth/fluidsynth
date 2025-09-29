@@ -26,6 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 /*
  * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
  */

@@ -22,6 +22,10 @@
 
 #include "fluid_sys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
 
@@ -31,5 +35,9 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size);
 
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
                                 int num_buffers, fluid_real_t buffers[], int buf_stride);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_LADSPA_H */
