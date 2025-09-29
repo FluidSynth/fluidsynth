@@ -12,14 +12,437 @@ on:
       - '.github/workflows/linux.yml'
       - '.cirrus.yml'
       - 'README.md'
+  release:
+    types: [published]
 
 env:
   BUILD_TYPE: RelWithDebInfo
   INSTALL_LOCATION: fluidsynth_install
+  GTK_BUNDLE_X86: 'http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip'
+  GTK_BUNDLE_X64: 'http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip'
+  LIBSNDFILE_URL_X86: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win32.zip'
+  LIBSNDFILE_URL_X64: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win64.zip'
+  MINGW_URL_X64: 'https://sourceforge.net/projects/mingw-w64/files/Toolchains%%20targetting%%20Win64/Personal%%20Builds/mingw-builds/8.1.0/threads-win32/sjlj/x86_64-8.1.0-release-win32-sjlj-rt_v6-rev0.7z'
+  SDL3_URL: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-VC.zip'
 
 jobs:
-  build:
-    runs-on: windows-latest
+  # MSVC builds migrated from Azure Pipeline Windows10 job
+  msvc-build:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Win32
+            platformAlt: x86
+            osal: "glib"
+            CFLAGS: ""
+            CXXFLAGS: ""
+            CMAKEFLAGS: ""
+            dep_arch: "x86"
+          - platform: Win32
+            platformAlt: x86
+            osal: "cpp11"
+            CFLAGS: "/arch:IA32"
+            CXXFLAGS: "/arch:IA32"
+            CMAKEFLAGS: ""
+            dep_arch: "x86"
+          - platform: x64
+            platformAlt: x64
+            osal: "glib"
+            CFLAGS: ""
+            CXXFLAGS: ""
+            CMAKEFLAGS: ""
+            dep_arch: "x64"
+          - platform: x64
+            platformAlt: x64
+            osal: "cpp11"
+            CFLAGS: ""
+            CXXFLAGS: ""
+            CMAKEFLAGS: ""
+            dep_arch: "x64"
+    
+    name: 🔨 MSVC ${{ matrix.platformAlt }} ${{ matrix.osal }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    - name: Setup dependencies
+      shell: cmd
+      run: |
+        @ECHO ON
+        mkdir d:\deps || exit /b 1
+        cd d:\deps || exit /b 1
+        if "${{ matrix.dep_arch }}"=="x86" (
+          set GTK_URL=${{ env.GTK_BUNDLE_X86 }}
+          set LIBSNDFILE_URL=${{ env.LIBSNDFILE_URL_X86 }}
+        ) else (
+          set GTK_URL=${{ env.GTK_BUNDLE_X64 }}
+          set LIBSNDFILE_URL=${{ env.LIBSNDFILE_URL_X64 }}
+        )
+        if not "%GTK_URL%"=="" (
+          curl -LfsS -o gtk-bundle-dev.zip "%GTK_URL%" || exit /b 1
+          7z x -aos -- gtk-bundle-dev.zip > NUL || exit /b 1
+        )
+        if not "%LIBSNDFILE_URL%"=="" (
+          curl -LfsS -o libsndfile-dev.zip "%LIBSNDFILE_URL%" || exit /b 1
+          7z x -aos -- libsndfile-dev.zip > NUL || exit /b 1
+        )
+        curl -LfsS -o sdl3-dev.zip "%SDL3_URL%" || exit /b 1
+        7z x -aos -- sdl3-dev.zip > NUL || exit /b 1
+        del *.zip
+        if exist libsndfile-* (
+          cd libsndfile-*
+          xcopy /E /I /Y * ..
+          cd ..
+          rmdir /S /Q libsndfile-*
+        )
+        cd SDL3-*
+        COPY lib\${{ matrix.platformAlt }}\SDL3.dll d:\deps\bin\ || echo SDL3.dll copy failed
+        COPY lib\${{ matrix.platformAlt }}\SDL3* d:\deps\bin || echo SDL3 lib copy failed
+        xcopy /E /I /Y * ..
+        cd ..
+        rmdir /S /Q SDL3-*
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        pkg-config --list-all || echo pkg-config failed
+        mkdir build && cd build || exit /b 1
+        cmake -Werror=dev -A ${{ matrix.platform }} -T v143 ^
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
+          -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl2=0 ^
+          -Dosal=${{ matrix.osal }} -Denable-libinstpatch=0 -Denable-dls=1 ^
+          ${{ matrix.CMAKEFLAGS }} -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
+          -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
+
+    - name: Build
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --parallel 3 || exit /b 1
+
+    - name: Test
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --target check || exit /b 1
+
+    - name: Demo
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --target demo || exit /b 1
+
+    - name: Install
+      shell: cmd
+      run: |
+        @ECHO ON
+        cd build
+        cmake --build . --config Release --target install || exit /b 1
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul || exit 0
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul || exit 0
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul || exit 0
+        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x86" 2>nul || exit 0
+        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x64" 2>nul || exit 0
+
+    - name: Validate library
+      shell: bash
+      working-directory: ${{ env.INSTALL_LOCATION }}
+      run: |
+        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.lib" ]; then
+          echo "Fluidsynth library has unexpected filename!"
+          ls -la . bin lib
+          exit 1
+        fi
+
+    - name: Set artifact name
+      shell: bash
+      id: artifact_name
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "name=fluidsynth-${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "name=CI-${{ github.run_id }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact_name.outputs.name }}-win10-${{ matrix.platformAlt }}-${{ matrix.osal }}
+        path: ${{ env.INSTALL_LOCATION }}
+        retention-days: 14
+        overwrite: true
+
+  # Additional MSVC builds migrated from Azure Pipeline Windows10Additional job
+  msvc-additional:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - CMAKE_FLAGS: ""
+            CMAKE_CONFIG: Release
+            name: "default"
+          - CMAKE_FLAGS: "-Denable-profiling=1 -Denable-trap-on-fpe=1 -Denable-fpe-check=1"
+            CMAKE_CONFIG: Debug
+            name: "debug_prof"
+          - CMAKE_FLAGS: "-Denable-network=0"
+            CMAKE_CONFIG: Release
+            name: "no_network"
+          - CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
+            CMAKE_CONFIG: Release
+            name: "static_lib"
+          - CMAKE_FLAGS: "-Dosal=cpp11"
+            CMAKE_CONFIG: Release
+            name: "osal_cpp11"
+          - CMAKE_FLAGS: "-Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-libsndfile=0 -Denable-floats=1"
+            CMAKE_CONFIG: Release
+            name: "minimal"
+    
+    name: 🔧 MSVC Additional (${{ matrix.name }})
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        submodules: true
+        
+    - name: Setup dependencies
+      shell: cmd
+      run: |
+        @ECHO ON
+        mkdir d:\deps || exit /b 1
+        cd d:\deps || exit /b 1
+        if not "${{ env.GTK_BUNDLE_X64 }}"=="" (
+          curl -LfsS -o gtk-bundle-dev.zip "${{ env.GTK_BUNDLE_X64 }}" || exit /b 1
+          7z x -aos -- gtk-bundle-dev.zip > NUL || exit /b 1
+        )
+        if not "${{ env.LIBSNDFILE_URL_X64 }}"=="" (
+          curl -LfsS -o libsndfile-dev.zip "${{ env.LIBSNDFILE_URL_X64 }}" || exit /b 1
+          7z x -aos -- libsndfile-dev.zip > NUL || exit /b 1
+        )
+        del *.zip 2>nul
+        if exist libsndfile-* (
+          cd libsndfile-*
+          xcopy /E /I /Y * ..
+          cd ..
+          rmdir /S /Q libsndfile-*
+        )
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit /b 1
+        cmake -Werror=dev -A x64 -T v142 ^
+          -DCMAKE_BUILD_TYPE=${{ matrix.CMAKE_CONFIG }} ^
+          -DCMAKE_VERBOSE_MAKEFILE=1 ${{ matrix.CMAKE_FLAGS }} ^
+          -DNO_GUI=1 -Dwindows-version=0x0A00 -Denable-jack=0 ^
+          -Denable-pulseaudio=0 -Denable-ladspa=0 -Denable-dbus=0 ^
+          -Denable-readline=0 -Denable-sdl2=0 -Denable-libinstpatch=0 .. || exit /b 1
+
+    - name: Build
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config ${{ matrix.CMAKE_CONFIG }} --parallel 3 || exit /b 1
+
+    - name: Test
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config ${{ matrix.CMAKE_CONFIG }} --target check || exit /b 1
+
+    - name: Demo
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config ${{ matrix.CMAKE_CONFIG }} --target demo || exit /b 1
+
+  # MinGW builds migrated from Azure Pipeline WindowsMinGW job 
+  mingw-build:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - CMAKE_FLAGS: ""
+            artifactPrefix: "fluidsynth-mingw"
+            platform: x64
+            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
+            sdl3-subdir: 'x86_64-w64-mingw32'
+          - CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=0'
+            artifactPrefix: "fluidsynth-mingw-static"
+            platform: x64
+            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
+            sdl3-subdir: 'x86_64-w64-mingw32'
+    
+    name: 🔧 MinGW ${{ matrix.artifactPrefix }} ${{ matrix.platform }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    - name: Setup dependencies
+      shell: cmd
+      run: |
+        @ECHO ON
+        mkdir d:\deps || exit /b 1
+        cd d:\deps || exit /b 1
+        if not "${{ env.GTK_BUNDLE_X64 }}"=="" (
+          curl -LfsS -o gtk-bundle-dev.zip "${{ env.GTK_BUNDLE_X64 }}" || exit /b 1
+          7z x -aos -- gtk-bundle-dev.zip > NUL || exit /b 1
+        )
+        if not "${{ env.LIBSNDFILE_URL_X64 }}"=="" (
+          curl -LfsS -o libsndfile-dev.zip "${{ env.LIBSNDFILE_URL_X64 }}" || exit /b 1
+          7z x -aos -- libsndfile-dev.zip > NUL || exit /b 1
+        )
+        if not "${{ env.MINGW_URL_X64 }}"=="" (
+          curl -LfsS -o mingw.zip "${{ env.MINGW_URL_X64 }}" || exit /b 1
+          7z x -aos -- mingw.zip > NUL || exit /b 1
+        )
+        curl -LfsS -o sdl3.tar.gz "${{ matrix.sdl3-url }}" || exit /b 1
+        tar xzf sdl3.tar.gz > NUL || exit /b 1
+        del *.zip *.tar.gz 2>nul
+        if exist SDL3-* (
+          cd SDL3-*
+          xcopy /E /I /Y * ..
+          cd ..
+          rmdir /S /Q SDL3-*
+        )
+        if exist libsndfile-* (
+          cd libsndfile-*
+          xcopy /E /I /Y * ..
+          cd ..
+          rmdir /S /Q libsndfile-*
+        )
+        if exist mingw* (
+          cd mingw*
+          xcopy /E /I /Y * ..
+          cd ..
+          rmdir /S /Q mingw*
+        )
+        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
+        REM remove Git paths to avoid sh.exe conflicts
+        set PATH=%PATH:C:\Program Files\Git\bin;=%
+        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+        pkg-config --list-all || echo pkg-config failed
+        mkdir build && cd build || exit /b 1
+        cmake -Werror=dev -G "MinGW Makefiles" ^
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
+          ${{ matrix.CMAKE_FLAGS }} -Denable-readline=0 -Denable-floats=1 ^
+          -Denable-jack=0 -Denable-pulseaudio=0 -Denable-ladspa=0 ^
+          -Denable-dbus=0 -Denable-sdl2=0 -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
+
+    - name: Build
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
+        set PATH=%PATH:C:\Program Files\Git\bin;=%
+        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+        cd build || exit /b 1
+        mingw32-make.exe -j3 all || exit /b 1
+
+    - name: Test
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
+        set PATH=%PATH:C:\Program Files\Git\bin;=%
+        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+        cd build || exit /b 1
+        mingw32-make.exe -j4 check || exit /b 1
+
+    - name: Demo
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
+        set PATH=%PATH:C:\Program Files\Git\bin;=%
+        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+        cd build || exit /b 1
+        mingw32-make.exe -j4 demo || exit /b 1
+
+    - name: Install
+      shell: cmd
+      run: |
+        @ECHO ON
+        cd build
+        mingw32-make.exe install || exit /b 1
+        xcopy d:\deps\bin\libgcc_s_sjlj-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
+        xcopy d:\deps\bin\libgcc_s_seh-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
+        xcopy d:\deps\bin\libgomp-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
+        xcopy d:\deps\bin\libstdc++-6.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
+        xcopy d:\deps\bin\libwinpthread-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
+        xcopy d:\deps\${{ matrix.sdl3-subdir }}\bin\SDL3.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul
+
+    - name: Validate library (shared)
+      if: ${{ !contains(matrix.artifactPrefix, 'static') }}
+      shell: bash
+      working-directory: ${{ env.INSTALL_LOCATION }}
+      run: |
+        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.dll.a" ]; then
+          echo "Fluidsynth library has unexpected filename!"
+          ls -la . bin lib
+          exit 1
+        fi
+
+    - name: Validate library (static)
+      if: ${{ contains(matrix.artifactPrefix, 'static') }}
+      shell: bash
+      working-directory: ${{ env.INSTALL_LOCATION }}
+      run: |
+        if [ ! -f "lib/libfluidsynth-3.a" ]; then
+          echo "Fluidsynth static library has unexpected filename!"
+          ls -la . bin lib
+          exit 1
+        fi
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: CI-${{ github.run_id }}-mingw-${{ matrix.artifactPrefix }}-${{ matrix.platform }}
+        path: ${{ env.INSTALL_LOCATION }}
+        retention-days: 14
+        overwrite: true
+
+  msys2-build:
+    runs-on: windows-2022
     strategy:
         fail-fast: false
         matrix:
@@ -85,7 +508,84 @@ jobs:
     - name: '${{ matrix.icon }} Upload Artifacts'
       uses: actions/upload-artifact@v4
       with:
-        name: ${{env.INSTALL_LOCATION}}-${{matrix.sys}}-${{matrix.osal}}
+        name: CI-${{ github.run_id }}-msys2-${{matrix.sys}}-${{matrix.osal}}
         path: ${{env.INSTALL_LOCATION}}
         retention-days: 14
         overwrite: true
+
+  # Publish artifacts to GitHub releases (only on release events)
+  publish-release:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [msvc-build]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v5
+      with:
+        path: artifacts
+        pattern: fluidsynth-*
+        merge-multiple: false
+        tag_name: ${{ github.event.release.tag_name }}
+        
+    - name: Create release archives
+      run: |
+        cd artifacts
+        ls -la
+        for dir in */; do
+          if [[ "$dir" == fluidsynth* ]]; then
+            echo "Creating archive for $dir"
+            zip -r "${dir%/}.zip" "$dir"
+          fi
+        done
+        ls -la *.zip
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          artifacts/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Create announcement PR in website repository  
+  announce-release:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [publish-release]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Generate HTML Release Announcement
+        run: |
+          set -e
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          RELEASE_NAME="${{ github.event.release.name }}"
+          VERSION="${TAG_NAME#v}"
+          DATE="$(date +%Y-%m-%d)"
+          FILENAME="${DATE}-released-fluidsynth-${VERSION//./-}.md"
+          mkdir -p release_announcement
+          cat > release_announcement/$FILENAME <<EOF
+          ---
+          title: Released FluidSynth ${VERSION}
+          author: Tom Moebert
+          layout: post
+          ---
+          
+          A maintenance release for fluidsynth has been released. Details can be found in the release notes:
+          
+          <https://github.com/FluidSynth/fluidsynth/releases/tag/${TAG_NAME}>
+
+      - name: Publish Announcement to GH Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: release_announcement
+          repository-name: FluidSynth/fluidsynth.github.io
+          branch: main
+          target-folder: _posts/
+          token: ${{ secrets.DEPLOY_API_TOKEN_NEW }}
+          clean: false
+          commit-message: Announce FluidSynth ${{ github.event.release.tag_name }}
+          git-config-name: Fluid Release Announcer
+          git-config-email: fluid-release-bot@fluidsynth.github.io

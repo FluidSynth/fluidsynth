@@ -30,6 +30,7 @@ ADD_FLUID_TEST(test_seq_evt_order)
 ADD_FLUID_TEST(test_seq_event_queue_remove)
 ADD_FLUID_TEST(test_jack_obtaining_synth)
 ADD_FLUID_TEST(test_utf8_open)
+ADD_FLUID_TEST(test_modulator)
 
 if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
     # Earlier versions of GLib had broken comment handling and should not be compared to
@@ -175,18 +176,14 @@ add_custom_target(renderHybridCol
     VERBATIM
 )
 
-add_custom_target(render1TOWOW
-    COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
-    COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
+add_custom_target(renderPortamento
+    COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/3 - Turn Up, Strut In, Chill Out (XG).${FEXT}" "3 - Turn Up, Strut In, Chill Out (XG).mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/6 - Galactic Invasion (XG).${FEXT}" "6 - Galactic Invasion (XG).mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/Descent_Game08.${FEXT}" "Descent_Game08.mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}" ${GENERAL_USER_GS2} "MM6_-_MrX2010XG.mid"
     COMMENT "Rendering Portamento tests"
-    DEPENDS fluidsynth create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/portamento/
-    VERBATIM
-)
-
-add_custom_target(renderDescent8
-    COMMAND fluidsynth -R 1 -C 1 -g 0.5 -F ${PORTAMENTO_RENDER_DIR}/Game08.${FEXT} Game08.mid ${GENERAL_USER_GS2}
-    COMMENT "Rendering Descent Game 8"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/portamento/
     VERBATIM
@@ -311,6 +308,8 @@ add_custom_target(renderBankSelect
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_GS.${FEXT}" ${GENERAL_USER_GS2} "Dance_GS.mid"
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_original.${FEXT}" ${GENERAL_USER_GS2} "Dance_original.mid"
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_XG.${FEXT}" ${GENERAL_USER_GS2} "Dance_XG.mid"
+    COMMAND fluidsynth -o "synth.midi-bank-select=xg" -g 0.6 -F "${BANKSELECT_RENDER_DIR}/9 - On 'Til Morning.${FEXT}" ${GENERAL_USER_GS2} "issue-1524/9 - On 'Til Morning.mid"
+    COMMAND fluidsynth -g 0.6 -F "${BANKSELECT_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}" "issue-1524/Default.sf2" "issue-1524/MM6_-_MrX2010XG.mid"
     COMMENT "Rendering MIDI Bank selection tests"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/midi-bank-select"
@@ -350,8 +349,7 @@ add_dependencies(check_manual renderFilter)
 add_dependencies(check_manual renderUplift)
 add_dependencies(check_manual renderChrisNRPN)
 add_dependencies(check_manual renderHybridCol)
-add_dependencies(check_manual render1TOWOW)
-add_dependencies(check_manual renderDescent8)
+add_dependencies(check_manual renderPortamento)
 add_dependencies(check_manual renderSfSpecTest)
 add_dependencies(check_manual render1455)
 add_dependencies(check_manual renderDK64JJU)
