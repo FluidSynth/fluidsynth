@@ -52,18 +52,22 @@ template<size_t N, typename... Args>
 static inline std::string string_format(const char (&format)[N], Args... args)
 {
     int size_s = std::snprintf(nullptr, 0, format, args...);
-    if (size_s < 0)
+
+    if(size_s < 0)
     {
         throw std::runtime_error("Error while formatting a message (dry)");
     }
+
     auto size = static_cast<size_t>(size_s);
     std::string result;
     result.resize(size);
     size_s = std::snprintf(result.data(), size + 1, format, args...); // snprintf writes \0 into buffer
-    if (size_s < 0)
+
+    if(size_s < 0)
     {
         throw std::runtime_error("Error while formatting a message");
     }
+
     return result;
 }
 
@@ -71,12 +75,13 @@ static inline void log_exception(int level, const std::exception &exc, int nest_
 {
     const auto &exc_type = typeid(exc);
     std::string prefix;
-    if (nest_level > 0)
+
+    if(nest_level > 0)
     {
         prefix = std::string(1 * nest_level, ' ');
     }
 
-    if (exc_type == typeid(std::bad_alloc))
+    if(exc_type == typeid(std::bad_alloc))
     {
         FLUID_LOG(FLUID_PANIC, "%sOut of memory!!: %s", prefix.c_str(), exc.what());
     }
@@ -89,13 +94,14 @@ static inline void log_exception(int level, const std::exception &exc, int nest_
     {
         std::rethrow_if_nested(exc);
     }
-    catch (const std::exception &nested)
+    catch(const std::exception &nested)
     {
-        if (nest_level + 1 >= 16)
+        if(nest_level + 1 >= 16)
         {
             FLUID_LOG(level, "%s...", prefix.c_str());
             return;
         }
+
         log_exception(level, nested, nest_level + 1);
     }
 }
@@ -150,17 +156,18 @@ struct mlock_guard
     mlock_guard(const mlock_guard &) = delete;
     mlock_guard &operator=(const mlock_guard &) = delete;
     mlock_guard(mlock_guard &&other) noexcept
-    : ptr(std::exchange(other.ptr, nullptr)), size(std::exchange(other.size, 0)),
-      locked(std::exchange(other.locked, false))
+        : ptr(std::exchange(other.ptr, nullptr)), size(std::exchange(other.size, 0)),
+          locked(std::exchange(other.locked, false))
     {
     }
 
     mlock_guard &operator=(mlock_guard &&other) noexcept
     {
-        if (this == &other)
+        if(this == &other)
         {
             return *this; // self-assignment
         }
+
         unlock();
         ptr = std::exchange(other.ptr, nullptr);
         size = std::exchange(other.size, 0);
@@ -170,24 +177,28 @@ struct mlock_guard
 
     int lock() noexcept
     {
-        if (ptr == nullptr || locked)
+        if(ptr == nullptr || locked)
         {
             return 0;
         }
+
         int result = fluid_mlock(ptr, size);
-        if (result == 0)
+
+        if(result == 0)
         {
             locked = true;
         }
+
         return result;
     }
 
     void unlock() noexcept
     {
-        if (ptr == nullptr || !locked)
+        if(ptr == nullptr || !locked)
         {
             return;
         }
+
         fluid_munlock(ptr, size);
         locked = false;
     }
@@ -234,7 +245,8 @@ struct fluid_dls_articulation
     fluid_real_t keynum_scale = 1.0;
 
     // clang-format off
-    fluid_mod_t keyToPitch {
+    fluid_mod_t keyToPitch
+    {
         GEN_FINETUNE,
         FLUID_MOD_KEY,
         FLUID_MOD_GC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE,
@@ -260,20 +272,21 @@ struct fluid_dls_articulation
 
     void add_mod(const fluid_mod_t &mod)
     {
-        if (fluid_mod_test_identity(&keyToPitch, &mod))
+        if(fluid_mod_test_identity(&keyToPitch, &mod))
         {
             keyToPitch.amount = mod.amount;
             return;
         }
 
-        for (auto &existing_mod : mods)
+        for(auto &existing_mod : mods)
         {
-            if (fluid_mod_test_identity(&existing_mod, &mod))
+            if(fluid_mod_test_identity(&existing_mod, &mod))
             {
                 existing_mod.amount = mod.amount;
                 return;
             }
         }
+
         mods.push_back(mod);
     }
 };
@@ -366,13 +379,14 @@ struct fluid_dls_font
 
     void *file{};
     // this RAII wrapper is used to provide exception safety (initializer may throws!)
-    scope_guard<std::function<void()>> on_file_exit{ [this]() { // Once `this` is captured, it must not be copied or moved
-        if (file != nullptr)
+    scope_guard<std::function<void()>> on_file_exit{ [this]()   // Once `this` is captured, it must not be copied or moved
         {
-            fcbs->fclose(file);
-            file = nullptr;
-        }
-    } };
+            if(file != nullptr)
+            {
+                fcbs->fclose(file);
+                file = nullptr;
+            }
+        } };
     fluid_long_long_t filesize{};
 
     // offset to chunk header
@@ -462,7 +476,7 @@ struct fluid_dls_font
     // utilities
     void fseek(fluid_long_long_t pos, int whence)
     {
-        if (fcbs->fseek(file, pos, whence) != FLUID_OK)
+        if(fcbs->fseek(file, pos, whence) != FLUID_OK)
         {
             throw std::runtime_error{ "Failed to seek" };
         }
@@ -483,12 +497,12 @@ new_fluid_dls_font(Args &&...args) noexcept
     {
         return new fluid_dls_font(std::forward<Args>(args)...);
     }
-    catch (const std::bad_alloc &)
+    catch(const std::bad_alloc &)
     {
         FLUID_LOG(FLUID_PANIC, "Out of memory when allocing fluid_dls_font");
         return nullptr;
     }
-    catch (const std::exception &exc)
+    catch(const std::exception &exc)
     {
         FLUID_LOG(FLUID_ERR, "Exception thrown in fluid_dls_font constructor");
         log_exception(FLUID_ERR, exc);
@@ -498,7 +512,7 @@ new_fluid_dls_font(Args &&...args) noexcept
 
 static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 {
-    if (dlsfont == nullptr)
+    if(dlsfont == nullptr)
     {
         return;
     }
@@ -507,7 +521,7 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
     {
         delete dlsfont;
     }
-    catch (const std::exception &err)
+    catch(const std::exception &err)
     {
         FLUID_LOG(FLUID_ERR, "Exception thrown in fluid_dls_font destructor");
         log_exception(FLUID_ERR, err);
@@ -615,31 +629,37 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 static inline int READCHUNK(fluid_dls_font *dlsfont, RIFFChunk &chunk)
 {
     READCHUNK_RAW(dlsfont, &chunk);
-    if (chunk.id == LIST_FCC)
+
+    if(chunk.id == LIST_FCC)
     {
-        if (chunk.size < 4)
+        if(chunk.size < 4)
         {
             throw std::runtime_error{ "Bad LIST header: size < 4" };
         }
+
         READID(dlsfont, &chunk.id);
         chunk.size -= 4;
         return 12;
     }
-    if (chunk.id == RIFF_FCC)
+
+    if(chunk.id == RIFF_FCC)
     {
-        if (chunk.size < 4)
+        if(chunk.size < 4)
         {
             throw std::runtime_error{ "Bad RIFF header: size < 4" };
         }
+
         READID(dlsfont, &chunk.id);
         chunk.size -= 4;
         return 12;
     }
-    if (chunk.id == CRS1_FCC)
+
+    if(chunk.id == CRS1_FCC)
     {
         // see CRS1_FCC comment
         chunk.size = 28;
     }
+
     return 8;
 }
 
@@ -649,63 +669,70 @@ fluid_dls_font::visit_subchunks(fluid_long_long_t offset, uint32_t expected_4cc,
 {
     fseek(offset, SEEK_SET);
     RIFFChunk chunk;
-    if (READCHUNK(this, chunk) != 12) // only LIST chunks contains subchunks
+
+    if(READCHUNK(this, chunk) != 12)  // only LIST chunks contains subchunks
     {
-        if (expected_4cc == 0)
+        if(expected_4cc == 0)
         {
             // clang-format off
             throw std::runtime_error{ string_format(
-                "Expected chunk LIST[....], got " FMT_4CC_SPEC,
-                FMT_4CC_ARG(chunk.id)
-            )};
+                                          "Expected chunk LIST[....], got " FMT_4CC_SPEC,
+                                          FMT_4CC_ARG(chunk.id)
+                                      )};
             // clang-format on
         }
+
         // clang-format off
         throw std::runtime_error{ string_format(
-            "Expected chunk LIST[" FMT_4CC_SPEC "], got " FMT_4CC_SPEC,
-            FMT_4CC_ARG(expected_4cc), // 0x20202020 is '    ' (four spaces)
-            FMT_4CC_ARG(chunk.id)
-        )};
+                                      "Expected chunk LIST[" FMT_4CC_SPEC "], got " FMT_4CC_SPEC,
+                                      FMT_4CC_ARG(expected_4cc), // 0x20202020 is '    ' (four spaces)
+                                      FMT_4CC_ARG(chunk.id)
+                                  )};
         // clang-format on
     }
-    if (expected_4cc != 0 && chunk.id != expected_4cc)
+
+    if(expected_4cc != 0 && chunk.id != expected_4cc)
     {
         // clang-format off
         throw std::runtime_error{ string_format(
-            "Expected chunk LIST[" FMT_4CC_SPEC "], got LIST[" FMT_4CC_SPEC "]",
-            FMT_4CC_ARG(expected_4cc),
-            FMT_4CC_ARG(chunk.id)
-        )};
+                                      "Expected chunk LIST[" FMT_4CC_SPEC "], got LIST[" FMT_4CC_SPEC "]",
+                                      FMT_4CC_ARG(expected_4cc),
+                                      FMT_4CC_ARG(chunk.id)
+                                  )};
         // clang-format on
     }
 
     fluid_long_long_t pos = offset + 12;
-    while (pos < offset + 12 + chunk.size)
+
+    while(pos < offset + 12 + chunk.size)
     {
         RIFFChunk subchunk;
         fseek(pos, SEEK_SET);
         auto subchunkpos = pos;
         auto headersize = READCHUNK(this, subchunk);
         pos += headersize;
+
         try
         {
             visitor(subchunk, headersize, subchunkpos);
         }
-        catch (...)
+        catch(...)
         {
             // clang-format off
             std::throw_with_nested(std::runtime_error{string_format(
-                "visit in LIST '" FMT_4CC_SPEC "' ofs=0x%llx -> %s'" FMT_4CC_SPEC "' ofs=0x%llx",
-                FMT_4CC_ARG(chunk.id),
-                static_cast<unsigned long long>(offset),
-                (headersize == 12) ? "LIST " : "",
-                FMT_4CC_ARG(subchunk.id),
-                static_cast<unsigned long long>(subchunkpos)
-            )});
+                                       "visit in LIST '" FMT_4CC_SPEC "' ofs=0x%llx -> %s'" FMT_4CC_SPEC "' ofs=0x%llx",
+                                       FMT_4CC_ARG(chunk.id),
+                                       static_cast<unsigned long long>(offset),
+                                       (headersize == 12) ? "LIST " : "",
+                                       FMT_4CC_ARG(subchunk.id),
+                                       static_cast<unsigned long long>(subchunkpos)
+                                   )});
             // clang-format on
         }
+
         pos += subchunk.size;
-        if (subchunk.size % 2 != 0)
+
+        if(subchunk.size % 2 != 0)
         {
             pos++;
         }
@@ -718,24 +745,30 @@ inline std::string fluid_dls_font::read_name_from_info_entries(fluid_long_long_t
 {
     fseek(offset, SEEK_SET);
     fluid_long_long_t pos = offset;
-    while (pos < offset + size)
+
+    while(pos < offset + size)
     {
         RIFFChunk chunk;
         fseek(pos, SEEK_SET);
         pos += READCHUNK(this, chunk);
-        if (chunk.id == INAM_FCC)
+
+        if(chunk.id == INAM_FCC)
         {
             std::string name;
             name.resize(chunk.size);
-            if (fcbs->fread(name.data(), chunk.size, file) != FLUID_OK)
+
+            if(fcbs->fread(name.data(), chunk.size, file) != FLUID_OK)
             {
                 throw std::runtime_error{ "Failed when reading INAM chunk" };
             }
+
             FLUID_LOG(FLUID_DBG, "Read INAM: '%s'", name.c_str());
             return name;
         }
+
         pos += chunk.size;
-        if (chunk.size % 2 != 0)
+
+        if(chunk.size % 2 != 0)
         {
             pos++;
         }
@@ -780,7 +813,8 @@ inline static void READGUID(fluid_dls_font *sf, DLSID &id)
     READ32(sf, id.Data1);
     READ16(sf, id.Data2);
     READ16(sf, id.Data3);
-    if (sf->fcbs->fread(id.Data4, 8, sf->file) == FLUID_FAILED)
+
+    if(sf->fcbs->fread(id.Data4, 8, sf->file) == FLUID_FAILED)
     {
         throw std::runtime_error{ "Failed when reading GUID" };
     }
@@ -793,12 +827,13 @@ constexpr uint16_t WAVE_FORMAT_PCM = 0x0001;
 
 static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_t size, int bitdepth)
 {
-    if (bitdepth == 16)
+    if(bitdepth == 16)
     {
         memcpy(dest, data, size);
         return;
     }
-    if (bitdepth != 8)
+
+    if(bitdepth != 8)
     {
         // this should never happen!
         throw std::runtime_error{ "Unsupported bitdepth" };
@@ -806,7 +841,8 @@ static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_
 
     const auto *src = static_cast<const uint8_t *>(data);
     auto *dest16 = static_cast<int16_t *>(dest);
-    for (fluid_long_long_t i = 0; i < size; ++i)
+
+    for(fluid_long_long_t i = 0; i < size; ++i)
     {
         dest16[i] = (static_cast<int8_t>(src[i] - 128) << 8);
     }
@@ -917,10 +953,10 @@ struct DLSTransform
     bool src_bip : 1;
 
     explicit DLSTransform(uint16_t transform) noexcept
-    : out_trans(transform & TRN_OUT_TRN_MASK), ctl_trans((transform & TRN_CTL_TRN_MASK) >> 4),
-      src_trans((transform & TRN_SRC_TRN_MASK) >> 10), ctl_inv((transform & TRN_CTL_INV_MASK) != 0),
-      src_inv((transform & TRN_SRC_INV_MASK) != 0), ctl_bip((transform & TRN_CTL_BIP_MASK) != 0),
-      src_bip((transform & TRN_SRC_BIP_MASK) != 0)
+        : out_trans(transform & TRN_OUT_TRN_MASK), ctl_trans((transform & TRN_CTL_TRN_MASK) >> 4),
+          src_trans((transform & TRN_SRC_TRN_MASK) >> 10), ctl_inv((transform & TRN_CTL_INV_MASK) != 0),
+          src_inv((transform & TRN_SRC_INV_MASK) != 0), ctl_bip((transform & TRN_CTL_BIP_MASK) != 0),
+          src_bip((transform & TRN_SRC_BIP_MASK) != 0)
     {
     }
 
@@ -940,16 +976,20 @@ constexpr static uint16_t dls_transform_ctl_to_src(uint16_t transform)
 
 constexpr static std::optional<unsigned char> convert_dls_transform_to_fluid(uint16_t transform_mode)
 {
-    switch (transform_mode)
+    switch(transform_mode)
     {
     case CONN_TRN_NONE:
         return FLUID_MOD_LINEAR;
+
     case CONN_TRN_CONCAVE:
         return FLUID_MOD_CONCAVE;
+
     case CONN_TRN_CONVEX:
         return FLUID_MOD_CONVEX;
+
     case CONN_TRN_SWITCH:
         return FLUID_MOD_SWITCH;
+
     default:
         return std::nullopt;
     }
@@ -957,62 +997,86 @@ constexpr static std::optional<unsigned char> convert_dls_transform_to_fluid(uin
 
 constexpr static std::optional<uint16_t> convert_dls_mod_dest_to_gen(uint16_t dest)
 {
-    if (dest == CONN_DST_NONE || dest == CONN_DST_RESERVED || dest == CONN_DST_EG1_RESERVED ||
-        dest == CONN_DST_EG2_RESERVED || (dest >= CONN_DST_LEFT && dest <= CONN_DST_RIGHTREAR))
+    if(dest == CONN_DST_NONE || dest == CONN_DST_RESERVED || dest == CONN_DST_EG1_RESERVED ||
+            dest == CONN_DST_EG2_RESERVED || (dest >= CONN_DST_LEFT && dest <= CONN_DST_RIGHTREAR))
     {
         return std::nullopt;
     }
 
-    switch (dest)
+    switch(dest)
     {
     case CONN_DST_GAIN:
         return GEN_ATTENUATION; // NOTE: attenuation = -gain
+
     case CONN_DST_EG1_SUSTAINLEVEL:
         return GEN_VOLENVSUSTAIN; // NOTE: SF2 sustain (atten) in dB = (100% - sustainlevel) * 96 dB (or 144 dB, whatever)
+
     case CONN_DST_EG2_SUSTAINLEVEL:
         return GEN_MODENVSUSTAIN; // NOTE: SF2 sustain (atten) = 100% - sustainlevel
+
     case CONN_DST_PITCH:
         return GEN_FINETUNE;
+
     case CONN_DST_PAN:
         return GEN_PAN;
+
     case CONN_DST_CHORUS:
         return GEN_CHORUSSEND;
+
     case CONN_DST_REVERB:
         return GEN_REVERBSEND;
+
     case CONN_DST_LFO_FREQUENCY:
         return GEN_MODLFOFREQ;
+
     case CONN_DST_LFO_STARTDELAY:
         return GEN_MODLFODELAY;
+
     case CONN_DST_VIB_FREQUENCY:
         return GEN_VIBLFOFREQ;
+
     case CONN_DST_VIB_STARTDELAY:
         return GEN_VIBLFODELAY;
+
     case CONN_DST_EG1_ATTACKTIME:
         return GEN_VOLENVATTACK;
+
     case CONN_DST_EG1_DECAYTIME:
         return GEN_VOLENVDECAY;
+
     case CONN_DST_EG1_RELEASETIME:
         return GEN_VOLENVRELEASE;
+
     case CONN_DST_EG1_DELAYTIME:
         return GEN_VOLENVDELAY;
+
     case CONN_DST_EG1_HOLDTIME:
         return GEN_VOLENVHOLD;
+
     case CONN_DST_EG1_SHUTDOWNTIME:
         return std::nullopt;
+
     case CONN_DST_EG2_ATTACKTIME:
         return GEN_MODENVATTACK;
+
     case CONN_DST_EG2_DECAYTIME:
         return GEN_MODENVDECAY;
+
     case CONN_DST_EG2_RELEASETIME:
         return GEN_MODENVRELEASE;
+
     case CONN_DST_EG2_DELAYTIME:
         return GEN_MODENVDELAY;
+
     case CONN_DST_EG2_HOLDTIME:
         return GEN_MODENVHOLD;
+
     case CONN_DST_FILTER_CUTOFF:
         return GEN_FILTERFC;
+
     case CONN_DST_FILTER_Q:
         return GEN_FILTERQ;
+
     default:
         return std::nullopt;
     }
@@ -1021,22 +1085,29 @@ constexpr static std::optional<uint16_t> convert_dls_mod_dest_to_gen(uint16_t de
 // gsrc: general source
 constexpr std::optional<uint16_t> convert_dls_mod_gsrc(uint16_t source)
 {
-    switch (source)
+    switch(source)
     {
     case CONN_SRC_NONE:
         return FLUID_MOD_NONE;
+
     case CONN_SRC_KEYONVELOCITY:
         return FLUID_MOD_VELOCITY;
+
     case CONN_SRC_KEYNUMBER:
         return FLUID_MOD_KEY;
+
     case CONN_SRC_POLYPRESSURE:
         return FLUID_MOD_KEYPRESSURE;
+
     case CONN_SRC_CHANNELPRESSURE:
         return FLUID_MOD_CHANNELPRESSURE;
+
     case CONN_SRC_PITCHWHEEL:
         return FLUID_MOD_PITCHWHEEL;
+
     case CONN_SRC_RPN0:
         return FLUID_MOD_PITCHWHEELSENS;
+
     default:
         return std::nullopt;
     }
@@ -1045,20 +1116,26 @@ constexpr std::optional<uint16_t> convert_dls_mod_gsrc(uint16_t source)
 // csrc: CC source
 constexpr std::optional<uint16_t> convert_dls_mod_csrc(uint16_t source)
 {
-    switch (source)
+    switch(source)
     {
     case CONN_SRC_CC1:
         return 1;
+
     case CONN_SRC_CC7:
         return 7;
+
     case CONN_SRC_CC10:
         return 10;
+
     case CONN_SRC_CC11:
         return 11;
+
     case CONN_SRC_CC91:
         return 91;
+
     case CONN_SRC_CC93:
         return 93;
+
     default:
         return std::nullopt;
     }
@@ -1071,7 +1148,7 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
                                     DLSTransform transform,
                                     uint16_t control_dls)
 {
-    if (src_dls == CONN_SRC_NONE && control_dls == CONN_SRC_NONE)
+    if(src_dls == CONN_SRC_NONE && control_dls == CONN_SRC_NONE)
     {
         art.gens[dest_gen] = art.gens[dest_gen].value_or(0) + scale;
         return;
@@ -1083,27 +1160,29 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
 
     // if output transform is set to something else, but input transform is none, and the connection
     // block does not have a control source, apply the output transform to the input instead.
-    if (transform.out_trans != CONN_TRN_NONE && transform.src_trans == CONN_TRN_NONE && control_dls == CONN_SRC_NONE)
+    if(transform.out_trans != CONN_TRN_NONE && transform.src_trans == CONN_TRN_NONE && control_dls == CONN_SRC_NONE)
     {
         transform.src_trans = transform.out_trans;
         transform.out_trans = CONN_TRN_NONE;
     }
 
-    if (transform.out_trans != CONN_TRN_NONE)
+    if(transform.out_trans != CONN_TRN_NONE)
     {
         FLUID_LOG(FLUID_WARN, "Output transform in connection block is not supported, set to to linear");
     }
 
     fluid_mod_t mod{};
     auto src = convert_dls_mod_gsrc(src_dls);
-    if (src.has_value())
+
+    if(src.has_value())
     {
         mod.flags1 = FLUID_MOD_GC;
     }
     else
     {
         src = convert_dls_mod_csrc(src_dls);
-        if (src.has_value())
+
+        if(src.has_value())
         {
             mod.flags1 = FLUID_MOD_CC;
         }
@@ -1115,17 +1194,20 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
             return;
         }
     }
+
     mod.src1 = src.value();
 
     auto ctl = convert_dls_mod_gsrc(control_dls);
-    if (ctl.has_value())
+
+    if(ctl.has_value())
     {
         mod.flags2 = FLUID_MOD_GC;
     }
     else
     {
         ctl = convert_dls_mod_csrc(control_dls);
-        if (ctl.has_value())
+
+        if(ctl.has_value())
         {
             mod.flags2 = FLUID_MOD_CC;
         }
@@ -1137,31 +1219,36 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
             return;
         }
     }
+
     mod.src2 = ctl.value();
 
-    if (mod.src1 != FLUID_MOD_NONE)
+    if(mod.src1 != FLUID_MOD_NONE)
     {
         mod.flags1 |= transform.src_bip ? FLUID_MOD_BIPOLAR : FLUID_MOD_UNIPOLAR;
         mod.flags1 |= transform.src_inv ? FLUID_MOD_NEGATIVE : FLUID_MOD_POSITIVE;
         auto transform_flag = convert_dls_transform_to_fluid(transform.src_trans);
-        if (!transform_flag.has_value())
+
+        if(!transform_flag.has_value())
         {
             FLUID_LOG(FLUID_WARN, "Invalid DLS transform enum, ignoring connection block");
             return;
         }
+
         mod.flags1 |= transform_flag.value();
     }
 
-    if (mod.src2 != FLUID_MOD_NONE)
+    if(mod.src2 != FLUID_MOD_NONE)
     {
         mod.flags2 |= transform.ctl_bip ? FLUID_MOD_BIPOLAR : FLUID_MOD_UNIPOLAR;
         mod.flags2 |= transform.ctl_inv ? FLUID_MOD_NEGATIVE : FLUID_MOD_POSITIVE;
         auto transform_flag = convert_dls_transform_to_fluid(transform.ctl_trans);
-        if (!transform_flag.has_value())
+
+        if(!transform_flag.has_value())
         {
             FLUID_LOG(FLUID_WARN, "Invalid DLS transform enum, ignoring connection block");
             return;
         }
+
         mod.flags2 |= transform_flag.value();
     }
 
@@ -1171,11 +1258,11 @@ void add_dls_connectionblock_to_art(fluid_dls_articulation &art,
     // transform.out_trans is ignored because unsupported
     mod.trans = FLUID_MOD_TRANSFORM_LINEAR;
 
-    if (mod.src1 == FLUID_MOD_VELOCITY && mod.dest == GEN_ATTENUATION && (mod.flags1 & FLUID_MOD_CONCAVE) != 0)
+    if(mod.src1 == FLUID_MOD_VELOCITY && mod.dest == GEN_ATTENUATION && (mod.flags1 & FLUID_MOD_CONCAVE) != 0)
     {
         // confirmed as vel2att modulator
         // fix when non-inverted (positive), this is seen in Fury.dls from https://www.ronimusic.com/smp_ios_dls_files.htm
-        if ((mod.flags1 & FLUID_MOD_NEGATIVE) == 0)
+        if((mod.flags1 & FLUID_MOD_NEGATIVE) == 0)
         {
             FLUID_LOG(FLUID_DBG, "Fixing non-inverted vel2att modulator to inverted");
             mod.flags1 |= FLUID_MOD_NEGATIVE;
@@ -1197,35 +1284,39 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
                                         uint16_t transform,
                                         int32_t scale_16)
 {
-    switch (destination)
+    switch(destination)
     {
     case CONN_DST_NONE:
+
     // these reserved dest are used in gm.dls, interesting
     case CONN_DST_RESERVED:
     case CONN_DST_EG1_RESERVED:
     case CONN_DST_EG2_RESERVED:
         return;
+
     default:
         break;
     }
 
-    if (source == CONN_SRC_NONE && control != CONN_SRC_NONE)
+    if(source == CONN_SRC_NONE && control != CONN_SRC_NONE)
     {
         source = std::exchange(control, CONN_SRC_NONE);
         transform = dls_transform_ctl_to_src(transform);
     }
 
-    if (source == CONN_SRC_RPN1)
+    if(source == CONN_SRC_RPN1)
     {
         FLUID_LOG(FLUID_WARN, "Ignoring connection block with RPN 1 source");
         return;
     }
-    if (source == CONN_SRC_RPN2)
+
+    if(source == CONN_SRC_RPN2)
     {
         FLUID_LOG(FLUID_WARN, "Ignoring connection block with RPN 2 source");
         return;
     }
-    if (source == CONN_SRC_EG1)
+
+    if(source == CONN_SRC_EG1)
     {
         FLUID_LOG(FLUID_WARN, "Ignoring connection block with EG1 source");
         return;
@@ -1235,8 +1326,8 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
     fluid_real_t scale = static_cast<fluid_real_t>(scale_16) / 65536;
 
     // keynum * scale -> keynum, linear
-    if (source == CONN_SRC_KEYNUMBER && control == CONN_SRC_NONE &&
-        destination == CONN_DST_KEYNUMBER && transform == 0)
+    if(source == CONN_SRC_KEYNUMBER && control == CONN_SRC_NONE &&
+            destination == CONN_DST_KEYNUMBER && transform == 0)
     {
         art.keynum_scale = scale / 12800;
         return;
@@ -1245,22 +1336,25 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
     // LFO or EG -> something
     // they are not available as modulator source in SF2
     // note: keynumToVol/ModEnvHold/Decay is implemented through modulator. why they exist?
-    if (source == CONN_SRC_LFO)
+    if(source == CONN_SRC_LFO)
     {
-        if (!trans.src_bip)
+        if(!trans.src_bip)
         {
             FLUID_LOG(FLUID_DBG, "Non bipolar LFO source is not supported, set to bipolar");
         }
-        if (trans.src_inv || trans.src_trans != CONN_TRN_NONE)
+
+        if(trans.src_inv || trans.src_trans != CONN_TRN_NONE)
         {
             FLUID_LOG(FLUID_WARN, "LFO source is inverted or transformed, ignoring transform");
         }
-        switch (destination)
+
+        switch(destination)
         {
         case CONN_DST_PITCH:
             add_dls_connectionblock_to_art(
-            art, GEN_MODLFOTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+                art, GEN_MODLFOTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
             return;
+
         case CONN_DST_FILTER_CUTOFF:
             add_dls_connectionblock_to_art(art,
                                            GEN_MODLFOTOFILTERFC,
@@ -1268,46 +1362,53 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
                                            scale,
                                            DLSTransform{ dls_transform_ctl_to_src(transform) });
             return;
+
         case CONN_DST_GAIN:
             add_dls_connectionblock_to_art(
-            art, GEN_MODLFOTOVOL, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+                art, GEN_MODLFOTOVOL, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
             return;
+
         default:
             break;
         }
     }
-    else if (source == CONN_SRC_VIBRATO)
+    else if(source == CONN_SRC_VIBRATO)
     {
-        if (!trans.src_bip)
+        if(!trans.src_bip)
         {
             FLUID_LOG(FLUID_DBG, "Non bipolar vibrato LFO source is not supported, set to bipolar");
         }
-        if (trans.src_inv || trans.src_trans != CONN_TRN_NONE)
+
+        if(trans.src_inv || trans.src_trans != CONN_TRN_NONE)
         {
             FLUID_LOG(FLUID_WARN, "Inverted or transformed vibrato LFO source is not supported, ignoring transform");
         }
-        switch (destination)
+
+        switch(destination)
         {
         case CONN_DST_PITCH:
             add_dls_connectionblock_to_art(
-            art, GEN_VIBLFOTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+                art, GEN_VIBLFOTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
             return;
+
         default:
             break;
         }
     }
-    else if (source == CONN_SRC_EG2)
+    else if(source == CONN_SRC_EG2)
     {
-        if (trans.src_inv || trans.src_bip || trans.src_trans != CONN_TRN_NONE)
+        if(trans.src_inv || trans.src_bip || trans.src_trans != CONN_TRN_NONE)
         {
             FLUID_LOG(FLUID_WARN, "EG2 source is transformed, ignoring transform");
         }
-        switch (destination)
+
+        switch(destination)
         {
         case CONN_DST_PITCH:
             add_dls_connectionblock_to_art(
-            art, GEN_MODENVTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
+                art, GEN_MODENVTOPITCH, control, scale, DLSTransform{ dls_transform_ctl_to_src(transform) });
             return;
+
         case CONN_DST_FILTER_CUTOFF:
             add_dls_connectionblock_to_art(art,
                                            GEN_MODENVTOFILTERFC,
@@ -1315,30 +1416,32 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
                                            scale,
                                            DLSTransform{ dls_transform_ctl_to_src(transform) });
             return;
+
         default:
             break;
         }
     }
 
-    if (destination == CONN_DST_GAIN)
+    if(destination == CONN_DST_GAIN)
     {
         scale = -scale;
     }
 
-    if (destination == CONN_DST_EG1_SUSTAINLEVEL)
+    if(destination == CONN_DST_EG1_SUSTAINLEVEL)
     {
         art.gens[GEN_VOLENVSUSTAIN] = art.gens[GEN_VOLENVSUSTAIN].value_or(0) + 960;
         scale = -scale * 960 / 1000;
     }
 
-    if (destination == CONN_DST_EG2_SUSTAINLEVEL)
+    if(destination == CONN_DST_EG2_SUSTAINLEVEL)
     {
         art.gens[GEN_MODENVSUSTAIN] = art.gens[GEN_MODENVSUSTAIN].value_or(0) + 1000;
         scale = -scale;
     }
 
     auto dest_gen = convert_dls_mod_dest_to_gen(destination);
-    if (!dest_gen.has_value())
+
+    if(!dest_gen.has_value())
     {
         FLUID_LOG(FLUID_DBG,
                   "Ignoring connection block with unsupported destination: %u",
@@ -1356,26 +1459,30 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                                const char *filename,
                                uint32_t output_sample_rate,
                                bool try_mlock)
-: synth(synth), sfont(sfont), fcbs(fcbs), output_sample_rate(output_sample_rate), filename(filename)
+    : synth(synth), sfont(sfont), fcbs(fcbs), output_sample_rate(output_sample_rate), filename(filename)
 {
     // Get basic file information
 
     file = fcbs->fopen(filename); // NOLINT(cppcoreguidelines-prefer-member-initializer)
-    if (file == nullptr)
+
+    if(file == nullptr)
     {
         throw std::runtime_error{ string_format("Unable to open file '%s'", filename) };
     }
 
-    if (fcbs->fseek(file, 0L, SEEK_END) == FLUID_FAILED)
+    if(fcbs->fseek(file, 0L, SEEK_END) == FLUID_FAILED)
     {
         throw std::runtime_error{ "Seek to end of file failed" };
     }
+
     filesize = fcbs->ftell(file);
-    if (filesize == FLUID_FAILED)
+
+    if(filesize == FLUID_FAILED)
     {
         throw std::runtime_error{ "Get end of file position failed" };
     }
-    if (fcbs->fseek(file, 0, SEEK_SET) == FLUID_FAILED)
+
+    if(fcbs->fseek(file, 0, SEEK_SET) == FLUID_FAILED)
     {
         throw std::runtime_error{ "Rewind to start of file failed" };
     }
@@ -1387,22 +1494,25 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     RIFFChunk chunk{};
 
     READCHUNK_RAW(this, &chunk); // load RIFF chunk
-    if (chunk.id != RIFF_FCC)
+
+    if(chunk.id != RIFF_FCC)
     {
         throw std::runtime_error{ "Not a RIFF file" };
     }
 
     READID(this, &chunk.id); // load file ID
-    if (chunk.id != DLS_FCC)
+
+    if(chunk.id != DLS_FCC)
     {
         throw std::runtime_error{ "Not a DLS file" };
     }
 
-    if (chunk.size + 8 > filesize)
+    if(chunk.size + 8 > filesize)
     {
         throw std::runtime_error{ "DLS file early EOF" };
     }
-    if (chunk.size + 8 < filesize)
+
+    if(chunk.size + 8 < filesize)
     {
         FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk");
     }
@@ -1413,41 +1523,51 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     // iterate over chunks in the RIFF form
     try
     {
-        visit_subchunks(0, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos) {
-            switch (subchunk.id) // toplevel chunk
+        visit_subchunks(0, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos)
+        {
+            switch(subchunk.id)  // toplevel chunk
             {
             case DLID_FCC:
             case VERS_FCC:
                 break;
+
             case CDL_FCC:
-                if (!execute_cdls(pos + headersize, subchunk.size))
+                if(!execute_cdls(pos + headersize, subchunk.size))
                 {
                     throw std::runtime_error{ "DLS toplevel CDL bypasses the sound library" };
                 }
+
                 break;
-            case COLH_FCC: {
+
+            case COLH_FCC:
+            {
                 // read it now to preserve the instrument vector
-                if (subchunk.size != 4)
+                if(subchunk.size != 4)
                 {
                     throw std::runtime_error{ "DLS colh chunk size is not 4 bytes" };
                 }
+
                 uint32_t colh;
                 READ32(this, colh);
                 instruments.reserve(colh);
                 break;
             }
-            case PTBL_FCC: {
+
+            case PTBL_FCC:
+            {
                 // read ptbl now
                 uint32_t cbsize;
                 READ32(this, cbsize);
-                if (cbsize < 8)
+
+                if(cbsize < 8)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
                 }
 
                 uint32_t cues; // sample count
                 READ32(this, cues);
-                if (cues * 4 + cbsize != subchunk.size)
+
+                if(cues * 4 + cbsize != subchunk.size)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
                 }
@@ -1455,40 +1575,47 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                 fskip(cbsize - 8); // usually cbsize == 8
 
                 poolcues.resize(cues);
-                for (uint32_t i = 0; i < cues; i++)
+
+                for(uint32_t i = 0; i < cues; i++)
                 {
                     READ32(this, poolcues[i]);
                 }
+
                 samples.reserve(cues);
                 break;
             }
+
             case INFO_FCC:
                 read_name_from_info_entries(pos + headersize, subchunk.size);
                 break;
+
             case LINS_FCC:
                 linsoffset = pos;
                 break;
+
             case WVPL_FCC:
                 wvploffset = pos;
                 break;
+
             case PGAL_FCC:
                 pgaloffset = pos + headersize;
                 pgalsize = subchunk.size;
                 break;
+
             default:
                 // clang-format off
-                    FLUID_LOG(FLUID_WARN,
-                        "Ignoring unknown top-level DLS chunk %s'" FMT_4CC_SPEC "' ofs=0x%llx",
-                        headersize == 12 ? "LIST " : "",
-                        FMT_4CC_ARG(subchunk.id),
-                        pos
-                    );
+                FLUID_LOG(FLUID_WARN,
+                          "Ignoring unknown top-level DLS chunk %s'" FMT_4CC_SPEC "' ofs=0x%llx",
+                          headersize == 12 ? "LIST " : "",
+                          FMT_4CC_ARG(subchunk.id),
+                          pos
+                         );
                 // clang-format on
                 break;
             }
         });
     }
-    catch (...)
+    catch(...)
     {
         std::throw_with_nested(std::runtime_error{ "Exception thrown while reading RIFF form" });
     }
@@ -1496,24 +1623,27 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     // Parse samples (LIST[wvpl])
     try
     {
-        if (wvploffset == 0)
+        if(wvploffset == 0)
         {
             throw std::runtime_error{ "DLS does not contain a LIST[wvpl] chunk" };
         }
+
         parse_wvpl(wvploffset);
     }
-    catch (...)
+    catch(...)
     {
         std::throw_with_nested(std::runtime_error{ "Exception thrown while parsing samples" });
     }
+
     // reading sample data is now completed
 
     FLUID_LOG(FLUID_DBG, "DLS %zu samples read, %zu bytes", samples.size(), sampledata.size());
 
     sampledata_mlock = mlock_guard{ sampledata.data(), static_cast<fluid_long_long_t>(sampledata.size()) };
-    if (try_mlock && !sampledata.empty())
+
+    if(try_mlock && !sampledata.empty())
     {
-        if (sampledata_mlock.lock() != 0)
+        if(sampledata_mlock.lock() != 0)
         {
             FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
         }
@@ -1526,13 +1656,14 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     // Parse LIST[lins]
     try
     {
-        if (linsoffset == 0)
+        if(linsoffset == 0)
         {
             throw std::runtime_error{ "DLS does not contain a LIST[lins] chunk" };
         }
+
         parse_lins(linsoffset);
     }
-    catch (...)
+    catch(...)
     {
         std::throw_with_nested(std::runtime_error{ "Exception thrown while parsing instruments" });
     }
@@ -1541,13 +1672,14 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     // Parse 'pgal'
     total_presets = instruments.size();
-    if (pgalsize != 0)
+
+    if(pgalsize != 0)
     {
         try
         {
             parse_pgal(pgaloffset, pgalsize);
         }
-        catch (...)
+        catch(...)
         {
             std::throw_with_nested(std::runtime_error{ "Exception thrown while parsing pgal" });
         }
@@ -1559,13 +1691,13 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     {
         samples_fluid.reserve(samples.size());
     }
-    catch (...)
+    catch(...)
     {
         std::throw_with_nested(
-        std::runtime_error{ "Exception thrown while allocating fluid_sample_t" });
+            std::runtime_error{ "Exception thrown while allocating fluid_sample_t" });
     }
 
-    for (auto &sample : samples)
+    for(auto &sample : samples)
     {
         auto &fluid = samples_fluid.emplace_back();
         fluid.start = sample.start;
@@ -1573,7 +1705,8 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         fluid.samplerate = sample.samplerate;
         std::strncpy(fluid.name, sample.name.c_str(), sizeof(fluid.name) - 1);
         fluid.name[sizeof(fluid.name) - 1] = '\0';
-        if (sample.wsmp.has_value())
+
+        if(sample.wsmp.has_value())
         {
             const auto &wsmp = sample.wsmp.value();
             fluid.loopstart = sample.start + wsmp.loop_start;
@@ -1588,31 +1721,34 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             fluid.origpitch = 0;
             fluid.pitchadj = 0;
         }
+
         fluid.data = sampledata.data();
         fluid.sampletype = FLUID_SAMPLETYPE_MONO;
         fluid.default_modulators = this->sfont->default_mod_list;
     }
 
     // put info in dls_sample into region
-    for (auto &instrument : instruments)
+    for(auto &instrument : instruments)
     {
-        for (auto &region : instrument.regions)
+        for(auto &region : instrument.regions)
         {
             auto &sample = samples.at(region.sampleindex);
-            if (sample.wsmp.has_value())
+
+            if(sample.wsmp.has_value())
             {
                 const auto &wsmp = sample.wsmp.value();
-                if (wsmp.loop_length == 0)
+
+                if(wsmp.loop_length == 0)
                 {
                     region.samplemode_inherited = 0;
                 }
                 else
                 {
-                    if (wsmp.loop_type == 0)
+                    if(wsmp.loop_type == 0)
                     {
                         region.samplemode_inherited = 1;
                     }
-                    else if (wsmp.loop_type == 1)
+                    else if(wsmp.loop_type == 1)
                     {
                         region.samplemode_inherited = 3;
                     }
@@ -1624,6 +1760,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                         region.samplemode_inherited = 3;
                     }
                 }
+
                 region.gain_inherited = static_cast<fluid_real_t>(wsmp.gain) / 65536;
             }
             else
@@ -1639,32 +1776,38 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     std::sort(instruments.begin(),
               instruments.end(),
-              [](const fluid_dls_instrument &lhs, const fluid_dls_instrument &rhs) {
-                  if (lhs.bankmsb * 128 + lhs.banklsb == rhs.bankmsb * 128 + rhs.banklsb)
-                  {
-                      return lhs.pcnum < rhs.pcnum;
-                  }
-                  return lhs.bankmsb * 128 + lhs.banklsb < rhs.bankmsb * 128 + rhs.banklsb;
-              });
+              [](const fluid_dls_instrument & lhs, const fluid_dls_instrument & rhs)
+    {
+        if(lhs.bankmsb * 128 + lhs.banklsb == rhs.bankmsb * 128 + rhs.banklsb)
+        {
+            return lhs.pcnum < rhs.pcnum;
+        }
+
+        return lhs.bankmsb * 128 + lhs.banklsb < rhs.bankmsb * 128 + rhs.banklsb;
+    });
 
     std::sort(instruments_fluid_data.begin(),
               instruments_fluid_data.end(),
-              [](const fluid_dls_instrument_fluid_data &lhs, const fluid_dls_instrument_fluid_data &rhs) {
-                  if (lhs.bankmsb * 128 + lhs.banklsb == rhs.bankmsb * 128 + rhs.banklsb)
-                  {
-                      return lhs.pcnum < rhs.pcnum;
-                  }
-                  return lhs.bankmsb * 128 + lhs.banklsb < rhs.bankmsb * 128 + rhs.banklsb;
-              });
+              [](const fluid_dls_instrument_fluid_data & lhs, const fluid_dls_instrument_fluid_data & rhs)
+    {
+        if(lhs.bankmsb * 128 + lhs.banklsb == rhs.bankmsb * 128 + rhs.banklsb)
+        {
+            return lhs.pcnum < rhs.pcnum;
+        }
+
+        return lhs.bankmsb * 128 + lhs.banklsb < rhs.bankmsb * 128 + rhs.banklsb;
+    });
 
     // convert instruments to fluid presets
     instruments_fluid_data.reserve(total_presets);
-    for (auto &instrument : instruments)
+
+    for(auto &instrument : instruments)
     {
         instrument.samples_fluid = samples_fluid.data();
         instrument.articulations = articulations.data();
         instrument.synth = synth;
-        if (drum_note_aliasing.has_value())
+
+        if(drum_note_aliasing.has_value())
         {
             instrument.drum_note_aliasing = drum_note_aliasing.value().data();
         }
@@ -1688,7 +1831,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         self_data.fluid.data = &self_data;
         self_data.fluid.notify = nullptr;
 
-        for (auto &alias : instrument.aliases)
+        for(auto &alias : instrument.aliases)
         {
             auto &alias_data = instruments_fluid_data.emplace_back();
             alias_data.banklsb = alias.banklsb;
@@ -1715,44 +1858,53 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 // cdl
 inline std::optional<uint32_t> fluid_dls_font::eval_dlsid_query(const DLSID &dlsid)
 {
-    if (dlsid == DLSID_GMInHardware)
+    if(dlsid == DLSID_GMInHardware)
     {
         return 1;
     }
-    if (dlsid == DLSID_GSInHardware)
+
+    if(dlsid == DLSID_GSInHardware)
     {
         return 1;
     }
-    if (dlsid == DLSID_XGInHardware)
+
+    if(dlsid == DLSID_XGInHardware)
     {
         return 1;
     }
-    if (dlsid == DLSID_SupportsDLS1)
+
+    if(dlsid == DLSID_SupportsDLS1)
     {
         return 1;
     }
-    if (dlsid == DLSID_SupportsDLS2)
+
+    if(dlsid == DLSID_SupportsDLS2)
     {
         return 1;
     }
-    if (dlsid == DLSID_SampleMemorySize)
+
+    if(dlsid == DLSID_SampleMemorySize)
     {
         return std::numeric_limits<uint32_t>::max() / 4 * 3; // ~1.5GiB
     }
-    if (dlsid == DLSID_ManufacturersID)
+
+    if(dlsid == DLSID_ManufacturersID)
     {
         // See https://www.amei.or.jp/report/System_ID_e.html
         // Who are we?
         return 0x00004000; // a random number, no manufacturer have owned it
     }
-    if (dlsid == DLSID_ProductID)
+
+    if(dlsid == DLSID_ProductID)
     {
         return 0x0d000721; // a random number
     }
-    if (dlsid == DLSID_SamplePlaybackRate)
+
+    if(dlsid == DLSID_SamplePlaybackRate)
     {
         return output_sample_rate;
     }
+
     FLUID_LOG(FLUID_WARN,
               "Unknown CDL query {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
               dlsid.Data1,
@@ -1774,23 +1926,27 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
     uint32_t stack[64];
     unsigned sp = 0;
 
-    auto push = [&](uint32_t value) {
-        if (sp >= sizeof(stack) / sizeof(stack[0]))
+    auto push = [&](uint32_t value)
+    {
+        if(sp >= sizeof(stack) / sizeof(stack[0]))
         {
             throw std::runtime_error{ "CDL stack overflow" };
         }
+
         stack[sp++] = value;
     };
 
-    auto pop = [&]() -> uint32_t {
-        if (sp == 0)
+    auto pop = [&]() -> uint32_t
+    {
+        if(sp == 0)
         {
             throw std::runtime_error{ "CDL stack underflow" };
         }
+
         return stack[--sp];
     };
 
-    if (fcbs->fseek(file, offset, SEEK_SET) != FLUID_OK)
+    if(fcbs->fseek(file, offset, SEEK_SET) != FLUID_OK)
     {
         throw std::runtime_error{ "Failed to seek to CDL operations" };
     }
@@ -1799,10 +1955,12 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
     uint16_t opcode;
     uint32_t rax; // these two are just temp vars
     uint32_t rbx;
-    while (pc < size)
+
+    while(pc < size)
     {
         READ16(this, opcode);
-        switch (opcode)
+
+        switch(opcode)
         {
         // Assign
         case 0x0010: // DLS_CDL_CONST
@@ -1810,85 +1968,103 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
             push(rax);
             pc += 4;
             break;
+
         // Unary operators
         case 0x000F: // DLS_CDL_NOT (logical)
             push(!pop());
             break;
+
         // Binary operators
         case 0x0001: // DLS_CDL_AND
             rax = pop();
             rbx = pop();
             push(rax & rbx);
             break;
+
         case 0x0002: // DLS_CDL_OR
             rax = pop();
             rbx = pop();
             push(rax | rbx);
             break;
+
         case 0x0003: // DLS_CDL_XOR
             rax = pop();
             rbx = pop();
             push(rax ^ rbx);
             break;
+
         case 0x0004: // DLS_CDL_ADD
             rax = pop();
             rbx = pop();
             push(rax + rbx);
             break;
+
         case 0x0005:     // DLS_CDL_SUBTRACT
             rax = pop(); // X, top
             rbx = pop(); // Y, prev
             push(rax - rbx);
             break;
+
         case 0x0006: // DLS_CDL_MULTIPLY
             rax = pop();
             rbx = pop();
             push(rax * rbx);
             break;
+
         case 0x0007: // DLS_CDL_DIVIDE
             rax = pop();
             rbx = pop();
-            if (rbx == 0)
+
+            if(rbx == 0)
             {
                 throw std::runtime_error{ "CDL division by zero" };
             }
+
             push(rax / rbx);
             break;
+
         case 0x0008: // DLS_CDL_LOGICAL_AND
             rax = pop();
             rbx = pop();
             push(rax && rbx);
             break;
+
         case 0x0009: // DLS_CDL_LOGICAL_OR
             rax = pop();
             rbx = pop();
             push(rax || rbx);
             break;
+
         case 0x000A: // DLS_CDL_LT
             rax = pop();
             rbx = pop();
             push(rax < rbx);
             break;
+
         case 0x000B: // DLS_CDL_LE
             rax = pop();
             rbx = pop();
             push(rax <= rbx);
             break;
+
         case 0x000C: // DLS_CDL_GT
             rax = pop();
             rbx = pop();
             push(rax > rbx);
             break;
+
         case 0x000D: // DLS_CDL_GE
             rax = pop();
             rbx = pop();
             push(rax >= rbx);
             break;
+
         case 0x000E: // DLS_CDL_EQ
             rax = pop();
             rbx = pop();
             push(rax == rbx);
             break;
+
         // Query
         case 0x0011: // DLS_CDL_QUERY
         case 0x0012: // DLS_CDL_QUERY_SUPPORTED
@@ -1896,31 +2072,36 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
             DLSID dlsid{};
             READGUID(this, dlsid);
             auto result = eval_dlsid_query(dlsid);
-            if (opcode == 0x0011) // Query
+
+            if(opcode == 0x0011)  // Query
             {
-                if (result.has_value())
+                if(result.has_value())
                 {
                     push(result.value());
                 }
                 else
                 {
-                    throw std::runtime_error{
+                    throw std::runtime_error
+                    {
                         string_format("CDL query for unsupported DLSID, pc=0x%x", pc)
                     };
                 }
             }
+
             push(result.has_value() ? 1 : 0); // Query_Supported
             pc += sizeof(DLSID);
             break;
         }
+
         default:
             // SIGILL lol
             throw std::runtime_error{ string_format("Unknown CDL opcode 0x%04x", opcode) };
         } // switch(opcode) end
+
         pc += 2;
     } // while pc end
 
-    if (pc > size)
+    if(pc > size)
     {
         throw std::runtime_error{ "CDL chunk too early end of chunk" };
     }
@@ -1935,28 +2116,31 @@ inline void fluid_dls_font::parse_wvpl(fluid_long_long_t offset)
     fseek(offset, SEEK_SET);
     RIFFChunk chunk;
     const int headersize = READCHUNK(this, chunk);
-    if (offset + headersize + chunk.size > filesize)
+
+    if(offset + headersize + chunk.size > filesize)
     {
         throw std::runtime_error{ "DLS wvpl chunk exceeds file size" };
     }
-    if (headersize != 12)
+
+    if(headersize != 12)
     {
         FLUID_LOG(FLUID_WARN, "Nonstandard 'wvpl' chunk; 'LIST[wvpl]' is legal");
     }
 
     // iterate ptbl
-    for (unsigned i = 0; i < poolcues.size(); i++)
+    for(unsigned i = 0; i < poolcues.size(); i++)
     {
         auto pos = poolcues[i];
         auto &sample = samples.emplace_back();
+
         try
         {
             parse_wave(offset + headersize + pos, sample);
         }
-        catch (...)
+        catch(...)
         {
             std::throw_with_nested(std::runtime_error{ string_format(
-            "Exception thrown while parsing LIST[wave] at offset 0x%llx, ptbl index %u", offset + headersize + pos, i) });
+                                       "Exception thrown while parsing LIST[wave] at offset 0x%llx, ptbl index %u", offset + headersize + pos, i) });
         }
     }
 }
@@ -1967,69 +2151,88 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
     uint16_t fmtTag{};
     uint16_t bitsPerSample{};
 
-    visit_subchunks(offset, WAVE_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
-        switch (subchunk.id)
+    visit_subchunks(offset, WAVE_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos)
+    {
+        switch(subchunk.id)
         {
         case INFO_FCC:
             sample.name = read_name_from_info_entries(pos + headersize, subchunk.size);
             break;
+
         case DLID_FCC:
         case GUID_FCC:
         case FACT_FCC:
         case CUE_FCC:
             break;
-        case FMT_FCC: { // See WAVEFORMAT struct (mmreg.h)
+
+        case FMT_FCC:   // See WAVEFORMAT struct (mmreg.h)
+        {
             uint16_t temp16;
             uint32_t temp32;
             READ16(this, temp16); // read formatTag
             fmtTag = temp16;
-            if (fmtTag != WAVE_FORMAT_PCM)
+
+            if(fmtTag != WAVE_FORMAT_PCM)
             {
 #if !LIBSNDFILE_SUPPORT
-                throw std::runtime_error{
+                throw std::runtime_error
+                {
                     string_format("Unsupported wave format %u (without libsndfile)", fmtTag)
                 };
 #endif
             }
+
             READ16(this, temp16); // read channels
-            if (temp16 != 1)
+
+            if(temp16 != 1)
             {
                 throw std::runtime_error{ string_format("Unsupported wave channel count %u", temp16) };
             }
+
             READ32(this, temp32); // read sampleRate
             sample.samplerate = temp32;
             READ32(this, temp32); // read avgBytesPerSec
             READ16(this, temp32); // read blockAlign
             READ16(this, temp16); // read bitsPerSample
-            if (temp16 != 8 && temp16 != 16)
+
+            if(temp16 != 8 && temp16 != 16)
             {
                 throw std::runtime_error{ string_format("Unsupported wave bits per sample %u", temp16) };
             }
+
             bitsPerSample = temp16;
             // probably a cbSize field for WAVEFORMATEX
             break;
         }
+
         case WSMP_FCC:
-            if (parse_wsmp(pos + headersize, sample.wsmp.emplace()) != subchunk.size)
+            if(parse_wsmp(pos + headersize, sample.wsmp.emplace()) != subchunk.size)
             {
                 throw std::runtime_error{ "DLS wsmp chunk in wave chunk has corrupted size" };
             }
+
             break;
-        case DATA_FCC: {
+
+        case DATA_FCC:
+        {
             contains_data = true;
-            if (fmtTag == 0 || bitsPerSample == 0)
+
+            if(fmtTag == 0 || bitsPerSample == 0)
             {
                 throw std::runtime_error{ "DLS fmt chunk must exist in wave chunk and be prior "
                                           "to data chunk" };
             }
-            if (fmtTag != WAVE_FORMAT_PCM)
+
+            if(fmtTag != WAVE_FORMAT_PCM)
             {
                 break; // leave data to libsndfile
             }
-            if (subchunk.size % (bitsPerSample / 8) != 0)
+
+            if(subchunk.size % (bitsPerSample / 8) != 0)
             {
                 throw std::runtime_error{ "DLS data chunk not align to bitsPerSample" };
             }
+
             auto samplelen = subchunk.size / (bitsPerSample / 8);
             sample.start = sampledata.size();
             sample.end = sample.start + samplelen;
@@ -2038,10 +2241,12 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
             char buffer[4096];
             uint32_t remaining = subchunk.size;
             int16_t *destination = sampledata.data() + sample.start;
-            while (remaining > 0)
+
+            while(remaining > 0)
             {
                 uint32_t c = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
-                if (fcbs->fread(buffer, c, file) != FLUID_OK)
+
+                if(fcbs->fread(buffer, c, file) != FLUID_OK)
                 {
                     FLUID_LOG(FLUID_ERR, "fcbs->fread failed when reading DLS data chunk");
                     throw std::exception{};
@@ -2052,8 +2257,10 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
                 destination += c / (bitsPerSample / 8);
                 remaining -= c;
             }
+
             break;
         }
+
         default:
             FLUID_LOG(FLUID_WARN,
                       "Unknown DLS chunk in LIST[wave] '" FMT_4CC_SPEC "'",
@@ -2062,26 +2269,28 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
     });
 
 
-    if (!contains_data)
+    if(!contains_data)
     {
         throw std::runtime_error{ "DLS data chunk must exist in wave chunk" };
     }
 
-    if (fmtTag == WAVE_FORMAT_PCM)
+    if(fmtTag == WAVE_FORMAT_PCM)
     {
         return;
     }
 
 #if LIBSNDFILE_SUPPORT
+
     try
     {
         parse_wave_sndfile(offset, sample);
     }
-    catch (...)
+    catch(...)
     {
         std::throw_with_nested(
-        std::runtime_error{ "Exception thrown while parsing LIST[wave] using libsndfile" });
+            std::runtime_error{ "Exception thrown while parsing LIST[wave] using libsndfile" });
     }
+
 #endif
 }
 
@@ -2091,35 +2300,41 @@ inline uint32_t fluid_dls_font::parse_wsmp(fluid_long_long_t offset, fluid_dls_w
 
     uint32_t cbsize;
     READ32(this, cbsize);
-    if (cbsize < 20)
+
+    if(cbsize < 20)
     {
         // This is seen in Crystal's DLS. See CRS1_FCC comment.
         FLUID_LOG(FLUID_WARN, "DLS wsmp chunk cbSize < 20. The file is probably corrupted.");
         cbsize = 20;
     }
+
     READ16(this, wsmp.unity_note);
     READ16(this, wsmp.fine_tune);
     READ32(this, wsmp.gain);
     fskip(4); // fulOptions
     uint32_t loops;
     READ32(this, loops);
-    if (loops > 1)
+
+    if(loops > 1)
     {
         throw std::runtime_error{ "DLS wsmp chunk has more than one loop" };
     }
-    if (loops == 0)
+
+    if(loops == 0)
     {
         return cbsize;
     }
 
     uint32_t loopcbsize;
     READ32(this, loopcbsize);
-    if (loopcbsize < 16)
+
+    if(loopcbsize < 16)
     {
         // This is also seen in Crystal's DLS. See CRS1_FCC comment.
         FLUID_LOG(FLUID_WARN, "DLS wsmp chunk loop cbSize < 16. The file is probably corrupted.");
         loopcbsize = 16;
     }
+
     READ32(this, wsmp.loop_type);
     READ32(this, wsmp.loop_start);
     READ32(this, wsmp.loop_length);
@@ -2132,25 +2347,27 @@ inline void fluid_dls_font::parse_lins(fluid_long_long_t offset)
 {
     // clang-format off
     visit_subchunks(offset, LINS_FCC,
-    [this](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos [[maybe_unused]]) {
-        if (subchunk.id == CRS1_FCC || subchunk.id == CRS2_FCC)
+                    [this](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos [[maybe_unused]])
+    {
+        if(subchunk.id == CRS1_FCC || subchunk.id == CRS2_FCC)
         {
             return;
         }
-        if (subchunk.id != INS_FCC)
+
+        if(subchunk.id != INS_FCC)
         {
             FLUID_LOG(FLUID_WARN,
-                        "Unknown DLS chunk '" FMT_4CC_SPEC
-                        "' ofs=0x%llx in LIST[lins]",
-                        FMT_4CC_ARG(subchunk.id),
-                        pos);
+                      "Unknown DLS chunk '" FMT_4CC_SPEC
+                      "' ofs=0x%llx in LIST[lins]",
+                      FMT_4CC_ARG(subchunk.id),
+                      pos);
             return;
         }
 
         auto &instrument = instruments.emplace_back();
         parse_ins(pos, instrument);
     }
-    );
+                   );
     // clang-format on
 }
 
@@ -2158,21 +2375,26 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
 {
     size_t articulation_index = -1; // in C++26 we can do std::optional<T&>
 
-    visit_subchunks(offset, INS_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
-        switch (subchunk.id)
+    visit_subchunks(offset, INS_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos)
+    {
+        switch(subchunk.id)
         {
         case DLID_FCC:
         case CRS1_FCC:
         case CRS2_FCC:
             break;
+
         case INFO_FCC:
             instrument.name = read_name_from_info_entries(pos + headersize, subchunk.size);
             break;
-        case INSH_FCC: {
-            if (subchunk.size != 12)
+
+        case INSH_FCC:
+        {
+            if(subchunk.size != 12)
             {
                 throw std::runtime_error{ "DLS insh chunk size != 12" };
             }
+
             uint32_t temp;
             READ32(this, temp); // cRegions
             instrument.regions.reserve(temp);
@@ -2184,25 +2406,31 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
             instrument.pcnum = temp & 0x7F;
             break;
         }
+
         case LART_FCC:
         case LAR2_FCC:
-            if (articulation_index == static_cast<size_t>(-1))
+            if(articulation_index == static_cast<size_t>(-1))
             {
                 articulation_index = articulations.size();
-                if (!parse_lart(pos, articulations.emplace_back())) // bypassed by cdl
+
+                if(!parse_lart(pos, articulations.emplace_back()))  // bypassed by cdl
                 {
                     FLUID_LOG(FLUID_DBG, "A instrument lart chunk is bypassed by cdl");
                     articulations.pop_back();
                     articulation_index = static_cast<size_t>(-1);
                 }
+
                 break;
             }
+
             parse_lart(pos, articulations[articulation_index]);
             instrument.keynum_scale = articulations[articulation_index].keynum_scale;
             break;
+
         case LRGN_FCC:
             parse_lrgn(pos, instrument);
             break;
+
         default:
             FLUID_LOG(FLUID_WARN,
                       "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[ins]",
@@ -2211,9 +2439,9 @@ inline void fluid_dls_font::parse_ins(fluid_long_long_t offset, fluid_dls_instru
         }
     });
 
-    for (auto &region : instrument.regions)
+    for(auto &region : instrument.regions)
     {
-        if (region.artindex == static_cast<uint32_t>(-1))
+        if(region.artindex == static_cast<uint32_t>(-1))
         {
             region.artindex = articulation_index;
         }
@@ -2226,18 +2454,20 @@ inline bool fluid_dls_font::parse_lart(fluid_long_long_t offset, fluid_dls_artic
 
     try
     {
-        visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
-            if (subchunk.id == CDL_FCC)
+        visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos)
+        {
+            if(subchunk.id == CDL_FCC)
             {
-                if (!execute_cdls(pos + headersize, subchunk.size))
+                if(!execute_cdls(pos + headersize, subchunk.size))
                 {
                     bypassed = false;
                     throw std::exception{};
                 }
+
                 return;
             }
 
-            if (subchunk.id != ART1_FCC && subchunk.id != ART2_FCC)
+            if(subchunk.id != ART1_FCC && subchunk.id != ART2_FCC)
             {
                 // clang-format off
                 FLUID_LOG(FLUID_WARN,
@@ -2250,12 +2480,13 @@ inline bool fluid_dls_font::parse_lart(fluid_long_long_t offset, fluid_dls_artic
             parse_art(pos, articulation);
         });
     }
-    catch (...)
+    catch(...)
     {
-        if (bypassed)
+        if(bypassed)
         {
             return false;
         }
+
         throw;
     }
 
@@ -2267,12 +2498,14 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
     fseek(offset, SEEK_SET);
     RIFFChunk chunk;
     auto headersize = READCHUNK(this, chunk);
-    if (chunk.id != ART1_FCC && chunk.id != ART2_FCC)
+
+    if(chunk.id != ART1_FCC && chunk.id != ART2_FCC)
     {
         // this should never happen!
         throw std::runtime_error{ "Expected 'art1' or 'art2' chunk" };
     }
-    if (headersize != 8)
+
+    if(headersize != 8)
     {
         FLUID_LOG(FLUID_WARN, "Nonstandard LIST[art1/2] chunk; 'art1/2' is legal ofs=0x%llx", offset);
     }
@@ -2281,19 +2514,23 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
 
     uint32_t cbsize;
     READ32(this, cbsize);
-    if (cbsize < 8)
+
+    if(cbsize < 8)
     {
         throw std::runtime_error{ "art chunk cbSize < 8" };
     }
+
     uint32_t connblocks;
     READ32(this, connblocks);
-    if (cbsize + connblocks * 12 != chunk.size)
+
+    if(cbsize + connblocks * 12 != chunk.size)
     {
         throw std::runtime_error{ "art chunk has corrupted size" };
     }
+
     fskip(cbsize - 8);
 
-    for (uint32_t i = 0; i < connblocks; i++)
+    for(uint32_t i = 0; i < connblocks; i++)
     {
         uint16_t source, control, dest, trans;
         int32_t scale;
@@ -2301,7 +2538,8 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
         READ16(this, control);
         READ16(this, dest);
         READ16(this, trans);
-        if (isArt1)
+
+        if(isArt1)
         {
             // DLS-1 uses concave transform for CC 7 and 11
             // in DLS-2 the transform is applied to source
@@ -2309,16 +2547,20 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
             // DLS-2 transform: 0b00nnnn'00nnnn'0000
             trans = (trans << 10) | (trans << 4);
             auto dlsv2trans = DLSTransform{ trans };
-            if (source == CONN_SRC_LFO || source == CONN_SRC_VIBRATO)
+
+            if(source == CONN_SRC_LFO || source == CONN_SRC_VIBRATO)
             {
                 dlsv2trans.src_bip = true;
             }
-            if (control == CONN_SRC_LFO || control == CONN_SRC_VIBRATO)
+
+            if(control == CONN_SRC_LFO || control == CONN_SRC_VIBRATO)
             {
                 dlsv2trans.ctl_bip = true;
             }
+
             trans = static_cast<uint16_t>(dlsv2trans);
         }
+
         READ32(this, scale);
         convert_dls_connectionblock_to_art(articulation, source, control, dest, trans, scale);
     }
@@ -2326,23 +2568,29 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
 
 inline void fluid_dls_font::parse_lrgn(fluid_long_long_t offset, fluid_dls_instrument &instrument)
 {
-    visit_subchunks(offset, LRGN_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos) {
-        switch (subchunk.id)
+    visit_subchunks(offset, LRGN_FCC, [&](RIFFChunk subchunk, int headersize [[maybe_unused]], fluid_long_long_t pos)
+    {
+        switch(subchunk.id)
         {
         case RGN_FCC:
-        case RGN2_FCC: {
+        case RGN2_FCC:
+        {
             auto &region = instrument.regions.emplace_back();
-            if (!parse_rgn(pos, region)) // bypassed by cdl
+
+            if(!parse_rgn(pos, region))  // bypassed by cdl
             {
                 FLUID_LOG(FLUID_DBG, "Region ofs=0x%llx is bypassed by cdl", pos);
                 instrument.regions.pop_back();
             }
+
             break;
         }
+
         case CRS1_FCC:
         case CRS2_FCC:
             // see CRS1 and CRS2_FCC's comment
             break;
+
         default:
             FLUID_LOG(FLUID_WARN,
                       "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[lrgn]",
@@ -2362,49 +2610,63 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
 
     try
     {
-        visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize, fluid_long_long_t pos) {
-            switch (subchunk.id)
+        visit_subchunks(offset, 0, [&](RIFFChunk subchunk, int headersize, fluid_long_long_t pos)
+        {
+            switch(subchunk.id)
             {
             case INFO_FCC:
             case CRS1_FCC:
             case CRS2_FCC:
                 break;
+
             case WLNK_FCC:
                 fskip(8); // fluidsynth does not implement phase-locking and multichannel output
                 READ32(this, region.sampleindex);
-                if (region.sampleindex >= samples.size())
+
+                if(region.sampleindex >= samples.size())
                 {
                     throw std::runtime_error{ string_format("Sample index %u is out of range",
                                                             static_cast<unsigned>(region.sampleindex)) };
                 }
+
                 break;
+
             case CDL_FCC:
-                if (!execute_cdls(pos + headersize, subchunk.size))
+                if(!execute_cdls(pos + headersize, subchunk.size))
                 {
                     bypassed = true;
                     throw std::exception{};
                 }
+
                 break;
+
             case LART_FCC:
             case LAR2_FCC:
-                if (articulation_index == static_cast<size_t>(-1))
+                if(articulation_index == static_cast<size_t>(-1))
                 {
                     articulation_index = articulations.size();
-                    if (!parse_lart(pos, articulations.emplace_back()))
+
+                    if(!parse_lart(pos, articulations.emplace_back()))
                     {
                         FLUID_LOG(FLUID_DBG, "A region lart chunk is bypassed by cdl");
                         articulations.pop_back();
                         articulation_index = static_cast<size_t>(-1);
                     }
+
                     break;
                 }
+
                 parse_lart(pos, articulations[articulation_index]);
-                if (articulations[articulation_index].keynum_scale != 1.0f)
+
+                if(articulations[articulation_index].keynum_scale != 1.0f)
                 {
                     FLUID_LOG(FLUID_WARN, "Key Number Generator is not allowed in region articulation, ignoring");
                 }
+
                 break;
-            case RGNH_FCC: {
+
+            case RGNH_FCC:
+            {
                 uint16_t temp;
                 READ16(this, temp); // key low
                 region.range.keylo = temp;
@@ -2415,19 +2677,24 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
                 READ16(this, temp); // vel high
                 region.range.velhi = temp;
                 READ16(this, temp);                              // fusOptions
-                if ((temp & F_RGN_OPTION_SELFNONEXCLUSIVE) == 0) // self-exclusive
+
+                if((temp & F_RGN_OPTION_SELFNONEXCLUSIVE) == 0)  // self-exclusive
                 {
                     // implement this flag doesn't make sense
                     // region.exclusive_class = self_exclusive_class++;
                 }
+
                 READ16(this, temp); // keyGroup
-                if (temp != 0)
+
+                if(temp != 0)
                 {
                     region.exclusive_class = temp;
                 }
+
                 // usLayer is useless
                 break;
             }
+
             // DLS-2 1.14.6 Each region contains at minimum a <rgnh-ck> region header chunk and a <wlnk-ck> wave link chunk.
             // It may also **optionally** contain a <wsmp-ck> wave sample chunk. ...
             // DLS-2 2.2 <rgn-list> -> ... <wsmp-ck> ...
@@ -2436,6 +2703,7 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
             case WSMP_FCC:
                 parse_wsmp(pos + headersize, region.wsmp.emplace());
                 break;
+
             default:
                 FLUID_LOG(FLUID_WARN,
                           "Unknown DLS chunk '" FMT_4CC_SPEC "' ofs=0x%llx in LIST[rgn]",
@@ -2445,12 +2713,13 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
             }
         });
     }
-    catch (...)
+    catch(...)
     {
-        if (bypassed)
+        if(bypassed)
         {
             return false;
         }
+
         throw;
     }
 
@@ -2461,22 +2730,26 @@ inline bool fluid_dls_font::parse_rgn(fluid_long_long_t offset, fluid_dls_region
 
 inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
 {
-    if (size < 4 + 128 + 4)
+    if(size < 4 + 128 + 4)
     {
         throw std::runtime_error{ string_format("DLS pgal chunk is too small: %d bytes", size) };
     }
+
     fseek(offset, SEEK_SET);
 
     // drum note aliasing table
     uint32_t version;
     READ32(this, version);
-    if (version == 0x03020100)
+
+    if(version == 0x03020100)
     {
         // there is actually no version field, this is the drum note aliasing table
         fseek(-4, SEEK_CUR);
     }
+
     drum_note_aliasing.emplace();
-    if (fcbs->fread(drum_note_aliasing->data(), 128, file) != FLUID_OK)
+
+    if(fcbs->fread(drum_note_aliasing->data(), 128, file) != FLUID_OK)
     {
         throw std::runtime_error{ "Failed to read drum note aliasing table" };
     }
@@ -2484,7 +2757,8 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
     // melodic instrument aliasing table
     uint32_t nAlias;
     READ32(this, nAlias);
-    for (uint32_t i = 0; i < nAlias; i++)
+
+    for(uint32_t i = 0; i < nAlias; i++)
     {
         uint16_t bank;
         uint8_t pc;
@@ -2499,13 +2773,14 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
         READ8(this, pc);
         fskip(1);
 
-        for (auto &instrument : instruments)
+        for(auto &instrument : instruments)
         {
-            if (instrument.banklsb == (bank & 0x7F) && instrument.bankmsb == ((bank >> 7) & 0x7F) &&
-                instrument.pcnum == pc)
+            if(instrument.banklsb == (bank & 0x7F) && instrument.bankmsb == ((bank >> 7) & 0x7F) &&
+                    instrument.pcnum == pc)
             {
-                instrument.aliases.push_back(fluid_dls_instrument::fluid_dls_instrument_alias{
-                pc2, (bank2 >> 7) & 0x7F, bank2 & 0x7F });
+                instrument.aliases.push_back(fluid_dls_instrument::fluid_dls_instrument_alias
+                {
+                    pc2, (bank2 >> 7) & 0x7F, bank2 & 0x7F });
                 total_presets++;
                 goto found_inst;
             }
@@ -2521,7 +2796,8 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
                   (bank2 >> 7) & 0x7F,
                   bank2 & 0x7F,
                   pc2);
-    found_inst:;
+found_inst:
+        ;
     }
 }
 
@@ -2547,24 +2823,27 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data) noe
 
     fluid_long_long_t newpos = data->pos;
 
-    switch (whence)
+    switch(whence)
     {
     case SEEK_SET:
         newpos = offset;
         break;
+
     case SEEK_CUR:
         newpos += offset;
         break;
+
     case SEEK_END:
         newpos = data->size + offset;
         break;
+
     default:
         return data->pos;
     }
 
     newpos = std::clamp(newpos, 0LL, data->size);
 
-    if (data->font->fcbs->fseek(data->font->file, data->offset + newpos, SEEK_SET) == FLUID_OK)
+    if(data->font->fcbs->fseek(data->font->file, data->offset + newpos, SEEK_SET) == FLUID_OK)
     {
         data->pos = newpos;
     }
@@ -2582,17 +2861,17 @@ static sf_count_t sfvio_read(void *buffer, sf_count_t count, void *user_data) no
 {
     auto *data = static_cast<sfvio_data *>(user_data);
 
-    if (data->pos + count > data->size)
+    if(data->pos + count > data->size)
     {
         count = data->size - data->pos;
     }
 
-    if (count == 0)
+    if(count == 0)
     {
         return 0;
     }
 
-    if (data->font->fcbs->fread(buffer, count, data->font->file) != FLUID_OK)
+    if(data->font->fcbs->fread(buffer, count, data->font->file) != FLUID_OK)
     {
         return 0;
     }
@@ -2605,12 +2884,12 @@ static sf_count_t sfvio_read(void *buffer, sf_count_t count, void *user_data) no
     const char RIFF[4] = { 'R', 'I', 'F', 'F' };
     const char WAVE[4] = { 'W', 'A', 'V', 'E' };
 
-    if (data->pos < 4)
+    if(data->pos < 4)
     {
         memcpy(buffer, RIFF + data->pos, std::min(4LL - data->pos, static_cast<long long>(count)));
     }
 
-    if (data->pos < 12 && data->pos + count > 8)
+    if(data->pos < 12 && data->pos + count > 8)
     {
         memcpy(static_cast<char *>(buffer) + std::max(0LL, 8 - data->pos),
                WAVE + std::max(0LL, data->pos - 8),
@@ -2628,7 +2907,8 @@ inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_d
     RIFFChunk chunk;
     fseek(offset, SEEK_SET);
     auto headersize = READCHUNK(this, chunk);
-    if (headersize != 12)
+
+    if(headersize != 12)
     {
         throw std::runtime_error{ "Invalid 'wave' chunk instead of LIST[wave]" };
     }
@@ -2639,7 +2919,7 @@ inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_d
     SF_INFO sfinfo{};
     auto *sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, &data);
 
-    if (sndfile == nullptr)
+    if(sndfile == nullptr)
     {
         sf_close(sndfile);
         throw std::runtime_error{ string_format("Failed to open 'wave' chunk using libsndfile: %s",
@@ -2647,7 +2927,8 @@ inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_d
     }
 
     sample.samplerate = sfinfo.samplerate;
-    if (sfinfo.channels != 1)
+
+    if(sfinfo.channels != 1)
     {
         sf_close(sndfile);
         throw std::runtime_error{ string_format("Unsupported wave channel count: %d (libsndfile)",
@@ -2659,7 +2940,8 @@ inline void fluid_dls_font::parse_wave_sndfile(fluid_long_long_t offset, fluid_d
     sampledata.resize(sampledata.size() + sfinfo.frames);
 
     auto count = sf_read_short(sndfile, sampledata.data() + sample.start, sfinfo.frames);
-    if (count != sfinfo.frames)
+
+    if(count != sfinfo.frames)
     {
         FLUID_LOG(FLUID_WARN, "Read 'wave' using libsndfile reached unexpected EOF");
     }
@@ -2682,7 +2964,7 @@ fluid_sfloader_t *new_fluid_dls_loader(fluid_synth_t *synth, fluid_settings_t *s
 
     fluid_sfloader_t *loader = new_fluid_sfloader(fluid_dls_loader_load, fluid_dls_loader_delete);
 
-    if (loader == nullptr)
+    if(loader == nullptr)
     {
         FLUID_LOG(FLUID_PANIC, "Out of memory");
         return nullptr;
@@ -2714,26 +2996,29 @@ extern "C"
     extern fluid_mod_t DLS_default_chorus_mod;
     extern fluid_mod_t DLS_default_pitch_bend_mod;
 }
-static fluid_mod_t* fluid_dls_default_mod_list()
+static fluid_mod_t *fluid_dls_default_mod_list()
 {
-    std::array def_mods = { // skip default_vel2filter_mod
-                                           // skip default_at2viblfo_mod
-                                           &default_vel2att_mod,
-                                           &default_mod2viblfo_mod,
-                                           &default_att_mod,
-                                           &default_pan_mod,
-                                           &default_expr_mod,
-                                           &DLS_default_reverb_mod,
-                                           &DLS_default_chorus_mod,
-                                           &DLS_default_pitch_bend_mod,
-                                           &custom_balance_mod
+    std::array def_mods =   // skip default_vel2filter_mod
+    {
+        // skip default_at2viblfo_mod
+        &default_vel2att_mod,
+        &default_mod2viblfo_mod,
+        &default_att_mod,
+        &default_pan_mod,
+        &default_expr_mod,
+        &DLS_default_reverb_mod,
+        &DLS_default_chorus_mod,
+        &DLS_default_pitch_bend_mod,
+        &custom_balance_mod
     };
 
     fluid_mod_t *list = nullptr;
-    for (unsigned int i = 0; i < def_mods.size(); i++)
+
+    for(unsigned int i = 0; i < def_mods.size(); i++)
     {
         fluid_mod_t *mod = new_fluid_mod();
-        if (mod == nullptr)
+
+        if(mod == nullptr)
         {
             delete_fluid_list_mod(list);
             throw std::bad_alloc();
@@ -2755,7 +3040,7 @@ static fluid_sfont_t *fluid_dls_loader_load(fluid_sfloader_t *loader, const char
                                   fluid_dls_iteration_next,
                                   fluid_dls_sfont_delete);
 
-    if (sfont == nullptr)
+    if(sfont == nullptr)
     {
         return nullptr;
     }
@@ -2766,23 +3051,28 @@ static fluid_sfont_t *fluid_dls_loader_load(fluid_sfloader_t *loader, const char
     bool try_mlock = false;
     auto *sfloader_data = static_cast<fluid_dls_loader_data *>(fluid_sfloader_get_data(loader));
     auto *settings = sfloader_data->settings;
-    if (settings != nullptr)
+
+    if(settings != nullptr)
     {
         double rate{};
-        if (fluid_settings_getnum(settings, "synth.sample-rate", &rate) == FLUID_OK)
+
+        if(fluid_settings_getnum(settings, "synth.sample-rate", &rate) == FLUID_OK)
         {
             sample_rate = static_cast<uint32_t>(rate);
         }
+
         int mlock{};
-        if (fluid_settings_getint(settings, "synth.lock-memory", &mlock) == FLUID_OK)
+
+        if(fluid_settings_getint(settings, "synth.lock-memory", &mlock) == FLUID_OK)
         {
             try_mlock = mlock != 0;
         }
     }
 
     auto *dlsfont =
-    new_fluid_dls_font(sfloader_data->synth, sfont, &loader->file_callbacks, filename, sample_rate, try_mlock);
-    if (dlsfont == nullptr)
+        new_fluid_dls_font(sfloader_data->synth, sfont, &loader->file_callbacks, filename, sample_rate, try_mlock);
+
+    if(dlsfont == nullptr)
     {
         delete_fluid_sfont(sfont);
         return nullptr;
@@ -2802,32 +3092,32 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
 
-    for (auto &inst : dlsfont->instruments_fluid_data)
+    for(auto &inst : dlsfont->instruments_fluid_data)
     {
-        if (fluid_dls_preset_get_banknum(&inst.fluid) == bank && inst.pcnum == prenum)
+        if(fluid_dls_preset_get_banknum(&inst.fluid) == bank && inst.pcnum == prenum)
         {
             return &inst.fluid;
         }
     }
 
-    if (dlsfont->synth->bank_select == FLUID_BANK_STYLE_MMA)
+    if(dlsfont->synth->bank_select == FLUID_BANK_STYLE_MMA)
     {
-        for (auto &inst : dlsfont->instruments_fluid_data)
+        for(auto &inst : dlsfont->instruments_fluid_data)
         {
             // Drum bank fallback for MMA bank style
-            if (bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
+            if(bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
             {
                 return &inst.fluid;
             }
         }
     }
 
-    if (dlsfont->synth->bank_select == FLUID_BANK_STYLE_GM)
+    if(dlsfont->synth->bank_select == FLUID_BANK_STYLE_GM)
     {
-        for (auto &inst : dlsfont->instruments_fluid_data)
+        for(auto &inst : dlsfont->instruments_fluid_data)
         {
             // Melodic bank fallback for GM2 bank style
-            if (bank == 0 && !inst.is_drums && inst.bankmsb == 0x79 && inst.pcnum == prenum)
+            if(bank == 0 && !inst.is_drums && inst.bankmsb == 0x79 && inst.pcnum == prenum)
             {
                 return &inst.fluid;
             }
@@ -2846,10 +3136,12 @@ static void fluid_dls_iteration_start(fluid_sfont_t *sfont) noexcept
 static fluid_preset_t *fluid_dls_iteration_next(fluid_sfont_t *sfont) noexcept
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
-    if (dlsfont->fluid_preset_iterator == dlsfont->instruments_fluid_data.end())
+
+    if(dlsfont->fluid_preset_iterator == dlsfont->instruments_fluid_data.end())
     {
         return nullptr;
     }
+
     return &(*(dlsfont->fluid_preset_iterator++)).fluid;
 }
 
@@ -2866,7 +3158,7 @@ static int fluid_dls_sfont_delete(fluid_sfont_t *sfont) noexcept
 static const char *fluid_dls_preset_get_name(fluid_preset_t *preset) noexcept
 {
     return static_cast<const fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset))
-    ->instrument->name.c_str();
+           ->instrument->name.c_str();
 }
 
 static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
@@ -2876,33 +3168,39 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
 
     // see fluid_synth.h enum fluid_midi_bank_select
     // see fluid_chan.c fluid_channel_set_bank_msb()
-    if (synth->bank_select == FLUID_BANK_STYLE_GM)
+    if(synth->bank_select == FLUID_BANK_STYLE_GM)
     {
-        if (inst->is_drums || inst->bankmsb == 0x78) // GM2 rhythm bank
+        if(inst->is_drums || inst->bankmsb == 0x78)  // GM2 rhythm bank
         {
             return DRUM_INST_BANK;
         }
+
         return inst->bankmsb; // to always match bank 0 for GM
     }
-    if (synth->bank_select == FLUID_BANK_STYLE_GS)
+
+    if(synth->bank_select == FLUID_BANK_STYLE_GS)
     {
         return inst->bankmsb + (inst->is_drums ? DRUM_INST_BANK : 0);
     }
-    if (synth->bank_select == FLUID_BANK_STYLE_XG)
+
+    if(synth->bank_select == FLUID_BANK_STYLE_XG)
     {
-        if (inst->is_drums)
+        if(inst->is_drums)
         {
             // see https://github.com/FluidSynth/fluidsynth/issues/1524
             // see fluid_chan.c fluid_channel_set_bank_msb()
             return 128;
         }
+
         return inst->banklsb;
     }
+
     // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
-    if (inst->is_drums)
+    if(inst->is_drums)
     {
         return DRUM_INST_BANK * 128;
     }
+
     return inst->banklsb + (128 * inst->bankmsb);
 }
 
@@ -2921,7 +3219,7 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
     fluid_real_t tuned_key_f = key;
 
     // this is copied from fluid_defsfont
-    if (synth->channel[chan]->channel_type == CHANNEL_TYPE_MELODIC)
+    if(synth->channel[chan]->channel_type == CHANNEL_TYPE_MELODIC)
     {
         tuned_key_f = fluid_channel_get_key_pitch(synth->channel[chan], key) / 100.0f;
     }
@@ -2931,41 +3229,45 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
     // key with subtonal tuning and key number generator applied
     int tuned_key = static_cast<int>(std::round(tuned_key_f));
 
-    if (dlspreset->drum_note_aliasing != nullptr && synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
+    if(dlspreset->drum_note_aliasing != nullptr && synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
     {
         tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
     }
+
     // key with only key number generator applied
     const int adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
 
-    for (auto &region : dlspreset->regions)
+    for(auto &region : dlspreset->regions)
     {
-        if (!fluid_zone_inside_range(&region.range, tuned_key, vel))
+        if(!fluid_zone_inside_range(&region.range, tuned_key, vel))
         {
             continue;
         }
 
         auto *voice = fluid_synth_alloc_voice_LOCAL(
-        synth, dlspreset->samples_fluid + region.sampleindex, chan, adjusted_key, vel, &region.range);
+                          synth, dlspreset->samples_fluid + region.sampleindex, chan, adjusted_key, vel, &region.range);
 
-        if (voice == nullptr)
+        if(voice == nullptr)
         {
             return FLUID_FAILED;
         }
 
-        if (region.artindex != static_cast<uint32_t>(-1))
+        if(region.artindex != static_cast<uint32_t>(-1))
         {
             auto &art = dlspreset->articulations[region.artindex];
-            for (int i = 0; i < GEN_LAST; i++)
+
+            for(int i = 0; i < GEN_LAST; i++)
             {
-                if (art.gens[i].has_value())
+                if(art.gens[i].has_value())
                 {
                     fluid_voice_gen_set(voice, i, art.gens[i].value());
                 }
             }
+
             // this should be the count of default mods to be probably overwritten
             auto existing_mod_count = voice->mod_count;
-            for (auto &mod : art.mods)
+
+            for(auto &mod : art.mods)
             {
                 fluid_voice_add_mod_local(voice, &mod, FLUID_VOICE_OVERWRITE, existing_mod_count);
             }
@@ -2976,7 +3278,7 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                                 dlspreset->articulations[region.artindex].keyToPitch.amount / 128.0);
         }
 
-        if (region.wsmp.has_value())
+        if(region.wsmp.has_value())
         {
             const auto &wsmp = region.wsmp.value();
             const auto &sample = dlspreset->samples_fluid[region.sampleindex];
@@ -2985,13 +3287,13 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
             fluid_voice_gen_incr(voice, GEN_FINETUNE, wsmp.fine_tune - sample.pitchadj);
             fluid_voice_gen_incr(voice, GEN_ATTENUATION, -wsmp.gain / 65536.0f);
 
-            if (wsmp.loop_length != 0)
+            if(wsmp.loop_length != 0)
             {
-                if (wsmp.loop_type == 0)
+                if(wsmp.loop_type == 0)
                 {
                     fluid_voice_gen_set(voice, GEN_SAMPLEMODE, 1);
                 }
-                else if (wsmp.loop_type == 1)
+                else if(wsmp.loop_type == 1)
                 {
                     fluid_voice_gen_set(voice, GEN_SAMPLEMODE, 3);
                 }
