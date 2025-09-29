@@ -25,6 +25,10 @@
 #include "fluid_rvoice_mixer.h"
 #include "fluid_ringbuffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fluid_rvoice_event_t fluid_rvoice_event_t;
 
 struct _fluid_rvoice_event_t
@@ -85,7 +89,7 @@ fluid_rvoice_eventhandler_get_finished_voice(fluid_rvoice_eventhandler_t *handle
 
     result = * (fluid_rvoice_t **) result;
     fluid_ringbuffer_next_outptr(handler->finished_voices);
-    return result;
+    return (fluid_rvoice_t *)result;
 }
 
 
@@ -108,6 +112,8 @@ fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t *handler,
                                        handler->mixer, rvoice);
 }
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif

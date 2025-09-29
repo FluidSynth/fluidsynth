@@ -38,6 +38,10 @@
 */
 #define FLUID_CHANNEL_SIZE_MONOLIST  10
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 
             The monophonic list
@@ -283,4 +287,7 @@ void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, flui
 /* Portamento time calculation with mode support */
 int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _FLUID_CHAN_H */

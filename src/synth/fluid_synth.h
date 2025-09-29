@@ -56,6 +56,10 @@
 #define FLUID_CHORUS_DEFAULT_SPEED 0.2f                  /**< Default chorus speed */
 #define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE  /**< Default chorus waveform type */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /***************************************************************
  *
  *                         ENUM
@@ -272,4 +276,9 @@ fluid_voice_t *
 fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int chan, int key, int vel, fluid_zone_range_t *zone_range);
 
 void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan, int key);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif  /* _FLUID_SYNTH_H */

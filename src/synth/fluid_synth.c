@@ -24,6 +24,7 @@
 #include "fluid_settings.h"
 #include "fluid_sfont.h"
 #include "fluid_defsfont.h"
+#include "fluid_dls.h"
 #include "fluid_instpatch.h"
 
 #ifdef TRAP_ON_FPE
@@ -927,6 +928,19 @@ new_fluid_synth(fluid_settings_t *settings)
     if(loader == NULL)
     {
         FLUID_LOG(FLUID_WARN, "Failed to create the instpatch SoundFont loader");
+    }
+    else
+    {
+        fluid_synth_add_sfloader(synth, loader);
+    }
+#endif
+
+#ifdef ENABLE_NATIVE_DLS
+    loader = new_fluid_dls_loader(synth, settings);
+    
+    if(loader == NULL)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to create the dls SoundFont loader");
     }
     else
     {

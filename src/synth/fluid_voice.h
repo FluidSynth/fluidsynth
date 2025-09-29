@@ -32,6 +32,10 @@
 
 #define NO_CHANNEL             0xff
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
 
 struct _fluid_overflow_prio_t
@@ -193,5 +197,8 @@ fluid_voice_unlock_rvoice(fluid_voice_t *voice)
 fluid_real_t fluid_voice_gen_value(const fluid_voice_t *voice, int num);
 void fluid_voice_set_custom_filter(fluid_voice_t *voice, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_VOICE_H */

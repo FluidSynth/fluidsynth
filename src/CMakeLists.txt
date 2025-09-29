@@ -93,6 +93,10 @@ if ( AUFILE_SUPPORT )
   set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
 endif ( AUFILE_SUPPORT )
 
+if ( ENABLE_NATIVE_DLS )
+  set ( fluid_dls_SOURCES sfloader/fluid_dls.cpp sfloader/fluid_dls.h )
+endif ( ENABLE_NATIVE_DLS )
+
 if ( LIBINSTPATCH_SUPPORT )
   set ( fluid_libinstpatch_SOURCES sfloader/fluid_instpatch.c sfloader/fluid_instpatch.h )
 endif ( LIBINSTPATCH_SUPPORT )
@@ -269,6 +273,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
     ${fluid_sdl3_SOURCES}
+    ${fluid_dls_SOURCES}
     ${fluid_libinstpatch_SOURCES}
     ${fluid_osal_SOURCES}
     ${fluid_file_SOURCES}
