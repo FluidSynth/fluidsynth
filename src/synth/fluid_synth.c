@@ -857,7 +857,7 @@ new_fluid_synth(fluid_settings_t *settings)
         {
             synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
         }
-        synth->portamento_time_has_seen_lsb = 0; /* Start in 7-bit mode for auto */
+        synth->portamento_time_has_seen_lsb = 0; /* Start in xg-gs mode for auto */
     }
 
     fluid_atomic_int_set(&synth->ticks_since_start, 0);
@@ -8465,20 +8465,17 @@ int fluid_synth_set_portamento_time_mode(fluid_synth_t *synth, int mode)
     /* checks parameters first */
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
-    
+
     if(mode < 0 || mode >= FLUID_PORTAMENTO_TIME_MODE_LAST)
     {
         FLUID_API_RETURN(FLUID_FAILED);
     }
-    
+
     synth->portamento_time_mode = (enum fluid_portamento_time_mode)mode;
-    
+
     /* Reset auto mode tracking when mode changes */
-    if(mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
-    {
-        synth->portamento_time_has_seen_lsb = 0;
-    }
-    
+    synth->portamento_time_has_seen_lsb = 0;
+
     FLUID_API_RETURN(FLUID_OK);
 }
 

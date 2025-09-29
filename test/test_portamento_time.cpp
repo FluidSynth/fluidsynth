@@ -12,7 +12,7 @@ int print_portamento_time7(fluid_channel_t *chan)
     for(int i = 0; i<128; i++)
     {
         fluid_channel_set_cc(chan, PORTAMENTO_TIME_MSB, i);
-        auto ms = fluid_channel_portamentotime_with_mode(chan, FLUID_PORTAMENTO_TIME_MODE_XG_GS);
+        auto ms = fluid_channel_portamentotime_with_mode(chan, FLUID_PORTAMENTO_TIME_MODE_XG_GS, false);
         std::cout << "CC5: " << i << " ^= " << ms << " ms";
     }
 }
