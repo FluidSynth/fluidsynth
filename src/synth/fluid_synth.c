@@ -136,8 +136,8 @@ static void fluid_synth_handle_gain(void *data, const char *name, double value);
 static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
 static void fluid_synth_handle_device_id(void *data, const char *name, int value);
 static void fluid_synth_handle_overflow(void *data, const char *name, double value);
-static void fluid_synth_handle_important_channels(void *data, const char *name,
-        const char *value);
+static void fluid_synth_handle_important_channels(void *data, const char *name, const char *value);
+static void fluid_synth_handle_portamento_mode(void *data, const char *name, const char *value);
 static void fluid_synth_handle_reverb_chorus_num(void *data, const char *name, double value);
 static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, int value);
 
@@ -753,6 +753,8 @@ new_fluid_synth(fluid_settings_t *settings)
                                 fluid_synth_handle_reverb_chorus_num, synth);
     fluid_settings_callback_num(settings, "synth.chorus.speed",
                                 fluid_synth_handle_reverb_chorus_num, synth);
+    fluid_settings_callback_str(settings, "synth.portamento-mode",
+                                fluid_synth_handle_portamento_mode, synth);
 
     /* do some basic sanity checking on the settings */
 
@@ -8351,6 +8353,31 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
     fluid_synth_api_enter(synth);
     fluid_synth_set_important_channels(synth, value);
     fluid_synth_api_exit(synth);
+}
+
+static void fluid_synth_handle_portamento_mode(void *data, const char *name, const char *value)
+{
+    int mode;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+
+    if(FLUID_STRCMP(value, "auto") == 0)
+    {
+        mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
+    }
+    else if(FLUID_STRCMP(value, "xg-gs") == 0)
+    {
+        mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
+    }
+    else if(FLUID_STRCMP(value, "linear") == 0)
+    {
+        mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
+    }
+    else
+    {
+        FLUID_LOG(FLUID_ERR, "Invalid portamento time mode '%s'. Valid modes: auto, xg-gs, linear", value);
+        return;
+    }
+    fluid_synth_set_portamento_time_mode(synth, mode);
 }
 
 
