@@ -31,6 +31,7 @@ ADD_FLUID_TEST(test_seq_event_queue_remove)
 ADD_FLUID_TEST(test_jack_obtaining_synth)
 ADD_FLUID_TEST(test_utf8_open)
 ADD_FLUID_TEST(test_portamento_time)
+ADD_FLUID_TEST(test_modulator)
 
 if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
     # Earlier versions of GLib had broken comment handling and should not be compared to
