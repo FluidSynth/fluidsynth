@@ -131,6 +131,8 @@ static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *
 
 static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb);
 
+static int fluid_parse_portamento_time_str(const char* value);
+
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
 static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
@@ -842,17 +844,14 @@ new_fluid_synth(fluid_settings_t *settings)
         char *portamento_mode_str;
         if(fluid_settings_dupstr(settings, "synth.portamento-time", &portamento_mode_str) == FLUID_OK)
         {
-            if(FLUID_STRCMP(portamento_mode_str, "xg-gs") == 0)
-            {
-                synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
-            }
-            else if(FLUID_STRCMP(portamento_mode_str, "linear") == 0)
-            {
-                synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
-            }
-            else /* "auto" or any other value defaults to auto */
+            int res = fluid_parse_portamento_time_str(portamento_mode_str);
+            if(res == FLUID_FAILED)
             {
                 synth->portamento_time_mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
+            }
+            else
+            {
+                synth->portamento_time_mode = res;
             }
             FLUID_FREE(portamento_mode_str);
         }
@@ -8355,11 +8354,9 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
     fluid_synth_api_exit(synth);
 }
 
-static void fluid_synth_handle_portamento_mode(void *data, const char *name, const char *value)
+static int fluid_parse_portamento_time_str(const char* value)
 {
     int mode;
-    fluid_synth_t *synth = (fluid_synth_t *)data;
-
     if(FLUID_STRCMP(value, "auto") == 0)
     {
         mode = FLUID_PORTAMENTO_TIME_MODE_AUTO;
@@ -8375,9 +8372,21 @@ static void fluid_synth_handle_portamento_mode(void *data, const char *name, con
     else
     {
         FLUID_LOG(FLUID_ERR, "Invalid portamento time mode '%s'. Valid modes: auto, xg-gs, linear", value);
-        return;
+        mode = FLUID_FAILED;
     }
-    fluid_synth_set_portamento_time_mode(synth, mode);
+    return mode;
+}
+
+static void fluid_synth_handle_portamento_mode(void *data, const char *name, const char *value)
+{
+    int mode;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+
+    mode = fluid_parse_portamento_time_str(value);
+    if(mode != FLUID_FAILED)
+    {
+        fluid_synth_set_portamento_time_mode(synth, mode);
+    }
 }
 
 
