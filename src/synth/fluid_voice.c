@@ -1277,11 +1277,17 @@ void fluid_voice_update_portamento(fluid_voice_t *voice, int fromkey, int tokey)
     fluid_real_t PitchBeg = fluid_voice_calculate_pitch(voice, fromkey);
     fluid_real_t PitchEnd = fluid_voice_calculate_pitch(voice, tokey);
     fluid_real_t pitchoffset = PitchBeg - PitchEnd;
+    unsigned int countinc;
+    enum fluid_portamento_time_mode tm = channel->synth->portamento_time_mode;
 
     /* Calculates increment countinc */
     /* Increment is function of PortamentoTime (ms)*/
-    fluid_real_t ms = fluid_channel_portamentotime_with_mode(channel, channel->synth->portamento_time_mode, channel->synth->portamento_time_has_seen_lsb);
-    unsigned int countinc = (unsigned int)(((fluid_real_t)voice->output_rate * 0.001f * ms) /
+    fluid_real_t ms = fluid_channel_portamentotime_with_mode(channel, tm, channel->synth->portamento_time_has_seen_lsb);
+    // Apply a similar scaling hack as SpessaSynth to fix Descent Game08, it's unclear why exactly. Supposably the portamento time applies to two octaves pitch glide.
+    // https://github.com/spessasus/spessasynth_core/blob/0b2d44f48065d3d6bbca24a1d40223b1255dab00/src/synthesizer/audio_engine/engine_methods/portamento_time.ts#L84-L86
+    ms *= (tm == FLUID_PORTAMENTO_TIME_MODE_XG_GS) ? (abs(tokey - fromkey) / 24.0f) : 1.0f;
+
+    countinc = (unsigned int)(((fluid_real_t)voice->output_rate * 0.001f * ms) /
                                             (fluid_real_t)FLUID_BUFSIZE + 0.5f);
 
     /* Send portamento parameters to the voice dsp */

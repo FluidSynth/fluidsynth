@@ -179,10 +179,12 @@ add_custom_target(renderHybridCol
 
 add_custom_target(renderPortamento
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -o "synth.portamento-time=linear" -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4_linear.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
     COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
     COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/3 - Turn Up, Strut In, Chill Out (XG).${FEXT}" "3 - Turn Up, Strut In, Chill Out (XG).mid" ${GENERAL_USER_GS2}
     COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/6 - Galactic Invasion (XG).${FEXT}" "6 - Galactic Invasion (XG).mid" ${GENERAL_USER_GS2}
     COMMAND fluidsynth -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/Descent_Game08.${FEXT}" "Descent_Game08.mid" ${GENERAL_USER_GS2}
+    COMMAND fluidsynth -o "synth.portamento-time=linear" -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/Descent_Game08_linear.${FEXT}" "Descent_Game08.mid" ${GENERAL_USER_GS2}
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}" ${GENERAL_USER_GS2} "MM6_-_MrX2010XG.mid"
     COMMENT "Rendering Portamento tests"
     DEPENDS fluidsynth create_iir_dir
