@@ -86,7 +86,7 @@ fluid_channel_init(fluid_channel_t *chan)
     /*---*/
     chan->key_mono_sustained = INVALID_NOTE; /* No previous mono note sustained */
     chan->legatomode = FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER;		/* Default mode */
-    chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY;	/* Default mode */
+    chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE;	/* Default mode */
     /*--- End of poly/mono initialization --------------------------------------*/
 
     chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
@@ -760,7 +760,7 @@ void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, flui
 }
 
 /* Calculate portamento time in milliseconds considering the synthesizer's portamento time mode */
-unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen)
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen, int fromkey, int tokey)
 {
     int msb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_MSB);
     int lsb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_LSB);
@@ -806,7 +806,11 @@ unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum 
             // Tests were performed by John Novak
             // https://github.com/dosbox-staging/dosbox-staging/pull/2705
             res = (Max/2 * 2.5) * fluid_concave(msb) * fluid_concave(126 * fluid_concave(msb)) + 200 * fluid_convex(msb);
-            return res < Max ? res : Max;
+            res = res < Max ? res : Max;
+            // Apply a similar scaling hack as SpessaSynth to fix Descent Game08, it's unclear why exactly
+            // https://github.com/spessasus/spessasynth_core/blob/0b2d44f48065d3d6bbca24a1d40223b1255dab00/src/synthesizer/audio_engine/engine_methods/portamento_time.ts#L84-L86
+            res = (unsigned int)(res * abs(tokey - fromkey) / 24.0f + 0.5f);
+            return res;
             
         case FLUID_PORTAMENTO_TIME_MODE_LINEAR:
             /* Always use 14-bit MSB+LSB */

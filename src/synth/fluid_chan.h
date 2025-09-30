@@ -285,7 +285,7 @@ int fluid_channel_get_override_gen_default(fluid_channel_t *chan, int gen, fluid
 void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t val);
 
 /* Portamento time calculation with mode support */
-unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen);
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen, int, int);
 
 #ifdef __cplusplus
 }

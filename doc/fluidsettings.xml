@@ -325,7 +325,7 @@ Developers:
                 This setting was introduced in 2.5.0 to specify how to handle portamento time CC MSB and LSB.
                 <ul>
                     <li>'linear' - portamento time is 14 bits wide and calculated as <code>CC5 * 128 + CC37</code> in milliseconds (this was fluidsynth's behavior before this setting was introduced).</li>
-                    <li>'xg-gs' - portamento time is 7 bits wide, using only CC5, which is mapped onto a concave curve ranging from 0s to 480s. This setting should be used for older MIDI files, like Descent Game08.</li>
+                    <li>'xg-gs' - portamento time is 7 bits wide, using only CC5, which is mapped onto a concave curve ranging from 0s to 480s. The exact mapping was derived through listening tests and may be subject to change between different versions of fluidsynth. This setting should be used for older MIDI files, like Descent Game08.</li>
                     <li>'auto' - the synth starts in 'xg-gs' mode. If it detects a CC37 on any MIDI channel, it switches to 'linear' mode.</li>
                 </ul>
             </desc>
