@@ -316,6 +316,23 @@ Developers:
                 The polyphony defines how many voices can be played in parallel. A note event produces one or more voices. Its good to set this to a value which the system can handle and will thus limit FluidSynth's CPU usage. When FluidSynth runs out of voices it will begin terminating lower priority voices for new note events.</desc>
         </setting>
         <setting>
+            <name>portamento-mode</name>
+            <type>str</type>
+            <def>auto</def>
+            <realtime/>
+            <vals>auto, linear, xg-gs</vals>
+            <desc>
+                This setting was introduced in 2.5.0 to specify how to handle portamento time CC MSB and LSB.
+                <ul>
+                    <li>'linear' - portamento time is 14 bits wide and calculated as <code>CC5 * 128 + CC37</code> in milliseconds (this was fluidsynth's behavior before this setting was introduced).</li>
+                    <li>'xg-gs' - portamento time is 7 bits wide, using only CC5, which is mapped onto a concave curve ranging from 0s to 480s. This setting should be used for older MIDI files, like Descent Game08.</li>
+                    <li>'auto' - the synth starts in 'xg-gs' mode. If it detects a CC37 on any MIDI channel, it switches to 'linear' mode.</li>
+                </ul>
+            </desc>
+            <desc>
+                The polyphony defines how many voices can be played in parallel. A note event produces one or more voices. Its good to set this to a value which the system can handle and will thus limit FluidSynth's CPU usage. When FluidSynth runs out of voices it will begin terminating lower priority voices for new note events.</desc>
+        </setting>
+        <setting>
             <name>reverb.active</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
