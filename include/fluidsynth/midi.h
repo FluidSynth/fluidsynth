@@ -261,6 +261,82 @@ enum fluid_player_set_tempo_type
     FLUID_PLAYER_TEMPO_NBR        /**< @internal Value defines the count of player tempo type (#fluid_player_set_tempo_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
+enum fluid_midi_control_change
+{
+    BANK_SELECT_MSB = 0x00,
+    MODULATION_MSB = 0x01,
+    BREATH_MSB = 0x02,
+    FOOT_MSB = 0x04,
+    PORTAMENTO_TIME_MSB = 0x05,
+    DATA_ENTRY_MSB = 0x06,
+    VOLUME_MSB = 0x07,
+    BALANCE_MSB = 0x08,
+    PAN_MSB = 0x0A,
+    EXPRESSION_MSB = 0x0B,
+    EFFECTS1_MSB = 0x0C,
+    EFFECTS2_MSB = 0x0D,
+    GPC1_MSB = 0x10, /* general purpose controller */
+    GPC2_MSB = 0x11,
+    GPC3_MSB = 0x12,
+    GPC4_MSB = 0x13,
+    BANK_SELECT_LSB = 0x20,
+    MODULATION_WHEEL_LSB = 0x21,
+    BREATH_LSB = 0x22,
+    FOOT_LSB = 0x24,
+    PORTAMENTO_TIME_LSB = 0x25,
+    DATA_ENTRY_LSB = 0x26,
+    VOLUME_LSB = 0x27,
+    BALANCE_LSB = 0x28,
+    PAN_LSB = 0x2A,
+    EXPRESSION_LSB = 0x2B,
+    EFFECTS1_LSB = 0x2C,
+    EFFECTS2_LSB = 0x2D,
+    GPC1_LSB = 0x30,
+    GPC2_LSB = 0x31,
+    GPC3_LSB = 0x32,
+    GPC4_LSB = 0x33,
+    SUSTAIN_SWITCH = 0x40,
+    PORTAMENTO_SWITCH = 0x41,
+    SOSTENUTO_SWITCH = 0x42,
+    SOFT_PEDAL_SWITCH = 0x43,
+    LEGATO_SWITCH = 0x44,
+    HOLD2_SWITCH = 0x45,
+    SOUND_CTRL1 = 0x46,
+    SOUND_CTRL2 = 0x47,
+    SOUND_CTRL3 = 0x48,
+    SOUND_CTRL4 = 0x49,
+    SOUND_CTRL5 = 0x4A,
+    SOUND_CTRL6 = 0x4B,
+    SOUND_CTRL7 = 0x4C,
+    SOUND_CTRL8 = 0x4D,
+    SOUND_CTRL9 = 0x4E,
+    SOUND_CTRL10 = 0x4F,
+    GPC5 = 0x50,
+    GPC6 = 0x51,
+    GPC7 = 0x52,
+    GPC8 = 0x53,
+    PORTAMENTO_CTRL = 0x54,
+    EFFECTS_DEPTH1 = 0x5B,
+    EFFECTS_DEPTH2 = 0x5C,
+    EFFECTS_DEPTH3 = 0x5D,
+    EFFECTS_DEPTH4 = 0x5E,
+    EFFECTS_DEPTH5 = 0x5F,
+    DATA_ENTRY_INCR = 0x60,
+    DATA_ENTRY_DECR = 0x61,
+    NRPN_LSB = 0x62,
+    NRPN_MSB = 0x63,
+    RPN_LSB = 0x64,
+    RPN_MSB = 0x65,
+    ALL_SOUND_OFF = 0x78,
+    ALL_CTRL_OFF = 0x79,
+    LOCAL_CONTROL = 0x7A,
+    ALL_NOTES_OFF = 0x7B,
+    OMNI_OFF = 0x7C,
+    OMNI_ON = 0x7D,
+    POLY_OFF = 0x7E,
+    POLY_ON = 0x7F
+};
+
 /** @startlifecycle{MIDI File Player} */
 FLUIDSYNTH_API fluid_player_t *new_fluid_player(fluid_synth_t *synth);
 FLUIDSYNTH_API void delete_fluid_player(fluid_player_t *player);
@@ -285,6 +361,30 @@ FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_division(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_seek(fluid_player_t *player, int ticks);
+FLUIDSYNTH_API int fluid_player_mute_track(fluid_player_t *player, unsigned char track);
+FLUIDSYNTH_API int fluid_player_unmute_track(fluid_player_t *player, unsigned char track);
+FLUIDSYNTH_API int fluid_player_mute_channel(fluid_player_t *player, unsigned char channel);
+FLUIDSYNTH_API int fluid_player_unmute_channel(fluid_player_t *player, unsigned char channel);
+FLUIDSYNTH_API int fluid_player_solo_track(fluid_player_t *player, unsigned char track);
+FLUIDSYNTH_API int fluid_player_unsolo_track(fluid_player_t *player, unsigned char track);
+FLUIDSYNTH_API int fluid_player_solo_channel(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_unsolo_channel(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_set_cc(fluid_player_t *player, unsigned char chan, unsigned char cc_num, unsigned char val);
+FLUIDSYNTH_API int fluid_player_set_pitch_bend(fluid_player_t *player, unsigned char chan, unsigned short val);
+FLUIDSYNTH_API int fluid_player_set_instrument(fluid_player_t *player, unsigned char chan, unsigned char val);
+FLUIDSYNTH_API int fluid_player_reset_channel_transpose(fluid_player_t *player);
+FLUIDSYNTH_API int fluid_player_reset_channel_mute(fluid_player_t *player);
+FLUIDSYNTH_API int fluid_player_reset_track_mute(fluid_player_t *player);
+FLUIDSYNTH_API int fluid_player_set_transpose(fluid_player_t *player, char amount);
+FLUIDSYNTH_API int fluid_player_enable_channel_transpose(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_disable_channel_transpose(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_get_channel_transpose(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_get_transpose(fluid_player_t *player);
+FLUIDSYNTH_API int fluid_player_get_channel_mute(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_get_track_mute(fluid_player_t *player, unsigned char track);
+FLUIDSYNTH_API int fluid_player_get_program(fluid_player_t *player, unsigned char chan);
+FLUIDSYNTH_API int fluid_player_get_cc(fluid_player_t *player, unsigned char chan, unsigned char cc_num);
+FLUIDSYNTH_API int fluid_player_get_pitch_bend(fluid_player_t *player, unsigned char chan);
 /** @} */
 
 #ifdef __cplusplus
