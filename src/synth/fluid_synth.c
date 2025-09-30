@@ -258,10 +258,10 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.note-cut", 0, 0, 2, 0);
     
-    fluid_settings_register_str(settings, "synth.portamento-mode", "auto", 0);
-    fluid_settings_add_option(settings, "synth.portamento-mode", "auto");
-    fluid_settings_add_option(settings, "synth.portamento-mode", "xg-gs");
-    fluid_settings_add_option(settings, "synth.portamento-mode", "linear");
+    fluid_settings_register_str(settings, "synth.portamento-time", "auto", 0);
+    fluid_settings_add_option(settings, "synth.portamento-time", "auto");
+    fluid_settings_add_option(settings, "synth.portamento-time", "xg-gs");
+    fluid_settings_add_option(settings, "synth.portamento-time", "linear");
 }
 
 /**
@@ -753,7 +753,7 @@ new_fluid_synth(fluid_settings_t *settings)
                                 fluid_synth_handle_reverb_chorus_num, synth);
     fluid_settings_callback_num(settings, "synth.chorus.speed",
                                 fluid_synth_handle_reverb_chorus_num, synth);
-    fluid_settings_callback_str(settings, "synth.portamento-mode",
+    fluid_settings_callback_str(settings, "synth.portamento-time",
                                 fluid_synth_handle_portamento_mode, synth);
 
     /* do some basic sanity checking on the settings */
@@ -840,7 +840,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* Initialize portamento time mode */
     {
         char *portamento_mode_str;
-        if(fluid_settings_dupstr(settings, "synth.portamento-mode", &portamento_mode_str) == FLUID_OK)
+        if(fluid_settings_dupstr(settings, "synth.portamento-time", &portamento_mode_str) == FLUID_OK)
         {
             if(FLUID_STRCMP(portamento_mode_str, "xg-gs") == 0)
             {
