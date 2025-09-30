@@ -329,8 +329,6 @@ Developers:
                     <li>'auto' - the synth starts in 'xg-gs' mode. If it detects a CC37 on any MIDI channel, it switches to 'linear' mode.</li>
                 </ul>
             </desc>
-            <desc>
-                The polyphony defines how many voices can be played in parallel. A note event produces one or more voices. Its good to set this to a value which the system can handle and will thus limit FluidSynth's CPU usage. When FluidSynth runs out of voices it will begin terminating lower priority voices for new note events.</desc>
         </setting>
         <setting>
             <name>reverb.active</name>

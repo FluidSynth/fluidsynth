@@ -760,13 +760,26 @@ void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, flui
 }
 
 /* Calculate portamento time in milliseconds considering the synthesizer's portamento time mode */
-int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen)
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen)
 {
     int msb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_MSB);
     int lsb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_LSB);
     int res;
     static const int Max = 480*1000; /*ms*/
     
+    /* Use 7-bit MSB initially, switch to 14-bit if LSB has been seen */
+    if(time_mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
+    {
+        if(lsb_seen)
+        {
+            time_mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
+        }
+        else
+        {
+            time_mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
+        }
+    }
+
     switch(time_mode)
     {
         case FLUID_PORTAMENTO_TIME_MODE_XG_GS:
@@ -799,16 +812,8 @@ int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_por
             /* Always use 14-bit MSB+LSB */
             return msb * 128 + lsb;
             
-        case FLUID_PORTAMENTO_TIME_MODE_AUTO:
         default:
-            /* Use 7-bit MSB initially, switch to 14-bit if LSB has been seen */
-            if(lsb_seen)
-            {
-                return msb * 128 + lsb;
-            }
-            else
-            {
-                return msb;
-            }
+            FLUID_LOG(FLUID_ERR, "THIS SHOULD NEVER HAPPEN! unknown portamento time mode %d", time_mode);
     }
+    return 0;
 }
