@@ -135,6 +135,13 @@ void sfont_default_mods(fluid_sfont_t *sfont)
     fluid_mod_t mods[3] = {0};
     fluid_mod_t *def_mod, *my_mod;
 
+    res = fluid_sfont_get_default_mod(NULL, NULL);
+    TEST_ASSERT(FLUID_FAILED);
+    res = fluid_sfont_get_default_mod(sfont, NULL);
+    TEST_ASSERT(FLUID_FAILED);
+    res = fluid_sfont_get_default_mod(NULL, &def_mod);
+    TEST_ASSERT(FLUID_FAILED);
+
     TEST_ASSERT(sfont->default_mod_list == NULL);
     res = fluid_sfont_get_default_mod(sfont, &def_mod);
     TEST_ASSERT(res == 0);

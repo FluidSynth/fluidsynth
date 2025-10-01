@@ -111,7 +111,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 <strong><span style="color:red">Important changes that may not result in a compilation error but may cause your app to misbehave:</span></strong>
 
-- all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
+- all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either #FLUID_OK or #FLUID_FAILED
 - fluid_settings_setstr() cannot be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint() instead, for example: <br /><code>fluid_settings_setint(settings, "synth.reverb.active", 0)</code> instead of <code>fluid_settings_setstr(settings, "synth.reverb.active", "no")</code>
 - <span style="text-decoration:line-through;">explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()</span> (since fluidsynth 2.1.1 not required anymore, but still recommend)
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers

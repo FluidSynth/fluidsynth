@@ -54,7 +54,7 @@ enum fluid_mod_flags
     FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
 
     FLUID_MOD_CUSTOM = 0x40,       /**< Custom mapping function */
-    FLUID_MOD_SIN = 0x80,          /**< Custom non-standard sinus mapping function @deprecated Deprecated since 2.5.0, use #FLUID_MOD_CUSTOM and fluid_mod_set_custom_mapping() instead. */
+    FLUID_MOD_SIN = 0x80,          /**< Custom non-standard sinus mapping function @deprecated Deprecated and non-functional since 2.5.0, use #FLUID_MOD_CUSTOM and fluid_mod_set_custom_mapping() instead. */
 };
 
 /**
@@ -82,17 +82,16 @@ enum fluid_mod_src
 };
 
 /**
- * This function transforms or maps a normalised value into a range of [-1;+1].
+ * This function transforms or maps a modulator source value into a normalized range of <code>[-1.0;+1.0]</code>.
  *
  * See fluid_mod_set_custom_mapping().
  *
- * @param mod The modulator instance. The behavior is undefined if you modify @mod through any of the fluid_mod_set*() functions from within the callback.
- * @param value The input value from the modulator source, which will be in range <code>[0;16383]</code> (if the input source value is #FLUID_MOD_PITCHWHEEL), or <code>[0;127]</code> otherwise.
- * @param range The value-range of the modulator source, i.e. 16384, if the input source value is #FLUID_MOD_PITCHWHEEL, otherwise 128.
- * @param data Custom data pointer, as set by fluid_mod_set_custom_mapping().
+ * @param mod The modulator instance. The behavior is undefined if you modify @p mod through any of the <code>fluid_mod_set*()</code> functions from within the callback.
+ * @param value The input value from the modulator source, which will be in range <code>[0;16383]</code> if the input source value is #FLUID_MOD_PITCHWHEEL, or <code>[0;127]</code> otherwise.
+ * @param range The value-range of the modulator source, i.e. <code>16384</code>, if the input source value is #FLUID_MOD_PITCHWHEEL, otherwise <code>128</code>.
+ * @param data Custom data pointer, as supplied via fluid_mod_set_custom_mapping().
  * @param is_src1 A boolean, which, if true, indicates that the mapping function is called for source1. Otherwise, it's called for source2. Only useful if two sources have been specified with the #FLUID_MOD_CUSTOM flag set.
- * @return A value mapped into range [-1.0;+1.0].
- * @note For return values that exceed the mentioned range, the behavior is unspecified
+ * @return A value mapped into range <code>[-1.0;+1.0]</code>. For return values that exceed the mentioned range, the behavior is unspecified
  * (i.e. it may be honored, it may be clipped, ignored, the entire modulator may be disabled, etc.).
  * @since 2.5.0
  */
