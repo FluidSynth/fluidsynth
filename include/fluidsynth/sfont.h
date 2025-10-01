@@ -247,6 +247,9 @@ FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t *sfont);
 FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t *sfont, void *data);
 FLUIDSYNTH_API void *fluid_sfont_get_data(fluid_sfont_t *sfont);
 
+FLUIDSYNTH_API int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out);
+FLUIDSYNTH_API int fluid_sfont_set_default_mod(fluid_sfont_t *sfont, const fluid_mod_t *mods, int nmods);
+
 FLUIDSYNTH_API int fluid_sfont_get_id(fluid_sfont_t *sfont);
 FLUIDSYNTH_API const char *fluid_sfont_get_name(fluid_sfont_t *sfont);
 FLUIDSYNTH_API fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenum);

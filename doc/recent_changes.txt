@@ -5,6 +5,7 @@
 - #FLUID_MOD_SIN is now deprecated, use the newly added fluid_mod_set_custom_mapping()
 - A new mode for the custom IIR filter has been added: #FLUID_IIR_BEANLAND
 - fluid_mod_get_transform() now receives a <code>const</code> argument
+- An API for manipulating fluid_sfont_t specific default modulators has been added: fluid_sfont_get_default_mod() and fluid_sfont_set_default_mod()
 
 \section NewIn2_4_5 What's new in 2.4.5?
 - In order to use the sdl3 audio driver, the downstream application is responsible for calling <code>SDL_Init()</code> and <code>SDL_Quit()</code>, just like it was practice for the sdl2 audio driver. Fluidsynth may raise a warning if this isn't done, see \ref CreatingAudioDriver
