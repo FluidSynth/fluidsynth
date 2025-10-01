@@ -793,7 +793,7 @@ struct DLSID
 };
 
 #define DEFINE_DLSID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-    const DLSID name = { l, w1, w2, { b1, b2, b3, b4, b5, b6, b7, b8 } }
+    static const DLSID name = { l, w1, w2, { b1, b2, b3, b4, b5, b6, b7, b8 } }
 
 // Specified in DLS-2.2 2.6 <cdl-ck>, Conditional Chunk
 // From DLS-2.2 4.2 DLS Level 2 Header File (dls2.h)
@@ -849,98 +849,98 @@ static inline void read_data_lpcm(void *dest, const void *data, fluid_long_long_
 }
 
 // DLS-2.2 2.8 <rgnh-ck>, Region Header Chunk
-constexpr uint16_t F_RGN_OPTION_SELFNONEXCLUSIVE = 0x0001;
+[[maybe_unused]] constexpr uint16_t F_RGN_OPTION_SELFNONEXCLUSIVE = 0x0001;
 
 // DLS-2.2 2.10 <art2-ck>, Level 2 Articulator Chunk; Table 9 and 10
 // DLS Level 2 (1 is included) Sources, Controls, Destinations and Transforms
 // Modulator Sources
-constexpr uint16_t CONN_SRC_NONE = 0x0000;            // No Source
-constexpr uint16_t CONN_SRC_LFO = 0x0001;             // Low Frequency Oscillator
-constexpr uint16_t CONN_SRC_KEYONVELOCITY = 0x0002;   // Note-On Velocity
-constexpr uint16_t CONN_SRC_KEYNUMBER = 0x0003;       // Note Number
-constexpr uint16_t CONN_SRC_EG1 = 0x0004;             // Envelope Generator 1
-constexpr uint16_t CONN_SRC_EG2 = 0x0005;             // Envelope Generator 2
-constexpr uint16_t CONN_SRC_PITCHWHEEL = 0x0006;      // Pitch Wheel
-constexpr uint16_t CONN_SRC_POLYPRESSURE = 0x0007;    // Polyphonic Pressure
-constexpr uint16_t CONN_SRC_CHANNELPRESSURE = 0x0008; // Channel Pressure
-constexpr uint16_t CONN_SRC_VIBRATO = 0x0009;         // Vibrato LFO
+[[maybe_unused]] constexpr uint16_t CONN_SRC_NONE = 0x0000;            // No Source
+[[maybe_unused]] constexpr uint16_t CONN_SRC_LFO = 0x0001;             // Low Frequency Oscillator
+[[maybe_unused]] constexpr uint16_t CONN_SRC_KEYONVELOCITY = 0x0002;   // Note-On Velocity
+[[maybe_unused]] constexpr uint16_t CONN_SRC_KEYNUMBER = 0x0003;       // Note Number
+[[maybe_unused]] constexpr uint16_t CONN_SRC_EG1 = 0x0004;             // Envelope Generator 1
+[[maybe_unused]] constexpr uint16_t CONN_SRC_EG2 = 0x0005;             // Envelope Generator 2
+[[maybe_unused]] constexpr uint16_t CONN_SRC_PITCHWHEEL = 0x0006;      // Pitch Wheel
+[[maybe_unused]] constexpr uint16_t CONN_SRC_POLYPRESSURE = 0x0007;    // Polyphonic Pressure
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CHANNELPRESSURE = 0x0008; // Channel Pressure
+[[maybe_unused]] constexpr uint16_t CONN_SRC_VIBRATO = 0x0009;         // Vibrato LFO
 
 // MIDI Controller Sources
-constexpr uint16_t CONN_SRC_CC1 = 0x0081;  // Modulation
-constexpr uint16_t CONN_SRC_CC7 = 0x0087;  // Channel Volume
-constexpr uint16_t CONN_SRC_CC10 = 0x008a; // Pan
-constexpr uint16_t CONN_SRC_CC11 = 0x008b; // Expression
-constexpr uint16_t CONN_SRC_CC91 = 0x00db; // Chorus Send
-constexpr uint16_t CONN_SRC_CC93 = 0x00dd; // Reverb Send
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CC1 = 0x0081;  // Modulation
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CC7 = 0x0087;  // Channel Volume
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CC10 = 0x008a; // Pan
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CC11 = 0x008b; // Expression
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CC91 = 0x00db; // Chorus Send
+[[maybe_unused]] constexpr uint16_t CONN_SRC_CC93 = 0x00dd; // Reverb Send
 
 // Registered Parameter Numbers
-constexpr uint16_t CONN_SRC_RPN0 = 0x0100; // RPN0 - Pitch Bend Range
-constexpr uint16_t CONN_SRC_RPN1 = 0x0101; // RPN1 - Fine Tune
-constexpr uint16_t CONN_SRC_RPN2 = 0x0102; // RPN2 - Coarse Tune
+[[maybe_unused]] constexpr uint16_t CONN_SRC_RPN0 = 0x0100; // RPN0 - Pitch Bend Range
+[[maybe_unused]] constexpr uint16_t CONN_SRC_RPN1 = 0x0101; // RPN1 - Fine Tune
+[[maybe_unused]] constexpr uint16_t CONN_SRC_RPN2 = 0x0102; // RPN2 - Coarse Tune
 
 // Generic Destinations
-constexpr uint16_t CONN_DST_NONE = 0x0000;      // No Destination
-constexpr uint16_t CONN_DST_GAIN = 0x0001;      // Gain
-constexpr uint16_t CONN_DST_RESERVED = 0x0002;  // Reserved
-constexpr uint16_t CONN_DST_PITCH = 0x0003;     // Pitch
-constexpr uint16_t CONN_DST_PAN = 0x0004;       // Pan
-constexpr uint16_t CONN_DST_KEYNUMBER = 0x0005; // Key Number Generator
+[[maybe_unused]] constexpr uint16_t CONN_DST_NONE = 0x0000;      // No Destination
+[[maybe_unused]] constexpr uint16_t CONN_DST_GAIN = 0x0001;      // Gain
+[[maybe_unused]] constexpr uint16_t CONN_DST_RESERVED = 0x0002;  // Reserved
+[[maybe_unused]] constexpr uint16_t CONN_DST_PITCH = 0x0003;     // Pitch
+[[maybe_unused]] constexpr uint16_t CONN_DST_PAN = 0x0004;       // Pan
+[[maybe_unused]] constexpr uint16_t CONN_DST_KEYNUMBER = 0x0005; // Key Number Generator
 
 // Channel Output Destinations
-constexpr uint16_t CONN_DST_LEFT = 0x0010;        // Left Channel Send
-constexpr uint16_t CONN_DST_RIGHT = 0x0011;       // Right Channel Send
-constexpr uint16_t CONN_DST_CENTER = 0x0012;      // Center Channel Send
-constexpr uint16_t CONN_DST_LFE_CHANNEL = 0x0013; // LFE Channel Send
-constexpr uint16_t CONN_DST_LEFTREAR = 0x0014;    // Left Rear Channel Send
-constexpr uint16_t CONN_DST_RIGHTREAR = 0x0015;   // Right Rear Channel Send
-constexpr uint16_t CONN_DST_CHORUS = 0x0080;      // Chorus Send
-constexpr uint16_t CONN_DST_REVERB = 0x0081;      // Reverb Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_LEFT = 0x0010;        // Left Channel Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_RIGHT = 0x0011;       // Right Channel Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_CENTER = 0x0012;      // Center Channel Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_LFE_CHANNEL = 0x0013; // LFE Channel Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_LEFTREAR = 0x0014;    // Left Rear Channel Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_RIGHTREAR = 0x0015;   // Right Rear Channel Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_CHORUS = 0x0080;      // Chorus Send
+[[maybe_unused]] constexpr uint16_t CONN_DST_REVERB = 0x0081;      // Reverb Send
 
 // Modulator LFO Destinations
-constexpr uint16_t CONN_DST_LFO_FREQUENCY = 0x0104;  // LFO Frequency
-constexpr uint16_t CONN_DST_LFO_STARTDELAY = 0x0105; // LFO Start Delay Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_LFO_FREQUENCY = 0x0104;  // LFO Frequency
+[[maybe_unused]] constexpr uint16_t CONN_DST_LFO_STARTDELAY = 0x0105; // LFO Start Delay Time
 
 // Vibrato LFO Destinations
-constexpr uint16_t CONN_DST_VIB_FREQUENCY = 0x0114;  // Vibrato Frequency
-constexpr uint16_t CONN_DST_VIB_STARTDELAY = 0x0115; // Vibrato Start Delay
+[[maybe_unused]] constexpr uint16_t CONN_DST_VIB_FREQUENCY = 0x0114;  // Vibrato Frequency
+[[maybe_unused]] constexpr uint16_t CONN_DST_VIB_STARTDELAY = 0x0115; // Vibrato Start Delay
 
 // EG Destinations
-constexpr uint16_t CONN_DST_EG1_ATTACKTIME = 0x0206;   // EG1 Attack Time
-constexpr uint16_t CONN_DST_EG1_DECAYTIME = 0x0207;    // EG1 Decay Time
-constexpr uint16_t CONN_DST_EG1_RESERVED = 0x0208;     // EG1 Reserved
-constexpr uint16_t CONN_DST_EG1_RELEASETIME = 0x0209;  // EG1 Release Time
-constexpr uint16_t CONN_DST_EG1_SUSTAINLEVEL = 0x020A; // EG1 Sustain Level
-constexpr uint16_t CONN_DST_EG1_DELAYTIME = 0x020B;    // EG1 Delay Time
-constexpr uint16_t CONN_DST_EG1_HOLDTIME = 0x020C;     // EG1 Hold Time
-constexpr uint16_t CONN_DST_EG1_SHUTDOWNTIME = 0x020D; // EG1 Shutdown Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_ATTACKTIME = 0x0206;   // EG1 Attack Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_DECAYTIME = 0x0207;    // EG1 Decay Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_RESERVED = 0x0208;     // EG1 Reserved
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_RELEASETIME = 0x0209;  // EG1 Release Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_SUSTAINLEVEL = 0x020A; // EG1 Sustain Level
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_DELAYTIME = 0x020B;    // EG1 Delay Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_HOLDTIME = 0x020C;     // EG1 Hold Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG1_SHUTDOWNTIME = 0x020D; // EG1 Shutdown Time
 
-constexpr uint16_t CONN_DST_EG2_ATTACKTIME = 0x030A;   // EG2 Attack Time
-constexpr uint16_t CONN_DST_EG2_DECAYTIME = 0x030B;    // EG2 Decay Time
-constexpr uint16_t CONN_DST_EG2_RESERVED = 0x030C;     // EG2 Reserved
-constexpr uint16_t CONN_DST_EG2_RELEASETIME = 0x030D;  // EG2 Release Time
-constexpr uint16_t CONN_DST_EG2_SUSTAINLEVEL = 0x030E; // EG2 Sustain Level
-constexpr uint16_t CONN_DST_EG2_DELAYTIME = 0x030F;    // EG2 Delay Time
-constexpr uint16_t CONN_DST_EG2_HOLDTIME = 0x0310;     // EG2 Hold Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_ATTACKTIME = 0x030A;   // EG2 Attack Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_DECAYTIME = 0x030B;    // EG2 Decay Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_RESERVED = 0x030C;     // EG2 Reserved
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_RELEASETIME = 0x030D;  // EG2 Release Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_SUSTAINLEVEL = 0x030E; // EG2 Sustain Level
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_DELAYTIME = 0x030F;    // EG2 Delay Time
+[[maybe_unused]] constexpr uint16_t CONN_DST_EG2_HOLDTIME = 0x0310;     // EG2 Hold Time
 
 // Filter Destinations
-constexpr uint16_t CONN_DST_FILTER_CUTOFF = 0x0500; // Filter Cutoff Frequency
-constexpr uint16_t CONN_DST_FILTER_Q = 0x0501;      // Filter Resonance
+[[maybe_unused]] constexpr uint16_t CONN_DST_FILTER_CUTOFF = 0x0500; // Filter Cutoff Frequency
+[[maybe_unused]] constexpr uint16_t CONN_DST_FILTER_Q = 0x0501;      // Filter Resonance
 
 // Transforms
-constexpr uint16_t CONN_TRN_NONE = 0x0000;    // No Transform
-constexpr uint16_t CONN_TRN_CONCAVE = 0x0001; // Concave Transform
-constexpr uint16_t CONN_TRN_CONVEX = 0x0002;  // Convex Transform
-constexpr uint16_t CONN_TRN_SWITCH = 0x0003;  // Switch Transform
+[[maybe_unused]] constexpr uint16_t CONN_TRN_NONE = 0x0000;    // No Transform
+[[maybe_unused]] constexpr uint16_t CONN_TRN_CONCAVE = 0x0001; // Concave Transform
+[[maybe_unused]] constexpr uint16_t CONN_TRN_CONVEX = 0x0002;  // Convex Transform
+[[maybe_unused]] constexpr uint16_t CONN_TRN_SWITCH = 0x0003;  // Switch Transform
 
 // DLS-2.2 2.10 <art2-ck>, Level 2 Articulator Chunk
 // transform mask
-constexpr uint16_t TRN_SRC_INV_MASK = 0b100000'000000'0000;
-constexpr uint16_t TRN_SRC_BIP_MASK = 0b010000'000000'0000;
-constexpr uint16_t TRN_SRC_TRN_MASK = 0b001111'000000'0000;
-constexpr uint16_t TRN_CTL_INV_MASK = 0b000000'100000'0000;
-constexpr uint16_t TRN_CTL_BIP_MASK = 0b000000'010000'0000;
-constexpr uint16_t TRN_CTL_TRN_MASK = 0b000000'001111'0000;
-constexpr uint16_t TRN_OUT_TRN_MASK = 0b000000'000000'1111;
+[[maybe_unused]] constexpr uint16_t TRN_SRC_INV_MASK = 0b100000'000000'0000;
+[[maybe_unused]] constexpr uint16_t TRN_SRC_BIP_MASK = 0b010000'000000'0000;
+[[maybe_unused]] constexpr uint16_t TRN_SRC_TRN_MASK = 0b001111'000000'0000;
+[[maybe_unused]] constexpr uint16_t TRN_CTL_INV_MASK = 0b000000'100000'0000;
+[[maybe_unused]] constexpr uint16_t TRN_CTL_BIP_MASK = 0b000000'010000'0000;
+[[maybe_unused]] constexpr uint16_t TRN_CTL_TRN_MASK = 0b000000'001111'0000;
+[[maybe_unused]] constexpr uint16_t TRN_OUT_TRN_MASK = 0b000000'000000'1111;
 
 struct DLSTransform
 {
@@ -2984,18 +2984,6 @@ void fluid_dls_loader_delete(fluid_sfloader_t *loader) noexcept
     delete_fluid_sfloader(loader);
 }
 
-extern "C"
-{
-    extern fluid_mod_t default_vel2att_mod;
-    extern fluid_mod_t default_mod2viblfo_mod;
-    extern fluid_mod_t default_att_mod;
-    extern fluid_mod_t default_pan_mod;
-    extern fluid_mod_t default_expr_mod;
-    extern fluid_mod_t custom_balance_mod;
-    extern fluid_mod_t DLS_default_reverb_mod;
-    extern fluid_mod_t DLS_default_chorus_mod;
-    extern fluid_mod_t DLS_default_pitch_bend_mod;
-}
 static fluid_mod_t *fluid_dls_default_mod_list()
 {
     std::array def_mods =   // skip default_vel2filter_mod
