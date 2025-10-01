@@ -1,0 +1,158 @@
+
+# modified version of:
+# https://gist.github.com/NickNaso/0d478f1481686d5bcc868cac06620a60
+
+name: CI
+
+on: [push, pull_request, release]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config: 
+        - {
+            name: "ubuntu_latest_gcc_cxx11",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc",
+            cxx: "g++",
+            cxxstd: "11"
+          }
+        - {
+            name: "ubuntu_latest_gcc_cxx11_coverage",
+            os: ubuntu-latest,
+            build_type: "Coverage",
+            cc: "gcc",
+            cxx: "g++",
+            cxxstd: "11"
+          }
+        - {
+            name: "ubuntu_latest_gcc9_cxx14",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc-9",
+            cxx: "g++-9",
+            cxxstd: "14"
+          }
+        - {
+            name: "ubuntu_latest_gcc10_cxx14",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc-10",
+            cxx: "g++-10",
+            cxxstd: "14"
+          }
+        - {
+            name: "ubuntu_latest_gcc11_cxx17",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc-11",
+            cxx: "g++-11",
+            cxxstd: "17"
+          }
+        - {
+            name: "ubuntu_latest_gcc11_cxx20",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "gcc-11",
+            cxx: "g++-11",
+            cxxstd: "20"
+          }
+        - {
+            name: "ubuntu_latest_clang11_cxx11",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "clang-11",
+            cxx: "clang++-11",
+            cxxstd: "11"
+          }
+        - {
+            name: "ubuntu_latest_clang11_cxx14",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "clang-11",
+            cxx: "clang++-11",
+            cxxstd: "14"
+          }
+        - {
+            name: "ubuntu_latest_clang12_cxx14",
+            os: ubuntu-latest,
+            build_type: "Release",
+            cc: "clang-12",
+            cxx: "clang++-12",
+            cxxstd: "14"
+          }
+        - {
+            name: "ubuntu22_clang13_cxx17",
+            os: ubuntu-22.04,
+            build_type: "Release",
+            cc: "clang-13",
+            cxx: "clang++-13",
+            cxxstd: "17"
+          }
+        - {
+            name: "ubuntu22_clang14_cxx20",
+            os: ubuntu-22.04,
+            build_type: "Release",
+            cc: "clang-14",
+            cxx: "clang++-14",
+            cxxstd: "20"
+          }
+        - {
+            name: "macos_latest_clang_cxx11",
+            os: macos-latest,
+            build_type: "Release",
+            cc: "clang",
+            cxx: "clang++",
+            cxxstd: "11"
+          }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print env
+        run: |
+          echo github.event.action: ${{ github.event.action }}
+          echo github.event_name: ${{ github.event_name }}
+
+      - name: Install dependencies on ubuntu
+        if: startsWith(matrix.config.name, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install ${{ matrix.config.cc }} ${{ matrix.config.cxx }}
+          ${{ matrix.config.cc }} --version
+          echo "CXXT=${{ matrix.config.cxxstd }}" >> $GITHUB_ENV
+
+      - name: Tests
+        shell: bash
+        working-directory: tests
+        run: |
+          export CC=${{ matrix.config.cc }}
+          export CXX=${{ matrix.config.cxx }}
+          export GCEM_CXX_STD="-std=c++${{ matrix.config.cxxstd }}"
+          echo "Testing CXXT: ${CXXT}"
+          echo "Testing env.CXXT: ${{ env.CXXT }}"
+          make
+          ./run_tests
+
+      - name: Coverage
+        if: startsWith(matrix.config.build_type, 'Coverage')
+        shell: bash
+        working-directory: tests
+        run: |
+          export SHOULD_RUN_COVERAGE="y"
+          ./cov_check
+          cd ..
+          curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+          gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+          shasum -a 256 -c codecov.SHA256SUM
+          chmod +x codecov
+          ./codecov

@@ -1,0 +1,22 @@
+
+echo "SHOULD_RUN_COVERAGE: ${SHOULD_RUN_COVERAGE}"
+
+if [[ "${SHOULD_RUN_COVERAGE}" == "y" ]]; then 
+
+    if [ -z ${CCOV+x} ]; then 
+        CCOV=gcov
+    fi
+
+    echo "CCOV set to ${CCOV}"
+
+    for t in ./*.cpp; do
+        $CCOV "$t" > /dev/null 2>&1
+    done
+
+    ./pow.test > /dev/null 2>&1
+    $CCOV pow.cpp > /dev/null 2>&1
+    ./exp.test > /dev/null 2>&1
+    $CCOV exp.cpp > /dev/null 2>&1
+    ./log.test > /dev/null 2>&1
+    $CCOV log.cpp > /dev/null 2>&1
+fi
