@@ -1,0 +1,248 @@
+
+language: c++
+sudo: required
+
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-5
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+      compiler: gcc
+    
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-6
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+      compiler: gcc
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-7
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - CCOV=gcov-7
+        - SHOULD_RUN_COVERAGE="y"
+      compiler: gcc
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-8
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+      compiler: gcc
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-8
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - GCEM_CXX_STD="-std=c++14"
+      compiler: gcc
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-8
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - GCEM_CXX_STD="-std=c++17"
+      compiler: gcc
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - g++-9
+          sources: &sources
+            - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+        - GCEM_CXX_STD="-std=c++17"
+      compiler: gcc
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-5.0
+          sources: &sources
+            - llvm-toolchain-bionic-5.0
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-6.0
+          sources: &sources
+            - llvm-toolchain-bionic-6.0
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+      env:
+        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-7
+          sources: &sources
+            - llvm-toolchain-bionic-7
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+      env:
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-8
+          sources: &sources
+            - llvm-toolchain-bionic-8
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+      env:
+        - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-9
+          sources: &sources
+            - llvm-toolchain-bionic-9
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+      env:
+        - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-10
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+      env:
+        - MATRIX_EVAL="CC=clang-10 && CXX=clang++-10"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-11
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+      env:
+        - MATRIX_EVAL="CC=clang-11 && CXX=clang++-11"
+        - TRAVIS_CLANG_BUILD="y"
+      compiler: clang
+
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-11
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+      env:
+        - MATRIX_EVAL="CC=clang-11 && CXX=clang++-11"
+        - TRAVIS_CLANG_BUILD="y"
+        - GCEM_CXX_STD="-std=c++20"
+      compiler: clang
+
+    - os: osx
+      osx_image: xcode9
+      env:
+        - MATRIX_EVAL="CC=clang && CXX=clang++"
+      compiler: clang
+
+before_install:
+    - eval "${MATRIX_EVAL}"
+
+install:
+    - |
+      if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+        sudo apt-get update
+      # else
+        # OSX
+        # brew upgrade gcc || brew install gcc
+      fi
+
+script:
+  - cd ./tests && make
+  - ./run_tests
+  - ./cov_check
+  - cd ..
+
+after_success:
+  - |
+    if [[ "${SHOULD_RUN_COVERAGE}" == "y" ]]; then 
+      alias gcov=$CCOV
+      bash <(curl -s https://codecov.io/bash) -x $CCOV
+    fi
+
+after_failure:
+  - ./travis-tool.sh dump_logs
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change

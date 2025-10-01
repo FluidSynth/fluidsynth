@@ -1,0 +1,4 @@
+
+for t in ./*.test; do
+   "$t"
+done

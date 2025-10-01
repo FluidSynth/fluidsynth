@@ -1,0 +1,7 @@
+# For use with Binder
+name: statslib
+channels:
+  - conda-forge
+dependencies:
+  - xeus-cling=0.8.1
+  - notebook

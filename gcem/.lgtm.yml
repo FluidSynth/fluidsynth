@@ -1,0 +1,10 @@
+
+path_classifiers:
+  test:
+    - tests
+extraction:
+  cpp:
+    index:
+      build_command:
+        - cd ./tests
+        - make
