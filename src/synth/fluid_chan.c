@@ -765,6 +765,7 @@ unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum 
     int msb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_MSB);
     int lsb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_LSB);
     int res;
+    fluid_real_t tmp;
     static const int Max = 480*1000; /*ms*/
     
     /* Use 7-bit MSB initially, switch to 14-bit if LSB has been seen */
@@ -805,11 +806,13 @@ unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum 
             */
             // Tests were performed by John Novak
             // https://github.com/dosbox-staging/dosbox-staging/pull/2705
-            res = (Max/2 * 2.5) * fluid_concave(msb) * fluid_concave(126 * fluid_concave(msb)) + 200 * fluid_convex(msb);
+            tmp = fluid_concave(msb);
+            res = (Max/2 * 2.5) * tmp * fluid_concave(126 * tmp) + 200 * fluid_convex(msb);
             res = res < Max ? res : Max;
             // Apply a similar scaling hack as SpessaSynth to fix Descent Game08, it's unclear why exactly
             // https://github.com/spessasus/spessasynth_core/blob/0b2d44f48065d3d6bbca24a1d40223b1255dab00/src/synthesizer/audio_engine/engine_methods/portamento_time.ts#L84-L86
-            res = (unsigned int)(res * abs(tokey - fromkey) / 24.0f + 0.5f);
+            // https://github.com/FluidSynth/fluidsynth/pull/1656#issuecomment-3355759938
+            res = (unsigned int)(res * abs(tokey - fromkey) / 36.0f + 0.5f);
             return res;
             
         case FLUID_PORTAMENTO_TIME_MODE_LINEAR:
