@@ -146,7 +146,7 @@ new_fluid_midi_file(const char *buffer, size_t length)
     mf = FLUID_NEW(fluid_midi_file);
     if(mf == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -527,7 +527,7 @@ fluid_midi_file_read_track(fluid_midi_file *mf, fluid_player_t *player, int num)
 
             if(track == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 return FLUID_FAILED;
             }
 
@@ -711,7 +711,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
             if(evt == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 FLUID_FREE(metadata);
                 return FLUID_FAILED;
             }
@@ -818,7 +818,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
             if(evt == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 result = FLUID_FAILED;
                 break;
             }
@@ -850,7 +850,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
             if(evt == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 result = FLUID_FAILED;
                 break;
             }
@@ -867,7 +867,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
 			if(evt->paramptr == NULL)
 			{
-				FLUID_LOG(FLUID_ERR, "Out of memory");
+				FLUID_LOG(FLUID_PANIC, "Out of memory");
 				break;
 			}
 			FLUID_STRCPY((char*)evt->paramptr, (char*)metadata);
@@ -891,7 +891,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
             if(evt == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 result = FLUID_FAILED;
                 break;
             }
@@ -916,7 +916,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
             if(evt == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
                 result = FLUID_FAILED;
                 break;
             }
@@ -1073,7 +1073,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
         if(evt == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FLUID_FAILED;
         }
 
@@ -1115,7 +1115,7 @@ new_fluid_midi_event(void)
 
     if(evt == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -1524,7 +1524,7 @@ fluid_track_set_name(fluid_track_t *track, char *name)
 
     if(track->name == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return FLUID_FAILED;
     }
 
@@ -1767,7 +1767,7 @@ new_fluid_player(fluid_synth_t *synth)
 
     if(player == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -1816,7 +1816,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->end_pedals_disabled = 0;
     player->last_callback_ticks = -1;
     fluid_atomic_int_set(&player->seek_ticks, -1);
-    fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, player);
+    fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
     fluid_player_set_tick_callback(player, fluid_player_handle_loops, player);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
                                "player.timing-source", "system");
@@ -2231,7 +2231,7 @@ fluid_player_callback(void *data, unsigned int msec)
     loadnextfile = player->currentfile == NULL ? 1 : 0;
     
     fluid_midi_event_set_type(&mute_event, CONTROL_CHANGE);
-    mute_event.param1 = ALL_NOTES_OFF; /* for smooth MIDI pause, useful in games */
+    mute_event.param1 = ALL_SOUND_OFF;
     mute_event.param2 = 1;
 
     if(fluid_player_get_status(player) != FLUID_PLAYER_PLAYING)
@@ -2831,7 +2831,7 @@ new_fluid_midi_parser(void)
 
     if(parser == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -3015,220 +3015,263 @@ fluid_midi_event_length(unsigned char event)
  * Mute the track of a MIDI player.
  * @param MIDI player instance
  * @param Track number (from 0 to MAX_NUMBER_OF_TRACKS)
- * @return Returns #FLUID_OK if track is less than number of player tracks. else, return #FLUID_FAILED.
+ * @param boolean: TRUE for mute, FALSE for unmute.
+ * @return Returns #FLUID_OK if player or track number is valid.
+ * Otherwise return #FLUID_FAILED. This does NOT support MIDI Type 0 files.
  */
  
-int fluid_player_mute_track(fluid_player_t *player, unsigned char track)
+int fluid_player_set_track_mute(fluid_player_t *player, unsigned char track, char boolean)
 {
-		if(track >= player->ntracks)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid track number\n");
-			return FLUID_FAILED;
-		}
-		player->muted_tracks[track] = TRUE;
-		FLUID_LOG(FLUID_DBG, "Muted track %d\n", track);
-		return FLUID_OK;
-}
-
-/**
- * Unmute the track of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_TRACKS)
- * @return Returns #FLUID_OK if track is less than number of player tracks. else, return #FLUID_FAILED.
- */
- 
-int fluid_player_unmute_track(fluid_player_t *player, unsigned char track)
-{
-		if(track >= player->ntracks)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid track number\n");
-			return FLUID_FAILED;
-		}
-		player->muted_tracks[track] = FALSE;
-		FLUID_LOG(FLUID_DBG, "Unmuted track %d\n", track);
-		return FLUID_OK;
-}
-
-
-/**
- * Mute the channel of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_CHANNELS)
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
- */
- 
-int fluid_player_mute_channel(fluid_player_t *player, unsigned char channel)
-{
-		if(channel >= MAX_NUMBER_OF_CHANNELS)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-			return FLUID_FAILED;
-		}
-		player->muted_ch[channel] = TRUE;
-		FLUID_LOG(FLUID_DBG, "Muted channel %d\n", channel);
-		return FLUID_OK;
-}
-
-/**
- * Unmute the channel of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_CHANNELS)
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
- */
- 
-int fluid_player_unmute_channel(fluid_player_t *player, unsigned char channel)
-{
-		if(channel >= MAX_NUMBER_OF_CHANNELS)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-			return FLUID_FAILED;
-		}
-		player->muted_ch[channel] = FALSE;
-		FLUID_LOG(FLUID_DBG, "Unmuted channel %d\n", channel);
-		return FLUID_OK;
-}
-
-/**
- * Solo the track of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_TRACKS)
- * @return Returns #FLUID_OK if track is less than number of player tracks. else, return #FLUID_FAILED.
- */
-int fluid_player_solo_track(fluid_player_t *player, unsigned char track)
-{
-		if(track >= player->ntracks)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid track number\n");
-			return FLUID_FAILED;
-		}
-		player->solo_tracks[track] = TRUE;
-		FLUID_LOG(FLUID_DBG, "Solod track %d\n", track);
-		return FLUID_OK;
-}
-
-/**
- * Unsolo the track of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_TRACKS)
- * @return Returns #FLUID_OK if track is less than number of player tracks. else, return #FLUID_FAILED.
- */
-int fluid_player_unsolo_track(fluid_player_t *player, unsigned char track)
-{
-		if(track >= player->ntracks)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid track number\n");
-			return FLUID_FAILED;
-		}
-		player->solo_tracks[track] = FALSE;
-		FLUID_LOG(FLUID_DBG, "Unsolod track %d\n", track);
-		return FLUID_OK;
-}
-
-/**
- * Solo the channel of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_CHANNELS)
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
- */
-
-int fluid_player_solo_channel(fluid_player_t *player, unsigned char chan)
-{
-		if(chan >= MAX_NUMBER_OF_CHANNELS)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-			return FLUID_FAILED;
-		}
-		player->solo_ch[chan] = TRUE;
-		FLUID_LOG(FLUID_DBG, "Solod channel %d\n", chan);
-		return FLUID_OK;
-}
-
-/**
- * Solo the channel of a MIDI player.
- * @param MIDI player instance
- * @param Track number (from 0 to MAX_NUMBER_OF_CHANNELS)
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
- * @note No solos at all means that all non-muted channels are active.
- */
-
-int fluid_player_unsolo_channel(fluid_player_t *player, unsigned char chan)
-{
-		if(chan >= MAX_NUMBER_OF_CHANNELS)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-			return FLUID_FAILED;
-		}
-		player->solo_ch[chan] = FALSE;
-		FLUID_LOG(FLUID_DBG, "Unsolod channel %d\n", chan);
-		return FLUID_OK;
-}
-
-/**
- * Sets channel control change
- * @param player: Player instance
- * @param chan: MIDI channel 
- * @param ctrl_num: MIDI Control Change number
- * @param val: MIDI Control Change value
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
- */
-
-int fluid_player_set_cc(fluid_player_t *player, unsigned char chan, unsigned char cc_num, unsigned char val)
-{
-	if(chan >= MAX_NUMBER_OF_CHANNELS)
-	{
-		FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
+	/* fprintf(stderr, "ntracks=%d\n", player->ntracks); */
+	if(player == NULL) {return FLUID_FAILED;}
+	if(!player->ntracks)
+	{	
+		FLUID_LOG(FLUID_ERR, "Player tracks uninitialized.\n");
 		return FLUID_FAILED;
 	}
-	if(val > 127)	val = 127;
-	fluid_synth_cc(player->synth, chan, cc_num, val);
+	else if(player->ntracks == 1)
+	{	
+		FLUID_LOG(FLUID_ERR, "The file is a MIDI Type 0 file, unsupported.\n");
+		return FLUID_FAILED;
+	}	
+	if(track >= player->ntracks)
+	{
+		FLUID_LOG(FLUID_ERR, "Invalid track number\n");
+		return FLUID_FAILED;
+	}
+	if (boolean < 0) {boolean = 0;}
+	player->muted_tracks[track] = boolean;
+	FLUID_LOG(FLUID_DBG, "Set track %d mute to%d\n", track, boolean);
 	return FLUID_OK;
 }
 
 /**
- * Sets channel pitch bend.
- * @param player: Player instance
- * @param chan: MIDI channel 
- * @param val: MIDI pitch bend pitch value (0-16383, 8192 = no bend) 
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
+ * Sets the mute status of a MIDI channel.
+ * @param MIDI player instance
+ * @param Channel number (from 0 to MAX_NUMBER_OF_CHANNELS)
+ * @param boolean: TRUE for mute, FALSE for unmute.
+ * @return Returns #FLUID_OK if player is valid or channel is less than MAX_NUMBER_OF_CHANNELS. 
+ * Otherwise return #FLUID_FAILED.
  */
  
-int fluid_player_set_pitch_bend(fluid_player_t *player, unsigned char chan, unsigned short val)
+int fluid_player_set_channel_mute(fluid_player_t *player, unsigned char chan, char boolean)
 {
-	if(chan >= MAX_NUMBER_OF_CHANNELS)
-	{
-		FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-		return FLUID_FAILED;
-	}
-	if(val > 16383) {val = 16383;}
-	fluid_synth_pitch_bend(player->synth, chan, val);
+	if(chan >= MAX_NUMBER_OF_CHANNELS || player == NULL)
+	{return FLUID_FAILED;}
+	if (boolean < 0) {boolean = 0;}
+	player->muted_ch[chan] = boolean;
+	FLUID_LOG(FLUID_DBG, "Set channel %d mute to%d\n", chan, boolean);
 	return FLUID_OK;
 }
 
 /**
- * Sets channel program change
- * @param player: Player instance
- * @param chan: MIDI channel 
- * @param val: MIDI program (0 to 127).
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
+ * Set the solo status of a MIDI track.
+ * @param MIDI player instance
+ * @param Track number (from 0 to MAX_NUMBER_OF_TRACKS)
+ * @param boolean: TRUE for solo, FALSE for unsolo.
+ * @return Returns #FLUID_OK if player or track number is valid.
+ * Otherwise return #FLUID_FAILED.
  */
- 
-int fluid_player_set_instrument(fluid_player_t *player, unsigned char chan, unsigned char val)
+int fluid_player_set_track_solo(fluid_player_t *player, unsigned char track, char boolean)
 {
-	if(chan >= MAX_NUMBER_OF_CHANNELS)
-	{
-		FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
+	if(player == NULL) {return FLUID_FAILED;}
+	if(!player->ntracks)
+	{	
+		FLUID_LOG(FLUID_ERR, "Player tracks uninitialized.\n");
 		return FLUID_FAILED;
 	}
-	if(val > 127) {val = 127;}
-	fluid_synth_program_change(player->synth, chan, val);
+	else if(player->ntracks == 1)
+	{	
+		FLUID_LOG(FLUID_ERR, "The file is a MIDI Type 0 file, unsupported.\n");
+		return FLUID_FAILED;
+	}	
+	if(track >= player->ntracks)
+	{
+		FLUID_LOG(FLUID_ERR, "Invalid track number\n");
+		return FLUID_FAILED;
+	}
+	if (boolean < 0) {boolean = 0;}
+	player->solo_tracks[track] = boolean;
+	FLUID_LOG(FLUID_DBG, "Set track %d solo to%d\n", track, boolean);
 	return FLUID_OK;
-}	
+}
 
-/*Resets channel transpose status. Always returns FLUID_OK. */
+/**
+ * Set the solo status of a MIDI channel.
+ * @param MIDI player instance
+ * @param Channel number (from 0 to MAX_NUMBER_OF_CHANNELS)
+ * @param boolean: TRUE for solo, FALSE for unsolo.
+ * @return Returns #FLUID_OK if player is valid or channel is less than MAX_NUMBER_OF_CHANNELS. 
+ * Otherwise return #FLUID_FAILED.
+ */
 
-int fluid_player_reset_channel_transpose(fluid_player_t *player)
+int fluid_player_set_channel_solo(fluid_player_t *player, unsigned char chan, char boolean)
+{
+	if(chan >= MAX_NUMBER_OF_CHANNELS || player == NULL)
+	{return FLUID_FAILED;}
+	if (boolean < 0) {boolean = 0;}
+	player->solo_ch[chan] = boolean;
+	FLUID_LOG(FLUID_DBG, "Set channel %d solo to%d\n", chan, boolean);
+	return FLUID_OK;
+}
+
+
+/**
+ * Sets player transpose amount
+ * @param player: Player instance
+ * @param amount: Amount of seminotes to transpose by (-24 to 24)
+ * @return FLUID_OK, FLUID_FAILED if player is invalid.
+ */
+ 
+int fluid_player_set_transpose_amount(fluid_player_t *player, char amount)
+{
+	if(player == NULL) {return FLUID_FAILED;}
+	/* Limit transposition amount to avoid sending invalid MIDI note numbers */
+	if(amount < -24) {amount = -24;} else if (amount > 24) {amount = 24;}
+	player->transpose = amount;
+	FLUID_LOG(FLUID_DBG, "Set transpose level to %d semitones\n", amount);
+	return FLUID_OK;
+}
+
+/**
+ * Allows a channel to be transposed
+ * @param player: Player instance
+ * @param chan: MIDI channel 
+ * @param boolean: TRUE to allow transposition, FALSE to not allow transposition. 
+ * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
+ */
+
+int fluid_player_set_channel_transpose_status(fluid_player_t *player, unsigned char chan, char boolean)
+{
+	if(chan >= MAX_NUMBER_OF_CHANNELS || player == NULL)
+	{return FLUID_FAILED;}
+	if(boolean < 0) {boolean = 0;}
+	player->transposed_ch[chan] = boolean;
+	FLUID_LOG(FLUID_DBG, "Set transposition permission on channel %d to %d!\n", chan, boolean);
+	return FLUID_OK;
+}
+
+/**
+ * Get the transposition status of a MIDI channel.
+ * @param player FluidSynth player instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @return TRUE if transposition allowed, FALSE if transposition not allowed,
+   #FLUID_FAILED if channel is invalid, or in other fail cases.
+ */
+int fluid_player_get_channel_transpose_status(fluid_player_t *player, unsigned char chan)
+{
+	
+	if(chan > MAX_NUMBER_OF_CHANNELS || player == NULL) {return FLUID_FAILED;}
+	return player->transposed_ch[chan];
+}
+
+/**
+ * Get the transposition status of a FluidSynth player instance.
+ * @param player FluidSynth player instance
+ * @param val Variable pointer to write transpose value to (in semitones)
+ * @return #FLUID_OK or #FLUID_FAILED if player is invalid.
+ */
+int fluid_player_get_transpose_amount(fluid_player_t *player, int* val)
+{
+	if(player == NULL || val == NULL) {return FLUID_FAILED;}
+	*val = player->transpose;
+	return FLUID_OK;
+}
+
+/**
+ * Get the mute status of a MIDI channel.
+ * @param player FluidSynth player instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @return TRUE if muted, FALSE if unmuted,
+   #FLUID_FAILED if channel is invalid, or in other fail cases.
+ */
+int fluid_player_get_channel_mute(fluid_player_t *player, unsigned char chan)
+{
+	if(player == NULL) {return FLUID_FAILED;}
+	if(chan > MAX_NUMBER_OF_CHANNELS || player == NULL) {return FLUID_FAILED;}
+	return player->muted_ch[chan];
+}
+
+/**
+ * Get the mute status of a MIDI track.
+ * @param player FluidSynth player instance
+ * @param track MIDI track number
+ * @return TRUE if muted, FALSE if unmuted, and FLUID_FAILED if error.
+   #FLUID_FAILED if track is invalid, or in other fail cases.
+ */
+int fluid_player_get_track_mute(fluid_player_t *player, unsigned char track)
+{
+	if(player == NULL) {return FLUID_FAILED;}
+	if(!player->ntracks)
+	{	
+		FLUID_LOG(FLUID_ERR, "Player tracks uninitialized.\n");
+		return FLUID_FAILED;
+	}
+	else if(player->ntracks == 1)
+	{	
+		FLUID_LOG(FLUID_ERR, "The file is a MIDI Type 0 file, unsupported.\n");
+		return FLUID_FAILED;
+	}	
+	if(track >= player->ntracks)
+	{
+		FLUID_LOG(FLUID_ERR, "Invalid track number\n");
+		return FLUID_FAILED;
+	}
+	return player->muted_tracks[track];
+}
+
+/**
+ * Get the solo status of a MIDI channel.
+ * @param player FluidSynth player instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @return TRUE if solod, FALSE if unsolod,
+   #FLUID_FAILED if channel is invalid, or in other fail cases.
+ */
+int fluid_player_get_channel_solo(fluid_player_t *player, unsigned char chan)
+{
+	if(player == NULL) {return FLUID_FAILED;}
+	if(chan > MAX_NUMBER_OF_CHANNELS || player == NULL) {return FLUID_FAILED;}
+	return player->solo_ch[chan];
+}
+
+/**
+ * Get the solo status of a MIDI track.
+ * @param player FluidSynth player instance
+ * @param track MIDI track number
+ * @return TRUE if muted, FALSE if unmuted, and FLUID_FAILED if error.
+   #FLUID_FAILED if track is invalid, or in other fail cases.
+ */
+int fluid_player_get_track_solo(fluid_player_t *player, unsigned char track)
+{
+	if(player == NULL) {return FLUID_FAILED;}
+	if(!player->ntracks)
+	{	
+		FLUID_LOG(FLUID_ERR, "Player tracks uninitialized.\n");
+		return FLUID_FAILED;
+	}
+	else if(player->ntracks == 1)
+	{	
+		FLUID_LOG(FLUID_ERR, "The file is a MIDI Type 0 file, unsupported.\n");
+		return FLUID_FAILED;
+	}	
+	if(track >= player->ntracks)
+	{
+		FLUID_LOG(FLUID_ERR, "Invalid track number\n");
+		return FLUID_FAILED;
+	}
+	return player->solo_tracks[track];
+}
+
+/**
+ * Resets MIDI channel transposition permissions
+ * @param player: Player instance
+ * @return FLUID_OK, FLUID_FAILED if player is invalid.
+ */
+
+int fluid_player_reset_channel_transpose_status(fluid_player_t *player)
 {
 	unsigned char i;
+	if(player == NULL) {return FLUID_FAILED;}
 	player->transpose = 0;
 	for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
 	{
@@ -3239,11 +3282,16 @@ int fluid_player_reset_channel_transpose(fluid_player_t *player)
 }
 
 
-/*Resets channel muting and solo status. Always returns FLUID_OK. */
+/**
+ * Resets MIDI channel mute/solo status
+ * @param player: Player instance
+ * @return FLUID_OK, FLUID_FAILED if player is invalid.
+ */
 
 int fluid_player_reset_channel_mute(fluid_player_t *player)
 {
 	unsigned char i;
+	if(player == NULL) {return FLUID_FAILED;}
 	for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
 	{
 		player->muted_ch[i] = FALSE;
@@ -3253,11 +3301,16 @@ int fluid_player_reset_channel_mute(fluid_player_t *player)
 	return FLUID_OK;
 }
 
-/*Resets track muting and solo status. Always returns FLUID_OK. */
+/**
+ * Resets track mute/solo status
+ * @param player: Player instance
+ * @return FLUID_OK, FLUID_FAILED if player is invalid.
+ */
 
 int fluid_player_reset_track_mute(fluid_player_t *player)
 {
 	unsigned char i;
+	if(player == NULL) {return FLUID_FAILED;}
 	for(i = 0; i < MAX_NUMBER_OF_TRACKS; i++)
 	{
 		player->muted_tracks[i] = FALSE;
@@ -3268,125 +3321,20 @@ int fluid_player_reset_track_mute(fluid_player_t *player)
 }
 
 /**
- * Sets player transpose amount
+ * Gets amount of tracks in currently playing MIDI file
  * @param player: Player instance
- * @param amount: Amount of seminotes to transpose by (-24 to 24)
- * @return Always FLUID_OK
- */
- 
-int fluid_player_set_transpose(fluid_player_t *player, char amount)
-{
-	/* Limit transposition amount to avoid sending invalid MIDI note numbers */
-	if(amount < -24) {amount = -24;} else if (amount > 24) {amount = 24;}
-	player->transpose = amount;
-	FLUID_LOG(FLUID_DBG, "Set transpose level to %d semitones\n", amount);
-	return FLUID_OK;
-}
-
-/**
- * Sets channel transpose
- * @param player: Player instance
- * @param chan: MIDI channel 
- * @return Returns #FLUID_OK if channel is less than MAX_NUMBER_OF_CHANNELS. else, return #FLUID_FAILED.
+ * @return Number of tracks in currently playing MIDI file.
+   0 if unitialized, 1 if it's a MIDI Type 0, and #FLUID_FAILED if player is invalid.
  */
 
-int fluid_player_enable_channel_transpose(fluid_player_t *player, unsigned char chan)
+int fluid_player_get_track_count(fluid_player_t* player)
 {
-		if(chan >= MAX_NUMBER_OF_CHANNELS)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-			return FLUID_FAILED;
-		}
-		player->transposed_ch[chan] = TRUE;
-		FLUID_LOG(FLUID_DBG, "Enabled transposition on channel %d\n", chan);
-		return FLUID_OK;
+	if(player == NULL) {return FLUID_FAILED;}
+	return player->ntracks;	
 }
 
-int fluid_player_disable_channel_transpose(fluid_player_t *player, unsigned char chan)
-{
-		if(chan >= MAX_NUMBER_OF_CHANNELS)
-		{
-			FLUID_LOG(FLUID_ERR, "Invalid channel number\n");
-			return FLUID_FAILED;
-		}
-		player->transposed_ch[chan] = FALSE;
-		FLUID_LOG(FLUID_DBG, "Disabled transposition on channel %d\n", chan);
-		return FLUID_OK;
-}
-
-/* Returns 1 if transposed, 0 if not */
-int fluid_player_get_channel_transpose(fluid_player_t *player, unsigned char chan)
-{
-	return player->transposed_ch[chan];
-}
-
-/* Returns 1 if transposed, 0 if not */
-int fluid_player_get_transpose(fluid_player_t *player)
-{
-	return player->transpose;
-}
-
-/* Returns 1 if muted, 0 if not -1 if channel is invalid */
-int fluid_player_get_channel_mute(fluid_player_t *player, unsigned char chan)
-{
-	if(chan > MAX_NUMBER_OF_CHANNELS) {return -1;}
-	return player->muted_ch[chan];
-}
-
-/* Returns 1 if muted, 0 if not, -1 if track is invalid */
-int fluid_player_get_track_mute(fluid_player_t *player, unsigned char track)
-{
-	if(track > player->ntracks) {return -1;}
-	return player->muted_tracks[track];
-}
-
-/**
- * Get the program number on a MIDI channel.
- * @param player FluidSynth player instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return program number (0-127) 
-   #FLUID_FAILED if channel is invalid, or in other fail cases.
- */
-int fluid_player_get_program(fluid_player_t *player, unsigned char chan)
-{
-	int program;
-	if(chan > MAX_NUMBER_OF_CHANNELS) {return FLUID_FAILED;}
-	fluid_synth_get_program(player->synth, chan, NULL, NULL, &program);
-	return program;
-}
-
-/**
- * Get the Control Change value on a MIDI channel.
- * @param player FluidSynth player instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return MIDI Control Change value (0-127) 
-   #FLUID_FAILED if channel is invalid
- */
-int fluid_player_get_cc(fluid_player_t *player, unsigned char chan, unsigned char cc_num)
-{
-	int pval;
-	if(chan > MAX_NUMBER_OF_CHANNELS) {return FLUID_FAILED;}
-	fluid_synth_get_cc(player->synth, chan, cc_num, &pval);
-	return pval;
-}
-
-/**
- * Get the MIDI pitch bend controller value on a MIDI channel.
- * @param player FluidSynth player instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return MIDI pitch bend value (0-16383 with 8192 being center), 
-   #FLUID_FAILED if channel is invalid
- */
-int fluid_player_get_pitch_bend(fluid_player_t *player, unsigned char chan)
-{
-	int pbend;
-	if(chan > MAX_NUMBER_OF_CHANNELS) {return FLUID_FAILED;}
-	fluid_synth_get_pitch_bend(player->synth, chan, &pbend);
-	return pbend;
-}
-
-/*Loop handler for callback. Always returns FLUID_OK. */
-
+/* Private loop handler for callback. Always returns FLUID_OK. */
+/* Enabling tick callback means you have to supply your own loop logic */
 int fluid_player_handle_loops(void *data, int tick)
 {
 	fluid_player_t *player = (fluid_player_t *)data;
@@ -3395,7 +3343,7 @@ int fluid_player_handle_loops(void *data, int tick)
 	
 	/* return if loopstart tick is undefined in MIDI or */
 	/* loopend tick is undefined in MIDI and player hasn't reached song end tick */
-	if(!player->loopstart_tick || (!player->loopend_tick && tick < total_ticks))
+	if(tick < total_ticks)
 	{return FLUID_OK;}
 	/* set loopend tick to song end tick if loopend tick is undefined in MIDI */
 	else if (tick >= total_ticks && !player->loopend_tick)
