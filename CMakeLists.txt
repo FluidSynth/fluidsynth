@@ -362,6 +362,8 @@ if ( WIN32 )
   endif  ( MINGW )
 endif ( WIN32 )
 
+find_package ( GCEM REQUIRED )
+
 set ( LIBFLUID_LIBS ${MATH_LIBRARY} )
 if (NOT ((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR (osal STREQUAL "embedded")))
   # Check for threads and math

@@ -295,7 +295,7 @@ target_include_directories ( libfluidsynth-OBJ PRIVATE
     ${FluidSynth_SOURCE_DIR}/src/sfloader
     ${FluidSynth_SOURCE_DIR}/src/bindings
     ${FluidSynth_SOURCE_DIR}/include
-    ${FluidSynth_SOURCE_DIR}/gcem/include
+    ${GCEM_INCLUDE_DIR}
 )
 
 if ( LIBFLUID_CPPFLAGS )
