@@ -2200,7 +2200,7 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                                           handled, dryrun);
         if(synth->verbose)
         {
-            FLUID_LOG(FLUID_INFO, "Processing SysEX GS DT1 message, bank selection mode might have been changed.");
+            FLUID_LOG(FLUID_INFO, "Processed SysEX GS DT1 message, bank selection mode might have been changed.");
         }
         FLUID_API_RETURN(result);
     }
@@ -2591,16 +2591,24 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         }
         if (!dryrun)
         {
-            int chan = (addr >> 8) & 0x0F;
+            int chan = (addr >> 8) & 0x0F, type;
             //See the Patch Part parameters section in SC-88Pro/8850 owner's manual
             chan = chan >= 0x0a ? chan : (chan == 0 ? 9 : chan - 1);
-            synth->channel[chan]->channel_type =
-                data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+            type = data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+            synth->channel[chan]->channel_type = type;
 
             FLUID_LOG(FLUID_DBG, "SysEx DT1: setting MIDI channel %d to type %d", chan, (int)synth->channel[chan]->channel_type);
-            //Roland synths seem to "remember" the last instrument a channel
-            //used in the selected mode. This behavior is not replicated here.
-            fluid_synth_program_change(synth, chan, 0);
+            // Roland synths seem to "remember" the last instrument a channel
+            // used in the selected mode. This behavior is not replicated here.
+            // Issue 1579: The preset selected for the channel needs to be forcibly changed. Therefore it is not sufficient
+            // to send a prog change, as the old bank is still active in the channel.
+            // Also, do not explicitly send a prog change here. It must be sent by the user, see note on site 60:
+            // "To select a drum set after setting the part mode, transmit a program change [...]"
+            fluid_channel_set_sfont_bank_prog(synth->channel[chan],
+                                              -1,
+                                              type == CHANNEL_TYPE_DRUM ? DRUM_INST_BANK : 0,
+                                              -1);
+            fluid_synth_cc_LOCAL(synth, chan, ALL_CTRL_OFF);
         }
         return FLUID_OK;
     }
