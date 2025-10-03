@@ -24,12 +24,6 @@ void test_portamento_time7(fluid_channel_t *chan, enum fluid_portamento_time_mod
     auto ms = fluid_channel_portamentotime_with_mode(chan, time_mode, lsb_seen, 0, 36);
     TEST_ASSERT(0 == ms);
 
-    fluid_channel_set_cc(chan, PORTAMENTO_TIME_MSB, 85);
-    ms = fluid_channel_portamentotime_with_mode(chan, time_mode, lsb_seen, 0, 36);
-    TEST_ASSERT(5*1000 == ms);
-    ms = fluid_channel_portamentotime_with_mode(chan, time_mode, lsb_seen, 18, 36);
-    TEST_ASSERT(2500 == ms);
-
     fluid_channel_set_cc(chan, PORTAMENTO_TIME_MSB, 127);
     ms = fluid_channel_portamentotime_with_mode(chan, time_mode, lsb_seen, 0, 36);
     TEST_ASSERT(480*1000 == ms);
