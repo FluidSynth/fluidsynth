@@ -281,7 +281,7 @@ void fluid_version(int *major, int *minor, int *micro)
  * @return FluidSynth version string, which is internal and should not be
  *   modified or freed.
  */
-char *
+const char *
 fluid_version_str(void)
 {
     return FLUIDSYNTH_VERSION;
