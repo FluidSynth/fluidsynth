@@ -87,50 +87,58 @@ elseif(_sndfile_library)
   find_package(mpg123 QUIET)
 
   if(NOT CMAKE_CROSSCOMPILING)
-    include(CheckSourceRuns)
-    set(_backup_includes ${CMAKE_REQUIRED_INCLUDES})
-    set(_backup_libraries ${CMAKE_REQUIRED_LIBRARIES})
-    set(CMAKE_REQUIRED_INCLUDES "${SndFile_INCLUDE_DIR}")
-    set(CMAKE_REQUIRED_LIBRARIES "${_sndfile_library}")
+    if(${CMAKE_VERSION} VERSION_LESS "3.19")
+      message(STATUS
+        "Your CMake version (${CMAKE_VERSION}) is less than 3.19 - cannot check for external sndfile libraries."
+      )
+      set(SndFile_WITH_EXTERNAL_LIBS FALSE)
+      set(SndFile_WITH_MPEG FALSE)
+    else()
+      include(CheckSourceRuns)
+      set(_backup_includes ${CMAKE_REQUIRED_INCLUDES})
+      set(_backup_libraries ${CMAKE_REQUIRED_LIBRARIES})
+      set(CMAKE_REQUIRED_INCLUDES "${SndFile_INCLUDE_DIR}")
+      set(CMAKE_REQUIRED_LIBRARIES "${_sndfile_library}")
 
-    set(_optional_libs "MPG123::libmpg123" "mp3lame::mp3lame" "FLAC::FLAC"
-                       "Opus::opus" "Vorbis::vorbisenc" "Ogg::ogg")
-    foreach(_target ${_optional_libs})
-      if(TARGET "${_target}")
-        list(APPEND CMAKE_REQUIRED_LIBRARIES "${_target}")
-      endif()
-    endforeach()
+      set(_optional_libs "MPG123::libmpg123" "mp3lame::mp3lame" "FLAC::FLAC"
+                        "Opus::opus" "Vorbis::vorbisenc" "Ogg::ogg")
+      foreach(_target ${_optional_libs})
+        if(TARGET "${_target}")
+          list(APPEND CMAKE_REQUIRED_LIBRARIES "${_target}")
+        endif()
+      endforeach()
 
-    check_source_runs(
-      C
-      "#include <stdlib.h>
+      check_source_runs(
+        C
+        "#include <stdlib.h>
 #include <sndfile.h>
 int main() {
   SF_FORMAT_INFO info = {SF_FORMAT_VORBIS};
   sf_command(NULL, SFC_GET_FORMAT_INFO, &info, sizeof info);
   return info.name != NULL ? EXIT_SUCCESS : EXIT_FAILURE;
 }"
-      SNDFILE_SUPPORTS_VORBIS)
+        SNDFILE_SUPPORTS_VORBIS)
 
-    check_source_runs(
-      C
-      "#include <stdlib.h>
+      check_source_runs(
+        C
+        "#include <stdlib.h>
 #include <sndfile.h>
 int main() {
   SF_FORMAT_INFO info = {SF_FORMAT_MPEG_LAYER_III};
   sf_command(NULL, SFC_GET_FORMAT_INFO, &info, sizeof info);
   return info.name != NULL ? EXIT_SUCCESS : EXIT_FAILURE;
 }"
-      SNDFILE_SUPPORTS_MPEG)
+        SNDFILE_SUPPORTS_MPEG)
 
-    set(SndFile_WITH_EXTERNAL_LIBS ${SNDFILE_SUPPORTS_VORBIS})
-    set(SndFile_WITH_MPEG ${SNDFILE_SUPPORTS_MPEG})
-    set(CMAKE_REQUIRED_INCLUDES ${_backup_includes})
-    set(CMAKE_REQUIRED_LIBRARIES ${_backup_libraries})
+      set(SndFile_WITH_EXTERNAL_LIBS ${SNDFILE_SUPPORTS_VORBIS})
+      set(SndFile_WITH_MPEG ${SNDFILE_SUPPORTS_MPEG})
+      set(CMAKE_REQUIRED_INCLUDES ${_backup_includes})
+      set(CMAKE_REQUIRED_LIBRARIES ${_backup_libraries})
+    endif()
   else()
     message(
       STATUS
-        "Cross-compiling without pkg-config - cannot check for external libraries."
+        "Cross-compiling without pkg-config - cannot check for external sndfile libraries."
         "If you have the upstream CMake config set CMAKE_FIND_PACKAGE_PREFER_CONFIG to true for accurate results."
     )
     set(SndFile_WITH_EXTERNAL_LIBS FALSE)
