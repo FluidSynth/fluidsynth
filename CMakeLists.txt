@@ -905,14 +905,12 @@ endif ()
 
 if (BUILD_SHARED_LIBS)
     set(target-type shared)
-    set(pkgconfig-name "fluidsynth.pc")
 else ()
     set(target-type static)
-    set(pkgconfig-name "fluidsynth-static.pc")
 endif ()
 
-generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/${pkgconfig-name} libfluidsynth-OBJ)
-install ( FILES ${FluidSynth_BINARY_DIR}/${pkgconfig-name}
+generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
+install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
 
 # Exported targets for cmake: find_package(FluidSynth)
