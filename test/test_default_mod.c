@@ -24,6 +24,7 @@ void synth_global_default_mods(fluid_synth_t *synth)
     fluid_mod_t mod[6] = {0};
     fluid_mod_t *my_mod = &mod[0];
 
+    int res;
     unsigned int n = count_modulator_list(synth->default_mod);
     TEST_ASSERT(n == 11);
 
@@ -113,8 +114,8 @@ void synth_global_default_mods(fluid_synth_t *synth)
     n = count_modulator_list(synth->default_mod);
     TEST_ASSERT(n == 0);
 
-    n = fluid_synth_remove_default_mod(synth, &default_pitch_bend_mod);
-    TEST_ASSERT(n == FLUID_FAILED);
+    res = fluid_synth_remove_default_mod(synth, &default_pitch_bend_mod);
+    TEST_ASSERT(res == FLUID_FAILED);
 
     TEST_SUCCESS(fluid_synth_add_default_mod(synth, &default_vel2att_mod, FLUID_SYNTH_ADD));
 
@@ -122,8 +123,8 @@ void synth_global_default_mods(fluid_synth_t *synth)
     TEST_ASSERT(n == 1);
     TEST_ASSERT(fluid_mod_test_identity(synth->default_mod, &default_vel2att_mod));
 
-    n = fluid_synth_remove_default_mod(synth, &default_pitch_bend_mod);
-    TEST_ASSERT(n == FLUID_FAILED);
+    res = fluid_synth_remove_default_mod(synth, &default_pitch_bend_mod);
+    TEST_ASSERT(res == FLUID_FAILED);
 
     n = count_modulator_list(synth->default_mod);
     TEST_ASSERT(n == 1);
