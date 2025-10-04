@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-fluid_sfloader_t* new_fluid_dls_loader(fluid_synth_t *synth, fluid_settings_t *settings);
+fluid_sfloader_t *new_fluid_dls_loader(fluid_synth_t *synth, fluid_settings_t *settings);
 
 #ifdef __cplusplus
 }

@@ -312,7 +312,7 @@ error_recovery:
  * @note Only use this function when the API documentation explicitly says so. Otherwise use
  * adequate \c delete_fluid_* functions.
  *
- * @warning Calling ::free() on memory that is advised to be freed with fluid_free() results in undefined behaviour!
+ * @warning Calling C-std lib <code>free()</code> on memory that is advised to be freed with fluid_free() results in undefined behaviour!
  * (cf.: "Potential Errors Passing CRT Objects Across DLL Boundaries" found in MS Docs)
  *
  * @since 2.0.7

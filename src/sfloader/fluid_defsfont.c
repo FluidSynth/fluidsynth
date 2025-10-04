@@ -273,8 +273,6 @@ int delete_fluid_defsfont(fluid_defsfont_t *defsfont)
         delete_fluid_sample(sample);
     }
 
-    delete_fluid_list_mod(defsfont->default_mod_list);
-
     if(defsfont->sample)
     {
         delete_fluid_list(defsfont->sample);
@@ -491,7 +489,7 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
     if (dmod_data != NULL)
     {
         /* Load the default modulators*/
-        if (fluid_mod_import_sfont(&defsfont->default_mod_list, dmod_data) != FLUID_OK)
+        if (fluid_mod_import_sfont(&defsfont->sfont->default_mod_list, dmod_data) != FLUID_OK)
         {
             FLUID_LOG(FLUID_ERR, "Unable to load the default modulators");
             goto err_exit;
@@ -1223,21 +1221,6 @@ new_fluid_preset_zone(char *name)
     fluid_gen_init(&zone->gen[0], NULL);
     zone->mod = NULL; /* list of modulators */
     return zone;
-}
-
-/*
- * delete list of modulators.
- */
-void delete_fluid_list_mod(fluid_mod_t *mod)
-{
-    fluid_mod_t *tmp;
-
-    while(mod)	/* delete the modulators */
-    {
-        tmp = mod;
-        mod = mod->next;
-        delete_fluid_mod(tmp);
-    }
 }
 
 /*
@@ -2115,7 +2098,7 @@ fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defs
     sample->origpitch = sfsample->origpitch;
     sample->pitchadj = sfsample->pitchadj;
     sample->sampletype = sfsample->sampletype;
-    sample->default_modulators = defsfont->default_mod_list;
+    sample->default_modulators = defsfont->sfont->default_mod_list;
 
     if(defsfont->dynamic_samples)
     {

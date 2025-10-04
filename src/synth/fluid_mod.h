@@ -62,6 +62,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 fluid_real_t fluid_mod_get_source_value(const unsigned char mod_src, const unsigned char mod_flags, fluid_real_t *range, const fluid_voice_t *voice);
 fluid_real_t fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid_real_t range, int is_src1);
 
+void delete_fluid_list_mod(fluid_mod_t *mod);
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);
