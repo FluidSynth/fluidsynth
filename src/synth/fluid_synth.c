@@ -5256,11 +5256,11 @@ fluid_voice_t *
 fluid_synth_alloc_voice(fluid_synth_t *synth, fluid_sample_t *sample,
                         int chan, int key, int vel)
 {
-    int res;
+    fluid_voice_t *res;
     fluid_return_val_if_fail(sample != NULL, NULL);
     fluid_return_val_if_fail(sample->data != NULL, NULL);
     FLUID_API_ENTRY_CHAN(NULL);
-    res = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL)
+    res = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL);
     FLUID_API_RETURN(res);
 
 }
