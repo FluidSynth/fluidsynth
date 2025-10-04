@@ -807,7 +807,7 @@ unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum 
             // Tests were performed by John Novak
             // https://github.com/dosbox-staging/dosbox-staging/pull/2705
             tmp = fluid_concave(msb);
-            res = (Max/2 * 2.5) * tmp * fluid_concave(128 * tmp) + 400 * fluid_convex(msb * (fluid_real_t)(1/4.0));
+            res = (fluid_real_t)(Max/2 * 2.5) * tmp * fluid_concave(128 * tmp) + 400 * fluid_convex(msb * (fluid_real_t)(1/4.0));
             res = res < Max ? res : Max;
             // Apply a similar scaling hack as SpessaSynth to fix Descent Game08, it's unclear why exactly
             // https://github.com/spessasus/spessasynth_core/blob/5a8730a80f8c0b74733ec193a968b36e2a0c0aee/src/synthesizer/audio_engine/engine_methods/portamento_time.ts#L84-87
