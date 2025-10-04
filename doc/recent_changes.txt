@@ -7,6 +7,7 @@
 - fluid_mod_get_transform() now receives a <code>const</code> argument
 - fluid_version_str() now returns a <code>const</code> char array
 - An API for manipulating fluid_sfont_t specific default modulators has been added: fluid_sfont_get_default_mod() and fluid_sfont_set_default_mod()
+- Support for specifying a synth-wide mode to interpret portamento time has been added, see #fluid_portamento_time_mode, fluid_synth_get_portamento_time_mode(), fluid_synth_set_portamento_time_mode() and setting "synth.portamento-time"
 
 \section NewIn2_4_5 What's new in 2.4.5?
 - In order to use the sdl3 audio driver, the downstream application is responsible for calling <code>SDL_Init()</code> and <code>SDL_Quit()</code>, just like it was practice for the sdl2 audio driver. Fluidsynth may raise a warning if this isn't done, see \ref CreatingAudioDriver

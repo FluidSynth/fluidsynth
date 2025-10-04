@@ -192,8 +192,6 @@ fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key);
   ((chan)->tuning_prog)
 #define fluid_channel_set_tuning_prog(chan, prog) \
   ((chan)->tuning_prog = (prog))
-#define fluid_channel_portamentotime(_c) \
-    ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
 #define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
 #define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
 #define fluid_channel_clear_portamento(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
@@ -286,8 +284,10 @@ void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value);
 int fluid_channel_get_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t *val);
 void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t val);
 
+/* Portamento time calculation with mode support */
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen, int, int);
+
 #ifdef __cplusplus
 }
 #endif
-
 #endif /* _FLUID_CHAN_H */
