@@ -538,6 +538,27 @@ FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t *synth,
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
         int chan, int  *breathmode);
 /** @} Breath Mode */
+
+/** @name Portamento Time Mode
+ * @{
+ */
+
+/**
+ * Indicates the portamento time mode the synthesizer is set to
+ */
+enum fluid_portamento_time_mode
+{
+    FLUID_PORTAMENTO_TIME_MODE_AUTO,     /**< Auto mode - Start with 7-bit MSB, switch to 14-bit when LSB seen */
+    FLUID_PORTAMENTO_TIME_MODE_XG_GS,    /**< XG/GS mode - Always use 7-bit MSB only */
+    FLUID_PORTAMENTO_TIME_MODE_LINEAR,   /**< Linear mode - Always use 14-bit MSB+LSB */
+    FLUID_PORTAMENTO_TIME_MODE_LAST      /**< @internal Value defines the count of portamento time modes
+                                           @warning This symbol is not part of the public API and ABI
+                                           stability guarantee and may change at any time! */
+};
+
+FLUIDSYNTH_API int fluid_synth_set_portamento_time_mode(fluid_synth_t *synth, int mode);
+FLUIDSYNTH_API int fluid_synth_get_portamento_time_mode(fluid_synth_t *synth, int *mode);
+/** @} Portamento Time Mode */
 /** @} MIDI Channel Setup */
 
 

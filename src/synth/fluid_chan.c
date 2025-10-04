@@ -86,7 +86,7 @@ fluid_channel_init(fluid_channel_t *chan)
     /*---*/
     chan->key_mono_sustained = INVALID_NOTE; /* No previous mono note sustained */
     chan->legatomode = FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER;		/* Default mode */
-    chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY;	/* Default mode */
+    chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE;	/* Default mode */
     /*--- End of poly/mono initialization --------------------------------------*/
 
     chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
@@ -757,4 +757,70 @@ void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, flui
 {
     chan->override_gen_default[gen].flags = GEN_SET;
     chan->override_gen_default[gen].val = val;
+}
+
+/* Calculate portamento time in milliseconds considering the synthesizer's portamento time mode */
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen, int fromkey, int tokey)
+{
+    int msb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_MSB);
+    int lsb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_LSB);
+    int res;
+    fluid_real_t tmp;
+    static const int Max = 480*1000; /*ms*/
+    
+    /* Use 7-bit MSB initially, switch to 14-bit if LSB has been seen */
+    if(time_mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
+    {
+        if(lsb_seen)
+        {
+            time_mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
+        }
+        else
+        {
+            time_mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
+        }
+    }
+
+    switch(time_mode)
+    {
+        case FLUID_PORTAMENTO_TIME_MODE_XG_GS:
+            // Produce a curve similar to:
+            /*
+                CC 5 value  Portamento time
+                ----------  ---------------
+                    0            0.000 s
+                    1            0.006 s
+                    2            0.023 s
+                    4            0.050 s
+                    8            0.110 s
+                    16           0.250 s
+                    32           0.500 s
+                    64           2.060 s
+                    80           4.200 s
+                    96           8.400 s
+                    112         19.500 s
+                    116         26.700 s
+                    120         40.000 s
+                    124         80.000 s
+                    127        480.000 s
+            */
+            // Tests were performed by John Novak
+            // https://github.com/dosbox-staging/dosbox-staging/pull/2705
+            tmp = fluid_concave(msb);
+            res = (fluid_real_t)(Max/2 * 2.5) * tmp * fluid_concave(128 * tmp) + 400 * fluid_convex(msb * (fluid_real_t)(1/4.0));
+            res = res < Max ? res : Max;
+            // Apply a similar scaling hack as SpessaSynth to fix Descent Game08, it's unclear why exactly
+            // https://github.com/spessasus/spessasynth_core/blob/5a8730a80f8c0b74733ec193a968b36e2a0c0aee/src/synthesizer/audio_engine/engine_methods/portamento_time.ts#L84-87
+            // https://github.com/FluidSynth/fluidsynth/pull/1656#issuecomment-3355759938
+            res = (unsigned int)(res * abs(tokey - fromkey) / 36.0f + 0.5f);
+            return res;
+            
+        case FLUID_PORTAMENTO_TIME_MODE_LINEAR:
+            /* Always use 14-bit MSB+LSB */
+            return msb * 128 + lsb;
+            
+        default:
+            FLUID_LOG(FLUID_ERR, "THIS SHOULD NEVER HAPPEN! unknown portamento time mode %d", time_mode);
+    }
+    return 0;
 }
