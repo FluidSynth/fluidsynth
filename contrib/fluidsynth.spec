@@ -122,7 +122,7 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files
 %license LICENSE
-%doc AUTHORS ChangeLog README.md THANKS TODO
+%doc AUTHORS ChangeLog.old README.md THANKS TODO
 %{_mandir}/man?/*
 %{_bindir}/*
 %if 0%{?suse_version}
