@@ -24,7 +24,7 @@
 %endif
 
 Name:           fluidsynth
-Version:        2.2.2
+Version:        2.5.0
 Release:        0
 Summary:        A Real-Time Software Synthesizer That Uses Soundfont(tm)
 License:        LGPL-2.1-or-later
@@ -122,13 +122,14 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files
 %license LICENSE
-%doc AUTHORS ChangeLog README.md THANKS TODO
+%doc AUTHORS ChangeLog.old README.md THANKS TODO
 %{_mandir}/man?/*
 %{_bindir}/*
 %if 0%{?suse_version}
 %{_unitdir}/%{name}.service
 %{_sbindir}/rc%{name}
 %{_fillupdir}/sysconfig.%{name}
+%{_tmpfilesdir}/%{name}.conf
 %endif
 
 %files devel
