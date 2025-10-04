@@ -129,6 +129,7 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 %{_unitdir}/%{name}.service
 %{_sbindir}/rc%{name}
 %{_fillupdir}/sysconfig.%{name}
+%{_tmpfilesdir}/%{name}.conf
 %endif
 
 %files devel
