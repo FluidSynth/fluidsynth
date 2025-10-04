@@ -2606,15 +2606,15 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
             // used in the selected mode. This behavior is not replicated here.
             // Issue 1579: The preset selected for the channel needs to be forcibly changed. Therefore it is not sufficient
             // to send a prog change, as the old bank is still active in the channel.
-            // Also, do not explicitly send a prog change here. It must be sent by the user, see note on site 60:
+            // MSGS selects the standard drum kit right after this message (which is equivalent to sending a prog change 0).
+            // However, this behavior is insonsistent with the note on site 60:
             // "To select a drum set after setting the part mode, transmit a program change [...]"
+            fluid_synth_cc_LOCAL(synth, chan, ALL_CTRL_OFF);
             fluid_channel_set_sfont_bank_prog(synth->channel[chan],
                                               -1,
                                               type == CHANNEL_TYPE_DRUM ? DRUM_INST_BANK : 0,
                                               -1);
-            fluid_synth_cc_LOCAL(synth, chan, ALL_CTRL_OFF);
-            // Unset the currently selected program, so that this channel remains silent, in case the user doesn't send a progchange afterwards
-            fluid_synth_unset_program(synth, chan);
+            fluid_synth_program_change(synth, chan, 0);
         }
         return FLUID_OK;
     }
