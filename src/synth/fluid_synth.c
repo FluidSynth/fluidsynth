@@ -2613,6 +2613,8 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
                                               type == CHANNEL_TYPE_DRUM ? DRUM_INST_BANK : 0,
                                               -1);
             fluid_synth_cc_LOCAL(synth, chan, ALL_CTRL_OFF);
+            // Unset the currently selected program, so that this channel remains silent, in case the user doesn't send a progchange afterwards
+            fluid_synth_unset_program(synth, chan);
         }
         return FLUID_OK;
     }
