@@ -3395,8 +3395,10 @@ fluid_synth_sfont_select(fluid_synth_t *synth, int chan, int sfont_id)
 int
 fluid_synth_unset_program(fluid_synth_t *synth, int chan)
 {
+    int res;
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-    FLUID_API_RETURN(fluid_synth_program_change(synth, chan, FLUID_UNSET_PROGRAM));
+    res = fluid_synth_program_change(synth, chan, FLUID_UNSET_PROGRAM);
+    FLUID_API_RETURN(res);
 }
 
 /**
@@ -5299,10 +5301,12 @@ fluid_voice_t *
 fluid_synth_alloc_voice(fluid_synth_t *synth, fluid_sample_t *sample,
                         int chan, int key, int vel)
 {
+    fluid_voice_t *res;
     fluid_return_val_if_fail(sample != NULL, NULL);
     fluid_return_val_if_fail(sample->data != NULL, NULL);
     FLUID_API_ENTRY_CHAN(NULL);
-    FLUID_API_RETURN(fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL));
+    res = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL);
+    FLUID_API_RETURN(res);
 
 }
 
