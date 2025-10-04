@@ -329,6 +329,7 @@ add_custom_target(renderDMOD
 add_custom_target(renderGSDT1
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${SYSEX_GS_DT1}/wikipedia_MIDI_sample_gstest.${FEXT}" ${GENERAL_USER_GS2} "wikipedia_MIDI_sample_gstest.mid"
     COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${SYSEX_GS_DT1}/D_DM2TTL - GS Drums.${FEXT}" ${GENERAL_USER_GS2} "D_DM2TTL - GS Drums.mid"
+    COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${SYSEX_GS_DT1}/GS Drums Bank Select and Program Change interaction on MSGS.${FEXT}" ${GENERAL_USER_GS2} "GS Drums Bank Select and Program Change interaction on MSGS.mid"
     COMMENT "Rendering Test MIDIs for SysEx GS DT1"
     DEPENDS fluidsynth create_iir_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sysex/gs_dt1"
