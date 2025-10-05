@@ -587,7 +587,7 @@ target_include_directories(libfluidsynth PUBLIC
 
 # installation of the exported targets
 install(EXPORT FluidSynthTargets
-        FILE FluidSynthTargets.cmake
+        FILE FluidSynth-${target-type}-targets.cmake
         NAMESPACE FluidSynth::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
 )

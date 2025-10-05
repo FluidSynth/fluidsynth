@@ -878,6 +878,13 @@ configure_file ( ${FluidSynth_SOURCE_DIR}/src/config.cmake
 # required to allow ctest to be called from top-level build directory
 ENABLE_TESTING()
 
+# to build the exported targets cmake file name
+if (BUILD_SHARED_LIBS)
+    set(target-type shared)
+else ()
+    set(target-type static)
+endif ()
+
 # Process subdirectories
 add_subdirectory ( src )
 add_subdirectory ( test )
@@ -913,7 +920,7 @@ install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
 
 # targets in the build directory
 export(EXPORT FluidSynthTargets
-   FILE "${FluidSynth_BINARY_DIR}/FluidSynthTargets.cmake"
+   FILE "${FluidSynth_BINARY_DIR}/FluidSynth-${target-type}-targets.cmake"
    NAMESPACE FluidSynth::
 )
 
