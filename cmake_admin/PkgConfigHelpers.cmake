@@ -27,7 +27,7 @@ macro ( generate_pkgconfig_spec template outfile target )
     if (TARGET ${target})
         # retrieve all the private libs we depend on
         get_target_property (_libs ${target} INTERFACE_LINK_LIBRARIES)
-        set(_cleanlibs)
+        set(_cleanlibs "")
         foreach(_lib IN LISTS _libs)
             if (TARGET ${_lib})
                 # All the imported PkgConfig target are explicitly added to PC_REQUIRES_PRIV.
