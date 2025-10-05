@@ -2237,10 +2237,6 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
         result = fluid_synth_sysex_gs_dt1(synth, data, len, response,
                                           response_len, avail_response,
                                           handled, dryrun);
-        if(synth->verbose)
-        {
-            FLUID_LOG(FLUID_INFO, "Processing SysEX GS DT1 message, bank selection mode might have been changed.");
-        }
         FLUID_API_RETURN(result);
     }
 
@@ -2568,7 +2564,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
 
     if(len < 9) // at least one byte of data should be transmitted
     {
-        FLUID_LOG(FLUID_INFO, "SysEx DT1: message too short, dropping it.");
+        FLUID_LOG(FLUID_INFO, "SysEx GS DT1: message too short, dropping it.");
         return FLUID_FAILED;
     }
     len_data = len - 8;
@@ -2582,7 +2578,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     // An intermediate checksum of 0x80 must be treated as zero! #1578
     if ((checksum & 0x7F) != data[len - 1])
     {
-        FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
+        FLUID_LOG(FLUID_INFO, "SysEx GS DT1: dropping message on addr 0x%x due to incorrect checksum 0x%x. Correct checksum: 0x%x", addr, (int)data[len - 1], checksum);
         return FLUID_FAILED;
     }
 
@@ -2590,16 +2586,18 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         if (len_data > 1 || (data[7] != 0 && data[7] != 0x7f))
         {
-            FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping invalid mode set message");
+            FLUID_LOG(FLUID_INFO, "SysEx GS DT1: dropping invalid mode set message");
             return FLUID_FAILED;
         }
         if (handled)
         {
             *handled = TRUE;
         }
+
+        i = data[7];
         if (!dryrun)
         {
-            if (data[7] == 0)
+            if (i == 0)
             {
                 synth->bank_select = FLUID_BANK_STYLE_GS;
             }
@@ -2608,6 +2606,12 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
                 synth->bank_select = FLUID_BANK_STYLE_GM;
             }
             return fluid_synth_system_reset_LOCAL(synth);
+        }
+        if(synth->verbose)
+        {
+            FLUID_LOG(FLUID_INFO, "%sSysEX GS DT1: bank selection mode is now %s",
+            dryrun ? "[DRYRUN] " : "",
+            i == 0 ? "GS" : "GM");
         }
         return FLUID_OK;
     }
@@ -2621,7 +2625,7 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
     {
         if (len_data > 1 || data[7] > 0x02)
         {
-            FLUID_LOG(FLUID_INFO, "SysEx DT1: dropping invalid rhythm part message");
+            FLUID_LOG(FLUID_INFO, "SysEx GS DT1: dropping invalid rhythm part message");
             return FLUID_FAILED;
         }
         if (handled)
@@ -2630,15 +2634,25 @@ fluid_synth_sysex_gs_dt1(fluid_synth_t *synth, const char *data, int len,
         }
         if (!dryrun)
         {
-            int chan = (addr >> 8) & 0x0F;
+            int chan = (addr >> 8) & 0x0F, type;
             //See the Patch Part parameters section in SC-88Pro/8850 owner's manual
             chan = chan >= 0x0a ? chan : (chan == 0 ? 9 : chan - 1);
-            synth->channel[chan]->channel_type =
-                data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+            type = data[7] == 0x00 ? CHANNEL_TYPE_MELODIC : CHANNEL_TYPE_DRUM;
+            synth->channel[chan]->channel_type = type;
 
-            FLUID_LOG(FLUID_DBG, "SysEx DT1: setting MIDI channel %d to type %d", chan, (int)synth->channel[chan]->channel_type);
-            //Roland synths seem to "remember" the last instrument a channel
-            //used in the selected mode. This behavior is not replicated here.
+            FLUID_LOG(FLUID_DBG, "SysEx GS DT1: setting MIDI channel %d to type %d", chan, (int)synth->channel[chan]->channel_type);
+            // Roland synths seem to "remember" the last instrument a channel
+            // used in the selected mode. This behavior is not replicated here.
+            // Issue 1579: The preset selected for the channel needs to be forcibly changed. Therefore it is not sufficient
+            // to send a prog change, as the old bank is still active in the channel.
+            // MSGS selects the standard drum kit right after this message (which is equivalent to sending a prog change 0).
+            // However, this behavior is insonsistent with the note on site 60:
+            // "To select a drum set after setting the part mode, transmit a program change [...]"
+            fluid_synth_cc_LOCAL(synth, chan, ALL_CTRL_OFF);
+            fluid_channel_set_sfont_bank_prog(synth->channel[chan],
+                                              -1,
+                                              type == CHANNEL_TYPE_DRUM ? DRUM_INST_BANK : 0,
+                                              -1);
             fluid_synth_program_change(synth, chan, 0);
         }
         return FLUID_OK;
