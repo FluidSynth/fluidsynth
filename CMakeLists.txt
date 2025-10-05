@@ -878,6 +878,13 @@ configure_file ( ${FluidSynth_SOURCE_DIR}/src/config.cmake
 # required to allow ctest to be called from top-level build directory
 ENABLE_TESTING()
 
+# to build the exported targets cmake file name
+if (BUILD_SHARED_LIBS)
+    set(target-type shared)
+else ()
+    set(target-type static)
+endif ()
+
 # Process subdirectories
 add_subdirectory ( src )
 add_subdirectory ( test )
@@ -901,12 +908,6 @@ if (WIN32)
   set ( implibname "fluidsynth-${LIB_VERSION_CURRENT}" )
 else ()
   set ( implibname "fluidsynth" )
-endif ()
-
-if (BUILD_SHARED_LIBS)
-    set(target-type shared)
-else ()
-    set(target-type static)
 endif ()
 
 generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
