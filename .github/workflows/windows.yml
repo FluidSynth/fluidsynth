@@ -10,6 +10,7 @@ on:
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/linux.yml'
+      - '.github/workflows/ios.yml'
       - '.cirrus.yml'
       - 'README.md'
   release:
