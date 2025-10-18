@@ -143,6 +143,7 @@ endif ( NOT CMAKE_POSITION_INDEPENDENT_CODE )
 # no visibility support on OS2
 if ( NOT OS2 )
     set ( CMAKE_C_VISIBILITY_PRESET hidden )
+    set ( CMAKE_CXX_VISIBILITY_PRESET hidden )
 endif ( NOT OS2 )
 
 # enforce visibility control for all types of cmake targets
