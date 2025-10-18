@@ -567,7 +567,9 @@ unset ( HAVE_CXX_FILESYSTEM CACHE )
 if ( osal STREQUAL "cpp11" )
     # Will silently fall back to a lower standard version if not available
     set( CMAKE_CXX_STANDARD 17 )
-    check_include_file_cxx ( filesystem HAVE_CXX_FILESYSTEM )
+    include( CheckCXXSourceCompiles )
+    check_cxx_source_compiles( "#include <filesystem>
+        int main() { std::filesystem::path path = std::filesystem::current_path(); }" HAVE_CXX_FILESYSTEM )
     if ( NOT HAVE_CXX_FILESYSTEM )
         message ( WARNING "C++ filesystem support not found, some file operations will be stubs" )
     endif ( NOT HAVE_CXX_FILESYSTEM )
