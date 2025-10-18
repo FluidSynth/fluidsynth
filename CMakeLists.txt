@@ -569,7 +569,7 @@ if ( osal STREQUAL "cpp11" )
     set( CMAKE_CXX_STANDARD 17 )
     include( CheckCXXSourceCompiles )
     check_cxx_source_compiles( "#include <filesystem>
-        int main() { std::filesystem::path path = std::filesystem::current_path(); }" HAVE_CXX_FILESYSTEM )
+        int main() { static_assert(__cpp_lib_filesystem == 201703L); std::filesystem::path p = std::filesystem::current_path(); }" HAVE_CXX_FILESYSTEM )
     if ( NOT HAVE_CXX_FILESYSTEM )
         message ( WARNING "C++ filesystem support not found, some file operations will be stubs" )
     endif ( NOT HAVE_CXX_FILESYSTEM )
