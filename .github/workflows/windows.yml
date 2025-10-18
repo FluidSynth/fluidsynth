@@ -153,11 +153,24 @@ jobs:
         @ECHO ON
         cd build
         cmake --build . --config Release --target install || exit /b 1
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul || exit 0
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul || exit 0
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul || exit 0
-        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x86" 2>nul || exit 0
-        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x64" 2>nul || exit 0
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll"
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll"
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll"
+        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x86"
+        rmdir "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\lib\x64"
+
+        cd d:\deps\bin\
+        dir
+        COPY SDL3.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+        COPY sndfile.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+        if "${{ matrix.osal }}"=="glib" (
+          COPY libglib-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+          COPY libgobject-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+          COPY libgthread-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+          COPY intl.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+          COPY libintl-8.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
+        )
+        exit 0
 
     - name: Validate library
       shell: bash
@@ -176,7 +189,7 @@ jobs:
         if [[ "${{ github.event_name }}" == "release" ]]; then
           echo "name=fluidsynth-${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
         else
-          echo "name=CI-${{ github.run_id }}" >> $GITHUB_OUTPUT
+          echo "name=fluidsynth-${{ github.run_id }}" >> $GITHUB_OUTPUT
         fi
 
     - name: Upload Artifacts
@@ -513,11 +526,13 @@ jobs:
         retention-days: 14
         overwrite: true
 
-  # Publish artifacts to GitHub releases (only on release events)
-  publish-release:
-    if: github.event_name == 'release' && github.event.action == 'published'
-    needs: [msvc-build]
-    runs-on: ubuntu-latest
+  acceptance-test:
+    needs:
+    - msvc-build
+    - msys2-build
+    - mingw-build
+    runs-on: windows-2022
+    name: 🧪 Acceptance Test
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v5
@@ -525,17 +540,40 @@ jobs:
         path: artifacts
         pattern: fluidsynth-*
         merge-multiple: false
-        tag_name: ${{ github.event.release.tag_name }}
+        
+    - name: Try to execute fluidsynth
+      shell: bash
+      run: |
+        set -ex
+        cd artifacts
+        for dir in */; do
+            echo "Testing artifact $dir"
+            "$dir/bin/fluidsynth.exe" --version
+        done
+
+  # Publish artifacts to GitHub releases (only on release events)
+  publish-release:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs:
+      - acceptance-test
+      - msvc-build
+    runs-on: ubuntu-latest
+    name: 🚀 Publish Release Artifacts
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v5
+      with:
+        path: artifacts
+        pattern: fluidsynth-*
+        merge-multiple: false
         
     - name: Create release archives
       run: |
         cd artifacts
         ls -la
         for dir in */; do
-          if [[ "$dir" == fluidsynth* ]]; then
             echo "Creating archive for $dir"
             zip -r "${dir%/}.zip" "$dir"
-          fi
         done
         ls -la *.zip
 
@@ -552,6 +590,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
     needs: [publish-release]
     runs-on: ubuntu-22.04
+    name: 📢 Announce Release
     steps:
       - uses: actions/checkout@v5
         with:
