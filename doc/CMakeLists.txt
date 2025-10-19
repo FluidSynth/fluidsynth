@@ -57,7 +57,9 @@ endif ( DOXYGEN_FOUND )
 
 if ( UNIX )
   install ( FILES fluidsynth.1
-    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 )
+    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+    COMPONENT ${PACKAGE}_program
+  )
 endif ( UNIX )
 
 add_subdirectory ( examples )
