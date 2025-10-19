@@ -376,9 +376,13 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     }
     else
     {
+        fluid_real_t last_fres = iir_filter->last_fres;
         // difference in fres is small, so set it directly
-        iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
+        // disable fres interpolation
+        iir_filter->fres_incr_count = 0;
+        // Filter cutoff has changed, so don't forget to recalculate the coefficients! #1679
+        calc_coeff_flag = last_fres != fres;
         // We do not account for any change of Q here - if it was changed q_incro_count will be non-zero and recalculating the coeffs
         // will be taken care of in fluid_iir_filter_apply().
     }
