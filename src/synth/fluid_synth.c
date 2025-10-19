@@ -2032,12 +2032,15 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     case NRPN_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_cc(chan, NRPN_LSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_MSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_LSB, 0);
         chan->nrpn_select = 0;
         chan->nrpn_active = 1;
         break;
 
     case NRPN_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
-
+        fluid_channel_set_cc(chan, DATA_ENTRY_MSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_LSB, 0);
         /* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
         if(fluid_channel_get_cc(chan, NRPN_MSB) == 120)
         {
@@ -2065,6 +2068,8 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
     case RPN_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     case RPN_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         chan->nrpn_active = 0;
+        fluid_channel_set_cc(chan, DATA_ENTRY_MSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_LSB, 0);
         break;
 
     case BREATH_MSB:
