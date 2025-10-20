@@ -39,7 +39,6 @@ jobs:
       run: |
         git clone https://github.com/libsdl-org/SDL.git && \
         pushd SDL && \
-        git checkout release-3.2.24 && \
         xcodebuild -project Xcode/SDL/SDL.xcodeproj -target "SDL3.xcframework" -configuration Release SYMROOT="build/" && \
         mkdir build && \
         cp -r Xcode/SDL/build/SDL3.xcframework build/ && \
