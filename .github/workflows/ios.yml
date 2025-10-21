@@ -44,4 +44,4 @@ jobs:
         cp -r Xcode/SDL/build/SDL3.xcframework build/ && \
         popd
     - name: Build
-      run: bash ios/build.sh
+      run: bash contrib/ios_build.sh
