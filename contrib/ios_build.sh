@@ -59,7 +59,8 @@ cmake ../.. \
     -DSDL3_DIR="${SDL3_CMAKE_DIR_IOS}" \
     "${CMAKE_COMMON_FLAGS[@]}"
 
-xcodebuild -project FluidSynth.xcodeproj -target libfluidsynth -configuration Release -sdk iphoneos build 2>&1
+xcodebuild -project FluidSynth.xcodeproj -target libfluidsynth -configuration Release -sdk iphoneos \
+    build DEBUG_INFORMATION_FORMAT="dwarf-with-dsym" GCC_GENERATE_DEBUGGING_SYMBOLS=YES 2>&1
 cd ..
 
 # Build for iOS simulator
@@ -71,15 +72,19 @@ cmake ../../ \
     -DSDL3_DIR="${SDL3_CMAKE_DIR_IOS_SIMULATOR}" \
     "${CMAKE_COMMON_FLAGS[@]}"
 
-xcodebuild -project FluidSynth.xcodeproj -target libfluidsynth -configuration Release -sdk iphonesimulator build 2>&1
+xcodebuild -project FluidSynth.xcodeproj -target libfluidsynth -configuration Release -sdk iphonesimulator \
+    build DEBUG_INFORMATION_FORMAT="dwarf-with-dsym" GCC_GENERATE_DEBUGGING_SYMBOLS=YES 2>&1
 cd ..
 
 # Create XCFramework from the built dynamic frameworks
 echo "Creating XCFramework..."
 rm -rf FluidSynth.xcframework
+BUILD_DIR_ABSOLUTE=$(pwd)
 xcodebuild -create-xcframework \
-    -framework build-ios/src/Release-iphoneos/FluidSynth.framework \
-    -framework build-ios-simulator/src/Release-iphonesimulator/FluidSynth.framework \
-    -output FluidSynth.xcframework
+    -framework "${BUILD_DIR_ABSOLUTE}/build-ios/src/Release-iphoneos/FluidSynth.framework" \
+    -debug-symbols "${BUILD_DIR_ABSOLUTE}/build-ios/src/Release-iphoneos/FluidSynth.framework.dSYM" \
+    -framework "${BUILD_DIR_ABSOLUTE}/build-ios-simulator/src/Release-iphonesimulator/FluidSynth.framework" \
+    -debug-symbols "${BUILD_DIR_ABSOLUTE}/build-ios-simulator/src/Release-iphonesimulator/FluidSynth.framework.dSYM" \
+    -output "${BUILD_DIR_ABSOLUTE}/FluidSynth.xcframework"
 
 echo "FluidSynth.xcframework (dynamic framework) built successfully at build/FluidSynth.xcframework"
