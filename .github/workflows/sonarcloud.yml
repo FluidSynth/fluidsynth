@@ -10,6 +10,7 @@ on:
       - '.github/workflows/linux.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
+      - '.github/workflows/ios.yml'
       - '.cirrus.yml'
       - 'README.md'
   pull_request:
