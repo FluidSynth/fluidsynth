@@ -2032,12 +2032,15 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     case NRPN_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_cc(chan, NRPN_LSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_MSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_LSB, 0);
         chan->nrpn_select = 0;
         chan->nrpn_active = 1;
         break;
 
     case NRPN_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
-
+        fluid_channel_set_cc(chan, DATA_ENTRY_MSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_LSB, 0);
         /* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
         if(fluid_channel_get_cc(chan, NRPN_MSB) == 120)
         {
@@ -2065,6 +2068,8 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
     case RPN_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     case RPN_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         chan->nrpn_active = 0;
+        fluid_channel_set_cc(chan, DATA_ENTRY_MSB, 0);
+        fluid_channel_set_cc(chan, DATA_ENTRY_LSB, 0);
         break;
 
     case BREATH_MSB:
@@ -7938,7 +7943,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(NULL, data, 256, TRUE);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_reverb_mod, data, 256, TRUE);
             FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
             break;
@@ -7946,7 +7951,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_CHORUSSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(NULL, data, 256, TRUE);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_chorus_mod, data, 256, TRUE);
             FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
             break;
