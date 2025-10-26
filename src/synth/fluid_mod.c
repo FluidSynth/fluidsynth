@@ -363,7 +363,7 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid
             }
             else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
             {
-                val = fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+                val = fmin(fluid_convex(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
             }
             else
             {
