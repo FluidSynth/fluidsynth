@@ -9,6 +9,7 @@ on:
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
+      - '.github/workflows/ios.yml'
       - '.cirrus.yml'
       - 'README.md'
 
