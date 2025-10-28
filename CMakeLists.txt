@@ -916,7 +916,8 @@ endif ()
 
 generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
 install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    COMPONENT ${PACKAGE}_development)
 
 # Exported targets for cmake: find_package(FluidSynth)
 # when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
@@ -952,7 +953,8 @@ configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
 install(FILES "${FluidSynth_BINARY_DIR}/FluidSynthConfig.cmake"
               "${FluidSynth_BINARY_DIR}/FluidSynthConfigVersion.cmake"
               ${EXTRA_STATIC_MODULES}
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth")
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth"
+    COMPONENT ${PACKAGE}_development)
 
 # Extra targets for Unix build environments
 if ( UNIX )
@@ -988,15 +990,25 @@ set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )
 set ( CPACK_PACKAGE_EXECUTABLES "fluidsynth" "FluidSynth CLI" )
 
 # source packages
-set ( CPACK_SOURCE_GENERATOR TGZ;TBZ2;ZIP )
-set ( CPACK_SOURCE_IGNORE_FILES "/.svn/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
+set ( CPACK_SOURCE_IGNORE_FILES "/.git/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
 set ( CPACK_SOURCE_PACKAGE_FILE_NAME "${PACKAGE}-${VERSION}" )
 set ( CPACK_SOURCE_STRIP_FILES OFF )
 
 # binary packages
 include ( InstallRequiredSystemLibraries )
-set ( CPACK_GENERATOR STGZ;TGZ;TBZ2;ZIP )
 set ( CPACK_PACKAGE_NAME ${PACKAGE} )
 set ( CPACK_STRIP_FILES ON )
 
 include ( CPack )
+
+cpack_add_component(${PACKAGE}_runtime 
+  DISPLAY_NAME "Runtime Library"
+  DESCRIPTION "Shared library (DLL) needed to run FluidSynth programs")
+cpack_add_component(${PACKAGE}_program
+  DISPLAY_NAME "FluidSynth Application"
+  DESCRIPTION "FluidSynth Command Line Interface Program"
+  DEPENDS ${PACKAGE}_runtime)
+cpack_add_component(${PACKAGE}_development
+  DISPLAY_NAME "C Headers and import library"
+  DESCRIPTION "C headers and import library for using FluidSynth"
+  DEPENDS ${PACKAGE}_runtime)
