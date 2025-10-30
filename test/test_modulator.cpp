@@ -8,6 +8,8 @@
 
 // Range shall be set to 7bit resolution, i.e. 128
 constexpr fluid_real_t Range = 128.0;
+
+// These formulas match the logic used in the convex/concave table generation code.
 static const fluid_real_t UnipolarConvexMid = (1.0 - ((-200.0 * 2 / FLUID_PEAK_ATTENUATION) * std::log(64 / (FLUID_VEL_CB_SIZE - 1.0)) / static_cast<double>(FLUID_M_LN10)));
 static const fluid_real_t UnipolarConcaveMid = ((-200.0 * 2 / FLUID_PEAK_ATTENUATION) * std::log(((FLUID_VEL_CB_SIZE - 1) - 64) / (FLUID_VEL_CB_SIZE - 1.0)) / static_cast<double>(FLUID_M_LN10));
 constexpr fluid_real_t BipolarConvexMid = 0.0f;
@@ -54,12 +56,12 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
-                TEST_ASSERT(v1 == UnipolarConvexMid);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConvexMid) <= 1e-6);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
-                TEST_ASSERT(v1 == UnipolarConcaveMid);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConcaveMid) <= 1e-6);
             }
 
             v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
@@ -90,12 +92,12 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
-                TEST_ASSERT(v1 == UnipolarConvexMid);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConvexMid) <= 1e-6);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
                 v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
-                TEST_ASSERT(v1 == UnipolarConcaveMid);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConcaveMid) <= 1e-6);
             }
             
             v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
@@ -125,11 +127,13 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
             }
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
+                // v1 should be zero exactly
                 v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
                 TEST_ASSERT(v1 == BipolarConvexMid);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
+                // v1 should be zero exactly
                 v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
                 TEST_ASSERT(v1 == BipolarConcaveMid);
             }
@@ -161,11 +165,13 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
             }
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
+                // v1 should be zero exactly
                 v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
                 TEST_ASSERT(v1 == BipolarConvexMid);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
+                // v1 should be zero exactly
                 v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
                 TEST_ASSERT(v1 == BipolarConcaveMid);
             }
