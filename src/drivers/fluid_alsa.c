@@ -1367,10 +1367,10 @@ fluid_alsa_seq_run(void *d)
                     }
                     else
                     {
-                        FLUID_LOG(FLUID_WARN, "ALSA sequencer buffer overrun, some MIDI events where lost (code=%d)", ev);
+                        FLUID_LOG(FLUID_WARN, "ALSA sequencer buffer overrun, some MIDI events were lost (code=%d)", ev);
                         if(dev->dyn_sample_loading_is_active)
                         {
-                            FLUID_LOG(FLUID_INFO, "Hint: To mitigate buffer overruns, you should consider to disable synth.dynamic-sample-loading!");
+                            FLUID_LOG(FLUID_INFO, "Hint: To mitigate buffer overruns, you should consider disabling synth.dynamic-sample-loading!");
                             // avoid spamming those hints
                             dev->dyn_sample_loading_is_active = 0;
                         }
