@@ -4,9 +4,16 @@
 #include "fluid_mod.h"
 
 #include <array>
+#include <cmath>
 
 // Range shall be set to 7bit resolution, i.e. 128
 constexpr fluid_real_t Range = 128.0;
+
+// These formulas match the logic used in the convex/concave table generation code.
+static const fluid_real_t UnipolarConvexMid = (1.0 - ((-200.0 * 2 / FLUID_PEAK_ATTENUATION) * std::log(64 / (FLUID_VEL_CB_SIZE - 1.0)) / static_cast<double>(FLUID_M_LN10)));
+static const fluid_real_t UnipolarConcaveMid = ((-200.0 * 2 / FLUID_PEAK_ATTENUATION) * std::log(((FLUID_VEL_CB_SIZE - 1) - 64) / (FLUID_VEL_CB_SIZE - 1.0)) / static_cast<double>(FLUID_M_LN10));
+constexpr fluid_real_t BipolarConvexMid = 0.0f;
+constexpr fluid_real_t BipolarConcaveMid = 0.0f;
 
 constexpr std::array<int, 4> Mapping = {FLUID_MOD_SWITCH, FLUID_MOD_LINEAR, FLUID_MOD_CONCAVE, FLUID_MOD_CONVEX};
 constexpr std::array<int, 2> Polar = {FLUID_MOD_UNIPOLAR, FLUID_MOD_BIPOLAR};
@@ -25,6 +32,7 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
 
     for(unsigned int i = 0; i < Mapping.size(); i++)
     {
+        // Test unipolar positive mappings
         {
             static const fluid_real_t mid = 64.0/128.0;
             fluid_mod_set_source1(mod,
@@ -45,12 +53,23 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
+            else if(Mapping[i] == FLUID_MOD_CONVEX)
+            {
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConvexMid) <= 1e-6);
+            }
+            else if(Mapping[i] == FLUID_MOD_CONCAVE)
+            {
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConcaveMid) <= 1e-6);
+            }
 
             v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
 
+        // Test unipolar negative mappings
         {
             static const fluid_real_t mid = (64-1)/128.0;
             fluid_mod_set_source1(mod,
@@ -70,12 +89,23 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 0.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
+            else if(Mapping[i] == FLUID_MOD_CONVEX)
+            {
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConvexMid) <= 1e-6);
+            }
+            else if(Mapping[i] == FLUID_MOD_CONCAVE)
+            {
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                TEST_ASSERT(std::fabs(v1 - UnipolarConcaveMid) <= 1e-6);
+            }
             
             v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
 
+        // Test bipolar positive mappings
         {
             static const fluid_real_t mid = 0;
             fluid_mod_set_source1(mod,
@@ -95,12 +125,25 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
+            else if(Mapping[i] == FLUID_MOD_CONVEX)
+            {
+                // v1 should be zero exactly
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                TEST_ASSERT(v1 == BipolarConvexMid);
+            }
+            else if(Mapping[i] == FLUID_MOD_CONCAVE)
+            {
+                // v1 should be zero exactly
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                TEST_ASSERT(v1 == BipolarConcaveMid);
+            }
 
             v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
 
+        // Test bipolar negative mappings
         {
             static const fluid_real_t mid = -1/64.0;
             fluid_mod_set_source1(mod,
@@ -120,6 +163,18 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? -1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
+            else if(Mapping[i] == FLUID_MOD_CONVEX)
+            {
+                // v1 should be zero exactly
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                TEST_ASSERT(v1 == BipolarConvexMid);
+            }
+            else if(Mapping[i] == FLUID_MOD_CONCAVE)
+            {
+                // v1 should be zero exactly
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                TEST_ASSERT(v1 == BipolarConcaveMid);
+            }
 
             v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
             tmp = get_mod_max(mod);
@@ -134,11 +189,11 @@ static void test_mod_no_source(fluid_mod_t *mod)
     fluid_mod_set_amount(mod, 1);
 
     fluid_real_t tmp, v1;
-    for (int i = 0; i < Mapping.size(); i++)
+    for (unsigned int i = 0; i < Mapping.size(); i++)
     {
-        for (int j = 0; j < Polar.size(); j++)
+        for (unsigned int j = 0; j < Polar.size(); j++)
         {
-            for (int k = 0; k < Direction.size(); k++)
+            for (unsigned int k = 0; k < Direction.size(); k++)
             {
                 fluid_mod_set_source2(mod, FLUID_MOD_NONE, Mapping[i] | Polar[j] | Direction[k]);
                 // No secondary source given, result must be one
@@ -153,7 +208,6 @@ static void test_mod_no_source(fluid_mod_t *mod)
     }
 
     fluid_mod_set_source2(mod, FLUID_MOD_VELOCITY, FLUID_MOD_GC | FLUID_MOD_SIN);
-    // No secondary source given, result must be one
     tmp = Range;
     v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, nullptr);
     TEST_ASSERT(tmp == Range);
