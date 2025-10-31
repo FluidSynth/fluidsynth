@@ -19,6 +19,7 @@ android {
             cmake {
                 cppFlags ''
                 arguments '-DANDROID_STL=c++_shared'
+                targets "check-android"
             }
 
             if (project.hasProperty('customAbiFilters'))
@@ -41,7 +42,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path file('src/main/cpp/CMakeLists.txt')
+            path file('../../CMakeLists.txt')
             version '3.16.0+'
         }
     }
