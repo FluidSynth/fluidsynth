@@ -7,6 +7,9 @@ on:
       - '.azure/**'
       - '.circleci/**'
       - '.github/workflows/linux.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/windows.yml'
       - '.cirrus.yml'
       - 'README.md'
 

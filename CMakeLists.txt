@@ -110,11 +110,11 @@ if ( CMAKE_SYSTEM MATCHES "Linux" )
     option ( enable-systemd "compile systemd support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
 
-if ( CMAKE_SYSTEM MATCHES "Darwin" )
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
-endif ( CMAKE_SYSTEM MATCHES "Darwin" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
@@ -203,7 +203,7 @@ unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   # If we ever bump to CMake 3.29+, replace this with CMAKE_LANG_COMPILER_LINKER_ID
-  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|OS2|Emscripten|SunOS") )
+  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|OS2|Emscripten|SunOS") )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
@@ -409,14 +409,14 @@ if ( CMAKE_SYSTEM MATCHES "SunOS" )
   set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};nsl;socket" )
 endif ( CMAKE_SYSTEM MATCHES "SunOS" )
 
-# Apple Mac OSX
+# Apple Mac OSX / iOS
 unset ( COREAUDIO_SUPPORT CACHE )
 unset ( COREAUDIO_LIBS CACHE )
 unset ( COREMIDI_SUPPORT CACHE )
 unset ( COREMIDI_LIBS CACHE )
 unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
-if ( CMAKE_SYSTEM MATCHES "Darwin" )
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR} )
   if ( enable-coreaudio )
@@ -430,13 +430,13 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
     check_include_file ( CoreMIDI/MIDIServices.h COREMIDI_FOUND )
     if ( COREMIDI_FOUND )
       set ( COREMIDI_SUPPORT 1 )
-      set ( COREMIDI_LIBS "-Wl,-framework,CoreMIDI,-framework,CoreServices" )
+      set ( COREMIDI_LIBS "-Wl,-framework,CoreFoundation,-framework,CoreMIDI,-framework,CoreServices" )
     endif ( COREMIDI_FOUND )
   endif ( enable-coremidi )
   if ( enable-framework )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
-endif ( CMAKE_SYSTEM MATCHES "Darwin" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
 
 # Android
 if ( ANDROID_ABI )
