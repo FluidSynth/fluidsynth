@@ -43,7 +43,8 @@ extern int feenableexcept(int excepts);
   do { if (FLUID_LIKELY(synth->channel[chan]->mode & FLUID_CHANNEL_ENABLED)) \
        {} \
        else \
-       { FLUID_API_RETURN(return_value); } \
+       { FLUID_LOG(FLUID_INFO, "Channel %d is disabled, event dropped!", chan); FLUID_API_RETURN(return_value); \
+        } \
   } while (0)
 
 #define FLUID_API_ENTRY_CHAN(fail_value)  \
@@ -1726,6 +1727,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
         /* The channel chan is not a valid 'global channel' */
         else
         {
+            FLUID_LOG(FLUID_INFO, "Ignoring cc%d=%d - channel %d is disabled and not a valid global channel either!", num, val, chan);
             result = FLUID_FAILED;
         }
     }
