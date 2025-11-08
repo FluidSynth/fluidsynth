@@ -47,6 +47,8 @@ static void test_strict_weak_ordering_same_timestamp()
     ev.push_back(make_event(100));
     fluid_event_system_reset(ev.back().get());
     ev.push_back(make_event(100));
+    fluid_event_noteoff(ev.back().get(), 0, 62);
+    ev.push_back(make_event(100));
     fluid_event_unregistering(ev.back().get());
     ev.push_back(make_event(100));
     fluid_event_bank_select(ev.back().get(), 0, 1);
@@ -56,8 +58,6 @@ static void test_strict_weak_ordering_same_timestamp()
     fluid_event_noteon(ev.back().get(), 0, 60, 90);
     ev.push_back(make_event(100));
     fluid_event_note(ev.back().get(), 0, 61, 80, 10);
-    ev.push_back(make_event(100));
-    fluid_event_noteoff(ev.back().get(), 0, 62);
     ev.push_back(make_event(100));
     fluid_event_pan(ev.back().get(), 0, 40);
     ev.push_back(make_event(100));
