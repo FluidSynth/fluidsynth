@@ -56,8 +56,8 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         // Both events have the same tick value. Per MIDI standard, the order is undefined. However, most implementations use a FIFO ordering here,
         // which we cannot use, because heap sort is not stable. To make sure that fluidsynth behaves correctly from a user perspective,
         // we do the following:
-        //  * System reset events are always first,
-        //  * Unregistering events are second (this gives clients the chance to reset themselves before unregistering at the same tick),
+        //  * System reset and NoteOff events are always first (this allows to off notes, before a channel is potentially disabled via channel mode messages on the same tick),
+        //  * Unregistering events are third (this gives clients the chance to reset and silence themselves before unregistering at the same tick),
         //  * Bank changes must precede Prog changes (to ensure correct preset fallback AND preset selection within a certain bank),
         //  * NoteOn events are always last (this makes sure that all other "state-change" events have been processed and NoteOff events
         //    with the same key as the NoteOn have been processed (zero-length notes are not a use-case here)).
@@ -75,20 +75,20 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         //  * X meaning any other event type, and
         //  * the '*' means that it could be zero, but making it 1 simplifies the boolean expression.
         //
-        // | ltype \ rtype | SYSR | UNREG | BANK | PROG | NOTEON | X  |
-        // |      SYSR     |  1   |   1   |   1  |   1  |   1    | 1  |
-        // |     UNREG     |  0   |   1   |   1  |   1  |   1    | 1  |
-        // |      BANK     |  0   |   0   |   1  |   1  |   1    | 1* |
-        // |      PROG     |  0   |   0   |   0  |   1  |   1    | 1* |
-        // |     NOTEON    |  0   |   0   |   0  |   0  |   1    | 0  |
-        // |       X       |  0   |   0   |   0  |   0  |   1    | 1  |
+        // | ltype \ rtype | SYSR||NOTEOFF | UNREG | BANK | PROG | NOTEON | X  |
+        // | SYSR||NOTEOFF |        1      |   1   |   1  |   1  |   1    | 1  |
+        // |     UNREG     |        0      |   1   |   1  |   1  |   1    | 1  |
+        // |      BANK     |        0      |   0   |   1  |   1  |   1    | 1* |
+        // |      PROG     |        0      |   0   |   0  |   1  |   1    | 1* |
+        // |     NOTEON    |        0      |   0   |   0  |   0  |   1    | 0  |
+        // |       X       |        0      |   0   |   0  |   0  |   1    | 1  |
         //
         // The values in the diagonal (i.e. comparison with itself) must be true to make them become false after leaving this
         // function in order to satisfy the irreflexive requirement, i.e. assert(!(a < a))
 
         leftIsBeforeRight =
            // first row in table
-           (ltype == FLUID_SEQ_SYSTEMRESET)
+           (ltype == FLUID_SEQ_SYSTEMRESET) || (ltype == FLUID_SEQ_NOTEOFF)
            // the rtype NOTEON column
         || (rtype == FLUID_SEQ_NOTEON || rtype == FLUID_SEQ_NOTE)
            // the second row in table
@@ -98,8 +98,8 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
            // the fourth row in table
         || (rtype != FLUID_SEQ_SYSTEMRESET && rtype != FLUID_SEQ_UNREGISTERING && rtype != FLUID_SEQ_BANKSELECT && ltype == FLUID_SEQ_PROGRAMCHANGE)
            // the bottom right value, i.e. any other type compared to any other type
-        || (ltype != FLUID_SEQ_SYSTEMRESET && ltype != FLUID_SEQ_UNREGISTERING && ltype != FLUID_SEQ_BANKSELECT && ltype != FLUID_SEQ_PROGRAMCHANGE && ltype != FLUID_SEQ_NOTEON && ltype != FLUID_SEQ_NOTE &&
-            rtype != FLUID_SEQ_SYSTEMRESET && rtype != FLUID_SEQ_UNREGISTERING && rtype != FLUID_SEQ_BANKSELECT && rtype != FLUID_SEQ_PROGRAMCHANGE && rtype != FLUID_SEQ_NOTEON && rtype != FLUID_SEQ_NOTE);
+        || (ltype != FLUID_SEQ_SYSTEMRESET && ltype != FLUID_SEQ_UNREGISTERING && ltype != FLUID_SEQ_BANKSELECT && ltype != FLUID_SEQ_PROGRAMCHANGE && ltype != FLUID_SEQ_NOTEON && ltype != FLUID_SEQ_NOTE && ltype != FLUID_SEQ_NOTEOFF &&
+            rtype != FLUID_SEQ_SYSTEMRESET && rtype != FLUID_SEQ_UNREGISTERING && rtype != FLUID_SEQ_BANKSELECT && rtype != FLUID_SEQ_PROGRAMCHANGE && rtype != FLUID_SEQ_NOTEON && rtype != FLUID_SEQ_NOTE && rtype != FLUID_SEQ_NOTEOFF);
     }
     else
     {
