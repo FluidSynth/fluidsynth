@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 5.0.0), cmake, pkg-config, libdb-dev, libjack-dev, 
   libsndfile-dev, libglib2.0-dev
 Standards-Version: 3.7.2
 
-Package: libfluidsynth1
+Package: libfluidsynth3
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -17,7 +17,7 @@ Description: FluidSynth is a real-time software synthesizer
 Package: libfluidsynth-dev
 Section: libdevel
 Architecture: any
-Depends: libfluidsynth1 (= ${source:Version})
+Depends: libfluidsynth3 (= ${source:Version})
 Description: FluidSynth is a real-time software synthesizer
   FluidSynth is a real-time software synthesizer based on
   the SoundFont 2 specifications. 
@@ -27,7 +27,7 @@ Description: FluidSynth is a real-time software synthesizer
 Package: fluidsynth
 Section: sound
 Architecture: any
-Depends: libfluidsynth1 (= ${source:Version})
+Depends: libfluidsynth3 (= ${source:Version})
 Description: FluidSynth is a real-time software synthesizer
   FluidSynth is a real-time software synthesizer based on
   the SoundFont 2 specifications. 

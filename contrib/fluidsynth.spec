@@ -24,7 +24,7 @@
 %endif
 
 Name:           fluidsynth
-Version:        2.5.0
+Version:        2.5.1
 Release:        0
 Summary:        A Real-Time Software Synthesizer That Uses Soundfont(tm)
 License:        LGPL-2.1-or-later
@@ -42,7 +42,6 @@ BuildRequires:  readline-devel
 BuildRequires:  pkgconfig(alsa)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(jack)
-BuildRequires:  pkgconfig(libinstpatch-1.0) >= 1.1.0
 BuildRequires:  pkgconfig(libpulse)
 BuildRequires:  pkgconfig(sndfile)
 %if 0%{?suse_version}

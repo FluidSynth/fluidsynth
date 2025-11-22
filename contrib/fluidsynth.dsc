@@ -1,7 +1,7 @@
 Format: 1.0
 Source: fluidsynth
-Version: 2.2.0-1
-Binary: fluidsynth, libfluidsynth1, libfluidsynth-dev
+Version: 2.5.1-1
+Binary: fluidsynth, libfluidsynth3, libfluidsynth-dev
 Maintainer: Rui Nuno Capela <rncbc@rncbc.org>
 Architecture: any
 Standards-Version: 3.7.2
