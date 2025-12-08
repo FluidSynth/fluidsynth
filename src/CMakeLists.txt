@@ -199,6 +199,16 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.h
 )
 
+if ( LIMITER_SUPPORT )
+  set ( fulid_limiter_SOURCES
+      rvoice/fluid_limiter.c
+      rvoice/fluid_limiter.h
+      rvoice/fluid_limiter_impl.cpp
+      rvoice/fluid_limiter_impl.h
+  )
+  set_source_files_properties(rvoice/fluid_limiter_impl.cpp PROPERTIES COMPILE_FLAGS "-I${SIGNALSMITH_AUDIO_BASICS}/include -std=c++11")
+endif ( LIMITER_SUPPORT )
+
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
 if ( osal STREQUAL "cpp11" )
   set ( fluid_osal_SOURCES ${fluid_osal_SOURCES} utils/fluid_sys_${osal}.cpp )
@@ -285,6 +295,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${public_HEADERS}
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
+    ${fulid_limiter_SOURCES}
 )
 
 target_include_directories ( libfluidsynth-OBJ PRIVATE
