@@ -36,7 +36,9 @@
 #if COREAUDIO_SUPPORT
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudioTypes.h>
+#if COREAUDIO_SUPPORT_HAL
 #include <CoreAudio/AudioHardware.h>
+#endif
 #include <AudioUnit/AudioUnit.h>
 
 /*
@@ -77,6 +79,7 @@ OSStatus fluid_core_audio_callback(void *data,
 #define kAudioObjectPropertyElementMain (kAudioObjectPropertyElementMaster)
 #endif
 
+#if COREAUDIO_SUPPORT_HAL
 int
 get_num_outputs(AudioDeviceID deviceID)
 {
@@ -113,6 +116,7 @@ get_num_outputs(AudioDeviceID deviceID)
 
     return total;
 }
+#endif
 
 void
 set_channel_map(AudioUnit outputUnit, int audio_channels, const char *map_string)
@@ -187,17 +191,20 @@ set_channel_map(AudioUnit outputUnit, int audio_channels, const char *map_string
 void
 fluid_core_audio_driver_settings(fluid_settings_t *settings)
 {
+#if COREAUDIO_SUPPORT_HAL
     int i;
     UInt32 size;
     AudioObjectPropertyAddress pa;
     pa.mSelector = kAudioHardwarePropertyDevices;
     pa.mScope = kAudioObjectPropertyScopeWildcard;
     pa.mElement = kAudioObjectPropertyElementMain;
+#endif
 
     fluid_settings_register_str(settings, "audio.coreaudio.device", "default", 0);
     fluid_settings_register_str(settings, "audio.coreaudio.channel-map", "", 0);
     fluid_settings_add_option(settings, "audio.coreaudio.device", "default");
 
+#if COREAUDIO_SUPPORT_HAL
     if(OK(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &pa, 0, 0, &size)))
     {
         int num = size / (int) sizeof(AudioDeviceID);
@@ -221,6 +228,7 @@ fluid_core_audio_driver_settings(fluid_settings_t *settings)
             }
         }
     }
+#endif
 }
 
 /*
@@ -240,14 +248,17 @@ new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 fluid_audio_driver_t *
 new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
-    char *devname = NULL, *channel_map = NULL;
+#if COREAUDIO_SUPPORT_HAL
+    char *devname = NULL;
+    int i;
+#endif
+    char *channel_map = NULL;
     fluid_core_audio_driver_t *dev = NULL;
     int period_size, periods, audio_channels = 1;
     double sample_rate;
     OSStatus status;
     UInt32 size;
-    int i;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#if COREAUDIO_SUPPORT_HAL && MAC_OS_X_VERSION_MIN_REQUIRED < 1060
     ComponentDescription desc;
     Component comp;
 #else
@@ -271,12 +282,16 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     // Open the default output unit
     desc.componentType = kAudioUnitType_Output;
-    desc.componentSubType = kAudioUnitSubType_HALOutput; //kAudioUnitSubType_DefaultOutput;
+#if COREAUDIO_SUPPORT_HAL
+    desc.componentSubType = kAudioUnitSubType_HALOutput;
+#else
+    desc.componentSubType = kAudioUnitSubType_RemoteIO;
+#endif
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#if COREAUDIO_SUPPORT_HAL && MAC_OS_X_VERSION_MIN_REQUIRED < 1060
     comp = FindNextComponent(NULL, &desc);
 #else
     comp = AudioComponentFindNext(NULL, &desc);
@@ -288,7 +303,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         goto error_recovery;
     }
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#if COREAUDIO_SUPPORT_HAL && MAC_OS_X_VERSION_MIN_REQUIRED < 1060
     status = OpenAComponent(comp, &dev->outputUnit);
 #else
     status = AudioComponentInstanceNew(comp, &dev->outputUnit);
@@ -324,6 +339,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
     /* audio channels are in stereo, with a minimum of one pair */
     audio_channels = (audio_channels > 0) ? (2 * audio_channels) : 2;
 
+#if COREAUDIO_SUPPORT_HAL
     /* get the selected device name. if none is specified, use NULL for the default device. */
     if(fluid_settings_dupstr(settings, "audio.coreaudio.device", &devname) == FLUID_OK   /* alloc device name */
             && devname && strlen(devname) > 0)
@@ -369,8 +385,9 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
             }
         }
     }
-
     FLUID_FREE(devname);  /* free device name */
+#endif
+
 
     dev->buffer_size = period_size * periods;
 
@@ -473,7 +490,7 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t *p)
     fluid_core_audio_driver_t *dev = (fluid_core_audio_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#if COREAUDIO_SUPPORT_HAL && MAC_OS_X_VERSION_MIN_REQUIRED < 1060
     CloseComponent(dev->outputUnit);
 #else
     AudioComponentInstanceDispose(dev->outputUnit);

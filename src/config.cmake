@@ -9,6 +9,7 @@
 
 /* whether or not we are supporting CoreAudio */
 #cmakedefine COREAUDIO_SUPPORT @COREAUDIO_SUPPORT@
+#cmakedefine COREAUDIO_SUPPORT_HAL @COREAUDIO_SUPPORT_HAL@
 
 /* whether or not we are supporting CoreMIDI */
 #cmakedefine COREMIDI_SUPPORT @COREMIDI_SUPPORT@
