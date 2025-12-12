@@ -38,8 +38,12 @@
 #include <CoreAudio/CoreAudioTypes.h>
 #if COREAUDIO_SUPPORT_HAL
 #include <CoreAudio/AudioHardware.h>
+#else
+#include "fluid_coreaudio_avaudiosession.h"
 #endif
 #include <AudioUnit/AudioUnit.h>
+
+static const char PERF_MODE[] = "audio.coreaudio.performance-mode";
 
 /*
  * fluid_core_audio_driver_t
@@ -204,6 +208,12 @@ fluid_core_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.coreaudio.channel-map", "", 0);
     fluid_settings_add_option(settings, "audio.coreaudio.device", "default");
 
+#if !COREAUDIO_SUPPORT_HAL
+    fluid_settings_register_str(settings, PERF_MODE, "None", 0);
+    fluid_settings_add_option(settings, PERF_MODE, "None");
+    fluid_settings_add_option(settings, PERF_MODE, "LowLatency");
+#endif
+
 #if COREAUDIO_SUPPORT_HAL
     if(OK(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &pa, 0, 0, &size)))
     {
@@ -251,6 +261,10 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 #if COREAUDIO_SUPPORT_HAL
     char *devname = NULL;
     int i;
+#else
+    int avsession_ok;
+    int performance_mode;
+    char avaudiosession_msg[128] = "";
 #endif
     char *channel_map = NULL;
     fluid_core_audio_driver_t *dev = NULL;
@@ -386,7 +400,24 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         }
     }
     FLUID_FREE(devname);  /* free device name */
-#endif
+
+#else /* COREAUDIO_SUPPORT_HAL */
+    performance_mode = fluid_settings_str_equal(settings, PERF_MODE, "LowLatency")
+                           ? AVAUDIOSESSION_MODE_LOW_LATENCY : AVAUDIOSESSION_MODE_NONE;
+
+    avsession_ok = setupAVAudioSession(performance_mode, period_size, sample_rate,
+                                       avaudiosession_msg, sizeof(avaudiosession_msg));
+
+    if (avaudiosession_msg[0] != 0) {
+        if (avsession_ok) {
+            FLUID_LOG(FLUID_INFO, "%s", avaudiosession_msg);
+        }
+        else {
+            FLUID_LOG(FLUID_ERR, "%s", avaudiosession_msg);
+        }
+    }
+#endif /* !COREAUDIO_SUPPORT_HAL */
+
 
 
     dev->buffer_size = period_size * periods;

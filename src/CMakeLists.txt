@@ -31,6 +31,10 @@ endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
   set ( fluid_coreaudio_SOURCES drivers/fluid_coreaudio.c )
+  if ( NOT COREAUDIO_SUPPORT_HAL )
+    enable_language( OBJC )
+    set ( fluid_coreaudio_SOURCES ${fluid_coreaudio_SOURCES} drivers/fluid_coreaudio_avaudiosession.m )
+  endif ( NOT COREAUDIO_SUPPORT_HAL )
 endif ( COREAUDIO_SUPPORT )
 
 if ( COREMIDI_SUPPORT )
