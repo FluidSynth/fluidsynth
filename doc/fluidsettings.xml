@@ -735,6 +735,17 @@ Developers:
             <def>default</def>
             <desc>
                 Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
+                <br /><br />
+                <strong>Note</strong><br />
+                When using the WASAPI audio driver, more detailed information about device and format negotiation (e.g. whether the requested format was accepted natively, adjusted, or rejected) may be obtained by installing a custom log callback using <code>fluid_set_log_function()</code>.
+                <br />
+                The WASAPI driver reports informational, warning, and error messages received from the OS during device initialization, which can be used as a best-effort heuristic to distinguish between:
+                <ul>
+                <li>Successful native opens,</li>
+                <li>successful opens with format adjustment or resampling, and</li>
+                <li>failed opens.</li>
+                </ul>
+                This mechanism is used internally by the <code>fluidsynth -Q</code> command, see <a href="https://github.com/FluidSynth/fluidsynth/blob/master/src/fluid_wasapi_device_enumerate.c"><code>fluid_wasapi_device_enumerate.c</code></a> for a reference implementation. The content and meaning of log messages are not part of the public API contract and may change between releases.
             </desc>
         </setting>
         <setting>
