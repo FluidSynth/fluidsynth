@@ -39,15 +39,6 @@ jobs:
     - uses: actions/checkout@v5
       with:
         submodules: recursive
-    - name: Build Dependencies
-      run: |
-        git clone https://github.com/libsdl-org/SDL.git && \
-        pushd SDL && \
-        git checkout preview-3.3.2 && \
-        xcodebuild -project Xcode/SDL/SDL.xcodeproj -target "SDL3.xcframework" -configuration Release SYMROOT="build/" && \
-        mkdir build && \
-        cp -r Xcode/SDL/build/SDL3.xcframework build/ && \
-        popd
     - name: Build
       run: bash contrib/ios_build.sh
       
@@ -61,8 +52,8 @@ jobs:
           echo "name=fluidsynth-${{ github.run_id }}" >> $GITHUB_OUTPUT
         fi
         mkdir publish
-        ls -la . SDL SDL/*
-        cp -r build/FluidSynth.xcframework SDL/Xcode/SDL/build/SDL3.xcframework  publish/
+        ls -la .
+        cp -r build/FluidSynth.xcframework publish/
         ls -la publish
 
     - name: Upload Artifacts

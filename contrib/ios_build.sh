@@ -1,15 +1,10 @@
 #!/bin/bash
 
 # Framework build script for iOS
-# SDL3 is used instead of CoreAudio as CoreAudio/AudioHardware.h is not available in iOS.
-# Assumes the built SDL3 framework for both iOS and iOS simulator is located in /path/to/fluidsynth/SDL/build/SDL3.xcframework 
-# Also assumes the build script is run on a Mac with XCode installed
+# Assumes the build script is run on a Mac with XCode installed
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SDL3_XCFRAMEWORK_DIR="${SCRIPT_DIR}/../SDL/build/SDL3.xcframework"
-SDL3_CMAKE_DIR_IOS="${SDL3_XCFRAMEWORK_DIR}/ios-arm64/SDL3.framework/CMake"
-SDL3_CMAKE_DIR_IOS_SIMULATOR="${SDL3_XCFRAMEWORK_DIR}/ios-arm64_x86_64-simulator/SDL3.framework/CMake"
 
 # Clean up previous builds
 rm -rf build
@@ -35,8 +30,8 @@ CMAKE_COMMON_FLAGS=(
     -Denable-portaudio=OFF
     -Denable-pulseaudio=OFF
     -Denable-readline=OFF
-    -Denable-coreaudio=OFF
-    -Denable-sdl3=ON
+    -Denable-coreaudio=ON
+    -Denable-sdl3=OFF
     -Denable-systemd=OFF
     -Denable-threads=ON
     -Denable-waveout=OFF
@@ -56,7 +51,6 @@ cd build-ios
 cmake ../.. \
     -DCMAKE_TOOLCHAIN_FILE=../ios.toolchain.cmake \
     -DPLATFORM=OS64 \
-    -DSDL3_DIR="${SDL3_CMAKE_DIR_IOS}" \
     "${CMAKE_COMMON_FLAGS[@]}"
 
 xcodebuild -project FluidSynth.xcodeproj -target libfluidsynth -configuration Release -sdk iphoneos \
@@ -69,7 +63,6 @@ cd build-ios-simulator
 cmake ../../ \
     -DCMAKE_TOOLCHAIN_FILE=../ios.toolchain.cmake \
     -DPLATFORM=SIMULATOR64COMBINED \
-    -DSDL3_DIR="${SDL3_CMAKE_DIR_IOS_SIMULATOR}" \
     "${CMAKE_COMMON_FLAGS[@]}"
 
 xcodebuild -project FluidSynth.xcodeproj -target libfluidsynth -configuration Release -sdk iphonesimulator \
