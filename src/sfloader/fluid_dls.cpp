@@ -3138,10 +3138,21 @@ static int fluid_dls_sfont_delete(fluid_sfont_t *sfont) noexcept
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
 
+    /* Check that no samples are currently used */
+    for (auto it = dlsfont->samples_fluid.begin(); it != dlsfont->samples_fluid.end(); ++it)
+    {
+        auto& sample = *it;
+
+        if (sample.refcount != 0)
+        {
+            return FLUID_FAILED;
+        }
+    }
+
     delete_fluid_dls_font(dlsfont);
     delete_fluid_sfont(sfont);
 
-    return 0;
+    return FLUID_OK;
 }
 
 static const char *fluid_dls_preset_get_name(fluid_preset_t *preset) noexcept
