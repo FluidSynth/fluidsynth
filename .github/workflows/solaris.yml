@@ -29,12 +29,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Checkout
-          uses: actions/checkout@v5
+          uses: actions/checkout@v6
           with:
             submodules: true
 
         - name: Build & test
-          uses: vmactions/solaris-vm@v1.1.5
+          uses: vmactions/solaris-vm@v1.1.8
           with:
             envs: 'CFLAGS_SOLARIS_CC'
             usesh: true
