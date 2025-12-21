@@ -947,7 +947,21 @@ int main(int argc, char **argv)
 
         if((s != NULL) && (s[0] != '\0'))
         {
-            fluid_synth_sfload(synth, s, 1);
+            if(!fluid_file_test(s, FLUID_FILE_TEST_EXISTS))
+            {
+                if(verbose)
+                {
+                    fprintf(stdout, "Default SoundFont file '%s' does not exist.\n", s);
+                }
+            }
+            else
+            {
+                if(verbose)
+                {
+                    fprintf(stdout, "No SoundFont specified, loading default SoundFont '%s'\n", s);
+                }
+                fluid_synth_sfload(synth, s, 1);
+            }
         }
 
         FLUID_FREE(s);
