@@ -7,10 +7,11 @@ updates:
     directory: /
     groups:
       github-actions:
+        update-types: minor
         patterns:
           - "*"  # Group all Actions updates into a single larger pull request
     schedule:
-      interval: weekly
+      interval: monthly
     ignore:
       - dependency-name: "SonarSource/sonarcloud-github-c-cpp"
         # Version 3 of that task causes the scanner to throw a Java exception...
