@@ -166,7 +166,7 @@ static void test_time_precedence()
     EventPtr early = make_event(10);
     EventPtr late = make_event(20);
     fluid_event_program_change(early.get(), 0, 1);
-    fluid_event_system_reset(late.get()); // System reset has highest type precedence at same tick.
+    fluid_event_system_reset(late.get()); // NOTE OFF events now have highest type precedence at the same tick, followed by System reset.
 
     // event_compare_for_test returns !leftIsBeforeRight; since early < late by time,
     // leftIsBeforeRight is true -> comparator returns false.

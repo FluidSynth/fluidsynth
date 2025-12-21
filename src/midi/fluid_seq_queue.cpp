@@ -56,7 +56,7 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         // Both events have the same tick value. Per MIDI standard, the order is undefined. However, most implementations use a FIFO ordering here,
         // which we cannot use, because heap sort is not stable. To make sure that fluidsynth behaves correctly from a user perspective,
         // we do the following:
-        //  * System reset and NoteOff events are always first (this allows to off notes, before a channel is potentially disabled via channel mode messages on the same tick),
+        //  * NoteOff events have the highest precedence and are processed before System reset events (this allows turning off notes before a channel is potentially disabled via channel mode messages on the same tick),
         //  * Unregistering events are third (this gives clients the chance to reset and silence themselves before unregistering at the same tick),
         //  * Bank changes must precede Prog changes (to ensure correct preset fallback AND preset selection within a certain bank),
         //  * NoteOn events are always last (this makes sure that all other "state-change" events have been processed and NoteOff events
