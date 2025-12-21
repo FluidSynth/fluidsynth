@@ -22,7 +22,6 @@
 
 
 #include "fluid_defsfont.h"
-#include "fluid_sfont.h"
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_samplecache.h"
@@ -468,10 +467,10 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         return FLUID_FAILED;
     }
 
-    defsfont->fcbs = fcbs;
+    defsfont->fcbs = *fcbs;
 
     /* The actual loading is done in the sfont and sffile files */
-    sfdata = fluid_sffile_open(file, fcbs);
+    sfdata = fluid_sffile_open(file, &defsfont->fcbs);
 
     if(sfdata == NULL)
     {
@@ -2246,7 +2245,7 @@ static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *prese
                      * for a preset */
                     if(sffile == NULL)
                     {
-                        sffile = fluid_sffile_open(defsfont->filename, defsfont->fcbs);
+                        sffile = fluid_sffile_open(defsfont->filename, &defsfont->fcbs);
 
                         if(sffile == NULL)
                         {

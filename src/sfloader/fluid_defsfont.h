@@ -30,6 +30,7 @@
 #include "fluid_list.h"
 #include "fluid_mod.h"
 #include "fluid_gen.h"
+#include "fluid_sfont.h"
 
 
 
@@ -105,7 +106,7 @@ int fluid_zone_inside_range(fluid_zone_range_t *zone_range, int key, int vel);
  */
 struct _fluid_defsfont_t
 {
-    const fluid_file_callbacks_t *fcbs; /* the file callbacks used to load this Soundfont */
+    fluid_file_callbacks_t fcbs; /* the file callbacks used to load this Soundfont */
     char *filename;           /* the filename of this soundfont */
     unsigned int samplepos;   /* the position in the file at which the sample data starts */
     unsigned int samplesize;  /* the size of the sample data in bytes */
