@@ -36,7 +36,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.artifact_name.outputs.name }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
     - name: Build
@@ -57,7 +57,7 @@ jobs:
         ls -la publish
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ steps.artifact_name.outputs.name }}-iOS
         path: publish/
@@ -73,7 +73,7 @@ jobs:
     name: 🚀 Publish Release Artifacts
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         path: ${{ needs.ios-build.outputs.artifact_name }}-iOS
         pattern: ${{ needs.ios-build.outputs.artifact_name }}-iOS
