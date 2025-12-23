@@ -660,7 +660,7 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @note The @p settings parameter is used directly, but the synth does not take ownership of it.
  * Hence, the caller is responsible for freeing it, when no longer needed.
  * Further note that you may modify FluidSettings of the
- * @p settings instance. However, only those FluidSettings marked as 'realtime' will
+ * @p settings instance. However, only those FluidSettings marked as fluid_settings_is_realtime() will
  * affect the synth immediately. See the \ref fluidsettings for more details.
  *
  * @warning The @p settings object should only be used by a single synth at a time. I.e. creating
