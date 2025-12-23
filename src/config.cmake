@@ -215,6 +215,9 @@
 /* Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT "@TEST_SOUNDFONT@"
 
+/* DLS to load for unit testing */
+#cmakedefine TEST_DLS "@TEST_DLS@"
+
 /* Soundfont to load for UTF-8 unit testing */
 #cmakedefine TEST_SOUNDFONT_UTF8_1 "@TEST_SOUNDFONT_UTF8_1@"
 #cmakedefine TEST_SOUNDFONT_UTF8_2 "@TEST_SOUNDFONT_UTF8_2@"
