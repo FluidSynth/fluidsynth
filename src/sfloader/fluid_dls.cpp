@@ -374,7 +374,7 @@ struct fluid_dls_font
 {
     fluid_synth_t *synth;
     fluid_sfont_t *sfont;
-    const fluid_file_callbacks_t *fcbs;
+    const fluid_file_callbacks_t fcbs;
     uint32_t output_sample_rate; // only used for cdl eval
     std::string filename;
 
@@ -384,7 +384,7 @@ struct fluid_dls_font
         {
             if(file != nullptr)
             {
-                fcbs->fclose(file);
+                fcbs.fclose(file);
                 file = nullptr;
             }
         } };
@@ -477,7 +477,7 @@ struct fluid_dls_font
     // utilities
     void fseek(fluid_long_long_t pos, int whence)
     {
-        if(fcbs->fseek(file, pos, whence) != FLUID_OK)
+        if(fcbs.fseek(file, pos, whence) != FLUID_OK)
         {
             throw std::runtime_error{ "Failed to seek" };
         }
@@ -589,7 +589,7 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 #define READCHUNK_RAW(sf, var)                                                  \
     do                                                                          \
     {                                                                           \
-        if ((sf)->fcbs->fread(var, 8, (sf)->file) == FLUID_FAILED)              \
+        if ((sf)->fcbs.fread(var, 8, (sf)->file) == FLUID_FAILED)              \
             throw std::runtime_error{ "Failed when reading chunk" };            \
         ((RIFFChunk *)(var))->size = FLUID_LE32TOH(((RIFFChunk *)(var))->size); \
     } while (0)
@@ -597,14 +597,14 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 #define READID(sf, var)                                                  \
     do                                                                   \
     {                                                                    \
-        if ((sf)->fcbs->fread(var, 4, (sf)->file) == FLUID_FAILED)       \
+        if ((sf)->fcbs.fread(var, 4, (sf)->file) == FLUID_FAILED)       \
             throw std::runtime_error{ "Failed when reading FOURCC ID" }; \
     } while (0)
 
 #define READ8(sf, var)                                              \
     do                                                              \
     {                                                               \
-        if ((sf)->fcbs->fread(&var, 1, (sf)->file) == FLUID_FAILED) \
+        if ((sf)->fcbs.fread(&var, 1, (sf)->file) == FLUID_FAILED) \
             throw std::runtime_error{ "Failed when reading byte" }; \
     } while (0)
 
@@ -612,7 +612,7 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
     do                                                                \
     {                                                                 \
         uint16_t _temp;                                               \
-        if ((sf)->fcbs->fread(&_temp, 2, (sf)->file) == FLUID_FAILED) \
+        if ((sf)->fcbs.fread(&_temp, 2, (sf)->file) == FLUID_FAILED) \
             throw std::runtime_error{ "Failed when reading word" };   \
         (var) = FLUID_LE16TOH(_temp);                                 \
     } while (0)
@@ -621,7 +621,7 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
     do                                                                \
     {                                                                 \
         uint32_t _temp;                                               \
-        if ((sf)->fcbs->fread(&_temp, 4, (sf)->file) == FLUID_FAILED) \
+        if ((sf)->fcbs.fread(&_temp, 4, (sf)->file) == FLUID_FAILED) \
             throw std::runtime_error{ "Failed when reading dword" };  \
         (var) = FLUID_LE32TOH(_temp);                                 \
     } while (0)
@@ -758,7 +758,7 @@ inline std::string fluid_dls_font::read_name_from_info_entries(fluid_long_long_t
             std::string name;
             name.resize(chunk.size);
 
-            if(fcbs->fread(name.data(), chunk.size, file) != FLUID_OK)
+            if(fcbs.fread(name.data(), chunk.size, file) != FLUID_OK)
             {
                 throw std::runtime_error{ "Failed when reading INAM chunk" };
             }
@@ -815,7 +815,7 @@ inline static void READGUID(fluid_dls_font *sf, DLSID &id)
     READ16(sf, id.Data2);
     READ16(sf, id.Data3);
 
-    if(sf->fcbs->fread(id.Data4, 8, sf->file) == FLUID_FAILED)
+    if(sf->fcbs.fread(id.Data4, 8, sf->file) == FLUID_FAILED)
     {
         throw std::runtime_error{ "Failed when reading GUID" };
     }
@@ -1456,34 +1456,33 @@ void convert_dls_connectionblock_to_art(fluid_dls_articulation &art,
 // Parse the DLS structure
 fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                                fluid_sfont_t *sfont,
-                               const fluid_file_callbacks_t *fcbs,
+                               const fluid_file_callbacks_t *fcbs_in,
                                const char *filename,
                                uint32_t output_sample_rate,
                                bool try_mlock)
-    : synth(synth), sfont(sfont), fcbs(fcbs), output_sample_rate(output_sample_rate), filename(filename)
+    : synth(synth), sfont(sfont), fcbs(*fcbs_in), output_sample_rate(output_sample_rate), filename(filename)
 {
     // Get basic file information
 
-    file = fcbs->fopen(filename); // NOLINT(cppcoreguidelines-prefer-member-initializer)
-
+    file = fcbs.fopen(filename); // NOLINT(cppcoreguidelines-prefer-member-initializer)
     if(file == nullptr)
     {
         throw std::runtime_error{ string_format("Unable to open file '%s'", filename) };
     }
 
-    if(fcbs->fseek(file, 0L, SEEK_END) == FLUID_FAILED)
+    if(fcbs.fseek(file, 0L, SEEK_END) == FLUID_FAILED)
     {
         throw std::runtime_error{ "Seek to end of file failed" };
     }
 
-    filesize = fcbs->ftell(file);
+    filesize = fcbs.ftell(file);
 
     if(filesize == FLUID_FAILED)
     {
         throw std::runtime_error{ "Get end of file position failed" };
     }
 
-    if(fcbs->fseek(file, 0, SEEK_SET) == FLUID_FAILED)
+    if(fcbs.fseek(file, 0, SEEK_SET) == FLUID_FAILED)
     {
         throw std::runtime_error{ "Rewind to start of file failed" };
     }
@@ -1947,7 +1946,7 @@ inline bool fluid_dls_font::execute_cdls(fluid_long_long_t offset, int size)
         return stack[--sp];
     };
 
-    if(fcbs->fseek(file, offset, SEEK_SET) != FLUID_OK)
+    if(fcbs.fseek(file, offset, SEEK_SET) != FLUID_OK)
     {
         throw std::runtime_error{ "Failed to seek to CDL operations" };
     }
@@ -2247,9 +2246,9 @@ inline void fluid_dls_font::parse_wave(fluid_long_long_t offset, fluid_dls_sampl
             {
                 uint32_t c = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
 
-                if(fcbs->fread(buffer, c, file) != FLUID_OK)
+                if(fcbs.fread(buffer, c, file) != FLUID_OK)
                 {
-                    FLUID_LOG(FLUID_ERR, "fcbs->fread failed when reading DLS data chunk");
+                    FLUID_LOG(FLUID_ERR, "fcbs::fread failed when reading DLS data chunk");
                     throw std::exception{};
                 }
 
@@ -2750,7 +2749,7 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
 
     drum_note_aliasing.emplace();
 
-    if(fcbs->fread(drum_note_aliasing->data(), 128, file) != FLUID_OK)
+    if(fcbs.fread(drum_note_aliasing->data(), 128, file) != FLUID_OK)
     {
         throw std::runtime_error{ "Failed to read drum note aliasing table" };
     }
@@ -2844,7 +2843,7 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data) noe
 
     newpos = std::clamp(newpos, 0LL, data->size);
 
-    if(data->font->fcbs->fseek(data->font->file, data->offset + newpos, SEEK_SET) == FLUID_OK)
+    if(data->font->fcbs.fseek(data->font->file, data->offset + newpos, SEEK_SET) == FLUID_OK)
     {
         data->pos = newpos;
     }
@@ -2872,7 +2871,7 @@ static sf_count_t sfvio_read(void *buffer, sf_count_t count, void *user_data) no
         return 0;
     }
 
-    if(data->font->fcbs->fread(buffer, count, data->font->file) != FLUID_OK)
+    if(data->font->fcbs.fread(buffer, count, data->font->file) != FLUID_OK)
     {
         return 0;
     }

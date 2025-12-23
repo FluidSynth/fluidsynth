@@ -1220,16 +1220,6 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     delete_fluid_list(synth->sfont);
 
-    /* delete all the SoundFont loaders */
-
-    for(list = synth->loaders; list; list = fluid_list_next(list))
-    {
-        loader = (fluid_sfloader_t *) fluid_list_get(list);
-        fluid_sfloader_delete(loader);
-    }
-
-    delete_fluid_list(synth->loaders);
-
     /* wait for and delete all the lazy sfont unloading timers */
 
     for(list = synth->fonts_to_be_unloaded; list; list = fluid_list_next(list))
@@ -1242,6 +1232,16 @@ delete_fluid_synth(fluid_synth_t *synth)
     }
 
     delete_fluid_list(synth->fonts_to_be_unloaded);
+
+    /* delete all the SoundFont loaders */
+
+    for(list = synth->loaders; list; list = fluid_list_next(list))
+    {
+        loader = (fluid_sfloader_t *) fluid_list_get(list);
+        fluid_sfloader_delete(loader);
+    }
+
+    delete_fluid_list(synth->loaders);
 
     if(synth->channel != NULL)
     {
