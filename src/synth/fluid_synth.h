@@ -33,6 +33,7 @@
 #include "fluid_voice.h"
 #include "fluid_chorus.h"
 #include "fluid_ladspa.h"
+#include "fluid_limiter.h"
 #include "fluid_midi_router.h"
 #include "fluid_rvoice_event.h"
 
@@ -56,9 +57,18 @@
 #define FLUID_CHORUS_DEFAULT_SPEED 0.2f                  /**< Default chorus speed */
 #define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE  /**< Default chorus waveform type */
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define FLUID_LIMITER_DEFAULT_INPUT_GAIN 1.0f        /**< Default input gain */
+#define FLUID_LIMITER_DEFAULT_ATTACK_MS 5.0f         /**< Default attack in milliseconds */
+#define FLUID_LIMITER_DEFAULT_HOLD_MS 15.0f          /**< Default hold in milliseconds */
+#define FLUID_LIMITER_DEFAULT_RELEASE_MS 40.0f       /**< Default attack in milliseconds */
+#define FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT 0.999f    /**< Default output limit */
+#define FLUID_LIMITER_DEFAULT_SMOOTHING_STAGES 1     /**< Default number of smoothing stages (can be 1,2 or 3) */
+#define FLUID_LIMITER_DEFAULT_LINK_CHANNELS 0.5f     /**< Default "link channels" value (from 0.0 to 1.0) */
 
 /***************************************************************
  *
