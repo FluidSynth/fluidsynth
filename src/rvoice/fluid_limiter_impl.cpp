@@ -19,7 +19,7 @@
 
 #include "fluidsynth_priv.h"
 
-#ifdef LIMITER
+#ifdef LIMITER_SUPPORT
 
 #include "fluid_limiter.h"
 #include "fluid_limiter_impl.h"
@@ -70,4 +70,4 @@ extern "C" void fluid_limiter_impl_process_buffers(
     ((Limiter*)lim)->process(bufs, FLUID_BUFSIZE);
 }
 
-#endif /* LIMITER */
+#endif /* LIMITER_SUPPORT */

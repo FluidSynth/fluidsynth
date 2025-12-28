@@ -817,7 +817,6 @@ if ( enable-limiter )
               HINTS ENV SIGNALSMITH_AUDIO_BASICS_PATH NO_CACHE )
   if ( SIGNALSMITH_AUDIO_BASICS )
     set ( LIMITER_SUPPORT 1 )
-    set ( LIMITER 1 )
   endif ( SIGNALSMITH_AUDIO_BASICS )
 endif ( enable-limiter )
 
