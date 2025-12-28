@@ -227,7 +227,6 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
 #ifdef LIMITER_SUPPORT
     fluid_settings_register_int(settings, "synth.limiter.active", 0, 0, 1, FLUID_HINT_TOGGLED);
-    fluid_settings_register_num(settings, "synth.limiter.input-gain", FLUID_LIMITER_DEFAULT_INPUT_GAIN, fluid_cb2amp(120), fluid_cb2amp(-240), 0);
     fluid_settings_register_num(settings, "synth.limiter.output-limit", FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT, fluid_cb2amp(240), 1.0f, 0);
     fluid_settings_register_num(settings, "synth.limiter.attack", FLUID_LIMITER_DEFAULT_ATTACK_MS, 1.0f, 250.0f, 0);
     fluid_settings_register_num(settings, "synth.limiter.hold", FLUID_LIMITER_DEFAULT_HOLD_MS, 0.0f, 250.0f, 0);
@@ -961,7 +960,7 @@ new_fluid_synth(fluid_settings_t *settings)
     if(with_limiter)
     {
 #ifdef LIMITER_SUPPORT
-        fluid_settings_getnum(settings, "synth.limiter.input-gain", &limiter_settings.input_gain);
+        limiter_settings.input_gain = 1.0;
         fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_settings.output_limit);
         fluid_settings_getnum(settings, "synth.limiter.attack", &limiter_settings.attack_ms);
         fluid_settings_getnum(settings, "synth.limiter.hold", &limiter_settings.hold_ms);
