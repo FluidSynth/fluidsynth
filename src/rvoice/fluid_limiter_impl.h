@@ -26,10 +26,10 @@
 extern "C" {
 #endif
 
-void fluid_limiter_impl_set_sample_rate(fluid_limiter_t*lim, fluid_real_t sample_rate);
-fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings);
+void fluid_limiter_impl_set_sample_rate(fluid_limiter_t*lim, fluid_real_t sample_rate, unsigned int block_size);
+fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings, unsigned int block_size);
 void fluid_limiter_impl_delete(fluid_limiter_t* lim);
-void fluid_limiter_impl_process_buffers(fluid_limiter_t* lim, fluid_real_t* bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE]);
+void fluid_limiter_impl_process_buffers(fluid_limiter_t* lim, fluid_real_t* bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE], unsigned int block_size);
 
 #ifdef __cplusplus
 }
