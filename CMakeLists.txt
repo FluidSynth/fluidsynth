@@ -813,8 +813,13 @@ endif ( enable-libinstpatch )
 
 unset ( LIMITER_SUPPORT CACHE )
 if ( enable-limiter )
-  find_path ( SIGNALSMITH_AUDIO_BASICS include/signalsmith-basics/limiter.h
-              HINTS ENV SIGNALSMITH_AUDIO_BASICS_PATH NO_CACHE )
+  if ( NOT SIGNALSMITH_AUDIO_BASICS_PATH )
+    set ( SIGNALSMITH_AUDIO_BASICS_PATH "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics" )
+  endif ( NOT SIGNALSMITH_AUDIO_BASICS_PATH )
+  find_path ( SIGNALSMITH_AUDIO_BASICS
+              PATHS
+              "include/signalsmith-basics/limiter.h"
+              HINTS SIGNALSMITH_AUDIO_BASICS_PATH NO_CACHE )
   if ( SIGNALSMITH_AUDIO_BASICS )
     set ( LIMITER_SUPPORT 1 )
   endif ( SIGNALSMITH_AUDIO_BASICS )
