@@ -206,7 +206,11 @@ if ( LIMITER_SUPPORT )
       rvoice/fluid_limiter_impl.cpp
       rvoice/fluid_limiter_impl.h
   )
-  set_source_files_properties(rvoice/fluid_limiter_impl.cpp PROPERTIES COMPILE_FLAGS "-I${SIGNALSMITH_AUDIO_BASICS}/include -std=c++11")
+  set_source_files_properties(rvoice/fluid_limiter_impl.cpp
+   PROPERTIES
+    INCLUDE_DIRECTORIES "${SIGNALSMITH_AUDIO_BASICS}/include"
+    CXX_STANDARD 20 # Because of std::atomic_flag::test()
+    CXX_STANDARD_REQUIRED ON)
 endif ( LIMITER_SUPPORT )
 
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
