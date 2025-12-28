@@ -14,7 +14,7 @@ macro ( ADD_FLUID_TEST _test )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_test} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    target_link_libraries( ${_test} libfluidsynth-OBJ )
+    target_link_libraries( ${_test} libfluidsynth-OBJ $<$<BOOL:${LIMITER_SUPPORT}>:fluid_limiter_impl-OBJ> )
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}
@@ -46,7 +46,8 @@ macro ( ADD_FLUID_TEST_UTIL _util )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_util} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    target_link_libraries( ${_util} libfluidsynth-OBJ )
+    target_link_libraries( ${_util} libfluidsynth-OBJ $<$<BOOL:${LIMITER_SUPPORT}>:fluid_limiter_impl-OBJ>
+ )
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_util}

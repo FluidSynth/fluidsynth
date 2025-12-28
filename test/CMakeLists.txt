@@ -76,6 +76,7 @@ set(STACKEDSF_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/stacked_sf2")
 set(SFE_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/sfe")
 set(RPN_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/rpn")
 set(SYSEX_GS_DT1 "${CMAKE_CURRENT_BINARY_DIR}/manual/sysex/gs_dt1")
+set(LIMITER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/limiter")
 
 if(LIBSNDFILE_SUPPORT)
     set(FEXT "wav")
@@ -87,7 +88,7 @@ endif()
 add_custom_target(check_manual)
 
 add_custom_target(create_iir_dir
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR} ${SFE_RENDER_DIR} ${SYSEX_GS_DT1} ${RPN_RENDER_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR} ${SFE_RENDER_DIR} ${SYSEX_GS_DT1} ${RPN_RENDER_DIR} ${LIMITER_RENDER_DIR}
     VERBATIM)
 
 add_custom_target(render1415
@@ -348,6 +349,21 @@ add_custom_target(renderGSDT1
     VERBATIM
 )
 
+add_custom_target(renderLimiterTests
+    COMMAND fluidsynth -o synth.limiter.active=1 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_default.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.attack=1 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a1.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.attack=50 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a50.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.release=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_r0.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.attack=1 -o synth.limiter.release=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a1_r0.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.attack=1 -o synth.limiter.release=250 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a1_r250.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_lim06.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMAND fluidsynth -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -o synth.limiter.hold=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_h0_lim06.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+    COMMENT "Rendering Limiter Tests"
+    DEPENDS fluidsynth create_iir_dir
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/
+    VERBATIM
+)
+
 if ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
     add_custom_target(renderStreetwise
         COMMAND fluidsynth -R 0 -C 0 -g 0.6 -F "${STACKEDSF_RENDER_DIR}/Streetwise.${FEXT}" "Streetwise.mid" ${GENERAL_USER_GS2} "Streetwise.dls"
@@ -388,4 +404,5 @@ add_dependencies(check_manual renderGeneralUserDemo)
 add_dependencies(check_manual renderBankSelect)
 add_dependencies(check_manual renderDMOD)
 add_dependencies(check_manual renderRPN)
+add_dependencies(check_manual renderLimiterTests)
 
