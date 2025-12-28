@@ -102,7 +102,7 @@ option ( enable-threads "enable multi-threading support (such as parallel voice 
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 option ( enable-unicode "enable UNICODE build for Windows" on )
 option ( enable-native-dls "compile native DLS support (requires C++17)" on )
-option ( enable-limiter "compile Limiter support (requires signalsmith-audio)" off )
+option ( enable-limiter "compile Limiter support (requires signalsmith-audio)" on )
 
 set ( osal "glib" CACHE STRING "OS abstraction to use, provided by src/utils/fluid_sys_${osal}.*" )
 
@@ -813,15 +813,15 @@ endif ( enable-libinstpatch )
 
 unset ( LIMITER_SUPPORT CACHE )
 if ( enable-limiter )
-  if ( NOT SIGNALSMITH_AUDIO_BASICS_PATH )
-    set ( SIGNALSMITH_AUDIO_BASICS_PATH "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics" )
-  endif ( NOT SIGNALSMITH_AUDIO_BASICS_PATH )
   find_path ( SIGNALSMITH_AUDIO_BASICS
-              PATHS
-              "include/signalsmith-basics/limiter.h"
-              HINTS SIGNALSMITH_AUDIO_BASICS_PATH NO_CACHE )
+              NAMES "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
+              PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
+              HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE )
   if ( SIGNALSMITH_AUDIO_BASICS )
+    add_subdirectory(signalsmith-audio-basics)
     set ( LIMITER_SUPPORT 1 )
+  else ( SIGNALSMITH_AUDIO_BASICS )
+    message ( STATUS "Could NOT find Signalsmith Audio Basic. Limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository. The repo contains submodules, be sure to init them!" )
   endif ( SIGNALSMITH_AUDIO_BASICS )
 endif ( enable-limiter )
 

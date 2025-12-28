@@ -203,10 +203,21 @@ if ( LIMITER_SUPPORT )
   set ( fulid_limiter_SOURCES
       rvoice/fluid_limiter.c
       rvoice/fluid_limiter.h
-      rvoice/fluid_limiter_impl.cpp
       rvoice/fluid_limiter_impl.h
   )
-  set_source_files_properties(rvoice/fluid_limiter_impl.cpp PROPERTIES COMPILE_FLAGS "-I${SIGNALSMITH_AUDIO_BASICS}/include -std=c++11")
+  add_library(fluid_limiter_impl-OBJ OBJECT
+    rvoice/fluid_limiter_impl.cpp
+  )
+  target_include_directories(fluid_limiter_impl-OBJ PRIVATE
+    ${FluidSynth_BINARY_DIR}
+    ${FluidSynth_BINARY_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/include
+  )
+  target_link_libraries(fluid_limiter_impl-OBJ PRIVATE signalsmith-basics)
+  set_target_properties(fluid_limiter_impl-OBJ PROPERTIES
+    CXX_STANDARD 20 # Because of std::atomic_flag::test()
+    CXX_STANDARD_REQUIRED ON
+  )
 endif ( LIMITER_SUPPORT )
 
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
@@ -332,6 +343,7 @@ endif ( MACOSX_FRAMEWORK )
 # them correctly in case of MACOSX_FRAMEWORK
 add_library ( libfluidsynth
     $<TARGET_OBJECTS:libfluidsynth-OBJ>
+    $<$<BOOL:${LIMITER_SUPPORT}>:$<TARGET_OBJECTS:fluid_limiter_impl-OBJ>>
     ${public_main_HEADER}
     ${public_HEADERS}
     ${MACOSX_FRAMEWORK_SOURCE_HACK}

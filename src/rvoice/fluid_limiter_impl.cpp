@@ -17,10 +17,17 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-#include "fluidsynth_priv.h"
+#include "config.h"
+
+#if defined(WITH_FLOAT)
+using fluid_real_t = float;
+#else
+using fluid_real_t = double;
+#endif
 
 #ifdef LIMITER_SUPPORT
 
+//#include "fluidsynth.h"
 #include "fluid_limiter.h"
 #include "fluid_limiter_impl.h"
 #include "signalsmith-basics/limiter.h"
@@ -31,12 +38,12 @@ using Limiter = signalsmith::basics::LimiterFloat;
 using Limiter = signalsmith::basics::LimiterDouble;
 #endif
 
-extern "C" void fluid_limiter_impl_set_sample_rate(fluid_limiter_t* lim, fluid_real_t sample_rate)
+extern "C" void fluid_limiter_impl_set_sample_rate(fluid_limiter_t* lim, fluid_real_t sample_rate, unsigned int block_size)
 {
-    ((Limiter*)lim)->configure(sample_rate, FLUID_BUFSIZE, FLUID_LIMITER_NUM_CHANNELS_AT_ONCE);
+    ((Limiter*)lim)->configure(sample_rate, block_size, FLUID_LIMITER_NUM_CHANNELS_AT_ONCE);
 }
 
-extern "C" fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
+extern "C" fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings, unsigned int block_size)
 {
     auto lim = new Limiter(settings->attack_ms + settings->hold_ms);
 
@@ -48,11 +55,11 @@ extern "C" fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, flu
     lim->smoothingStages = settings->smoothing_stages;
     lim->linkChannels = settings->link_channels;
 
-    if (! lim->configure(sample_rate, FLUID_BUFSIZE,
+    if (! lim->configure(sample_rate, block_size,
                          FLUID_LIMITER_NUM_CHANNELS_AT_ONCE,
                          FLUID_LIMITER_NUM_CHANNELS_AT_ONCE) )
     {
-        FLUID_LOG(FLUID_WARN, "limiter parameters was not accepted");
+        //fluid_log(FLUID_WARN, "limiter parameters was not accepted");
     }
 
     return lim;
@@ -65,9 +72,10 @@ extern "C" void fluid_limiter_impl_delete(fluid_limiter_t* lim)
 
 extern "C" void fluid_limiter_impl_process_buffers(
     fluid_limiter_t* lim,
-    fluid_real_t* bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE])
+    fluid_real_t* bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE],
+    unsigned int block_size)
 {
-    ((Limiter*)lim)->process(bufs, FLUID_BUFSIZE);
+    ((Limiter*)lim)->process(bufs, block_size);
 }
 
 #endif /* LIMITER_SUPPORT */

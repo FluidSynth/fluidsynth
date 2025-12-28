@@ -47,7 +47,7 @@ new_fluid_limiter(fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
         return NULL;
     }
 
-    lim = fluid_limiter_impl_new(sample_rate, settings);
+    lim = fluid_limiter_impl_new(sample_rate, settings, FLUID_BUFSIZE);
 
     if(lim == NULL)
     {
@@ -84,7 +84,7 @@ fluid_limiter_samplerate_change(fluid_limiter_t *lim, fluid_real_t sample_rate)
 
     fluid_return_val_if_fail(lim != NULL, FLUID_FAILED);
 
-    fluid_limiter_impl_set_sample_rate(lim, sample_rate);
+    fluid_limiter_impl_set_sample_rate(lim, sample_rate, FLUID_BUFSIZE);
 
     return status;
 }
@@ -110,7 +110,7 @@ fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r
         bufs[0] = buf_l + i*FLUID_BUFSIZE;
         bufs[1] = buf_r + i*FLUID_BUFSIZE;
 
-        fluid_limiter_impl_process_buffers(lim, bufs);
+        fluid_limiter_impl_process_buffers(lim, bufs, FLUID_BUFSIZE);
     }
 }
 
