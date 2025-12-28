@@ -226,16 +226,14 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "midi.portname", "", 0);
 
 #ifdef LIMITER
-#define DB2GAIN(_db_) pow(10, (_db_)*0.05)
     fluid_settings_register_int(settings, "synth.limiter.active", 0, 0, 1, FLUID_HINT_TOGGLED);
-    fluid_settings_register_num(settings, "synth.limiter.input-gain", FLUID_LIMITER_DEFAULT_INPUT_GAIN, DB2GAIN(-12), DB2GAIN(24), 0);
-    fluid_settings_register_num(settings, "synth.limiter.output-limit", FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT, DB2GAIN(-24), 1.0f, 0);
-    fluid_settings_register_num(settings, "synth.limiter.attack-ms", FLUID_LIMITER_DEFAULT_ATTACK_MS, 1.0f, 250.0f, 0);
-    fluid_settings_register_num(settings, "synth.limiter.hold-ms", FLUID_LIMITER_DEFAULT_HOLD_MS, 0.0f, 250.0f, 0);
-    fluid_settings_register_num(settings, "synth.limiter.release-ms", FLUID_LIMITER_DEFAULT_RELEASE_MS, 0.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.input-gain", FLUID_LIMITER_DEFAULT_INPUT_GAIN, fluid_cb2amp(120), fluid_cb2amp(-240), 0);
+    fluid_settings_register_num(settings, "synth.limiter.output-limit", FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT, fluid_cb2amp(240), 1.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.attack", FLUID_LIMITER_DEFAULT_ATTACK_MS, 1.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.hold", FLUID_LIMITER_DEFAULT_HOLD_MS, 0.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.release", FLUID_LIMITER_DEFAULT_RELEASE_MS, 0.0f, 250.0f, 0);
     fluid_settings_register_int(settings, "synth.limiter.smoothing-stages", FLUID_LIMITER_DEFAULT_SMOOTHING_STAGES, 1, 3, 0);
     fluid_settings_register_num(settings, "synth.limiter.link-channels", FLUID_LIMITER_DEFAULT_LINK_CHANNELS, 0.0f, 1.0f, 0);
-#undef DB2GAIN
 #endif
 
 #ifdef DEFAULT_SOUNDFONT
@@ -965,9 +963,9 @@ new_fluid_synth(fluid_settings_t *settings)
 #ifdef LIMITER
         fluid_settings_getnum(settings, "synth.limiter.input-gain", &limiter_settings.input_gain);
         fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_settings.output_limit);
-        fluid_settings_getnum(settings, "synth.limiter.attack-ms", &limiter_settings.attack_ms);
-        fluid_settings_getnum(settings, "synth.limiter.hold-ms", &limiter_settings.hold_ms);
-        fluid_settings_getnum(settings, "synth.limiter.release-ms", &limiter_settings.release_ms);
+        fluid_settings_getnum(settings, "synth.limiter.attack", &limiter_settings.attack_ms);
+        fluid_settings_getnum(settings, "synth.limiter.hold", &limiter_settings.hold_ms);
+        fluid_settings_getnum(settings, "synth.limiter.release", &limiter_settings.release_ms);
         fluid_settings_getint(settings, "synth.limiter.smoothing-stages", &limiter_settings.smoothing_stages);
         fluid_settings_getnum(settings, "synth.limiter.link-channels", &limiter_settings.link_channels);
 
