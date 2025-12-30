@@ -45,7 +45,12 @@ extern "C" void fluid_limiter_impl_set_sample_rate(fluid_limiter_t* lim, fluid_r
 
 extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings, unsigned int block_size)
 {
-    auto lim = new Limiter(settings->attack_ms + settings->hold_ms);
+    auto lim = new (std::nothrow) Limiter(settings->attack_ms + settings->hold_ms);
+    if(lim == nullptr)
+    {
+        //fluid_log(FLUID_PANIC, "out of memory allocating limiter");
+        return nullptr;
+    }
 
     lim->inputGain = settings->input_gain;
     lim->outputLimit = settings->output_limit;
