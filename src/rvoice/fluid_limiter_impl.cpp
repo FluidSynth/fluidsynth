@@ -27,7 +27,7 @@ using fluid_real_t = double;
 
 #ifdef LIMITER_SUPPORT
 
-//#include "fluidsynth.h"
+#include "fluidsynth.h"
 #include "fluid_limiter.h"
 #include "fluid_limiter_impl.h"
 #include "signalsmith-basics/limiter.h"
@@ -48,7 +48,7 @@ extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, flu
     auto lim = new (std::nothrow) Limiter(settings->attack_ms + settings->hold_ms);
     if(lim == nullptr)
     {
-        //fluid_log(FLUID_PANIC, "out of memory allocating limiter");
+        fluid_log(FLUID_PANIC, "out of memory allocating limiter");
         return nullptr;
     }
 
@@ -64,7 +64,7 @@ extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, flu
                         FLUID_LIMITER_NUM_CHANNELS_AT_ONCE,
                         FLUID_LIMITER_NUM_CHANNELS_AT_ONCE))
     {
-        //fluid_log(FLUID_WARN, "limiter parameters was not accepted");
+        fluid_log(FLUID_WARN, "limiter parameters was not accepted");
     }
 
     return lim;
