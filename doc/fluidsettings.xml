@@ -159,8 +159,7 @@ Developers:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE) a lookahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the output signal. Note that fluidsynth has to be compiled with limiter support, otherwise any
-                of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</desc>
+                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. Note that fluidsynth has to be compiled with limiter support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</desc>
         </setting>
         <setting>
             <name>limiter.attack</name>
