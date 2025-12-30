@@ -43,7 +43,7 @@ extern "C" void fluid_limiter_impl_set_sample_rate(fluid_limiter_t* lim, fluid_r
     ((Limiter*)lim)->configure(sample_rate, block_size, FLUID_LIMITER_NUM_CHANNELS_AT_ONCE);
 }
 
-extern "C" fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings, unsigned int block_size)
+extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings, unsigned int block_size)
 {
     auto lim = new Limiter(settings->attack_ms + settings->hold_ms);
 
@@ -55,9 +55,9 @@ extern "C" fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, flu
     lim->smoothingStages = settings->smoothing_stages;
     lim->linkChannels = settings->link_channels;
 
-    if (! lim->configure(sample_rate, block_size,
-                         FLUID_LIMITER_NUM_CHANNELS_AT_ONCE,
-                         FLUID_LIMITER_NUM_CHANNELS_AT_ONCE) )
+    if(! lim->configure(sample_rate, block_size,
+                        FLUID_LIMITER_NUM_CHANNELS_AT_ONCE,
+                        FLUID_LIMITER_NUM_CHANNELS_AT_ONCE))
     {
         //fluid_log(FLUID_WARN, "limiter parameters was not accepted");
     }
@@ -67,12 +67,12 @@ extern "C" fluid_limiter_t* fluid_limiter_impl_new(fluid_real_t sample_rate, flu
 
 extern "C" void fluid_limiter_impl_delete(fluid_limiter_t* lim)
 {
-    delete (Limiter*)lim;
+    delete(Limiter*)lim;
 }
 
 extern "C" void fluid_limiter_impl_process_buffers(
-    fluid_limiter_t* lim,
-    fluid_real_t* bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE],
+    fluid_limiter_t *lim,
+    fluid_real_t *bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE],
     unsigned int block_size)
 {
     ((Limiter*)lim)->process(bufs, block_size);

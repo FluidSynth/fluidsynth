@@ -37,10 +37,10 @@
 * @return pointer on the new limiter or NULL if memory error.
 * Limiter API.
 */
-fluid_limiter_t*
+fluid_limiter_t *
 new_fluid_limiter(fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
 {
-    fluid_limiter_t* lim;
+    fluid_limiter_t *lim;
 
     if(sample_rate <= 0)
     {
@@ -100,15 +100,15 @@ void
 fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r, int block_count)
 {
     int i;
-    fluid_real_t* bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE];
+    fluid_real_t *bufs[FLUID_LIMITER_NUM_CHANNELS_AT_ONCE];
 
-    for (i = 0; i < block_count; i++)
+    for(i = 0; i < block_count; i++)
     {
 #if FLUID_LIMITER_NUM_CHANNELS_AT_ONCE < 2
 #error "expected FLUID_LIMITER_NUM_CHANNELS_AT_ONCE >= 2"
 #endif
-        bufs[0] = buf_l + i*FLUID_BUFSIZE;
-        bufs[1] = buf_r + i*FLUID_BUFSIZE;
+        bufs[0] = buf_l + i * FLUID_BUFSIZE;
+        bufs[1] = buf_r + i * FLUID_BUFSIZE;
 
         fluid_limiter_impl_process_buffers(lim, bufs, FLUID_BUFSIZE);
     }

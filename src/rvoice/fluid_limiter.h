@@ -27,7 +27,8 @@
 // maybe if we want to parallelize, we might set this to 1
 #define FLUID_LIMITER_NUM_CHANNELS_AT_ONCE 2
 
-typedef struct {
+typedef struct
+{
     fluid_real_t input_gain;
     fluid_real_t output_limit;
     fluid_real_t attack_ms;
@@ -39,15 +40,14 @@ typedef struct {
 
 typedef void fluid_limiter_t;
 
-fluid_limiter_t*
+fluid_limiter_t *
 new_fluid_limiter(fluid_real_t sample_rate, fluid_limiter_settings_t* settings);
 
 void delete_fluid_limiter(fluid_limiter_t* lim);
 
 int fluid_limiter_samplerate_change(fluid_limiter_t* lim, fluid_real_t sample_rate);
 
-void
-fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r, int block_count);
+void fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r, int block_count);
 
 #endif /* LIMITER_SUPPORT */
 
