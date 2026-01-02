@@ -137,6 +137,9 @@
 /* Include the LADSPA Fx unit */
 #cmakedefine LADSPA @LADSPA_SUPPORT@
 
+/* Include the LIMITER */
+#cmakedefine LIMITER @LIMITER_SUPPORT@
+
 /* Define to enable IPV6 support */
 #cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
 
