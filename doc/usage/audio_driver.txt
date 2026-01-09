@@ -20,18 +20,19 @@ and a description.
 - pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
 - coreaudio: Apple CoreAudio (Mac OS X)
 - dsound: Microsoft DirectSound (Windows)
+- wasapi: Windows Audio Session API (Windows Vista and later)
+- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86,
+  Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
+  and later)
 - portaudio: PortAudio Library (Mac OS 9 & X, Windows, Linux)
 - sndman: Apple SoundManager (Mac OS Classic)
 - dart: DART sound driver (OS/2)
 - opensles: OpenSL ES (Android)
 - oboe: Oboe (Android)
-- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86,
-  Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
-  and later)
-- file: Driver to output audio to a file
 - sdl3*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
   FreeBSD, Haiku, etc.)
 - pipewire**: PipeWire (Linux)
+- file: Driver to output audio to a file
 
 The default audio driver depends on the settings with which FluidSynth was
 compiled. You can get the default driver with
