@@ -8,878 +8,1124 @@ NOTE: You're not expected to look at this raw XML file. Please open it in a webb
       consult the web on how to make your browser display XSLT content. For instance if you're using Chrome
       and open the file locally you'll need to start Chrome with the "allow-file-access-from-files" flag.
 
-https://stackoverflow.com/a/3839054
-https://stackoverflow.com/a/6251757
+      https://stackoverflow.com/a/3839054
+      https://stackoverflow.com/a/6251757
 
+      You can start a simple webserver in this directory using python3 like this:
+	       python3 -m http.server 8000
+      Then open your browser and navigate to:
+        http://localhost:8000/fluidsettings.xml
+		    This should work in all browsers.
+			
 Developers:
  - Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
  - Real-time settings can be marked with <realtime>SOME OPTIONAL TEXT</realtime>.
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
-    <synth label="Synthesizer settings">
-        <setting>
-            <name>audio-channels</name>
-            <type>int</type>
-            <def>1</def>
-            <min>1</min>
-            <max>128</max>
-            <desc>
-                By default, the synthesizer outputs a single stereo signal. Using this option, the synthesizer can output multi-channel audio. Sets the number of stereo channel pairs. So 1 is actually 2 channels (a stereo pair).</desc>
-        </setting>
-        <setting>
-            <name>audio-groups</name>
-            <type>int</type>
-            <def>1</def>
-            <min>1</min>
-            <max>128</max>
-            <desc>
-                The output audio channel associated with a MIDI channel is wrapped around using the number of synth.audio-groups as modulo divider. This is typically the number of output channels on the sound card, as long as the LADSPA Fx unit is not used. In case of LADSPA unit, think of it as subgroups on a mixer.</desc>
-        </setting>
-        <setting>
-            <name>chorus.active</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <realtime/>
-            <desc>
-                When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.</desc>
-        </setting>
-        <setting>
-            <name>chorus.depth</name>
-            <type>num</type>
-            <def>4.25 (since version 2.4.0),<br />8.0 (2.3.x and older)</def>
-            <min>0.0</min>
-            <max>256.0</max>
-            <realtime/>
-            <desc>
-                Specifies the modulation depth of the chorus.</desc>
-        </setting>
-        <setting>
-            <name>chorus.level</name>
-            <type>num</type>
-            <def>0.6 (since version 2.4.0),<br />2.0 (2.3.x and older)</def>
-            <def></def>
-            <min>0.0</min>
-            <max>10.0</max>
-            <realtime/>
-            <desc>
-                Specifies the output amplitude of the chorus signal.</desc>
-        </setting>
-        <setting>
-            <name>chorus.nr</name>
-            <type>int</type>
-            <def>3</def>
-            <min>0</min>
-            <max>99</max>
-            <realtime/>
-            <desc>
-                Sets the voice count of the chorus.</desc>
-        </setting>
-        <setting>
-            <name>chorus.speed</name>
-            <type>num</type>
-            <def>0.2 (since version 2.4.0),<br />0.3 (2.3.x and older)</def>
-            <min>0.1</min>
-            <max>5.0</max>
-            <realtime/>
-            <desc>
-                Sets the modulation speed in Hz.</desc>
-        </setting>
-        <setting>
-            <name>cpu-cores</name>
-            <type>int</type>
-            <def>1</def>
-            <min>1</min>
-            <max>256</max>
-            <desc>
-                Sets the number of synthesis CPU cores. If set to a value greater than 1, additional synthesis threads will be created to do the actual rendering work that is then returned synchronously by the render function. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio.
-                So for example, if you set cpu-cores to 4, fluidsynth will attempt to split the synthesis work it needs to do between the client's calling thread and three additional (internal) worker threads. As soon as all threads have done their work, their results are collected and the resulting buffer is returned to the caller.
-                </desc>
-        </setting>
-        <setting>
-            <name>default-soundfont</name>
-            <type>str</type>
-            <def>C:\soundfonts\default.sf2 (Windows),<br />
-                 ${CMAKE_INSTALL_PREFIX}/share/soundfonts/default.sf2 (all others)</def>
-            <desc>
-                The default soundfont file to use by the fluidsynth executable. The default value can be overridden during compilation time by setting the DEFAULT_SOUNDFONT cmake variable.</desc>
-        </setting>
-        <setting>
-            <name>device-id</name>
-            <type>int</type>
-            <def>0</def>
-            <min>0</min>
-            <max>127</max>
-            <realtime/>
-            <desc>
-                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed. It has been observed that setting this ID to 16 provides best compatibility when playing MIDI files which contain SYSEX commands that you want to have honored.</desc>
-        </setting>
-        <setting>
-            <name>dynamic-sample-loading</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected for a MIDI channel (PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this). This involves memory allocation, which is not realtime safe! So only enable this in non-realtime scenarios! E.g. when rendering to a WAVE file using the fast-file-renderer.
-            </desc>
-        </setting>
-        <setting>
-            <name>effects-channels</name>
-            <type>int</type>
-            <def>2</def>
-            <min>2</min>
-            <max>2</max>
-            <desc>Specifies the number of effects per effects group. Currently this value can not be changed so there are always two effects per group available (reverb and chorus).</desc>
-        </setting>
-        <setting>
-            <name>effects-groups</name>
-            <type>int</type>
-            <def>1</def>
-            <min>1</min>
-            <max>128</max>
-            <desc>Specifies the number of effects groups. By default, the sound of all voices is rendered by one reverb and one chorus effect respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller than the number of MIDI channels, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
-        </setting>
-        <setting>
-            <name>gain</name>
-            <type>num</type>
-            <def>0.2</def>
-            <min>0.0</min>
-            <max>10.0</max>
-            <realtime/>
-            <desc>The gain is applied to the final or master output of the synthesizer. It is set to a low value by default to avoid the saturation of the output when many notes are played.</desc>
-        </setting>
-        <setting>
-            <name>ladspa.active</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                When set to 1 (TRUE) the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem can be found in doc/ladspa.md or on the FluidSynth website.</desc>
-        </setting>
-        <setting>
-            <name>lock-memory</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <desc>
-                Page-lock memory that contains audio sample data, if true.</desc>
-        </setting>
-        <setting>
-            <name>midi-channels</name>
-            <type>int</type>
-            <def>16</def>
-            <min>16</min>
-            <max>256</max>
-            <desc>
-                This setting defines the number of MIDI channels of the synthesizer. The MIDI standard defines 16 channels, so MIDI hardware is limited to this number. Internally FluidSynth can use more channels which can be mapped to different MIDI sources.</desc>
-        </setting>
-        <setting>
-            <name>midi-bank-select</name>
-            <type>str</type>
-            <def>gs</def>
-            <vals>gs, gm, xg, mma</vals>
-            <desc>
-                This setting defines how the synthesizer interprets Bank Select messages.
-                <ul>
-                    <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
-                    <li>gm: ignores CC0 and CC32 messages.</li>
-                    <li>mma: bank is calculated as CC0*128+CC32.</li>
-                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic and CC32 becomes the bank number. Note that before fluidsynth 2.3.5 the logic for CC0 was broken.</li>
-                </ul>
-            </desc>
-        </setting>
-        <setting>
-            <name>min-note-length</name>
-            <type>int</type>
-            <def>10</def>
-            <min>0</min>
-            <max>65535</max>
-            <desc>
-                Sets the minimum note duration in milliseconds. This ensures that really short duration note events, such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.</desc>
-        </setting>
-        <setting>
-            <name>note-cut</name>
-            <type>int</type>
-            <def>0</def>
-            <min>0</min>
-            <max>2</max>
-            <desc>
-                This setting specifies the behavior for releasing voices, if the same note is hit twice on the same channel. Early synthesizers like the Roland SC-55 and Microsoft Wavetable GS MIDI synthesizer (MSGS) are terminating notes abruptly that have already received a noteOff after receiving a noteOn for the same key. This behavior was presumably implemented to save polyphony in these systems. This setting was introduced in fluidsynth 2.4.3 and can be enabled to mimic this behavior, to esp. play back old tunes like Doom E1M1 more accurately. Please note that using a SoundFont which makes proper use of exclusive classes for esp. percussion instruments will yield a similar or better result. Also, this approach is generally preferable because it's portable among SF2 compliant synths and can be applied more fine-grained among instruments. This setting supports the following values:
-                <ul>
-                    <li>0: A regular noteOff is applied to the previous note, which is the default SF2 compliant behavior.</li>
-                    <li>1: Note-cut is only applied on drum MIDI channels (i.e. CHANNEL_TYPE_DRUM). Fluidsynth 2.4.0, 2.4.1, and 2.4.2 unconditionally used this mode.</li>
-                    <li>2: Note-cut is applied to both, drum and melodic MIDI channels (i.e. CHANNEL_TYPE_DRUM and CHANNEL_TYPE_MELODIC).</li>
-                </ul></desc>
-        </setting>
-        <setting>
-            <name>overflow.age</name>
-            <type>num</type>
-            <def>1000.0</def>
-            <min>-10000.0</min>
-            <max>10000.0</max>
-            <realtime/>
-            <desc>
-                This score is divided by the number of seconds this voice has been
-                active and is added to the overflow priority. It is usually a positive
-                value and gives voices which have just been started a higher priority,
-                making them less likely to be killed in an overflow situation.
-            </desc>
-        </setting>
-        <setting>
-            <name>overflow.important</name>
-            <type>num</type>
-            <def>5000.0</def>
-            <min>-50000.0</min>
-            <max>50000.0</max>
-            <realtime/>
-            <desc>
-                This score is added to voices on channels marked with the
-                synth.overflow.important-channels setting.
-            </desc>
-        </setting>
-        <setting>
-            <name>overflow.important-channels</name>
-            <type>str</type>
-            <def>(empty string)</def>
-            <realtime/>
-            <desc>
-                This setting is a comma-separated list of MIDI channel numbers that should
-                be treated as "important" by the overflow calculation, adding the score
-                set by synth.overflow.important to each voice on those channels. It can
-                be used to make voices on particular MIDI channels
-                less likely (synth.overflow.important &gt; 0) or more likely
-                (synth.overflow.important &lt; 0) to be killed in an overflow situation. Channel
-                numbers are 1-based, so the first MIDI channel is number 1.
-            </desc>
-        </setting>
-        <setting>
-            <name>overflow.percussion</name>
-            <type>num</type>
-            <def>4000.0</def>
-            <min>-10000.0</min>
-            <max>10000.0</max>
-            <realtime/>
-            <desc>
-                Sets the overflow priority score added to voices on a percussion
-                channel. This is usually a positive score, to give percussion voices
-                a higher priority and less chance of being killed in an overflow
-                situation.
-            </desc>
-        </setting>
-        <setting>
-            <name>overflow.released</name>
-            <type>num</type>
-            <def>-2000.0</def>
-            <min>-10000.0</min>
-            <max>10000.0</max>
-            <realtime/>
-            <desc>
-                Sets the overflow priority score added to voices that have already
-                received a note-off event. This is usually a negative score, to give released
-                voices a lower priority so that they are killed first in an overflow
-                situation.
-            </desc>
-        </setting>
-        <setting>
-            <name>overflow.sustained</name>
-            <type>num</type>
-            <def>-1000.0</def>
-            <min>-10000.0</min>
-            <max>10000.0</max>
-            <realtime/>
-            <desc>
-                Sets the overflow priority score added to voices that are currently
-                sustained. With the default value, sustained voices are considered less
-                important and are more likely to be killed in an overflow situation.
-            </desc>
-        </setting>
-        <setting>
-            <name>overflow.volume</name>
-            <type>num</type>
-            <def>500.0</def>
-            <min>-10000.0</min>
-            <max>10000.0</max>
-            <realtime/>
-            <desc>
-                Sets the overflow priority score added to voices based on their current
-                volume. The voice volume is normalized to a value between 0 and 1 and
-                multiplied with this setting. So voices with maximum volume get added
-                the full score, voices with only half that volume get added half of this
-                score.
-            </desc>
-        </setting>
-        <setting>
-            <name>polyphony</name>
-            <type>int</type>
-            <def>256</def>
-            <min>1</min>
-            <max>65535</max>
-            <realtime/>
-            <desc>
-                The polyphony defines how many voices can be played in parallel. A note event produces one or more voices. Its good to set this to a value which the system can handle and will thus limit FluidSynth's CPU usage. When FluidSynth runs out of voices it will begin terminating lower priority voices for new note events.</desc>
-        </setting>
-        <setting>
-            <name>portamento-time</name>
-            <type>str</type>
-            <def>auto</def>
-            <realtime/>
-            <vals>auto, linear, xg-gs</vals>
-            <desc>
-                This setting was introduced in 2.5.0 to specify how to handle portamento time CC MSB and LSB.
-                <ul>
-                    <li>'linear' - portamento time is 14 bits wide and calculated as <code>CC5 * 128 + CC37</code> in milliseconds (this was fluidsynth's behavior before this setting was introduced).</li>
-                    <li>'xg-gs' - portamento time is 7 bits wide, using only CC5, which is mapped onto a concave curve ranging from 0s to 480s. The exact mapping was derived through listening tests and may be subject to change between different versions of fluidsynth. This setting should be used for older MIDI files, like Descent Game08.</li>
-                    <li>'auto' - the synth starts in 'xg-gs' mode. If it detects a CC37 on any MIDI channel, it switches to 'linear' mode.</li>
-                </ul>
-            </desc>
-        </setting>
-        <setting>
-            <name>reverb.active</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <realtime/>
-            <desc>
-                When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
-            </desc>
-        </setting>
-        <setting>
-            <name>reverb.damp</name>
-            <type>num</type>
-            <def>0.3 (since version 2.4.0),<br />0.0 (2.3.x and older)</def>
-            <min>0.0</min>
-            <max>1.0</max>
-            <realtime/>
-            <desc>
-                Sets the amount of reverb damping.</desc>
-        </setting>
-        <setting>
-            <name>reverb.level</name>
-            <type>num</type>
-            <def>0.7 (since version 2.4.0),<br />0.9 (2.3.x and older)</def>
-            <min>0.0</min>
-            <max>1.0</max>
-            <realtime/>
-            <desc>
-                Sets the reverb output amplitude.</desc>
-        </setting>
-        <setting>
-            <name>reverb.room-size</name>
-            <type>num</type>
-            <def>0.5 (since version 2.4.0),<br />0.2 (2.3.x and older)</def>
-            <min>0.0</min>
-            <max>1.0</max>
-            <realtime/>
-            <desc>
-                Sets the room size (i.e. amount of wet) reverb.</desc>
-        </setting>
-        <setting>
-            <name>reverb.width</name>
-            <type>num</type>
-            <def>0.8 (since version 2.4.0),<br />0.5 (2.3.x and older)</def>
-            <min>0.0</min>
-            <max>100.0</max>
-            <realtime/>
-            <desc>
-                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange [0;1] is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
-        </setting>
-        <setting>
-            <name>sample-rate</name>
-            <type>num</type>
-            <def>44100.0</def>
-            <min>8000.0</min>
-            <max>96000.0</max>
-            <desc>
-                The sample rate of the audio generated by the synthesizer. For optimal performance, make sure this value equals the native output rate of the audio driver (in case you are using any of fluidsynth's audio drivers). Some drivers, such as Oboe, will interpolate sample-rates, whereas others, such as Jack, will override this setting, if a mismatch with the native output rate is detected.
-            </desc>
-        </setting>
-        <setting>
-            <name>threadsafe-api</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <desc>
-                Controls whether the synth's public API is protected by a mutex or not. Default is on, turn it off for slightly better performance if you know you're only accessing the synth from one thread only, this could be the case in many embedded use cases for example. Note that libfluidsynth can use many threads by itself (shell is one, midi driver is one, midi player is one etc) so you should usually leave it on.
-            </desc>
-        </setting>
-        <setting>
-            <name>verbose</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                When set to 1 (TRUE) the synthesizer will print out information about the received MIDI events to the stdout. This can be helpful for debugging. This setting cannot be changed after the synthesizer has started.
-            </desc>
-        </setting>
-    </synth>
+	<synth label="Synthesizer settings">
+		<setting>
+			<name>audio-channels</name>
+			<type>int</type>
+			<def>1</def>
+			<min>1</min>
+			<max>128</max>
+			<desc>
+				By default, the synthesizer outputs a single stereo signal. Using this option, the synthesizer can output
+				multi-channel audio. Sets the number of stereo channel pairs. So 1 is actually 2 channels (a stereo pair).
+			</desc>
+		</setting>
+		<setting>
+			<name>audio-groups</name>
+			<type>int</type>
+			<def>1</def>
+			<min>1</min>
+			<max>128</max>
+			<desc>
+				The output audio channel associated with a MIDI channel is wrapped around using the number of
+				synth.audio-groups as modulo divider. This is typically the number of output channels on the sound card,
+				as long as the LADSPA Fx unit is not used. In case of LADSPA unit, think of it as subgroups on a mixer.
+			</desc>
+		</setting>
+		<setting>
+			<name>chorus.active</name>
+			<type>bool</type>
+			<def>1 (TRUE)</def>
+			<realtime/>
+			<desc>
+				When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the
+				output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send"
+				generator defined in the SoundFont.
+			</desc>
+		</setting>
+		<setting>
+			<name>chorus.depth</name>
+			<type>num</type>
+			<def>
+				4.25 (since version 2.4.0),<br />8.0 (2.3.x and older)
+			</def>
+			<min>0.0</min>
+			<max>256.0</max>
+			<realtime/>
+			<desc>
+				Specifies the modulation depth of the chorus.
+			</desc>
+		</setting>
+		<setting>
+			<name>chorus.level</name>
+			<type>num</type>
+			<def>
+				0.6 (since version 2.4.0),<br />2.0 (2.3.x and older)
+			</def>
+			<def></def>
+			<min>0.0</min>
+			<max>10.0</max>
+			<realtime/>
+			<desc>
+				Specifies the output amplitude of the chorus signal.
+			</desc>
+		</setting>
+		<setting>
+			<name>chorus.nr</name>
+			<type>int</type>
+			<def>3</def>
+			<min>0</min>
+			<max>99</max>
+			<realtime/>
+			<desc>
+				Sets the voice count of the chorus.
+			</desc>
+		</setting>
+		<setting>
+			<name>chorus.speed</name>
+			<type>num</type>
+			<def>
+				0.2 (since version 2.4.0),<br />0.3 (2.3.x and older)
+			</def>
+			<min>0.1</min>
+			<max>5.0</max>
+			<realtime/>
+			<desc>
+				Sets the modulation speed in Hz.
+			</desc>
+		</setting>
+		<setting>
+			<name>cpu-cores</name>
+			<type>int</type>
+			<def>1</def>
+			<min>1</min>
+			<max>256</max>
+			<desc>
+				Sets the number of synthesis CPU cores. If set to a value greater than 1, additional synthesis threads
+				will be created to do the actual rendering work that is then returned synchronously by the render function.
+				This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio.
+				So for example, if you set cpu-cores to 4, fluidsynth will attempt to split the synthesis work it needs to do
+				between the client's calling thread and three additional (internal) worker threads. As soon as all threads have
+				done their work, their results are collected and the resulting buffer is returned to the caller.
+			</desc>
+		</setting>
+		<setting>
+			<name>default-soundfont</name>
+			<type>str</type>
+			<def>
+				C:\soundfonts\default.sf2 (Windows),<br />
+				${CMAKE_INSTALL_PREFIX}/share/soundfonts/default.sf2 (all others)
+			</def>
+			<desc>
+				The default soundfont file to use by the fluidsynth executable. The default value can be overridden during compilation
+				time by setting the DEFAULT_SOUNDFONT cmake variable.
+			</desc>
+		</setting>
+		<setting>
+			<name>device-id</name>
+			<type>int</type>
+			<def>0</def>
+			<min>0</min>
+			<max>127</max>
+			<realtime/>
+			<desc>
+				Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Fluidsynth will only process those
+				SYSEX commands destined for this ID (except when this setting is set to 127, which causes fluidsynth to process all
+				SYSEX commands, regardless of the device ID). Broadcast commands (with ID=127) will always be processed. It has been
+				observed that setting this ID to 16 provides best compatibility when playing MIDI files which contain SYSEX commands
+				that you want to have honored.
+			</desc>
+		</setting>
+		<setting>
+			<name>dynamic-sample-loading</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				When set to 1 (TRUE), samples are loaded to and unloaded from memory whenever presets are being selected or unselected
+				for a MIDI channel (PROGRAM_CHANGE and PROGRAM_SELECT events are typically responsible for this). This involves memory
+				allocation, which is not realtime safe! So only enable this in non-realtime scenarios! E.g. when rendering to a WAVE
+				file using the fast-file-renderer.
+			</desc>
+		</setting>
+		<setting>
+			<name>effects-channels</name>
+			<type>int</type>
+			<def>2</def>
+			<min>2</min>
+			<max>2</max>
+			<desc>
+				Specifies the number of effects per effects group. Currently this value can not be changed so there are always
+				two effects per group available (reverb and chorus).
+			</desc>
+		</setting>
+		<setting>
+			<name>effects-groups</name>
+			<type>int</type>
+			<def>1</def>
+			<min>1</min>
+			<max>128</max>
+			<desc>
+				Specifies the number of effects groups. By default, the sound of all voices is rendered by one reverb and
+				one chorus effect respectively (even for multi-channel rendering). This setting gives the user control
+				which effects of a voice to render to which independent audio channels. E.g. setting
+				synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate
+				audio buffers. If synth.effects-groups is smaller than the number of MIDI channels, it will wrap around.
+				Note that any value >1 will significantly increase CPU usage.
+			</desc>
+		</setting>
+		<setting>
+			<name>gain</name>
+			<type>num</type>
+			<def>0.2</def>
+			<min>0.0</min>
+			<max>10.0</max>
+			<realtime/>
+			<desc>
+				The gain is applied to the final or master output of the synthesizer. It is set to a low value by default
+				to avoid the saturation of the output when many notes are played.
+			</desc>
+		</setting>
+		<setting>
+			<name>ladspa.active</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				When set to 1 (TRUE) the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect
+				LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer
+				has to be compiled with LADSPA support. More information about the LADSPA subsystem can be found in
+				doc/ladspa.md or on the FluidSynth website.
+			</desc>
+		</setting>
+		<setting>
+			<name>lock-memory</name>
+			<type>bool</type>
+			<def>1 (TRUE)</def>
+			<desc>
+				Page-lock memory that contains audio sample data, if true.
+			</desc>
+		</setting>
+		<setting>
+			<name>midi-channels</name>
+			<type>int</type>
+			<def>16</def>
+			<min>16</min>
+			<max>256</max>
+			<desc>
+				This setting defines the number of MIDI channels of the synthesizer. The MIDI standard defines 16 channels,
+				so MIDI hardware is limited to this number. Internally FluidSynth can use more channels which can be mapped
+				to different MIDI sources.
+			</desc>
+		</setting>
+		<setting>
+			<name>midi-bank-select</name>
+			<type>str</type>
+			<def>gs</def>
+			<vals>gs, gm, xg, mma</vals>
+			<desc>
+				This setting defines how the synthesizer interprets Bank Select messages.
+				<ul>
+					<li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
+					<li>gm: ignores CC0 and CC32 messages.</li>
+					<li>mma: bank is calculated as CC0*128+CC32.</li>
+					<li>
+						xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is
+						set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic
+						and CC32 becomes the bank number. Note that before fluidsynth 2.3.5 the logic for CC0 was broken.
+					</li>
+				</ul>
+			</desc>
+		</setting>
+		<setting>
+			<name>min-note-length</name>
+			<type>int</type>
+			<def>10</def>
+			<min>0</min>
+			<max>65535</max>
+			<desc>
+				Sets the minimum note duration in milliseconds. This ensures that really short duration note events,
+				such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.
+			</desc>
+		</setting>
+		<setting>
+			<name>note-cut</name>
+			<type>int</type>
+			<def>0</def>
+			<min>0</min>
+			<max>2</max>
+			<desc>
+				This setting specifies the behavior for releasing voices, if the same note is hit twice on the same channel.
+				Early synthesizers like the Roland SC-55 and Microsoft Wavetable GS MIDI synthesizer (MSGS) are terminating
+				notes abruptly that have already received a noteOff after receiving a noteOn for the same key. This behavior
+				was presumably implemented to save polyphony in these systems. This setting was introduced in
+				fluidsynth 2.4.3 and can be enabled to mimic this behavior, to esp. play back old tunes like Doom E1M1 more
+				accurately. Please note that using a SoundFont which makes proper use of exclusive classes for esp. percussion
+				instruments will yield a similar or better result. Also, this approach is generally preferable because it's
+				portable among SF2 compliant synths and can be applied more fine-grained among instruments. This setting
+				supports the following values:
+				<ul>
+					<li>0: A regular noteOff is applied to the previous note, which is the default SF2 compliant behavior.</li>
+					<li>
+						1: Note-cut is only applied on drum MIDI channels (i.e. CHANNEL_TYPE_DRUM).
+						Fluidsynth 2.4.0, 2.4.1, and 2.4.2 unconditionally used this mode.
+					</li>
+					<li>
+						2: Note-cut is applied to both, drum and melodic MIDI channels
+						(i.e. CHANNEL_TYPE_DRUM and CHANNEL_TYPE_MELODIC).
+					</li>
+				</ul>
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.age</name>
+			<type>num</type>
+			<def>1000.0</def>
+			<min>-10000.0</min>
+			<max>10000.0</max>
+			<realtime/>
+			<desc>
+				This score is divided by the number of seconds this voice has been
+				active and is added to the overflow priority. It is usually a positive
+				value and gives voices which have just been started a higher priority,
+				making them less likely to be killed in an overflow situation.
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.important</name>
+			<type>num</type>
+			<def>5000.0</def>
+			<min>-50000.0</min>
+			<max>50000.0</max>
+			<realtime/>
+			<desc>
+				This score is added to voices on channels marked with the
+				synth.overflow.important-channels setting.
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.important-channels</name>
+			<type>str</type>
+			<def>(empty string)</def>
+			<realtime/>
+			<desc>
+				This setting is a comma-separated list of MIDI channel numbers that should
+				be treated as "important" by the overflow calculation, adding the score
+				set by synth.overflow.important to each voice on those channels. It can
+				be used to make voices on particular MIDI channels
+				less likely (synth.overflow.important &gt; 0) or more likely
+				(synth.overflow.important &lt; 0) to be killed in an overflow situation. Channel
+				numbers are 1-based, so the first MIDI channel is number 1.
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.percussion</name>
+			<type>num</type>
+			<def>4000.0</def>
+			<min>-10000.0</min>
+			<max>10000.0</max>
+			<realtime/>
+			<desc>
+				Sets the overflow priority score added to voices on a percussion
+				channel. This is usually a positive score, to give percussion voices
+				a higher priority and less chance of being killed in an overflow
+				situation.
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.released</name>
+			<type>num</type>
+			<def>-2000.0</def>
+			<min>-10000.0</min>
+			<max>10000.0</max>
+			<realtime/>
+			<desc>
+				Sets the overflow priority score added to voices that have already
+				received a note-off event. This is usually a negative score, to give released
+				voices a lower priority so that they are killed first in an overflow
+				situation.
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.sustained</name>
+			<type>num</type>
+			<def>-1000.0</def>
+			<min>-10000.0</min>
+			<max>10000.0</max>
+			<realtime/>
+			<desc>
+				Sets the overflow priority score added to voices that are currently
+				sustained. With the default value, sustained voices are considered less
+				important and are more likely to be killed in an overflow situation.
+			</desc>
+		</setting>
+		<setting>
+			<name>overflow.volume</name>
+			<type>num</type>
+			<def>500.0</def>
+			<min>-10000.0</min>
+			<max>10000.0</max>
+			<realtime/>
+			<desc>
+				Sets the overflow priority score added to voices based on their current
+				volume. The voice volume is normalized to a value between 0 and 1 and
+				multiplied with this setting. So voices with maximum volume get added
+				the full score, voices with only half that volume get added half of this
+				score.
+			</desc>
+		</setting>
+		<setting>
+			<name>polyphony</name>
+			<type>int</type>
+			<def>256</def>
+			<min>1</min>
+			<max>65535</max>
+			<realtime/>
+			<desc>
+				The polyphony defines how many voices can be played in parallel. A note
+				event produces one or more voices. Its good to set this to a value which
+				the system can handle and will thus limit FluidSynth's CPU usage. When
+				FluidSynth runs out of voices it will begin terminating lower priority
+				voices for new note events.
+			</desc>
+		</setting>
+		<setting>
+			<name>portamento-time</name>
+			<type>str</type>
+			<def>auto</def>
+			<realtime/>
+			<vals>auto, linear, xg-gs</vals>
+			<desc>
+				This setting was introduced in 2.5.0 to specify how to handle portamento time CC MSB and LSB.
+				<ul>
+					<li>
+						'linear' - portamento time is 14 bits wide and calculated as <code>CC5 * 128 + CC37</code>
+						in milliseconds (this was fluidsynth's behavior before this setting was introduced).
+					</li>
+					<li>
+						'xg-gs' - portamento time is 7 bits wide, using only CC5, which is mapped onto a
+						concave curve ranging from 0s to 480s. The exact mapping was derived through
+						listening tests and may be subject to change between different versions of fluidsynth.
+						This setting should be used for older MIDI files, like Descent Game08.
+					</li>
+					<li>
+						'auto' - the synth starts in 'xg-gs' mode. If it detects a CC37 on any MIDI channel,
+						it switches to 'linear' mode.
+					</li>
+				</ul>
+			</desc>
+		</setting>
+		<setting>
+			<name>reverb.active</name>
+			<type>bool</type>
+			<def>1 (TRUE)</def>
+			<realtime/>
+			<desc>
+				When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be
+				added to the output signal. Note that the amount of signal sent to the reverb module depends
+				on the "reverb send" generator defined in the SoundFont.
+			</desc>
+		</setting>
+		<setting>
+			<name>reverb.damp</name>
+			<type>num</type>
+			<def>
+				0.3 (since version 2.4.0),<br />0.0 (2.3.x and older)
+			</def>
+			<min>0.0</min>
+			<max>1.0</max>
+			<realtime/>
+			<desc>
+				Sets the amount of reverb damping.
+			</desc>
+		</setting>
+		<setting>
+			<name>reverb.level</name>
+			<type>num</type>
+			<def>
+				0.7 (since version 2.4.0),<br />0.9 (2.3.x and older)
+			</def>
+			<min>0.0</min>
+			<max>1.0</max>
+			<realtime/>
+			<desc>
+				Sets the reverb output amplitude.
+			</desc>
+		</setting>
+		<setting>
+			<name>reverb.room-size</name>
+			<type>num</type>
+			<def>
+				0.5 (since version 2.4.0),<br />0.2 (2.3.x and older)
+			</def>
+			<min>0.0</min>
+			<max>1.0</max>
+			<realtime/>
+			<desc>
+				Sets the room size (i.e. amount of wet) reverb.
+			</desc>
+		</setting>
+		<setting>
+			<name>reverb.width</name>
+			<type>num</type>
+			<def>
+				0.8 (since version 2.4.0),<br />0.5 (2.3.x and older)
+			</def>
+			<min>0.0</min>
+			<max>100.0</max>
+			<realtime/>
+			<desc>
+				Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation
+				causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum
+				separation between the uncorrelated left and right channels (note that reverb is still a
+				monophonic effect). This subrange [0;1] is recommended for general usage. Values bigger
+				than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals.
+				Otherwise, this setting should be considered as dimensionless quantity, with its maximum
+				value existing for historical reasons. Please note that under some circumstances, values
+				bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.
+			</desc>
+		</setting>
+		<setting>
+			<name>sample-rate</name>
+			<type>num</type>
+			<def>44100.0</def>
+			<min>8000.0</min>
+			<max>96000.0</max>
+			<desc>
+				The sample rate of the audio generated by the synthesizer. For optimal performance,
+				make sure this value equals the native output rate of the audio driver (in case you
+				are using any of fluidsynth's audio drivers). Some drivers, such as Oboe, will
+				interpolate sample-rates, whereas others, such as Jack, will override this setting,
+				if a mismatch with the native output rate is detected.
+			</desc>
+		</setting>
+		<setting>
+			<name>threadsafe-api</name>
+			<type>bool</type>
+			<def>1 (TRUE)</def>
+			<desc>
+				Controls whether the synth's public API is protected by a mutex or not. Default is on,
+				turn it off for slightly better performance if you know you're only accessing the synth
+				from one thread only, this could be the case in many embedded use cases for example.
+				Note that libfluidsynth can use many threads by itself (shell is one, midi driver is one,
+				midi player is one etc) so you should usually leave it on.
+			</desc>
+		</setting>
+		<setting>
+			<name>verbose</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				When set to 1 (TRUE) the synthesizer will print out information about the received MIDI
+				events to the stdout. This can be helpful for debugging. This setting cannot be changed
+				after the synthesizer has started.
+			</desc>
+		</setting>
+	</synth>
 
-    <audio label="Audio driver settings">
-        <setting>
-            <name>driver</name>
-            <type>str</type>
-            <def>alsa (Linux),<br />
-                  dsound (Windows),<br />
-                  sndman (MacOS9),<br />
-                  coreaudio (Mac OS X),<br />
-                  dart (OS/2)
-            </def>
-            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl3, sndman, wasapi, waveout</vals>
-            <desc>
-                The audio system to be used. In order to use sdl3 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> waveout is available since fluidsynth 2.1.0, sdl3 since fluidsynth 2.4.4.
-            </desc>
-        </setting>
-        <setting>
-            <name>periods</name>
-            <type>int</type>
-            <def>8 (Windows, MacOS9),<br />
-                 16 (all other)
-            </def>
-            <min>2</min>
-            <max>64</max>
-            <desc>
-                The number of the audio buffers used by the driver. This number of buffers, multiplied by the buffer size (see setting audio.period-size), determines the maximum latency of the audio driver.
-            </desc>
-        </setting>
-        <setting>
-            <name>period-size</name>
-            <type>int</type>
-            <def>512 (Windows),<br />
-                 64 (all other)
-            </def>
-            <min>64</min>
-            <max>8192</max>
-            <desc>
-                This is the number of audio samples most audio drivers will request from the synth at one time. In other words, it's the amount of samples the synth is allowed to render in one go when no state changes (events) are about to happen. Because of that, specifying too big numbers here may cause MIDI events to be poorly quantized (=untimed) when a MIDI driver or the synth's API directly is used, as fluidsynth cannot determine when those events are to arrive. This issue does not matter, when using the MIDI player or the MIDI sequencer, because in this case, fluidsynth does know when events will be received.
-            </desc>
-        </setting>
-        <setting>
-            <name>realtime-prio</name>
-            <type>int</type>
-            <def>60</def>
-            <min>0</min>
-            <max>99</max>
-            <desc>
-                Sets the realtime scheduling priority of the audio synthesis thread. This includes the synthesis threads created by the synth (in case synth.cpu-cores was greater 1). A value of 0 disables high priority scheduling. Linux is the only platform which currently makes use of different priority levels as specified by this setting. On other operating systems the thread priority is set to maximum. Drivers which use this option: alsa, oss and pulseaudio
-            </desc>
-        </setting>
-        <setting>
-            <name>sample-format</name>
-            <type>str</type>
-            <def>16bits</def>
-            <vals>16bits, float</vals>
-            <desc>
-                The format of the audio samples. This is currently only an indication; the audio driver may ignore this setting if it can't handle the specified format.
-            </desc>
-        </setting>
-        <setting>
-            <name>alsa.device</name>
-            <type>str</type>
-            <def>default</def>
-            <vals>ALSA device string, such as: "hw:0", "plughw:1", etc.</vals>
-            <desc>
-                Selects the ALSA audio device to use.
-            </desc>
-        </setting>
-        <setting>
-            <name>coreaudio.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Selects the CoreAudio device to use.
-            </desc>
-        </setting>
-        <setting>
-            <name>coreaudio.channel-map</name>
-            <type>str</type>
-            <def>(empty string)</def>
-            <desc>
-                This setting is a comma-separated integer list that maps fluidsynth mono-channels
-                to CoreAudio device output channels. Each position in the list represents the output channel
-                of the CoreAudio device.
-                The value of each position indicates the zero-based index of the fluidsynth
-                output mono-channel to route there (i.e. the buffer index used for fluid_synth_process()).
-                Additionally, the special value of -1 will turn off an output.
-                <br /><br />
-                For example, the default map for a single stereo output is "0,1". A value of "0,0" will
-                copy the left channel to the right, a value of "1,0" will flip left and right, and a
-                value of "-1,1" will play only the right channel.
-                <br /><br />
-                With a six-channel output device, and the synth.audio-channels and synth.audio-groups
-                settings both set to "2", a channel map of "-1,-1,0,1,2,3" will result in notes from odd
-                MIDI channels (audible on the first stereo channel, i.e. mono-indices 0,1) being sent to
-                outputs 3 and 4, and even MIDI channels (audible on the second stereo channel, i.e. mono-indices 2,3)
-                being sent to outputs 5 and 6.
-                <br /><br />
-                If the list specifies less than the number of available outputs channels, outputs
-                beyond those specified will maintain the default channel mapping given by the CoreAudio driver.
-            </desc>
-        </setting>
-        <setting>
-            <name>dart.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Selects the Dart (OS/2 driver) device to use.
-            </desc>
-        </setting>
-        <setting>
-            <name>dsound.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Selects the DirectSound (Windows) device to use. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
-            </desc>
-        </setting>
-        <setting>
-            <name>file.endian</name>
-            <type>str</type>
-            <def>'auto' if libsndfile support is built in,<br />
-                 'cpu' otherwise.</def>
-            <vals>auto, big, cpu, little ('cpu' is all that is supported if libsndfile support is not built in)</vals>
-            <desc>
-                Defines the byte order when using the 'file' driver or file renderer to store audio to a file. 'auto' uses the default for the given file type, 'cpu' uses the CPU byte order, 'big' uses big endian byte order and 'little' uses little endian byte order.
-            </desc>
-        </setting>
-        <setting>
-            <name>file.format</name>
-            <type>str</type>
-            <def>s16</def>
-            <vals>double, float, s16, s24, s32, s8, u8</vals>
-            <desc>
-                Defines the audio format when rendering audio to a file. Limited to 's16' if no libsndfile support.
-                <ul>
-                    <li>'double' is 64 bit floating point,</li>
-                    <li>'float' is 32 bit floating point,</li>
-                    <li>'s16' is 16 bit signed PCM,</li>
-                    <li>'s24' is 24 bit signed PCM,</li>
-                    <li>'s32' is 32 bit signed PCM,</li>
-                    <li>'s8' is 8 bit signed PCM and</li>
-                    <li>'u8' is 8 bit unsigned PCM.</li>
-                </ul>
-            </desc>
-        </setting>
-        <setting>
-            <name>file.name</name>
-            <type>str</type>
-            <def>'fluidsynth.wav' if libsndfile support is built in,<br />
-                 'fluidsynth.raw' otherwise.</def>
-            <desc>
-                Specifies the file name to store the audio to, when rendering audio to a file.
-            </desc>
-        </setting>
-        <setting>
-            <name>file.type</name>
-            <type>str</type>
-            <def>'auto' if libsndfile support is built in,<br />
-                 'raw' otherwise.</def>
-            <vals>aiff, au, auto, avr, caf, flac, htk, iff, mat, oga, paf, pvf, raw, sd2, sds, sf, voc, w64, wav, xi</vals>
-            <desc>
-                Sets the file type of the file which the audio will be stored to. 'auto' attempts to determine the file type from the audio.file.name file extension and falls back to 'wav' if the extension doesn't match any types. Limited to 'raw' if compiled without libsndfile support. Actual options will vary depending on libsndfile library.
-            </desc>
-        </setting>
-        <setting>
-            <name>jack.autoconnect</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                If 1 (TRUE), then FluidSynth output is automatically connected to jack system audio output.
-            </desc>
-        </setting>
-        <setting>
-            <name>jack.id</name>
-            <type>str</type>
-            <def>fluidsynth</def>
-            <desc>
-                Unique identifier used when creating Jack client connection.
-            </desc>
-        </setting>
-        <setting>
-            <name>jack.multi</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                If 1 (TRUE), then multi-channel Jack output will be enabled if synth.audio-channels is greater than 1.
-            </desc>
-        </setting>
-        <setting>
-            <name>jack.server</name>
-            <type>str</type>
-            <def>(empty string)</def>
-            <desc>
-                Jack server to connect to. Defaults to an empty string, which uses default Jack server.
-            </desc>
-        </setting>
-        <setting>
-            <name>oboe.id</name>
-            <type>int</type>
-            <def>0</def>
-            <min>0</min>
-            <max>2147483647</max>
-            <desc>
-                Request an audio device identified device using an ID as pointed out by Oboe's documentation.
-            </desc>
-        </setting>
-        <setting>
-            <name>oboe.sample-rate-conversion-quality</name>
-            <type>str</type>
-            <def>None</def>
-            <vals>None, Fastest, Low, Medium, High, Best</vals>
-            <desc>
-                Sets the sample-rate conversion quality as pointed out by Oboe's documentation.
-            </desc>
-        </setting>
-        <setting>
-            <name>oboe.sharing-mode</name>
-            <type>str</type>
-            <def>Shared</def>
-            <vals>Shared, Exclusive</vals>
-            <desc>
-                Sets the sharing mode as pointed out by Oboe's documentation.
-            </desc>
-        </setting>
-        <setting>
-            <name>oboe.performance-mode</name>
-            <type>str</type>
-            <def>None</def>
-            <vals>None, PowerSaving, LowLatency</vals>
-            <desc>
-                Sets the performance mode as pointed out by Oboe's documentation.
-            </desc>
-        </setting>
-        <setting>
-            <name>oboe.error-recovery-mode</name>
-            <type>str</type>
-            <def>Reconnect</def>
-            <vals>Reconnect, Stop</vals>
-            <desc>
-                Sets the error recovery mode when audio device error such as earphone disconnection occurred. It reconnects by default (same as OpenSLES behavior), but can be stopped if Stop is specified.
-            </desc>
-        </setting>
-        <setting>
-            <name>oss.device</name>
-            <type>str</type>
-            <def>/dev/dsp</def>
-            <desc>
-                Device to use for OSS audio output.
-            </desc>
-        </setting>
-        <setting>
-            <name>pipewire.media-category</name>
-            <type>str</type>
-            <def>Playback</def>
-            <desc>
-                The media category to use. This value will be passed to <code>PW_KEY_MEDIA_CATEGORY</code>, see Pipewire documentation for valid values.
-            </desc>
-        </setting>
-        <setting>
-            <name>pipewire.media-role</name>
-            <type>str</type>
-            <def>Music</def>
-            <desc>
-                The media role to use. This value will be passed to <code>PW_KEY_MEDIA_ROLE</code>, see Pipewire documentation for valid values.
-            </desc>
-        </setting>
-        <setting>
-            <name>pipewire.media-type</name>
-            <type>str</type>
-            <def>Audio</def>
-            <desc>
-                The media type to use. This value will be passed to <code>PW_KEY_MEDIA_TYPE</code>, see Pipewire documentation for valid values.
-            </desc>
-        </setting>
-        <setting>
-            <name>portaudio.device</name>
-            <type>str</type>
-            <def>PortAudio Default</def>
-            <desc>
-                Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value which outputs to the default PortAudio device. The format of the device name is: "&lt;device_index&gt;:&lt;host_api_name&gt;:&lt;host_device_name&gt;" e.g. "11:Windows DirectSound:SB PCI"
-            </desc>
-        </setting>
-        <setting>
-            <name>pulseaudio.adjust-latency</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <desc>
-                If TRUE initializes the maximum length of the audio buffer to the highest supported value and increases the latency dynamically if PulseAudio suggests so. Else uses a buffer with length of "audio.period-size".
-            </desc>
-        </setting>
-        <setting>
-            <name>pulseaudio.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Device to use for PulseAudio driver output.
-            </desc>
-        </setting>
-        <setting>
-            <name>pulseaudio.media-role</name>
-            <type>str</type>
-            <def>music</def>
-            <desc>
-                PulseAudio media role information.
-            </desc>
-        </setting>
-        <setting>
-            <name>pulseaudio.server</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Server to use for PulseAudio driver output.
-            </desc>
-        </setting>
-        <setting>
-            <name>sdl3.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Device to use for SDL3 driver output.
-            </desc>
-        </setting>
-        <setting>
-            <name>wasapi.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
-                <br /><br />
-                <strong>Note</strong><br />
-                When using the WASAPI audio driver, more detailed information about device and format negotiation (e.g. whether the requested format was accepted natively, adjusted, or rejected) may be obtained by installing a custom log callback using <code>fluid_set_log_function()</code>.
-                <br />
-                The WASAPI driver reports informational, warning, and error messages received from the OS during device initialization, which can be used as a best-effort heuristic to distinguish between:
-                <ul>
-                <li>Successful native opens,</li>
-                <li>successful opens with format adjustment or resampling, and</li>
-                <li>failed opens.</li>
-                </ul>
-                This mechanism is used internally by the <code>fluidsynth -Q</code> command, see <a href="https://github.com/FluidSynth/fluidsynth/blob/master/src/fluid_wasapi_device_enumerate.c"><code>fluid_wasapi_device_enumerate.c</code></a> for a reference implementation. The content and meaning of log messages are not part of the public API contract and may change between releases.
-            </desc>
-        </setting>
-        <setting>
-            <name>wasapi.exclusive-mode</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                By default, WASAPI will operate in shared mode. Set it to 1 (TRUE) to use WASAPI in exclusive mode. In this mode, you'll benefit from direct soundcard access via kernel streaming, which has an extremely low latency. However, you must pay close attention to other settings, such as synth.sample-rate and audio.sample-format as your soundcard may not accept any possible sample configuration.
-            </desc>
-        </setting>
-        <setting>
-            <name>waveout.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>
-                Device to use for WaveOut driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
-            </desc>
-        </setting>
-    </audio>
-    
-    <midi label="MIDI driver settings">
-        <setting>
-            <name>autoconnect</name>
-            <type>bool</type>
-            <def>0 (FALSE)</def>
-            <desc>
-                If 1 (TRUE), automatically connects FluidSynth to available MIDI input ports. alsa_seq, coremidi and jack are currently the only drivers making use of this.
-            </desc>
-        </setting>
-        <setting>
-            <name>driver</name>
-            <type>str</type>
-            <def>alsa_seq (Linux),<br />
-                 winmidi (Windows),<br />
-                 jack (Mac OS X)</def>
-            <vals>alsa_raw, alsa_seq, coremidi, jack, midishare, oss, winmidi</vals>
-            <desc>The MIDI system to be used.</desc>
-        </setting>
-        <setting>
-            <name>realtime-prio</name>
-            <type>int</type>
-            <def>50</def>
-            <min>0</min>
-            <max>99</max>
-            <desc>Sets the realtime scheduling priority of the MIDI thread (0 disables high priority scheduling). Linux is the only platform which currently makes use of different priority levels. Drivers which use this option: alsa_raw, alsa_seq, oss</desc>
-        </setting>
-        <setting>
-            <name>portname</name>
-            <type>str</type>
-            <def>(empty string)</def>
-            <desc>Used by coremidi and alsa_seq drivers for the portnames registered with the MIDI subsystem.</desc>
-        </setting>
-        <setting>
-            <name>alsa.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port). Since fluidsynth 2.3.0 this setting will be populated with available devices when fluidsynth starts up.</desc>
-        </setting>
-        <setting>
-            <name>alsa_seq.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>ALSA sequencer hardware device to use for ALSA sequencer driver (not to be confused with the MIDI port).</desc>
-        </setting>
-        <setting>
-            <name>alsa_seq.id</name>
-            <type>str</type>
-            <def>pid</def>
-            <desc>ID to use when registering ports with the ALSA sequencer driver. If set to "pid" then the ID will be "FLUID Synth (PID)", where PID is the FluidSynth process ID of the audio thread otherwise the provided string will be used in place of PID.</desc>
-        </setting>
-        <setting>
-            <name>coremidi.id</name>
-            <type>str</type>
-            <def>pid</def>
-            <desc>Client ID to use for CoreMIDI driver. 'pid' will use process ID as port of the client name.</desc>
-        </setting>
-        <setting>
-            <name>jack.server</name>
-            <type>str</type>
-            <def>(empty string)</def>
-            <desc>Jack server to connect to for Jack MIDI driver. If an empty string then the default server will be used.</desc>
-        </setting>
-        <setting>
-            <name>jack.id</name>
-            <type>str</type>
-            <def>fluidsynth-midi</def>
-            <desc>Client ID to use with the Jack MIDI driver. If jack is also used as audio driver and "midi.jack.server" and "audio.jack.server" are equal, this setting will be overridden by "audio.jack.id", because a client cannot have multiple names.</desc>
-        </setting>
-        <setting>
-            <name>oss.device</name>
-            <type>str</type>
-            <def>/dev/midi</def>
-            <desc>The hardware device to use for OSS MIDI driver (not to be confused with the MIDI port).</desc>
-        </setting>
-        <setting>
-            <name>winmidi.device</name>
-            <type>str</type>
-            <def>default</def>
-            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels). Starting with 2.3.6 all device names are expected to be UTF8 encoded.</desc>
-        </setting>
-    </midi>
-    
-    <player label="MIDI player settings">
-        <setting>
-            <name>reset-synth</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <realtime/>
-            <desc>If true, reset the synth after the end of a MIDI song, so that the state of a previous song can't affect the next song. Turn it off for seamless looping of a song.</desc>
-        </setting>
-        <setting>
-            <name>timing-source</name>
-            <type>str</type>
-            <def>sample</def>
-            <vals>sample, system</vals>
-            <desc>Determines the timing source of the player sequencer. 'sample' uses the sample clock (how much audio has been output) to sequence events, in which case audio is synchronized with MIDI events. 'system' uses the system clock, audio and MIDI are not synchronized exactly.</desc>
-        </setting>
-    </player>
-    
-    <shell label="Shell (command line) settings">
-        <setting>
-            <name>prompt</name>
-            <type>str</type>
-            <def>(empty string)</def>
-            <desc>In dump mode we set the prompt to "" (empty string). The ui cannot easily handle lines, which don't end with cr. Changing the prompt cannot be done through a command, because the current shell does not handle empty arguments.</desc>
-        </setting>
-        <setting>
-            <name>port</name>
-            <type>int</type>
-            <def>9800</def>
-            <min>1</min>
-            <max>65535</max>
-            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses.</desc>
-        </setting>
-    </shell>
+	<audio label="Audio driver settings">
+		<setting>
+			<name>driver</name>
+			<type>str</type>
+			<def>
+				alsa (Linux),<br />
+				dsound (Windows),<br />
+				sndman (MacOS9),<br />
+				coreaudio (Mac OS X),<br />
+				dart (OS/2)
+			</def>
+			<vals>
+				alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss,
+				portaudio, pulseaudio, sdl3, sndman, wasapi, waveout
+			</vals>
+			<desc>
+				The audio system to be used.
+				Some audio drivers support only a subset of audio sample formats.
+				See <code>audio.sample-format</code> for details, and driver-specific notes
+				(e.g. WASAPI exclusive mode) for format negotiation behavior.
+				In order to use sdl3 as audio driver, the application is responsible for initializing
+				SDL's audio subsystem.
+				<br /><br />
+				<strong>Note:</strong> waveout is available since fluidsynth 2.1.0, sdl3 since
+				fluidsynth 2.4.4.
+			</desc>
+		</setting>
+		<setting>
+			<name>periods</name>
+			<type>int</type>
+			<def>
+				8 (Windows, MacOS9),<br />
+				16 (all other)
+			</def>
+			<min>2</min>
+			<max>64</max>
+			<desc>
+				The number of the audio buffers used by the driver. This number of buffers, multiplied by the buffer size
+				(see setting audio.period-size), determines the maximum latency of the audio driver.
+			</desc>
+		</setting>
+		<setting>
+			<name>period-size</name>
+			<type>int</type>
+			<def>
+				512 (Windows),<br />
+				64 (all other)
+			</def>
+			<min>64</min>
+			<max>8192</max>
+			<desc>
+				This is the number of audio samples most audio drivers will request from the synth at one time. In other words,
+				it's the amount of samples the synth is allowed to render in one go when no state changes (events) are about to
+				happen. Because of that, specifying too big numbers here may cause MIDI events to be poorly quantized (=untimed)
+				when a MIDI driver or the synth's API directly is used, as fluidsynth cannot determine when those events are to
+				arrive. This issue does not matter, when using the MIDI player or the MIDI sequencer, because in this case,
+				fluidsynth does know when events will be received.
+			</desc>
+		</setting>
+		<setting>
+			<name>realtime-prio</name>
+			<type>int</type>
+			<def>60</def>
+			<min>0</min>
+			<max>99</max>
+			<desc>
+				Sets the realtime scheduling priority of the audio synthesis thread. This includes the synthesis threads created
+				by the synth (in case synth.cpu-cores was greater 1). A value of 0 disables high priority scheduling. Linux is
+				the only platform which currently makes use of different priority levels as specified by this setting. On other
+				operating systems the thread priority is set to maximum. Drivers which use this option: alsa, oss and pulseaudio
+			</desc>
+		</setting>
+		<setting>
+			<name>sample-format</name>
+			<type>str</type>
+			<def>16bits</def>
+			<vals>16bits, 24bits, 32bits, float</vals>
+			<desc>
+				Sample format requested for transferring floating point audio samples
+				from the synthesizer to the audio hardware. The format actually used
+				depends on the selected audio driver and output device. Some drivers
+				may ignore this setting or fail to initialize when an unsupported
+				format is requested.
+				<br /><br />
+				At present, only the Windows WASAPI audio driver supports the
+				<code>24bits</code> and <code>32bits</code> values.
+				<br /><br />
+				This setting applies to live audio output only.
+				For file rendering formats, see <code>audio.file.format</code>.
+			</desc>
+		</setting>
+		<setting>
+			<name>alsa.device</name>
+			<type>str</type>
+			<def>default</def>
+			<vals>ALSA device string, such as: "hw:0", "plughw:1", etc.</vals>
+			<desc>
+				Selects the ALSA audio device to use.
+			</desc>
+		</setting>
+		<setting>
+			<name>coreaudio.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Selects the CoreAudio device to use.
+			</desc>
+		</setting>
+		<setting>
+			<name>coreaudio.channel-map</name>
+			<type>str</type>
+			<def>(empty string)</def>
+			<desc>
+				This setting is a comma-separated integer list that maps fluidsynth mono-channels
+				to CoreAudio device output channels. Each position in the list represents the output channel
+				of the CoreAudio device.
+				The value of each position indicates the zero-based index of the fluidsynth
+				output mono-channel to route there (i.e. the buffer index used for fluid_synth_process()).
+				Additionally, the special value of -1 will turn off an output.
+				<br /><br />
+				For example, the default map for a single stereo output is "0,1". A value of "0,0" will
+				copy the left channel to the right, a value of "1,0" will flip left and right, and a
+				value of "-1,1" will play only the right channel.
+				<br /><br />
+				With a six-channel output device, and the synth.audio-channels and synth.audio-groups
+				settings both set to "2", a channel map of "-1,-1,0,1,2,3" will result in notes from odd
+				MIDI channels (audible on the first stereo channel, i.e. mono-indices 0,1) being sent to
+				outputs 3 and 4, and even MIDI channels (audible on the second stereo channel, i.e. mono-indices 2,3)
+				being sent to outputs 5 and 6.
+				<br /><br />
+				If the list specifies less than the number of available outputs channels, outputs
+				beyond those specified will maintain the default channel mapping given by the CoreAudio driver.
+			</desc>
+		</setting>
+		<setting>
+			<name>dart.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Selects the Dart (OS/2 driver) device to use.
+			</desc>
+		</setting>
+		<setting>
+			<name>dsound.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Selects the DirectSound (Windows) device to use. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
+			</desc>
+		</setting>
+		<setting>
+			<name>file.endian</name>
+			<type>str</type>
+			<def>
+				'auto' if libsndfile support is built in,<br />
+				'cpu' otherwise.
+			</def>
+			<vals>auto, big, cpu, little ('cpu' is all that is supported if libsndfile support is not built in)</vals>
+			<desc>
+				Defines the byte order when using the 'file' driver or file renderer to store audio to a file. 'auto' uses the default
+				for the given file type, 'cpu' uses the CPU byte order, 'big' uses big endian byte order and 'little' uses little
+				endian byte order.
+			</desc>
+		</setting>
+		<setting>
+			<name>file.format</name>
+			<type>str</type>
+			<def>s16</def>
+			<vals>double, float, s16, s24, s32, s8, u8</vals>
+			<desc>
+				Defines the audio format when rendering audio to a file. Limited to 's16' if no libsndfile support.
+				<ul>
+					<li>'double' is 64 bit floating point,</li>
+					<li>'float' is 32 bit floating point,</li>
+					<li>'s16' is 16 bit signed PCM,</li>
+					<li>'s24' is 24 bit signed PCM,</li>
+					<li>'s32' is 32 bit signed PCM,</li>
+					<li>'s8' is 8 bit signed PCM and</li>
+					<li>'u8' is 8 bit unsigned PCM.</li>
+				</ul>
+				This setting affects file rendering only and is independent of
+				<code>audio.sample-format</code> used by live audio drivers.
+			</desc>
+		</setting>
+		<setting>
+			<name>file.name</name>
+			<type>str</type>
+			<def>
+				'fluidsynth.wav' if libsndfile support is built in,<br />
+				'fluidsynth.raw' otherwise.
+			</def>
+			<desc>
+				Specifies the file name to store the audio to, when rendering audio to a file.
+			</desc>
+		</setting>
+		<setting>
+			<name>file.type</name>
+			<type>str</type>
+			<def>
+				'auto' if libsndfile support is built in,<br />
+				'raw' otherwise.
+			</def>
+			<vals>aiff, au, auto, avr, caf, flac, htk, iff, mat, oga, paf, pvf, raw, sd2, sds, sf, voc, w64, wav, xi</vals>
+			<desc>
+				Sets the file type of the file which the audio will be stored to. 'auto' attempts to determine the file type
+				from the audio.file.name file extension and falls back to 'wav' if the extension doesn't match any types.
+				Limited to 'raw' if compiled without libsndfile support. Actual options will vary depending on libsndfile library.
+			</desc>
+		</setting>
+		<setting>
+			<name>jack.autoconnect</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				If 1 (TRUE), then FluidSynth output is automatically connected to jack system audio output.
+			</desc>
+		</setting>
+		<setting>
+			<name>jack.id</name>
+			<type>str</type>
+			<def>fluidsynth</def>
+			<desc>
+				Unique identifier used when creating Jack client connection.
+			</desc>
+		</setting>
+		<setting>
+			<name>jack.multi</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				If 1 (TRUE), then multi-channel Jack output will be enabled if synth.audio-channels is greater than 1.
+			</desc>
+		</setting>
+		<setting>
+			<name>jack.server</name>
+			<type>str</type>
+			<def>(empty string)</def>
+			<desc>
+				Jack server to connect to. Defaults to an empty string, which uses default Jack server.
+			</desc>
+		</setting>
+		<setting>
+			<name>oboe.id</name>
+			<type>int</type>
+			<def>0</def>
+			<min>0</min>
+			<max>2147483647</max>
+			<desc>
+				Request an audio device identified device using an ID as pointed out by Oboe's documentation.
+			</desc>
+		</setting>
+		<setting>
+			<name>oboe.sample-rate-conversion-quality</name>
+			<type>str</type>
+			<def>None</def>
+			<vals>None, Fastest, Low, Medium, High, Best</vals>
+			<desc>
+				Sets the sample-rate conversion quality as pointed out by Oboe's documentation.
+			</desc>
+		</setting>
+		<setting>
+			<name>oboe.sharing-mode</name>
+			<type>str</type>
+			<def>Shared</def>
+			<vals>Shared, Exclusive</vals>
+			<desc>
+				Sets the sharing mode as pointed out by Oboe's documentation.
+			</desc>
+		</setting>
+		<setting>
+			<name>oboe.performance-mode</name>
+			<type>str</type>
+			<def>None</def>
+			<vals>None, PowerSaving, LowLatency</vals>
+			<desc>
+				Sets the performance mode as pointed out by Oboe's documentation.
+			</desc>
+		</setting>
+		<setting>
+			<name>oboe.error-recovery-mode</name>
+			<type>str</type>
+			<def>Reconnect</def>
+			<vals>Reconnect, Stop</vals>
+			<desc>
+				Sets the error recovery mode when audio device error such as earphone disconnection occurred.
+				It reconnects by default (same as OpenSLES behavior), but can be stopped if Stop is specified.
+			</desc>
+		</setting>
+		<setting>
+			<name>oss.device</name>
+			<type>str</type>
+			<def>/dev/dsp</def>
+			<desc>
+				Device to use for OSS audio output.
+			</desc>
+		</setting>
+		<setting>
+			<name>pipewire.media-category</name>
+			<type>str</type>
+			<def>Playback</def>
+			<desc>
+				The media category to use. This value will be passed to <code>PW_KEY_MEDIA_CATEGORY</code>,
+				see Pipewire documentation for valid values.
+			</desc>
+		</setting>
+		<setting>
+			<name>pipewire.media-role</name>
+			<type>str</type>
+			<def>Music</def>
+			<desc>
+				The media role to use. This value will be passed to <code>PW_KEY_MEDIA_ROLE</code>,
+				see Pipewire documentation for valid values.
+			</desc>
+		</setting>
+		<setting>
+			<name>pipewire.media-type</name>
+			<type>str</type>
+			<def>Audio</def>
+			<desc>
+				The media type to use. This value will be passed to <code>PW_KEY_MEDIA_TYPE</code>,
+				see Pipewire documentation for valid values.
+			</desc>
+		</setting>
+		<setting>
+			<name>portaudio.device</name>
+			<type>str</type>
+			<def>PortAudio Default</def>
+			<desc>
+				Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value
+				which outputs to the default PortAudio device. The format of the device name is:
+				"&lt;device_index&gt;:&lt;host_api_name&gt;:&lt;host_device_name&gt;" e.g. "11:Windows DirectSound:SB PCI"
+			</desc>
+		</setting>
+		<setting>
+			<name>pulseaudio.adjust-latency</name>
+			<type>bool</type>
+			<def>1 (TRUE)</def>
+			<desc>
+				If TRUE initializes the maximum length of the audio buffer to the highest supported value and
+				increases the latency dynamically if PulseAudio suggests so. Else uses a buffer with length of "audio.period-size".
+			</desc>
+		</setting>
+		<setting>
+			<name>pulseaudio.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Device to use for PulseAudio driver output.
+			</desc>
+		</setting>
+		<setting>
+			<name>pulseaudio.media-role</name>
+			<type>str</type>
+			<def>music</def>
+			<desc>
+				PulseAudio media role information.
+			</desc>
+		</setting>
+		<setting>
+			<name>pulseaudio.server</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Server to use for PulseAudio driver output.
+			</desc>
+		</setting>
+		<setting>
+			<name>sdl3.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Device to use for SDL3 driver output.
+			</desc>
+		</setting>
+		<setting>
+			<name>wasapi.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
+				<br /><br />
+				<strong>Note</strong><br />
+				When using the WASAPI audio driver, more detailed information about device and format negotiation
+				(e.g. whether the requested format was accepted natively, adjusted, or rejected) may be obtained
+				by installing a custom log callback using <code>fluid_set_log_function()</code>.
+				<br />
+				The WASAPI driver reports informational, warning, and error messages received from the OS during
+				device initialization, which can be used as a best-effort heuristic to distinguish between:
+				<ul>
+					<li>Successful native opens,</li>
+					<li>successful opens with format adjustment or resampling, and</li>
+					<li>failed opens.</li>
+				</ul>
+				This mechanism is used internally by the <code>fluidsynth -Q</code> command,
+				see <a href="https://github.com/FluidSynth/fluidsynth/blob/master/src/fluid_wasapi_device_enumerate.c">
+					<code>fluid_wasapi_device_enumerate.c</code>
+				</a>
+				for a reference implementation. The content and meaning of log messages are
+				not part of the public API contract and may change between releases.
+			</desc>
+		</setting>
+		<setting>
+			<name>wasapi.exclusive-mode</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				By default, WASAPI will operate in shared mode. Set it to 1 (TRUE) to use WASAPI in exclusive mode.
+				In this mode, you'll benefit from direct soundcard access, which has extremely
+				low latency. However, in exclusive mode the requested audio configuration must be supported exactly
+				by the output device.
+				<br /><br />
+				Pay close attention to settings of <code>synth.sample-rate</code>, <code>audio.sample-format</code>,
+				and <code>audio.period-size</code>, as unsupported combinations may cause the WASAPI driver to fail
+				during initialization.
+				<br /><br />
+				The <code>fluidsynth -Q</code> command can be used to list the sample rate and format support status
+				and recommended period sizes for available WASAPI devices.
+			</desc>
+		</setting>
+		<setting>
+			<name>waveout.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				Device to use for WaveOut driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
+			</desc>
+		</setting>
+	</audio>
+
+	<midi label="MIDI driver settings">
+		<setting>
+			<name>autoconnect</name>
+			<type>bool</type>
+			<def>0 (FALSE)</def>
+			<desc>
+				If 1 (TRUE), automatically connects FluidSynth to available MIDI input ports. alsa_seq, coremidi
+				and jack are currently the only drivers making use of this.
+			</desc>
+		</setting>
+		<setting>
+			<name>driver</name>
+			<type>str</type>
+			<def>
+				alsa_seq (Linux),<br />
+				winmidi (Windows),<br />
+				jack (Mac OS X)
+			</def>
+			<vals>alsa_raw, alsa_seq, coremidi, jack, midishare, oss, winmidi</vals>
+			<desc>
+				The MIDI system to be used.
+			</desc>
+		</setting>
+		<setting>
+			<name>realtime-prio</name>
+			<type>int</type>
+			<def>50</def>
+			<min>0</min>
+			<max>99</max>
+			<desc>
+				Sets the realtime scheduling priority of the MIDI thread (0 disables high priority scheduling).
+				Linux is the only platform which currently makes use of different priority levels. Drivers which
+				use this option: alsa_raw, alsa_seq, oss
+			</desc>
+		</setting>
+		<setting>
+			<name>portname</name>
+			<type>str</type>
+			<def>(empty string)</def>
+			<desc>
+				Used by coremidi and alsa_seq drivers for the portnames registered with the MIDI subsystem.
+			</desc>
+		</setting>
+		<setting>
+			<name>alsa.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port).
+				Since fluidsynth 2.3.0 this setting will be populated with available devices when fluidsynth starts up.
+			</desc>
+		</setting>
+		<setting>
+			<name>alsa_seq.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				ALSA sequencer hardware device to use for ALSA sequencer driver (not to be confused with the MIDI port).
+			</desc>
+		</setting>
+		<setting>
+			<name>alsa_seq.id</name>
+			<type>str</type>
+			<def>pid</def>
+			<desc>
+				ID to use when registering ports with the ALSA sequencer driver. If set to "pid" then the ID will
+				be "FLUID Synth (PID)", where PID is the FluidSynth process ID of the audio thread otherwise the
+				provided string will be used in place of PID.
+			</desc>
+		</setting>
+		<setting>
+			<name>coremidi.id</name>
+			<type>str</type>
+			<def>pid</def>
+			<desc>
+				Client ID to use for CoreMIDI driver. 'pid' will use process ID as port of the client name.
+			</desc>
+		</setting>
+		<setting>
+			<name>jack.server</name>
+			<type>str</type>
+			<def>(empty string)</def>
+			<desc>
+				Jack server to connect to for Jack MIDI driver. If an empty string then the default server will be used.
+			</desc>
+		</setting>
+		<setting>
+			<name>jack.id</name>
+			<type>str</type>
+			<def>fluidsynth-midi</def>
+			<desc>
+				Client ID to use with the Jack MIDI driver. If jack is also used as audio driver and
+				"midi.jack.server" and "audio.jack.server" are equal, this setting will be overridden by "audio.jack.id",
+				because a client cannot have multiple names.
+			</desc>
+		</setting>
+		<setting>
+			<name>oss.device</name>
+			<type>str</type>
+			<def>/dev/midi</def>
+			<desc>
+				The hardware device to use for OSS MIDI driver (not to be confused with the MIDI port).
+			</desc>
+		</setting>
+		<setting>
+			<name>winmidi.device</name>
+			<type>str</type>
+			<def>default</def>
+			<desc>
+				The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port).
+				Multiple devices can be specified by a list of devices index separated by a semicolon
+				(e.g "2;0", which is equivalent to one device with 32 MIDI channels). Starting with 2.3.6
+				all device names are expected to be UTF8 encoded.
+			</desc>
+		</setting>
+	</midi>
+
+	<player label="MIDI player settings">
+		<setting>
+			<name>reset-synth</name>
+			<type>bool</type>
+			<def>1 (TRUE)</def>
+			<realtime/>
+			<desc>
+				If true, reset the synth after the end of a MIDI song, so that the state of a previous song
+				can't affect the next song. Turn it off for seamless looping of a song.
+			</desc>
+		</setting>
+		<setting>
+			<name>timing-source</name>
+			<type>str</type>
+			<def>sample</def>
+			<vals>sample, system</vals>
+			<desc>
+				Determines the timing source of the player sequencer. 'sample' uses the sample clock
+				(how much audio has been output) to sequence events, in which case audio is synchronized
+				with MIDI events. 'system' uses the system clock, audio and MIDI are not synchronized exactly.
+			</desc>
+		</setting>
+	</player>
+
+	<shell label="Shell (command line) settings">
+		<setting>
+			<name>prompt</name>
+			<type>str</type>
+			<def>(empty string)</def>
+			<desc>
+				In dump mode we set the prompt to "" (empty string). The ui cannot easily handle lines,
+				which don't end with cr. Changing the prompt cannot be done through a command, because
+				the current shell does not handle empty arguments.
+			</desc>
+		</setting>
+		<setting>
+			<name>port</name>
+			<type>int</type>
+			<def>9800</def>
+			<min>1</min>
+			<max>65535</max>
+			<desc>
+				The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses.
+			</desc>
+		</setting>
+	</shell>
 </fluidsettings>
-
