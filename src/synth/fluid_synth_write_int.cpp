@@ -1,21 +1,38 @@
-/*
- * FluidSynth - A Software Synthesizer
+/* FluidSynth - A Software Synthesizer
  *
- * C++11 integer output rendering implementation for s16.
- * This file contains the full, bit-identical logic formerly implemented in
- * fluid_synth.c: fluid_synth_write_s16() and fluid_synth_write_s16_channels().
+ * Copyright (C) 2003  Peter Hanappe and others.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ */
+
+/*
+ * C++11 integer output rendering implementation (s16/s24/s32).
+ *
+ * Contains the full, bit-identical legacy s16 rendering logic formerly in
+ * fluid_synth.c, plus shared integer output infrastructure used for s24 and
+ * s32.
  */
 
 #include "fluid_synth_write_int.h"
 
 /* Include the same internal headers that the original C bodies relied on.
- * Adjust includes to match upstream commit 2d07b6b.
  */
 #include "fluid_sys.h"
-/* + any other needed internal headers */
+#include "drivers/fluid_audio_convert.h"
 
 #include <cstdint>
-#include <climits> // INT32_MIN / INT32_MAX
 
 /* --------------------------------------------------------------------------
  * Local static helpers/tables
@@ -73,88 +90,7 @@ static void fluid_sample_timer_process(fluid_synth_t *synth)
     }
 }
 
-/* Dither table */
-#define DITHER_SIZE 48000
-#define DITHER_CHANNELS 2
-
-static float rand_table[DITHER_CHANNELS][DITHER_SIZE];
-
-/* Init dither table */
-static void init_dither(void)
-{
-    float d, dp;
-    int c, i;
-
-    for (c = 0; c < DITHER_CHANNELS; c++)
-    {
-        dp = 0;
-
-        for (i = 0; i < DITHER_SIZE - 1; i++)
-        {
-            d = rand() / (float)RAND_MAX - 0.5f;
-            rand_table[c][i] = d - dp;
-            dp = d;
-        }
-
-        rand_table[c][DITHER_SIZE - 1] = 0 - dp;
-    }
-}
-
-/* A portable replacement for roundf(), seems it may actually be faster too! */
-static FLUID_INLINE int16_t round_clip_to_i16(float x)
-{
-    long i;
-
-    if (x >= 0.0f)
-    {
-        i = (long)(x + 0.5f);
-
-        if (FLUID_UNLIKELY(i > 32767))
-        {
-            i = 32767;
-        }
-    }
-    else
-    {
-        i = (long)(x - 0.5f);
-
-        if (FLUID_UNLIKELY(i < -32768))
-        {
-            i = -32768;
-        }
-    }
-
-    return (int16_t)i;
-}
-
-/* Round + clip to signed 32-bit PCM. No dithering. */
-static FLUID_INLINE int32_t round_clip_to_i32(float x)
-{
-    int64_t i;
-
-    if (x >= 0.0f)
-    {
-        i = (int64_t)(x + 0.5f);
-
-        if (FLUID_UNLIKELY(i > INT32_MAX))
-        {
-            i = INT32_MAX;
-        }
-    }
-    else
-    {
-        i = (int64_t)(x - 0.5f);
-
-        if (FLUID_UNLIKELY(i < INT32_MIN))
-        {
-            i = INT32_MIN;
-        }
-    }
-
-    return (int32_t)i;
-}
-
-/**
+/*
  * Process blocks (FLUID_BUFSIZE) of audio.
  * Must be called from renderer thread only!
  * @return number of blocks rendered. Might (often) return less than requested
@@ -246,7 +182,7 @@ template<> struct int_write_traits<s16_tag>
         /* Preserve exact arithmetic order:
          * (sample * 32766.0f) + rand_table[ch][di], then round_clip_to_i16().
          */
-        return round_clip_to_i16(x * 32766.0f + rand_table[ch][di]);
+        return round_clip_to_i16((float)x * 32766.0f + rand_table[ch][di]);
     }
 
     static FLUID_INLINE void advance_di(int &di)
@@ -268,7 +204,7 @@ template<> struct int_write_traits<s16_tag>
     }
 };
 
-/**
+/*
  * s24: 24-bit PCM in an int32_t container.
  * - 24 valid bits are left-aligned in the 32-bit word.
  * - The low 8 bits are always zero (mask 0xFFFFFF00).
@@ -482,44 +418,13 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
     return FLUID_OK;
 }
 
-/* --------------------------------------------------------------------------
- * C ABI entrypoints called by the C forwarders
- * -------------------------------------------------------------------------- */
-
-/**
- * Synthesize a block of 16 bit audio samples channels to audio buffers.
- * The function is convenient for audio driver to render multiple stereo
- * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
+/*
+ * C ABI entrypoints called by the C forwarders.
  *
- * @param synth FluidSynth instance.
- * @param len Count of audio frames to synthesize.
- * @param channels_count Count of channels in a frame.
- *  must be multiple of 2 and  channel_count/2 must not exceed the number
- *  of internal mixer buffers (synth->audio_groups)
- * @param channels_out Array of channels_count pointers on 16 bit words to
- *  store sample channels. Modified on return.
- * @param channels_off Array of channels_count offset index to add to respective pointer
- *  in channels_out for first sample.
- * @param channels_incr Array of channels_count increment between consecutive
- *  samples channels.
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
- *
- * Useful for storing:
- * - interleaved channels in a unique buffer.
- * - non interleaved channels in an unique buffer (or in distinct buffers).
- *
- * Example for interleaved 4 channels (c1, c2, c3, c4) and n samples (s1, s2,..sn)
- * in a unique buffer:
- * { s1:c1, s1:c2, s1:c3, s1:c4,  s2:c1, s2:c2, s2:c3, s2:c4, ....
- *   sn:c1, sn:c2, sn:c3, sn:c4 }.
- *
- * @note Should only be called from synthesis thread.
- * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
- * @note Dithering is performed when converting from internal floating point to
- * 16 bit audio.
+ * These wrappers are internal plumbing; their public-facing documentation
+ * (if any) lives with the declarations in fluid_synth_write_int.h.
  */
-extern "C" int 
-fluid_synth_write_s16_channels_cpp(
+extern "C" int fluid_synth_write_s16_channels_cpp(
     fluid_synth_t *synth,
     int len,
     int channels_count,
@@ -528,20 +433,15 @@ fluid_synth_write_s16_channels_cpp(
     int channels_incr[])
 {
     return fluid_synth_write_int_channels_impl<s16_tag>(
-        synth, 
-        len, 
-        channels_count, 
-        channels_out, 
-        channels_off, 
+        synth,
+        len,
+        channels_count,
+        channels_out,
+        channels_off,
         channels_incr);
 }
 
-/**
- * Synthesize a block of 24 bit audio samples channels to audio buffers.
- * Same shape as s16_channels, but outputs left aligned, signed 24-bit PCM (24-in-32),
- * and performs round+clip+mask conversion from internal floating point. No dithering.
- */
-extern "C" int 
+extern "C" int
 fluid_synth_write_s24_channels_cpp(
     fluid_synth_t *synth,
     int len,
@@ -551,20 +451,15 @@ fluid_synth_write_s24_channels_cpp(
     int channels_incr[])
 {
     return fluid_synth_write_int_channels_impl<s24_tag>(
-        synth, 
-        len, 
-        channels_count, 
-        channels_out, 
-        channels_off, 
+        synth,
+        len,
+        channels_count,
+        channels_out,
+        channels_off,
         channels_incr);
 }
 
-/**
- * Synthesize a block of 32 bit audio samples channels to audio buffers.
- * Same shape as s16_channels, but outputs signed 32-bit PCM (int32_t),
- * and performs round+clip conversion from internal floating point. No dithering.
- */
-extern "C" int 
+extern "C" int
 fluid_synth_write_s32_channels_cpp(
     fluid_synth_t *synth,
     int len,
@@ -574,34 +469,14 @@ fluid_synth_write_s32_channels_cpp(
     int channels_incr[])
 {
     return fluid_synth_write_int_channels_impl<s32_tag>(
-        synth, 
-        len, 
-        channels_count, 
-        channels_out, 
-        channels_off, 
+        synth,
+        len,
+        channels_count,
+        channels_out,
+        channels_off,
         channels_incr);
 }
 
-/**
- * Synthesize a block of 16 bit audio samples to audio buffers.
- * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize
- * @param lout Array of 16 bit words to store left channel of audio
- * @param loff Offset index in 'lout' for first sample
- * @param lincr Increment between samples stored to 'lout'
- * @param rout Array of 16 bit words to store right channel of audio
- * @param roff Offset index in 'rout' for first sample
- * @param rincr Increment between samples stored to 'rout'
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
- * lincr = 2, rincr = 2).
- *
- * @note Should only be called from synthesis thread.
- * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
- * @note Dithering is performed when converting from internal floating point to
- * 16 bit audio.
- */
 extern "C" int
 fluid_synth_write_s16_cpp(fluid_synth_t *synth, int len, void *lout, int loff, int lincr, void *rout, int roff, int rincr)
 {
@@ -612,11 +487,6 @@ fluid_synth_write_s16_cpp(fluid_synth_t *synth, int len, void *lout, int loff, i
     return fluid_synth_write_s16_channels_cpp(synth, len, 2, channels_out, channels_off, channels_incr);
 }
 
-/**
- * Synthesize a block of 24 bit audio samples channels to audio buffers.
- * Same shape as s16_channels, but outputs left aligned, signed 24-bit PCM (24-in-32),
- * and performs round+clip+mask conversion from internal floating point. No dithering.
- */
 extern "C" int
 fluid_synth_write_s24_cpp(fluid_synth_t *synth, int len, void *lout, int loff, int lincr, void *rout, int roff, int rincr)
 {
@@ -627,11 +497,6 @@ fluid_synth_write_s24_cpp(fluid_synth_t *synth, int len, void *lout, int loff, i
     return fluid_synth_write_s24_channels_cpp(synth, len, 2, channels_out, channels_off, channels_incr);
 }
 
-/**
- * Synthesize a block of 32 bit audio samples to audio buffers.
- * Same shape as s16, but outputs signed 32-bit PCM (int32_t),
- * and performs round+clip conversion from internal floating point. No dithering.
- */
 extern "C" int
 fluid_synth_write_s32_cpp(fluid_synth_t *synth, int len, void *lout, int loff, int lincr, void *rout, int roff, int rincr)
 {
