@@ -225,6 +225,16 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_str(settings, "midi.portname", "", 0);
 
+#ifdef LIMITER_SUPPORT
+    fluid_settings_register_int(settings, "synth.limiter.active", 0, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_num(settings, "synth.limiter.output-limit", FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT, fluid_cb2amp(240), 1.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.attack", FLUID_LIMITER_DEFAULT_ATTACK_MS, 1.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.hold", FLUID_LIMITER_DEFAULT_HOLD_MS, 0.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.release", FLUID_LIMITER_DEFAULT_RELEASE_MS, 0.0f, 250.0f, 0);
+    fluid_settings_register_int(settings, "synth.limiter.smoothing-stages", FLUID_LIMITER_DEFAULT_SMOOTHING_STAGES, 1, 3, 0);
+    fluid_settings_register_num(settings, "synth.limiter.link-channels", FLUID_LIMITER_DEFAULT_LINK_CHANNELS, 0.0f, 1.0f, 0);
+#endif
+
 #ifdef DEFAULT_SOUNDFONT
     fluid_settings_register_str(settings, "synth.default-soundfont", DEFAULT_SOUNDFONT, 0);
 #endif
@@ -675,7 +685,12 @@ new_fluid_synth(fluid_settings_t *settings)
     char *important_channels;
     int i, prio_level = 0;
     int with_ladspa = 0;
+    int with_limiter = 0;
     double sample_rate_min, sample_rate_max;
+#ifdef LIMITER_SUPPORT
+    fluid_limiter_settings_t limiter_settings;
+    double limiter_value;
+#endif
 
     /* initialize all the conversion tables and other stuff */
     if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
@@ -940,6 +955,39 @@ new_fluid_synth(fluid_settings_t *settings)
         FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
 #endif /* LADSPA */
     }
+
+    fluid_settings_getint(settings, "synth.limiter.active", &with_limiter);
+
+    if(with_limiter)
+    {
+#ifdef LIMITER_SUPPORT
+        limiter_settings.input_gain = 1.0;
+        if(fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_value) == FLUID_OK) {
+            limiter_settings.output_limit = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.attack", &limiter_value) == FLUID_OK) {
+            limiter_settings.attack_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.hold", &limiter_value) == FLUID_OK) {
+            limiter_settings.hold_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.release", &limiter_value) == FLUID_OK) {
+            limiter_settings.release_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.link-channels", &limiter_value) == FLUID_OK) {
+            limiter_settings.link_channels = limiter_value;
+        }
+        fluid_settings_getint(settings, "synth.limiter.smoothing-stages", &limiter_settings.smoothing_stages);
+
+        if (!fluid_rvoice_mixer_set_limiter(synth->eventhandler->mixer, synth->sample_rate, &limiter_settings)) {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            goto error_recovery;
+        }
+#else /* LIMITER_SUPPORT */
+        FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with limiter support");
+#endif /* LIMITER_SUPPORT */
+    }
+
 
     /* allocate and add the dls sfont loader */
 #ifdef LIBINSTPATCH_SUPPORT
