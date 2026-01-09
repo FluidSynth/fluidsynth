@@ -689,6 +689,7 @@ new_fluid_synth(fluid_settings_t *settings)
     double sample_rate_min, sample_rate_max;
 #ifdef LIMITER_SUPPORT
     fluid_limiter_settings_t limiter_settings;
+    double limiter_value;
 #endif
 
     /* initialize all the conversion tables and other stuff */
@@ -961,12 +962,22 @@ new_fluid_synth(fluid_settings_t *settings)
     {
 #ifdef LIMITER_SUPPORT
         limiter_settings.input_gain = 1.0;
-        fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_settings.output_limit);
-        fluid_settings_getnum(settings, "synth.limiter.attack", &limiter_settings.attack_ms);
-        fluid_settings_getnum(settings, "synth.limiter.hold", &limiter_settings.hold_ms);
-        fluid_settings_getnum(settings, "synth.limiter.release", &limiter_settings.release_ms);
+        if(fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_value) == FLUID_OK) {
+            limiter_settings.output_limit = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.attack", &limiter_value) == FLUID_OK) {
+            limiter_settings.attack_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.hold", &limiter_value) == FLUID_OK) {
+            limiter_settings.hold_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.release", &limiter_value) == FLUID_OK) {
+            limiter_settings.release_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.link-channels", &limiter_value) == FLUID_OK) {
+            limiter_settings.link_channels = limiter_value;
+        }
         fluid_settings_getint(settings, "synth.limiter.smoothing-stages", &limiter_settings.smoothing_stages);
-        fluid_settings_getnum(settings, "synth.limiter.link-channels", &limiter_settings.link_channels);
 
         if (!fluid_rvoice_mixer_set_limiter(synth->eventhandler->mixer, synth->sample_rate, &limiter_settings)) {
             FLUID_LOG(FLUID_ERR, "Out of memory");
