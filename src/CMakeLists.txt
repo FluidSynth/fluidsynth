@@ -176,6 +176,7 @@ set ( libfluidsynth_SOURCES
     synth/fluid_synth.c
     synth/fluid_synth.h
     synth/fluid_synth_monopoly.c
+    synth/fluid_synth_write_int.cpp
     synth/fluid_tuning.c
     synth/fluid_tuning.h
     synth/fluid_voice.c

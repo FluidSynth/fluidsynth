@@ -239,6 +239,13 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[]);
+
+int 
+fluid_synth_write_s32_channels(fluid_synth_t *synth, int len,
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[]);
+
 int
 fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
                                  int channels_count,
@@ -248,6 +255,7 @@ fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
 fluid_preset_t *fluid_synth_find_preset(fluid_synth_t *synth,
                                         int banknum,
                                         int prognum);
+
 void fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont);
 
 void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
@@ -255,21 +263,28 @@ void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const 
                             void *rout, int roff, int rincr);
 
 int fluid_synth_reset_reverb(fluid_synth_t *synth);
+
 int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num);
+
 int fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
                                  int param,
                                  double value);
+
 int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 
 int fluid_synth_reset_chorus(fluid_synth_t *synth);
+
 int fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group,
                                  int param, double value);
+
 int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 
 fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_callback_t callback, void *data);
+
 void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer);
+
 void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer);
 
 void fluid_synth_process_event_queue(fluid_synth_t *synth);
@@ -286,6 +301,7 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
  * misc
  */
 void fluid_synth_settings(fluid_settings_t *settings);
+
 void fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate);
 
 

@@ -18,6 +18,7 @@
  */
 
 #include "fluid_synth.h"
+#include "fluid_synth_write_int.h"
 #include "fluid_sys.h"
 #include "fluid_chan.h"
 #include "fluid_tuning.h"
@@ -4837,68 +4838,46 @@ round_clip_to_i16(float x)
 
 /**
  * Synthesize a block of 16 bit audio samples to audio buffers.
- * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize
- * @param lout Array of 16 bit words to store left channel of audio
- * @param loff Offset index in 'lout' for first sample
- * @param lincr Increment between samples stored to 'lout'
- * @param rout Array of 16 bit words to store right channel of audio
- * @param roff Offset index in 'rout' for first sample
- * @param rincr Increment between samples stored to 'rout'
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
- * lincr = 2, rincr = 2).
- *
- * @note Should only be called from synthesis thread.
- * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
- * @note Dithering is performed when converting from internal floating point to
- * 16 bit audio.
  */
 int
 fluid_synth_write_s16(fluid_synth_t *synth, int len,
                       void *lout, int loff, int lincr,
                       void *rout, int roff, int rincr)
 {
-    void *channels_out[2] = {lout, rout};
-    int channels_off[2] = {loff, roff };
-    int channels_incr[2] = {lincr, rincr };
+    return fluid_synth_write_s16_cpp(synth, len, 
+                                     lout, loff, lincr, 
+                                     rout, roff, rincr);
+}
 
-    return fluid_synth_write_s16_channels(synth, len, 2, channels_out,
-                                          channels_off, channels_incr);
+/**
+ * Synthesize a block of 24 bit audio samples to audio buffers.
+ */
+int fluid_synth_write_s24(fluid_synth_t *synth, int len, 
+                          void *lout, int loff, int lincr, 
+                          void *rout, int roff, int rincr)
+{
+    return fluid_synth_write_s24_cpp(synth, len, 
+                                     lout, loff, lincr, 
+                                     rout, roff, rincr);
+}
+
+/**
+ * Synthesize a block of 32 bit audio samples to audio buffers.
+ */
+int 
+fluid_synth_write_s32(fluid_synth_t *synth, int len, 
+                      void *lout, int loff, int lincr, 
+                      void *rout, int roff, int rincr)
+{
+    return fluid_synth_write_s32_cpp(synth, len, 
+                                     lout, loff, lincr, 
+                                     rout, roff, rincr);
 }
 
 /**
  * Synthesize a block of 16 bit audio samples channels to audio buffers.
  * The function is convenient for audio driver to render multiple stereo
  * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
- *
- * @param synth FluidSynth instance.
- * @param len Count of audio frames to synthesize.
- * @param channels_count Count of channels in a frame.
- *  must be multiple of 2 and  channel_count/2 must not exceed the number
- *  of internal mixer buffers (synth->audio_groups)
- * @param channels_out Array of channels_count pointers on 16 bit words to
- *  store sample channels. Modified on return.
- * @param channels_off Array of channels_count offset index to add to respective pointer
- *  in channels_out for first sample.
- * @param channels_incr Array of channels_count increment between consecutive
- *  samples channels.
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
- *
- * Useful for storing:
- * - interleaved channels in a unique buffer.
- * - non interleaved channels in an unique buffer (or in distinct buffers).
- *
- * Example for interleaved 4 channels (c1, c2, c3, c4) and n samples (s1, s2,..sn)
- * in a unique buffer:
- * { s1:c1, s1:c2, s1:c3, s1:c4,  s2:c1, s2:c2, s2:c3, s2:c4, ....
- *   sn:c1, sn:c2, sn:c3, sn:c4 }.
- *
- * @note Should only be called from synthesis thread.
- * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
- * @note Dithering is performed when converting from internal floating point to
- * 16 bit audio.
  */
 int
 fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
@@ -4906,145 +4885,51 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
                                void *channels_out[], int channels_off[],
                                int channels_incr[])
 {
-    int16_t **chan_out = (int16_t **)channels_out;
-    int di, n, cur, size;
+    return fluid_synth_write_s16_channels_cpp(synth, len, 
+                                              channels_count,
+                                              channels_out, channels_off, 
+                                              channels_incr); 
+}
 
-    /* pointers on first input mixer buffer */
-    fluid_real_t *left_in;
-    fluid_real_t *right_in;
-    int bufs_in_count; /* number of stereo input buffers */
-    int i;
+/**
+ * Synthesize a block of 24 bit audio samples channels to audio buffers.
+ * The function is convenient for audio driver to render multiple stereo
+ * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
+ *
+ * Output is left aligned signed 24-bit PCM (24-in-32), produced by 
+ * round + clip + mask conversion from internal floating point.
+ * No dithering is performed.
+ */
+int fluid_synth_write_s24_channels(fluid_synth_t *synth, int len,
+                                   int channels_count,
+                                   void *channels_out[],
+                                   int channels_off[],
+                                   int channels_incr[])
+{
+    return fluid_synth_write_s24_channels_cpp(synth, len, 
+                                              channels_count, 
+                                              channels_out, channels_off, 
+                                              channels_incr);
+}
 
-    /* start average cpu load probe */
-    double time = fluid_utime();
-    float cpu_load;
-
-    /* start profiling duration probe (if profiling is enabled) */
-    fluid_profile_ref_var(prof_ref);
-
-    /* check parameters */
-    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
-
-    fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
-    fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
-
-    /* check for valid channel_count: must be multiple of 2 and
-       channel_count/2 must not exceed the number of internal mixer buffers
-       (synth->audio_groups)
-    */
-    fluid_return_val_if_fail(!(channels_count & 1)  /* must be multiple of 2 */
-                             && channels_count >= 2, FLUID_FAILED);
-
-    bufs_in_count = (unsigned int)channels_count >> 1; /* channels_count/2 */
-    fluid_return_val_if_fail(bufs_in_count <= synth->audio_groups, FLUID_FAILED);
-
-    fluid_return_val_if_fail(channels_out != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(channels_off != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(channels_incr != NULL, FLUID_FAILED);
-
-    /* initialize output channels buffers on first sample position */
-    i = channels_count;
-    do
-    {
-        i--;
-        chan_out[i] += channels_off[i];
-    }
-    while(i);
-
-    /* Conversely to fluid_synth_process(),
-       we want rendered audio effect mixed in internal audio dry buffers.
-       TRUE instructs the mixer that internal audio effects will be mixed in internal
-       audio dry buffers.
-    */
-    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
-    /* get first internal mixer audio dry buffer's pointer (left and right channel) */
-    fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
-
-    size = len;
-    /* synth->cur indicates if available samples are still in internal mixer buffer */
-    cur = synth->cur; /* get previous sample position in internal buffer (due to prvious call) */
-    di = synth->dither_index;
-
-    do
-    {
-        /* fill up the buffers as needed */
-        if(cur >= synth->curmax)
-        {
-            /* render audio (dry and effect) to internal dry buffers */
-            /* always render full blocks multiple of FLUID_BUFSIZE */
-            int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-            synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
-
-            /* get first internal mixer audio dry buffer's pointer (left and right channel) */
-            fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
-            cur = 0;
-        }
-
-        /* calculate amount of available samples */
-        n = synth->curmax - cur;
-
-        /* keep track of emitted samples */
-        if(n > size)
-        {
-            n = size;
-        }
-
-        size -= n;
-
-        /* update pointers to current position */
-        left_in  += cur + n;
-        right_in += cur + n;
-
-        /* set final cursor position */
-        cur += n;
-
-        /* reverse index */
-        n = 0 - n;
-
-        do
-        {
-            i = bufs_in_count;
-            do
-            {
-                /* input sample index in stereo buffer i */
-                int in_idx = --i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + n;
-                int c = i << 1; /* channel index c to write */
-
-                /* write left input sample to channel sample */
-                *chan_out[c] = round_clip_to_i16(left_in[in_idx] * 32766.0f +
-                                                 rand_table[0][di]);
-
-                /* write right input sample to next channel sample */
-                *chan_out[c+1] = round_clip_to_i16(right_in[in_idx] * 32766.0f +
-                                                   rand_table[1][di]);
-                /* advance output pointers */
-                chan_out[c]   += channels_incr[c];
-                chan_out[c+1] += channels_incr[c+1];
-            }
-            while(i);
-
-            if(++di >= DITHER_SIZE)
-            {
-                di = 0;
-            }
-        }
-        while(++n < 0);
-    }
-    while(size);
-
-    synth->cur = cur; /* save current sample position. It will be used on next call */
-    synth->dither_index = di;	/* keep dither buffer continuous */
-
-    /* save average cpu load, used by API for real time cpu load meter */
-    time = fluid_utime() - time;
-    cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
-    fluid_atomic_float_set(&synth->cpu_load, cpu_load);
-
-    /* stop duration probe and save performance measurement (if profiling is enabled) */
-    fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
-                        fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
-                        len);
-    return FLUID_OK;
+/**
+ * Synthesize a block of 32 bit audio samples channels to audio buffers.
+ * The function is convenient for audio driver to render multiple stereo
+ * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
+ *
+ * Output is signed 32-bit PCM (int32_t), produced by round+clip conversion
+ * from internal floating point. No dithering is performed.
+ */
+int 
+fluid_synth_write_s32_channels(fluid_synth_t *synth, int len,
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[])
+{
+    return fluid_synth_write_s32_channels_cpp(synth, len, 
+                                              channels_count, 
+                                              channels_out, channels_off, 
+                                              channels_incr);
 }
 
 /**

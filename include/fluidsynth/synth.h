@@ -354,6 +354,12 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
 FLUIDSYNTH_API int fluid_synth_write_s16(fluid_synth_t *synth, int len,
         void *lout, int loff, int lincr,
         void *rout, int roff, int rincr);
+FLUIDSYNTH_API int fluid_synth_write_s24(fluid_synth_t *synth, int len, 
+        void *lout, int loff, int lincr, 
+        void *rout, int roff, int rincr);
+FLUIDSYNTH_API int fluid_synth_write_s32(fluid_synth_t *synth, int len, 
+        void *lout, int loff, int lincr, 
+        void *rout, int roff, int rincr);
 FLUIDSYNTH_API int fluid_synth_write_float(fluid_synth_t *synth, int len,
         void *lout, int loff, int lincr,
         void *rout, int roff, int rincr);
