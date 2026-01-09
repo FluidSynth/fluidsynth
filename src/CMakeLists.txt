@@ -62,7 +62,7 @@ if ( DSOUND_SUPPORT )
 endif ( DSOUND_SUPPORT )
 
 if ( WASAPI_SUPPORT )
-  set ( fluid_wasapi_SOURCES drivers/fluid_wasapi.c )
+  set ( fluid_wasapi_SOURCES drivers/fluid_wasapi.cpp )
 endif ( WASAPI_SUPPORT )
 
 if ( WAVEOUT_SUPPORT )
@@ -193,6 +193,7 @@ set ( libfluidsynth_SOURCES
     drivers/fluid_adriver.h
     drivers/fluid_mdriver.c
     drivers/fluid_mdriver.h
+    drivers/fluid_audio_convert.cpp
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
@@ -593,7 +594,7 @@ if ( MACOSX_FRAMEWORK )
     ARCHIVE DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}" COMPONENT ${PACKAGE}_development
   )
 else ( MACOSX_FRAMEWORK )
-  install ( TARGETS fluidsynth 
+  install ( TARGETS fluidsynth
     EXPORT FluidSynthTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PACKAGE}_program
   )

@@ -21,11 +21,14 @@
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
+#include "drivers/fluid_audio_convert.h"
 
 #if WASAPI_SUPPORT
 
 #define CINTERFACE
 #define COBJMACROS
+
+#include <stdint.h> /* int16_t, int32_t */
 
 #include <objbase.h>
 #include <windows.h>
@@ -72,8 +75,6 @@ static const IID   _IID_IAudioRenderClient =
  *
  * Current limitations:
  *  - Only one stereo audio output.
- *  - If audio.sample-format is "16bits", a conversion from float
- *    without dithering is used.
  *
  * Available settings:
  *  - audio.wasapi.exclusive-mode
@@ -103,6 +104,8 @@ static const IID   _IID_IAudioRenderClient =
  *    Vista doesn't seem to support the resampling method with better quality.
  *  - Under Windows 10, this driver may report a latency of 0ms in shared mode.
  *    This is nonsensical and should be disregarded.
+ *  - The behavior when audio.sample-format is "16bits" has been changed to
+ *    apply dithering. Previously no dithering was applied.
  *
  */
 
@@ -110,6 +113,7 @@ static const IID   _IID_IAudioRenderClient =
 
 typedef void(*fluid_wasapi_devenum_callback_t)(IMMDevice *, void *);
 
+static int fluid_wasapi_synth_write_float(void *data, int len, int nfx, float **fx, int nout, float **out);
 static DWORD WINAPI fluid_wasapi_audio_run(void *p);
 static int fluid_wasapi_write_processed_channels(void *data, int len,
         int channels_count,
@@ -119,7 +123,6 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
 static void fluid_wasapi_register_callback(IMMDevice *dev, void *data);
 static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data);
 static IMMDevice *fluid_wasapi_find_device(IMMDeviceEnumerator *denum, const char *name);
-static FLUID_INLINE int16_t round_clip_to_i16(float x);
 
 typedef struct
 {
@@ -127,19 +130,27 @@ typedef struct
     wchar_t *id;
 } fluid_wasapi_finddev_data_t;
 
+typedef enum
+{
+    FLUID_WASAPI_FMT_FLOAT = 0,
+    FLUID_WASAPI_FMT_S16,
+    FLUID_WASAPI_FMT_S24, /* 24-bit PCM in 32-bit container */
+    FLUID_WASAPI_FMT_S32
+} fluid_wasapi_outfmt_t;
+
 typedef struct
 {
     fluid_audio_driver_t driver;
 
     void *user_pointer;
     fluid_audio_func_t func;
-    fluid_audio_channels_callback_t write;
+
     float **drybuf;
 
     UINT32 nframes;
     double buffer_duration;
     int channels_count;
-    int float_samples;
+    fluid_wasapi_outfmt_t outfmt;
 
     HANDLE start_ev;
     HANDLE thread;
@@ -164,7 +175,7 @@ typedef struct
 
 fluid_audio_driver_t *new_fluid_wasapi_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-    return new_fluid_wasapi_audio_driver2(settings, (fluid_audio_func_t)fluid_synth_process, synth);
+    return new_fluid_wasapi_audio_driver2(settings, fluid_wasapi_synth_write_float, synth);
 }
 
 fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
@@ -208,15 +219,36 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
         goto cleanup;
     }
 
-    if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
+    /* Parse requested sample format (strict for now) */
+    if (fluid_settings_str_equal(settings, "audio.sample-format", "float"))
     {
+        dev->outfmt = FLUID_WASAPI_FMT_FLOAT;
+        dev->sample_size = sizeof(float);
+        dev->sample_format = WAVE_FORMAT_IEEE_FLOAT;
+    }
+    else if (fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
+    {
+        dev->outfmt = FLUID_WASAPI_FMT_S16;
         dev->sample_size = sizeof(int16_t);
+        dev->sample_format = WAVE_FORMAT_PCM;
+    }
+    else if (fluid_settings_str_equal(settings, "audio.sample-format", "24bits"))
+    {
+        /* 24-bit PCM, left-aligned in 32-bit container */
+        dev->outfmt = FLUID_WASAPI_FMT_S24;
+        dev->sample_size = sizeof(int32_t);
+        dev->sample_format = WAVE_FORMAT_EXTENSIBLE;
+    }
+    else if (fluid_settings_str_equal(settings, "audio.sample-format", "32bits"))
+    {
+        dev->outfmt = FLUID_WASAPI_FMT_S32;
+        dev->sample_size = sizeof(int32_t);
         dev->sample_format = WAVE_FORMAT_PCM;
     }
     else
     {
-        dev->sample_size = sizeof(float);
-        dev->sample_format = WAVE_FORMAT_IEEE_FLOAT;
+        FLUID_LOG(FLUID_ERR, "wasapi: unsupported audio.sample-format");
+        goto cleanup;
     }
 
     if(fluid_settings_dupstr(settings, "audio.wasapi.device", &dev->dname) != FLUID_OK)
@@ -229,7 +261,6 @@ fluid_audio_driver_t *new_fluid_wasapi_audio_driver2(fluid_settings_t *settings,
     dev->user_pointer = data;
     dev->buffer_duration = dev->periods * dev->period_size / dev->sample_rate;
     dev->channels_count = dev->audio_channels * 2;
-    dev->float_samples = (dev->sample_format == WAVE_FORMAT_IEEE_FLOAT);
     dev->buffer_duration_reftime = (fluid_long_long_t)(dev->buffer_duration * 1e7 + .5);
     dev->periods_reftime = (fluid_long_long_t)(dev->period_size / dev->sample_rate * 1e7 + .5);
 
@@ -341,8 +372,8 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     UINT32 pos;
     DWORD len;
     void *channels_out[2];
-    int channels_off[2] = {0, 1};
-    int channels_incr[2] = {2, 2};
+    int channels_off[2] = { 0, 1 };
+    int channels_incr[2] = { 2, 2 };
     BYTE *pbuf;
     HRESULT ret;
     IMMDeviceEnumerator *denum = NULL;
@@ -351,29 +382,44 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
     WAVEFORMATEXTENSIBLE wfx;
     WAVEFORMATEXTENSIBLE *rwfx = NULL;
     AUDCLNT_SHAREMODE share_mode;
-    OSVERSIONINFOEXW vi = {sizeof(vi), 6, 0, 0, 0, {0}, 0, 0, 0, 0, 0};
+    OSVERSIONINFOEXW vi = { sizeof(vi), 6, 0, 0, 0, { 0 }, 0, 0, 0, 0, 0 };
     int needs_com_uninit = FALSE;
+    int aucl_started = 0;
     int i;
 
     /* Clear format structure */
-    ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
+    ZeroMemory(&wfx, sizeof(wfx));
 
-    wfx.Format.nChannels  = 2;
-    wfx.Format.wBitsPerSample  = dev->sample_size * 8;
-    wfx.Format.nBlockAlign     = dev->sample_size * wfx.Format.nChannels;
-    wfx.Format.nSamplesPerSec  = (DWORD) dev->sample_rate;
-    wfx.Format.nAvgBytesPerSec = (DWORD) dev->sample_rate * wfx.Format.nBlockAlign;
-    wfx.Format.wFormatTag      = dev->sample_format;
-    //wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    //wfx.Format.cbSize = 22;
-    //wfx.SubFormat = guid_float;
-    //wfx.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
-    //wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
+    wfx.Format.nChannels = 2;
+    wfx.Format.nSamplesPerSec = (DWORD)dev->sample_rate;
 
-    /* initialize COM in a worker thread to avoid a potential double initialization in the callers thread */
+    if (dev->outfmt == FLUID_WASAPI_FMT_S24)
+    {
+        /* 24-bit PCM in 32-bit container (EXTENSIBLE) */
+        wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        wfx.Format.wBitsPerSample = 32;
+        wfx.Format.nBlockAlign = 2 * sizeof(int32_t);
+        wfx.Format.nAvgBytesPerSec = wfx.Format.nSamplesPerSec * wfx.Format.nBlockAlign;
+        wfx.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+
+        wfx.Samples.wValidBitsPerSample = 24;
+        wfx.dwChannelMask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+        wfx.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }
+    else
+    {
+        /* PCM 16, PCM 32, or float */
+        wfx.Format.wFormatTag = dev->sample_format;
+        wfx.Format.wBitsPerSample = dev->sample_size * 8;
+        wfx.Format.nBlockAlign = dev->sample_size * 2;
+        wfx.Format.nAvgBytesPerSec = wfx.Format.nSamplesPerSec * wfx.Format.nBlockAlign;
+        wfx.Format.cbSize = 0;
+    }
+
+    /* Initialize COM in a worker thread to avoid a potential double initialization in the caller's thread */
     ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot initialize COM. 0x%x", (unsigned)ret);
         goto cleanup;
@@ -381,12 +427,11 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
     needs_com_uninit = TRUE;
 
-    ret = CoCreateInstance(
-              &_CLSID_MMDeviceEnumerator, NULL,
-              CLSCTX_ALL, &_IID_IMMDeviceEnumerator,
-              (void **)&denum);
+    ret = CoCreateInstance(_CLSID_MMDeviceEnumerator, NULL,
+                           CLSCTX_ALL, _IID_IMMDeviceEnumerator,
+                           (void **)&denum);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
         goto cleanup;
@@ -394,24 +439,22 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
     mmdev = fluid_wasapi_find_device(denum, dev->dname);
 
-    if(mmdev == NULL)
+    if (mmdev == NULL)
     {
         goto cleanup;
     }
 
-    ret = IMMDevice_Activate(mmdev,
-                             &_IID_IAudioClient,
+    ret = IMMDevice_Activate(mmdev, _IID_IAudioClient,
                              CLSCTX_ALL, NULL,
                              (void **)&dev->aucl);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot activate audio client. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
-
-    if(dev->exclusive)
+    if (dev->exclusive)
     {
         share_mode = AUDCLNT_SHAREMODE_EXCLUSIVE;
         FLUID_LOG(FLUID_DBG, "wasapi: using exclusive mode.");
@@ -423,8 +466,8 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
         FLUID_LOG(FLUID_DBG, "wasapi: using shared mode.");
         dev->periods_reftime = 0;
 
-        //use default period size of the device
-        if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, NULL)))
+        /* Use default period size of the device */
+        if (SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, NULL)))
         {
             dev->period_size = (int)(defp / 1e7 * dev->sample_rate);
             dev->buffer_duration = dev->periods * dev->period_size / dev->sample_rate;
@@ -433,54 +476,95 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
         }
     }
 
-    ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode, (const WAVEFORMATEX *)&wfx, (WAVEFORMATEX **)&rwfx);
+    ret = IAudioClient_IsFormatSupported(dev->aucl, share_mode,
+                                         (const WAVEFORMATEX *)&wfx,
+                                         (WAVEFORMATEX **)&rwfx);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: device doesn't support the mode we want. 0x%x", (unsigned)ret);
         goto cleanup;
     }
-    else if(ret == S_FALSE)
+    else if (ret == S_FALSE)
     {
-        //rwfx is non-null only in this case
+        /* Requested format not supported exactly; WASAPI provided a closest match. */
         FLUID_LOG(FLUID_INFO, "wasapi: requested mode cannot be fully satisfied.");
 
-        if(rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) // needs resampling
+        if (rwfx != NULL)
         {
-            flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
-            vi.dwMinorVersion = 1;
-
-            if(VerifyVersionInfoW(&vi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
-                                  VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
-                                          VER_MAJORVERSION, VER_GREATER_EQUAL),
-                                          VER_MINORVERSION, VER_GREATER_EQUAL),
-                                          VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL)))
-                //IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set
+            /* Log closest-match basics safely. */
+            if (rwfx->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                rwfx->Format.cbSize >= (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
             {
-                flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+                const WAVEFORMATEXTENSIBLE *wx = (const WAVEFORMATEXTENSIBLE *)rwfx;
+                FLUID_LOG(FLUID_INFO,
+                          "wasapi: closest match: tag=0x%x ch=%d rate=%lu bits=%d valid=%d",
+                          (unsigned)wx->Format.wFormatTag,
+                          (int)wx->Format.nChannels,
+                          (unsigned long)wx->Format.nSamplesPerSec,
+                          (int)wx->Format.wBitsPerSample,
+                          (int)wx->Samples.wValidBitsPerSample);
             }
-        }
+            else
+            {
+                const WAVEFORMATEX *fx = (const WAVEFORMATEX *)&rwfx->Format;
+                FLUID_LOG(FLUID_INFO,
+                          "wasapi: closest match: tag=0x%x ch=%d rate=%lu bits=%d",
+                          (unsigned)fx->wFormatTag,
+                          (int)fx->nChannels,
+                          (unsigned long)fx->nSamplesPerSec,
+                          (int)fx->wBitsPerSample);
+            }
 
-        CoTaskMemFree(rwfx);
+            if (rwfx->Format.nSamplesPerSec != wfx.Format.nSamplesPerSec) /* needs resampling */
+            {
+                flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
+                vi.dwMinorVersion = 1;
+
+                if (VerifyVersionInfoW(&vi,
+                                       VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR,
+                                       VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+                                                                               VER_MINORVERSION,
+                                                                               VER_GREATER_EQUAL),
+                                                           VER_SERVICEPACKMAJOR,
+                                                           VER_GREATER_EQUAL)))
+                {
+                    /* IAudioClient::Initialize in Vista fails with E_INVALIDARG if this flag is set */
+                    flags |= AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+                }
+            }
+
+            CoTaskMemFree(rwfx);
+            rwfx = NULL;
+        }
+        else
+        {
+            /* Defensive: spec implies closest-match is returned for S_FALSE, but don't crash if not. */
+            FLUID_LOG(FLUID_WARN, "wasapi: IsFormatSupported returned S_FALSE but no closest match was provided.");
+        }
     }
 
-    ret = IAudioClient_Initialize(dev->aucl, share_mode, flags,
-                                  dev->buffer_duration_reftime, dev->periods_reftime, (WAVEFORMATEX *)&wfx, &GUID_NULL);
+    ret = IAudioClient_Initialize(
+    dev->aucl, share_mode, flags, dev->buffer_duration_reftime, dev->periods_reftime, (WAVEFORMATEX *)&wfx, &GUID_NULL);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: failed to initialize audio client. 0x%x", (unsigned)ret);
 
-        if(ret == AUDCLNT_E_INVALID_DEVICE_PERIOD)
+        if (ret == AUDCLNT_E_INVALID_DEVICE_PERIOD)
         {
             fluid_long_long_t defp, minp;
             FLUID_LOG(FLUID_ERR, "wasapi: the device period size is invalid.");
 
-            if(SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, &minp)))
+            if (SUCCEEDED(IAudioClient_GetDevicePeriod(dev->aucl, &defp, &minp)))
             {
                 int defpf = (int)(defp / 1e7 * dev->sample_rate);
                 int minpf = (int)(minp / 1e7 * dev->sample_rate);
-                FLUID_LOG(FLUID_ERR, "wasapi: minimum period is %d, default period is %d. selected %d.", minpf, defpf, dev->period_size);
+                FLUID_LOG(FLUID_ERR,
+                          "wasapi: minimum period is %d, default period is %d. selected %d.",
+                          minpf,
+                          defpf,
+                          dev->period_size);
             }
         }
 
@@ -489,23 +573,26 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
     ret = IAudioClient_GetBufferSize(dev->aucl, &dev->nframes);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio buffer size. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
-    FLUID_LOG(FLUID_DBG, "wasapi: requested %d frames of buffers, got %u.", dev->periods * dev->period_size, dev->nframes);
+    FLUID_LOG(FLUID_DBG,
+              "wasapi: requested %d frames of buffers, got %u.",
+              dev->periods * dev->period_size,
+              dev->nframes);
     dev->buffer_duration = dev->nframes / dev->sample_rate;
-    time_to_sleep = dev->buffer_duration * 1000 / 2;
-    if(time_to_sleep < 1)
+    time_to_sleep = (DWORD)(dev->buffer_duration * 1000.0 / 2.0);
+    if (time_to_sleep < 1)
     {
         time_to_sleep = 1;
     }
 
     dev->drybuf = FLUID_ARRAY(float *, dev->audio_channels * 2);
 
-    if(dev->drybuf == NULL)
+    if (dev->drybuf == NULL)
     {
         FLUID_LOG(FLUID_ERR, "wasapi: out of memory");
         goto cleanup;
@@ -513,46 +600,50 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
     FLUID_MEMSET(dev->drybuf, 0, sizeof(float *) * dev->audio_channels * 2);
 
-    for(i = 0; i < dev->audio_channels * 2; ++i)
+    for (i = 0; i < dev->audio_channels * 2; ++i)
     {
         dev->drybuf[i] = FLUID_ARRAY(float, dev->nframes);
 
-        if(dev->drybuf[i] == NULL)
+        if (dev->drybuf[i] == NULL)
         {
             FLUID_LOG(FLUID_ERR, "wasapi: out of memory");
             goto cleanup;
         }
     }
 
-    ret = IAudioClient_GetService(dev->aucl, &_IID_IAudioRenderClient, (void **)&dev->arcl);
+    ret = IAudioClient_GetService(dev->aucl,
+                                  _IID_IAudioRenderClient,
+                                  (void **)&dev->arcl);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get audio render device. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
-    if(SUCCEEDED(IAudioClient_GetStreamLatency(dev->aucl, &dev->latency_reftime)))
+    if (SUCCEEDED(IAudioClient_GetStreamLatency(dev->aucl, &dev->latency_reftime)))
     {
         FLUID_LOG(FLUID_DBG, "wasapi: latency: %fms.", dev->latency_reftime / 1e4);
     }
 
     ret = IAudioClient_Start(dev->aucl);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: failed to start audio client. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
+    aucl_started = 1; /* mark that we started the audio client */
+
     /* Signal the success of the driver initialization */
     SetEvent(dev->start_ev);
 
-    for(;;)
+    for (;;)
     {
         ret = IAudioClient_GetCurrentPadding(dev->aucl, &pos);
 
-        if(FAILED(ret))
+        if (FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: cannot get buffer padding. 0x%x", (unsigned)ret);
             goto cleanup;
@@ -560,7 +651,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
         len = dev->nframes - pos;
 
-        if(len == 0)
+        if (len == 0)
         {
             Sleep(0);
             continue;
@@ -568,7 +659,7 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
         ret = IAudioRenderClient_GetBuffer(dev->arcl, len, &pbuf);
 
-        if(FAILED(ret))
+        if (FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: cannot get buffer. 0x%x", (unsigned)ret);
             goto cleanup;
@@ -576,18 +667,17 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
         channels_out[0] = channels_out[1] = (void *)pbuf;
 
-        fluid_wasapi_write_processed_channels(dev, len, 2,
-                                              channels_out, channels_off, channels_incr);
+        fluid_wasapi_write_processed_channels(dev, (int)len, 2, channels_out, channels_off, channels_incr);
 
         ret = IAudioRenderClient_ReleaseBuffer(dev->arcl, len, 0);
 
-        if(FAILED(ret))
+        if (FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: failed to release buffer. 0x%x", (unsigned)ret);
             goto cleanup;
         }
 
-        if(WaitForSingleObject(dev->quit_ev, time_to_sleep) == WAIT_OBJECT_0)
+        if (WaitForSingleObject(dev->quit_ev, time_to_sleep) == WAIT_OBJECT_0)
         {
             break;
         }
@@ -595,28 +685,36 @@ static DWORD WINAPI fluid_wasapi_audio_run(void *p)
 
 cleanup:
 
-    if(dev->aucl != NULL)
-    {
-        IAudioClient_Stop(dev->aucl);
-        IAudioClient_Release(dev->aucl);
-    }
-
-    if(dev->arcl != NULL)
+    if (dev->arcl != NULL)
     {
         IAudioRenderClient_Release(dev->arcl);
+        dev->arcl = NULL;
     }
 
-    if(mmdev != NULL)
+    if (dev->aucl != NULL)
+    {
+        if (aucl_started) /* only stop if we actually started it */
+        {
+            IAudioClient_Stop(dev->aucl);
+        }
+
+        IAudioClient_Release(dev->aucl);
+        dev->aucl = NULL;
+    }
+
+    if (mmdev != NULL)
     {
         IMMDevice_Release(mmdev);
+        mmdev = NULL;
     }
 
-    if(denum != NULL)
+    if (denum != NULL)
     {
         IMMDeviceEnumerator_Release(denum);
+        denum = NULL;
     }
 
-    if(needs_com_uninit)
+    if (needs_com_uninit)
     {
         CoUninitialize();
     }
@@ -624,51 +722,113 @@ cleanup:
     return 0;
 }
 
-static int fluid_wasapi_write_processed_channels(void *data, int len,
-        int channels_count,
-        void *channels_out[], int channels_off[],
-        int channels_incr[])
+static int fluid_wasapi_write_processed_channels(void *data,
+                                                 int len,
+                                                 int channels_count,
+                                                 void *channels_out[],
+                                                 int channels_off[],
+                                                 int channels_incr[])
 {
-    int i, ch;
+    int ch;
     int ret;
-    fluid_wasapi_audio_driver_t *drv = (fluid_wasapi_audio_driver_t *) data;
-    float *optr[FLUID_WASAPI_MAX_OUTPUTS * 2];
-    int16_t *ioptr[FLUID_WASAPI_MAX_OUTPUTS * 2];
-    int efx_nch = 0;
-    float **efx_buf = NULL;
+    fluid_wasapi_audio_driver_t *drv = (fluid_wasapi_audio_driver_t *)data;
 
-    for(ch = 0; ch < drv->channels_count; ++ch)
+    fluid_return_val_if_fail(drv != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(len >= 0, FLUID_FAILED); /* invalid negative length */
+    fluid_return_val_if_fail(drv->drybuf != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(drv->channels_count > 0, FLUID_FAILED);
+
+    if (len == 0)
     {
-        FLUID_MEMSET(drv->drybuf[ch], 0, len * sizeof(float));
-        optr[ch] = (float *)channels_out[ch] + channels_off[ch];
-        ioptr[ch] = (int16_t *)channels_out[ch] + channels_off[ch];
+        return FLUID_OK;
     }
 
-    if(drv->func == (fluid_audio_func_t)fluid_synth_process)
+    /* Clear planar scratch */
+    for (ch = 0; ch < drv->channels_count; ++ch)
     {
-        efx_nch = drv->channels_count;
-        efx_buf = drv->drybuf;
-    }
-    ret = drv->func(drv->user_pointer, len, efx_nch, efx_buf, drv->channels_count, drv->drybuf);
-
-    for(ch = 0; ch < drv->channels_count; ++ch)
-    {
-        for(i = 0; i < len; ++i)
+        if (FLUID_UNLIKELY(drv->drybuf[ch] == NULL))
         {
-            if(drv->float_samples)
-            {
-                *optr[ch] = drv->drybuf[ch][i];
-                optr[ch] += channels_incr[ch];
+            FLUID_LOG(FLUID_ERR, "wasapi: internal error: drybuf[%d] is NULL", ch);
+            return FLUID_FAILED;
+        }
+        FLUID_MEMSET(drv->drybuf[ch], 0, len * sizeof(float));
+    }
+
+    /* Render into planar float scratch */
+    ret = drv->func(drv->user_pointer,
+                    len,
+                    0,
+                    NULL, /* no FX in WASAPI */
+                    drv->channels_count,
+                    drv->drybuf);
+
+    if (ret != FLUID_OK)
+    {
+        return ret;
+    }
+
+    /* WASAPI output buffer is interleaved. For this driver, it is always stereo
+       (one stereo pair), so dst_stride is 2 samples per frame. */
+    if (FLUID_UNLIKELY(drv->channels_count != 2 || channels_count != 2 || channels_off[0] != 0 ||
+                       channels_off[1] != 1 || channels_incr[0] != 2 || channels_incr[1] != 2))
+    {
+        FLUID_LOG(FLUID_ERR, "wasapi: internal error: unexpected channel layout");
+        return FLUID_FAILED;
+    }
+
+    /* Base pointer to the interleaved WASAPI buffer */
+    {
+        if (FLUID_UNLIKELY(channels_out[0] == NULL))
+        {
+            FLUID_LOG(FLUID_ERR, "wasapi: internal error: NULL output buffer");
+            return FLUID_FAILED;
+        }
+
+        void *dst = channels_out[0]; /* both entries alias the same pbuf */
+
+        switch (drv->outfmt)
+        {
+            case FLUID_WASAPI_FMT_FLOAT: {
+                /* Interleave planar float -> interleaved float */
+                float *dstf = (float *)dst;
+                int i;
+                for (i = 0; i < len; ++i)
+                {
+                    dstf[i * 2 + 0] = drv->drybuf[0][i];
+                    dstf[i * 2 + 1] = drv->drybuf[1][i];
+                }
+                return FLUID_OK;
             }
-            else //This code is taken from fluid_synth.c. No dithering yet.
-            {
-                *ioptr[ch] = round_clip_to_i16(drv->drybuf[ch][i] * 32766.0f);
-                ioptr[ch] += channels_incr[ch];
-            }
+
+            case FLUID_WASAPI_FMT_S16:
+                return fluid_audio_planar_float_to_s16((int16_t *)dst,
+                                                       2, /* dst_stride (samples) */
+                                                       (const float *const *)drv->drybuf,
+                                                       2,  /* channels */
+                                                       len /* frames */
+                );
+
+            case FLUID_WASAPI_FMT_S24:
+                return fluid_audio_planar_float_to_s24((int32_t *)dst,
+                                                       2, /* dst_stride (samples) */
+                                                       (const float *const *)drv->drybuf,
+                                                       2,  /* channels */
+                                                       len /* frames */
+                );
+
+            case FLUID_WASAPI_FMT_S32:
+                return fluid_audio_planar_float_to_s32((int32_t *)dst,
+                                                       2, /* dst_stride (samples) */
+                                                       (const float *const *)drv->drybuf,
+                                                       2,  /* channels */
+                                                       len /* frames */
+                );
+
+            default:
+                FLUID_LOG(FLUID_ERR, "wasapi: unsupported output format");
+                return FLUID_FAILED;
         }
     }
-
-    return ret;
 }
 
 static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback, void *data)
@@ -681,9 +841,9 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
 
     ret = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
-        if(ret == RPC_E_CHANGED_MODE)
+        if (ret == RPC_E_CHANGED_MODE)
         {
             com_was_initialized = TRUE;
             FLUID_LOG(FLUID_DBG, "wasapi: COM was already initialized");
@@ -695,22 +855,19 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
         }
     }
 
-    ret = CoCreateInstance(
-              &_CLSID_MMDeviceEnumerator, NULL,
-              CLSCTX_ALL, &_IID_IMMDeviceEnumerator,
-              (void **)&denum);
+    ret = CoCreateInstance(_CLSID_MMDeviceEnumerator, NULL,
+                           CLSCTX_ALL, _IID_IMMDeviceEnumerator,
+                           (void **)&denum);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot create device enumerator. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
-    ret = IMMDeviceEnumerator_EnumAudioEndpoints(
-              denum, eRender,
-              DEVICE_STATE_ACTIVE, &dcoll);
+    ret = IMMDeviceEnumerator_EnumAudioEndpoints(denum, eRender, DEVICE_STATE_ACTIVE, &dcoll);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot enumerate audio devices. 0x%x", (unsigned)ret);
         goto cleanup;
@@ -718,19 +875,19 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
 
     ret = IMMDeviceCollection_GetCount(dcoll, &cnt);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get device count. 0x%x", (unsigned)ret);
         goto cleanup;
     }
 
-    for(i = 0; i < cnt; ++i)
+    for (i = 0; i < cnt; ++i)
     {
         IMMDevice *dev = NULL;
 
         ret = IMMDeviceCollection_Item(dcoll, i, &dev);
 
-        if(FAILED(ret))
+        if (FAILED(ret))
         {
             FLUID_LOG(FLUID_ERR, "wasapi: cannot get device #%u. 0x%x", i, (unsigned)ret);
             continue;
@@ -743,17 +900,17 @@ static void fluid_wasapi_foreach_device(fluid_wasapi_devenum_callback_t callback
 
 cleanup:
 
-    if(dcoll != NULL)
+    if (dcoll != NULL)
     {
         IMMDeviceCollection_Release(dcoll);
     }
 
-    if(denum != NULL)
+    if (denum != NULL)
     {
         IMMDeviceEnumerator_Release(denum);
     }
 
-    if(!com_was_initialized)
+    if (!com_was_initialized)
     {
         CoUninitialize();
     }
@@ -764,11 +921,11 @@ static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
     fluid_settings_t *settings = (fluid_settings_t *)data;
     IPropertyStore *prop = NULL;
     PROPVARIANT var;
-    int ret;
+    HRESULT ret;
 
     ret = IMMDevice_OpenPropertyStore(dev, STGM_READ, &prop);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get properties of device. 0x%x", (unsigned)ret);
         return;
@@ -776,9 +933,9 @@ static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
 
     PropVariantInit(&var);
 
-    ret = IPropertyStore_GetValue(prop, &PKEY_Device_FriendlyName, &var);
+    ret = IPropertyStore_GetValue(prop, PKEY_Device_FriendlyName, &var);
 
-    if(FAILED(ret))
+    if (FAILED(ret))
     {
         FLUID_LOG(FLUID_ERR, "wasapi: cannot get friendly name of device. 0x%x", (unsigned)ret);
     }
@@ -789,9 +946,17 @@ static void fluid_wasapi_register_callback(IMMDevice *dev, void *data)
 
         nsz = WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, 0, 0, 0, 0);
         name = FLUID_ARRAY(char, nsz);
-        WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, name, nsz, 0, 0);
-        fluid_settings_add_option(settings, "audio.wasapi.device", name);
-        FLUID_FREE(name);
+
+        if (name != NULL)
+        {
+            WideCharToMultiByte(CP_UTF8, 0, var.pwszVal, -1, name, nsz, 0, 0);
+            fluid_settings_add_option(settings, "audio.wasapi.device", name);
+            FLUID_FREE(name);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "wasapi: out of memory.");
+        }
     }
 
     IPropertyStore_Release(prop);
@@ -819,7 +984,7 @@ static void fluid_wasapi_finddev_callback(IMMDevice *dev, void *data)
 
     PropVariantInit(&var);
 
-    ret = IPropertyStore_GetValue(prop, &PKEY_Device_FriendlyName, &var);
+    ret = IPropertyStore_GetValue(prop, PKEY_Device_FriendlyName, &var);
 
     if(FAILED(ret))
     {
@@ -908,31 +1073,42 @@ static IMMDevice *fluid_wasapi_find_device(IMMDeviceEnumerator *denum, const cha
     }
 }
 
-static FLUID_INLINE int16_t
-round_clip_to_i16(float x)
+static int fluid_wasapi_synth_write_float(void *data, int len, int nfx, float **fx, int nout, float **out)
 {
-    long i;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
 
-    if(x >= 0.0f)
+    /* Guardrail: this wrapper uses fixed-size stack arrays sized for the
+       driver's current maximum channel count (stereo pairs × 2). */
+    if (FLUID_UNLIKELY(nout < 0 || nout > (FLUID_WASAPI_MAX_OUTPUTS * 2)))
     {
-        i = (long)(x + 0.5f);
-
-        if(FLUID_UNLIKELY(i > 32767))
-        {
-            i = 32767;
-        }
-    }
-    else
-    {
-        i = (long)(x - 0.5f);
-
-        if(FLUID_UNLIKELY(i < -32768))
-        {
-            i = -32768;
-        }
+        FLUID_LOG(FLUID_ERR,
+                  "wasapi: internal error: requested %d output channels (max %d)",
+                  nout,
+                  (FLUID_WASAPI_MAX_OUTPUTS * 2));
+        return FLUID_FAILED;
     }
 
-    return (int16_t)i;
+    /* WASAPI does not use separate FX buffers; historically it passed the same
+       buffer for fx/out when using fluid_synth_process(). Keep that behavior:
+       ignore fx and just render full mix into 'out'. */
+    (void)nfx;
+    (void)fx;
+
+    /* Adapt planar float** 'out' to the channels callback API */
+    void *channels_out[FLUID_WASAPI_MAX_OUTPUTS * 2];
+    int channels_off[FLUID_WASAPI_MAX_OUTPUTS * 2];
+    int channels_incr[FLUID_WASAPI_MAX_OUTPUTS * 2];
+
+    int ch;
+    for (ch = 0; ch < nout; ++ch)
+    {
+        channels_out[ch] = out[ch]; /* each out[ch] points to a float buffer */
+        channels_off[ch] = 0;
+        channels_incr[ch] = 1; /* planar */
+    }
+
+    return fluid_synth_write_float_channels(synth, len, nout, channels_out, channels_off, channels_incr);
 }
+
 #endif /* WASAPI_SUPPORT */
 

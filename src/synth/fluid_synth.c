@@ -27,6 +27,7 @@
 #include "fluid_defsfont.h"
 #include "fluid_dls.h"
 #include "fluid_instpatch.h"
+#include "drivers/fluid_audio_convert.h"
 
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
@@ -103,8 +104,6 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t *synth, const char *sfontname
 static void fluid_synth_update_presets(fluid_synth_t *synth);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t *synth);
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t *synth, int new_polyphony);
-static void init_dither(void);
-static FLUID_INLINE int16_t round_clip_to_i16(float x);
 static int fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount);
 
 static fluid_voice_t *fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth);
@@ -275,7 +274,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "synth.dynamic-sample-loading", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.note-cut", 0, 0, 2, 0);
-    
+
     fluid_settings_register_str(settings, "synth.portamento-time", "auto", 0);
     fluid_settings_add_option(settings, "synth.portamento-time", "auto");
     fluid_settings_add_option(settings, "synth.portamento-time", "xg-gs");
@@ -522,7 +521,7 @@ fluid_synth_init(void)
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
 
     // DLS-specific default MODs below
-    // 
+    //
     // CC 91 -> reverb send 100%
     fluid_mod_clone(&DLS_default_reverb_mod, &default_reverb_mod);
     fluid_mod_set_amount(&DLS_default_reverb_mod, 1000);
@@ -745,7 +744,7 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getnum_float(settings, "synth.overflow.volume", &synth->overflow.volume);
     fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
     fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
-    
+
     fluid_settings_getint(settings, "synth.note-cut", &i);
     synth->msgs_note_cut_mode = i;
 
@@ -872,7 +871,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* as soon as the synth is created it starts playing. */
     synth->state = FLUID_SYNTH_PLAYING;
 
-    synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
+    synth->fromkey_portamento = INVALID_NOTE;   /* disable portamento */
 
     /* Initialize portamento time mode */
     {
@@ -1006,7 +1005,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
 #ifdef ENABLE_NATIVE_DLS
     loader = new_fluid_dls_loader(synth, settings);
-    
+
     if(loader == NULL)
     {
         FLUID_LOG(FLUID_WARN, "Failed to create the dls SoundFont loader");
@@ -1695,10 +1694,10 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
 
 /**
  * Send a MIDI controller event on a MIDI channel.
- * 
+ *
  * Most CCs are 7-bits wide in FluidSynth. There are a few exceptions which may be 14-bits wide as are documented here:
  * https://github.com/FluidSynth/fluidsynth/wiki/FluidFeatures#midi-control-change-implementation-chart
- * 
+ *
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param num MIDI controller number (0-127)
@@ -1868,7 +1867,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 basic channel minus 1 (if any) or to MIDI channel count minus 1.
                 However, if value is > 0 (e.g. 4), the group of channels will be be
                 limited to 4.
-            	value is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this mode
+              value is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this mode
                 implies a group of only one channel.
             */
             /* Checks value range and changes this existing basic channel group */
@@ -3561,7 +3560,7 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
  * @param preset_num MIDI program number
  * @return #FLUID_OK if the preset was found, pinned and loaded
  * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
- * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
+ * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or
  * the preset doesn't support dynamic-sample-loading.
  *
  * This function will attempt to pin all samples of the given preset and
@@ -3770,13 +3769,13 @@ fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate)
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     fluid_return_if_fail(synth != NULL);
     fluid_synth_api_enter(synth);
-    
+
     fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
 
     param[0].i = 0;
     param[1].real = synth->sample_rate;
     fluid_rvoice_mixer_set_samplerate(synth->eventhandler->mixer, param);
-    
+
     fluid_synth_api_exit(synth);
 }
 
@@ -4590,7 +4589,7 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
  * @param channels_count Count of channels in a frame.
  *  must be multiple of 2 and  channel_count/2 must not exceed the number
  *  of internal mixer buffers (synth->audio_groups)
- * @param channels_out Array of channels_count pointers on 16 bit words to
+ * @param channels_out Array of channels_count pointers on 16-bit words to
  *  store sample channels. Modified on return.
  * @param channels_off Array of channels_count offset index to add to respective pointer
  *  in channels_out for first sample.
@@ -4780,97 +4779,92 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
                                             block_render_func);
 }
 
-
-#define DITHER_SIZE 48000
-#define DITHER_CHANNELS 2
-
-static float rand_table[DITHER_CHANNELS][DITHER_SIZE];
-
-/* Init dither table */
-static void
-init_dither(void)
-{
-    float d, dp;
-    int c, i;
-
-    for(c = 0; c < DITHER_CHANNELS; c++)
-    {
-        dp = 0;
-
-        for(i = 0; i < DITHER_SIZE - 1; i++)
-        {
-            d = rand() / (float)RAND_MAX - 0.5f;
-            rand_table[c][i] = d - dp;
-            dp = d;
-        }
-
-        rand_table[c][DITHER_SIZE - 1] = 0 - dp;
-    }
-}
-
-/* A portable replacement for roundf(), seems it may actually be faster too! */
-static FLUID_INLINE int16_t
-round_clip_to_i16(float x)
-{
-    long i;
-
-    if(x >= 0.0f)
-    {
-        i = (long)(x + 0.5f);
-
-        if(FLUID_UNLIKELY(i > 32767))
-        {
-            i = 32767;
-        }
-    }
-    else
-    {
-        i = (long)(x - 0.5f);
-
-        if(FLUID_UNLIKELY(i < -32768))
-        {
-            i = -32768;
-        }
-    }
-
-    return (int16_t)i;
-}
-
 /**
  * Synthesize a block of 16 bit audio samples to audio buffers.
+ * @param synth FluidSynth instance
+ * @param len Count of audio frames to synthesize
+ * @param lout Array of 16 bit words to store left channel of audio
+ * @param loff Offset index in 'lout' for first sample
+ * @param lincr Increment between samples stored to 'lout'
+ * @param rout Array of 16 bit words to store right channel of audio
+ * @param roff Offset index in 'rout' for first sample
+ * @param rincr Increment between samples stored to 'rout'
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
+ * lincr = 2, rincr = 2).
+ *
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Dithering is performed when converting from internal floating point to
+ * 16 bit audio.
  */
 int
 fluid_synth_write_s16(fluid_synth_t *synth, int len,
                       void *lout, int loff, int lincr,
                       void *rout, int roff, int rincr)
 {
-    return fluid_synth_write_s16_cpp(synth, len, 
-                                     lout, loff, lincr, 
+    return fluid_synth_write_s16_cpp(synth, len,
+                                     lout, loff, lincr,
                                      rout, roff, rincr);
 }
 
 /**
  * Synthesize a block of 24 bit audio samples to audio buffers.
+ * @param synth FluidSynth instance
+ * @param len Count of audio frames to synthesize
+ * @param lout Array of 32 bit words to store left channel of audio
+ * @param loff Offset index in 'lout' for first sample
+ * @param lincr Increment between samples stored to 'lout'
+ * @param rout Array of 32 bit words to store right channel of audio
+ * @param roff Offset index in 'rout' for first sample
+ * @param rincr Increment between samples stored to 'rout'
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
+ * lincr = 2, rincr = 2).
+ *
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Output is left-aligned signed 24-bit PCM (24-in-32), produced by
+ * clearing the least significant byte after 32-bit conversion from
+ * internal floating point. No dithering is performed.
  */
-int fluid_synth_write_s24(fluid_synth_t *synth, int len, 
-                          void *lout, int loff, int lincr, 
-                          void *rout, int roff, int rincr)
+int fluid_synth_write_s24(fluid_synth_t *synth, int len,
+                      void *lout, int loff, int lincr,
+                      void *rout, int roff, int rincr)
 {
-    return fluid_synth_write_s24_cpp(synth, len, 
-                                     lout, loff, lincr, 
+    return fluid_synth_write_s24_cpp(synth, len,
+                                     lout, loff, lincr,
                                      rout, roff, rincr);
 }
 
 /**
  * Synthesize a block of 32 bit audio samples to audio buffers.
+ * @param synth FluidSynth instance
+ * @param len Count of audio frames to synthesize
+ * @param lout Array of 32 bit words to store left channel of audio
+ * @param loff Offset index in 'lout' for first sample
+ * @param lincr Increment between samples stored to 'lout'
+ * @param rout Array of 32 bit words to store right channel of audio
+ * @param roff Offset index in 'rout' for first sample
+ * @param rincr Increment between samples stored to 'rout'
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
+ * lincr = 2, rincr = 2).
+ *
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Output is signed 32-bit PCM (int32_t), produced by round-and-clip
+ * conversion from internal floating point. No dithering is performed.
  */
-int 
-fluid_synth_write_s32(fluid_synth_t *synth, int len, 
-                      void *lout, int loff, int lincr, 
+int fluid_synth_write_s32(fluid_synth_t *synth, int len,
+                      void *lout, int loff, int lincr,
                       void *rout, int roff, int rincr)
 {
-    return fluid_synth_write_s32_cpp(synth, len, 
-                                     lout, loff, lincr, 
+    return fluid_synth_write_s32_cpp(synth, len,
+                                     lout, loff, lincr,
                                      rout, roff, rincr);
 }
 
@@ -4878,17 +4872,43 @@ fluid_synth_write_s32(fluid_synth_t *synth, int len,
  * Synthesize a block of 16 bit audio samples channels to audio buffers.
  * The function is convenient for audio driver to render multiple stereo
  * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
+ *
+ * @param synth FluidSynth instance.
+ * @param len Count of audio frames to synthesize.
+ * @param channels_count Count of channels in a frame.
+ *  must be multiple of 2 and  channel_count/2 must not exceed the number
+ *  of internal mixer buffers (synth->audio_groups)
+ * @param channels_out Array of channels_count pointers on 16 bit words to
+ *  store sample channels. Modified on return.
+ * @param channels_off Array of channels_count offset index to add to respective pointer
+ *  in channels_out for first sample.
+ * @param channels_incr Array of channels_count increment between consecutive
+ *  samples channels.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ *
+ * Useful for storing:
+ * - interleaved channels in a unique buffer.
+ * - non interleaved channels in an unique buffer (or in distinct buffers).
+ *
+ * Example for interleaved 4 channels (c1, c2, c3, c4) and n samples (s1, s2,..sn)
+ * in a unique buffer:
+ * { s1:c1, s1:c2, s1:c3, s1:c4,  s2:c1, s2:c2, s2:c3, s2:c4, ....
+ *   sn:c1, sn:c2, sn:c3, sn:c4 }.
+ *
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Dithering is performed when converting from internal floating point to
+ * 16 bit audio.
  */
-int
-fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
+int fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[])
 {
-    return fluid_synth_write_s16_channels_cpp(synth, len, 
+    return fluid_synth_write_s16_channels_cpp(synth, len,
                                               channels_count,
-                                              channels_out, channels_off, 
-                                              channels_incr); 
+                                              channels_out, channels_off,
+                                              channels_incr);
 }
 
 /**
@@ -4896,19 +4916,42 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
  * The function is convenient for audio driver to render multiple stereo
  * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
  *
- * Output is left aligned signed 24-bit PCM (24-in-32), produced by 
- * round + clip + mask conversion from internal floating point.
- * No dithering is performed.
+ * @param synth FluidSynth instance.
+ * @param len Count of audio frames to synthesize.
+ * @param channels_count Count of channels in a frame.
+ *  must be multiple of 2 and  channel_count/2 must not exceed the number
+ *  of internal mixer buffers (synth->audio_groups)
+ * @param channels_out Array of channels_count pointers on 32 bit words to
+ *  store sample channels. Modified on return.
+ * @param channels_off Array of channels_count offset index to add to respective pointer
+ *  in channels_out for first sample.
+ * @param channels_incr Array of channels_count increment between consecutive
+ *  samples channels.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ *
+ * Useful for storing:
+ * - interleaved channels in a unique buffer.
+ * - non interleaved channels in an unique buffer (or in distinct buffers).
+ *
+ * Example for interleaved 4 channels (c1, c2, c3, c4) and n samples (s1, s2,..sn)
+ * in a unique buffer:
+ * { s1:c1, s1:c2, s1:c3, s1:c4,  s2:c1, s2:c2, s2:c3, s2:c4, ....
+ *   sn:c1, sn:c2, sn:c3, sn:c4 }.
+ *
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Output is left-aligned signed 24-bit PCM (24-in-32), produced by
+ * clearing the least significant byte after 32-bit conversion from
+ * internal floating point. No dithering is performed.
  */
 int fluid_synth_write_s24_channels(fluid_synth_t *synth, int len,
-                                   int channels_count,
-                                   void *channels_out[],
-                                   int channels_off[],
-                                   int channels_incr[])
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[])
 {
-    return fluid_synth_write_s24_channels_cpp(synth, len, 
-                                              channels_count, 
-                                              channels_out, channels_off, 
+    return fluid_synth_write_s24_channels_cpp(synth, len,
+                                              channels_count,
+                                              channels_out, channels_off,
                                               channels_incr);
 }
 
@@ -4917,38 +4960,75 @@ int fluid_synth_write_s24_channels(fluid_synth_t *synth, int len,
  * The function is convenient for audio driver to render multiple stereo
  * channels pairs on multi channels audio cards (i.e 2, 4, 6, 8,.. channels).
  *
- * Output is signed 32-bit PCM (int32_t), produced by round+clip conversion
- * from internal floating point. No dithering is performed.
+ * @param synth FluidSynth instance.
+ * @param len Count of audio frames to synthesize.
+ * @param channels_count Count of channels in a frame.
+ *  must be multiple of 2 and  channel_count/2 must not exceed the number
+ *  of internal mixer buffers (synth->audio_groups)
+ * @param channels_out Array of channels_count pointers on 32 bit words to
+ *  store sample channels. Modified on return.
+ * @param channels_off Array of channels_count offset index to add to respective pointer
+ *  in channels_out for first sample.
+ * @param channels_incr Array of channels_count increment between consecutive
+ *  samples channels.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ *
+ * Useful for storing:
+ * - interleaved channels in a unique buffer.
+ * - non interleaved channels in an unique buffer (or in distinct buffers).
+ *
+ * Example for interleaved 4 channels (c1, c2, c3, c4) and n samples (s1, s2,..sn)
+ * in a unique buffer:
+ * { s1:c1, s1:c2, s1:c3, s1:c4,  s2:c1, s2:c2, s2:c3, s2:c4, ....
+ *   sn:c1, sn:c2, sn:c3, sn:c4 }.
+ *
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Output is signed 32-bit PCM (int32_t), produced by round-and-clip
+ * conversion from internal floating point. No dithering is performed.
  */
-int 
-fluid_synth_write_s32_channels(fluid_synth_t *synth, int len,
+int fluid_synth_write_s32_channels(fluid_synth_t *synth, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[])
 {
-    return fluid_synth_write_s32_channels_cpp(synth, len, 
-                                              channels_count, 
-                                              channels_out, channels_off, 
+    return fluid_synth_write_s32_channels_cpp(synth, len,
+                                              channels_count,
+                                              channels_out, channels_off,
                                               channels_incr);
 }
 
 /**
- * Converts stereo floating point sample data to signed 16 bit data with dithering.
+ * Converts stereo floating point sample data to signed 16-bit data with dithering.
  * @param dither_index Pointer to an integer which should be initialized to 0
  *   before the first call and passed unmodified to additional calls which are
  *   part of the same synthesis output.
  * @param len Length in frames to convert
  * @param lin Buffer of left audio samples to convert from
  * @param rin Buffer of right audio samples to convert from
- * @param lout Array of 16 bit words to store left channel of audio
+ * @param lout Array of 16-bit words to store left channel of audio
  * @param loff Offset index in 'lout' for first sample
  * @param lincr Increment between samples stored to 'lout'
- * @param rout Array of 16 bit words to store right channel of audio
+ * @param rout Array of 16-bit words to store right channel of audio
  * @param roff Offset index in 'rout' for first sample
  * @param rincr Increment between samples stored to 'rout'
  *
  * @note Currently private to libfluidsynth.
+ *
+ *
+ * Implementation note:
+ * This helper is used by in-tree audio drivers that render float internally
+ * and dither/convert to s16 in the driver(e.g.ALSA and OSS drivers).
+ * Keep behavior(scaling, arithmetic order, dither index continuity) stable.
+ * The dither table is shared and must be initialized before use; this function
+ * ensures initialization for driver call sites.
  */
+
+/* TODO: Consider migrating drivers that currently call fluid_synth_dither_s16()
+ * to use fluid_audio_planar_float_to_s16() (planar-to-interleaved conversion),
+ * if/when their buffer layout matches and the change can be tested.
+ */
+
 void
 fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
                        void *lout, int loff, int lincr,
@@ -4959,6 +5039,13 @@ fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float
     int16_t *right_out = rout;
     int di = *dither_index;
     fluid_profile_ref_var(prof_ref);
+
+    static int dither_initialized = 0; // ensure dither table is initialized
+    if (!dither_initialized)
+    {
+        init_dither();
+        dither_initialized = 1;
+    }
 
     for(i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr)
     {
@@ -4971,7 +5058,7 @@ fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float
         }
     }
 
-    *dither_index = di;	/* keep dither buffer continuous */
+    *dither_index = di; /* keep dither buffer continuous */
 
     fluid_profile(FLUID_PROF_WRITE, prof_ref, 0, len);
 }
@@ -5146,7 +5233,7 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
     }
     else if(FLUID_STRCMP(name, "synth.chorus.nr") == 0)
     {
-		fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, (double)value);
+    fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, (double)value);
     }
 }
 
@@ -5478,7 +5565,7 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, #FLUID_FAILED on error
- * 
+ *
  * @note Since FluidSynth 2.2.0 @c filename is treated as an UTF8 encoded string on Windows. FluidSynth will convert it
  * to wide-char internally and then pass it to <code>_wfopen()</code>. Before FluidSynth 2.2.0, @c filename was treated as ANSI string
  * on Windows. All other platforms directly pass it to <code>fopen()</code> without any conversion (usually, UTF8 is accepted).
@@ -5976,7 +6063,7 @@ int
 fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on)
 {
     int ret;
-	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
 
     fluid_synth_api_enter(synth);
@@ -6450,7 +6537,7 @@ int
 fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
 {
     int ret;
-	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
 
     fluid_synth_api_enter(synth);
@@ -6488,7 +6575,7 @@ fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @deprecated Use the individual chorus setter functions in new code instead.
- * 
+ *
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
  */
 int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
@@ -7119,7 +7206,7 @@ fluid_synth_count_effects_channels(fluid_synth_t *synth)
 
 /**
  * Get the total number of allocated effects units.
- * 
+ *
  * This is the same number as initially provided by the setting \setting{synth_effects-groups}.
  * @param synth FluidSynth instance
  * @return Count of allocated effects units
@@ -7724,7 +7811,7 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
 /**
  * This implementation is based on "Frequently Asked Questions for SB AWE32" http://archive.gamedev.net/archive/reference/articles/article445.html
  * as well as on the "SB AWE32 Developer's Information Pack" https://github.com/user-attachments/files/15757220/adip301.pdf
- * 
+ *
  * @param gen the AWE32 effect or generator to manipulate
  * @param data the composed value of DATA_MSB and DATA_LSB
  */
@@ -7734,33 +7821,33 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     {
         // assuming LFO1 maps to MODLFO and LFO2 maps to VIBLFO
         // observe how nicely most of the AWE32 generators here match up with the order of SF2 generators in fluid_gen_type
-        GEN_MODLFODELAY,		/**< Modulation LFO delay */
-        GEN_MODLFOFREQ,		/**< Modulation LFO frequency */
-        GEN_VIBLFODELAY,		/**< Vibrato LFO delay */
-        GEN_VIBLFOFREQ,		/**< Vibrato LFO frequency */
-        GEN_MODENVDELAY,		/**< Modulation envelope delay */
-        GEN_MODENVATTACK,		/**< Modulation envelope attack */
-        GEN_MODENVHOLD,		/**< Modulation envelope hold */
-        GEN_MODENVDECAY,		/**< Modulation envelope decay */
-        GEN_MODENVSUSTAIN,		/**< Modulation envelope sustain */
-        GEN_MODENVRELEASE,		/**< Modulation envelope release */
-        GEN_VOLENVDELAY,		/**< Volume envelope delay */
-        GEN_VOLENVATTACK,		/**< Volume envelope attack */
-        GEN_VOLENVHOLD,		/**< Volume envelope hold */
-        GEN_VOLENVDECAY,		/**< Volume envelope decay */
-        GEN_VOLENVSUSTAIN,		/**< Volume envelope sustain */
-        GEN_VOLENVRELEASE,		/**< Volume envelope release */
+        GEN_MODLFODELAY,        /**< Modulation LFO delay */
+        GEN_MODLFOFREQ,         /**< Modulation LFO frequency */
+        GEN_VIBLFODELAY,        /**< Vibrato LFO delay */
+        GEN_VIBLFOFREQ,         /**< Vibrato LFO frequency */
+        GEN_MODENVDELAY,        /**< Modulation envelope delay */
+        GEN_MODENVATTACK,       /**< Modulation envelope attack */
+        GEN_MODENVHOLD,         /**< Modulation envelope hold */
+        GEN_MODENVDECAY,        /**< Modulation envelope decay */
+        GEN_MODENVSUSTAIN,      /**< Modulation envelope sustain */
+        GEN_MODENVRELEASE,      /**< Modulation envelope release */
+        GEN_VOLENVDELAY,        /**< Volume envelope delay */
+        GEN_VOLENVATTACK,       /**< Volume envelope attack */
+        GEN_VOLENVHOLD,         /**< Volume envelope hold */
+        GEN_VOLENVDECAY,        /**< Volume envelope decay */
+        GEN_VOLENVSUSTAIN,      /**< Volume envelope sustain */
+        GEN_VOLENVRELEASE,      /**< Volume envelope release */
         GEN_PITCH,              /**< Initial Pitch */
-        GEN_MODLFOTOPITCH,		/**< Modulation LFO to pitch */
-        GEN_VIBLFOTOPITCH,		/**< Vibrato LFO to pitch */
-        GEN_MODENVTOPITCH,		/**< Modulation envelope to pitch */
-        GEN_MODLFOTOVOL,		/**< Modulation LFO to volume */
-        GEN_FILTERFC,			/**< Filter cutoff */
-        GEN_FILTERQ,			/**< Filter Q */
-        GEN_MODLFOTOFILTERFC,		/**< Modulation LFO to filter cutoff */
-        GEN_MODENVTOFILTERFC,		/**< Modulation envelope to filter cutoff */
-        GEN_CHORUSSEND,		/**< Chorus send amount */
-        GEN_REVERBSEND,		/**< Reverb send amount */
+        GEN_MODLFOTOPITCH,      /**< Modulation LFO to pitch */
+        GEN_VIBLFOTOPITCH,      /**< Vibrato LFO to pitch */
+        GEN_MODENVTOPITCH,      /**< Modulation envelope to pitch */
+        GEN_MODLFOTOVOL,        /**< Modulation LFO to volume */
+        GEN_FILTERFC,           /**< Filter cutoff */
+        GEN_FILTERQ,            /**< Filter Q */
+        GEN_MODLFOTOFILTERFC,   /**< Modulation LFO to filter cutoff */
+        GEN_MODENVTOFILTERFC,   /**< Modulation envelope to filter cutoff */
+        GEN_CHORUSSEND,         /**< Chorus send amount */
+        GEN_REVERBSEND,         /**< Reverb send amount */
     };
 
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
@@ -7816,7 +7903,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_PITCH:
             converted_sf2_generator_value = data + 8192;
-            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but 
+            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but
             // I'll buy it, since pitch bend is not a regular SF2 generator and we do a bit of magic there to
             // make it work
             fluid_synth_pitch_bend(synth, chan, converted_sf2_generator_value);
@@ -7896,7 +7983,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             FLUID_LOG(FLUID_WARN, "AWE32 NPRN %d conversion not implemented", gen);
             return;
     }
-    
+
     fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
 
     for (i = 0; is_realtime && i < synth->polyphony; i++)
@@ -7908,7 +7995,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             // sets the adjusted generator
             fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
             fluid_voice_update_param(voice, sf2_gen);
-            
+
             FLUID_LOG(FLUID_DBG, "AWE32 Realtime: adjusting voice id %d, generator %d, chan %d", fluid_voice_get_id(voice), sf2_gen, chan);
         }
     }
@@ -8523,9 +8610,9 @@ int fluid_synth_get_portamento_time_mode(fluid_synth_t *synth, int *mode)
     fluid_return_val_if_fail(mode != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
-    
+
     *mode = synth->portamento_time_mode;
-    
+
     FLUID_API_RETURN(FLUID_OK);
 }
 
@@ -8791,7 +8878,7 @@ fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mod
         if(i == basicchan)
         {
             new_mode |= FLUID_CHANNEL_BASIC; /* First channel in the group */
-            new_val = val;	/* number of channels in the group */
+            new_val = val;  /* number of channels in the group */
         }
         else
         {
