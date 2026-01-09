@@ -184,6 +184,32 @@ check_include_file ( pthread.h HAVE_PTHREAD_H )
 check_include_file ( signal.h HAVE_SIGNAL_H )
 check_include_file ( getopt.h HAVE_GETOPT_H )
 check_include_file ( stdint.h HAVE_STDINT_H )
+check_c_source_compiles ("
+#include <stdatomic.h>
+int main(void) {
+  atomic_thread_fence(memory_order_acquire);
+  atomic_thread_fence(memory_order_seq_cst);
+  return 0;
+}
+" HAVE_STDATOMIC_H )
+check_c_source_compiles ("
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+int main (int argc, char ** argv) {
+  syscall (__NR_futex, NULL, FUTEX_WAKE, FUTEX_WAIT);
+  return 0;
+}
+" HAVE_FUTEX)
+check_c_source_compiles ("
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+int main (int argc, char ** argv) {
+  syscall (__NR_futex_time64, NULL, FUTEX_WAKE, FUTEX_WAIT);
+  return 0;
+}
+" HAVE_FUTEX_TIME64 )
 check_type_size ( "long long" LONG_LONG )
 if ( NOT HAVE_LONG_LONG AND NOT MSVC)
     message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
