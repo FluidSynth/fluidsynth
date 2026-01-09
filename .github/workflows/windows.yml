@@ -69,7 +69,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
       with:
-        submodules: true
+        submodules: recursive
 
     - name: Setup dependencies
       shell: cmd
@@ -233,7 +233,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
       with:
-        submodules: true
+        submodules: recursive
         
     - name: Setup dependencies
       shell: cmd
@@ -319,7 +319,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
       with:
-        submodules: true
+        submodules: recursive
 
     - name: Setup dependencies
       shell: cmd
