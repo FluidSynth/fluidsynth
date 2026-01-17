@@ -39,7 +39,7 @@ if(NOT GCEM_INCLUDE_DIR)
       "and extract its contents into the 'gcem' directory in the repository root."
     )
   else()
-    message(NOTICE "The 'gcem' submodule directory seems to be empty or incomplete. Attempting to download gcem from Github.")
+    message("The 'gcem' submodule directory seems to be empty or incomplete. Attempting to download gcem from Github.")
     set(GCEM_ZIP_FILE "${CMAKE_BINARY_DIR}/gcem.zip")
     set(GCEM_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gcem-extracted")
 
