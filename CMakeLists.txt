@@ -544,7 +544,7 @@ endif(ASTYLE)
 # Set the minimum version desired for libraries
 set ( ALSA_MINIMUM_VERSION 0.9.1 )
 set ( DBUS_MINIMUM_VERSION 1.11.12 )
-set ( GLIB2_MINUMUM_VERSION 2.6.5 )
+set ( GLIB2_MINIMUM_VERSION 2.6.5 )
 set ( LIBINSTPATCH_MINIMUM_VERSION 1.1.0 )
 set ( LIBSNDFILE_MINIMUM_VERSION 1.0.0 )
 set ( PIPEWIRE_MINIMUM_VERSION 0.3 )
@@ -561,7 +561,7 @@ endif ()
 unset ( GLIB_SUPPORT CACHE )
 if ( osal STREQUAL "glib" )
     # Mandatory libraries: glib and gthread
-    find_package ( GLib2 ${GLIB2_MINUMUM_VERSION} REQUIRED )
+    find_package ( GLib2 ${GLIB2_MINIMUM_VERSION} REQUIRED )
     list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
     set ( GLIB_SUPPORT 1 )
 
