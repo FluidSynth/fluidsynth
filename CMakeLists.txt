@@ -366,17 +366,17 @@ endif ( WIN32 )
 
 find_package ( GCEM REQUIRED )
 
+find_library ( HAS_LIBM NAMES "m" )
+if ( HAS_LIBM )
+  set ( MATH_LIBRARY "m" )
+endif ( HAS_LIBM )
+
 set ( LIBFLUID_LIBS ${MATH_LIBRARY} )
 if (NOT ((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR (osal STREQUAL "embedded")))
   # Check for threads and math
   find_package ( Threads REQUIRED )
   list ( APPEND LIBFLUID_LIBS "Threads::Threads" )
 endif ()
-
-find_library ( HAS_LIBM NAMES "m" )
-if ( HAS_LIBM )
-  set ( MATH_LIBRARY "m" )
-endif ( HAS_LIBM )
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )
