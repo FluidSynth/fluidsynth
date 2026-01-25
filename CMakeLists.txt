@@ -113,8 +113,11 @@ endif ( CMAKE_SYSTEM MATCHES "Linux" )
 if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
-    option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
 endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
+    option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
@@ -203,7 +206,7 @@ unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   # If we ever bump to CMake 3.29+, replace this with CMAKE_LANG_COMPILER_LINKER_ID
-  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|OS2|Emscripten|SunOS") )
+  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS|OS2|Emscripten|SunOS") )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
@@ -416,7 +419,7 @@ unset ( COREMIDI_SUPPORT CACHE )
 unset ( COREMIDI_LIBS CACHE )
 unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
-if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR} )
   if ( enable-coreaudio )
@@ -441,7 +444,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
   if ( enable-framework )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
-endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
 
 # Android
 if ( ANDROID_ABI )
