@@ -134,7 +134,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
 static int fluid_parse_portamento_time_str(const char* value);
 
-/* Callback handlers for real-time settings */
+/* Callback handlers for realtime settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
 static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
 static void fluid_synth_handle_device_id(void *data, const char *name, int value);
@@ -1116,7 +1116,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
-    /* unregister all real-time settings callback, to avoid a use-after-free when changing those settings after
+    /* unregister all realtime settings callback, to avoid a use-after-free when changing those settings after
      * this synth has been deleted*/
 
     fluid_settings_callback_num(synth->settings, "synth.gain",
@@ -3684,7 +3684,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
  * Set up an event to change the sample-rate of the synth during the next rendering call.
  * @warning This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
- * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
+ * Changing the sample-rate is generally not considered to be a realtime use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.
  * However, this memory allocation may fail and there is no way for the caller to know that, because the actual change of the sample-rate is executed during rendering.
  * This function cannot (must not) do the sample-rate change itself, otherwise the synth needs to be locked down, causing rendering to block.
@@ -7747,7 +7747,7 @@ fluid_synth_get_settings(fluid_synth_t *synth)
 /**
  * Apply an offset to a SoundFont generator on a MIDI channel.
  *
- * This function allows to set an offset for the specified destination generator in real-time.
+ * This function allows to set an offset for the specified destination generator in realtime.
  * The offset will be applied immediately to all voices that are currently and subsequently playing
  * on the given MIDI channel. This functionality works equivalent to using NRPN MIDI messages to
  * manipulate synthesis parameters. See SoundFont spec, paragraph 8.1.3, for details on SoundFont

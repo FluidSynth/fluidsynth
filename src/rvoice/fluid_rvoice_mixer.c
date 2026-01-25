@@ -613,7 +613,7 @@ fluid_mixer_buffers_update_polyphony(fluid_mixer_buffers_t *buffers, int value)
 }
 
 /**
- * Update polyphony - max number of voices (NOTE: not hard real-time capable)
+ * Update polyphony - max number of voices (NOTE: not hard realtime capable)
  * @return FLUID_OK or FLUID_FAILED
  */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
@@ -757,7 +757,7 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice_mixer_t *m
 }
 
 /**
- * Note: Not hard real-time capable (calls malloc)
+ * Note: Not hard realtime capable (calls malloc)
  */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 {
@@ -1629,7 +1629,7 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
 /**
  * Update amount of extra mixer threads.
  * @param thread_count Number of extra mixer threads for multi-core rendering
- * @param prio_level real-time prio level for the extra mixer threads
+ * @param prio_level realtime prio level for the extra mixer threads
  */
 static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int thread_count, int prio_level)
 {

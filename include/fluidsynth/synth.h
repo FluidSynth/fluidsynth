@@ -334,7 +334,7 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
  * but can also be used manually for custom processing of the rendered audio.
  *
  * @note Please note that all following functions block during rendering. If your goal is to
- * render real-time audio, ensure that you call these functions from a high-priority
+ * render realtime audio, ensure that you call these functions from a high-priority
  * thread with little to no other duties other than calling the rendering functions.
  *
  * @warning
@@ -344,7 +344,7 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
  * synth with every call (cf. fluid_synth_get_internal_bufsize()), it will become evident when requesting larger sample chunks:
  * With larger sample chunks it will get harder for the synth to react on those spontaneously occurring events in time
  * (like events received from a MIDI driver, or directly made synth API calls).
- * In those real-time scenarios, prefer requesting smaller
+ * In those realtime scenarios, prefer requesting smaller
  * sample chunks from the synth with each call, to avoid poor quantization of your events in the synthesized audio.
  * This issue is not applicable when using the MIDI player or sequencer for event dispatching. Also
  * refer to the documentation of \setting{audio_period-size}.
