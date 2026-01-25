@@ -821,7 +821,7 @@ if ( enable-limiter )
     add_subdirectory(signalsmith-audio-basics)
     set ( LIMITER_SUPPORT 1 )
   else ( SIGNALSMITH_AUDIO_BASICS )
-    message ( STATUS "Could NOT find Signalsmith Audio Basic. Limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository. The repo contains submodules, be sure to init them!" )
+    message ( STATUS "Could NOT find Signalsmith Audio Basic. Limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository." )
   endif ( SIGNALSMITH_AUDIO_BASICS )
 endif ( enable-limiter )
 
