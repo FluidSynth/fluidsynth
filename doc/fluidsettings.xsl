@@ -285,7 +285,7 @@ a {
                                                         <xsl:copy-of select="realtime"/>
                                                     </xsl:when>
                                                     <xsl:otherwise>
-                                                        Changes made to this setting are applied instantly to the associated synthesizer object.
+                                                        This setting can be changed during runtime of the synthesizer.
                                                     </xsl:otherwise>
                                                 </xsl:choose>
                                             </div>
