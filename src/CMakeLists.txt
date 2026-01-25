@@ -214,10 +214,6 @@ if ( LIMITER_SUPPORT )
     ${FluidSynth_SOURCE_DIR}/include
   )
   target_link_libraries(fluid_limiter_impl-OBJ PRIVATE signalsmith-basics)
-  set_target_properties(fluid_limiter_impl-OBJ PROPERTIES
-    CXX_STANDARD 20 # Because of std::atomic_flag::test()
-    CXX_STANDARD_REQUIRED ON
-  )
 endif ( LIMITER_SUPPORT )
 
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
