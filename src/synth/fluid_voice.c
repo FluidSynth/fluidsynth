@@ -738,7 +738,7 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
  * fluid_voice_update_param can be called during the setup of the
  * voice (to calculate the initial value for a voice parameter), or
  * during its operation (a generator has been changed due to
- * real-time parameter modifications like pitch-bend).
+ * realtime parameter modifications like pitch-bend).
  *
  * Note: The generator holds three values: The base value .val, an
  * offset caused by modulators .mod, and an offset caused by the
@@ -1566,7 +1566,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
  * @return Note on unique ID
  *
  * A SoundFont loader may store pointers to voices it has created for
- * real-time control during the operation of a voice (for example: parameter
+ * realtime control during the operation of a voice (for example: parameter
  * changes in SoundFont editor). The synth uses a pool of voices internally which are
  * 'recycled' and never deallocated.
  *

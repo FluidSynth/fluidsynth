@@ -19,7 +19,7 @@
 
 /* fluid_aufile.c
  *
- * Audio driver, outputs the audio to a file (non real-time)
+ * Audio driver, outputs the audio to a file (non realtime)
  *
  */
 

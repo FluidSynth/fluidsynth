@@ -333,7 +333,9 @@ find_fluid_audio_driver(fluid_settings_t *settings)
  * completed before calling this function.
  * Thus, of all object types in use (synth, midi player, sequencer, etc.) the audio
  * driver should always be the last one to be created and the first one to be deleted!
- * Also refer to the order of object creation in the code examples.
+ * Also refer to the order of object creation in the code examples. Deleting and re-creating
+ * the audio driver is supported. However, only settings marked as realtime can reconfigure
+ * an already created \p synth.
  */
 fluid_audio_driver_t *
 new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)

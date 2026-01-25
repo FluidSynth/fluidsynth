@@ -231,7 +231,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* settings commands */
     {
         "set", "settings", fluid_handle_set,
-        "set name value             Set the value of a setting (must be a real-time setting to take effect immediately)"
+        "set name value             Set the value of a setting (must be a realtime setting to take effect immediately)"
     },
     {
         "get", "settings", fluid_handle_get,
