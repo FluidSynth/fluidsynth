@@ -20,18 +20,19 @@ and a description.
 - pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
 - coreaudio: Apple CoreAudio (Mac OS X)
 - dsound: Microsoft DirectSound (Windows)
+- wasapi: Windows Audio Session API (Windows Vista and later)
+- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86,
+  Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
+  and later)
 - portaudio: PortAudio Library (Mac OS 9 & X, Windows, Linux)
 - sndman: Apple SoundManager (Mac OS Classic)
 - dart: DART sound driver (OS/2)
 - opensles: OpenSL ES (Android)
 - oboe: Oboe (Android)
-- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86,
-  Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
-  and later)
-- file: Driver to output audio to a file
 - sdl3*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
   FreeBSD, Haiku, etc.)
 - pipewire**: PipeWire (Linux)
+- file: Driver to output audio to a file
 
 The default audio driver depends on the settings with which FluidSynth was
 compiled. You can get the default driver with
@@ -40,11 +41,21 @@ fluid_settings_foreach_option() function. Finally, you can set the driver
 with fluid_settings_setstr(). In most cases, the default driver should work
 out of the box. 
 
-Additional options that define the audio quality and latency are
+Additional audio driver options that define the audio quality and latency include
 \setting{audio_sample-format}, \setting{audio_period-size}, and
-\setting{audio_periods}. The details are described later.
+\setting{audio_periods}. The synthesizer's \setting{synth.sample-rate} is also
+involved. The details are described later.
 
-You create the audio driver with the new_fluid_audio_driver() function. This
+Important: Configure the synthesizer before creating the audio driver.
+In particular, set \setting{synth.sample-rate} before instantiating the synth
+with new_fluid_synth(). After the synth has been created, changing
+\setting{synth.sample-rate} in the settings object may not change the sample
+rate used by the synthesizer, while audio drivers created later may
+use the updated setting value and cause the audio to be played out of tune. 
+If you need to change the sample rate, recreate both the synthesizer and the 
+audio driver using settings with the new sample rate.
+
+You can create the audio driver with the new_fluid_audio_driver() function. This
 function takes the settings and synthesizer object as arguments. For example: 
 
 \code
@@ -64,8 +75,9 @@ void init()
 \endcode
 
 As soon as the audio driver is created, it will start playing. The audio
-driver creates a separate thread that uses the synthesizer object to generate
-the audio.
+driver creates a separate thread that receives audio samples from the
+synthesizer object and transfers them to an audio endpoint to generate
+sound.
  
 There are a number of general audio driver settings. The audio.driver settings
 define the audio subsystem that will be used. The \setting{audio_periods} and
