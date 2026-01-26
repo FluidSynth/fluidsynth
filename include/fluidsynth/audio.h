@@ -32,7 +32,7 @@ extern "C" {
  * The file renderer is used for fast rendering of MIDI files to
  * audio files. The audio drivers are a high-level interface to
  * connect the synthesizer with external audio sinks or to render
- * real-time audio to files.
+ * realtime audio to files.
  */
 
 /**
@@ -131,7 +131,7 @@ FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
  * as possible. Please see \ref FileRenderer for a full example.
  *
  * If you are looking for a way to write audio generated
- * from real-time events (for example from an external sequencer or a MIDI controller) to a file,
+ * from realtime events (for example from an external sequencer or a MIDI controller) to a file,
  * please have a look at the \c file \ref audio_driver instead.
  *
  *
