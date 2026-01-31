@@ -22,6 +22,7 @@
 #include "fluid_sys.h"
 #include "fluid_rev.h"
 #include "fluid_chorus.h"
+#include "fluid_limiter.h"
 #include "fluid_ladspa.h"
 #include "fluid_synth.h"
 
@@ -101,6 +102,10 @@ struct _fluid_rvoice_mixer_t
     int with_reverb;        /**< Should the synth use the built-in reverb unit? */
     int with_chorus;        /**< Should the synth use the built-in chorus unit? */
     int mix_fx_to_out;      /**< Should the effects be mixed in with the primary output? */
+
+#ifdef LIMITER_SUPPORT
+    fluid_limiter_t *limiter;
+#endif
 
 #ifdef LADSPA
     fluid_ladspa_fx_t *ladspa_fx; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
@@ -263,6 +268,17 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             }
         }
     }
+
+#ifdef LIMITER_SUPPORT
+    if(mixer->limiter)
+    {
+        fluid_real_t* buf_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t* buf_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_limiter_run(mixer->limiter, buf_l, buf_r, current_blockcount);
+        fluid_check_fpe("LIMITER");
+    }
+#endif
+
 }
 
 /**
@@ -786,6 +802,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
         }
     }
 
+#ifdef LIMITER_SUPPORT
+    if(mixer->limiter != NULL)
+    {
+        fluid_limiter_samplerate_change(mixer->limiter, samplerate);
+    }
+#endif
+
 #if LADSPA
 
     if(mixer->ladspa_fx != NULL)
@@ -923,6 +946,12 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 #endif
     fluid_mixer_buffers_free(&mixer->buffers);
 
+#ifdef LIMITER_SUPPORT
+    if(mixer->limiter)
+    {
+        delete_fluid_limiter(mixer->limiter);
+    }
+#endif
 
     for(i = 0; i < mixer->fx_units; i++)
     {
@@ -984,6 +1013,15 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
     }
 }
 #endif
+
+#ifdef LIMITER_SUPPORT
+int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
+{
+    mixer->limiter = new_fluid_limiter(sample_rate, settings);
+
+    return mixer->limiter != NULL;
+}
+#endif /* LIMITER_SUPPORT */
 
 /**
  * set one or more reverb shadow parameters for one fx group.

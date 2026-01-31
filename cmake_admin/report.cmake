@@ -162,6 +162,16 @@ endif ( LIBSNDFILE_SUPPORT )
 
 set ( MISC_REPORT "\nMiscellaneous support:\n" )
 
+if    ( LIMITER_SUPPORT )
+    set ( MISC_REPORT "${MISC_REPORT}  Limiter:               yes\n" )
+else  ( LIMITER_SUPPORT )
+  if    ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+        set ( MISC_REPORT "${MISC_REPORT}  Limiter:               no (signalsmith-audio/basics not found)\n" )
+  else  ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+        set ( MISC_REPORT "${MISC_REPORT}  Limiter:               no\n" )
+  endif ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+endif ( LIMITER_SUPPORT )
+
 if ( DBUS_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  D-Bus:                 yes\n" )
 else ( DBUS_SUPPORT )
