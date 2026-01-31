@@ -12,6 +12,16 @@
 #include <windows.h>
 #endif
 
+#define TEST_ASSERT_MSG(COND, MSG)                                                               \
+    do                                                                                           \
+    {                                                                                            \
+        if (!(COND))                                                                             \
+        {                                                                                        \
+            fprintf(stderr, __FILE__ ":%d assertion (%s) failed: %s\n", __LINE__, #COND, (MSG)); \
+            TEST_ABORT;                                                                          \
+        }                                                                                        \
+    } while (0)
+
 /*
  * Deterministic regression test for fluid_synth_write_s16() output.
  *
@@ -129,10 +139,10 @@ static fluid_synth_t *new_locked_down_synth(fluid_settings_t **out_settings)
     fluid_settings_t *settings = NULL;
     fluid_synth_t *synth = NULL;
 
-    TEST_ASSERT(out_settings != NULL, "new_locked_down_synth(): out_settings is NULL");
+    TEST_ASSERT_MSG(out_settings != NULL, "new_locked_down_synth(): out_settings is NULL");
 
     settings = new_fluid_settings();
-    TEST_ASSERT(settings != NULL, "new_fluid_settings() returned NULL");
+    TEST_ASSERT_MSG(settings != NULL, "new_fluid_settings() returned NULL");
 
     /* Lock down common “drift” knobs. */
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.sample-rate", (double)TEST_SRATE));
@@ -144,12 +154,12 @@ static fluid_synth_t *new_locked_down_synth(fluid_settings_t **out_settings)
      * It is not a public setting in current FluidSynth releases. */
 
     synth = new_fluid_synth(settings);
-    TEST_ASSERT(synth != NULL, "new_fluid_synth() returned NULL");
+    TEST_ASSERT_MSG(synth != NULL, "new_fluid_synth() returned NULL");
 
     /* Load known test soundfont and select it for all channels (reset=1). */
     {
         const int sfid = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1);
-        TEST_ASSERT(sfid >= 0, "fluid_synth_sfload(TEST_SOUNDFONT) failed");
+        TEST_ASSERT_MSG(sfid >= 0, "fluid_synth_sfload(TEST_SOUNDFONT) failed");
     }
 
     *out_settings = settings;
@@ -564,7 +574,7 @@ int main(void)
                 delete_fluid_settings(settings_a);
 
                 /* Fail fast on first failing split to keep output readable. */
-                TEST_ASSERT(ok, "S16 continuity failed");
+                TEST_ASSERT_MSG(ok, "S16 continuity failed");
             }
         }
     }
