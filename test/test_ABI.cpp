@@ -100,6 +100,9 @@ int main() {
     std::cout << "\nMax fundamental alignment-related type:\n\n";
     print_type<std::max_align_t>("std::max_align_t");
 
+    std::cout << "\nCustom FluidSynth types:\n\n";
+    print_type<fluid_long_long_t>("fluid_long_long_t");
+    TEST_ASSERT(sizeof(fluid_long_long_t) == 8);
     print_type<SFChunk>("SFChunk");
     TEST_ASSERT(sizeof(SFChunk) == 8);
 
