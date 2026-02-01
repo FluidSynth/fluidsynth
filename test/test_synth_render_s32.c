@@ -10,47 +10,22 @@
 
 #include "test.h"
 #include "fluidsynth.h"
+#include "drivers/fluid_audio_convert.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <stdio.h>
 
 /* Must match the s32 renderer's scale convention in fluid_synth_write_int.cpp */
 #define S32_SCALE (2147483646.0f)
-
-/* Local float->i32 reference conversion: round+clip, no dithering. */
-static int32_t round_clip_to_i32_ref(float x)
-{
-    int64_t i;
-
-    if (x >= 0.0f)
-    {
-        i = (int64_t)(x + 0.5f);
-        if (i > INT32_MAX)
-        {
-            i = INT32_MAX;
-        }
-    }
-    else
-    {
-        i = (int64_t)(x - 0.5f);
-        if (i < INT32_MIN)
-        {
-            i = INT32_MIN;
-        }
-    }
-
-    return (int32_t)i;
-}
 
 static void float_to_s32_ref(const float *in, int32_t *out, int count)
 {
     int i;
     for (i = 0; i < count; ++i)
     {
-        out[i] = round_clip_to_i32_ref(in[i] * S32_SCALE);
+        out[i] = round_clip_to_i32(in[i] * S32_SCALE);
     }
 }
 

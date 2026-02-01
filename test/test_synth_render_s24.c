@@ -10,41 +10,16 @@
 
 #include "test.h"
 #include "fluidsynth.h"
+#include "drivers/fluid_audio_convert.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <stdio.h>
 
 /* Must match the s32 scale used by the integer renderer (s24 uses s32 scale + mask). */
 #define S32_SCALE (2147483646.0f)
 #define S24_MASK (0xFFFFFF00u) /* 24 valid bits left-aligned in 32-bit container */
-
-/* Local float->i32 reference conversion: round+clip, no dithering. */
-static int32_t round_clip_to_i32_ref(float x)
-{
-    int64_t i;
-
-    if (x >= 0.0f)
-    {
-        i = (int64_t)(x + 0.5f);
-        if (i > INT32_MAX)
-        {
-            i = INT32_MAX;
-        }
-    }
-    else
-    {
-        i = (int64_t)(x - 0.5f);
-        if (i < INT32_MIN)
-        {
-            i = INT32_MIN;
-        }
-    }
-
-    return (int32_t)i;
-}
 
 static void float_to_s24_ref(const float *in, int32_t *out, int count)
 {
@@ -52,7 +27,7 @@ static void float_to_s24_ref(const float *in, int32_t *out, int count)
     for (i = 0; i < count; ++i)
     {
         /* s24 is transported as int32 with the lowest 8 bits cleared (left-aligned 24-bit PCM). */
-        const int32_t s32 = round_clip_to_i32_ref(in[i] * S32_SCALE);
+        const int32_t s32 = round_clip_to_i32(in[i] * S32_SCALE);
         out[i] = (int32_t)((uint32_t)s32 & (uint32_t)S24_MASK);
     }
 }
