@@ -37,6 +37,7 @@
 
 enum
 {
+    MAX_ABS_DELTA_ACCEPTABLE = 2, /* max absolute sample delta accepted in rendering vs reference */
     TEST_SRATE = 48000,
     FRAMES = 256, /* keep small to make the test fast */
     NOTE_CH = 0,
@@ -197,7 +198,7 @@ static uint32_t hash_s16_interleaved_le(const int16_t *lr, int frames)
     return h;
 }
 
-static void report_first_delta_s16(const int16_t *expected, const int16_t *got, int frames)
+static int report_first_delta_s16(const int16_t *expected, const int16_t *got, int frames)
 {
     int i;
     int mismatches = 0;
@@ -226,6 +227,7 @@ static void report_first_delta_s16(const int16_t *expected, const int16_t *got, 
     }
 
     fprintf(stderr, "mismatches=%d max_abs_delta=%d\n", mismatches, max_abs_delta);
+    return max_abs_delta;
 }
 
 static const char *build_config_string(void)
@@ -353,7 +355,6 @@ int main(void)
              */
             /* const uint32_t EXPECTED = 0x77F11EEFu; */ /* VS Debug build of FluidSynth 2.5.2 */
             const uint32_t EXPECTED = 0x7FD92354u;       /* VS Release build of FluidSynth 2.5.2 */
-
             if (got != EXPECTED)
             {
                 int first = -1;
@@ -373,8 +374,14 @@ int main(void)
 
                 if (first >= 0)
                 {
+                    int max_delta;
                     fprintf(stderr, "s16 stream mismatch vs reference buffer\n");
-                    report_first_delta_s16(REF_S16_INTERLEAVED_LR, out, FRAMES);
+                    max_delta = report_first_delta_s16(REF_S16_INTERLEAVED_LR, out, FRAMES);
+                    if(max_delta > MAX_ABS_DELTA_ACCEPTABLE)
+                    {
+                        fprintf(stderr, "ERROR: max delta %d exceeds acceptable threshold\n", max_delta);
+                        failed = 1;
+                    }
                     s16_diff_report(REF_S16_INTERLEAVED_LR, out, FRAMES);
                 }
                 else
@@ -382,9 +389,6 @@ int main(void)
                     /* Very unlikely: hash mismatch but samples match reference buffer. */
                     fprintf(stderr, "WARNING: hash mismatch but samples match reference buffer\n");
                 }
-
-                /* Don't abort: let continuity tests run too. */
-                failed = 1;
             }
         }
 
