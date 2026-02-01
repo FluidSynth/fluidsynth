@@ -125,7 +125,7 @@ int main(void)
         if (out_s32[i] != exp_s32[i])
         {
             int delta = (int)(out_s32[i] - exp_s32[i]);
-            int64_t abs_delta = llabs((long long)delta);
+            int64_t abs_delta = llabs(delta);
             if (abs_delta <= S32_DELTA_TOLERANCE)
             {
                 continue;
