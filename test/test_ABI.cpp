@@ -8,6 +8,10 @@
     ./print_type_sizes_align
 */
 
+#include "test.h"
+#include "fluidsynth.h"
+#include "fluid_sffile.h"
+
 #include <iostream>
 #include <iomanip>
 #include <type_traits>
@@ -95,6 +99,9 @@ int main() {
     // (Optional) show max alignment type
     std::cout << "\nMax fundamental alignment-related type:\n\n";
     print_type<std::max_align_t>("std::max_align_t");
+
+    print_type<SFChunk>("SFChunk");
+    TEST_ASSERT(sizeof(SFChunk) == 8);
 
     return 0;
 }
