@@ -177,6 +177,7 @@ static int count_loaded_samples(fluid_synth_t *synth, int sfont_id)
     int count = 0;
 
     fluid_sfont_t *sfont = fluid_synth_get_sfont_by_id(synth, sfont_id);
+    TEST_ASSERT(sfont != NULL);
     fluid_defsfont_t *defsfont = fluid_sfont_get_data(sfont);
 
     for(list = defsfont->sample; list; list = fluid_list_next(list))
