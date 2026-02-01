@@ -37,6 +37,7 @@ ADD_FLUID_TEST(test_synth_render_s16)
 ADD_FLUID_TEST(test_synth_render_s24)
 ADD_FLUID_TEST(test_synth_render_s32)
 ADD_FLUID_TEST(test_ABI)
+ADD_FLUID_TEST(test_file_seek_tell)
 
 if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
     # Earlier versions of GLib had broken comment handling and should not be compared to
