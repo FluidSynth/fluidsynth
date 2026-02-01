@@ -29,7 +29,7 @@
 #define FLUID_PRIi64 "lld"
 #endif
 
-#ifdef _WIN32
+#if 0
 #define FLUID_PRIsize "Iu"
 #else
 #define FLUID_PRIsize "zu"
@@ -94,6 +94,7 @@ int safe_fread(void *buf, fluid_long_long_t count, void *fd)
             offset += written;
         }
     }
+    output[offset - 1] = '\0';
 
     FLUID_LOG(FLUID_INFO, "safe_fread success: ftell=%" FLUID_PRIi64 "; buf now contains '%s'", FLUID_FTELL((FILE *)fd), output);
 
