@@ -102,6 +102,7 @@ option ( enable-threads "enable multi-threading support (such as parallel voice 
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 option ( enable-unicode "enable UNICODE build for Windows" on )
 option ( enable-native-dls "compile native DLS support (requires C++17)" on )
+option ( enable-limiter "compile Limiter support (requires signalsmith-audio)" on )
 
 set ( osal "glib" CACHE STRING "OS abstraction to use, provided by src/utils/fluid_sys_${osal}.*" )
 
@@ -113,8 +114,11 @@ endif ( CMAKE_SYSTEM MATCHES "Linux" )
 if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
-    option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
 endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
+    option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
@@ -203,7 +207,7 @@ unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   # If we ever bump to CMake 3.29+, replace this with CMAKE_LANG_COMPILER_LINKER_ID
-  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|OS2|Emscripten|SunOS") )
+  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS|OS2|Emscripten|SunOS") )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
@@ -284,17 +288,17 @@ if ( WIN32 OR CYGWIN )
   # windows-version is supposed to be non-official variable that can be used to tweak the Windows target version.
   # Its value defaults to the Windows Version we are compiling for.
   if ( NOT windows-version )
-    if(CMAKE_SYSTEM_VERSION EQUAL 10) # Windows 10
+    if(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 10) # Windows 10
         set ( windows-version "0x0A00" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.3) # Windows 8.1
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.3) # Windows 8.1
         set ( windows-version "0x0603" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.2) # Windows 8
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.2) # Windows 8
         set ( windows-version "0x0602" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.1) # Windows 7
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.1) # Windows 7
         set ( windows-version "0x0601" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.0) # Windows Vista
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.0) # Windows Vista
         set ( windows-version "0x0600" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 5.1) # Windows XP
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 5.1) # Windows XP
         set ( windows-version "0x0501" )
     else()
         set ( windows-version "0x0400" )
@@ -366,17 +370,17 @@ endif ( WIN32 )
 
 find_package ( GCEM REQUIRED )
 
+find_library ( HAS_LIBM NAMES "m" )
+if ( HAS_LIBM )
+  set ( MATH_LIBRARY "m" )
+endif ( HAS_LIBM )
+
 set ( LIBFLUID_LIBS ${MATH_LIBRARY} )
 if (NOT ((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR (osal STREQUAL "embedded")))
   # Check for threads and math
   find_package ( Threads REQUIRED )
   list ( APPEND LIBFLUID_LIBS "Threads::Threads" )
 endif ()
-
-find_library ( HAS_LIBM NAMES "m" )
-if ( HAS_LIBM )
-  set ( MATH_LIBRARY "m" )
-endif ( HAS_LIBM )
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )
@@ -416,7 +420,7 @@ unset ( COREMIDI_SUPPORT CACHE )
 unset ( COREMIDI_LIBS CACHE )
 unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
-if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR} )
   if ( enable-coreaudio )
@@ -441,7 +445,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
   if ( enable-framework )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
-endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
 
 # Android
 if ( ANDROID_ABI )
@@ -544,7 +548,7 @@ endif(ASTYLE)
 # Set the minimum version desired for libraries
 set ( ALSA_MINIMUM_VERSION 0.9.1 )
 set ( DBUS_MINIMUM_VERSION 1.11.12 )
-set ( GLIB2_MINUMUM_VERSION 2.6.5 )
+set ( GLIB2_MINIMUM_VERSION 2.6.5 )
 set ( LIBINSTPATCH_MINIMUM_VERSION 1.1.0 )
 set ( LIBSNDFILE_MINIMUM_VERSION 1.0.0 )
 set ( PIPEWIRE_MINIMUM_VERSION 0.3 )
@@ -561,7 +565,7 @@ endif ()
 unset ( GLIB_SUPPORT CACHE )
 if ( osal STREQUAL "glib" )
     # Mandatory libraries: glib and gthread
-    find_package ( GLib2 ${GLIB2_MINUMUM_VERSION} REQUIRED )
+    find_package ( GLib2 ${GLIB2_MINIMUM_VERSION} REQUIRED )
     list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
     set ( GLIB_SUPPORT 1 )
 
@@ -597,12 +601,12 @@ if ( enable-libsndfile )
         set ( LIBSNDFILE_SUPPORT 1 )
         message ( STATUS "Found libSndFile: ${SndFile_VERSION}" )
         #cmake_print_properties(TARGETS SndFile::sndfile PROPERTIES LOCATION INTERFACE_INCLUDE_DIRECTORIES IMPORTED_CONFIGURATIONS)
-        cmake_print_variables(SndFile_WITH_EXTERNAL_LIBS SndFile_WITH_MPEG)
+        #cmake_print_variables(SndFile_WITH_EXTERNAL_LIBS SndFile_WITH_MPEG)
         list( APPEND PC_REQUIRES_PRIV "sndfile")
         if ( SndFile_WITH_EXTERNAL_LIBS )
             set ( LIBSNDFILE_HASVORBIS 1 )
         else (SndFile_WITH_EXTERNAL_LIBS)
-            message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
+            message ( "Seems like libsndfile was compiled without OGG/Vorbis support." )
         endif (SndFile_WITH_EXTERNAL_LIBS)
     else ( SndFile_FOUND )
         message( STATUS "Could NOT find SndFile (Set SndFile_DIR to the directory containing its CMake config) (Required is at least version ${LIBSNDFILE_MINIMUM_VERSION})" )
@@ -710,7 +714,10 @@ unset ( OBOE_SUPPORT CACHE )
 if ( enable-oboe )
   find_package ( oboe )
   if ( oboe_FOUND )
-    set(CMAKE_CXX_STANDARD 14)
+    if(CMAKE_CXX_STANDARD VERSION_LESS 14)
+      message ( STATUS "Setting C++ standard to C++14 for Oboe support" )
+      set(CMAKE_CXX_STANDARD 14)
+    endif()
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set ( OBOE_SUPPORT 1 )
     list( APPEND PC_REQUIRES_PRIV "oboe-1.0")
@@ -803,6 +810,20 @@ if ( enable-libinstpatch )
         endif()
     endif ()
 endif ( enable-libinstpatch )
+
+unset ( LIMITER_SUPPORT CACHE )
+if ( enable-limiter )
+  find_path ( SIGNALSMITH_AUDIO_BASICS
+              NAMES "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
+              PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
+              HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE )
+  if ( SIGNALSMITH_AUDIO_BASICS )
+    add_subdirectory(signalsmith-audio-basics)
+    set ( LIMITER_SUPPORT 1 )
+  else ( SIGNALSMITH_AUDIO_BASICS )
+    message ( STATUS "Could NOT find Signalsmith Audio Basic. Limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository." )
+  endif ( SIGNALSMITH_AUDIO_BASICS )
+endif ( enable-limiter )
 
 # manipulate some variables to setup a proper test env
 set(TEST_SOUNDFONT "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")

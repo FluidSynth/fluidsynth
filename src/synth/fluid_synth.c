@@ -133,7 +133,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
 static int fluid_parse_portamento_time_str(const char* value);
 
-/* Callback handlers for real-time settings */
+/* Callback handlers for realtime settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
 static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
 static void fluid_synth_handle_device_id(void *data, const char *name, int value);
@@ -223,6 +223,16 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_str(settings, "midi.portname", "", 0);
+
+#ifdef LIMITER_SUPPORT
+    fluid_settings_register_int(settings, "synth.limiter.active", 0, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_num(settings, "synth.limiter.output-limit", FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT, fluid_cb2amp(240), 1.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.attack", FLUID_LIMITER_DEFAULT_ATTACK_MS, 1.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.hold", FLUID_LIMITER_DEFAULT_HOLD_MS, 0.0f, 250.0f, 0);
+    fluid_settings_register_num(settings, "synth.limiter.release", FLUID_LIMITER_DEFAULT_RELEASE_MS, 0.0f, 250.0f, 0);
+    fluid_settings_register_int(settings, "synth.limiter.smoothing-stages", FLUID_LIMITER_DEFAULT_SMOOTHING_STAGES, 1, 3, 0);
+    fluid_settings_register_num(settings, "synth.limiter.link-channels", FLUID_LIMITER_DEFAULT_LINK_CHANNELS, 0.0f, 1.0f, 0);
+#endif
 
 #ifdef DEFAULT_SOUNDFONT
     fluid_settings_register_str(settings, "synth.default-soundfont", DEFAULT_SOUNDFONT, 0);
@@ -659,8 +669,8 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @note The @p settings parameter is used directly, but the synth does not take ownership of it.
  * Hence, the caller is responsible for freeing it, when no longer needed.
  * Further note that you may modify FluidSettings of the
- * @p settings instance. However, only those FluidSettings marked as 'realtime' will
- * affect the synth immediately. See the \ref fluidsettings for more details.
+ * @p settings instance. However, only synth settings marked as realtime in \ref fluidsettings will
+ * affect the synth at runtime. fluid_settings_is_realtime() can be used to check this.
  *
  * @warning The @p settings object should only be used by a single synth at a time. I.e. creating
  * multiple synth instances with a single @p settings object causes undefined behavior. Once the
@@ -674,7 +684,12 @@ new_fluid_synth(fluid_settings_t *settings)
     char *important_channels;
     int i, prio_level = 0;
     int with_ladspa = 0;
+    int with_limiter = 0;
     double sample_rate_min, sample_rate_max;
+#ifdef LIMITER_SUPPORT
+    fluid_limiter_settings_t limiter_settings;
+    double limiter_value;
+#endif
 
     /* initialize all the conversion tables and other stuff */
     if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
@@ -940,6 +955,39 @@ new_fluid_synth(fluid_settings_t *settings)
 #endif /* LADSPA */
     }
 
+    fluid_settings_getint(settings, "synth.limiter.active", &with_limiter);
+
+    if(with_limiter)
+    {
+#ifdef LIMITER_SUPPORT
+        limiter_settings.input_gain = 1.0;
+        if(fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_value) == FLUID_OK) {
+            limiter_settings.output_limit = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.attack", &limiter_value) == FLUID_OK) {
+            limiter_settings.attack_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.hold", &limiter_value) == FLUID_OK) {
+            limiter_settings.hold_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.release", &limiter_value) == FLUID_OK) {
+            limiter_settings.release_ms = limiter_value;
+        }
+        if(fluid_settings_getnum(settings, "synth.limiter.link-channels", &limiter_value) == FLUID_OK) {
+            limiter_settings.link_channels = limiter_value;
+        }
+        fluid_settings_getint(settings, "synth.limiter.smoothing-stages", &limiter_settings.smoothing_stages);
+
+        if (!fluid_rvoice_mixer_set_limiter(synth->eventhandler->mixer, synth->sample_rate, &limiter_settings)) {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            goto error_recovery;
+        }
+#else /* LIMITER_SUPPORT */
+        FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with limiter support");
+#endif /* LIMITER_SUPPORT */
+    }
+
+
     /* allocate and add the dls sfont loader */
 #ifdef LIBINSTPATCH_SUPPORT
     loader = new_fluid_instpatch_loader(settings);
@@ -1115,7 +1163,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
-    /* unregister all real-time settings callback, to avoid a use-after-free when changing those settings after
+    /* unregister all realtime settings callback, to avoid a use-after-free when changing those settings after
      * this synth has been deleted*/
 
     fluid_settings_callback_num(synth->settings, "synth.gain",
@@ -3683,7 +3731,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
  * Set up an event to change the sample-rate of the synth during the next rendering call.
  * @warning This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
- * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
+ * Changing the sample-rate is generally not considered to be a realtime use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.
  * However, this memory allocation may fail and there is no way for the caller to know that, because the actual change of the sample-rate is executed during rendering.
  * This function cannot (must not) do the sample-rate change itself, otherwise the synth needs to be locked down, causing rendering to block.
@@ -7718,7 +7766,7 @@ fluid_synth_get_settings(fluid_synth_t *synth)
 /**
  * Apply an offset to a SoundFont generator on a MIDI channel.
  *
- * This function allows to set an offset for the specified destination generator in real-time.
+ * This function allows to set an offset for the specified destination generator in realtime.
  * The offset will be applied immediately to all voices that are currently and subsequently playing
  * on the given MIDI channel. This functionality works equivalent to using NRPN MIDI messages to
  * manipulate synthesis parameters. See SoundFont spec, paragraph 8.1.3, for details on SoundFont

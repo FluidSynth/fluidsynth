@@ -25,7 +25,7 @@
 #include <cmath>
 
 
-// Calculating the sine and cosine coefficients for every possible cutoff frequency is too CPU expensive and can harm real-time playback.
+// Calculating the sine and cosine coefficients for every possible cutoff frequency is too CPU expensive and can harm realtime playback.
 // Therefore, we precalculate the coefficients with a precision of CENTS_STEP and store them in a table.
 extern "C" void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t sample_rate)
 {
