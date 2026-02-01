@@ -127,8 +127,8 @@ int main(void)
     {
         if (out_s24[i] != exp_s24[i])
         {
-            const int64_t delta = (int64_t)out_s24[i] - (int64_t)exp_s24[i];
-            const int64_t abs_delta = llabs(delta);
+            int64_t delta = (int64_t)out_s24[i] - (int64_t)exp_s24[i];
+            int64_t abs_delta = llabs(delta);
             if (abs_delta <= S24_DELTA_TOLERANCE)
             {
                 continue;
