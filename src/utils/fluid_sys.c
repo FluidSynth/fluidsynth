@@ -1635,6 +1635,11 @@ fluid_long_long_t fluid_file_tell(FILE* f)
     {
         return (fluid_long_long_t)-1L;
     }
+    __int64 telli64pos = _telli64(_fileno(f));
+    __int64 ftellipos = _ftelli64(f);
+    long ftellpos = ftell(f);
+    FLUID_LOG(FLUID_INFO, "fluid_file_tell():  _telli64: %I64d, _ftelli64: %I64d, ftell: %ld, fgetpos: %I64d",
+               telli64pos, ftellipos, ftellpos, pos);
     return pos;
 #else
     return ftell(f);
