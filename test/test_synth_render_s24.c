@@ -21,7 +21,7 @@
 #define S32_SCALE (2147483646.0f)
 #define S24_MASK (0xFFFFFF00u) /* 24 valid bits left-aligned in 32-bit container */
 #if defined(__MINGW32__)
-#define S24_DELTA_TOLERANCE 256 /* smallest representable delta (bit 8) in left-aligned 24-bit container */
+#define S24_DELTA_TOLERANCE 256 /* allowed rounding drift (bit 8) in left-aligned 24-bit container */
 #else
 #define S24_DELTA_TOLERANCE 0
 #endif
