@@ -4,6 +4,7 @@
 #include "sfloader/fluid_sfont.h"
 #include "sfloader/fluid_defsfont.h"
 #include "utils/fluid_sys.h"
+#include <string.h>
 
 void noop(void)
 {
@@ -26,14 +27,8 @@ int main(void)
 
     TEST_ASSERT(fcbs->fread(header, 12, file) == FLUID_OK);
     TEST_ASSERT(fcbs->fseek(file, 0, SEEK_SET) == FLUID_OK);
-    TEST_ASSERT(header[0] == 'R');
-    TEST_ASSERT(header[1] == 'I');
-    TEST_ASSERT(header[2] == 'F');
-    TEST_ASSERT(header[3] == 'F');
-    TEST_ASSERT(header[8] == 's');
-    TEST_ASSERT(header[9] == 'f');
-    TEST_ASSERT(header[10] == 'b');
-    TEST_ASSERT(header[11] == 'k');
+    TEST_ASSERT(memcmp(header, "RIFF", 4) == 0);
+    TEST_ASSERT(memcmp(header + 8, "sfbk", 4) == 0);
 
     TEST_ASSERT(fcbs->fseek(file, 0, SEEK_END) == FLUID_OK);
     size = fcbs->ftell(file);
