@@ -34,7 +34,9 @@
  *  - Do not include from application code.
  */
 
-#include "drivers/fluid_audio_convert.h"
+#define NOMINMAX // to prevent windows.h from defining min/max macros
+#include "fluid_audio_convert.h"
+
 #include "fluid_sys.h"
 #include <cstdlib> /* rand(), RAND_MAX */
 
@@ -146,7 +148,7 @@ extern "C" int fluid_audio_planar_float_to_s16(int16_t *dst_interleaved,
         /* One interleaved frame: write channel samples then advance by stride. */
         for (int ch = 0; ch < channels; ++ch)
         {
-            dst_interleaved[ch] = round_clip_to_i16(src_planar[ch][f] * 32766.0f + rand_table[ch & 1][di]);
+            dst_interleaved[ch] = round_clip_to<int16_t>(src_planar[ch][f] * 32766.0f + rand_table[ch & 1][di]);
         }
 
         if (++di >= DITHER_SIZE)
@@ -182,7 +184,7 @@ extern "C" int fluid_audio_planar_float_to_s24(int32_t *dst_interleaved,
     {
         for (int ch = 0; ch < channels; ++ch)
         {
-            int32_t s = round_clip_to_i32(src_planar[ch][f] * 2147483646.0f);
+            int32_t s = round_clip_to<int32_t>(src_planar[ch][f] * 2147483646.0f);
             dst_interleaved[ch] = (int32_t)(s & 0xFFFFFF00);
         }
 
@@ -214,11 +216,77 @@ extern "C" int fluid_audio_planar_float_to_s32(int32_t *dst_interleaved,
     {
         for (int ch = 0; ch < channels; ++ch)
         {
-            dst_interleaved[ch] = round_clip_to_i32(src_planar[ch][f] * 2147483646.0f);
+            dst_interleaved[ch] = round_clip_to<int32_t>(src_planar[ch][f] * 2147483646.0f);
         }
 
         dst_interleaved += dst_stride;
     }
 
     return FLUID_OK;
+}
+
+
+/**
+ * Converts stereo floating point sample data to signed 16-bit data with dithering.
+ * @param dither_index Pointer to an integer which should be initialized to 0
+ *   before the first call and passed unmodified to additional calls which are
+ *   part of the same synthesis output.
+ * @param len Length in frames to convert
+ * @param lin Buffer of left audio samples to convert from
+ * @param rin Buffer of right audio samples to convert from
+ * @param lout Array of 16-bit words to store left channel of audio
+ * @param loff Offset index in 'lout' for first sample
+ * @param lincr Increment between samples stored to 'lout'
+ * @param rout Array of 16-bit words to store right channel of audio
+ * @param roff Offset index in 'rout' for first sample
+ * @param rincr Increment between samples stored to 'rout'
+ *
+ * @note Currently private to libfluidsynth.
+ *
+ *
+ * Implementation note:
+ * This helper is used by in-tree audio drivers that render float internally
+ * and dither/convert to s16 in the driver(e.g.ALSA and OSS drivers).
+ * Keep behavior(scaling, arithmetic order, dither index continuity) stable.
+ * The dither table is shared and must be initialized before use; this function
+ * ensures initialization for driver call sites.
+ */
+
+/* TODO: Consider migrating drivers that currently call fluid_synth_dither_s16()
+ * to use fluid_audio_planar_float_to_s16() (planar-to-interleaved conversion),
+ * if/when their buffer layout matches and the change can be tested.
+ */
+
+extern "C" void
+fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
+                       int16_t *lout, int loff, int lincr,
+                       int16_t *rout, int roff, int rincr)
+{
+    int i, j, k;
+    int16_t *left_out = lout;
+    int16_t *right_out = rout;
+    int di = *dither_index;
+    fluid_profile_ref_var(prof_ref);
+
+    static int dither_initialized = 0; // ensure dither table is initialized
+    if (!dither_initialized)
+    {
+        init_dither();
+        dither_initialized = 1;
+    }
+
+    for(i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr)
+    {
+        left_out[j] = round_clip_to<int16_t>(lin[i] * 32766.0f + rand_table[0][di]);
+        right_out[k] = round_clip_to<int16_t>(rin[i] * 32766.0f + rand_table[1][di]);
+
+        if(++di >= DITHER_SIZE)
+        {
+            di = 0;
+        }
+    }
+
+    *dither_index = di; /* keep dither buffer continuous */
+
+    fluid_profile(FLUID_PROF_WRITE, prof_ref, 0, len);
 }

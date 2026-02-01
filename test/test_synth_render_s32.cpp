@@ -25,7 +25,7 @@ static void float_to_s32_ref(const float *in, int32_t *out, int count)
     int i;
     for (i = 0; i < count; ++i)
     {
-        out[i] = round_clip_to_i32(in[i] * S32_SCALE);
+        out[i] = round_clip_to<int32_t>(in[i] * S32_SCALE);
     }
 }
 

@@ -28,12 +28,41 @@
  * Not installed; not part of the public FluidSynth API.
  */
 
-#include "fluidsynth_priv.h"
-#include <stdint.h>
-#include <limits.h> /* INT32_MIN / INT32_MAX */
-
 #ifdef __cplusplus
+
+#include <cstdint>
+#include <limits>
+
+
+/* A portable replacement for roundf(), seems it may actually be faster too! */
+template<typename T>
+T round_clip_to(float x)
+{
+    if (x >= 0.0f)
+    {
+        x += 0.5f;
+
+        if (x > std::numeric_limits<T>::max())
+        {
+            return std::numeric_limits<T>::max();
+        }
+    }
+    else
+    {
+        x -= 0.5f;
+
+        if (x < std::numeric_limits<T>::lowest())
+        {
+            return std::numeric_limits<T>::lowest();
+        }
+    }
+
+    return (T)x;
+}
+
 extern "C" {
+#else
+#include <stdint.h>
 #endif
 
 /* --------------------------------------------------------------------------
@@ -54,60 +83,6 @@ extern float rand_table[DITHER_CHANNELS][DITHER_SIZE];
 
 /* Init dither table */
 void init_dither(void);
-
-/* A portable replacement for roundf(), seems it may actually be faster too! */
-static FLUID_INLINE int16_t round_clip_to_i16(float x)
-{
-    long i;
-
-    if (x >= 0.0f)
-    {
-        i = (long)(x + 0.5f);
-
-        if (FLUID_UNLIKELY(i > 32767))
-        {
-            i = 32767;
-        }
-    }
-    else
-    {
-        i = (long)(x - 0.5f);
-
-        if (FLUID_UNLIKELY(i < -32768))
-        {
-            i = -32768;
-        }
-    }
-
-    return (int16_t)i;
-}
-
-/* Round + clip to signed 32-bit PCM. No dithering. */
-static FLUID_INLINE int32_t round_clip_to_i32(float x)
-{
-    int64_t i;
-
-    if (x >= 0.0f)
-    {
-        i = (int64_t)(x + 0.5f);
-
-        if (FLUID_UNLIKELY(i > INT32_MAX))
-        {
-            i = INT32_MAX;
-        }
-    }
-    else
-    {
-        i = (int64_t)(x - 0.5f);
-
-        if (FLUID_UNLIKELY(i < INT32_MIN))
-        {
-            i = INT32_MIN;
-        }
-    }
-
-    return (int32_t)i;
-}
 
 /*
  * Conversion helpers shared by synth-write and driver2 paths.
@@ -138,6 +113,9 @@ int fluid_audio_planar_float_to_s32(int32_t *dst_interleaved,
                                     int channels,
                                     int frames);
 
+void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
+                            int16_t *lout, int loff, int lincr,
+                            int16_t *rout, int roff, int rincr);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

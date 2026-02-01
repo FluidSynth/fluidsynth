@@ -25,14 +25,14 @@
  * s32.
  */
 
+#define NOMINMAX // to prevent windows.h from defining min/max macros
 #include "fluid_synth_write_int.h"
 
 /* Include the same internal headers that the original C bodies relied on.
  */
 #include "fluid_sys.h"
-#include "drivers/fluid_audio_convert.h"
+#include "fluid_audio_convert.h"
 
-#include <cstdint>
 
 /* --------------------------------------------------------------------------
  * Integer write core: tag dispatch + traits (C++11)
@@ -62,7 +62,7 @@ template<> struct int_write_traits<s16_tag>
         /* Preserve exact arithmetic order:
          * (sample * 32766.0f) + rand_table[ch][di], then round_clip_to_i16().
          */
-        return round_clip_to_i16((float)x * 32766.0f + rand_table[ch][di]);
+        return round_clip_to<sample_t>((float)x * 32766.0f + rand_table[ch][di]);
     }
 
     static FLUID_INLINE void advance_di(int &di)
@@ -103,8 +103,8 @@ template<> struct int_write_traits<s24_tag>
          * - Convert exactly like s32 (full 32-bit scale)
          * - Then clear the lowest 8 bits (transport truncation)
          */
-        int32_t s = round_clip_to_i32(x * 2147483646.0f);
-        return (int32_t)(s & 0xFFFFFF00);
+        sample_t s = round_clip_to<sample_t>(x * 2147483646.0f);
+        return (sample_t)(s & 0xFFFFFF00);
     }
 
     static FLUID_INLINE void advance_di(int & /*di*/)
@@ -132,7 +132,7 @@ template<> struct int_write_traits<s32_tag>
          * Keep scale convention parallel to s16's 32766.0f:
          * INT32_MAX-1 => 2147483646.0f
          */
-        return round_clip_to_i32(x * 2147483646.0f);
+        return round_clip_to<sample_t>(x * 2147483646.0f);
     }
 
     static FLUID_INLINE void advance_di(int & /*di*/)
