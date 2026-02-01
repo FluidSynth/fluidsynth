@@ -297,6 +297,9 @@ static void dump_s16_c_array(const char *name, const int16_t *lr, int frames)
 int main(void)
 {
     int failed = 0;
+    const char *audio_driver_register = { NULL };
+
+    fluid_audio_driver_register(&audio_driver_register);
 
     printf("FluidSynth runtime version: %s\n", fluid_version_str());
 
