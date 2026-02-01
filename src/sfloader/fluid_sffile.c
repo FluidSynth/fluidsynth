@@ -158,9 +158,11 @@ static const unsigned short invalid_preset_gen[] =
 #define READCHUNK(sf, var)                                                  \
     do                                                                      \
     {                                                                       \
-        if (sf->fcbs->fread(var, 8, sf->sffd) == FLUID_FAILED)              \
+        if (sf->fcbs->fread(&(var)->id, 4, sf->sffd) == FLUID_FAILED)       \
             return FALSE;                                                   \
-        ((SFChunk *)(var))->size = FLUID_LE32TOH(((SFChunk *)(var))->size); \
+        if (sf->fcbs->fread(&(var)->size, 4, sf->sffd) == FLUID_FAILED)     \
+            return FALSE;                                                   \
+        (var)->size = FLUID_LE32TOH((var)->size); \
     } while (0)
 
 #define READD(sf, var)                                            \
