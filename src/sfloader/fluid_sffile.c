@@ -663,7 +663,8 @@ static int read_listchunk(SFData *sf, SFChunk *chunk)
 
     if(chunk->id != LIST_FCC)  /* error if ! list chunk */
     {
-        FLUID_LOG(FLUID_ERR, "Invalid chunk id in level 0 parse");
+        unsigned char *p = (unsigned char *)&chunk->id;
+        FLUID_LOG(FLUID_ERR, "Invalid chunk id '0x%X 0x%X 0x%X 0x%X' (%d bytes) in level 0 parse", (int)p[0], (int)p[1], (int)p[2], (int)p[3], chunk->size);
         return FALSE;
     }
 
