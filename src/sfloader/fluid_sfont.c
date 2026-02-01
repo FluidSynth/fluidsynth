@@ -22,6 +22,19 @@
 #include "fluid_mod.h"
 
 
+
+#ifdef _WIN32
+#define FLUID_PRIi64 "I64d"
+#else
+#define FLUID_PRIi64 "lld"
+#endif
+
+#ifdef _WIN32
+#define FLUID_PRIsize "Iu"
+#else
+#define FLUID_PRIsize "zu"
+#endif
+
 void *default_fopen(const char *path)
 {
     const char* msg;
@@ -31,7 +44,10 @@ void *default_fopen(const char *path)
     {
         FLUID_LOG(FLUID_ERR, "fluid_sfloader_load(): Failed to open '%s': %s", path, msg);
     }
-
+    else
+    {
+        FLUID_LOG(FLUID_INFO, "ftell after open: %" FLUID_PRIi64, FLUID_FTELL(handle));
+    }
     return handle;
 }
 
@@ -45,15 +61,9 @@ fluid_long_long_t default_ftell(void *handle)
     return FLUID_FTELL((FILE *)handle);
 }
 
-#ifdef _WIN32
-#define FLUID_PRIi64 "I64d"
-#else
-#define FLUID_PRIi64 "lld"
-#endif
-
 int safe_fread(void *buf, fluid_long_long_t count, void *fd)
 {
-    FLUID_LOG(FLUID_INFO, "safe_fread: buf=%p, count=%" FLUID_PRIi64 ", (size_t)count=%" FLUID_PRIi64 ", fd=%p", buf, count, (size_t)count, fd);
+    FLUID_LOG(FLUID_INFO, "safe_fread: buf=0x%p, count=%" FLUID_PRIi64 ", (size_t)count=%" FLUID_PRIsize ", fd=0x%p", buf, count, (size_t)count, fd);
     if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
     {
         if(feof((FILE *)fd))
@@ -68,21 +78,43 @@ int safe_fread(void *buf, fluid_long_long_t count, void *fd)
         return FLUID_FAILED;
     }
 
+#define OUTPUT_BUFFER_SIZE 1024
+    char output[OUTPUT_BUFFER_SIZE];
+    size_t offset = 0,i;
+    
+    // Clear the output buffer
+    memset(output, 0, OUTPUT_BUFFER_SIZE);
+    
+    // Format each byte as hex into the output buffer
+    for (i = 0; i < count && offset < OUTPUT_BUFFER_SIZE - 3; i++) {
+        // Format: "XX " (2 hex digits + space)
+        int written = FLUID_SNPRINTF(output + offset, OUTPUT_BUFFER_SIZE - offset, 
+                              "%02x ", ((unsigned char*)buf)[i]);
+        if (written > 0) {
+            offset += written;
+        }
+    }
+
+    FLUID_LOG(FLUID_INFO, "safe_fread success: ftell=%" FLUID_PRIi64 "; buf now contains '%s'", FLUID_FTELL((FILE *)fd), output);
+
     return FLUID_OK;
 }
 
 int safe_fseek(void *fd, fluid_long_long_t ofs, int whence)
 {
+    FLUID_LOG(FLUID_INFO, "safe_fseek: fd=0x%p, offset=%" FLUID_PRIi64 ", whence=%d", fd, ofs, whence);
     if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
     {
         FLUID_LOG(FLUID_ERR, "File seek failed with offset = %" FLUID_PRIi64 " and whence = %d", ofs, whence);
         return FLUID_FAILED;
     }
+    FLUID_LOG(FLUID_INFO, "safe_fseek success: ftell=%" FLUID_PRIi64, FLUID_FTELL((FILE *)fd));
 
     return FLUID_OK;
 }
 
 #undef FLUID_PRIi64
+#undef FLUID_PRIsize
 
 /**
  * Creates a new SoundFont loader.
