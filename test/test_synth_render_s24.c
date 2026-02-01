@@ -20,6 +20,11 @@
 /* Must match the s32 scale used by the integer renderer (s24 uses s32 scale + mask). */
 #define S32_SCALE (2147483646.0f)
 #define S24_MASK (0xFFFFFF00u) /* 24 valid bits left-aligned in 32-bit container */
+#if defined(MINGW32)
+#define S24_DELTA_TOLERANCE 256 /* 1 LSB in 24-bit container for x87 precision drift */
+#else
+#define S24_DELTA_TOLERANCE 0
+#endif
 
 /* Local float->i32 reference conversion: round+clip, no dithering. */
 static int32_t round_clip_to_i32_ref(float x)
@@ -123,6 +128,11 @@ int main(void)
         if (out_s24[i] != exp_s24[i])
         {
             const int64_t delta = (int64_t)out_s24[i] - (int64_t)exp_s24[i];
+            const int64_t abs_delta = (delta < 0) ? -delta : delta;
+            if (abs_delta <= S24_DELTA_TOLERANCE)
+            {
+                continue;
+            }
             fprintf(stderr,
                     "s24 mismatch @%d (interleaved index): exp=%d got=%d delta=%lld\n",
                     i,
