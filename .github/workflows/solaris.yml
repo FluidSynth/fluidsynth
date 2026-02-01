@@ -34,7 +34,7 @@ jobs:
             submodules: true
 
         - name: Build & test
-          uses: vmactions/solaris-vm@v1.2.3
+          uses: vmactions/solaris-vm@v1.2.7
           with:
             envs: 'CFLAGS_SOLARIS_CC'
             usesh: true
