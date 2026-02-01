@@ -542,7 +542,7 @@ fluid_synth_init(void)
 #endif
 }
 
-static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t *synth)
+unsigned int fluid_synth_get_ticks(fluid_synth_t *synth)
 {
     return fluid_atomic_int_get(&synth->ticks_since_start);
 }
