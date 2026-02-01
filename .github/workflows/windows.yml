@@ -423,6 +423,9 @@ jobs:
       shell: cmd
       run: |
         @ECHO ON
+        dir sf2
+        git ls-files -s -- sf2
+        git check-attr -a -- sf2/VintageDreamsWaves-v2.sf2
         SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
         set PATH=%PATH:C:\Program Files\Git\bin;=%
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
