@@ -20,7 +20,7 @@
 /* Must match the s32 scale used by the integer renderer (s24 uses s32 scale + mask). */
 #define S32_SCALE (2147483646.0f)
 #define S24_MASK (0xFFFFFF00u) /* 24 valid bits left-aligned in 32-bit container */
-#if defined(MINGW32) || defined(__MINGW32__)
+#if defined(__MINGW32__)
 #define S24_DELTA_TOLERANCE 256 /* 1 LSB in 24-bit container for x87 precision drift */
 #else
 #define S24_DELTA_TOLERANCE 0

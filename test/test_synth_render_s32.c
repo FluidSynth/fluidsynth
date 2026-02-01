@@ -19,7 +19,7 @@
 
 /* Must match the s32 renderer's scale convention in fluid_synth_write_int.cpp */
 #define S32_SCALE (2147483646.0f)
-#if defined(MINGW32) || defined(__MINGW32__)
+#if defined(__MINGW32__)
 #define S32_DELTA_TOLERANCE 8 /* observed rounding drift on mingw32 */
 #else
 #define S32_DELTA_TOLERANCE 0
