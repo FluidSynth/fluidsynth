@@ -53,6 +53,7 @@ fluid_long_long_t default_ftell(void *handle)
 
 int safe_fread(void *buf, fluid_long_long_t count, void *fd)
 {
+    FLUID_LOG(FLUID_INFO, "safe_fread: buf=%p, count=%" FLUID_PRIi64 ", (size_t)count=%" FLUID_PRIi64 ", fd=%p", buf, count, (size_t)count, fd);
     if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
     {
         if(feof((FILE *)fd))
