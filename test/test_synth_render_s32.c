@@ -125,7 +125,7 @@ int main(void)
         if (out_s32[i] != exp_s32[i])
         {
             int delta = (int)(out_s32[i] - exp_s32[i]);
-            int abs_delta = (delta < 0) ? -delta : delta;
+            int abs_delta = abs(delta);
             if (abs_delta <= S32_DELTA_TOLERANCE)
             {
                 continue;
