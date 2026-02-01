@@ -303,32 +303,32 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-libsndfile=0'
+          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0'
             artifactPrefix: "fluidsynth-mingw1"
             platform: x86
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
             sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-libsndfile=0 -DCMAKE_C_FLAGS="-mfpmath=387" -DCMAKE_CXX_FLAGS="-mfpmath=387"'
+          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0 -DCMAKE_C_FLAGS="-mfpmath=387" -DCMAKE_CXX_FLAGS="-mfpmath=387"'
             artifactPrefix: "fluidsynth-mingw2"
             platform: x86
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
             sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-libsndfile=0 -DCMAKE_RC_FLAGS="-F pe-i386" -DCMAKE_C_FLAGS="-m32 -mfpmath=387" -DCMAKE_CXX_FLAGS="-m32 -mfpmath=387"'
+          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0 -DCMAKE_RC_FLAGS="-F pe-i386" -DCMAKE_C_FLAGS="-m32 -mfpmath=387" -DCMAKE_CXX_FLAGS="-m32 -mfpmath=387"'
             artifactPrefix: "fluidsynth-mingw"
             platform: x86
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
             sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-libsndfile=0 -DCMAKE_RC_FLAGS="-F pe-i386" -DCMAKE_C_FLAGS="-m32 -mfpmath=387 -ffloat-store" -DCMAKE_CXX_FLAGS="-m32 -mfpmath=387 -ffloat-store"'
+          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0 -DCMAKE_RC_FLAGS="-F pe-i386" -DCMAKE_C_FLAGS="-m32 -mfpmath=387 -ffloat-store" -DCMAKE_CXX_FLAGS="-m32 -mfpmath=387 -ffloat-store"'
             artifactPrefix: "fluidsynth-mingw-ffloat-store"
             platform: x86
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
             sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: ""
+          - CMAKE_FLAGS: "-Denable-openmp=0"
             artifactPrefix: "fluidsynth-mingw"
             platform: x64
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
             sdl3-subdir: 'x86_64-w64-mingw32'
-          - CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=0'
+          - CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=0 -Denable-openmp=0'
             artifactPrefix: "fluidsynth-mingw-static"
             platform: x64
             sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
