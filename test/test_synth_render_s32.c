@@ -124,18 +124,18 @@ int main(void)
     {
         if (out_s32[i] != exp_s32[i])
         {
-            int delta = (int)(out_s32[i] - exp_s32[i]);
+            int64_t delta = (int64_t)out_s32[i] - (int64_t)exp_s32[i];
             int64_t abs_delta = llabs(delta);
             if (abs_delta <= S32_DELTA_TOLERANCE)
             {
                 continue;
             }
             fprintf(stderr,
-                    "s32 mismatch @%d (interleaved index): exp=%d got=%d delta=%d\n",
+                    "s32 mismatch @%d (interleaved index): exp=%d got=%d delta=%lld\n",
                     i,
                     (int)exp_s32[i],
                     (int)out_s32[i],
-                    delta);
+                    (long long)delta);
             TEST_ASSERT(0);
         }
     }
