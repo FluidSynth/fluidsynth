@@ -259,6 +259,8 @@ fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
                                  void *channels_out[], int channels_off[],
                                  int channels_incr[]);
 
+int fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount);
+
 fluid_preset_t *fluid_synth_find_preset(fluid_synth_t *synth,
                                         int banknum,
                                         int prognum);

@@ -104,7 +104,6 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t *synth, const char *sfontname
 static void fluid_synth_update_presets(fluid_synth_t *synth);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t *synth);
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t *synth, int new_polyphony);
-static int fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount);
 
 static fluid_voice_t *fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth);
 static void fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t *synth,
@@ -5118,7 +5117,7 @@ void fluid_synth_process_event_queue(fluid_synth_t *synth)
  * Must be called from renderer thread only!
  * @return number of blocks rendered. Might (often) return less than requested
  */
-static int
+int
 fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount)
 {
     int i, maxblocks;
