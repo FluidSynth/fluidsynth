@@ -23,7 +23,7 @@ This will define the following variables:
 #]=======================================================================]
 
 # Find the headers and library
-find_path(GCEM_INCLUDE_DIR NAMES "gcem.hpp" PATHS "${CMAKE_SOURCE_DIR}/gcem/include")
+find_path(GCEM_INCLUDE_DIR NAMES "gcem.hpp" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/gcem/include")
 
 include(FindPackageHandleStandardArgs)
 
@@ -40,8 +40,8 @@ if(NOT GCEM_INCLUDE_DIR)
     )
   else()
     message("The 'gcem' submodule directory seems to be empty or incomplete. Attempting to download gcem from Github.")
-    set(GCEM_ZIP_FILE "${CMAKE_BINARY_DIR}/gcem.zip")
-    set(GCEM_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gcem-extracted")
+    set(GCEM_ZIP_FILE "${CMAKE_CURRENT_BINARY_DIR}/gcem.zip")
+    set(GCEM_EXTRACT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gcem-extracted")
 
     file(DOWNLOAD "${GCEM_ZIP_URL}" "${GCEM_ZIP_FILE}"
           SHOW_PROGRESS
