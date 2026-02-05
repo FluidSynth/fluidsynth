@@ -1,7 +1,7 @@
 /*
  * FluidSynth - A Software Synthesizer
  *
- * Lighytweight s32 render identity test (float-oracle).
+ * Lightweight s32 render identity test (float-oracle).
  *
  * Verifies that fluid_synth_write_s32() matches a local reference conversion
  * computed from fluid_synth_write_float() using the same scale + round+clip
@@ -10,23 +10,53 @@
 
 #include "test.h"
 #include "fluidsynth.h"
-#include "drivers/fluid_audio_convert.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <stdio.h>
 
 /* Must match the s32 renderer's scale convention in fluid_synth_write_int.cpp */
 #define S32_SCALE (2147483646.0f)
+
+/* Local float->i32 reference conversion: round+clip, no dithering. */
+static int32_t round_clip_to_i32_ref(float x)
+{
+    int64_t i;
+
+    if (x >= 0.0f)
+    {
+        i = (int64_t)(x + 0.5f);
+        if (i > INT32_MAX)
+        {
+            i = INT32_MAX;
+        }
+    }
+    else
+    {
+        i = (int64_t)(x - 0.5f);
+        if (i < INT32_MIN)
+        {
+            i = INT32_MIN;
+        }
+    }
+
+    return (int32_t)i;
+}
 
 static void float_to_s32_ref(const float *in, int32_t *out, int count)
 {
     int i;
     for (i = 0; i < count; ++i)
     {
-        out[i] = round_clip_to<int32_t>(in[i] * S32_SCALE);
+        out[i] = round_clip_to_i32_ref(in[i] * S32_SCALE);
     }
+}
+
+static int64_t abs_i64(int64_t x)
+{
+    return (x < 0) ? -x : x;
 }
 
 int main(void)
@@ -89,21 +119,65 @@ int main(void)
     /* Render s32. Interleaved stereo. */
     TEST_SUCCESS(fluid_synth_write_s32(synth_s32, len, out_s32, 0, 2, out_s32, 1, 2));
 
+    /* Tolerances */
+#if defined(__i386__) && !defined(__SSE2__)
+    const int64_t kTol = 8; /* x87 tolerance for s32 */
+    const int kMaxTol = 16; /* allow a few borderline samples */
+#else
+    const int64_t kTol = 0; /* strict everywhere else */
+    const int kMaxTol = 0;
+#endif
+
+    /* Track mismatches */
+    int tolCount = 0;
+    int64_t maxAbsDelta = 0;
+    int worstIdx = -1;
+    int64_t worstDelta = 0;
+
     /* Compare */
     for (i = 0; i < 2 * len; ++i)
     {
-        if (out_s32[i] != exp_s32[i])
+        int64_t delta = (int64_t)out_s32[i] - (int64_t)exp_s32[i];
+        int64_t ad = abs_i64(delta);
+
+        if (ad > maxAbsDelta)
         {
-            int delta = (int)(out_s32[i] - exp_s32[i]);
-            fprintf(stderr,
-                    "s32 mismatch @%d (interleaved index): exp=%d got=%d delta=%d\n",
-                    i,
-                    (int)exp_s32[i],
-                    (int)out_s32[i],
-                    delta);
+            maxAbsDelta = ad;
+            worstIdx = i;
+            worstDelta = delta;
+        }
+
+        if (ad == 0)
+        {
+            continue;
+        }
+
+        if (ad > kTol)
+        {
+            fprintf(stderr, "s32 mismatch @%d: exp=%d got=%d delta=%ld\n", i, (int)exp_s32[i], (int)out_s32[i], (long)delta);
+            TEST_ASSERT(0);
+        }
+
+        /* ad is non-zero and within tolerance */
+        tolCount++;
+        if (tolCount > kMaxTol)
+        {
+            fprintf(stderr, "Too many tolerated mismatches (count=%d), maxAbsDelta=%ld\n", tolCount, (long)maxAbsDelta);
             TEST_ASSERT(0);
         }
     }
+
+#if defined(__i386__) && !defined(__SSE2__)
+    if (tolCount > 0)
+    {
+        fprintf(stderr,
+                "x87 tolerated mismatches: count=%d, maxAbsDelta=%ld at idx=%d (delta=%ld)\n",
+                tolCount,
+                (long)maxAbsDelta,
+                worstIdx,
+                (long)worstDelta);
+    }
+#endif
 
     free(out_f);
     free(out_s32);
