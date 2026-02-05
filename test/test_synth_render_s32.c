@@ -125,7 +125,8 @@ int main(void)
     TEST_SUCCESS(fluid_synth_write_s32(synth_s32, len, out_s32, 0, 2, out_s32, 1, 2));
 
     /* Tolerances */
-#if defined(__i386__) && !defined(__SSE2__)
+    /* x87/excess-precision detection (prefer this over __SSE2__) */
+#if (defined(__i386__) || defined(_M_IX86)) && defined(__FLT_EVAL_METHOD__) && (__FLT_EVAL_METHOD__ != 0)
     const int64_t kTol = 8; /* x87 tolerance for s32 */
     const int kMaxTol = 16; /* allow a few borderline samples */
 #else

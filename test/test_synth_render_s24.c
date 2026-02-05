@@ -129,7 +129,8 @@ int main(void)
     TEST_SUCCESS(fluid_synth_write_s24(synth_s24, len, out_s24, 0, 2, out_s24, 1, 2));
 
     /* Tolerances */
-#if defined(__i386__) && !defined(__SSE2__)
+    /* x87/excess-precision detection (prefer this over __SSE2__) */
+#if (defined(__i386__) || defined(_M_IX86)) && defined(__FLT_EVAL_METHOD__) && (__FLT_EVAL_METHOD__ != 0)
     const int64_t kTol = 256; /* x87 tolerance for s24-in-32 (1 << 8) */
     const int kMaxTol = 16;   /* allow a few borderline samples */
 #else
