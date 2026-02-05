@@ -185,14 +185,6 @@ int main(void)
         }
     }
 
-    fprintf(stderr,
-            "%d non-zero deltas <= %lld, largest delta = %lld at idx = %d\n",
-            tolCount,
-            (long long)kTol,
-            (long long)worstDelta,
-            worstIdx);
-    TEST_ASSERT(0);
-
     free(out_f);
     free(out_s32);
     free(exp_s32);
