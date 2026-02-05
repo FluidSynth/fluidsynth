@@ -4,8 +4,13 @@
  * Lightweight s32 render identity test (float-oracle).
  *
  * Verifies that fluid_synth_write_s32() matches a local reference conversion
- * computed from fluid_synth_write_float() using the same scale + round+clip
+ * computed from fluid_synth_write_float() using the same scale + round + clip
  * semantics as the s32 renderer. No golden EXPECTED buffer yet.
+ *
+ * Note: On 32-bit x86 builds without SSE2 (x87 FPU), floating-point evaluation
+ * can differ slightly between render paths (excess precision / double rounding),
+ * leading to rare, small LSB-level deltas at the quantization boundary. This test
+ * tolerates a bounded number of small mismatches on such builds.
  */
 
 #include "test.h"
@@ -91,7 +96,7 @@ int main(void)
     TEST_SUCCESS(fluid_synth_sfload(synth_f, TEST_SOUNDFONT, 1));
     TEST_SUCCESS(fluid_synth_sfload(synth_s32, TEST_SOUNDFONT, 1));
 
-    /* Deterministic program + note (apply identically to both synths) */
+    /* Deterministic program + note (apply identically to both synths). */
     TEST_SUCCESS(fluid_synth_program_change(synth_f, 0, 0));
     TEST_SUCCESS(fluid_synth_program_change(synth_s32, 0, 0));
 
@@ -113,7 +118,7 @@ int main(void)
     /* Render float (oracle source). Interleaved stereo. */
     TEST_SUCCESS(fluid_synth_write_float(synth_f, len, out_f, 0, 2, out_f, 1, 2));
 
-    /* Convert float oracle -> expected s32 */
+    /* Convert float oracle -> expected s32. */
     float_to_s32_ref(out_f, exp_s32, 2 * len);
 
     /* Render s32. Interleaved stereo. */
@@ -134,50 +139,50 @@ int main(void)
     int worstIdx = -1;
     int64_t worstDelta = 0;
 
-    /* Compare */
+    /* Iterate over frames */
     for (i = 0; i < 2 * len; ++i)
     {
         int64_t delta = (int64_t)out_s32[i] - (int64_t)exp_s32[i];
-        int64_t ad = abs_i64(delta);
+        int64_t absDelta = abs_i64(delta);
 
-        if (ad > maxAbsDelta)
-        {
-            maxAbsDelta = ad;
-            worstIdx = i;
-            worstDelta = delta;
-        }
-
-        if (ad == 0)
+        if (absDelta == 0)
         {
             continue;
         }
 
-        if (ad > kTol)
+        if (absDelta > kTol) /* FAIL: large delta */
         {
-            fprintf(stderr, "s32 mismatch @%d: exp=%d got=%d delta=%ld\n", i, (int)exp_s32[i], (int)out_s32[i], (long)delta);
+            fprintf(stderr,
+                    "s32 mismatch @%d (interleaved index): exp=%d got=%d delta=%lld\n",
+                    i,
+                    (int)exp_s32[i],
+                    (int)out_s32[i],
+                    (long long)delta);
             TEST_ASSERT(0);
         }
 
-        /* ad is non-zero and within tolerance */
+        /* absDelta is non-zero and within tolerance, increment small delta count */
         tolCount++;
-        if (tolCount > kMaxTol)
+
+        /* Track worst delta */
+        if (absDelta > maxAbsDelta)
         {
-            fprintf(stderr, "Too many tolerated mismatches (count=%d), maxAbsDelta=%ld\n", tolCount, (long)maxAbsDelta);
+            maxAbsDelta = absDelta;
+            worstIdx = i;
+            worstDelta = delta;
+        }
+
+        if (tolCount > kMaxTol) /* FAIL: too many small deltas */
+        {
+            fprintf(stderr,
+                    "%d non-zero deltas <= %lld, largest delta = %lld at idx = %d\n",
+                    tolCount,
+                    (long long)kTol,
+                    (long long)worstDelta,
+                    worstIdx);
             TEST_ASSERT(0);
         }
     }
-
-#if defined(__i386__) && !defined(__SSE2__)
-    if (tolCount > 0)
-    {
-        fprintf(stderr,
-                "x87 tolerated mismatches: count=%d, maxAbsDelta=%ld at idx=%d (delta=%ld)\n",
-                tolCount,
-                (long)maxAbsDelta,
-                worstIdx,
-                (long)worstDelta);
-    }
-#endif
 
     free(out_f);
     free(out_s32);
