@@ -22,7 +22,7 @@ env:
   BUILD_TYPE: Debug
   BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
-name: SonarQube Workflow
+name: SonarCloud Workflow
 jobs:
   sonarcloud:
     runs-on: ubuntu-24.04
