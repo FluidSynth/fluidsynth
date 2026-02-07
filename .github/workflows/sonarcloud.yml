@@ -22,10 +22,10 @@ env:
   BUILD_TYPE: Debug
   BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
-name: SonarCloud Workflow
+name: SonarQube Workflow
 jobs:
   sonarcloud:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v6
       with:
@@ -51,24 +51,14 @@ jobs:
         cmake -E make_directory ${{github.workspace}}/build
         echo $PATH
 
-    - name: Get Sonar Build Wrapper
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: |
-        set -ex
-        wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
-        unzip build-wrapper-linux-x86.zip
-        mv build-wrapper-linux-x86/* .
-      
+    - name: Install Build Wrapper
+      uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v7
+
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
       shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -Denable-portaudio=1 -Denable-ladspa=1 -Denable-coverage=1 -DNO_GUI=1 $GITHUB_WORKSPACE
-      
-    - name: Install sonar-scanner and build-wrapper
-      uses: SonarSource/sonarcloud-github-c-cpp@v2
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Werror=dev -Denable-portaudio=1 -Denable-ladspa=1 -Denable-coverage=1 -DNO_GUI=1 $GITHUB_WORKSPACE
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -94,11 +84,12 @@ jobs:
        ls -la ${{ github.workspace }}/build
        ls -la ${{ github.workspace }}/build/coverage
 
-    - name: Run sonar-scanner
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v7
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-          sonar-scanner \
+        SONAR_ROOT_CERT: ${{ secrets.SONAR_ROOT_CERT }}
+      with:
+        args: >
             -Dsonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}" \
             -Dsonar.coverageReportPaths=${{github.workspace}}/build/coverage/sonarqube.report
