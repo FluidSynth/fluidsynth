@@ -62,7 +62,7 @@ if ( DSOUND_SUPPORT )
 endif ( DSOUND_SUPPORT )
 
 if ( WASAPI_SUPPORT )
-  set ( fluid_wasapi_SOURCES drivers/fluid_wasapi.cpp )
+  set ( fluid_wasapi_SOURCES drivers/fluid_wasapi.c )
 endif ( WASAPI_SUPPORT )
 
 if ( WAVEOUT_SUPPORT )

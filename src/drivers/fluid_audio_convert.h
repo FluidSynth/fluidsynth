@@ -57,7 +57,7 @@ T round_clip_to(float x)
         }
     }
 
-    return (T)x;
+    return static_cast<T>(x);
 }
 
 extern "C" {

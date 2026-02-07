@@ -27,7 +27,7 @@
 #include "fluid_defsfont.h"
 #include "fluid_dls.h"
 #include "fluid_instpatch.h"
-#include "drivers/fluid_audio_convert.h"
+#include "fluid_audio_convert.h"
 
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
@@ -870,7 +870,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* as soon as the synth is created it starts playing. */
     synth->state = FLUID_SYNTH_PLAYING;
 
-    synth->fromkey_portamento = INVALID_NOTE;   /* disable portamento */
+    synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
 
     /* Initialize portamento time mode */
     {
@@ -1866,7 +1866,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 basic channel minus 1 (if any) or to MIDI channel count minus 1.
                 However, if value is > 0 (e.g. 4), the group of channels will be be
                 limited to 4.
-              value is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this mode
+                value is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this mode
                 implies a group of only one channel.
             */
             /* Checks value range and changes this existing basic channel group */
@@ -5167,7 +5167,7 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
     }
     else if(FLUID_STRCMP(name, "synth.chorus.nr") == 0)
     {
-    fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, (double)value);
+        fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, (double)value);
     }
 }
 
@@ -5997,7 +5997,7 @@ int
 fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on)
 {
     int ret;
-  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
 
     fluid_synth_api_enter(synth);
@@ -6471,7 +6471,7 @@ int
 fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
 {
     int ret;
-  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
 
     fluid_synth_api_enter(synth);
@@ -7837,7 +7837,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_PITCH:
             converted_sf2_generator_value = data + 8192;
-            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but
+            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but 
             // I'll buy it, since pitch bend is not a regular SF2 generator and we do a bit of magic there to
             // make it work
             fluid_synth_pitch_bend(synth, chan, converted_sf2_generator_value);
