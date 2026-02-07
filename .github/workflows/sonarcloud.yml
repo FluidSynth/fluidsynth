@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - fix-sonarqube
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
