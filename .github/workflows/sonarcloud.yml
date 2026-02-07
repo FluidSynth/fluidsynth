@@ -34,11 +34,6 @@ jobs:
         fetch-depth: 0
         submodules: recursive
 
-    
-    - name: Add apt-get repositories
-      run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-
     - name: Update apt
       run: sudo apt-get update -y
 
@@ -92,5 +87,5 @@ jobs:
         SONAR_ROOT_CERT: ${{ secrets.SONAR_ROOT_CERT }}
       with:
         args: >
-            -Dsonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}" \
+            -Dsonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}"
             -Dsonar.coverageReportPaths=${{github.workspace}}/build/coverage/sonarqube.report
