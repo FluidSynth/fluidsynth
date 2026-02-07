@@ -158,9 +158,11 @@ static const unsigned short invalid_preset_gen[] =
 #define READCHUNK(sf, var)                                                  \
     do                                                                      \
     {                                                                       \
-        if (sf->fcbs->fread(var, 8, sf->sffd) == FLUID_FAILED)              \
+        if (sf->fcbs->fread(&(var)->id, 4, sf->sffd) == FLUID_FAILED)       \
             return FALSE;                                                   \
-        ((SFChunk *)(var))->size = FLUID_LE32TOH(((SFChunk *)(var))->size); \
+        if (sf->fcbs->fread(&(var)->size, 4, sf->sffd) == FLUID_FAILED)     \
+            return FALSE;                                                   \
+        (var)->size = FLUID_LE32TOH((var)->size); \
     } while (0)
 
 #define READD(sf, var)                                            \
@@ -291,7 +293,7 @@ int fluid_is_soundfont(const char *filename)
             break;
         }
 
-        if(FLUID_FSEEK(fp, 4, SEEK_CUR))
+        if(fluid_file_seek(fp, 4, SEEK_CUR))
         {
             FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): cannot seek +4 bytes.");
             break;
@@ -663,7 +665,8 @@ static int read_listchunk(SFData *sf, SFChunk *chunk)
 
     if(chunk->id != LIST_FCC)  /* error if ! list chunk */
     {
-        FLUID_LOG(FLUID_ERR, "Invalid chunk id in level 0 parse");
+        unsigned char *p = (unsigned char *)&chunk->id;
+        FLUID_LOG(FLUID_ERR, "Invalid chunk id '0x%X 0x%X 0x%X 0x%X' (%d bytes) in level 0 parse", (int)p[0], (int)p[1], (int)p[2], (int)p[3], chunk->size);
         return FALSE;
     }
 
@@ -2446,8 +2449,6 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
         FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_exit_unlock;
     }
-
-    FLUID_LOG(FLUID_DBG, "ftell(): %llu, fread(): %ld bytes", sf->fcbs->ftell(sf->sffd), num_samples * sizeof(short));
 
     if(sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
     {

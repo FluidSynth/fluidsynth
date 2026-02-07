@@ -309,6 +309,8 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 /* File access */
 FILE* fluid_file_open(const char* filename, const char** errMsg);
 fluid_long_long_t fluid_file_tell(FILE* f);
+int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd);
+int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence);
 
 
 /* Profiling */
