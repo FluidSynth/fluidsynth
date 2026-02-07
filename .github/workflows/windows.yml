@@ -491,14 +491,14 @@ jobs:
         fail-fast: false
         matrix:
           include:
-            - { icon: '⬛', sys: mingw32, osal: glib, CMAKE_FLAGS: '-DCMAKE_C_FLAGS="-mfpmath=387 -fexcess-precision=standard" -DCMAKE_CXX_FLAGS="-mfpmath=387 -fexcess-precision=standard"' }
-            - { icon: '🟦', sys: mingw64, osal: glib, CMAKE_FLAGS: '' }
-            - { icon: '🟨', sys: ucrt64, osal: glib, CMAKE_FLAGS: '' }
-            - { icon: '🟧', sys: clang64, osal: glib, CMAKE_FLAGS: '' }
-            - { icon: '⬛', sys: mingw32, osal: cpp11, CMAKE_FLAGS: '-DCMAKE_C_FLAGS="-mfpmath=sse -fexcess-precision=standard" -DCMAKE_CXX_FLAGS="-mfpmath=sse -fexcess-precision=standard"' }
-            - { icon: '🟦', sys: mingw64, osal: cpp11, CMAKE_FLAGS: '' }
-            - { icon: '🟨', sys: ucrt64, osal: cpp11, CMAKE_FLAGS: '' }
-            - { icon: '🟧', sys: clang64, osal: cpp11, CMAKE_FLAGS: '' }
+            - { icon: '⬛', sys: mingw32, osal: glib }
+            - { icon: '🟦', sys: mingw64, osal: glib }
+            - { icon: '🟨', sys: ucrt64, osal: glib }
+            - { icon: '🟧', sys: clang64, osal: glib }
+            - { icon: '⬛', sys: mingw32, osal: cpp11 }
+            - { icon: '🟦', sys: mingw64, osal: cpp11 }
+            - { icon: '🟨', sys: ucrt64, osal: cpp11 }
+            - { icon: '🟧', sys: clang64, osal: cpp11 }
     name: 🚧${{ matrix.icon }} ${{ matrix.sys }} ${{ matrix.osal }}
     defaults:
       run:

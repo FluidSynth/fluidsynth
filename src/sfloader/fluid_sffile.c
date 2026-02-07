@@ -293,7 +293,7 @@ int fluid_is_soundfont(const char *filename)
             break;
         }
 
-        if(FLUID_FSEEK(fp, 4, SEEK_CUR))
+        if(fluid_file_seek(fp, 4, SEEK_CUR))
         {
             FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): cannot seek +4 bytes.");
             break;
@@ -2449,8 +2449,6 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
         FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_exit_unlock;
     }
-
-    FLUID_LOG(FLUID_DBG, "ftell(): %llu, fread(): %ld bytes", sf->fcbs->ftell(sf->sffd), num_samples * sizeof(short));
 
     if(sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
     {

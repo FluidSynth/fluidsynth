@@ -9,7 +9,7 @@ void noop(void)
     // do nothing
 }
 
-// Some ftell or fseek implementations of some MinGW versions are broken.
+// A unit test that fails when compiled with MinGW32 8.1.0, due to inconsistencies when using fseek(SEEK_CUR).
 // Mimick the simple behavior of the sfont loader to test seek and tell are working as expected.
 int main(void)
 {
