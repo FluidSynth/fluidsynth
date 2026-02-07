@@ -84,7 +84,6 @@ jobs:
       uses: SonarSource/sonarqube-scan-action@v7
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_ROOT_CERT: ${{ secrets.SONAR_ROOT_CERT }}
       with:
         args: >
             -Dsonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}"
