@@ -29,7 +29,8 @@
 static void float_to_s32_ref(const float *in, int32_t *out, int count)
 {
     int i;
-    for (i = 0; i < count; ++i)
+
+    for(i = 0; i < count; ++i)
     {
         out[i] = round_clip_to<int32_t>(in[i] * S32_SCALE);
     }
@@ -117,17 +118,17 @@ int main(void)
     int64_t worstDelta = 0;
 
     /* Iterate over frames */
-    for (i = 0; i < 2 * len; ++i)
+    for(i = 0; i < 2 * len; ++i)
     {
         int64_t delta = (int64_t)out_s32[i] - (int64_t)exp_s32[i];
         int64_t absDelta = abs_i64(delta);
 
-        if (absDelta == 0)
+        if(absDelta == 0)
         {
             continue;
         }
 
-        if (absDelta > kTol) /* FAIL: large delta */
+        if(absDelta > kTol)  /* FAIL: large delta */
         {
             fprintf(stderr,
                     "s32 mismatch @%d (interleaved index): exp=%d got=%d delta=%lld\n",
@@ -142,14 +143,14 @@ int main(void)
         tolCount++;
 
         /* Track worst delta */
-        if (absDelta > maxAbsDelta)
+        if(absDelta > maxAbsDelta)
         {
             maxAbsDelta = absDelta;
             worstIdx = i;
             worstDelta = delta;
         }
 
-        if (tolCount > kMaxTol) /* FAIL: too many small deltas */
+        if(tolCount > kMaxTol)  /* FAIL: too many small deltas */
         {
             fprintf(stderr,
                     "%d non-zero deltas <= %lld, largest delta = %lld at idx = %d\n",

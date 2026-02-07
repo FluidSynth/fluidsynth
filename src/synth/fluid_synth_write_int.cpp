@@ -67,7 +67,7 @@ template<> struct int_write_traits<s16_tag>
 
     static FLUID_INLINE void advance_di(int &di)
     {
-        if (++di >= DITHER_SIZE)
+        if(++di >= DITHER_SIZE)
         {
             di = 0;
         }
@@ -153,11 +153,11 @@ template<> struct int_write_traits<s32_tag>
 
 template<typename Tag>
 static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
-                                               int len,
-                                               int channels_count,
-                                               void *channels_out[],
-                                               int channels_off[],
-                                               int channels_incr[])
+        int len,
+        int channels_count,
+        void *channels_out[],
+        int channels_off[],
+        int channels_incr[])
 {
     typedef int_write_traits<Tag> traits_t;
     typedef typename traits_t::sample_t sample_t;
@@ -201,11 +201,13 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
 
     /* initialize output channels buffers on first sample position */
     i = channels_count;
+
     do
     {
         i--;
         chan_out[i] += channels_off[i];
-    } while (i);
+    }
+    while(i);
 
     /* Conversely to fluid_synth_process(),
        we want rendered audio effect mixed in internal audio dry buffers.
@@ -224,7 +226,7 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
     do
     {
         /* fill up the buffers as needed */
-        if (cur >= synth->curmax)
+        if(cur >= synth->curmax)
         {
             /* render audio (dry and effect) to internal dry buffers */
             /* always render full blocks multiple of FLUID_BUFSIZE */
@@ -240,7 +242,7 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
         n = synth->curmax - cur;
 
         /* keep track of emitted samples */
-        if (n > size)
+        if(n > size)
         {
             n = size;
         }
@@ -260,6 +262,7 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
         do
         {
             i = bufs_in_count;
+
             do
             {
                 /* input sample index in stereo buffer i */
@@ -275,11 +278,14 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
                 /* advance output pointers */
                 chan_out[c] += channels_incr[c];
                 chan_out[c + 1] += channels_incr[c + 1];
-            } while (i);
+            }
+            while(i);
 
             traits_t::advance_di(di);
-        } while (++n < 0);
-    } while (size);
+        }
+        while(++n < 0);
+    }
+    while(size);
 
     synth->cur = cur; /* save current sample position. It will be used on next call */
     traits_t::store_di(synth, di);
@@ -287,7 +293,7 @@ static int fluid_synth_write_int_channels_impl(fluid_synth_t *synth,
     /* save average cpu load, used by API for real time cpu load meter */
     time = fluid_utime() - time;
     cpu_load =
-    0.5f * (fluid_atomic_float_get(&synth->cpu_load) + (float)(time * synth->sample_rate / len / 10000.0));
+        0.5f * (fluid_atomic_float_get(&synth->cpu_load) + (float)(time * synth->sample_rate / len / 10000.0));
     fluid_atomic_float_set(&synth->cpu_load, cpu_load);
 
     /* stop duration probe and save performance measurement (if profiling is enabled) */
@@ -313,12 +319,12 @@ extern "C" int fluid_synth_write_s16_channels_cpp(
     int channels_incr[])
 {
     return fluid_synth_write_int_channels_impl<s16_tag>(
-        synth,
-        len,
-        channels_count,
-        channels_out,
-        channels_off,
-        channels_incr);
+               synth,
+               len,
+               channels_count,
+               channels_out,
+               channels_off,
+               channels_incr);
 }
 
 extern "C" int
@@ -331,12 +337,12 @@ fluid_synth_write_s24_channels_cpp(
     int channels_incr[])
 {
     return fluid_synth_write_int_channels_impl<s24_tag>(
-        synth,
-        len,
-        channels_count,
-        channels_out,
-        channels_off,
-        channels_incr);
+               synth,
+               len,
+               channels_count,
+               channels_out,
+               channels_off,
+               channels_incr);
 }
 
 extern "C" int
@@ -349,12 +355,12 @@ fluid_synth_write_s32_channels_cpp(
     int channels_incr[])
 {
     return fluid_synth_write_int_channels_impl<s32_tag>(
-        synth,
-        len,
-        channels_count,
-        channels_out,
-        channels_off,
-        channels_incr);
+               synth,
+               len,
+               channels_count,
+               channels_out,
+               channels_off,
+               channels_incr);
 }
 
 extern "C" int

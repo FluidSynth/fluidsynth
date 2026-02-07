@@ -46,74 +46,74 @@
 
 extern "C" {
 
-/* Definition (storage) for the shared dither table. */
-float rand_table[DITHER_CHANNELS][DITHER_SIZE];
+    /* Definition (storage) for the shared dither table. */
+    float rand_table[DITHER_CHANNELS][DITHER_SIZE];
 
-void init_dither(void)
-{
-    float d, dp;
-    int c, i;
-
-    for (c = 0; c < DITHER_CHANNELS; c++)
+    void init_dither(void)
     {
-        dp = 0;
+        float d, dp;
+        int c, i;
 
-        for (i = 0; i < DITHER_SIZE - 1; i++)
+        for(c = 0; c < DITHER_CHANNELS; c++)
         {
-            d = rand() / (float)RAND_MAX - 0.5f;
-            rand_table[c][i] = d - dp;
-            dp = d;
-        }
+            dp = 0;
 
-        rand_table[c][DITHER_SIZE - 1] = 0 - dp;
+            for(i = 0; i < DITHER_SIZE - 1; i++)
+            {
+                d = rand() / (float)RAND_MAX - 0.5f;
+                rand_table[c][i] = d - dp;
+                dp = d;
+            }
+
+            rand_table[c][DITHER_SIZE - 1] = 0 - dp;
+        }
     }
-}
 
 } /* extern "C" */
 
 static int fluid_audio_convert_validate_args(const char *func_name,
-                                             const void *dst_interleaved,
-                                             int dst_stride,
-                                             const float *const *src_planar,
-                                             int channels,
-                                             int frames)
+        const void *dst_interleaved,
+        int dst_stride,
+        const float *const *src_planar,
+        int channels,
+        int frames)
 {
     /* Log at most once per call: return on first failing condition. */
 
-    if (dst_interleaved == NULL)
+    if(dst_interleaved == NULL)
     {
         FLUID_LOG(FLUID_ERR, "%s: dst_interleaved is NULL", func_name);
         return FLUID_FAILED;
     }
 
-    if (src_planar == NULL)
+    if(src_planar == NULL)
     {
         FLUID_LOG(FLUID_ERR, "%s: src_planar is NULL", func_name);
         return FLUID_FAILED;
     }
 
-    if (channels <= 0)
+    if(channels <= 0)
     {
         FLUID_LOG(FLUID_ERR, "%s: invalid channels=%d (must be > 0)", func_name, channels);
         return FLUID_FAILED;
     }
 
-    if (frames < 0)
+    if(frames < 0)
     {
         FLUID_LOG(FLUID_ERR, "%s: invalid frames=%d (must be >= 0)", func_name, frames);
         return FLUID_FAILED;
     }
 
     /* Typical interleaved stride is 'channels'. Contract: at least channels (and thus > 0). */
-    if (dst_stride < channels)
+    if(dst_stride < channels)
     {
         FLUID_LOG(FLUID_ERR, "%s: invalid dst_stride=%d (must be >= channels=%d)", func_name, dst_stride, channels);
         return FLUID_FAILED;
     }
 
-    for (int ch = 0; ch < channels; ch++)
+    for(int ch = 0; ch < channels; ch++)
     {
-        if (src_planar[ch] == NULL)
+        if(src_planar[ch] == NULL)
         {
             FLUID_LOG(FLUID_ERR, "%s: src_planar[%d] is NULL", func_name, ch);
             return FLUID_FAILED;
@@ -124,34 +124,34 @@ static int fluid_audio_convert_validate_args(const char *func_name,
 }
 
 extern "C" int fluid_audio_planar_float_to_s16(int16_t *dst_interleaved,
-                                               int dst_stride,
-                                               const float *const *src_planar,
-                                               int channels,
-                                               int frames)
+        int dst_stride,
+        const float *const *src_planar,
+        int channels,
+        int frames)
 {
-    if (fluid_audio_convert_validate_args(
-        "fluid_audio_planar_float_to_s16", dst_interleaved, dst_stride, src_planar, channels, frames) != FLUID_OK)
+    if(fluid_audio_convert_validate_args(
+                "fluid_audio_planar_float_to_s16", dst_interleaved, dst_stride, src_planar, channels, frames) != FLUID_OK)
     {
         return FLUID_FAILED;
     }
 
     /* Return semantics: conversion of 0 frames is a valid no-op. */
-    if (frames == 0)
+    if(frames == 0)
     {
         return FLUID_OK;
     }
 
     int di = 0;
 
-    for (int f = 0; f < frames; ++f)
+    for(int f = 0; f < frames; ++f)
     {
         /* One interleaved frame: write channel samples then advance by stride. */
-        for (int ch = 0; ch < channels; ++ch)
+        for(int ch = 0; ch < channels; ++ch)
         {
             dst_interleaved[ch] = round_clip_to<int16_t>(src_planar[ch][f] * 32766.0f + rand_table[ch & 1][di]);
         }
 
-        if (++di >= DITHER_SIZE)
+        if(++di >= DITHER_SIZE)
         {
             di = 0;
         }
@@ -163,26 +163,26 @@ extern "C" int fluid_audio_planar_float_to_s16(int16_t *dst_interleaved,
 }
 
 extern "C" int fluid_audio_planar_float_to_s24(int32_t *dst_interleaved,
-                                               int dst_stride,
-                                               const float *const *src_planar,
-                                               int channels,
-                                               int frames)
+        int dst_stride,
+        const float *const *src_planar,
+        int channels,
+        int frames)
 {
-    if (fluid_audio_convert_validate_args(
-        "fluid_audio_planar_float_to_s24", dst_interleaved, dst_stride, src_planar, channels, frames) != FLUID_OK)
+    if(fluid_audio_convert_validate_args(
+                "fluid_audio_planar_float_to_s24", dst_interleaved, dst_stride, src_planar, channels, frames) != FLUID_OK)
     {
         return FLUID_FAILED;
     }
 
     /* Return semantics: conversion of 0 frames is a valid no-op. */
-    if (frames == 0)
+    if(frames == 0)
     {
         return FLUID_OK;
     }
 
-    for (int f = 0; f < frames; ++f)
+    for(int f = 0; f < frames; ++f)
     {
-        for (int ch = 0; ch < channels; ++ch)
+        for(int ch = 0; ch < channels; ++ch)
         {
             int32_t s = round_clip_to<int32_t>(src_planar[ch][f] * 2147483646.0f);
             dst_interleaved[ch] = (int32_t)(s & 0xFFFFFF00);
@@ -195,26 +195,26 @@ extern "C" int fluid_audio_planar_float_to_s24(int32_t *dst_interleaved,
 }
 
 extern "C" int fluid_audio_planar_float_to_s32(int32_t *dst_interleaved,
-                                               int dst_stride,
-                                               const float *const *src_planar,
-                                               int channels,
-                                               int frames)
+        int dst_stride,
+        const float *const *src_planar,
+        int channels,
+        int frames)
 {
-    if (fluid_audio_convert_validate_args(
-        "fluid_audio_planar_float_to_s32", dst_interleaved, dst_stride, src_planar, channels, frames) != FLUID_OK)
+    if(fluid_audio_convert_validate_args(
+                "fluid_audio_planar_float_to_s32", dst_interleaved, dst_stride, src_planar, channels, frames) != FLUID_OK)
     {
         return FLUID_FAILED;
     }
 
     /* Return semantics: conversion of 0 frames is a valid no-op. */
-    if (frames == 0)
+    if(frames == 0)
     {
         return FLUID_OK;
     }
 
-    for (int f = 0; f < frames; ++f)
+    for(int f = 0; f < frames; ++f)
     {
-        for (int ch = 0; ch < channels; ++ch)
+        for(int ch = 0; ch < channels; ++ch)
         {
             dst_interleaved[ch] = round_clip_to<int32_t>(src_planar[ch][f] * 2147483646.0f);
         }
@@ -269,7 +269,8 @@ fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float
     fluid_profile_ref_var(prof_ref);
 
     static int dither_initialized = 0; // ensure dither table is initialized
-    if (!dither_initialized)
+
+    if(!dither_initialized)
     {
         init_dither();
         dither_initialized = 1;

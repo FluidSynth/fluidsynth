@@ -31,7 +31,8 @@
 static void float_to_s24_ref(const float *in, int32_t *out, int count)
 {
     int i;
-    for (i = 0; i < count; ++i)
+
+    for(i = 0; i < count; ++i)
     {
         /* s24 is transported as int32 with the lowest 8 bits cleared (left-aligned 24-bit PCM). */
         const int32_t s32 = round_clip_to<int32_t>(in[i] * S32_SCALE);
@@ -121,10 +122,10 @@ int main(void)
     int64_t worstDelta = 0;
 
     /* Iterate over frames */
-    for (i = 0; i < 2 * len; ++i)
+    for(i = 0; i < 2 * len; ++i)
     {
         /* Check low byte is zero (s24-in-32 format) */
-        if ((((uint32_t)out_s24[i]) & 0xFFu) != 0u) /* FAIL: non-zero low byte */
+        if((((uint32_t)out_s24[i]) & 0xFFu) != 0u)  /* FAIL: non-zero low byte */
         {
             fprintf(stderr, "s24 low-byte nonzero @%d: got=0x%08X\n", i, (unsigned)((uint32_t)out_s24[i]));
 
@@ -135,12 +136,12 @@ int main(void)
         int64_t delta = (int64_t)out_s24[i] - (int64_t)exp_s24[i];
         int64_t absDelta = abs_i64(delta);
 
-        if (absDelta == 0)
+        if(absDelta == 0)
         {
             continue;
         }
 
-        if (absDelta > kTol) /* FAIL: large delta */
+        if(absDelta > kTol)  /* FAIL: large delta */
         {
             fprintf(stderr,
                     "s24 mismatch @%d (interleaved index): exp=%d got=%d delta=%lld\n",
@@ -156,14 +157,14 @@ int main(void)
         tolCount++;
 
         /* Track worst delta */
-        if (absDelta > maxAbsDelta)
+        if(absDelta > maxAbsDelta)
         {
             maxAbsDelta = absDelta;
             worstIdx = i;
             worstDelta = delta;
         }
 
-        if (tolCount > kMaxTol) /* FAIL: too many small deltas */
+        if(tolCount > kMaxTol)  /* FAIL: too many small deltas */
         {
             fprintf(stderr,
                     "%d non-zero deltas <= %lld, largest delta = %lld at idx = %d\n",
