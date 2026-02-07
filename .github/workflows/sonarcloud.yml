@@ -86,5 +86,5 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-            -Dsonar.cfamily.build-wrapper-output="${{github.workspace}}/build/${{ env.BUILD_WRAPPER_OUT_DIR }}"
+            -Dsonar.cfamily.build-wrapper-output=${{ env.BUILD_WRAPPER_OUT_DIR }}
             -Dsonar.coverageReportPaths=${{github.workspace}}/build/coverage/sonarqube.report
