@@ -5,13 +5,9 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
-    groups:
-      github-actions:
-        update-types:
-          - "minor"
-          - "major"
-        patterns:
-          - "*"  # Group all Actions updates into a single larger pull request
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
     schedule:
       interval: monthly
     ignore:
