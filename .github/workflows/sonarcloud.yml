@@ -75,13 +75,10 @@ jobs:
       run: |
        rm -rf ${{ github.workspace }}/sf2
        gcovr --version
-       gcovr --help
-       ls -la ${{ github.workspace }}
-       ls -la ${{ github.workspace }}/build
-       ls -la ${{ github.workspace }}/build/coverage
 
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v7
+      working-directory: ${{github.workspace}}/build
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
