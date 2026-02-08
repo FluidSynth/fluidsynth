@@ -41,21 +41,32 @@ T round_clip_to(float x)
 {
     static_assert(std::is_integral<T>::value, "T must be an integral type");
 
-    // Handle NaN and inf
+    // Handle NaN
     if(std::isnan(x))
     {
         return 0;
     }
 
-    if (!std::isfinite(x))
+    // Handle infinities and large out-of-range values that would overflow when cast to T
+    if(x <= +1.0f * std::numeric_limits<T>::lowest())
     {
-        return (x < 0) ? std::numeric_limits<T>::lowest()
-                       : std::numeric_limits<T>::max();
+        return std::numeric_limits<T>::lowest();
+    }
+
+    if(x >= -1.0f * std::numeric_limits<T>::lowest())
+    {
+        return std::numeric_limits<T>::max();
     }
 
     constexpr float fmin = static_cast<float>(std::numeric_limits<T>::lowest());
     float fmax = std::numeric_limits<T>::max();
-    fmax = std::nextafter(fmax, 0.0f);
+    if(std::is_same<T, int32_t>::value || std::is_same<T, uint32_t>::value)
+    {
+        // Implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648.0f
+        // Hence, adjust fmax to 2147483520.0f to prevent integer overflow when attempting to cast 2147483648.0f to int32_t below.
+        // Same for 4294967295 to 4294967296.0f for uint32_t.
+        fmax = std::nextafter(fmax, 0.0f);
+    }
 
     x = std::round(x);
     x = std::clamp(x, fmin, fmax);
