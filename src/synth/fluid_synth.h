@@ -109,13 +109,13 @@ enum fluid_msgs_note_cut
  *
  * Mutual exclusion notes (as of 1.1.2):
  *
- * All variables are considered belongning to the "public API" thread,
+ * All variables are considered belonging to the "public API" thread,
  * which processes all MIDI, except for:
  *
  * ticks_since_start - atomic, set by rendering thread only
  * cpu_load - atomic, set by rendering thread only
  * cur, curmax, dither_index - used by rendering thread only
- * ladspa_fx - same instance copied in rendering thread. Synchronising handled internally.
+ * ladspa_fx - same instance copied in rendering thread. Synchronizing handled internally.
  *
  */
 
@@ -143,9 +143,9 @@ struct _fluid_synth_t
     unsigned int start;                /**< the start in msec, as returned by system clock */
     fluid_overflow_prio_t overflow;    /**< parameters for overflow priority (aka voice-stealing) */
 
-    fluid_list_t *loaders;             /**< the SoundFont loaders */
-    fluid_list_t *sfont;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
-    int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
+    fluid_list_t *loaders;              /**< the SoundFont loaders */
+    fluid_list_t *sfont;                /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
+    int sfont_id;                       /**< Incrementing ID assigned to each loaded SoundFont */
     fluid_list_t *fonts_to_be_unloaded; /**< list of timers that try to unload a soundfont */
 
     float gain;                        /**< master gain */
@@ -155,7 +155,7 @@ struct _fluid_synth_t
     int active_voice_count;            /**< count of active voices */
     unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
     unsigned int storeid;
-    int fromkey_portamento;			 /**< fromkey portamento */
+    int fromkey_portamento;            /**< fromkey portamento */
     fluid_rvoice_eventhandler_t *eventhandler;
 
     /**< Shadow of reverb parameter: roomsize, damping, width, level */
@@ -166,28 +166,28 @@ struct _fluid_synth_t
 
     int cur;                           /**< the current sample in the audio buffers to be output */
     int curmax;                        /**< current amount of samples present in the audio buffers */
-    int dither_index;		     /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
+    int dither_index;                  /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
 
-    fluid_atomic_float_t cpu_load;                    /**< CPU load in percent (CPU time required / audio synthesized time * 100) */
+    fluid_atomic_float_t cpu_load;     /**< CPU load in percent (CPU time required / audio synthesized time * 100) */
 
     fluid_tuning_t ***tuning;          /**< 128 banks of 128 programs for the tunings */
     fluid_private_t tuning_iter;       /**< Tuning iterators per each thread */
 
     fluid_sample_timer_t *sample_timers; /**< List of timers triggered before a block is processed */
-    unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
+    unsigned int min_note_length_ticks;  /**< If note-offs are triggered just after a note-on, they will be delayed */
 
     int cores;                         /**< Number of CPU cores (1 by default) */
 
     fluid_mod_t *default_mod;          /**< the (dynamic) list of default modulators */
 
     fluid_ladspa_fx_t *ladspa_fx;      /**< Effects unit for LADSPA support */
-    enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
-    enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
+    enum fluid_iir_filter_type custom_filter_type;   /**< filter type of the user-defined filter currently used for all voices */
+    enum fluid_iir_filter_flags custom_filter_flags; /**< filter flags for the user-defined filter currently used for all voices */
     enum fluid_msgs_note_cut msgs_note_cut_mode;
 
     /** Portamento time mode settings */
     enum fluid_portamento_time_mode portamento_time_mode; /**< Global portamento time mode */
-    int portamento_time_has_seen_lsb; /**< Flag to track if LSB has been seen (for auto mode) */
+    int portamento_time_has_seen_lsb;                     /**< Flag to track if LSB has been seen (for auto mode) */
 
     fluid_iir_sincos_t iir_sincos_table[SINCOS_TAB_SIZE]; /**< Table of sin/cos values for IIR filter */
 };
@@ -239,37 +239,58 @@ fluid_synth_write_s16_channels(fluid_synth_t *synth, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[]);
+
+int
+fluid_synth_write_s24_channels(fluid_synth_t *synth, int len,
+                               int channels_count,
+                               void *channels_out[],
+                               int channels_off[],
+                               int channels_incr[]);
+
+int
+fluid_synth_write_s32_channels(fluid_synth_t *synth, int len,
+                               int channels_count,
+                               void *channels_out[], int channels_off[],
+                               int channels_incr[]);
+
 int
 fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
                                  int channels_count,
                                  void *channels_out[], int channels_off[],
                                  int channels_incr[]);
 
+int fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount);
+unsigned int fluid_synth_get_ticks(fluid_synth_t *synth);
+
 fluid_preset_t *fluid_synth_find_preset(fluid_synth_t *synth,
                                         int banknum,
                                         int prognum);
+
 void fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont);
 
-void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
-                            void *lout, int loff, int lincr,
-                            void *rout, int roff, int rincr);
-
 int fluid_synth_reset_reverb(fluid_synth_t *synth);
+
 int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num);
+
 int fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
                                  int param,
                                  double value);
+
 int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 
 int fluid_synth_reset_chorus(fluid_synth_t *synth);
+
 int fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group,
                                  int param, double value);
+
 int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
                                 const double values[]);
 
 fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_callback_t callback, void *data);
+
 void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer);
+
 void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer);
 
 void fluid_synth_process_event_queue(fluid_synth_t *synth);
@@ -286,6 +307,7 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
  * misc
  */
 void fluid_synth_settings(fluid_settings_t *settings);
+
 void fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate);
 
 

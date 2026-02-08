@@ -176,6 +176,7 @@ set ( libfluidsynth_SOURCES
     synth/fluid_synth.c
     synth/fluid_synth.h
     synth/fluid_synth_monopoly.c
+    synth/fluid_synth_write_int.cpp
     synth/fluid_tuning.c
     synth/fluid_tuning.h
     synth/fluid_voice.c
@@ -192,6 +193,7 @@ set ( libfluidsynth_SOURCES
     drivers/fluid_adriver.h
     drivers/fluid_mdriver.c
     drivers/fluid_mdriver.h
+    drivers/fluid_audio_convert.cpp
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
@@ -592,7 +594,7 @@ if ( MACOSX_FRAMEWORK )
     ARCHIVE DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}" COMPONENT ${PACKAGE}_development
   )
 else ( MACOSX_FRAMEWORK )
-  install ( TARGETS fluidsynth 
+  install ( TARGETS fluidsynth
     EXPORT FluidSynthTargets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PACKAGE}_program
   )

@@ -227,6 +227,8 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 
     fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
     fluid_settings_add_option(settings, "audio.sample-format", "16bits");
+    fluid_settings_add_option(settings, "audio.sample-format", "24bits");
+    fluid_settings_add_option(settings, "audio.sample-format", "32bits");
     fluid_settings_add_option(settings, "audio.sample-format", "float");
 
 #if defined(_WIN32)
@@ -347,16 +349,22 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         fluid_audio_driver_t *driver;
         double srate, midi_event_latency;
         int period_size;
-        
+
         fluid_settings_getint(settings, "audio.period-size", &period_size);
         fluid_settings_getnum(settings, "synth.sample-rate", &srate);
-        
+
         midi_event_latency = period_size / srate;
         if(midi_event_latency >= 0.05)
         {
-            FLUID_LOG(FLUID_WARN, "You have chosen 'audio.period-size' to be %d samples. Given a sample rate of %.1f this results in a latency of %.1f ms, which will cause MIDI events to be poorly quantized (=untimed) in the synthesized audio (also known as the 'drunken-drummer' syndrome). To avoid that, you're strongly advised to increase 'audio.periods' instead, while keeping 'audio.period-size' small enough to make this warning disappear.", period_size, srate, midi_event_latency*1000.0);
+            FLUID_LOG(FLUID_WARN, "You have chosen 'audio.period-size' to be %d samples. "
+                "Given a sample rate of %.1f this results in a latency of %.1f ms, which "
+                "will cause MIDI events to be poorly quantized (=untimed) in the synthesized "
+                "audio (also known as the 'drunken-drummer' syndrome). To avoid that, you're "
+                "strongly advised to increase 'audio.periods' instead, while keeping "
+                "'audio.period-size' small enough to make this warning disappear.",
+                period_size, srate, midi_event_latency*1000.0);
         }
-        
+
         driver = (*def->new)(settings, synth);
 
         if(driver)

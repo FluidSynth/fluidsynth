@@ -1,6 +1,10 @@
 /*!
 
 \page RecentChanges Recent Changes
+\section NewIn2_6_0 What's new in 2.6.0?
+- A lookahead limiter has been added, see related setting <code>synth.limiter.*</code>
+- Support for 24bit and 32bit audio has been added, see fluid_synth_write_s24() and fluid_synth_write_s32()
+
 \section NewIn2_5_0 What's new in 2.5.0?
 - #FLUID_MOD_SIN is now deprecated, use the newly added fluid_mod_set_custom_mapping()
 - A new mode for the custom IIR filter has been added: #FLUID_IIR_BEANLAND
