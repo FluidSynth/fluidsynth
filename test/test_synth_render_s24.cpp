@@ -47,31 +47,31 @@ static int64_t abs_i64(int64_t x)
 
 int main(void)
 {
-    fluid_settings_t *settings = NULL;
-    fluid_synth_t *synth_f = NULL;   /* float oracle synth */
-    fluid_synth_t *synth_s24 = NULL; /* s24 render synth (int32 container, low 8 bits zero) */
+    fluid_settings_t *settings = nullptr;
+    fluid_synth_t *synth_f = nullptr;   /* float oracle synth */
+    fluid_synth_t *synth_s24 = nullptr; /* s24 render synth (int32 container, low 8 bits zero) */
 
     /* Enough frames to span multiple internal blocks, but still fast. */
     const int len = 4096;
 
-    float *out_f = NULL;     /* interleaved float: L,R,L,R,... */
-    int32_t *out_s24 = NULL; /* interleaved s24 from API (int32 container) */
-    int32_t *exp_s24 = NULL; /* interleaved s24 oracle (int32 container) */
+    float *out_f = nullptr;     /* interleaved float: L,R,L,R,... */
+    int32_t *out_s24 = nullptr; /* interleaved s24 from API (int32 container) */
+    int32_t *exp_s24 = nullptr; /* interleaved s24 oracle (int32 container) */
 
     int i;
 
     settings = new_fluid_settings();
-    TEST_ASSERT(settings != NULL);
+    TEST_ASSERT(settings != nullptr);
 
     /* Make test deterministic. */
     TEST_SUCCESS(fluid_settings_setint(settings, "synth.reverb.active", 0));
     TEST_SUCCESS(fluid_settings_setint(settings, "synth.chorus.active", 0));
 
     synth_f = new_fluid_synth(settings);
-    TEST_ASSERT(synth_f != NULL);
+    TEST_ASSERT(synth_f != nullptr);
 
     synth_s24 = new_fluid_synth(settings);
-    TEST_ASSERT(synth_s24 != NULL);
+    TEST_ASSERT(synth_s24 != nullptr);
 
     /* Load known test soundfont and select it for all channels (reset=1). */
     TEST_SUCCESS(fluid_synth_sfload(synth_f, TEST_SOUNDFONT, 1));
@@ -88,9 +88,9 @@ int main(void)
     out_s24 = (int32_t *)malloc(sizeof(int32_t) * 2 * len);
     exp_s24 = (int32_t *)malloc(sizeof(int32_t) * 2 * len);
 
-    TEST_ASSERT(out_f != NULL);
-    TEST_ASSERT(out_s24 != NULL);
-    TEST_ASSERT(exp_s24 != NULL);
+    TEST_ASSERT(out_f != nullptr);
+    TEST_ASSERT(out_s24 != nullptr);
+    TEST_ASSERT(exp_s24 != nullptr);
 
     memset(out_f, 0, sizeof(float) * 2 * len);
     memset(out_s24, 0, sizeof(int32_t) * 2 * len);

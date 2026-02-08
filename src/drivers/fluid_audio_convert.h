@@ -32,32 +32,36 @@
 
 #include <cstdint>
 #include <limits>
+#include <cmath>
+#include <algorithm>
 
 
-/* A portable replacement for roundf(), seems it may actually be faster too! */
 template<typename T>
 T round_clip_to(float x)
 {
-    if(x >= 0.0f)
-    {
-        x += 0.5f;
+    static_assert(std::is_integral<T>::value, "T must be an integral type");
 
-        if(x > std::numeric_limits<T>::max())
-        {
-            return std::numeric_limits<T>::max();
-        }
-    }
-    else
+    // Handle NaN and inf
+    if(std::isnan(x))
     {
-        x -= 0.5f;
-
-        if(x < std::numeric_limits<T>::lowest())
-        {
-            return std::numeric_limits<T>::lowest();
-        }
+        return 0;
     }
 
-    return static_cast<T>(x);
+    if (!std::isfinite(x))
+    {
+        return (x < 0) ? std::numeric_limits<T>::lowest()
+                       : std::numeric_limits<T>::max();
+    }
+
+    constexpr float fmin = static_cast<float>(std::numeric_limits<T>::lowest());
+    float fmax = std::numeric_limits<T>::max();
+    fmax = std::nextafter(fmax, 0.0f);
+
+    x = std::round(x);
+    x = std::clamp(x, fmin, fmax);
+
+    T i = static_cast<T>(x);
+    return i;
 }
 
 extern "C" {
