@@ -193,10 +193,14 @@ extract_stat() {
 
 failures=0
 compared=0
+missing_fail=0
 printf "%-70s %12s %12s %12s\n" "File" "SNR" "RMS" "ABS"
 for current_file in "${current_files[@]}"; do
   rel_path=${current_file#"$CURRENT_OUTPUT_DIR/"}
   reference_file="$REFERENCE_OUTPUT_DIR/$rel_path"
+  if [[ ! -f "$current_file" ]]; then
+    continue
+  fi
   if [[ ! -f "$reference_file" ]]; then
     continue
   fi
@@ -231,7 +235,7 @@ done
 if [[ $missing_count -ne 0 ]]; then
   if [[ $ALLOW_MISSING -eq 0 ]]; then
     echo "Missing file pairs: ${missing_count}" >&2
-    failures=$((failures + missing_count))
+    missing_fail=1
   else
     echo "Missing file pairs: ${missing_count} (allowed)" >&2
   fi
@@ -242,8 +246,12 @@ if [[ $compared -eq 0 ]]; then
   exit 1
 fi
 
-if [[ $failures -ne 0 ]]; then
-  echo "Audio regression check failed with ${failures} threshold violations." >&2
+if [[ $failures -ne 0 || $missing_fail -ne 0 ]]; then
+  if [[ $missing_fail -ne 0 ]]; then
+    echo "Audio regression check failed with ${failures} threshold violations and ${missing_count} missing pairs." >&2
+  else
+    echo "Audio regression check failed with ${failures} threshold violations." >&2
+  fi
   exit 1
 fi
 
