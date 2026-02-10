@@ -1,0 +1,66 @@
+name: Manual audio regression
+
+on:
+  workflow_dispatch:
+    inputs:
+      reference_ref:
+        description: Git ref (commit/tag) for reference build
+        required: false
+        default: HEAD~1
+      snr_min:
+        description: Minimum SNR threshold
+        required: false
+        default: "60"
+      rms_max:
+        description: Maximum RMS difference
+        required: false
+        default: "0.0001"
+      abs_max:
+        description: Maximum absolute difference
+        required: false
+        default: "0.01"
+  pull_request:
+  push:
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/solaris.yml'
+      - '.github/workflows/windows.yml'
+      - '.github/workflows/ios.yml'
+      - '.cirrus.yml'
+      - 'README.md'
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+  REFERENCE_REF: ${{ github.event.inputs.reference_ref || vars.FLUIDSYNTH_REGRESSION_REF || 'HEAD~1' }}
+  SNR_MIN: ${{ github.event.inputs.snr_min || vars.FLUIDSYNTH_REGRESSION_SNR_MIN || '60' }}
+  RMS_MAX: ${{ github.event.inputs.rms_max || vars.FLUIDSYNTH_REGRESSION_RMS_MAX || '0.0001' }}
+  ABS_MAX: ${{ github.event.inputs.abs_max || vars.FLUIDSYNTH_REGRESSION_ABS_MAX || '0.01' }}
+  REGRESSION_CMAKE_FLAGS: "-DNO_GUI=1 -Denable-network=0"
+
+jobs:
+  audio-regression:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libglib2.0-dev \
+            libinstpatch-dev \
+            libsndfile1-dev \
+            sox \
+            libsox-fmt-all
+
+      - name: Run audio regression comparison
+        run: test/run-manual-regression.sh
