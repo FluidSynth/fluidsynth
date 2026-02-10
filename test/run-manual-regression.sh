@@ -12,11 +12,12 @@ Options:
   --abs-max <value>       Maximum absolute difference (default: 0.01)
   --build-type <type>     CMake build type (default: RelWithDebInfo)
   --cmake-flags <flags>   Extra flags passed to both CMake configure steps
+  --allow-missing         Allow missing files while still comparing the rest
   --keep-worktree         Keep the reference worktree after running
   --help                  Show this help message
 
 Environment variables:
-  REFERENCE_REF, SNR_MIN, RMS_MAX, ABS_MAX, BUILD_TYPE, REGRESSION_CMAKE_FLAGS
+  REFERENCE_REF, SNR_MIN, RMS_MAX, ABS_MAX, BUILD_TYPE, REGRESSION_CMAKE_FLAGS, ALLOW_MISSING
 USAGE
 }
 
@@ -26,6 +27,7 @@ RMS_MAX=${RMS_MAX:-0.0001}
 ABS_MAX=${ABS_MAX:-0.01}
 BUILD_TYPE=${BUILD_TYPE:-RelWithDebInfo}
 REGRESSION_CMAKE_FLAGS=${REGRESSION_CMAKE_FLAGS:-}
+ALLOW_MISSING=${ALLOW_MISSING:-0}
 KEEP_WORKTREE=0
 
 while [[ $# -gt 0 ]]; do
@@ -53,6 +55,10 @@ while [[ $# -gt 0 ]]; do
     --cmake-flags)
       REGRESSION_CMAKE_FLAGS="$2"
       shift 2
+      ;;
+    --allow-missing)
+      ALLOW_MISSING=1
+      shift 1
       ;;
     --keep-worktree)
       KEEP_WORKTREE=1
@@ -163,12 +169,12 @@ if [[ ${#current_files[@]} -eq 0 ]]; then
   exit 1
 fi
 
-missing=0
+missing_count=0
 for ref_file in "${reference_files[@]}"; do
   rel_path=${ref_file#"$REFERENCE_OUTPUT_DIR/"}
   if [[ ! -f "$CURRENT_OUTPUT_DIR/$rel_path" ]]; then
     echo "Missing current render for ${rel_path}" >&2
-    missing=1
+    missing_count=$((missing_count + 1))
   fi
 done
 
@@ -176,13 +182,9 @@ for current_file in "${current_files[@]}"; do
   rel_path=${current_file#"$CURRENT_OUTPUT_DIR/"}
   if [[ ! -f "$REFERENCE_OUTPUT_DIR/$rel_path" ]]; then
     echo "Missing reference render for ${rel_path}" >&2
-    missing=1
+    missing_count=$((missing_count + 1))
   fi
 done
-
-if [[ $missing -ne 0 ]]; then
-  exit 1
-fi
 
 extract_stat() {
   local pattern="$1"
@@ -190,10 +192,15 @@ extract_stat() {
 }
 
 failures=0
+compared=0
 printf "%-70s %12s %12s %12s\n" "File" "SNR" "RMS" "ABS"
 for current_file in "${current_files[@]}"; do
   rel_path=${current_file#"$CURRENT_OUTPUT_DIR/"}
   reference_file="$REFERENCE_OUTPUT_DIR/$rel_path"
+  if [[ ! -f "$reference_file" ]]; then
+    continue
+  fi
+  compared=$((compared + 1))
 
   signal_stats=$(sox "$reference_file" -n stat 2>&1)
   rms_signal=$(printf '%s\n' "$signal_stats" | extract_stat "RMS[[:space:]]+amplitude")
@@ -220,6 +227,20 @@ for current_file in "${current_files[@]}"; do
     failures=$((failures + 1))
   fi
 done
+
+if [[ $missing_count -ne 0 ]]; then
+  if [[ $ALLOW_MISSING -eq 0 ]]; then
+    echo "Missing file pairs: ${missing_count}" >&2
+    failures=$((failures + missing_count))
+  else
+    echo "Missing file pairs: ${missing_count} (allowed)" >&2
+  fi
+fi
+
+if [[ $compared -eq 0 ]]; then
+  echo "No matching audio files to compare." >&2
+  exit 1
+fi
 
 if [[ $failures -ne 0 ]]; then
   echo "Audio regression check failed with ${failures} threshold violations." >&2
