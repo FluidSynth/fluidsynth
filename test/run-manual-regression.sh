@@ -198,9 +198,6 @@ printf "%-70s %12s %12s %12s\n" "File" "SNR" "RMS" "ABS"
 for current_file in "${current_files[@]}"; do
   rel_path=${current_file#"$CURRENT_OUTPUT_DIR/"}
   reference_file="$REFERENCE_OUTPUT_DIR/$rel_path"
-  if [[ ! -f "$current_file" ]]; then
-    continue
-  fi
   if [[ ! -f "$reference_file" ]]; then
     continue
   fi
@@ -247,8 +244,10 @@ if [[ $compared -eq 0 ]]; then
 fi
 
 if [[ $failures -ne 0 || $missing_fail -ne 0 ]]; then
-  if [[ $missing_fail -ne 0 ]]; then
+  if [[ $missing_fail -ne 0 && $failures -ne 0 ]]; then
     echo "Audio regression check failed with ${failures} threshold violations and ${missing_count} missing pairs." >&2
+  elif [[ $missing_fail -ne 0 ]]; then
+    echo "Audio regression check failed with ${missing_count} missing pairs." >&2
   else
     echo "Audio regression check failed with ${failures} threshold violations." >&2
   fi
