@@ -198,6 +198,9 @@ printf "%-70s %12s %12s %12s\n" "File" "SNR" "RMS" "ABS"
 for current_file in "${current_files[@]}"; do
   rel_path=${current_file#"$CURRENT_OUTPUT_DIR/"}
   reference_file="$REFERENCE_OUTPUT_DIR/$rel_path"
+  if [[ ! -f "$current_file" ]]; then
+    continue
+  fi
   if [[ ! -f "$reference_file" ]]; then
     continue
   fi
@@ -239,7 +242,15 @@ if [[ $missing_count -ne 0 ]]; then
 fi
 
 if [[ $compared -eq 0 ]]; then
-  echo "No matching audio files to compare." >&2
+  if [[ $missing_count -ne 0 ]]; then
+    if [[ $ALLOW_MISSING -eq 0 ]]; then
+      echo "No matching audio files to compare because file pairs are missing." >&2
+    else
+      echo "No matching audio files to compare; only missing pairs were found." >&2
+    fi
+  else
+    echo "No matching audio files to compare." >&2
+  fi
   exit 1
 fi
 
