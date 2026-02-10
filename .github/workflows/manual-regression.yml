@@ -31,6 +31,9 @@ on:
       - '.cirrus.yml'
       - 'README.md'
 
+permissions:
+  contents: read
+
 env:
   BUILD_TYPE: RelWithDebInfo
   REFERENCE_REF: ${{ github.event.inputs.reference_ref || vars.FLUIDSYNTH_REGRESSION_REF || 'HEAD~1' }}
