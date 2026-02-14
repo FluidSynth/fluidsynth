@@ -10,6 +10,7 @@ on:
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
       - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/rendering-regression.yml'
       - '.cirrus.yml'
       - 'README.md'
   release:

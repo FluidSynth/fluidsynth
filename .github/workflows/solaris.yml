@@ -8,6 +8,7 @@ on:
       - '.circleci/**'
       - '.github/workflows/linux.yml'
       - '.github/workflows/ios.yml'
+      - '.github/workflows/rendering-regression.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/windows.yml'
       - '.cirrus.yml'

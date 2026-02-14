@@ -11,6 +11,7 @@ on:
       - '.github/workflows/solaris.yml'
       - '.github/workflows/linux.yml'
       - '.github/workflows/ios.yml'
+      - '.github/workflows/rendering-regression.yml'
       - '.cirrus.yml'
       - 'README.md'
   release:
