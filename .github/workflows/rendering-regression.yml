@@ -1,4 +1,4 @@
-name: Manual audio regression
+name: Audio Rendering Regression Test
 
 on:
   workflow_dispatch:
