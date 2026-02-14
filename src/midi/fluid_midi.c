@@ -165,7 +165,7 @@ fluid_file_read_full(fluid_file fp, size_t *length)
     size_t n;
 
     /* Work out the length of the file in advance */
-    if(FLUID_FSEEK(fp, 0, SEEK_END) != 0)
+    if(fluid_file_seek(fp, 0, SEEK_END) != 0)
     {
         FLUID_LOG(FLUID_ERR, "File load: Could not seek within file");
         return NULL;
@@ -173,7 +173,7 @@ fluid_file_read_full(fluid_file fp, size_t *length)
 
     buflen = ftell(fp);
 
-    if(FLUID_FSEEK(fp, 0, SEEK_SET) != 0)
+    if(fluid_file_seek(fp, 0, SEEK_SET) != 0)
     {
         FLUID_LOG(FLUID_ERR, "File load: Could not seek within file");
         return NULL;

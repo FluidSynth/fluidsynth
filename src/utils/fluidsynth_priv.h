@@ -210,12 +210,6 @@ void* fluid_alloc(size_t len);
 
 FILE *fluid_fopen(const char *filename, const char *mode);
 
-#ifdef _WIN32
-#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
-#else
-#define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
-#endif
-
 #define FLUID_FTELL(_f)              fluid_file_tell(_f)
 
 /* Memory functions */

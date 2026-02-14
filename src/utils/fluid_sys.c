@@ -1641,6 +1641,64 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #endif
 }
 
+#ifdef _WIN32
+#define FLUID_PRIi64 "I64d"
+#else
+#define FLUID_PRIi64 "lld"
+#endif
+
+int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd)
+{
+    if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
+    {
+        if(feof((FILE *)fd))
+        {
+            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %" FLUID_PRIi64 " bytes", count);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "File read failed");
+        }
+
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence)
+{
+#if (defined(__MINGW32__) || defined(__MINGW64__)) && defined(__GNUC__) && (__GNUC__ < 15)
+    // Some older versions of MinGW report incorrect values for _ftelli64(). This is problematic,
+    // because _fseeki64() below would use these incorrect values when seeking with SEEK_CUR,
+    // resulting in incorrect file positions. So we need to work around this by doing the SEEK_CUR
+    // calculation ourselves.
+    // See https://sourceforge.net/p/mingw-w64/bugs/4897/ for more details.
+    if(whence == SEEK_CUR)
+    {
+        whence = SEEK_SET;
+        ofs += fluid_file_tell((FILE *)fd);
+    }
+#endif
+
+#ifdef _WIN32
+#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
+#else
+#define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
+#endif
+
+    if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
+    {
+        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %" FLUID_PRIi64 " and whence = %d", ofs, whence);
+        return FLUID_FAILED;
+    }
+#undef FLUID_FSEEK
+
+    return FLUID_OK;
+}
+
+#undef FLUID_PRIi64
+
 #if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!
 #define FLUID_WINDOWS_MEX_ERROR_LEN    1024
