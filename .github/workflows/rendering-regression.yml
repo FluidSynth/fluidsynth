@@ -1,24 +1,6 @@
 name: Audio Rendering Regression Test
 
 on:
-  workflow_dispatch:
-    inputs:
-      reference_ref:
-        description: Git ref (commit/tag) for reference build
-        required: false
-        default: "v2.4.8"
-      snr_min:
-        description: Minimum SNR threshold
-        required: false
-        default: "60"
-      rms_max:
-        description: Maximum RMS difference
-        required: false
-        default: "0.0001"
-      abs_max:
-        description: Maximum absolute difference
-        required: false
-        default: "0.01"
   pull_request:
   push:
     paths-ignore:
@@ -36,10 +18,10 @@ permissions:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  REFERENCE_REF: ${{ github.event.inputs.reference_ref || vars.FLUIDSYNTH_REGRESSION_REF || 'HEAD~1' }}
-  SNR_MIN: ${{ github.event.inputs.snr_min || vars.FLUIDSYNTH_REGRESSION_SNR_MIN || '60' }}
-  RMS_MAX: ${{ github.event.inputs.rms_max || vars.FLUIDSYNTH_REGRESSION_RMS_MAX || '0.0001' }}
-  ABS_MAX: ${{ github.event.inputs.abs_max || vars.FLUIDSYNTH_REGRESSION_ABS_MAX || '0.01' }}
+  REFERENCE_REF: 'v2.4.8'
+  SNR_MIN: '60'
+  RMS_MAX: '0.0001'
+  ABS_MAX: '0.01'
   REGRESSION_CMAKE_FLAGS: "-DNO_GUI=1 -Denable-network=0 -DBUILD_SHARED_LIBS=0"
   ALLOW_MISSING: "1"
 
