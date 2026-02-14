@@ -30,9 +30,8 @@ add_library( # Sets the name of the library.
              # Sets the library as a shared library.
              SHARED
 
-             # Provides a relative path to your source file(s).
-             ${LINKED_OBJ_FILES}
-
+             $<TARGET_OBJECTS:libfluidsynth-OBJ>
+ 
         tests/test_preset_pinning.c
         tests/test_seq_event_queue_remove.c
         tests/test_seq_scale.c
@@ -63,20 +62,10 @@ add_library( # Sets the name of the library.
 
 target_include_directories(native-lib
         PRIVATE
-        ../../../../../build_${CMAKE_ANDROID_ARCH_ABI}
-        ../../../../build-scripts/build-artifacts/include
-        ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/include
-        ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/include/glib-2.0
-        ../../../../build-scripts/android-build-root/${CMAKE_ANDROID_ARCH_ABI}/opt/android/lib/glib-2.0/include
-        ../../../../../src
-        ../../../../../src/bindings
-        ../../../../../src/drivers
-        ../../../../../src/midi
-        ../../../../../src/rvoice
-        ../../../../../src/sfloader
-        ../../../../../src/synth
-        ../../../../../src/utils
-        ../../../../../test
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include> # include auto generated headers
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> # include "normal" public (sub-)headers
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src> # include private headers
+        $<TARGET_PROPERTY:libfluidsynth,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -102,6 +91,7 @@ target_link_directories(native-lib
         ../jniLibs/${CMAKE_ANDROID_ARCH_ABI})
 
 target_link_libraries(native-lib
+        $<TARGET_PROPERTY:libfluidsynth,INTERFACE_LINK_LIBRARIES>
         ${log-lib}
         c++_shared
         gobject-2.0
@@ -111,3 +101,12 @@ target_link_libraries(native-lib
         OpenSLES
         oboe
         )
+
+set_target_properties(native-lib PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+if ( FLUID_CPPFLAGS )
+    set_target_properties ( native-lib PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
+endif ( FLUID_CPPFLAGS )
+
+add_custom_target ( check-android )
+add_dependencies ( check-android native-lib )
