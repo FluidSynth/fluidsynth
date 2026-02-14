@@ -21,7 +21,7 @@ Use the `TEST_SOUNDFONT` macro to access it.
 
 #### Manual audio regression tests
 
-The manual render suite (`check_manual`) can be compared against a reference FluidSynth revision using
+The manual render suite (`check_rendering`) can be compared against a reference FluidSynth revision using
 `test/run-manual-regression.sh`. The script builds the current checkout and a reference revision, renders
 the audio, and then reports SNR, RMS, and absolute differences using SoX.
 It requires `sox`, `cmake`, and `git`, plus the build dependencies for FluidSynth (including libsndfile).

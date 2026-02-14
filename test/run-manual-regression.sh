@@ -145,13 +145,13 @@ fi
 cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   "${CMAKE_FLAGS[@]}"
-cmake --build "$CURRENT_BUILD_DIR" --target check_manual --parallel $(nproc)
+cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc)
 
 cmake -S "$ROOT_DIR" -B "$REFERENCE_TEST_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   -DMANUAL_TEST_FLUIDSYNTH="$REF_FLUIDSYNTH" \
   "${CMAKE_FLAGS[@]}"
-cmake --build "$REFERENCE_TEST_BUILD_DIR" --target check_manual --parallel $(nproc)
+cmake --build "$REFERENCE_TEST_BUILD_DIR" --target check_rendering --parallel $(nproc)
 
 CURRENT_OUTPUT_DIR="${CURRENT_BUILD_DIR}/test/manual"
 REFERENCE_OUTPUT_DIR="${REFERENCE_TEST_BUILD_DIR}/test/manual"
