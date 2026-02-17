@@ -39,6 +39,10 @@
 #include <android/log.h>
 #endif
 
+#ifdef __MINGW32__
+#include <_mingw.h>
+#endif
+
 /* WIN32 HACK - Flag used to differentiate between a file descriptor and a socket.
  * Should work, so long as no SOCKET or file descriptor ends up with this bit set. - JG */
 #ifdef _WIN32
@@ -1668,12 +1672,13 @@ int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd)
 
 int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence)
 {
-#if (defined(__MINGW32__) || defined(__MINGW64__)) && defined(__GNUC__) && (__GNUC__ < 15)
-    // Some older versions of MinGW report incorrect values for _ftelli64(). This is problematic,
+// See here for the macro definitions: https://github.com/mingw-w64/mingw-w64/blob/a125b9ec1d96ff282155f2344f7d6eb50bf43c02/mingw-w64-headers/crt/_mingw_mac.h#L50-L61
+#if defined(__MINGW32__) && defined(_M_IX86)
+    // Some older versions of MinGW i686 report incorrect values for _ftelli64(). This is problematic,
     // because _fseeki64() below would use these incorrect values when seeking with SEEK_CUR,
     // resulting in incorrect file positions. So we need to work around this by doing the SEEK_CUR
     // calculation ourselves.
-    // See https://sourceforge.net/p/mingw-w64/bugs/4897/ for more details.
+    // See https://sourceforge.net/p/mingw-w64/bugs/864/ for more details.
     if(whence == SEEK_CUR)
     {
         whence = SEEK_SET;
