@@ -18,7 +18,7 @@ permissions:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  REFERENCE_REF: 'v2.4.8'
+  REFERENCE_REF: 'v2.5.1'
   SNR_MIN: '60'
   RMS_MAX: '0.0001'
   ABS_MAX: '0.01'
