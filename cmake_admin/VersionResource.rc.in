@@ -22,7 +22,7 @@ BEGIN
             VALUE "Full Version", "@FLUIDSYNTH_VERSION_MAJOR@.@FLUIDSYNTH_VERSION_MINOR@.@FLUIDSYNTH_VERSION_MICRO@.0"
             VALUE "InternalName", "FluidSynth"
             VALUE "ProductName", "@PRODUCT_NAME@"
-            VALUE "LegalCopyright", "Copyright (C) 2003-2025 Peter Hanappe and others. Licensed under the terms of the LGPL v2.1"
+            VALUE "LegalCopyright", "Copyright (C) 2003-2026 Peter Hanappe and others. Licensed under the terms of the LGPL v2.1"
             VALUE "OriginalFilename", "@TARGET_FILENAME@"
             VALUE "ProductVersion", "@FLUIDSYNTH_VERSION_MAJOR@.@FLUIDSYNTH_VERSION_MINOR@.@FLUIDSYNTH_VERSION_MICRO@"
         END
