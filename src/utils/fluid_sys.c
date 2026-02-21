@@ -1668,12 +1668,12 @@ int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd)
 
 int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence)
 {
-#if (defined(__MINGW32__) || defined(__MINGW64__)) && defined(__GNUC__) && (__GNUC__ < 15)
-    // Some older versions of MinGW report incorrect values for _ftelli64(). This is problematic,
+#if defined(__MINGW32__) && defined(__i386__)
+    // Some older versions of MinGW i686 report incorrect values for _ftelli64(). This is problematic,
     // because _fseeki64() below would use these incorrect values when seeking with SEEK_CUR,
     // resulting in incorrect file positions. So we need to work around this by doing the SEEK_CUR
     // calculation ourselves.
-    // See https://sourceforge.net/p/mingw-w64/bugs/4897/ for more details.
+    // See https://sourceforge.net/p/mingw-w64/bugs/864/ for more details.
     if(whence == SEEK_CUR)
     {
         whence = SEEK_SET;
