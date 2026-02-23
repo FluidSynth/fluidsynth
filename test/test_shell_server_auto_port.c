@@ -1,6 +1,9 @@
 #include "test.h"
 #include "fluidsynth.h"
 
+#define TEST_SHELL_AUTO_PORT_START 9800
+#define TEST_TCP_PORT_MAX          65535
+
 int main(void)
 {
 #ifdef NETWORK_SUPPORT
@@ -19,18 +22,18 @@ int main(void)
     server1 = new_fluid_server2(settings1, NULL, NULL, NULL);
     TEST_ASSERT(server1 != NULL);
     TEST_SUCCESS(fluid_settings_getint(settings1, "shell.port", &port1));
-    TEST_ASSERT(port1 >= 9800 && port1 <= 65535);
+    TEST_ASSERT(port1 >= TEST_SHELL_AUTO_PORT_START && port1 <= TEST_TCP_PORT_MAX);
 
     server2 = new_fluid_server2(settings2, NULL, NULL, NULL);
     TEST_ASSERT(server2 != NULL);
     TEST_SUCCESS(fluid_settings_getint(settings2, "shell.port", &port2));
-    TEST_ASSERT(port2 >= 9800 && port2 <= 65535);
+    TEST_ASSERT(port2 >= TEST_SHELL_AUTO_PORT_START && port2 <= TEST_TCP_PORT_MAX);
     TEST_ASSERT(port1 != port2);
 
-    (void)server1;
-    (void)server2;
-    (void)settings1;
-    (void)settings2;
+    delete_fluid_server(server2);
+    delete_fluid_server(server1);
+    delete_fluid_settings(settings2);
+    delete_fluid_settings(settings1);
 #endif
 
     return EXIT_SUCCESS;

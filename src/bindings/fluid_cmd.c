@@ -4484,9 +4484,13 @@ new_fluid_server2(fluid_settings_t *settings,
 
     if(port == 0)
     {
-        port = fluid_server_socket_get_port(server->socket);
-        fluid_settings_setint(settings, "shell.port", port);
-        FLUID_LOG(FLUID_INFO, "shell.port=0, using automatically selected port %d", port);
+        int selected_port = fluid_server_socket_get_port(server->socket);
+
+        if(selected_port != FLUID_FAILED)
+        {
+            fluid_settings_setint(settings, "shell.port", selected_port);
+            FLUID_LOG(FLUID_INFO, "shell.port=0, using automatically selected port %d", selected_port);
+        }
     }
 
     return server;

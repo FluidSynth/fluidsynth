@@ -51,6 +51,8 @@
 
 /* SCHED_FIFO priority for high priority timer threads */
 #define FLUID_SYS_TIMER_HIGH_PRIO_LEVEL         10
+#define FLUID_SHELL_AUTO_PORT_START             9800
+#define FLUID_TCP_PORT_MAX                      65535
 
 
 struct _fluid_timer_t
@@ -1387,10 +1389,13 @@ void fluid_socket_close(fluid_socket_t sock)
 {
     if(sock != INVALID_SOCKET)
     {
+        /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
 #ifdef _WIN32
+        shutdown(sock, SD_BOTH);
         closesocket(sock);
 
 #else
+        shutdown(sock, SHUT_RDWR);
         close(sock);
 #endif
     }
@@ -1499,7 +1504,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(auto_port)
     {
-        current_port = 9800;
+        current_port = FLUID_SHELL_AUTO_PORT_START;
     }
 
 #ifdef IPV6_SUPPORT
@@ -1562,9 +1567,10 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
             return NULL;
         }
 
-        if(current_port >= 65535)
+        if(current_port == FLUID_TCP_PORT_MAX)
         {
-            FLUID_LOG(FLUID_ERR, "No free TCP port available for shell server auto mode (starting at 9800)");
+            FLUID_LOG(FLUID_ERR, "No free TCP port available for shell server auto mode (starting at %d)",
+                      FLUID_SHELL_AUTO_PORT_START);
             fluid_socket_close(sock);
             fluid_socket_cleanup();
             return NULL;
