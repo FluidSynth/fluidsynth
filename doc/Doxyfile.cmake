@@ -89,7 +89,6 @@ INPUT = \
 @CMAKE_SOURCE_DIR@/doc/usage \
 @CMAKE_SOURCE_DIR@/doc/reverbators.md \
 @CMAKE_SOURCE_DIR@/include \
-@CMAKE_SOURCE_DIR@/include/fluidsynth \
 @CMAKE_SOURCE_DIR@/src \
 @CMAKE_BINARY_DIR@/include/fluidsynth \
 @CMAKE_BINARY_DIR@/doc/fluidsettings.txt
