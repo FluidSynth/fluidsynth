@@ -730,23 +730,22 @@ int main(int argc, char **argv)
             {
                 if((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0))
                 {
-                    fluid_settings_setint(settings, "synth.reverb.active", FLUID_REVERB_TYPE_OFF);
+                    fluid_settings_setint(settings, "synth.reverb.active", 0);
                 }
-                else if(FLUID_STRCMP(optarg, "2") == 0)
+                else if((FLUID_STRCMP(optarg, "1") == 0) || (FLUID_STRCMP(optarg, "yes") == 0))
                 {
-                    fluid_settings_setint(settings, "synth.reverb.active", FLUID_REVERB_TYPE_FREEVERB);
-                }
-                else if(FLUID_STRCMP(optarg, "3") == 0)
-                {
-                    fluid_settings_setint(settings, "synth.reverb.active", FLUID_REVERB_TYPE_LEXVERB);
-                }
-                else if(FLUID_STRCMP(optarg, "4") == 0)
-                {
-                    fluid_settings_setint(settings, "synth.reverb.active", FLUID_REVERB_TYPE_DATTORRO);
+                    fluid_settings_setint(settings, "synth.reverb.active", 1);
                 }
                 else
                 {
-                    fluid_settings_setint(settings, "synth.reverb.active", FLUID_REVERB_TYPE_FDN);
+                    fluid_settings_setint(settings, "synth.reverb.active", 1);
+                    if(fluid_settings_setstr(settings, "synth.reverb.engine", optarg) != FLUID_OK)
+                    {
+                        char *reverb_options = fluid_settings_option_concat(settings, "synth.reverb.engine", NULL);
+                        fprintf(stderr, "Reverb engine '%s' is unknown by this version of fluidsynth. Valid values are %s\n", optarg, reverb_options);
+                        FLUID_FREE(reverb_options);
+                        return FLUID_FAILED;
+                    }
                 }
             }
             break;

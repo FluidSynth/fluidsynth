@@ -1,6 +1,8 @@
 
 #include "test.h"
 #include "fluidsynth.h"
+#include "fluid_rev.h"
+#include "fluid_synth.h"
 
 // this test should make sure that effects change (reverb, chorus) are handled correctly
 int main(void)
@@ -19,8 +21,7 @@ int main(void)
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.damp", 0.2));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.width", 0.3));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.level", 0.4));
-    TEST_SUCCESS(fluid_settings_setint(settings, "synth.reverb.active",
-                                       FLUID_REVERB_TYPE_FREEVERB));
+    TEST_SUCCESS(fluid_settings_setstr(settings, "synth.reverb.engine", "free"));
 
     /* set values for all chorus group */
     TEST_SUCCESS(fluid_settings_setint(settings, "synth.chorus.nr", 99));
@@ -30,9 +31,9 @@ int main(void)
 
     synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
-    TEST_ASSERT(fluid_synth_get_reverb_type(synth) == FLUID_REVERB_TYPE_FREEVERB);
+    TEST_ASSERT(synth->reverb_type == FLUID_REVERB_TYPE_FREEVERB);
     TEST_SUCCESS(fluid_synth_reverb_on(synth, -1, 0));
-    TEST_ASSERT(fluid_synth_get_reverb_type(synth) == FLUID_REVERB_TYPE_FREEVERB);
+    TEST_ASSERT(synth->reverb_type == FLUID_REVERB_TYPE_FREEVERB);
 
     /*
        check that the synth is initialized with the correct values (for all reverb group)
@@ -198,21 +199,19 @@ int main(void)
 
     settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
-    TEST_SUCCESS(fluid_settings_setint(settings, "synth.reverb.active",
-                                       FLUID_REVERB_TYPE_LEXVERB));
+    TEST_SUCCESS(fluid_settings_setstr(settings, "synth.reverb.engine", "lex"));
     synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
-    TEST_ASSERT(fluid_synth_get_reverb_type(synth) == FLUID_REVERB_TYPE_LEXVERB);
+    TEST_ASSERT(synth->reverb_type == FLUID_REVERB_TYPE_LEXVERB);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
 
     settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
-    TEST_SUCCESS(fluid_settings_setint(settings, "synth.reverb.active",
-                                       FLUID_REVERB_TYPE_DATTORRO));
+    TEST_SUCCESS(fluid_settings_setstr(settings, "synth.reverb.engine", "dat"));
     synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
-    TEST_ASSERT(fluid_synth_get_reverb_type(synth) == FLUID_REVERB_TYPE_DATTORRO);
+    TEST_ASSERT(synth->reverb_type == FLUID_REVERB_TYPE_DATTORRO);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
 

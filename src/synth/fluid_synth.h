@@ -129,7 +129,7 @@ struct _fluid_synth_t
     int device_id;                     /**< Device ID used for SYSEX messages */
     int polyphony;                     /**< Maximum polyphony */
     int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
-    int reverb_type;                   /**< Reverb engine selection */
+    int reverb_type;                   /**< Reverb engine selection, #fluid_reverb_type */
     int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
     int verbose;                       /**< Turn verbose mode on? */
     double sample_rate;                /**< The sample rate */

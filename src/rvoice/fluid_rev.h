@@ -39,6 +39,17 @@ struct _fluid_revmodel_t
 extern "C" {
 #endif
 
+/**
+ * Reverb engine type selection.
+ */
+enum fluid_reverb_type
+{
+    FLUID_REVERB_TYPE_FDN,       /**< FDN reverb engine */
+    FLUID_REVERB_TYPE_FREEVERB,  /**< Freeverb engine */
+    FLUID_REVERB_TYPE_LEXVERB,   /**< Lexicon LEXverb engine */
+    FLUID_REVERB_TYPE_DATTORRO   /**< Dattorro reverb engine */
+};
+
 /* enum describing each reverb parameter */
 enum fluid_reverb_param
 {

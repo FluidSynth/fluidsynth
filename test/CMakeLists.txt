@@ -387,10 +387,10 @@ endif (LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
 
 
 set(_reverb_type
-  "1"
-  "2"
-  "3"
-  "4"
+  "fdn"
+  "free"
+  "lex"
+  "dat"
 )
 
 set(_reverb_width

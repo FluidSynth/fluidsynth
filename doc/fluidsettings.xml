@@ -400,12 +400,19 @@ Developers:
         <setting>
             <name>reverb.active</name>
             <type>int</type>
-            <def>1 (FDN)</def>
-            <min>0</min>
-            <max>4</max>
+            <def>1 (TRUE)</def>
             <realtime/>
             <desc>
-                Selects the reverb engine (0=off, 1=FDN, 2=freeverb, 3=LEXverb, 4=Dattorro). Engine selection applies at synth creation, and non-zero values select a specific engine (use 0 to disable reverb). Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
+                When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
+            </desc>
+        </setting>
+        <setting>
+            <name>reverb.engine</name>
+            <type>str</type>
+            <def>fdn</def>
+            <vals>fdn, free, lex, dat</vals>
+            <desc>
+                Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
             </desc>
         </setting>
         <setting>
