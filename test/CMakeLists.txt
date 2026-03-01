@@ -428,22 +428,22 @@ set(_reverb_size
 
 set(_render_commands)
 list(APPEND _render_commands
-     COMMAND fluidsynth -R 0 -C 0 -g 1.9
+     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.9
         -F ${REVERB_RENDER_DIR}/reverb_water_triangle_test_dry.oga
         reverb_water_triangle_test.mid ${DK64SF2}
 )
 list(APPEND _render_commands
-    COMMAND fluidsynth -R 0 -C 0 -g 0.4 -F ${REVERB_RENDER_DIR}/1496_dry.oga mrbumpys_rev_width_test.mid 1496.sf2
+    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.4 -F ${REVERB_RENDER_DIR}/1496_dry.oga mrbumpys_rev_width_test.mid 1496.sf2
 )
 list(APPEND _render_commands
-    COMMAND fluidsynth -R 0 -C 0 -g 0.7 -F ${REVERB_RENDER_DIR}/1455_dry.oga mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.7 -F ${REVERB_RENDER_DIR}/1455_dry.oga mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
 )
 foreach(_t IN LISTS _reverb_type)
     list(APPEND _render_commands
-        COMMAND fluidsynth -R ${_t} -C 0 -g 0.4 -o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7 -F ${REVERB_RENDER_DIR}/1496_t${_t}.oga mrbumpys_rev_width_test.mid 1496.sf2
+        COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R ${_t} -C 0 -g 0.4 -o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7 -F ${REVERB_RENDER_DIR}/1496_t${_t}.oga mrbumpys_rev_width_test.mid 1496.sf2
     )
     list(APPEND _render_commands
-        COMMAND fluidsynth -R ${_t} -C 0 -g 0.7 -o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7 -F ${REVERB_RENDER_DIR}/1455_t${_t}.oga mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+        COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R ${_t} -C 0 -g 0.7 -o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7 -F ${REVERB_RENDER_DIR}/1455_t${_t}.oga mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
     )
 endforeach()
 
@@ -453,7 +453,7 @@ foreach(_w IN LISTS _reverb_width)
 foreach(_d IN LISTS _reverb_damp)
 foreach(_t IN LISTS _reverb_type)
   list(APPEND _render_commands
-    COMMAND fluidsynth -R ${_t} -C 0 -g 1.9
+    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R ${_t} -C 0 -g 1.9
             -o synth.reverb.room-size=${_s}
             -o synth.reverb.width=${_w}
             -o synth.reverb.damp=${_d}
@@ -501,3 +501,4 @@ add_dependencies(check_rendering renderBankSelect)
 add_dependencies(check_rendering renderDMOD)
 add_dependencies(check_rendering renderRPN)
 add_dependencies(check_rendering renderLimiterTests)
+add_dependencies(check_rendering renderReverbOverview)
