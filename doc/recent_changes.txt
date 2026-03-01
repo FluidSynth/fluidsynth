@@ -2,7 +2,7 @@
 
 \page RecentChanges Recent Changes
 \section NewIn2_6_0 What's new in 2.6.0?
-- A lookahead limiter has been added, see related setting <code>synth.limiter.*</code>
+- A lookahead limiter has been added, see \setting{synth_limiter_active} and other related limiter settings
 - Support for 24bit and 32bit audio has been added, see fluid_synth_write_s24() and fluid_synth_write_s32()
 
 \section NewIn2_5_0 What's new in 2.5.0?
@@ -11,7 +11,7 @@
 - fluid_mod_get_transform() now receives a <code>const</code> argument
 - fluid_version_str() now returns a <code>const</code> char array
 - An API for manipulating fluid_sfont_t specific default modulators has been added: fluid_sfont_get_default_mod() and fluid_sfont_set_default_mod()
-- Support for specifying a synth-wide mode to interpret portamento time has been added, see #fluid_portamento_time_mode, fluid_synth_get_portamento_time_mode(), fluid_synth_set_portamento_time_mode() and setting "synth.portamento-time"
+- Support for specifying a synth-wide mode to interpret portamento time has been added, see #fluid_portamento_time_mode, fluid_synth_get_portamento_time_mode(), fluid_synth_set_portamento_time_mode() and setting \setting{synth_portamento-time}
 - In all previous versions of fluidsynth, the synth's API mutex was unlocked too early when calls to fluid_synth_unset_program() and fluid_synth_alloc_voice() had been made; this race condition has been fixed
 
 \section NewIn2_4_5 What's new in 2.4.5?
@@ -150,7 +150,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - add seek support to midi-player, see fluid_player_seek()
 - expose functions to manipulate the ladspa effects unit (see ladspa.h)
 - add support for text and lyrics midi events, see fluid_midi_event_set_lyrics() and fluid_midi_event_set_text()
-- complete rewrite of the soundfont loader API, see sfont.h
+- complete rewrite of the soundfont loader API, settingsee sfont.h
   - support for 24 bit audio samples, see fluid_sample_set_sound_data()
   - expose new_fluid_defsfloader() to support loading soundfonts from memory, see fluid_sfloader_set_callbacks() and <a href="fluidsynth_sfload_mem_8c-example.html">fluidsynth_sfload_mem.c</a>
   - remove these structs from the public API and provide proper getter and setter functions instead:

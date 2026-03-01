@@ -1,0 +1,52 @@
+name: Audio Rendering Regression Test
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/solaris.yml'
+      - '.github/workflows/windows.yml'
+      - '.github/workflows/ios.yml'
+      - '.cirrus.yml'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+  REFERENCE_REF: 'v2.5.1'
+  SNR_MIN: '60'
+  RMS_MAX: '0.0001'
+  ABS_MAX: '0.01'
+  REGRESSION_CMAKE_FLAGS: "-DNO_GUI=1 -Denable-network=0 -DBUILD_SHARED_LIBS=0"
+  ALLOW_MISSING: "1"
+
+jobs:
+  audio-regression:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libglib2.0-dev \
+            libinstpatch-dev \
+            libsndfile1-dev \
+            sox \
+            libsox-fmt-all
+
+      - name: Run audio regression comparison
+        run: test/run-manual-regression.sh
