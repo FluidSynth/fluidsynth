@@ -195,7 +195,7 @@ jobs:
         fi
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact_name.outputs.name }}-win10-${{ matrix.platformAlt }}-${{ matrix.osal }}
         path: ${{ env.INSTALL_LOCATION }}
@@ -478,7 +478,7 @@ jobs:
         fi
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: CI-${{ github.run_id }}-mingw-${{ matrix.artifactPrefix }}-${{ matrix.platform }}
         path: ${{ env.INSTALL_LOCATION }}
@@ -549,7 +549,7 @@ jobs:
         fi
 
     - name: '${{ matrix.icon }} Upload Artifacts'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: CI-${{ github.run_id }}-msys2-${{matrix.sys}}-${{matrix.osal}}
         path: ${{env.INSTALL_LOCATION}}
