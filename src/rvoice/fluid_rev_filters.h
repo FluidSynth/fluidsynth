@@ -24,7 +24,7 @@ enum fluid_reverb_allpass_mode
 };
 
 /**
- * @brief Damping low-pass filter state for delay lines.
+ * @brief One-pole damping low-pass filter state for delay lines.
  *
  * @tparam sample_t Floating point sample type (float or double).
  */
@@ -37,6 +37,32 @@ struct fluid_reverb_delay_damping
     sample_t b0;
     /** Feedback coefficient. */
     sample_t a1;
+
+    sample_t process(sample_t input)
+    {
+        /* Equivalent to buffer += b0 * (in - buffer) when a1 is maintained as (1 - b0). */
+        this->buffer = this->b0 * input + this->a1 * this->buffer;
+        return this->buffer;
+    }
+
+    void set_ff_coeff(sample_t b0)
+    {
+        /* Keep a1 = 1 - b0 so the one-pole filters maintain unity DC gain. */
+        this->b0 = b0;
+        this->a1 = 1.0f - b0;
+    }
+
+    void set_fb_coeff(sample_t a1)
+    {
+        this->a1 = a1;
+        this->b0 = 1.0f - a1;
+    }
+
+    void set_coeffs(sample_t ff, sample_t fb)
+    {
+        this->b0 = ff;
+        this->a1 = fb;
+    }
 };
 
 /**

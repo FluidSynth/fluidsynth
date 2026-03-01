@@ -303,32 +303,6 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
 */
 #define FDN_MATRIX_FACTOR (fluid_real_t)(-2.0 / NBR_DELAYS)
 
-/*-----------------------------------------------------------------------------
- Sets coefficients for delay absorbent low pass filter.
- @param lpf pointer on low pass filter structure.
- @param b0,a1 coefficients.
------------------------------------------------------------------------------*/
-static void set_fdn_delay_lpf(fdn_delay_lpf *lpf,
-                              fluid_real_t b0, fluid_real_t  a1)
-{
-    lpf->b0 = b0;
-    lpf->a1 = a1;
-}
-
-/*-----------------------------------------------------------------------------
- Process delay absorbent low pass filter.
- @param mod_delay modulated delay line.
- @param in, input sample.
- @param out output sample.
------------------------------------------------------------------------------*/
-/* process low pass damping filter (input, output, delay) */
-#define process_damping_filter(in,out,mod_delay) \
-{\
-    out = in * mod_delay->dl.damping.b0 - mod_delay->dl.damping.buffer * \
-                                            mod_delay->dl.damping.a1;\
-    mod_delay->dl.damping.buffer = out;\
-}\
-
 
 /*-----------------------------------------------------------------------------
  Clears a delay line to DC_OFFSET float value.
@@ -592,9 +566,8 @@ static void update_rev_time_damping(fluid_late *late,
         /* iir low pass filter feedback gain */
         ai = (20.f / 80.f) * FLUID_LOGF(gi) * (1.f - 1.f / alpha2);
 
-        /* b0 = gi * (1 - ai),  a1 = - ai */
-        set_fdn_delay_lpf(&late->mod_delay_lines[i].dl.damping,
-                          gi * (1.f - ai), -ai);
+        /* b0 = gi * (1 - ai),  a1 = ai */
+        late->mod_delay_lines[i].dl.damping.set_coeffs(gi * (1.f - ai), ai);
     }
 }
 
@@ -1155,7 +1128,7 @@ void fluid_revmodel_fdn::process(const fluid_real_t *in, fluid_real_t *left_out,
 
             /* process low pass damping filter
               (input:delay_out_s, output:delay_out_s) */
-            process_damping_filter(delay_out_s, delay_out_s, mdl);
+            delay_out_s = mdl->dl.damping.process(delay_out_s);
 
             /* Result in delay_out[], and matrix_factor.
                These will be of use later during input line process */

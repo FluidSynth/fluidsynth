@@ -32,18 +32,6 @@ static int fluid_lexverb_ms_to_buf_length(float ms, fluid_real_t sample_rate)
     return static_cast<int>(ms * (sample_rate * (1 / 1000.0f)) + 0.5f);
 }
 
-static float fluid_lexverb_lpf(fluid_reverb_delay_damping<float> &filter, float input)
-{
-    filter.buffer = filter.b0 * input + filter.a1 * filter.buffer;
-    return filter.buffer;
-}
-
-static void fluid_lexverb_set_lpf_coeffs(fluid_reverb_delay_damping<float> &filter, float b0)
-{
-    filter.b0 = b0;
-    filter.a1 = 1.0f - b0;
-}
-
 static void fluid_lexverb_setup_blocks(fluid_revmodel_lexverb_t *rev)
 {
     int i;
@@ -95,11 +83,10 @@ static void fluid_lexverb_update(fluid_revmodel_lexverb_t *rev)
         rev->dl[i].set_buffer(length);
     }
 
-    float damp_b0 = 1.0f - static_cast<float>(rev->damp);
-    fluid_lexverb_set_lpf_coeffs(rev->ap[4].delay.damping, damp_b0);
-    fluid_lexverb_set_lpf_coeffs(rev->ap[9].delay.damping, damp_b0);
-    fluid_lexverb_set_lpf_coeffs(rev->dl[0].damping, damp_b0);
-    fluid_lexverb_set_lpf_coeffs(rev->dl[1].damping, damp_b0);
+    rev->ap[4].delay.damping.set_fb_coeff(rev->damp);
+    rev->ap[9].delay.damping.set_fb_coeff(rev->damp);
+    rev->dl[0].damping.set_fb_coeff(rev->damp);
+    rev->dl[1].damping.set_fb_coeff(rev->damp);
 }
 
 static void fluid_lexverb_process_sample(fluid_revmodel_lexverb_t *rev, float input,
@@ -111,8 +98,8 @@ static void fluid_lexverb_process_sample(fluid_revmodel_lexverb_t *rev, float in
 
     output = ap[0].process(input * LEX_TRIM); // technically, the left input sample should be here
     output = ap[1].process(output);
-    float left_feedback = fluid_lexverb_lpf(ap[9].delay.damping, ap[9].get_last_output());
-    float left_cross = fluid_lexverb_lpf(dl[1].damping, dl[1].process(left_feedback));
+    float left_feedback = ap[9].delay.damping.process(ap[9].get_last_output());
+    float left_cross = dl[1].damping.process(dl[1].process(left_feedback));
     output = ap[2].process(output + left_cross * dl[1].get_coefficient());
     output = ap[3].process(output);
     output = ap[4].process(output);
@@ -120,8 +107,8 @@ static void fluid_lexverb_process_sample(fluid_revmodel_lexverb_t *rev, float in
 
     output = ap[5].process(input * LEX_TRIM); // technically, the right input sample should be here
     output = ap[6].process(output);
-    float right_feedback = fluid_lexverb_lpf(ap[4].delay.damping, ap[4].get_last_output());
-    float right_cross = fluid_lexverb_lpf(dl[0].damping, dl[0].process(right_feedback));
+    float right_feedback = ap[4].delay.damping.process(ap[4].get_last_output());
+    float right_cross = dl[0].damping.process(dl[0].process(right_feedback));
     output = ap[7].process(output + right_cross * dl[0].get_coefficient());
     output = ap[8].process(output);
     output = ap[9].process(output);

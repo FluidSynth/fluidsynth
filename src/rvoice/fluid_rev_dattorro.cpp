@@ -21,8 +21,7 @@
 #include "fluid_rev_dattorro.h"
 #include <stdexcept>
 
-namespace
-{
+
 // fluidsynth's convenience wet scale factor
 constexpr float DATTORRO_SCALE_WET_WIDTH = 0.2f;
 // === Reverbation default parameters, table 1 ===
@@ -105,20 +104,6 @@ static float fluid_dattorro_read_tap(const fluid_reverb_allpass<float> &ap, int 
     return fluid_dattorro_read_tap(ap.delay, tap);
 }
 
-static float fluid_dattorro_lpf(fluid_reverb_delay_damping<float> &filter, float input)
-{
-    /* Equivalent to y += b0 * (x - y) when a1 is maintained as (1 - b0). */
-    filter.buffer = filter.b0 * input + filter.a1 * filter.buffer;
-    return filter.buffer;
-}
-
-static void fluid_dattorro_set_lpf_coeffs(fluid_reverb_delay_damping<float> &filter, float b0)
-{
-    filter.b0 = b0;
-    filter.a1 = 1.0f - b0;
-}
-}
-
 fluid_revmodel_dattorro::fluid_revmodel_dattorro(fluid_real_t sample_rate)
     : roomsize(0.0f),
       damp(0.0f),
@@ -177,9 +162,9 @@ void fluid_revmodel_dattorro::update()
     wet2 = wet * ((1.0f - width) / 2.0f);
     decay = 0.2f + roomsize * 0.78f;
     /* Keep a1 = 1 - b0 so the one-pole filters maintain unity DC gain. */
-    fluid_dattorro_set_lpf_coeffs(predelay.damping, static_cast<float>(bandwidth));
-    fluid_dattorro_set_lpf_coeffs(tank_delay[0].damping, 1.0f - static_cast<float>(damp));
-    fluid_dattorro_set_lpf_coeffs(tank_delay[2].damping, 1.0f - static_cast<float>(damp));
+    predelay.damping.set_ff_coeff(bandwidth);
+    tank_delay[0].damping.set_fb_coeff(damp);
+    tank_delay[2].damping.set_fb_coeff(damp);
 }
 
 void fluid_revmodel_dattorro::processmix(const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out)
@@ -203,7 +188,7 @@ void fluid_revmodel_dattorro::process(const fluid_real_t *in, fluid_real_t *left
     {
         float input = static_cast<float>(in[i]) * DATTORRO_TRIM;
         float pre = predelay.process(input);
-        float bandwidth_filtered = fluid_dattorro_lpf(bandwidth_lpf_local, pre);
+        float bandwidth_filtered = bandwidth_lpf_local.process(pre);
 
         float split = input_ap[0].process(bandwidth_filtered);
         split = input_ap[1].process(split);
@@ -213,14 +198,14 @@ void fluid_revmodel_dattorro::process(const fluid_real_t *in, fluid_real_t *left
         float left = split + static_cast<float>(decay) * tank_delay[3].get_last_output();
         left = tank_ap[0].process(left);
         left = tank_delay[0].process(left);
-        float damp_left_filtered = fluid_dattorro_lpf(damp_lpf_left_local, left);
+        float damp_left_filtered = damp_lpf_left_local.process(left);
         left = tank_ap[1].process(static_cast<float>(decay) * damp_left_filtered);
         left = tank_delay[1].process(left);
 
         float right = split + static_cast<float>(decay) * tank_delay[1].get_last_output();
         right = tank_ap[2].process(right);
         right = tank_delay[2].process(right);
-        float damp_right_filtered = fluid_dattorro_lpf(damp_lpf_right_local, right);
+        float damp_right_filtered = damp_lpf_right_local.process(right);
         right = tank_ap[3].process(static_cast<float>(decay) * damp_right_filtered);
         right = tank_delay[3].process(right);
 
