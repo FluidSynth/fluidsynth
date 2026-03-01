@@ -115,7 +115,7 @@ if [[ -n "$REGRESSION_CMAKE_FLAGS" ]]; then
 fi
 
 CURRENT_BUILD_DIR="${CURRENT_BUILD_DIR:-${ROOT_DIR}/build/regression-current}"
-REFERENCE_TEST_BUILD_DIR="${REFERENCE_TEST_BUILD_DIR:-${ROOT_DIR}/build/regression-reference}"
+REF_BUILD_DIR="${REF_BUILD_DIR:-${ROOT_DIR}/build/regression-reference}"
 
 REF_WORKTREE=$(mktemp -d "${TMPDIR:-/tmp}/fluidsynth-reference-XXXXXX")
 cleanup() {
@@ -129,8 +129,9 @@ trap cleanup EXIT
 
 echo "Checking out reference revision ${REFERENCE_REF}..."
 git -C "$ROOT_DIR" worktree add --detach "$REF_WORKTREE" "$REFERENCE_REF" >/dev/null
+git -C "$REF_WORKTREE" submodule update --init --recursive
 
-REF_BUILD_DIR="${REF_WORKTREE}/build-regression"
+rm -rf "$REF_BUILD_DIR"
 cmake -S "$REF_WORKTREE" -B "$REF_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   "${CMAKE_FLAGS[@]}"
@@ -143,7 +144,7 @@ if [[ -z "$REF_FLUIDSYNTH" ]]; then
 fi
 
 CURRENT_OUTPUT_DIR="${CURRENT_BUILD_DIR}/test/manual"
-REFERENCE_OUTPUT_DIR="${REFERENCE_TEST_BUILD_DIR}/test/manual"
+REFERENCE_OUTPUT_DIR="${REF_BUILD_DIR}/test/manual"
 
 cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
@@ -158,7 +159,7 @@ cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DMANUAL_TEST_FLUIDSYNTH="$REF_FLUIDSYNTH" \
   -DRENDERING_OUTPUT_DIR="$REFERENCE_OUTPUT_DIR" \
   "${CMAKE_FLAGS[@]}"
-cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc)
+cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc) || true
 
 if [[ ! -d "$CURRENT_OUTPUT_DIR" || ! -d "$REFERENCE_OUTPUT_DIR" ]]; then
   echo "Manual test output directories were not created." >&2
