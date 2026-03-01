@@ -142,27 +142,31 @@ if [[ -z "$REF_FLUIDSYNTH" ]]; then
   exit 1
 fi
 
+CURRENT_OUTPUT_DIR="${CURRENT_BUILD_DIR}/test/manual"
+REFERENCE_OUTPUT_DIR="${REFERENCE_TEST_BUILD_DIR}/test/manual"
+
 cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+  -DRENDERING_OUTPUT_DIR="$CURRENT_OUTPUT_DIR" \
   "${CMAKE_FLAGS[@]}"
 cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc)
 
-cmake -S "$ROOT_DIR" -B "$REFERENCE_TEST_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
+# Execute reference rendering in the directory of the current build to ensure we render the same testdata.
+# Just override the fluidsynth binary to use the reference one.
+cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   -DMANUAL_TEST_FLUIDSYNTH="$REF_FLUIDSYNTH" \
+  -DRENDERING_OUTPUT_DIR="$REFERENCE_OUTPUT_DIR" \
   "${CMAKE_FLAGS[@]}"
-cmake --build "$REFERENCE_TEST_BUILD_DIR" --target check_rendering --parallel $(nproc) || true
-
-CURRENT_OUTPUT_DIR="${CURRENT_BUILD_DIR}/test/manual"
-REFERENCE_OUTPUT_DIR="${REFERENCE_TEST_BUILD_DIR}/test/manual"
+cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc)
 
 if [[ ! -d "$CURRENT_OUTPUT_DIR" || ! -d "$REFERENCE_OUTPUT_DIR" ]]; then
   echo "Manual test output directories were not created." >&2
   exit 1
 fi
 
-mapfile -d '' current_files < <(find "$CURRENT_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" \) -print0 | LC_ALL=C sort -z)
-mapfile -d '' reference_files < <(find "$REFERENCE_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" \) -print0 | LC_ALL=C sort -z)
+mapfile -d '' current_files < <(find "$CURRENT_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" -o -name "*.oga" \) -print0 | LC_ALL=C sort -z)
+mapfile -d '' reference_files < <(find "$REFERENCE_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" -o -name "*.oga" \) -print0 | LC_ALL=C sort -z)
 
 if [[ ${#current_files[@]} -eq 0 ]]; then
   echo "No rendered audio files found in ${CURRENT_OUTPUT_DIR}." >&2
