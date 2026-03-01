@@ -18,3 +18,19 @@ To add a unit test just duplicate an existing one, give it a unique name and upd
 
 Execute the tests via `make check`. Unit tests should use the `VintageDreamsWaves-v2.sf2` as test soundfont.
 Use the `TEST_SOUNDFONT` macro to access it.
+
+#### Manual audio regression tests
+
+The manual render suite (`check_rendering`) can be compared against a reference FluidSynth revision using
+`test/run-manual-regression.sh`. The script builds the current checkout and a reference revision, renders
+the audio, and then reports SNR, RMS, and absolute differences using SoX.
+It requires `sox`, `cmake`, and `git`, plus the build dependencies for FluidSynth (including libsndfile).
+
+Example:
+
+```
+REFERENCE_REF=HEAD~1 SNR_MIN=60 RMS_MAX=0.0001 ABS_MAX=0.01 test/run-manual-regression.sh
+```
+
+Additional CMake options can be provided via `REGRESSION_CMAKE_FLAGS`.
+Use `--allow-missing` (or `ALLOW_MISSING=1`) to keep going when file pairs are missing.
