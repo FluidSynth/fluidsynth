@@ -64,8 +64,6 @@ struct fluid_revmodel_lexverb : public _fluid_revmodel_t
     fluid_real_t wet1;
     fluid_real_t wet2;
     fluid_real_t width;
-    float damp_state_left;
-    float damp_state_right;
     fluid_real_t cached_sample_rate;
 
     fluid_reverb_allpass<float, FLUID_REVERB_ALLPASS_SCHROEDER> ap[NUM_OF_AP_SECTS];

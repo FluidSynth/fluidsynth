@@ -32,6 +32,18 @@ static int fluid_lexverb_ms_to_buf_length(float ms, fluid_real_t sample_rate)
     return static_cast<int>(ms * (sample_rate * (1 / 1000.0f)) + 0.5f);
 }
 
+static float fluid_lexverb_lpf(fluid_reverb_delay_damping<float> &filter, float input)
+{
+    filter.buffer = filter.b0 * input + filter.a1 * filter.buffer;
+    return filter.buffer;
+}
+
+static void fluid_lexverb_set_lpf_coeffs(fluid_reverb_delay_damping<float> &filter, float b0)
+{
+    filter.b0 = b0;
+    filter.a1 = 1.0f - b0;
+}
+
 static void fluid_lexverb_setup_blocks(fluid_revmodel_lexverb_t *rev)
 {
     int i;
@@ -43,6 +55,7 @@ static void fluid_lexverb_setup_blocks(fluid_revmodel_lexverb_t *rev)
         rev->ap[i].set_buffer(length);
         rev->ap[i].set_index(1);
         rev->ap[i].set_last_output(0.0f);
+        rev->ap[i].delay.damping.buffer = 0.0f;
     }
 
     for(i = 0; i < NUM_OF_DELAY_SECTS; ++i)
@@ -58,6 +71,7 @@ static void fluid_lexverb_setup_blocks(fluid_revmodel_lexverb_t *rev)
         rev->dl[i].set_buffer(length);
         rev->dl[i].set_positions(1, 1);
         rev->dl[i].set_last_output(0.0f);
+        rev->dl[i].damping.buffer = 0.0f;
     }
 
     rev->reset();
@@ -80,10 +94,16 @@ static void fluid_lexverb_update(fluid_revmodel_lexverb_t *rev)
         FLUID_LOG(FLUID_DBG, "Lexverb delay line %d: length = %d samples", i, length);
         rev->dl[i].set_buffer(length);
     }
+
+    float damp_b0 = 1.0f - static_cast<float>(rev->damp);
+    fluid_lexverb_set_lpf_coeffs(rev->ap[4].delay.damping, damp_b0);
+    fluid_lexverb_set_lpf_coeffs(rev->ap[9].delay.damping, damp_b0);
+    fluid_lexverb_set_lpf_coeffs(rev->dl[0].damping, damp_b0);
+    fluid_lexverb_set_lpf_coeffs(rev->dl[1].damping, damp_b0);
 }
 
 static void fluid_lexverb_process_sample(fluid_revmodel_lexverb_t *rev, float input,
-                                         float *out_left, float *out_right, float *out_damp_state_left, float *out_damp_state_right)
+                                         float *out_left, float *out_right)
 {
     fluid_reverb_allpass<float> *ap = rev->ap;
     fluid_reverb_delay_line<float> *dl = rev->dl;
@@ -91,27 +111,21 @@ static void fluid_lexverb_process_sample(fluid_revmodel_lexverb_t *rev, float in
 
     output = ap[0].process(input * LEX_TRIM); // technically, the left input sample should be here
     output = ap[1].process(output);
-    output = ap[2].process(output + dl[1].process(ap[9].get_last_output()) * dl[1].get_coefficient());
+    float left_feedback = fluid_lexverb_lpf(ap[9].delay.damping, ap[9].get_last_output());
+    float left_cross = fluid_lexverb_lpf(dl[1].damping, dl[1].process(left_feedback));
+    output = ap[2].process(output + left_cross * dl[1].get_coefficient());
     output = ap[3].process(output);
     output = ap[4].process(output);
     *out_left = output;
 
     output = ap[5].process(input * LEX_TRIM); // technically, the right input sample should be here
     output = ap[6].process(output);
-    output = ap[7].process(output + dl[0].process(ap[4].get_last_output()) * dl[0].get_coefficient());
+    float right_feedback = fluid_lexverb_lpf(ap[4].delay.damping, ap[4].get_last_output());
+    float right_cross = fluid_lexverb_lpf(dl[0].damping, dl[0].process(right_feedback));
+    output = ap[7].process(output + right_cross * dl[0].get_coefficient());
     output = ap[8].process(output);
     output = ap[9].process(output);
     *out_right = output;
-
-    if(rev->damp > 0.0f)
-    {
-        float damp = (float)rev->damp;
-        *out_left = *out_left * (1.0f - damp) + *out_damp_state_left * damp;
-        *out_right = *out_right * (1.0f - damp) + *out_damp_state_right * damp;
-    }
-
-    *out_damp_state_left = *out_left;
-    *out_damp_state_right = *out_right;
 }
 
 fluid_revmodel_lexverb::fluid_revmodel_lexverb(fluid_real_t sample_rate)
@@ -121,8 +135,6 @@ fluid_revmodel_lexverb::fluid_revmodel_lexverb(fluid_real_t sample_rate)
       wet1(0.0f),
       wet2(0.0f),
       width(0.0f),
-      damp_state_left(0.0f),
-      damp_state_right(0.0f),
       cached_sample_rate(sample_rate)
 {
     if(sample_rate <= 0.0f)
@@ -151,15 +163,13 @@ void fluid_revmodel_lexverb::process(const fluid_real_t *in, fluid_real_t *left_
                                      fluid_real_t *right_out)
 {
     int i;
-    auto damp_state_left = this->damp_state_left;
-    auto damp_state_right = this->damp_state_right;
 
     for(i = 0; i < FLUID_BUFSIZE; ++i)
     {
         float left = 0.0f;
         float right = 0.0f;
 
-        fluid_lexverb_process_sample(this, (float)in[i], &left, &right, &damp_state_left, &damp_state_right);
+        fluid_lexverb_process_sample(this, (float)in[i], &left, &right);
 
         fluid_real_t out_left = left * wet1 + right * wet2;
         fluid_real_t out_right = right * wet1 + left * wet2;
@@ -175,9 +185,6 @@ void fluid_revmodel_lexverb::process(const fluid_real_t *in, fluid_real_t *left_
             right_out[i] = out_right;
         }
     }
-
-    this->damp_state_left = damp_state_left;
-    this->damp_state_right = damp_state_right;
 }
 
 void fluid_revmodel_lexverb::reset()
@@ -192,6 +199,7 @@ void fluid_revmodel_lexverb::reset()
             this->ap[i].set_index(1);
         }
         this->ap[i].set_last_output(0.0f);
+        this->ap[i].delay.damping.buffer = 0.0f;
     }
 
     for(i = 0; i < NUM_OF_DELAY_SECTS; ++i)
@@ -202,10 +210,8 @@ void fluid_revmodel_lexverb::reset()
             this->dl[i].set_positions(1, 1);
         }
         this->dl[i].set_last_output(0.0f);
+        this->dl[i].damping.buffer = 0.0f;
     }
-
-    this->damp_state_left = 0.0f;
-    this->damp_state_right = 0.0f;
 }
 
 void fluid_revmodel_lexverb::set(int set, fluid_real_t roomsize, fluid_real_t damping,
