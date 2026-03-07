@@ -57,7 +57,7 @@ jobs:
         ls -la publish
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact_name.outputs.name }}-iOS
         path: publish/
@@ -73,7 +73,7 @@ jobs:
     name: 🚀 Publish Release Artifacts
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         path: ${{ needs.ios-build.outputs.artifact_name }}-iOS
         pattern: ${{ needs.ios-build.outputs.artifact_name }}-iOS
