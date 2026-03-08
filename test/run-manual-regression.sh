@@ -6,7 +6,7 @@ usage() {
 Usage: run-manual-regression.sh [options]
 
 Options:
-  --reference-ref <ref>   Git ref (commit/tag) for reference build (default: HEAD~1)
+  --ref <ref>             Git ref (commit/tag) for reference build (default: HEAD~1)
   --snr-min <value>       Minimum SNR threshold (default: 60)
   --rms-max <value>       Maximum RMS difference (default: 0.0001)
   --abs-max <value>       Maximum absolute difference (default: 0.01)
@@ -17,11 +17,11 @@ Options:
   --help                  Show this help message
 
 Environment variables:
-  REFERENCE_REF, SNR_MIN, RMS_MAX, ABS_MAX, BUILD_TYPE, REGRESSION_CMAKE_FLAGS, ALLOW_MISSING
+  REF, SNR_MIN, RMS_MAX, ABS_MAX, BUILD_TYPE, REGRESSION_CMAKE_FLAGS, ALLOW_MISSING
 USAGE
 }
 
-REFERENCE_REF=${REFERENCE_REF:-HEAD~1}
+REF=${REF:-HEAD~1}
 SNR_MIN=${SNR_MIN:-60}
 RMS_MAX=${RMS_MAX:-0.0001}
 ABS_MAX=${ABS_MAX:-0.01}
@@ -32,8 +32,8 @@ KEEP_WORKTREE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --reference-ref)
-      REFERENCE_REF="$2"
+    --ref)
+      REF="$2"
       shift 2
       ;;
     --snr-min)
@@ -97,8 +97,8 @@ if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! git -C "$ROOT_DIR" rev-parse --verify "$REFERENCE_REF" >/dev/null 2>&1; then
-  echo "Reference ref ${REFERENCE_REF} not found. Fetch full history or set REFERENCE_REF." >&2
+if ! git -C "$ROOT_DIR" rev-parse --verify "$REF" >/dev/null 2>&1; then
+  echo "Reference ref ${REF} not found. Fetch full history or set REF." >&2
   exit 1
 fi
 
@@ -127,8 +127,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Checking out reference revision ${REFERENCE_REF}..."
-git -C "$ROOT_DIR" worktree add --detach "$REF_WORKTREE" "$REFERENCE_REF" >/dev/null
+echo "Checking out reference revision ${REF}..."
+git -C "$ROOT_DIR" worktree add --detach "$REF_WORKTREE" "$REF" >/dev/null
 git -C "$REF_WORKTREE" submodule update --init --recursive
 
 rm -rf "$REF_BUILD_DIR"
