@@ -126,15 +126,21 @@ endmacro ( ADD_FLUID_DEMO )
 #   add_render_job(agg outfile workdir
 #       <args for fluidsynth, e.g. -R 0 -C 0 -g 0.6 MIDI SF2>
 #   )
-function(add_render_job aggregate_target outfile workdir)
-    string(SHA1 _job_hash "${aggregate_target}|${outfile}|${workdir}")
+function(add_render_job aggregate_target outfile)
+    # We reuse the work dir of the aggregate target to avoid having to specify it for each rendering job.
+    get_target_property(WD ${aggregate_target} WORKING_DIRECTORY)
+    if(NOT WD)
+        message(FATAL_ERROR "Aggregate target ${aggregate_target} must have a WORKING_DIRECTORY property set, explicitly via set_target_properties!")
+    endif()
+
+    string(SHA1 _job_hash "${aggregate_target}|${outfile}|${WD}")
     string(SUBSTRING "${_job_hash}" 0 12 _job_hash12)
     set(job_target "${aggregate_target}__${_job_hash12}")
 
     add_custom_command(
         OUTPUT "${outfile}"
         COMMAND ${MANUAL_TEST_FLUIDSYNTH} -F "${outfile}" ${ARGN}
-        WORKING_DIRECTORY "${workdir}"
+        WORKING_DIRECTORY "${WD}"
         VERBATIM
         COMMENT "Rendering ${aggregate_target} -> ${outfile}"
     )
