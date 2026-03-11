@@ -68,21 +68,27 @@ if(NOT DEFINED GENERAL_USER_GS2)
     set ( GENERAL_USER_GS2 "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2/GeneralUser-GS/GeneralUser-GS.sf2" )
 endif()
 
-set(IIR_FILTER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/iir_filter")
-set(AWE32_NRPN_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/awe32_nrpn")
-set(SFSPEC_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/SoundFont-Spec-Test")
-set(GUGDEMO_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/sf2/GeneralUser-GS")
-set(PORTAMENTO_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/portamento")
-set(REVERB_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/reverb")
-set(EXCL_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/exclusive_class")
-set(DSPINTERP_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dsp_interp")
-set(DYNSAM_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/dynamic-sample-loading")
-set(BANKSELECT_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/midi-bank-select")
-set(STACKEDSF_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/stacked_sf2")
-set(SFE_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/sfe")
-set(RPN_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/rpn")
-set(SYSEX_GS_DT1 "${CMAKE_CURRENT_BINARY_DIR}/manual/sysex/gs_dt1")
-set(LIMITER_RENDER_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual/limiter")
+
+set(RENDERING_OUTPUT_DIR "" CACHE FILEPATH "Directory to store rendered audio files of manual regression tests")
+if (NOT RENDERING_OUTPUT_DIR)
+    set(RENDERING_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual")
+endif()
+
+set(IIR_FILTER_RENDER_DIR "${RENDERING_OUTPUT_DIR}/iir_filter")
+set(AWE32_NRPN_RENDER_DIR "${RENDERING_OUTPUT_DIR}/awe32_nrpn")
+set(SFSPEC_RENDER_DIR "${RENDERING_OUTPUT_DIR}/SoundFont-Spec-Test")
+set(GUGDEMO_RENDER_DIR "${RENDERING_OUTPUT_DIR}/sf2/GeneralUser-GS")
+set(PORTAMENTO_RENDER_DIR "${RENDERING_OUTPUT_DIR}/portamento")
+set(REVERB_RENDER_DIR "${RENDERING_OUTPUT_DIR}/reverb")
+set(EXCL_RENDER_DIR "${RENDERING_OUTPUT_DIR}/exclusive_class")
+set(DSPINTERP_RENDER_DIR "${RENDERING_OUTPUT_DIR}/dsp_interp")
+set(DYNSAM_RENDER_DIR "${RENDERING_OUTPUT_DIR}/dynamic-sample-loading")
+set(BANKSELECT_RENDER_DIR "${RENDERING_OUTPUT_DIR}/midi-bank-select")
+set(STACKEDSF_RENDER_DIR "${RENDERING_OUTPUT_DIR}/stacked_sf2")
+set(SFE_RENDER_DIR "${RENDERING_OUTPUT_DIR}/sfe")
+set(RPN_RENDER_DIR "${RENDERING_OUTPUT_DIR}/rpn")
+set(SYSEX_GS_DT1 "${RENDERING_OUTPUT_DIR}/sysex/gs_dt1")
+set(LIMITER_RENDER_DIR "${RENDERING_OUTPUT_DIR}/limiter")
 
 if(LIBSNDFILE_SUPPORT)
     set(FEXT "wav")
@@ -102,14 +108,14 @@ endif()
 add_custom_target(check_rendering)
 add_custom_target(check_manual)
 
-add_custom_target(create_iir_dir
+add_custom_target(create_out_dir
     COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR} ${SFE_RENDER_DIR} ${SYSEX_GS_DT1} ${RPN_RENDER_DIR} ${LIMITER_RENDER_DIR}
     VERBATIM)
 
 add_custom_target(render1415
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1415_the-nervous-filter.${FEXT} "The Nervous Filter trimmed.mid" ${GENERAL_USER_GS2}
     COMMENT "Rendering testfile of issue 1415"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1415_the-nervous-filter/
     VERBATIM
 )
@@ -117,7 +123,7 @@ add_custom_target(render1415
 add_custom_target(render1417
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1417_filter-envelope-noise.${FEXT} filter-envelope-noise.mid ${GENERAL_USER_GS2}
     COMMENT "Rendering testfile of issue 1417"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1417_filter-envelope-noise/
     VERBATIM
 )
@@ -125,7 +131,7 @@ add_custom_target(render1417
 add_custom_target(render1424
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1 -F ${IIR_FILTER_RENDER_DIR}/1424_clicks-on-ModEnv-FilterFc-change.${FEXT} 1424.mid echo_drops.sf2
     COMMENT "Rendering testfile of issue 1424"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1424_clicks-on-ModEnv-FilterFc-change/
     VERBATIM
 )
@@ -133,7 +139,7 @@ add_custom_target(render1424
 add_custom_target(render1427
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 5 -F ${IIR_FILTER_RENDER_DIR}/1427_high-Q-note-cutoff.${FEXT} high_Q_note_cutoff_test.mid high_Q_note_cutoff_test.sf2
     COMMENT "Rendering testfile of issue 1427"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1427_high-Q-note-cutoff/
     VERBATIM
 )
@@ -141,7 +147,7 @@ add_custom_target(render1427
 add_custom_target(renderRealtimeIIR
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.5 -niq "high poly audio breakup.mid" "high poly preset test.sf2" # -F "${IIR_FILTER_RENDER_DIR}/1481 high poly audio breakup.${FEXT}"
     COMMENT "Realtime-Rendering testfile of issue 1481"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1481_realtime-playback/
     VERBATIM
 )
@@ -149,7 +155,7 @@ add_custom_target(renderRealtimeIIR
 add_custom_target(render1481
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.8 -F ${IIR_FILTER_RENDER_DIR}/1481_cutoff-resolution.${FEXT} "filter resolution test.mid" "filter resolution test.sf2"
     COMMENT "Rendering testfile of issue 1481"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/iir_filter/1481_cutoff-resolution/
     VERBATIM
 )
@@ -157,25 +163,36 @@ add_custom_target(render1481
 add_custom_target(renderAltitude
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 1 -g 0.5 -f fluidsynth.cfg -F ${AWE32_NRPN_RENDER_DIR}/Altitude.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Altitude.sf2 Altitude.mid
     COMMENT "Rendering AWE32 NRPN test file Altitude.mid"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Altitude/
     VERBATIM
 )
 
 add_custom_target(renderFilter
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.5 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter GenUserGS2.sf2.${FEXT}" "The Nervous Filter.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.5 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter 1mgm.sf2.${FEXT}" "The Nervous Filter.mid" "1mgm.sf2"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.5 -F "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter GM_Roland.sf2.${FEXT}" "The Nervous Filter.mid" "GM_Roland.sf2"
     COMMENT "Rendering AWE32 NRPN test file The Nervous Filter.mid"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Filter/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
 )
+set_target_properties(renderFilter PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Filter/"
+)
+
+set(_filter_soundfonts
+    ${GENERAL_USER_GS2}
+    "1mgm.sf2"
+    "GM_Roland.sf2"
+)
+foreach(_sf IN LISTS _filter_soundfonts)
+    get_filename_component(_sf_basename ${_sf} NAME_WE)
+    add_render_job(renderFilter
+        "${AWE32_NRPN_RENDER_DIR}/The Nervous Filter ${_sf_basename}.${FEXT}"
+        -R 0 -C 0 -g 0.5 "The Nervous Filter.mid" "${_sf}"
+    )
+endforeach()
 
 add_custom_target(renderUplift
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${AWE32_NRPN_RENDER_DIR}/Uplift-fixed.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
     COMMENT "Rendering AWE32 NRPN test file Uplift.mid"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/
     VERBATIM
 )
@@ -183,165 +200,271 @@ add_custom_target(renderUplift
 add_custom_target(renderChrisNRPN
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.8 -F ${AWE32_NRPN_RENDER_DIR}/filter_NRPN_test.${FEXT} "filter_NRPN_test.mid" "filter_NRPN_test.sf2"
     COMMENT "Rendering Chris' AWE32 NRPN filter test file"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/NRPN test - filter/"
 )
 
 add_custom_target(renderHybridCol
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 1 -g 0.7 -F "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage NRPN.${FEXT}" "HYBRID Collage NRPN.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 1 -g 1.5 -F "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage wah-guitar.${FEXT}" "HYBRID Collage wah-guitar.mid" ${GENERAL_USER_GS2}
     COMMENT "Rendering Christian's HYBRID Collage"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/HYBRID.Collage/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderHybridCol PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/HYBRID.Collage/"
+)
+add_render_job(renderHybridCol
+    "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage NRPN.${FEXT}"
+    -R 1 -C 1 -g 0.7 "HYBRID Collage NRPN.mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderHybridCol
+    "${AWE32_NRPN_RENDER_DIR}/HYBRID Collage wah-guitar.${FEXT}"
+    -R 1 -C 1 -g 0.7 "HYBRID Collage wah-guitar.mid" ${GENERAL_USER_GS2}
 )
 
 add_custom_target(renderPortamento
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o "synth.portamento-time=linear" -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4_linear.${FEXT}" "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}" "1TOWOW.MID" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/3 - Turn Up, Strut In, Chill Out (XG).${FEXT}" "3 - Turn Up, Strut In, Chill Out (XG).mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.7 -F "${PORTAMENTO_RENDER_DIR}/6 - Galactic Invasion (XG).${FEXT}" "6 - Galactic Invasion (XG).mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/Descent_Game08.${FEXT}" "Descent_Game08.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o "synth.portamento-time=linear" -R 0 -C 0 -g 0.5 -F "${PORTAMENTO_RENDER_DIR}/Descent_Game08_linear.${FEXT}" "Descent_Game08.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${PORTAMENTO_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}" ${GENERAL_USER_GS2} "MM6_-_MrX2010XG.mid"
     COMMENT "Rendering Portamento tests"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/portamento/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
 )
+set_target_properties(renderPortamento PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/portamento/"
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4.${FEXT}"
+    -R 0 -C 0 -g 0.6 "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/1TOWOW_reduced_to_A3_C4_linear.${FEXT}"
+    -o "synth.portamento-time=linear" -R 0 -C 0 -g 0.6 "1TOWOW_reduced_to_A3_C4.mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/1TOWOW.${FEXT}"
+    -R 0 -C 0 -g 0.7 "1TOWOW.MID" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/3 - Turn Up, Strut In, Chill Out (XG).${FEXT}"
+    -R 0 -C 0 -g 0.7 "3 - Turn Up, Strut In, Chill Out (XG).mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/6 - Galactic Invasion (XG).${FEXT}"
+    -R 0 -C 0 -g 0.7 "6 - Galactic Invasion (XG).mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/Descent_Game08.${FEXT}"
+    -R 0 -C 0 -g 0.5 "Descent_Game08.mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/Descent_Game08_linear.${FEXT}"
+    -o "synth.portamento-time=linear" -R 0 -C 0 -g 0.5 "Descent_Game08.mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderPortamento
+    "${PORTAMENTO_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}"
+    -R 0 -C 0 -g 0.6 "MM6_-_MrX2010XG.mid" ${GENERAL_USER_GS2}
+)
+
 
 add_custom_target(renderSfSpecTest
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 1 -g 0.5 -F ${SFSPEC_RENDER_DIR}/sf_spec_test.${FEXT} sf_spec_test.mid sf_spec_test.sf2
     COMMENT "Rendering Christian Collins' SF2 spec test"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/
     VERBATIM
 )
 
-add_custom_target(render1455
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.0 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_000.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.5 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_000.5.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=1.0 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_001.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=5.0 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_005.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=10  -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_010.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=50  -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_050.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=100 -F ${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_100.0.${FEXT} mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
-    COMMENT "Rendering Christian Collins' reverb test issue 1455"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
-    VERBATIM
+set(_1455_rev_width
+    "0.0"
+    "0.5"
+    "1.0"
+    "5.0"
+    "10.0"
+    "50.0"
+    "100.0"
 )
+add_custom_target(render1455
+    COMMENT "Rendering Christian Collins' reverb test issue 1455"
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(render1455 PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/"
+)
+foreach(_w IN LISTS _1455_rev_width)
+    add_render_job(render1455
+        "${REVERB_RENDER_DIR}/mrbumpys_rev_width_test_${_w}.${FEXT}"
+        -R 1 -C 0 -g 0.5 -o "synth.reverb.width=${_w}" "mrbumpys_rev_width_test.mid" ${GENERAL_USER_GS2}
+    )
+endforeach()
 
 add_custom_target(render1496
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.0 -F ${REVERB_RENDER_DIR}/1496.${FEXT} mrbumpys_rev_width_test.mid 1496.sf2
     COMMENT "Rendering reverb test issue 1496"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
     VERBATIM
 )
 
 set(DK64SF2 "../sf2/ANMP-data/soundfonts/N64/DK64.sf2")
 add_custom_target(renderDK64JJU
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.0 -F ${REVERB_RENDER_DIR}/DK64_sparse04_000.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=0.5 -F ${REVERB_RENDER_DIR}/DK64_sparse04_000.5.${FEXT} DK64_sparse04.mid ${DK64SF2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=1.0 -F ${REVERB_RENDER_DIR}/DK64_sparse04_001.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=5.0 -F ${REVERB_RENDER_DIR}/DK64_sparse04_005.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=10  -F ${REVERB_RENDER_DIR}/DK64_sparse04_010.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=50  -F ${REVERB_RENDER_DIR}/DK64_sparse04_050.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 1 -C 0 -g 0.5 -o synth.reverb.width=100 -F ${REVERB_RENDER_DIR}/DK64_sparse04_100.0.${FEXT} DK64_sparse04.mid ${DK64SF2}
     COMMENT "Praise Grant Kirkhope!"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderDK64JJU PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/"
+)
+foreach(_w IN LISTS _1455_rev_width)
+    add_render_job(renderDK64JJU
+        "${REVERB_RENDER_DIR}/DK64_sparse04_${_w}.${FEXT}"
+        -R 1 -C 0 -g 0.5 -o "synth.reverb.width=${_w}" DK64_sparse04.mid ${DK64SF2}
+    )
+endforeach()
+
+
+set(_note_cut
+    "0"
+    "1"
+    "2"
+)
+add_custom_target(renderExcl
+    COMMENT "Rendering exclusive class cutoff tests"
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderExcl PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/"
 )
 
-add_custom_target(renderExcl
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/exclusive class cutoff speed.${FEXT}" "exclusive class cutoff speed.mid" "exclusive class cutoff speed.sf2"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.4 -o synth.note-cut=0 -F "${EXCL_RENDER_DIR}/MIDInotecut0.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.4 -o synth.note-cut=1 -F "${EXCL_RENDER_DIR}/MIDInotecut1.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.4 -o synth.note-cut=2 -F "${EXCL_RENDER_DIR}/MIDInotecut2.${FEXT}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/percussion note cutoff.${FEXT}" "percussion note cutoff.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.4 -F "${EXCL_RENDER_DIR}/percussion-test.${FEXT}" "percussion-test.mid" ${GENERAL_USER_GS2}
-    COMMENT "Rendering exclusive class cutoff tests"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
-    VERBATIM
+foreach(_n IN LISTS _note_cut)
+    add_render_job(renderExcl
+        "${EXCL_RENDER_DIR}/MIDInotecut${_n}.${FEXT}"
+        -R 0 -C 0 -g 1.4 -o "synth.note-cut=${_n}" "MIDInotecut.mid" ${GENERAL_USER_GS2}
+    )
+endforeach()
+add_render_job(renderExcl
+    "${EXCL_RENDER_DIR}/exclusive class cutoff speed.${FEXT}"
+    -R 0 -C 0 -g 1.4 "exclusive class cutoff speed.mid" "exclusive class cutoff speed.sf2"
 )
+add_render_job(renderExcl
+    "${EXCL_RENDER_DIR}/percussion note cutoff.${FEXT}"
+    -R 0 -C 0 -g 1.4  "percussion note cutoff.mid" ${GENERAL_USER_GS2}
+)
+add_render_job(renderExcl
+    "${EXCL_RENDER_DIR}/percussion-test.${FEXT}"
+    -R 0 -C 0 -g 1.4 "percussion-test.mid" ${GENERAL_USER_GS2}
+)
+
 
 add_custom_target(rendere1m1
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.note-cut=0 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut0.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.note-cut=0 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut0.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.note-cut=1 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut1.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.note-cut=1 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut1.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.note-cut=2 -F "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut2.${FEXT}" "e1m1.mid" ${GENERAL_USER_GS2}
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.note-cut=2 -F "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut2.${FEXT}" "e1m1.mid" "../sf2/gzdoom.sf2"
     COMMENT "Rendering Doom E1M1 with note-cut 0,1,2"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
 )
+set_target_properties(rendere1m1 PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/exclusive_class/"
+)
+foreach(_n IN LISTS _note_cut)
+    add_render_job(rendere1m1
+        "${EXCL_RENDER_DIR}/e1m1_GeneralUser2_notecut${_n}.${FEXT}"
+        -R 0 -C 0 -g 0.6 -o "synth.note-cut=${_n}" "e1m1.mid" ${GENERAL_USER_GS2}
+    )
+    add_render_job(rendere1m1
+        "${EXCL_RENDER_DIR}/e1m1_gzdoom_notecut${_n}.${FEXT}"
+        -R 0 -C 0 -g 0.6 -o "synth.note-cut=${_n}" "e1m1.mid" "../sf2/gzdoom.sf2"
+    )
+endforeach()
 
 add_custom_target(renderdspInterp
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${DSPINTERP_RENDER_DIR}/sample interpolation test.${FEXT}" "sample interpolation test.mid" "sample interpolation test.sf2"
     COMMENT "Rendering Interpolation examples"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dsp_interp/
     VERBATIM
 )
 
 add_custom_target(render1484
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/DrTebz_dynamic-sample-loading_on.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/DrTebz_dynamic-sample-loading_off.${FEXT}" "dynamic-sample-loading_test.mid" "DrTebz.sf2"
     COMMENT "Rendering dynamic sample loading test"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(render1484 PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/"
+)
+add_render_job(render1484
+    "${DYNSAM_RENDER_DIR}/DrTebz_dynamic-sample-loading_on.${FEXT}"
+    -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 "dynamic-sample-loading_test.mid" "DrTebz.sf2"
+)
+add_render_job(render1484
+    "${DYNSAM_RENDER_DIR}/DrTebz_dynamic-sample-loading_off.${FEXT}"
+    -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 "dynamic-sample-loading_test.mid" "DrTebz.sf2"
 )
 
 add_custom_target(render1505
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_on.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 -F "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_off.${FEXT}" ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
     COMMENT "Rendering dynamic sample loading test"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(render1505 PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/dynamic-sample-loading/"
+)
+add_render_job(render1505
+    "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_on.${FEXT}"
+    -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=1 ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
+)
+add_render_job(render1505
+    "${DYNSAM_RENDER_DIR}/ran_dynamic-sample-loading_off.${FEXT}"
+    -R 0 -C 0 -g 0.6 -o synth.dynamic-sample-loading=0 ${GENERAL_USER_GS2} "ran.dls" "ran.mid"
 )
 
+set(_gs_demos
+    "Bond"
+    "Breakout"
+    "Dance"
+    "Earth Day - by Richard Audd (fixed)"
+    "J-cycle"
+    "Jump!"
+    "Santa Claus is Comin' to Town"
+    "The HYBRID Collage (v2.0) - by S. Christian Collins"
+    "Umi no Mieru Machi"
+)
 add_custom_target(renderGeneralUserDemo
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Bond.${FEXT}" ${GENERAL_USER_GS2} "Bond.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Breakout.${FEXT}" ${GENERAL_USER_GS2} "Breakout.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Dance.${FEXT}" ${GENERAL_USER_GS2} "Dance.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Earth Day - by Richard Audd (fixed).${FEXT}" ${GENERAL_USER_GS2} "Earth Day - by Richard Audd (fixed).mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/J-cycle.${FEXT}" ${GENERAL_USER_GS2} "J-cycle.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Jump!.${FEXT}" ${GENERAL_USER_GS2} "Jump!.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Santa Claus is Comin' to Town.${FEXT}" ${GENERAL_USER_GS2} "Santa Claus is Comin' to Town.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/The HYBRID Collage (v2.0) - by S. Christian Collins.${FEXT}" ${GENERAL_USER_GS2} "The HYBRID Collage (v2.0) - by S. Christian Collins.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${GUGDEMO_RENDER_DIR}/Umi no Mieru Machi.${FEXT}" ${GENERAL_USER_GS2} "Umi no Mieru Machi.mid"
     COMMENT "Rendering General User MIDI Demos"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2/GeneralUser-GS/demo MIDIs"
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
 )
+set_target_properties(renderGeneralUserDemo PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2/GeneralUser-GS/demo MIDIs/"
+)
+foreach(_demo IN LISTS _gs_demos)
+    add_render_job(renderGeneralUserDemo
+        "${GUGDEMO_RENDER_DIR}/${_demo}.${FEXT}"
+        -R 0 -C 0 -g 0.6 "${_demo}.mid" ${GENERAL_USER_GS2}
+    )
+endforeach()
 
+set(_bankselect_demos
+    "Dance_GM"
+    "Dance_GM2"
+    "Dance_GS"
+    "Dance_original"
+    "Dance_XG"
+)
 add_custom_target(renderBankSelect
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_GM.${FEXT}" ${GENERAL_USER_GS2} "Dance_GM.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_GM2.${FEXT}" ${GENERAL_USER_GS2} "Dance_GM2.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_GS.${FEXT}" ${GENERAL_USER_GS2} "Dance_GS.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_original.${FEXT}" ${GENERAL_USER_GS2} "Dance_original.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${BANKSELECT_RENDER_DIR}/Dance_XG.${FEXT}" ${GENERAL_USER_GS2} "Dance_XG.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o "synth.midi-bank-select=xg" -g 0.6 -F "${BANKSELECT_RENDER_DIR}/9 - On 'Til Morning.${FEXT}" ${GENERAL_USER_GS2} "issue-1524/9 - On 'Til Morning.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -g 0.6 -F "${BANKSELECT_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}" "issue-1524/Default.sf2" "issue-1524/MM6_-_MrX2010XG.mid"
     COMMENT "Rendering MIDI Bank selection tests"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderBankSelect PROPERTIES
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/midi-bank-select"
-    VERBATIM
+)
+foreach(_demo IN LISTS _bankselect_demos)
+    add_render_job(renderBankSelect
+        "${BANKSELECT_RENDER_DIR}/${_demo}.${FEXT}"
+        -R 0 -C 0 -g 0.6 "${_demo}.mid" ${GENERAL_USER_GS2}
+    )
+endforeach()
+add_render_job(renderBankSelect
+    "${BANKSELECT_RENDER_DIR}/9 - On 'Til Morning.${FEXT}"
+    -o "synth.midi-bank-select=xg" -g 0.6 ${GENERAL_USER_GS2} "issue-1524/9 - On 'Til Morning.mid"
+)
+add_render_job(renderBankSelect
+    "${BANKSELECT_RENDER_DIR}/MM6_-_MrX2010XG.${FEXT}"
+    -g 0.6 "issue-1524/Default.sf2" "issue-1524/MM6_-_MrX2010XG.mid"
 )
 
 add_custom_target(renderDMOD
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.2 -F "${SFE_RENDER_DIR}/DMOD.${FEXT}" DMOD.sf2 "test-rpn-00-00-pitch-bend-range.mid"
     COMMENT "Rendering Test MIDI for DMOD SF2"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sfe/dmod"
     VERBATIM
 )
@@ -349,41 +472,75 @@ add_custom_target(renderDMOD
 add_custom_target(renderRPN
     COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.1 -F "${RPN_RENDER_DIR}/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid.${FEXT}" ${GENERAL_USER_GS2} "FluidSynth.pitch.bend.fine.tuning.bug.demonstration/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid"
     COMMENT "Rendering Test MIDI for RPNs"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/rpn/"
     VERBATIM
 )
 
-add_custom_target(renderGSDT1
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${SYSEX_GS_DT1}/wikipedia_MIDI_sample_gstest.${FEXT}" ${GENERAL_USER_GS2} "wikipedia_MIDI_sample_gstest.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${SYSEX_GS_DT1}/D_DM2TTL - GS Drums.${FEXT}" ${GENERAL_USER_GS2} "D_DM2TTL - GS Drums.mid"
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${SYSEX_GS_DT1}/GS Drums Bank Select and Program Change interaction on MSGS.${FEXT}" ${GENERAL_USER_GS2} "GS Drums Bank Select and Program Change interaction on MSGS.mid"
-    COMMENT "Rendering Test MIDIs for SysEx GS DT1"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sysex/gs_dt1"
-    VERBATIM
+set(_gsdt1_demos
+    "wikipedia_MIDI_sample_gstest"
+    "D_DM2TTL - GS Drums"
+    "GS Drums Bank Select and Program Change interaction on MSGS"
 )
+add_custom_target(renderGSDT1
+    COMMENT "Rendering Test MIDIs for SysEx GS DT1"
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderGSDT1 PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sysex/gs_dt1"
+)
+foreach(_demo IN LISTS _gsdt1_demos)
+    add_render_job(renderGSDT1
+        "${SYSEX_GS_DT1}/${_demo}.${FEXT}"
+        -R 0 -C 0 -g 0.6 "${_demo}.mid" ${GENERAL_USER_GS2}
+    )
+endforeach()
 
 add_custom_target(renderLimiterTests
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_default.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.attack=1 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a1.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.attack=50 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a50.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.release=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_r0.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.attack=1 -o synth.limiter.release=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a1_r0.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.attack=1 -o synth.limiter.release=250 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_a1_r250.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_lim06.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -o synth.limiter.hold=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg -F ${LIMITER_RENDER_DIR}/Uplift-limiter_h0_lim06.${FEXT} ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
     COMMENT "Rendering Limiter Tests"
-    DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/
-    VERBATIM
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderLimiterTests PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/awe32_nrpn/Uplift/"
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_default.${FEXT}"
+    -o synth.limiter.active=1 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_a1.${FEXT}"
+     -o synth.limiter.active=1 -o synth.limiter.attack=1 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_a50.${FEXT}"
+    -o synth.limiter.active=1 -o synth.limiter.attack=50 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_r0.${FEXT}"
+    -o synth.limiter.active=1 -o synth.limiter.release=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_a1_r0.${FEXT}"
+    -o synth.limiter.active=1 -o synth.limiter.attack=1 -o synth.limiter.release=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_a1_r250.${FEXT}"
+    -o synth.limiter.active=1 -o synth.limiter.attack=1 -o synth.limiter.release=250 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_lim06.${FEXT}"
+    -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
+)
+add_render_job(renderLimiterTests
+    "${LIMITER_RENDER_DIR}/Uplift-limiter_h0_lim06.${FEXT}"
+    -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -o synth.limiter.hold=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
 )
 
 if ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
     add_custom_target(renderStreetwise
         COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${STACKEDSF_RENDER_DIR}/Streetwise.${FEXT}" "Streetwise.mid" ${GENERAL_USER_GS2} "Streetwise.dls"
         COMMENT "Rendering testcase for stacked soundfonts"
-        DEPENDS ${MANUAL_TEST_DEPENDS} create_iir_dir
+        DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/stacked_sf2/Streetwise/
         VERBATIM
     )
