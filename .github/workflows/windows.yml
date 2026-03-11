@@ -14,8 +14,8 @@ on:
       - '.github/workflows/rendering-regression.yml'
       - '.cirrus.yml'
       - 'README.md'
-  release:
-    types: [published]
+    tags:
+      - 'v*'
 
 env:
   BUILD_TYPE: RelWithDebInfo
@@ -189,14 +189,14 @@ jobs:
       shell: bash
       id: artifact_name
       run: |
-        if [[ "${{ github.event_name }}" == "release" ]]; then
-          echo "name=fluidsynth-${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          echo "name=fluidsynth-${{ github.ref_name }}" >> $GITHUB_OUTPUT
         else
           echo "name=fluidsynth-${{ github.run_id }}" >> $GITHUB_OUTPUT
         fi
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact_name.outputs.name }}-win10-${{ matrix.platformAlt }}-${{ matrix.osal }}
         path: ${{ env.INSTALL_LOCATION }}
@@ -479,7 +479,7 @@ jobs:
         fi
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: CI-${{ github.run_id }}-mingw-${{ matrix.artifactPrefix }}-${{ matrix.platform }}
         path: ${{ env.INSTALL_LOCATION }}
@@ -550,7 +550,7 @@ jobs:
         fi
 
     - name: '${{ matrix.icon }} Upload Artifacts'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: CI-${{ github.run_id }}-msys2-${{matrix.sys}}-${{matrix.osal}}
         path: ${{env.INSTALL_LOCATION}}
@@ -566,7 +566,7 @@ jobs:
     name: 🧪 Acceptance Test
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         path: artifacts
         pattern: fluidsynth-*
@@ -584,15 +584,19 @@ jobs:
 
   # Publish artifacts to GitHub releases (only on release events)
   publish-release:
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.ref_type == 'tag'
     needs:
       - acceptance-test
       - msvc-build
     runs-on: ubuntu-latest
     name: 🚀 Publish Release Artifacts
     steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
     - name: Download all artifacts
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         path: artifacts
         pattern: fluidsynth-*
@@ -608,17 +612,17 @@ jobs:
         done
         ls -la *.zip
 
-    - name: Upload release assets
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          artifacts/*.zip
+    - name: Upload assets to matching Release (draft or published)
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        tag="${GITHUB_REF_NAME}"
+        gh release upload "$tag" artifacts/*.zip --clobber
 
   # Create announcement PR in website repository  
   announce-release:
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.ref_type == 'tag'
     needs: [publish-release]
     runs-on: ubuntu-22.04
     name: 📢 Announce Release
@@ -630,8 +634,7 @@ jobs:
       - name: Generate HTML Release Announcement
         run: |
           set -e
-          TAG_NAME="${{ github.event.release.tag_name }}"
-          RELEASE_NAME="${{ github.event.release.name }}"
+          TAG_NAME="${{ github.ref_name }}"
           VERSION="${TAG_NAME#v}"
           DATE="$(date +%Y-%m-%d)"
           FILENAME="${DATE}-released-fluidsynth-${VERSION//./-}.md"
@@ -656,6 +659,6 @@ jobs:
           target-folder: _posts/
           token: ${{ secrets.DEPLOY_API_TOKEN_NEW }}
           clean: false
-          commit-message: Announce FluidSynth ${{ github.event.release.tag_name }}
+          commit-message: Announce FluidSynth ${{ github.ref_name }}
           git-config-name: Fluid Release Announcer
           git-config-email: fluid-release-bot@fluidsynth.github.io

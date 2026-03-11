@@ -13,8 +13,8 @@ on:
       - '.github/workflows/rendering-regression.yml'
       - '.cirrus.yml'
       - 'README.md'
-  release:
-    types: [published]
+    tags:
+      - 'v*'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -47,8 +47,8 @@ jobs:
       shell: bash
       id: artifact_name
       run: |
-        if [[ "${{ github.event_name }}" == "release" ]]; then
-          echo "name=fluidsynth-${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          echo "name=fluidsynth-${{ github.ref_name }}" >> $GITHUB_OUTPUT
         else
           echo "name=fluidsynth-${{ github.run_id }}" >> $GITHUB_OUTPUT
         fi
@@ -58,7 +58,7 @@ jobs:
         ls -la publish
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact_name.outputs.name }}-iOS
         path: publish/
@@ -67,28 +67,32 @@ jobs:
 
   # Publish artifacts to GitHub releases (only on release events)
   publish-release-ios:
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.ref_type == 'tag'
     needs:
       - ios-build
     runs-on: ubuntu-latest
     name: 🚀 Publish Release Artifacts
     steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
     - name: Download all artifacts
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         path: ${{ needs.ios-build.outputs.artifact_name }}-iOS
         pattern: ${{ needs.ios-build.outputs.artifact_name }}-iOS
         merge-multiple: false
-        
+
     - name: Create release archives
       run: |
         ls -la
         zip -r "${{ needs.ios-build.outputs.artifact_name }}-iOS.zip" "${{ needs.ios-build.outputs.artifact_name }}-iOS"
 
-    - name: Upload release assets
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          *.zip
+    - name: Upload assets to matching Release (draft or published)
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        tag="${GITHUB_REF_NAME}"
+        gh release upload "$tag" *.zip --clobber
