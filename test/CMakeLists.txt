@@ -68,8 +68,6 @@ if(NOT DEFINED GENERAL_USER_GS2)
     set ( GENERAL_USER_GS2 "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2/GeneralUser-GS/GeneralUser-GS.sf2" )
 endif()
 
-
-set(RENDERING_OUTPUT_DIR "" CACHE FILEPATH "Directory to store rendered audio files of manual regression tests")
 if (NOT RENDERING_OUTPUT_DIR)
     set(RENDERING_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual")
 endif()
