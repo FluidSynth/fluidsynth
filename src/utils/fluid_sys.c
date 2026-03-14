@@ -51,8 +51,6 @@
 
 /* SCHED_FIFO priority for high priority timer threads */
 #define FLUID_SYS_TIMER_HIGH_PRIO_LEVEL         10
-#define FLUID_SHELL_AUTO_PORT_START             9800
-#define FLUID_TCP_PORT_MAX                      65535
 
 
 struct _fluid_timer_t

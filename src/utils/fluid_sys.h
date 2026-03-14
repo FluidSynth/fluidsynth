@@ -285,6 +285,9 @@ int fluid_thread_join(fluid_thread_t *thread);
 
 /* Sockets and I/O */
 
+#define FLUID_SHELL_AUTO_PORT_START             9800
+#define FLUID_TCP_PORT_MAX                      65535
+
 int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt, char *buf, int len);
 int fluid_ostream_printf(fluid_ostream_t out, const char *format, ...);
 
