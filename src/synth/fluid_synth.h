@@ -46,7 +46,7 @@
 
 #define FLUID_UNSET_PROGRAM 128  /* Program number used to unset a preset */
 
-#define FLUID_REVERB_DEFAULT_DAMP 0.3f      /**< Default reverb damping */
+#define FLUID_REVERB_DEFAULT_DAMP 0.0f      /**< Default reverb damping */
 #define FLUID_REVERB_DEFAULT_LEVEL 0.7f     /**< Default reverb level */
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.5f  /**< Default reverb room size */
 #define FLUID_REVERB_DEFAULT_WIDTH 0.8f     /**< Default reverb width */
@@ -129,6 +129,7 @@ struct _fluid_synth_t
     int device_id;                     /**< Device ID used for SYSEX messages */
     int polyphony;                     /**< Maximum polyphony */
     int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
+    int reverb_type;                   /**< Reverb engine selection, #fluid_reverb_type */
     int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
     int verbose;                       /**< Turn verbose mode on? */
     double sample_rate;                /**< The sample rate */

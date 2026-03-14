@@ -828,6 +828,7 @@ fluid_rvoice_mixer_t *
 new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
                        fluid_real_t sample_rate_max,
                        fluid_real_t sample_rate,
+                       int reverb_type,
                        fluid_rvoice_eventhandler_t *evthandler,
                        int extra_threads, int prio)
 {
@@ -860,7 +861,8 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
     for(i = 0; i < fx_units; i++)
     {
         /* create reverb and chorus units */
-        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate);
+        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate,
+                                                 reverb_type);
         mixer->fx[i].chorus = new_fluid_chorus(sample_rate);
 
         if(mixer->fx[i].reverb == NULL || mixer->fx[i].chorus == NULL)

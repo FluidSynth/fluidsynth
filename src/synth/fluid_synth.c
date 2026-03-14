@@ -28,6 +28,7 @@
 #include "fluid_dls.h"
 #include "fluid_instpatch.h"
 #include "fluid_audio_convert.h"
+#include "fluid_rev.h"
 
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
@@ -209,6 +210,12 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1, FLUID_HINT_TOGGLED);
+    fluid_settings_register_str(settings, "synth.reverb.engine", "fdn", 0);
+    fluid_settings_add_option(settings, "synth.reverb.engine", "fdn");
+    fluid_settings_add_option(settings, "synth.reverb.engine", "free");
+    fluid_settings_add_option(settings, "synth.reverb.engine", "lex");
+    fluid_settings_add_option(settings, "synth.reverb.engine", "dattorro");
+
     fluid_settings_register_num(settings, "synth.reverb.room-size", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0, 1.0, 0);
     fluid_settings_register_num(settings, "synth.reverb.damp", FLUID_REVERB_DEFAULT_DAMP, 0.0, 1.0, 0);
     fluid_settings_register_num(settings, "synth.reverb.width", FLUID_REVERB_DEFAULT_WIDTH, 0.0, 100.0, 0);
@@ -722,6 +729,39 @@ new_fluid_synth(fluid_settings_t *settings)
     synth->settings = settings;
 
     fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
+
+    if(fluid_settings_str_equal(settings, "synth.reverb.engine", "fdn"))
+    {
+        synth->reverb_type = FLUID_REVERB_TYPE_FDN;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.reverb.engine", "free"))
+    {
+        synth->reverb_type = FLUID_REVERB_TYPE_FREEVERB;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.reverb.engine", "lex"))
+    {
+        synth->reverb_type = FLUID_REVERB_TYPE_LEXVERB;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.reverb.engine", "dat"))
+    {
+        synth->reverb_type = FLUID_REVERB_TYPE_DATTORRO;
+    }
+    else
+    {
+        char* opt;
+        if(fluid_settings_dupstr(settings, "synth.reverb.engine", &opt) == FLUID_OK)
+        {
+            FLUID_LOG(FLUID_WARN, "Unknown reverb engine '%s', using default", opt);
+            FLUID_FREE(opt);
+            synth->reverb_type = FLUID_REVERB_TYPE_FDN;
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "fluid_settings_dupstr() failed for 'synth.reverb.engine'");
+            goto error_recovery;
+        }
+    }
+
     fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
     fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
 
@@ -911,6 +951,7 @@ new_fluid_synth(fluid_settings_t *settings)
                           synth->polyphony, synth->audio_groups,
                           synth->effects_channels, synth->effects_groups,
                           (fluid_real_t)sample_rate_max, synth->sample_rate,
+                          synth->reverb_type,
                           synth->cores - 1, prio_level);
 
     if(synth->eventhandler == NULL)
@@ -5997,7 +6038,8 @@ int
 fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on)
 {
     int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    int enabled = (on != 0);
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
 
     fluid_synth_api_enter(synth);
@@ -6009,11 +6051,11 @@ fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on)
 
     if(fx_group  < 0 )
     {
-        synth->with_reverb = (on != 0);
+        synth->with_reverb = enabled;
     }
 
     param[0].i = fx_group;
-    param[1].i = on;
+    param[1].i = enabled;
     ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
                                          fluid_rvoice_mixer_reverb_enable,
                                          synth->eventhandler->mixer,

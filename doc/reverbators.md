@@ -1,6 +1,6 @@
 \page ReverbOverview Reverb Overview
 
-The following page gives an overview of different reverbator engines. It concentrates on objective criteria rather than trying to elaborate on the "quality" of the reverb engines. Listening examples are provided so you can make up your own opinion. Here are the dry versions. The reverb settings of all examples below share those settings: <code>-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7</code>
+The following page gives an overview of different reverbator engines. It concentrates on objective criteria rather than trying to elaborate on the "quality" of the reverb engines. Listening examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! Here are the dry versions. The reverb settings of all examples below share those settings: <code>-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7</code>
 
 
 Example 1 - Piano:
@@ -110,7 +110,7 @@ Example 3 - Water drops + Triangle:
 
 Due to its rinning nature, Freeverb was replaced by "Feedback Delay Networks"-reverbator in version 2.1.0. It's based on: https://ccrma.stanford.edu/~jos/pasp/FDN_Reverberation.html
 
-FDN receives a monophonic input signal and - as the name suggests - routes it through several delay lines. Fluidsynth's default implementation makes use of 8 delay lines, although there is a compile-time switch to allow using 12 delay lines, that slightly increases the reverb's quality by an increased frequency density. However, it also increases CPU usage beyound what the previous Freeverb would have required, so it was decided to use only 8 delay lines.
+FDN receives a monophonic input signal and - as the name suggests - routes it through several delay lines. Fluidsynth's default implementation makes use of 8 delay lines, although there is a compile-time switch to allow using 12 delay lines, that slightly increases the reverb's frequency density. However, it also increases CPU usage beyond what the previous Freeverb would have required, so it was decided to use only 8 delay lines.
 
 To fight ringing and high-frequency reverb "reflections", the delay lines are modulated with a sine. While this is generally inaudible, it can be perceived on certain high-frequent usually clear sounding instruments, like a triangle, causing a slight vibrato effect to be applied to them.
 

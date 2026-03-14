@@ -399,11 +399,20 @@ Developers:
         </setting>
         <setting>
             <name>reverb.active</name>
-            <type>bool</type>
+            <type>int</type>
             <def>1 (TRUE)</def>
             <realtime/>
             <desc>
                 When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
+            </desc>
+        </setting>
+        <setting>
+            <name>reverb.engine</name>
+            <type>str</type>
+            <def>fdn</def>
+            <vals>fdn, free, lex, dat</vals>
+            <desc>
+                Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
             </desc>
         </setting>
         <setting>
@@ -434,7 +443,7 @@ Developers:
             <max>1.0</max>
             <realtime/>
             <desc>
-                Sets the room size (i.e. amount of wet) reverb.</desc>
+                Sets the room size (i.e. amount and duration of wet) reverb.</desc>
         </setting>
         <setting>
             <name>reverb.width</name>
@@ -444,7 +453,7 @@ Developers:
             <max>100.0</max>
             <realtime/>
             <desc>
-                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange [0;1] is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
+                Sets the stereo spread of the reverb signal, i.e. how much the wet-left signal contributes to the wet-right signal and vice versa. A value of 0 indicates no stereo-spread causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum spread between the uncorrelated left and right channels. This subrange [0;1] is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
         </setting>
         <setting>
             <name>sample-rate</name>
@@ -991,4 +1000,3 @@ Developers:
         </setting>
     </shell>
 </fluidsettings>
-

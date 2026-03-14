@@ -115,7 +115,7 @@ fluid_rvoice_eventhandler_t *
 new_fluid_rvoice_eventhandler(int queuesize,
                               int finished_voices_size, int bufs, int fx_bufs, int fx_units,
                               fluid_real_t sample_rate_max, fluid_real_t sample_rate,
-                              int extra_threads, int prio)
+                              int reverb_type, int extra_threads, int prio)
 {
     fluid_rvoice_eventhandler_t *eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
 
@@ -147,7 +147,8 @@ new_fluid_rvoice_eventhandler(int queuesize,
     }
 
     eventhandler->mixer = new_fluid_rvoice_mixer(bufs, fx_bufs, fx_units,
-                          sample_rate_max, sample_rate, eventhandler, extra_threads, prio);
+                          sample_rate_max, sample_rate, reverb_type,
+                          eventhandler, extra_threads, prio);
 
     if(eventhandler->mixer == NULL)
     {
