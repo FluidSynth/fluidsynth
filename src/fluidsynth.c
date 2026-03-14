@@ -744,7 +744,7 @@ int main(int argc, char **argv)
                         char *reverb_options = fluid_settings_option_concat(settings, "synth.reverb.engine", NULL);
                         fprintf(stderr, "Reverb engine '%s' is unknown by this version of fluidsynth. Valid values are %s\n", optarg, reverb_options);
                         FLUID_FREE(reverb_options);
-                        return FLUID_FAILED;
+                        goto cleanup;
                     }
                 }
             }
