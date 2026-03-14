@@ -52,6 +52,8 @@ int main(void)
     server2 = new_fluid_server2(settings2, NULL, NULL, NULL);
     TEST_ASSERT(server2 == NULL); // should fail since port 12345 is already in use by server1
 
+    delete_fluid_server(server2);
+    delete_fluid_server(server1);
     delete_fluid_settings(settings2);
     delete_fluid_settings(settings1);
 #endif
