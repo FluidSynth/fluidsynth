@@ -879,6 +879,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_MODLFOTOPITCH:
+        x *= fluid_channel_get_modulation_depth_range(voice->channel) / 50.0f;
         fluid_clip(x, -12000.f, 12000.f);
         UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_pitch, x);
         break;
@@ -926,6 +927,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_VIBLFOTOPITCH:
+        x *= fluid_channel_get_modulation_depth_range(voice->channel) / 50.0f;
         fluid_clip(x, -12000.f, 12000.f);
         UPDATE_RVOICE_R1(fluid_rvoice_set_viblfo_to_pitch, x);
         break;

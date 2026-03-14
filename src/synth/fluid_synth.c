@@ -87,6 +87,7 @@ static int fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t *synth, int c
 static int fluid_synth_update_key_pressure_LOCAL(fluid_synth_t *synth, int chan, int key);
 static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan);
+static int fluid_synth_update_modulation_depth_range_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_set_preset(fluid_synth_t *synth, int chan,
                                   fluid_preset_t *preset);
 static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
@@ -2072,6 +2073,11 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 break;
 
             case RPN_MODULATION_DEPTH_RANGE:
+                /* MSB = semitones, LSB = 1/128 semitones (cent fraction)
+                 * Default per GM2: 0 semitones + 64/128 = 50 cents */
+                fluid_channel_set_modulation_depth_range(chan,
+                    msb_value * 100.0f + lsb_value * 100.0f / 128.0f);
+                fluid_synth_update_modulation_depth_range_LOCAL(synth, channum);
                 break;
             }
         }
@@ -3177,6 +3183,28 @@ static int
 fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan)
 {
     return fluid_synth_modulate_voices_LOCAL(synth, chan, 0, FLUID_MOD_PITCHWHEELSENS);
+}
+
+/* Local synthesis thread variant: update voices after modulation depth range RPN change.
+ * Re-applies GEN_VIBLFOTOPITCH and GEN_MODLFOTOPITCH with the new channel multiplier. */
+static int
+fluid_synth_update_modulation_depth_range_LOCAL(fluid_synth_t *synth, int chan)
+{
+    fluid_voice_t *voice;
+    int i;
+
+    for(i = 0; i < synth->polyphony; i++)
+    {
+        voice = synth->voice[i];
+
+        if(fluid_voice_get_channel(voice) == chan && fluid_voice_is_playing(voice))
+        {
+            fluid_voice_update_param(voice, GEN_VIBLFOTOPITCH);
+            fluid_voice_update_param(voice, GEN_MODLFOTOPITCH);
+        }
+    }
+
+    return FLUID_OK;
 }
 
 /**
