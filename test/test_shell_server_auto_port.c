@@ -4,20 +4,10 @@
 #define TEST_SHELL_AUTO_PORT_START 9800
 #define TEST_TCP_PORT_MAX          65535
 
-int main(void)
+void test_server_creation(fluid_settings_t* settings1, fluid_settings_t* settings2)
 {
-#ifdef NETWORK_SUPPORT
-    fluid_settings_t *settings1, *settings2;
     fluid_server_t *server1, *server2;
     int port1, port2;
-
-    settings1 = new_fluid_settings();
-    settings2 = new_fluid_settings();
-    TEST_ASSERT(settings1 != NULL);
-    TEST_ASSERT(settings2 != NULL);
-
-    TEST_SUCCESS(fluid_settings_setint(settings1, "shell.port", 0));
-    TEST_SUCCESS(fluid_settings_setint(settings2, "shell.port", 0));
 
     server1 = new_fluid_server2(settings1, NULL, NULL, NULL);
     TEST_ASSERT(server1 != NULL);
@@ -32,6 +22,36 @@ int main(void)
 
     delete_fluid_server(server2);
     delete_fluid_server(server1);
+}
+
+int main(void)
+{
+#ifdef NETWORK_SUPPORT
+    fluid_settings_t *settings1, *settings2;
+    fluid_server_t *server1, *server2;
+
+    settings1 = new_fluid_settings();
+    settings2 = new_fluid_settings();
+    TEST_ASSERT(settings1 != NULL);
+    TEST_ASSERT(settings2 != NULL);
+
+    // by default, auto-port probing should be enabled
+    test_server_creation(settings1, settings2);
+
+    TEST_SUCCESS(fluid_settings_setint(settings1, "shell.port", 0));
+    TEST_SUCCESS(fluid_settings_setint(settings2, "shell.port", 0));
+
+    // re-test by explicitly setting port to zero, should still work
+    test_server_creation(settings1, settings2);
+
+    TEST_SUCCESS(fluid_settings_setint(settings1, "shell.port", 12345));
+    TEST_SUCCESS(fluid_settings_setint(settings2, "shell.port", 12345));
+
+    server1 = new_fluid_server2(settings1, NULL, NULL, NULL);
+    TEST_ASSERT(server1 != NULL);
+    server2 = new_fluid_server2(settings2, NULL, NULL, NULL);
+    TEST_ASSERT(server2 == NULL); // should fail since port 12345 is already in use by server1
+
     delete_fluid_settings(settings2);
     delete_fluid_settings(settings1);
 #endif
