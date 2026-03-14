@@ -110,6 +110,15 @@ fluid_channel_init(fluid_channel_t *chan)
         fluid_tuning_unref(chan->tuning, 1);
         chan->tuning = NULL;
     }
+
+    /* Default to tuning bank 0, prog 0 if it has been set up */
+    if(chan->synth->tuning != NULL
+       && chan->synth->tuning[0] != NULL
+       && chan->synth->tuning[0][0] != NULL)
+    {
+        fluid_tuning_ref(chan->synth->tuning[0][0]);
+        chan->tuning = chan->synth->tuning[0][0];
+    }
 }
 
 /*

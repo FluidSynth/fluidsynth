@@ -661,6 +661,29 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
     return (unsigned int)(i * synth->sample_rate / 1000.0f);
 }
 
+/* Create the default tuning (bank 0, prog 0) and assign it to all channels. See MIDI RP-020:
+ * Defaults for Scale/Octave Tuning
+ * "If tuning presets are not supported by the instrument, it is assumed that the initial tuning of the instrument is equal
+ * temperament. If [tuning] presets are supported, it is suggested that the first [tuning] preset, selected by Bank 0H and Preset 0H, would be
+ * equal temperament. Tuning adjusters should begin by selecting Bank 0H, Preset 0H in order to start from equal
+ * temperament, if that is the desired behavior."
+ *
+ * This ensures that MTS SysEx messages modifying tuning 0/0 will automatically affect all channels.
+ */
+static FLUID_INLINE int fluid_synth_reinitialize_tuning(fluid_synth_t *synth)
+{
+    int i;
+
+    /* Unassign from all channels */
+    for(i = 0; i < synth->midi_channels; i++)
+    {
+        fluid_synth_set_tuning_LOCAL(synth, i, NULL, 1);
+        fluid_synth_activate_tuning(synth, i, 0, 0, FALSE);
+    }
+
+    return FLUID_OK;
+}
+
 /**
  * Create new FluidSynth instance.
  * @param settings Configuration parameters to use (used directly).
@@ -1130,6 +1153,12 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
+    if(fluid_synth_reinitialize_tuning(synth) != FLUID_OK)
+    {
+        // out of memory
+        goto error_recovery;
+    }
+
     fluid_iir_filter_init_table(synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
@@ -1309,7 +1338,6 @@ delete_fluid_synth(fluid_synth_t *synth)
 
         FLUID_FREE(synth->voice);
     }
-
 
     /* free the tunings, if any */
     if(synth->tuning != NULL)
@@ -2909,7 +2937,7 @@ fluid_synth_system_reset(fluid_synth_t *synth)
 static int
 fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 {
-    int i;
+    int i, res;
 
     if(synth->verbose)
     {
@@ -2917,6 +2945,8 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
     }
 
     fluid_synth_all_sounds_off_LOCAL(synth, -1);
+
+    res = fluid_synth_reinitialize_tuning(synth);
 
     for(i = 0; i < synth->midi_channels; i++)
     {
@@ -2936,7 +2966,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
         synth->portamento_time_has_seen_lsb = 0;
     }
 
-    return FLUID_OK;
+    return res;
 }
 
 /**
