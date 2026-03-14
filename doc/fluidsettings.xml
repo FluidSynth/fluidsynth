@@ -888,10 +888,10 @@ Developers:
         <setting>
             <name>port</name>
             <type>int</type>
-            <def>9800</def>
+            <def>0</def>
             <min>0</min>
             <max>65535</max>
-            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses. A value of 0 enables auto mode and selects the first free port, probing from 9800 upwards.</desc>
+            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses. Since fluidsynth 2.6.0, a value of 0 enables auto mode and selects the first free port, probing from 9800 upwards.</desc>
         </setting>
     </shell>
 </fluidsettings>
