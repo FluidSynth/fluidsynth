@@ -496,17 +496,14 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
     {
         fluid_real_t sample_fine_tune;
 
-        fluid_real_t root_key = voice->root_pitch / 100.0;
-        int root_key_int = (int)root_key;
-        fluid_clip(root_key, 0, 127);
-        // retrieve voice->sample->pitchadj, without actually accessing that indirection through memory
-        sample_fine_tune = root_key - root_key_int;
-        // assert expands to no-op for release builds
-        FLUID_ASSERT(sample_fine_tune == voice->sample->pitchadj);
+        fluid_real_t root_pitch = voice->root_pitch;
+        int root_pitch_int = (int)root_pitch;
+        // account for voice->sample->pitchadj, without actually accessing that indirection through memory
+        sample_fine_tune = root_pitch - root_pitch_int;
 
         tuning = fluid_channel_get_tuning(voice->channel);
-        tuned_root_pitch = fluid_tuning_get_pitch(tuning, (int)(root_key));
-        tuned_root_pitch -= sample_fine_tune;
+        tuned_root_pitch = fluid_tuning_get_pitch(tuning, (int)(root_pitch / 100.0f));
+        tuned_root_pitch += sample_fine_tune;
         tuned_key = fluid_tuning_get_pitch(tuning, key);
         pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
                 (tuned_key - tuned_root_pitch) + tuned_root_pitch;
