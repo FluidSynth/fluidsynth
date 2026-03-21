@@ -563,7 +563,7 @@ set_target_properties(renderMtsTests PROPERTIES
 )
 add_render_job(renderMtsTests
     "${MTS_RENDER_DIR}/issue102_orig.${FEXT}"
-    -R 0 -C 0 -g 3  ${GENERAL_USER_GS2} issue102_orig/mts.mid
+    -R 0 -C 0 -g 2 -o synth.device-id=0 ${GENERAL_USER_GS2} issue102_orig/mts.mid
 )
 add_render_job(renderMtsTests
     "${MTS_RENDER_DIR}/issue102_marcus.${FEXT}"
