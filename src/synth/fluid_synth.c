@@ -674,10 +674,16 @@ static FLUID_INLINE int fluid_synth_reinitialize_tuning(fluid_synth_t *synth)
 {
     int i;
 
-    /* Unassign from all channels */
+    // Unassign the default tuning from all channels, unreferenced and delete it
+    if(fluid_synth_replace_tuning_LOCK(synth, NULL, 0, 0, FALSE) != FLUID_OK)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to reset default tuning during system reset");
+    }
+
+    /* Reset tuning 0/0 back to equal temperament, as per MIDI RP-020.
+     * This also propagates the new tuning to all channels currently using tuning 0/0. */
     for(i = 0; i < synth->midi_channels; i++)
     {
-        fluid_synth_set_tuning_LOCAL(synth, i, NULL, 1);
         fluid_synth_activate_tuning(synth, i, 0, 0, FALSE);
     }
 
