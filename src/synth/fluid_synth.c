@@ -672,22 +672,23 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  */
 static FLUID_INLINE int fluid_synth_reinitialize_tuning(fluid_synth_t *synth)
 {
-    int i;
+    int i, res;
 
     // Unassign the default tuning from all channels, unreferenced and delete it
-    if(fluid_synth_replace_tuning_LOCK(synth, NULL, 0, 0, FALSE) != FLUID_OK)
+    res = fluid_synth_replace_tuning_LOCK(synth, NULL, 0, 0, FALSE);
+    if(res != FLUID_OK)
     {
         FLUID_LOG(FLUID_WARN, "Failed to reset default tuning during system reset");
     }
 
     /* Reset tuning 0/0 back to equal temperament, as per MIDI RP-020.
      * This also propagates the new tuning to all channels currently using tuning 0/0. */
-    for(i = 0; i < synth->midi_channels; i++)
+    for(i = 0; i < synth->midi_channels && res == FLUID_OK; i++)
     {
-        fluid_synth_activate_tuning(synth, i, 0, 0, FALSE);
+        res = fluid_synth_activate_tuning(synth, i, 0, 0, FALSE);
     }
 
-    return FLUID_OK;
+    return res;
 }
 
 /**
@@ -2952,12 +2953,12 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 
     fluid_synth_all_sounds_off_LOCAL(synth, -1);
 
-    res = fluid_synth_reinitialize_tuning(synth);
-
     for(i = 0; i < synth->midi_channels; i++)
     {
         fluid_channel_reset(synth->channel[i]);
     }
+
+    res = fluid_synth_reinitialize_tuning(synth);
 
     /* Basic channel 0, Mode Omni On Poly */
     fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
