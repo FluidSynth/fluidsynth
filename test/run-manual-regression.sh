@@ -150,7 +150,7 @@ cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   -DRENDERING_OUTPUT_DIR="$CURRENT_OUTPUT_DIR" \
   "${CMAKE_FLAGS[@]}"
-cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc)
+cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc) --verbose
 
 # Execute reference rendering in the directory of the current build to ensure we render the same testdata.
 # Just override the fluidsynth binary to use the reference one.
@@ -159,7 +159,7 @@ cmake -S "$ROOT_DIR" -B "$CURRENT_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DMANUAL_TEST_FLUIDSYNTH="$REF_FLUIDSYNTH" \
   -DRENDERING_OUTPUT_DIR="$REFERENCE_OUTPUT_DIR" \
   "${CMAKE_FLAGS[@]}"
-cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc) || true
+cmake --build "$CURRENT_BUILD_DIR" --target check_rendering --parallel $(nproc) --verbose || true
 
 if [[ ! -d "$CURRENT_OUTPUT_DIR" || ! -d "$REFERENCE_OUTPUT_DIR" ]]; then
   echo "Manual test output directories were not created." >&2
