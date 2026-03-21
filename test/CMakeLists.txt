@@ -90,6 +90,7 @@ set(SFE_RENDER_DIR "${RENDERING_OUTPUT_DIR}/sfe")
 set(RPN_RENDER_DIR "${RENDERING_OUTPUT_DIR}/rpn")
 set(SYSEX_GS_DT1 "${RENDERING_OUTPUT_DIR}/sysex/gs_dt1")
 set(LIMITER_RENDER_DIR "${RENDERING_OUTPUT_DIR}/limiter")
+set(MTS_RENDER_DIR "${RENDERING_OUTPUT_DIR}/mts")
 
 if(LIBSNDFILE_SUPPORT)
     set(FEXT "wav")
@@ -552,6 +553,23 @@ else ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
     )
 endif (LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
 
+
+add_custom_target(renderMtsTests
+    COMMENT "Rendering Midi Tuning Standard Tests"
+    DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+)
+set_target_properties(renderMtsTests PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/mts/"
+)
+add_render_job(renderMtsTests
+    "${MTS_RENDER_DIR}/issue102_orig.${FEXT}"
+    -R 0 -C 0 -g 3  ${GENERAL_USER_GS2} issue102_orig/mts.mid
+)
+add_render_job(renderMtsTests
+    "${MTS_RENDER_DIR}/issue102_marcus.${FEXT}"
+    -R 0 -C 0 -g 3  ${GENERAL_USER_GS2} issue102_marcus/mts_marcus.mid
+)
+
 # Add a dependency so that rendering targets depends on check_rendering
 add_dependencies(check_rendering render1415)
 add_dependencies(check_rendering render1417)
@@ -578,3 +596,4 @@ add_dependencies(check_rendering renderBankSelect)
 add_dependencies(check_rendering renderDMOD)
 add_dependencies(check_rendering renderRPN)
 add_dependencies(check_rendering renderLimiterTests)
+add_dependencies(check_rendering renderMtsTests)
