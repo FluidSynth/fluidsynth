@@ -595,5 +595,6 @@ add_dependencies(check_rendering renderGeneralUserDemo)
 add_dependencies(check_rendering renderBankSelect)
 add_dependencies(check_rendering renderDMOD)
 add_dependencies(check_rendering renderRPN)
-add_dependencies(check_rendering renderLimiterTests)
 add_dependencies(check_rendering renderMtsTests)
+# Temporarily disable limiter tests, because those tests will fail with reference fluidsynth 2.5.x, as it is lacking the limiter
+#add_dependencies(check_rendering renderLimiterTests)
