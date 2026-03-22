@@ -131,7 +131,7 @@ echo "Checking out reference revision ${REF}..."
 git -C "$ROOT_DIR" worktree add --detach "$REF_WORKTREE" "$REF" >/dev/null
 git -C "$REF_WORKTREE" submodule update --init --recursive
 
-rm -rf "$REF_BUILD_DIR"
+rm -rf "$REF_BUILD_DIR" "$CURRENT_BUILD_DIR"
 cmake -S "$REF_WORKTREE" -B "$REF_BUILD_DIR" "${CMAKE_GENERATOR_ARGS[@]}" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   "${CMAKE_FLAGS[@]}"
