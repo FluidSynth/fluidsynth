@@ -38,7 +38,6 @@ int main(void)
     fluid_voice_t *voice;
     fluid_sample_t sample;
     int origpitch;
-    int pitchadj;
     int key;
     fluid_real_t root_pitch_cents;
     fluid_real_t pitch_no_adj_100, pitch_with_adj_100;
@@ -49,17 +48,21 @@ int main(void)
 
     /* Set up channel with no tuning (the common case) */
     voice = synth->voice[0];
+    FLUID_MEMSET(voice->gen, 0, sizeof(voice->gen));
+    FLUID_MEMSET(voice->mod, 0, sizeof(voice->mod));
     voice->channel = synth->channel[0];
     voice->sample = &sample;
 
     /* Use middle C (MIDI key 60) as the root key, and test with key 64 (E4) */
     sample.origpitch = origpitch = 60;       /* sample root key in MIDI note number */
-    sample.pitchadj = 20;        /* sample fine tune in cents, i.e. must be correct by 20 cents sharp */
-    key = 64;             /* the MIDI key to calculate pitch for */
+    sample.pitchadj = 220;        /* sample fine tune in cents, i.e. must be correct by 20 cents sharp */
+    key = 60;             /* the MIDI key to calculate pitch for */
 
     /* root_pitch_cents is the root pitch in cents without fine tune */
     root_pitch_cents = origpitch * 100.0f;
 
+    voice->gen[GEN_KEYNUM].val = key;
+    voice->gen[GEN_OVERRIDEROOTKEY].val = -1;
     /*
      * Test 1: With default SCALETUNE=100, pitchadj does not affect pitch (it cancels out)
      */
@@ -69,8 +72,8 @@ int main(void)
     voice->root_pitch = root_pitch_cents;
     pitch_no_adj_100 = fluid_voice_calculate_pitch(voice, key);
 
-    /* Calculate pitch with pitchadj */
-    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_pitch = root_pitch_cents - pitchadj in faulty fluidsynth */
+    /* Calculate pitch */
+    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_key = root_pitch_cents - pitchadj in faulty fluidsynth */
     pitch_with_adj_100 = fluid_voice_calculate_pitch(voice, key);
 
     /* With SCALETUNE=100, both should give the same result: key*100 = 6400 */
@@ -78,6 +81,7 @@ int main(void)
               "SCALETUNE=100: pitch_no_adj=%.4f, pitch_with_adj=%.4f (expected both %.4f)",
               pitch_no_adj_100, pitch_with_adj_100, (fluid_real_t)(key * 100));
     TEST_ASSERT(pitch_no_adj_100 == pitch_with_adj_100);
+    TEST_ASSERT(pitch_no_adj_100 == (key * 100.f));
 
     /*
      * Test 2: With non-default SCALETUNE=50, pitchadj should still NOT affect pitch.
@@ -88,8 +92,8 @@ int main(void)
     /* Force calculate pitch without pitchadj */
     voice->root_pitch = root_pitch_cents;
     pitch_no_adj_50 = fluid_voice_calculate_pitch(voice, key);
-    /* Calculate pitch with pitchadj */
-    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_pitch = root_pitch_cents - pitchadj in faulty fluidsynth */
+    /* Calculate pitch */
+    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_key = root_pitch_cents - pitchadj in faulty fluidsynth */
     pitch_with_adj_50 = fluid_voice_calculate_pitch(voice, key);
 
     FLUID_LOG(FLUID_INFO,
@@ -100,6 +104,43 @@ int main(void)
      * pitchadj incorrectly influences the calculated pitch.
      * The difference is: pitchadj * (SCALETUNE/100 - 1) = 20 * (50/100 - 1) = -10 */
     TEST_ASSERT(pitch_no_adj_50 == pitch_with_adj_50);
+    TEST_ASSERT(pitch_no_adj_50 == 6000);
+
+    /*
+     * Test 3: With non-default SCALETUNE=50, pitchadj should still NOT affect pitch.
+     *         This test demonstrates the bug: the assertion will FAIL with current code.
+     */
+    voice->gen[GEN_SCALETUNE].val = 50;
+    voice->gen[GEN_KEYNUM].val = key = origpitch / 2;
+
+    /* Force calculate pitch without pitchadj */
+    voice->root_key = root_pitch_cents;
+    pitch_no_adj_50 = fluid_voice_calculate_pitch(voice, key);
+    /* Calculate pitch */
+    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_key = root_pitch_cents - pitchadj in faulty fluidsynth */
+    pitch_with_adj_50 = fluid_voice_calculate_pitch(voice, key);
+
+    FLUID_LOG(FLUID_INFO,
+              "SCALETUNE=50: pitch_no_adj=%.4f, pitch_with_adj=%.4f (should both be equal, diff %.4f)",
+              pitch_no_adj_50, pitch_with_adj_50, pitch_with_adj_50 - pitch_no_adj_50);
+
+    TEST_ASSERT(pitch_no_adj_50 == pitch_with_adj_50);
+    TEST_ASSERT(pitch_no_adj_50 == 4500);
+
+    /*
+     * Test 4
+     */
+    voice->gen[GEN_SCALETUNE].val = 200;
+    voice->root_key = root_pitch_cents;
+    pitch_no_adj_50 = fluid_voice_calculate_pitch(voice, key);
+    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY);
+    pitch_with_adj_50 = fluid_voice_calculate_pitch(voice, key);
+
+    FLUID_LOG(FLUID_INFO,
+              "SCALETUNE=50: pitch_no_adj=%.4f, pitch_with_adj=%.4f (should both be equal, diff %.4f)",
+              pitch_no_adj_50, pitch_with_adj_50, pitch_with_adj_50 - pitch_no_adj_50);
+    TEST_ASSERT(pitch_no_adj_50 == pitch_with_adj_50);
+    TEST_ASSERT(pitch_no_adj_50 == 0);
 
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
