@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "fluid_voice.h"
 #include "fluid_chan.h"
+#include "fluid_synth.h"
 
 /* fluid_voice_calculate_pitch is not declared in the header, forward declare it here */
 fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key);
@@ -32,8 +33,10 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key);
 
 int main(void)
 {
-    fluid_voice_t voice;
-    fluid_channel_t channel;
+    fluid_settings_t *settings = new_fluid_settings();
+    fluid_synth_t *synth = new_fluid_synth(settings);
+    fluid_voice_t *voice;
+    fluid_sample_t sample;
     int origpitch;
     int pitchadj;
     int key;
@@ -42,16 +45,16 @@ int main(void)
     fluid_real_t pitch_no_adj_50, pitch_with_adj_50;
 
     /* Zero-initialize to ensure clean state */
-    FLUID_MEMSET(&voice, 0, sizeof(voice));
-    FLUID_MEMSET(&channel, 0, sizeof(channel));
+    FLUID_MEMSET(&sample, 0, sizeof(sample));
 
     /* Set up channel with no tuning (the common case) */
-    channel.tuning = NULL;
-    voice.channel = &channel;
+    voice = synth->voice[0];
+    voice->channel = synth->channel[0];
+    voice->sample = &sample;
 
     /* Use middle C (MIDI key 60) as the root key, and test with key 64 (E4) */
-    origpitch = 60;       /* sample root key in MIDI note number */
-    pitchadj = 20;        /* sample fine tune in cents, i.e. must be correct by 20 cents sharp */
+    sample.origpitch = origpitch = 60;       /* sample root key in MIDI note number */
+    sample.pitchadj = 20;        /* sample fine tune in cents, i.e. must be correct by 20 cents sharp */
     key = 64;             /* the MIDI key to calculate pitch for */
 
     /* root_pitch_cents is the root pitch in cents without fine tune */
@@ -60,15 +63,15 @@ int main(void)
     /*
      * Test 1: With default SCALETUNE=100, pitchadj does not affect pitch (it cancels out)
      */
-    voice.gen[GEN_SCALETUNE].val = 100;
+    voice->gen[GEN_SCALETUNE].val = 100;
 
-    /* Calculate pitch without pitchadj */
-    voice.root_pitch = root_pitch_cents;
-    pitch_no_adj_100 = fluid_voice_calculate_pitch(&voice, key);
+    /* Force calculate pitch without pitchadj */
+    voice->root_pitch = root_pitch_cents;
+    pitch_no_adj_100 = fluid_voice_calculate_pitch(voice, key);
 
     /* Calculate pitch with pitchadj */
-    voice.root_pitch = root_pitch_cents - pitchadj;
-    pitch_with_adj_100 = fluid_voice_calculate_pitch(&voice, key);
+    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_pitch = root_pitch_cents - pitchadj in faulty fluidsynth */
+    pitch_with_adj_100 = fluid_voice_calculate_pitch(voice, key);
 
     /* With SCALETUNE=100, both should give the same result: key*100 = 6400 */
     FLUID_LOG(FLUID_INFO,
@@ -80,15 +83,14 @@ int main(void)
      * Test 2: With non-default SCALETUNE=50, pitchadj should still NOT affect pitch.
      *         This test demonstrates the bug: the assertion will FAIL with current code.
      */
-    voice.gen[GEN_SCALETUNE].val = 50;
+    voice->gen[GEN_SCALETUNE].val = 50;
 
-    /* Calculate pitch without pitchadj */
-    voice.root_pitch = root_pitch_cents;
-    pitch_no_adj_50 = fluid_voice_calculate_pitch(&voice, key);
-
+    /* Force calculate pitch without pitchadj */
+    voice->root_pitch = root_pitch_cents;
+    pitch_no_adj_50 = fluid_voice_calculate_pitch(voice, key);
     /* Calculate pitch with pitchadj */
-    voice.root_pitch = root_pitch_cents - pitchadj;
-    pitch_with_adj_50 = fluid_voice_calculate_pitch(&voice, key);
+    fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_pitch = root_pitch_cents - pitchadj in faulty fluidsynth */
+    pitch_with_adj_50 = fluid_voice_calculate_pitch(voice, key);
 
     FLUID_LOG(FLUID_INFO,
               "SCALETUNE=50: pitch_no_adj=%.4f, pitch_with_adj=%.4f (should both be equal, diff %.4f)",
@@ -99,5 +101,7 @@ int main(void)
      * The difference is: pitchadj * (SCALETUNE/100 - 1) = 20 * (50/100 - 1) = -10 */
     TEST_ASSERT(pitch_no_adj_50 == pitch_with_adj_50);
 
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
     return EXIT_SUCCESS;
 }
