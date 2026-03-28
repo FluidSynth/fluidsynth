@@ -2,10 +2,9 @@
 #include "test.h"
 #include "fluidsynth.h"
 #include "fluidsynth_priv.h"
-#include <stdint.h>
+#include "fluid_synth.h"
 #include "fluid_voice.h"
 #include "fluid_chan.h"
-#include "fluid_synth.h"
 
 /* fluid_voice_calculate_pitch is not declared in the header, forward declare it here */
 fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key);
