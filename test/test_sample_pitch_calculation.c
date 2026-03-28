@@ -12,7 +12,7 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key);
 /* Test for https://github.com/FluidSynth/fluidsynth/issues/1773
  *
  * The sample fine tune (pitchadj) should NOT influence the pitch calculated
- * by fluid_voice_calculate_pitch(). Currently, when GEN_SCALETUNE is set to
+ * by fluid_voice_calculate_pitch(). Between fluidsynth 1.1.0 and 2.5.x, when GEN_SCALETUNE is set to
  * a value other than 100, pitchadj incorrectly affects the result.
  *
  * root_pitch is set to: origpitch * 100 - pitchadj  (i.e. root_pitch_cents - pitchadj)
@@ -42,8 +42,8 @@ int main(void)
     fluid_real_t pitch_no_adj_50, pitch_with_adj_50;
 
     /* Zero-initialize to ensure clean state */
-    memset(&voice, 0, sizeof(voice));
-    memset(&channel, 0, sizeof(channel));
+    FLUID_MEMSET(&voice, 0, sizeof(voice));
+    FLUID_MEMSET(&channel, 0, sizeof(channel));
 
     /* Set up channel with no tuning (the common case) */
     channel.tuning = NULL;
@@ -51,7 +51,7 @@ int main(void)
 
     /* Use middle C (MIDI key 60) as the root key, and test with key 64 (E4) */
     origpitch = 60;       /* sample root key in MIDI note number */
-    pitchadj = 20;        /* sample fine tune in cents */
+    pitchadj = 20;        /* sample fine tune in cents, i.e. must be correct by 20 cents sharp */
     key = 64;             /* the MIDI key to calculate pitch for */
 
     /* root_pitch_cents is the root pitch in cents without fine tune */
@@ -91,7 +91,7 @@ int main(void)
     pitch_with_adj_50 = fluid_voice_calculate_pitch(&voice, key);
 
     FLUID_LOG(FLUID_INFO,
-              "SCALETUNE=50: pitch_no_adj=%.4f, pitch_with_adj=%.4f (should be equal but bug causes difference of %.4f)",
+              "SCALETUNE=50: pitch_no_adj=%.4f, pitch_with_adj=%.4f (should both be equal, diff %.4f)",
               pitch_no_adj_50, pitch_with_adj_50, pitch_with_adj_50 - pitch_no_adj_50);
 
     /* This assertion demonstrates the bug: with SCALETUNE != 100,
