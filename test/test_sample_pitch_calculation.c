@@ -69,7 +69,7 @@ int main(void)
     voice->gen[GEN_SCALETUNE].val = 100;
 
     /* Force calculate pitch without pitchadj */
-    voice->root_pitch = root_pitch_cents;
+    voice->root_key = root_pitch_cents;
     pitch_no_adj_100 = fluid_voice_calculate_pitch(voice, key);
 
     /* Calculate pitch */
@@ -90,7 +90,7 @@ int main(void)
     voice->gen[GEN_SCALETUNE].val = 50;
 
     /* Force calculate pitch without pitchadj */
-    voice->root_pitch = root_pitch_cents;
+    voice->root_key = root_pitch_cents;
     pitch_no_adj_50 = fluid_voice_calculate_pitch(voice, key);
     /* Calculate pitch */
     fluid_voice_update_param(voice, GEN_OVERRIDEROOTKEY); /* This sets voice.root_key = root_pitch_cents - pitchadj in faulty fluidsynth */

@@ -88,7 +88,7 @@ struct _fluid_voice_t
     /* basic parameters */
     fluid_real_t pitch;              /* the pitch in midicents (dupe in rvoice) */
     fluid_real_t attenuation;        /* the attenuation in centibels (dupe in rvoice) */
-    fluid_real_t root_pitch;
+    fluid_real_t root_key;           /* the effective root key of the sample in absolute cents */
 
     /* master gain (dupe in rvoice) */
     fluid_real_t synth_gain;
