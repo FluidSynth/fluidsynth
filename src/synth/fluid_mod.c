@@ -117,6 +117,7 @@ fluid_mod_set_amount(fluid_mod_t *mod, double amount)
  * @param mod The modulator instance
  * @param mapping_function Pointer to the mapping function to assign
  * @param data User defined data pointer that will be passed into the mapping function, or NULL if not needed
+ * @since 2.5.0
  */
 void
 fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function, void* data)
