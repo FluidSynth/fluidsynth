@@ -661,6 +661,36 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
     return (unsigned int)(i * synth->sample_rate / 1000.0f);
 }
 
+/* Create the default tuning (bank 0, prog 0) and assign it to all channels. See MIDI RP-020:
+ * Defaults for Scale/Octave Tuning
+ * "If tuning presets are not supported by the instrument, it is assumed that the initial tuning of the instrument is equal
+ * temperament. If [tuning] presets are supported, it is suggested that the first [tuning] preset, selected by Bank 0H and Preset 0H, would be
+ * equal temperament. Tuning adjusters should begin by selecting Bank 0H, Preset 0H in order to start from equal
+ * temperament, if that is the desired behavior."
+ *
+ * This ensures that MTS SysEx messages modifying tuning 0/0 will automatically affect all channels.
+ */
+static FLUID_INLINE int fluid_synth_reinitialize_tuning(fluid_synth_t *synth)
+{
+    int i, res;
+
+    // Unassign the default tuning from all channels, unreferenced and delete it
+    res = fluid_synth_replace_tuning_LOCK(synth, NULL, 0, 0, FALSE);
+    if(res != FLUID_OK)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to reset default tuning during system reset");
+    }
+
+    /* Reset tuning 0/0 back to equal temperament, as per MIDI RP-020.
+     * This also propagates the new tuning to all channels currently using tuning 0/0. */
+    for(i = 0; i < synth->midi_channels && res == FLUID_OK; i++)
+    {
+        res = fluid_synth_activate_tuning(synth, i, 0, 0, FALSE);
+    }
+
+    return res;
+}
+
 /**
  * Create new FluidSynth instance.
  * @param settings Configuration parameters to use (used directly).
@@ -1130,6 +1160,12 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
+    if(fluid_synth_reinitialize_tuning(synth) != FLUID_OK)
+    {
+        // out of memory
+        goto error_recovery;
+    }
+
     fluid_iir_filter_init_table(synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
@@ -1309,7 +1345,6 @@ delete_fluid_synth(fluid_synth_t *synth)
 
         FLUID_FREE(synth->voice);
     }
-
 
     /* free the tunings, if any */
     if(synth->tuning != NULL)
@@ -2909,7 +2944,7 @@ fluid_synth_system_reset(fluid_synth_t *synth)
 static int
 fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 {
-    int i;
+    int i, res;
 
     if(synth->verbose)
     {
@@ -2922,6 +2957,8 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
     {
         fluid_channel_reset(synth->channel[i]);
     }
+
+    res = fluid_synth_reinitialize_tuning(synth);
 
     /* Basic channel 0, Mode Omni On Poly */
     fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
@@ -2936,7 +2973,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
         synth->portamento_time_has_seen_lsb = 0;
     }
 
-    return FLUID_OK;
+    return res;
 }
 
 /**

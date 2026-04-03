@@ -484,7 +484,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
 {
     fluid_tuning_t *tuning;
-    fluid_real_t x, pitch;
+    fluid_real_t tuned_root_pitch, tuned_key, pitch;
 
     /* Now the nominal pitch of the key is returned.
      * Note about SCALETUNE: SF2.01 8.1.3 says, that this generator is a
@@ -494,10 +494,14 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
      */
     if(fluid_channel_has_tuning(voice->channel))
     {
+        fluid_real_t root_key = voice->root_key * (1 / 100.0f);
+        int root_key_int = (int)(root_key + 0.5f);
+
         tuning = fluid_channel_get_tuning(voice->channel);
-        x = fluid_tuning_get_pitch(tuning, (int)(voice->root_key / 100.0f));
+        tuned_root_pitch = fluid_tuning_get_pitch(tuning, root_key_int);
+        tuned_key = fluid_tuning_get_pitch(tuning, key);
         pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
-                (fluid_tuning_get_pitch(tuning, key) - x) + x;
+                (tuned_key - tuned_root_pitch) + tuned_root_pitch;
     }
     else
     {
