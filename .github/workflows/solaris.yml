@@ -8,6 +8,7 @@ on:
       - '.circleci/**'
       - '.github/workflows/linux.yml'
       - '.github/workflows/ios.yml'
+      - '.github/workflows/rendering-regression.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/windows.yml'
       - '.cirrus.yml'
@@ -34,7 +35,7 @@ jobs:
             submodules: true
 
         - name: Build & test
-          uses: vmactions/solaris-vm@v1.2.7
+          uses: vmactions/solaris-vm@v1.3.1
           with:
             envs: 'CFLAGS_SOLARIS_CC'
             usesh: true
