@@ -6,7 +6,7 @@
 #include "fluid_chan.h"
 #include "fluid_tuning.h"
 
-void verify_equal_temperament(fluid_synth_t *synth)
+void verify_equal_temperament(const fluid_synth_t *synth)
 {
     int i;
     /* Verify that the default tuning is equal-tempered (pitch[key] == key * 100 cents) */
@@ -45,18 +45,16 @@ int main(void)
     verify_equal_temperament(synth);
 
     /* Modify the tuning of bank 0, prog 0 - change note 60 (middle C) to 6000 cents */
-    {
-        int key = 60;
-        double new_pitch = 6.0;
-        TEST_SUCCESS(fluid_synth_tune_notes(synth, 0, 0, 1, &key, &new_pitch, FALSE));
+    int key = 60;
+    double new_pitch = 6.0;
+    TEST_SUCCESS(fluid_synth_tune_notes(synth, 0, 0, 1, &key, &new_pitch, FALSE));
 
-        /* All channels should now reflect the modified tuning */
-        for(i = 0; i < fluid_synth_count_midi_channels(synth); i++)
-        {
-            const fluid_channel_t *chan = synth->channel[i];
-            TEST_ASSERT(fluid_channel_has_tuning(chan));
-            TEST_ASSERT(fluid_tuning_get_pitch(fluid_channel_get_tuning(chan), 60) == new_pitch);
-        }
+    /* All channels should now reflect the modified tuning */
+    for(i = 0; i < fluid_synth_count_midi_channels(synth); i++)
+    {
+        const fluid_channel_t *chan = synth->channel[i];
+        TEST_ASSERT(fluid_channel_has_tuning(chan));
+        TEST_ASSERT(fluid_tuning_get_pitch(fluid_channel_get_tuning(chan), 60) == new_pitch);
     }
 
     /* After a system reset, channels should still have tuning 0/0 */
