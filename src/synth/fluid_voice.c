@@ -494,11 +494,11 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
      */
     if(fluid_channel_has_tuning(voice->channel))
     {
-        fluid_real_t root_pitch = voice->root_pitch * (1 / 100.0f);
-        int root_pitch_int = (int)(root_pitch + 0.5f);
+        fluid_real_t root_key = voice->root_key * (1 / 100.0f);
+        int root_key_int = (int)(root_key + 0.5f);
 
         tuning = fluid_channel_get_tuning(voice->channel);
-        tuned_root_pitch = fluid_tuning_get_pitch(tuning, root_pitch_int);
+        tuned_root_pitch = fluid_tuning_get_pitch(tuning, root_key_int);
         tuned_key = fluid_tuning_get_pitch(tuning, key);
         pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
                 (tuned_key - tuned_root_pitch) + tuned_root_pitch;
