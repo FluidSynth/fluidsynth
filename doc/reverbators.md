@@ -114,6 +114,8 @@ FDN receives a monophonic input signal and - as the name suggests - routes it th
 
 To fight ringing and high-frequency reverb "reflections", the delay lines are modulated with a sine. While this is generally inaudible, it can be perceived on certain high-frequent usually clear sounding instruments, like a triangle, causing a slight vibrato effect to be applied to them.
 
+FDN tends to add unnaturally sounding distortions for samples that have a wide frequency range. Take a listen to the "Snap" example 2.
+
 FDN is less CPU-expensive than Freeverb and is not capable of receiving a stereo input signal. The reverb settings (room-size, width, damp, level) were tuned and scaled to match up well with the behavior of the original Freeverb.
 
 
