@@ -39,6 +39,7 @@ ADD_FLUID_TEST(test_synth_render_s32)
 ADD_FLUID_TEST(test_round_clip)
 ADD_FLUID_TEST(test_ABI)
 ADD_FLUID_TEST(test_file_seek_tell)
+ADD_FLUID_TEST(test_sample_pitch_calculation)
 ADD_FLUID_TEST(test_mts_cc_tuning)
 
 if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
