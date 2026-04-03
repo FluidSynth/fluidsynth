@@ -55,6 +55,7 @@ int main(void)
     /* Use middle C (MIDI key 60) as the root key, and test with key 64 (E4) */
     sample.origpitch = origpitch = 60;       /* sample root key in MIDI note number */
     sample.pitchadj = 220;        /* sample fine tune in cents, i.e. must be correct by 20 cents sharp */
+    sample.samplerate = 44100; // must be set to avoid div by zero
     key = 60;             /* the MIDI key to calculate pitch for */
 
     /* root_pitch_cents is the root pitch in cents without fine tune */
