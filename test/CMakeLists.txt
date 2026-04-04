@@ -484,8 +484,12 @@ add_render_job(renderRPN
     -R 0 -C 0 -g 1.1 ${GENERAL_USER_GS2} "FluidSynth.pitch.bend.fine.tuning.bug.demonstration/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid"
 )
 add_render_job(renderRPN
-    "${RPN_RENDER_DIR}/test-rpn-00-05-modulation-depth-range.${FEXT}"
-    -R 0 -C 0 -g 1.9 ${GENERAL_USER_GS2} "test-rpn-00-05-modulation-depth-range.mid"
+    "${RPN_RENDER_DIR}/modulation-range/test-rpn-00-05-modulation-depth-range.${FEXT}"
+    -R 0 -C 0 -g 1.9 ${GENERAL_USER_GS2} "modulation-range/test-rpn-00-05-modulation-depth-range.mid"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/modulation-range/mod-rpn-no-mod-wheel.${FEXT}"
+    -R 0 -C 0 -g 1.4 modulation-range/vib.sf2 "modulation-range/mod-rpn-no-mod-wheel.mid"
 )
 
 set(_gsdt1_demos
