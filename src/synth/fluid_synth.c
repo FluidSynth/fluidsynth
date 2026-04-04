@@ -2109,10 +2109,14 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             case RPN_MODULATION_DEPTH_RANGE:
                 /* MSB = semitones, LSB = 1/128 semitones (cent fraction)
-                 * Default per GM2: 0 semitones + 64/128 = 50 cents */
-                fluid_channel_set_modulation_depth_range(chan,
-                    msb_value * 100.0f + lsb_value * 100.0f / 128.0f);
-                fluid_synth_update_modulation_depth_range_LOCAL(synth, channum);
+                 * Default per GM2: 0 semitones + 64/128 = 50 cents
+                 * Ignored for "rhythm channels" */
+                if(chan->channel_type == CHANNEL_TYPE_MELODIC)
+                {
+                    fluid_channel_set_modulation_depth_range(chan,
+                        msb_value * 100.0f + lsb_value * 100.0f / 128.0f);
+                    fluid_synth_update_modulation_depth_range_LOCAL(synth, channum);
+                }
                 break;
             }
         }
