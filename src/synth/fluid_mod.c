@@ -315,7 +315,7 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid
      */
     unsigned char mod_src = is_src1 ? mod->src1 : mod->src2;
     unsigned char mod_flags = is_src1 ? mod->flags1 : mod->flags2;
-    unsigned char applyModulationDepth = (mod_flags & FLUID_MOD_CC) && (mod_src == MODULATION_MSB) && (mod->dest == GEN_VIBLFOTOPITCH);
+    unsigned char applyModulationDepth = (mod_flags & FLUID_MOD_CC) && (mod_src == MODULATION_MSB) && ((mod->dest == GEN_VIBLFOTOPITCH) || (mod->dest == GEN_MODLFOTOPITCH));
     mod_flags &= ~FLUID_MOD_CC;
 
     if(mod_src == FLUID_MOD_NONE)
