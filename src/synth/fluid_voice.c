@@ -322,6 +322,8 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     voice->mod_count = 0;
     voice->start_time = start_time;
     voice->has_noteoff = 0;
+    voice->callback = NULL;
+    voice->callback_data = NULL;
     UPDATE_RVOICE0(fluid_rvoice_reset);
 
     /*
@@ -1339,6 +1341,11 @@ fluid_voice_release(fluid_voice_t *voice)
     unsigned int at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
     UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
     voice->has_noteoff = 1; // voice is marked as noteoff occurred
+
+    if(voice->callback != NULL)
+    {
+        voice->callback(voice, FLUID_VOICE_CALLBACK_NOTEOFF, voice->callback_data);
+    }
 }
 
 /*
@@ -1456,6 +1463,11 @@ void
 fluid_voice_stop(fluid_voice_t *voice)
 {
     fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref, 0, 0);
+
+    if(voice->callback != NULL)
+    {
+        voice->callback(voice, FLUID_VOICE_CALLBACK_FINISHED, voice->callback_data);
+    }
 
     voice->chan = NO_CHANNEL;
 
@@ -1642,6 +1654,44 @@ int fluid_voice_is_sustained(const fluid_voice_t *voice)
 int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
 {
     return (voice->status == FLUID_VOICE_HELD_BY_SOSTENUTO);
+}
+
+/**
+ * Set a callback function for a voice to be notified about voice state changes.
+ *
+ * The callback is invoked when:
+ * - A true noteoff is processed for this voice (i.e. the voice enters the release
+ *   phase and is neither sustained nor sostenutoed), with reason
+ *   #FLUID_VOICE_CALLBACK_NOTEOFF.
+ * - The voice has finished playing and is about to be removed from the DSP loop,
+ *   with reason #FLUID_VOICE_CALLBACK_FINISHED.
+ *
+ * Only one callback function can be registered per voice. Setting a new callback
+ * replaces the previous one. Passing NULL as the callback removes any previously
+ * registered callback.
+ *
+ * The callback is automatically cleared when the voice is re-initialized for a
+ * new note.
+ *
+ * @param voice Voice instance
+ * @param callback Callback function to register, or NULL to unregister.
+ * @param data User-defined data pointer passed to the callback.
+ *
+ * @note This function should be called after fluid_synth_alloc_voice() and before
+ *       fluid_synth_start_voice().
+ *
+ * @warning The callback is invoked from the synthesis thread context.
+ *          The callback implementation must not call any FluidSynth API function
+ *          that could trigger voice or synth modifications, as this may lead to
+ *          deadlocks or data corruption.
+ *
+ * @since 2.5.4
+ */
+void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callback, void *data)
+{
+    fluid_return_if_fail(voice != NULL);
+    voice->callback = callback;
+    voice->callback_data = data;
 }
 
 /**

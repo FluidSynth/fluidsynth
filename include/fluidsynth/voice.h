@@ -50,6 +50,37 @@ enum fluid_voice_add_mod
     FLUID_VOICE_DEFAULT           /**< For default modulators only, no need to check for duplicates */
 };
 
+/**
+ * Enum indicating the reason a voice callback was invoked.
+ *
+ * @since 2.5.4
+ */
+enum fluid_voice_callback_reason
+{
+    FLUID_VOICE_CALLBACK_NOTEOFF,   /**< A true noteoff was processed for this voice, i.e. the voice
+                                         is neither sustained nor sostenutoed and has entered
+                                         its release phase. */
+    FLUID_VOICE_CALLBACK_FINISHED   /**< The voice has finished playing and is about to be
+                                         removed from the DSP loop. */
+};
+
+/**
+ * Callback function type for voice events.
+ *
+ * @param voice The voice instance that triggered the callback.
+ * @param reason The reason why the callback was invoked (see #fluid_voice_callback_reason).
+ * @param data User-defined data pointer as passed to fluid_voice_set_callback().
+ *
+ * @note This callback is invoked from the synthesis thread context.
+ *       The callback implementation must not call any FluidSynth API function
+ *       that could trigger voice or synth modifications, as this may lead to
+ *       deadlocks or data corruption. The callback should be kept as short as
+ *       possible.
+ *
+ * @since 2.5.4
+ */
+typedef void (*fluid_voice_callback_t)(fluid_voice_t *voice, enum fluid_voice_callback_reason reason, void *data);
+
 FLUIDSYNTH_API void fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode);
 FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t *voice, int gen);
 FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t *voice, int gen, float val);
@@ -67,6 +98,7 @@ FLUIDSYNTH_API int fluid_voice_is_sustained(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_is_sostenuto(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t *s);
 FLUIDSYNTH_API void fluid_voice_update_param(fluid_voice_t *voice, int gen);
+FLUIDSYNTH_API void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callback, void *data);
 /** @} */
 
 #ifdef __cplusplus
