@@ -22,6 +22,6 @@ Feel free to contribute or let us know if something is missing or unclear.
     * [Using prebuilt libraries on Android](Using-prebuilt-libraries-on-Android)
   * [FluidSynth 2.0 API](http://www.fluidsynth.org/api/)
   * [FluidSynth legacy 1.x API](http://www.fluidsynth.org/api-1.x/)
-  * [LADSPA Interface Documentation](https://github.com/FluidSynth/fluidsynth/blob/master/doc/ladspa.md)
+  * [LADSPA Interface Documentation](ladspa.md)
   * [NotesForPackagers](NotesForPackagers.md)
   * [ReleaseCheckList](ReleaseCheckList.md) (used by the current FluidSynth release manager)
