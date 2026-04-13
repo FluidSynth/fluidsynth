@@ -5093,6 +5093,12 @@ fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount)
 
     blockcount = fluid_rvoice_mixer_render(synth->eventhandler->mixer, blockcount);
 
+    /* Process voices that have finished rendering, so that their
+     * callbacks (if any) fire immediately rather than being deferred
+     * until the next API call enters fluid_synth_api_enter().
+     */
+    fluid_synth_check_finished_voices(synth);
+
     /* Testcase, that provokes a denormal floating point error */
 #if 0
     {
