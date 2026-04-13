@@ -1654,13 +1654,6 @@ int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
 /**
  * Set a callback function for a voice to be notified about voice state changes.
  *
- * The callback is invoked when:
- * - A true noteoff is processed for this voice (i.e. the voice enters the release
- *   phase and is neither sustained nor sostenutoed), with reason
- *   #FLUID_VOICE_CALLBACK_NOTEOFF.
- * - The voice has finished playing and is about to be removed from the DSP loop,
- *   with reason #FLUID_VOICE_CALLBACK_FINISHED.
- *
  * Only one callback function can be registered per voice. Setting a new callback
  * replaces the previous one. Passing NULL as the callback removes any previously
  * registered callback.
@@ -1673,14 +1666,9 @@ int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
  * @param data User-defined data pointer passed to the callback.
  *
  * @note This function should be called after fluid_synth_alloc_voice() and before
- *       fluid_synth_start_voice().
+ *       fluid_synth_start_voice() to be guaranteed to receive the callback.
  *
- * @warning The callback is invoked from the synthesis thread context.
- *          The callback implementation must not call any FluidSynth API function
- *          that could trigger voice or synth modifications, as this may lead to
- *          deadlocks or data corruption.
- *
- * @since 2.5.4
+ * @since 2.6.0
  */
 void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callback, void *data)
 {

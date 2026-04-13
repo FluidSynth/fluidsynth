@@ -53,15 +53,24 @@ enum fluid_voice_add_mod
 /**
  * Enum indicating the reason a voice callback was invoked.
  *
- * @since 2.5.4
+ * @since 2.6.0
  */
 enum fluid_voice_callback_reason
 {
-    FLUID_VOICE_CALLBACK_NOTEOFF,   /**< A true noteoff was processed for this voice, i.e. the voice
-                                         is neither sustained nor sostenutoed and has entered
-                                         its release phase. */
-    FLUID_VOICE_CALLBACK_FINISHED   /**< The voice has finished playing and is about to be
-                                         removed from the DSP loop. */
+    /**
+     * A true noteoff is about to be processed for this voice by the next rendering call, i.e. the voice
+     * is neither sustained nor sostenutoed and is about to enter its release phase.
+     * @note This event may not be fired if the sample ends before the voice receives a noteoff event.
+     * Think of short and unlooped percussion samples, for example.
+     */
+    FLUID_VOICE_CALLBACK_NOTEOFF,
+    /**
+     * The voice has finished playing and is about to be
+     * removed from the DSP loop. The voice remains valid until the callback returns. After that,
+     * the voice instance should be considered invalid as it may be reclaimed immediately afterwards.
+     * @note This event will always be fired, even when the voice is being killed or stolen due to polyphony overflow.
+     */
+    FLUID_VOICE_CALLBACK_FINISHED
 };
 
 /**
@@ -71,15 +80,14 @@ enum fluid_voice_callback_reason
  * @param reason The reason why the callback was invoked (see #fluid_voice_callback_reason).
  * @param data User-defined data pointer as passed to fluid_voice_set_callback().
  *
- * @note This callback is invoked from the synthesis thread context.
- *       The callback implementation must not call any FluidSynth API function
- *       that could trigger voice or synth modifications, as this may lead to
- *       deadlocks or data corruption. The callback should be kept as short as
- *       possible.
+ * @note It is unspecified from which thread the callback is called. However, the callback may be invoked from the synthesis context.
+ *       In this case, audio synthesis will be blocked until the callback returns. It is therefore highly recommended to
+ *       keep the callback code short, efficient and non-blocking. In realtime-rendering scenarios it is particularly
+ *       discouraged to call any public API functions of the synth or the sequencer from within the callback, as this may acquire a mutex.
  *
- * @since 2.5.4
+ * @since 2.6.0
  */
-typedef void (*fluid_voice_callback_t)(fluid_voice_t *voice, enum fluid_voice_callback_reason reason, void *data);
+typedef void (*fluid_voice_callback_t)(const fluid_voice_t *voice, enum fluid_voice_callback_reason reason, void *data);
 
 FLUIDSYNTH_API void fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode);
 FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t *voice, int gen);
