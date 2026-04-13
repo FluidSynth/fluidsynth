@@ -59,7 +59,7 @@ enum fluid_voice_callback_reason
 {
     /**
      * A true noteoff is about to be processed for this voice by the next rendering call, i.e. the voice
-     * is neither sustained nor sostenutoed and is about to enter its release phase.
+     * is neither sustained nor sostenutoed and is about to enter its release phase with the next rendering call.
      * @note This event may not be fired if the sample ends before the voice receives a noteoff event.
      * Think of short and unlooped percussion samples, for example.
      */
