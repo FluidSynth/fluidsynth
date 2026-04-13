@@ -158,9 +158,10 @@ struct _fluid_rvoice_buffers_t
  * Generic callback for rvoice finished notification.
  * Invoked from the render thread when the rvoice completes.
  * @param voice Opaque pointer (typically the fluid_voice_t*)
+ * @param reason Integer reason code (FLUID_VOICE_CALLBACK_FINISHED)
  * @param data User-defined data pointer
  */
-typedef void (*fluid_rvoice_finished_cb_t)(void *voice, void *data);
+typedef void (*fluid_rvoice_finished_cb_t)(void *voice, int reason, void *data);
 
 /*
  * Hard realtime parameters needed to synthesize a voice

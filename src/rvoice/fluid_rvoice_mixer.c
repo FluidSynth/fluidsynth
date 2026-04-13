@@ -395,7 +395,7 @@ fluid_mixer_buffer_process_finished_voices(fluid_mixer_buffers_t *buffers)
          * before the voice is pushed to the finished_voices ringbuffer. */
         if(v->finished_cb != NULL)
         {
-            v->finished_cb(v->finished_cb_voice, v->finished_cb_data);
+            v->finished_cb(v->finished_cb_voice, 1 /* FLUID_VOICE_CALLBACK_FINISHED */, v->finished_cb_data);
         }
 
         fluid_rvoice_eventhandler_finished_voice_callback(buffers->mixer->eventhandler, v);

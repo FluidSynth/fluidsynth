@@ -1651,21 +1651,6 @@ int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
     return (voice->status == FLUID_VOICE_HELD_BY_SOSTENUTO);
 }
 
-/*
- * Trampoline for the rvoice finished callback.
- * Called from the render thread when the rvoice finishes.
- * Invokes the user's callback with FLUID_VOICE_CALLBACK_FINISHED.
- */
-static void fluid_voice_finished_cb_trampoline(void *voice_ptr, void *data)
-{
-    fluid_voice_t *voice = (fluid_voice_t *)voice_ptr;
-
-    if(voice->callback != NULL)
-    {
-        voice->callback(voice, FLUID_VOICE_CALLBACK_FINISHED, data);
-    }
-}
-
 /**
  * Set a callback function for a voice to be notified about voice state changes.
  *
@@ -1708,8 +1693,10 @@ void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callb
 
     /* Propagate to the rvoice so the finished callback fires from the
      * render thread immediately when the voice finishes, rather than
-     * being deferred to the next API call. */
-    param[0].ptr = (callback != NULL) ? (void *)fluid_voice_finished_cb_trampoline : NULL;
+     * being deferred to the next API call.
+     * The user's fluid_voice_callback_t is ABI-compatible with
+     * fluid_rvoice_finished_cb_t (void*, int, void*). */
+    param[0].ptr = (void *)callback;
     param[1].ptr = voice;
     param[2].ptr = data;
     fluid_rvoice_eventhandler_push(voice->eventhandler,
