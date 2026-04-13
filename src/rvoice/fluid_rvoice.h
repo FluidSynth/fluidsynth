@@ -154,6 +154,14 @@ struct _fluid_rvoice_buffers_t
 };
 
 
+/**
+ * Generic callback for rvoice finished notification.
+ * Invoked from the render thread when the rvoice completes.
+ * @param voice Opaque pointer (typically the fluid_voice_t*)
+ * @param data User-defined data pointer
+ */
+typedef void (*fluid_rvoice_finished_cb_t)(void *voice, void *data);
+
 /*
  * Hard realtime parameters needed to synthesize a voice
  */
@@ -164,6 +172,12 @@ struct _fluid_rvoice_t
     fluid_iir_filter_t resonant_filter; /* IIR resonant dsp filter */
     fluid_iir_filter_t resonant_custom_filter; /* optional custom/general-purpose IIR resonant filter */
     fluid_rvoice_buffers_t buffers;
+
+    /* Finished callback, invoked from the render thread when the rvoice
+     * finishes and is about to be removed from the mixer's active list. */
+    fluid_rvoice_finished_cb_t finished_cb;
+    void *finished_cb_voice; /* fluid_voice_t* passed as first arg */
+    void *finished_cb_data;  /* user data passed as second arg */
 };
 
 
@@ -196,6 +210,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopstart);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopend);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_samplemode);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_finished_callback);
 
 
 int fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping);

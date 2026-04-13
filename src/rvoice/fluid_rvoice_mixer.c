@@ -391,6 +391,13 @@ fluid_mixer_buffer_process_finished_voices(fluid_mixer_buffers_t *buffers)
 
         buffers->mixer->active_voices = av;
 
+        /* Fire user-registered finished callback from the render thread,
+         * before the voice is pushed to the finished_voices ringbuffer. */
+        if(v->finished_cb != NULL)
+        {
+            v->finished_cb(v->finished_cb_voice, v->finished_cb_data);
+        }
+
         fluid_rvoice_eventhandler_finished_voice_callback(buffers->mixer->eventhandler, v);
     }
 

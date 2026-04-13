@@ -1464,11 +1464,6 @@ fluid_voice_stop(fluid_voice_t *voice)
 {
     fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref, 0, 0);
 
-    if(voice->callback != NULL)
-    {
-        voice->callback(voice, FLUID_VOICE_CALLBACK_FINISHED, voice->callback_data);
-    }
-
     voice->chan = NO_CHANNEL;
 
     /* Decrement the reference count of the sample, to indicate
@@ -1656,6 +1651,21 @@ int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
     return (voice->status == FLUID_VOICE_HELD_BY_SOSTENUTO);
 }
 
+/*
+ * Trampoline for the rvoice finished callback.
+ * Called from the render thread when the rvoice finishes.
+ * Invokes the user's callback with FLUID_VOICE_CALLBACK_FINISHED.
+ */
+static void fluid_voice_finished_cb_trampoline(void *voice_ptr, void *data)
+{
+    fluid_voice_t *voice = (fluid_voice_t *)voice_ptr;
+
+    if(voice->callback != NULL)
+    {
+        voice->callback(voice, FLUID_VOICE_CALLBACK_FINISHED, data);
+    }
+}
+
 /**
  * Set a callback function for a voice to be notified about voice state changes.
  *
@@ -1689,9 +1699,22 @@ int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
  */
 void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callback, void *data)
 {
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+
     fluid_return_if_fail(voice != NULL);
+
     voice->callback = callback;
     voice->callback_data = data;
+
+    /* Propagate to the rvoice so the finished callback fires from the
+     * render thread immediately when the voice finishes, rather than
+     * being deferred to the next API call. */
+    param[0].ptr = (callback != NULL) ? (void *)fluid_voice_finished_cb_trampoline : NULL;
+    param[1].ptr = voice;
+    param[2].ptr = data;
+    fluid_rvoice_eventhandler_push(voice->eventhandler,
+                                   fluid_rvoice_set_finished_callback,
+                                   voice->rvoice, param);
 }
 
 /**
