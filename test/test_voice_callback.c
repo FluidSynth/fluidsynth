@@ -12,7 +12,7 @@ static void *finished_data_received = NULL;
 static unsigned int noteoff_voice_id = 0;
 static unsigned int finished_voice_id = 0;
 
-static void voice_callback(fluid_voice_t *voice, enum fluid_voice_callback_reason reason, void *data)
+static void voice_callback(const fluid_voice_t *voice, enum fluid_voice_callback_reason reason, void *data)
 {
     if(reason == FLUID_VOICE_CALLBACK_NOTEOFF)
     {
