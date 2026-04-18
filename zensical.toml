@@ -48,8 +48,8 @@ docs_dir="doc/wiki"
 #
 # Read more: https://zensical.org/docs/setup/navigation/
 nav = [
-    {"🎹 FluidSynth" = [
-        "index.md",
+    "index.md",
+    {"🎹 About FluidSynth" = [
         "Download.md",
         "SoundFont.md",
         "Applications.md",

@@ -1,4 +1,10 @@
-# 🎹 FluidSynth
+---
+hide:
+    - navigation
+    - toc
+---
+
+# 🏠 Home
 
 *Welcome to the FluidSynth project Wiki!*
 

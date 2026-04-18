@@ -46,3 +46,4 @@ install_manifest.txt
 
 # Built docs
 site/
+/.cache/
