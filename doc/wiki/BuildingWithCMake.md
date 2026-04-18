@@ -52,7 +52,7 @@ A minimal build of fluidsynth has the following requirements:
   * [PortAudio](http://www.portaudio.com) - Free, cross-platform, audio I/O library
   * [PulseAudio](http://www.pulseaudio.org) - Linux sound server
   * CoreAudio - Audio system found on Mac OS X
-  * DirectSound - Sound drivers found on Windows sytems
+  * DirectSound - Sound drivers found on Windows systems
   * [WaveOut](https://docs.microsoft.com/de-at/windows/win32/directshow/audio-renderer--waveout--filter) - Alternative to DirectSound driver on Windows
   * WinMIDI - MIDI driver on Windows
   * [MidiShare](http://midishare.sourceforge.net) - Cross-platform MIDI environment

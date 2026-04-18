@@ -10,7 +10,7 @@
   * It is also regularly tested on **Mac OS X**. For instructions on how to install fluidsynth on this platform, [see below](#distributions).
   * FluidSynth can also run on **Windows**, and building is supported with either MinGW or MSVC.
   * FluidSynth may be run on **FreeBSD** and its derivatives.
-  * We have had successful reports on FluidSynth running on **Solaris** and **OS/2**, but this is not officially supported. It's likely that it will also work on other platforms (most noteably Unix like operating systems). 
+  * We have had successful reports on FluidSynth running on **Solaris** and **OS/2**, but this is not officially supported. It's likely that it will also work on other platforms (most notably Unix like operating systems). 
 
 ## Distributions
 

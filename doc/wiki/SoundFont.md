@@ -87,7 +87,7 @@ The SoundFont format was originally created by Creative Labs and EMU Systems and
   Sounds (DLS)](https://midi.org/dls) that closely resembles the Soundfont Specifications.
   * [Creative Labs Developer Documentation](https://web.archive.org/web/20100728160132/http://connect.creativelabs.com/developer/SoundFont/Forms/AllItems.aspx) - Specifications, docs, SF2 test files, etc. (on archive.org, the original is no longer accessible)
   * [Soundfont.com FAQ](https://web.archive.org/web/20070107111507/http://www.soundblaster.com/soundfont/faqs/) (on archive.org, the original is no longer accessible)
-  * [MuseScore's officially inofficial SoundFont 3 extension](SoundFont3Format.md) - An extension of the SF2 format that allows sample compression.
+  * [MuseScore's officially unofficial SoundFont 3 extension](SoundFont3Format.md) - An extension of the SF2 format that allows sample compression.
   * [SoundFont spec compliance test](https://github.com/mrbumpy409/SoundFont-Spec-Test) - An excellent test suite created by S. Christian Collins
 
 ## FluidSynth's implementation details of the SoundFont 2 spec
