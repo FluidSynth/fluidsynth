@@ -112,6 +112,7 @@ fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *e
 
     if(vptr == NULL)
     {
+        FLUID_LOG(FLUID_PANIC, "THIS SHOULD NEVER HAPPEN: eventhandler->finished_voices ringbuffer full!");
         return;    // Buffer full
     }
 
