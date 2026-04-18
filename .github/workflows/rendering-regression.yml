@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Baseline FluidSynth git ref/tag/sha to compare against (e.g. v2.5.1)"
+        description: "Baseline FluidSynth git ref/tag/sha to compare against (e.g. v2.5.1 or commit hash)"
         required: true
-        default: "v2.5.1"
+        default: "1b87398d8a5bd1cb4f9f5143da097eb9827b2a5c"
   pull_request:
   push:
     paths-ignore:
@@ -24,7 +24,7 @@ permissions:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'v2.5.1' }}
+  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || '1b87398d8a5bd1cb4f9f5143da097eb9827b2a5c' }}
   SNR_MIN: '60'
   RMS_MAX: '0.0001'
   ABS_MAX: '0.01'
