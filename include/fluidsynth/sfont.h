@@ -152,6 +152,8 @@ typedef int (* fluid_sfloader_callback_read_t)(void *buf, fluid_long_long_t coun
 /**
  * Same purpose and behaviour as fseek.
  *
+ * @param handle file handle returned by the open callback
+ * @param offset offset in bytes relative to \p origin to seek
  * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
  * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise
  */

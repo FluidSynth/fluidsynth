@@ -478,7 +478,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 }
 
 /* Useful to return the nominal pitch of a key */
-/* The nominal pitch is dependent of voice->root_pitch,tuning, and
+/* The nominal pitch is dependent of voice->root_key,tuning, and
    GEN_SCALETUNE generator.
    This is useful to set the value of GEN_PITCH generator on noteOn.
    This is useful to get the beginning/ending pitch for portamento.
@@ -486,7 +486,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
 {
     fluid_tuning_t *tuning;
-    fluid_real_t x, pitch;
+    fluid_real_t tuned_root_pitch, tuned_key, pitch;
 
     /* Now the nominal pitch of the key is returned.
      * Note about SCALETUNE: SF2.01 8.1.3 says, that this generator is a
@@ -496,15 +496,19 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
      */
     if(fluid_channel_has_tuning(voice->channel))
     {
+        fluid_real_t root_key = voice->root_key * (1 / 100.0f);
+        int root_key_int = (int)(root_key + 0.5f);
+
         tuning = fluid_channel_get_tuning(voice->channel);
-        x = fluid_tuning_get_pitch(tuning, (int)(voice->root_pitch / 100.0f));
+        tuned_root_pitch = fluid_tuning_get_pitch(tuning, root_key_int);
+        tuned_key = fluid_tuning_get_pitch(tuning, key);
         pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
-                (fluid_tuning_get_pitch(tuning, key) - x) + x;
+                (tuned_key - tuned_root_pitch) + tuned_root_pitch;
     }
     else
     {
         pitch = voice->gen[GEN_SCALETUNE].val
-                * (key - voice->root_pitch / 100.0f) + voice->root_pitch;
+                * (key - voice->root_key / 100.0f) + voice->root_key;
     }
 
     return pitch;
@@ -820,45 +824,27 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_OVERRIDEROOTKEY:
-
         /* This is a non-realtime parameter. Therefore the .mod part of the generator
          * can be neglected.
          * NOTE: origpitch sets MIDI root note while pitchadj is a fine tuning amount
-         * which offsets the original rate.  This means that the fine tuning is
+         * which offsets / corrects the original rate.  This means that the fine tuning is
          * inverted with respect to the root note (so subtract it, not add).
          */
-        if(voice->sample != NULL)
+        z = voice->sample != NULL ? voice->sample->samplerate : voice->output_rate;
+        if(voice->gen[GEN_OVERRIDEROOTKEY].val > -1)
         {
-            if(voice->gen[GEN_OVERRIDEROOTKEY].val > -1)    //FIXME: use flag instead of -1
-            {
-                voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f
-                                    - voice->sample->pitchadj;
-            }
-            else
-            {
-                voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
-            }
-
-            x = (fluid_ct2hz_real(voice->root_pitch) * ((fluid_real_t) voice->output_rate / voice->sample->samplerate));
+            voice->root_key = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f;
         }
         else
         {
-            if(voice->gen[GEN_OVERRIDEROOTKEY].val > -1)     //FIXME: use flag instead of -1
-            {
-                voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f;
-            }
-            else
-            {
-                voice->root_pitch = 0;
-            }
-
-            x = fluid_ct2hz_real(voice->root_pitch);
+            voice->root_key = voice->sample->origpitch * 100.0f;
         }
 
-        /* voice->pitch depends on voice->root_pitch, so calculate voice->pitch now */
-        fluid_voice_calculate_gen_pitch(voice);
-        UPDATE_RVOICE_R1(fluid_rvoice_set_root_pitch_hz, x);
+        x = (fluid_ct2hz_real(voice->root_key - voice->sample->pitchadj) * ((fluid_real_t) voice->output_rate / z));
 
+        /* voice->pitch depends on voice->root_key, so calculate voice->pitch now */
+        fluid_voice_calculate_gen_pitch(voice);
+            UPDATE_RVOICE_R1(fluid_rvoice_set_root_pitch_hz, x);
         break;
 
     case GEN_FILTERFC:
