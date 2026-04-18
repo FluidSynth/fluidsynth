@@ -50,12 +50,12 @@ docs_dir="wiki"
 nav = [
     {"🎹 FluidSynth" = [
         "index.md",
+        "Download.md",
         "SoundFont.md",
         "Applications.md",
         "MadeWithFluidSynth.md",
         "LicensingFAQ.md"
     ]},
-    "Download.md",
     {"📚 Documentation" = [
         "Documentation.md",
         {"🙋 For users" = [
