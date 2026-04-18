@@ -1682,8 +1682,7 @@ void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callb
     /* Propagate to the rvoice so the finished callback fires from the
      * render thread immediately when the voice finishes, rather than
      * being deferred to the next API call.
-     * The user's fluid_voice_callback_t is ABI-compatible with
-     * fluid_rvoice_finished_cb_t (void*, int, void*). */
+     */
     param[0].ptr = (void *)callback;
     param[1].ptr = voice;
     param[2].ptr = data;

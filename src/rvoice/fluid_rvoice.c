@@ -955,7 +955,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_finished_callback)
 {
     fluid_rvoice_t *voice = obj;
 
-    voice->finished_cb = (fluid_rvoice_finished_cb_t) param[0].ptr;
+    voice->finished_cb = (fluid_voice_callback_t) param[0].ptr;
     voice->finished_cb_voice = param[1].ptr;
     voice->finished_cb_data = param[2].ptr;
 }
