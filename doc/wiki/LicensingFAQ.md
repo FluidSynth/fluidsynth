@@ -1,4 +1,4 @@
-# 📜 LicensingFAQ
+# 📜 Licensing FAQ
 
 **Q: Can I consider the below to be legal advice?**
 
@@ -15,7 +15,7 @@ More information about LGPL is available on <http://www.gnu.org>.
 
 **Q: Can I include FluidSynth in an iPhone app which I sell on Apple App Store?**
 
-A: Please see [here](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ#ios-and-the-app-store) for information. 
+A: Please see [here](#ios-and-the-app-store) for information. 
 
 **Q: I'm willing to pay for a commercial license of FluidSynth. Is there someone I can contact?**
 

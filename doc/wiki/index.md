@@ -44,7 +44,7 @@ The [Applications](Applications) page is a list of other applications that use F
 #### License
 
 The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). 
-There is also a [LicensingFAQ](LicensingFAQ.md) with a special section about the [Apple App Store](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ#ios-and-the-app-store). 
+There is also a [LicensingFAQ](LicensingFAQ.md) with a special section about the [Apple App Store](LicensingFAQ.md#ios-and-the-app-store). 
 
 #### Mailing lists
 

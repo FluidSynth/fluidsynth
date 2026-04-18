@@ -73,7 +73,7 @@
 
 * Previous versions have incorrectly exposed private C++ and inline symbols; they are now hidden from the library (#1676)
 * FluidSynth now resets DataEntry values when it receives (N)RPN MSB/LSB to prevent off-tuned channels (#1672, thanks to @rsp4jack)
-* It is now possible to install the library, header and executable independently of each other (#1693, refer to [wiki](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake#installation) for details, thanks to @pedrolcl)
+* It is now possible to install the library, header and executable independently of each other (#1693, refer to [wiki](BuildingWithCMake.md#installation) for details, thanks to @pedrolcl)
 * Add a CI pipeline for iOS and publish precompiled iOS binaries for each release (#1703, #1677, thanks to @withSang)
 * Fix the precompiled Windows binaries lacking dependency libraries (#1668)
 * Fix a regression introduced in 2.5.0, that could have caused a NULL pointer deref when playing AWE32 NRPN MIDIs (#1691)
@@ -96,20 +96,20 @@ Starting with 2.5.0, a C++11-compliant compiler and standard library will be req
 * Add a C++11-based OS abstraction layer as a replacement for glib, bringing [these minor limitations](https://github.com/FluidSynth/fluidsynth/discussions/847#discussioncomment-13183154) when C++17 is unavailable (#1570, thanks to @mmlr)
 * Add native support for **D**ownloadable **S**oundfont **F**ormat (#1626, thanks to @rsp4jack)
 * FluidSynth now recognizes the [`DMOD`](https://github.com/spessasus/soundfont-proposals/blob/main/default_modulators.md) INFO-subchunk (#1582, thanks to @spessasus)
-* A new positional flag has been introduced: `-b, --bank-offset`, (#1538, refer to [UserManual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual#options) for details)
+* A new positional flag has been introduced: `-b, --bank-offset`, (#1538, refer to [UserManual](UserManual.md#options) for details)
 * FluidSynth now natively supports the long CLI option flags on Windows (#1544)
 * FluidSynth now supports native Android logging (#1621, thanks to @neoharp-dev)
 
 ### Breaking Changes
 
 * Support for SDL2 has been removed - pls. use SDL3 instead (#1594)
-* The processing order of fluidsynth's configuration files has been changed (#1573, refer to [wiki](https://github.com/FluidSynth/fluidsynth/wiki/FluidSynth-configuration-files) for details)
-* The legacy shell commands for reverb and chorus have been removed (#1659, refer to [UserManual](https://github.com/FluidSynth/fluidsynth/wiki/UserManual#reverb) for details)
+* The processing order of fluidsynth's configuration files has been changed (#1573, refer to [wiki](FluidSynth-configuration-files.md) for details)
+* The legacy shell commands for reverb and chorus have been removed (#1659, refer to [UserManual](UserManual.md#reverb) for details)
 
 ### Musically Breaking Changes
 
 * It was discovered that fluidsynth was mapping some modulators slightly inaccurately into their normalized range (#1651, thanks to @baskanov)
-* Some Roland GS NPRN Params are now mapped to CC numbers (#1519, refer to [wiki](https://github.com/FluidSynth/fluidsynth/wiki/FluidFeatures#roland-nrpns) for details)
+* Some Roland GS NPRN Params are now mapped to CC numbers (#1519, refer to [wiki](FluidFeatures.md#roland-nrpns) for details)
 * FluidSynth now auto-detects whether Portamento Time is 7bit or 14bit wide - this fixes the infamous Descent Game08 tune (#705, #1232, #1311, #1456, #1495, #1517, see [`synth.portamento-time`](https://www.fluidsynth.org/api/fluidsettings.xml#synth.portamento-time) for details)
 * Previously, fluidsynth's default behavior was to use portamento only for those notes, that were played in a successive / legato manner; to further improve the portamento experience, this was changed and fluidsynth now plays portamento for all notes by default (#1656)
 
@@ -493,7 +493,7 @@ Calling `delete_fluid_synth()` does not free those SoundFonts either. Affected a
 * new, stereophonic chorus engine (#548, thanks to @jjceresa)
 * support for Downloadable Sounds (DLS) files was added (#320, requires [libinstpatch](https://github.com/swami/libinstpatch))
 * improved integrity checking of SoundFont modulators (#467, thanks to @jjceresa)
-* [rendering to stdout is now possible](https://github.com/FluidSynth/fluidsynth/wiki/ExampleCommandLines#fluidsynth-to-stdout) (#553, thanks to @mawe42)
+* [rendering to stdout is now possible](ExampleCommandLines.md#fluidsynth-to-stdout) (#553, thanks to @mawe42)
 * the following Audio Drivers have been added:
   * Oboe (#464, tested on Android, thanks to @atsushieno)
   * OpenSLES (#464, tested on Android, thanks to @atsushieno)
@@ -685,7 +685,7 @@ Minor maintenance release to address some issues introduced with 1.1.7:
 * build fixes on OS/2 (thanks to @komh)
 
 # FluidSynth 1.1.7
-This is mainly considered to be a maintenance release, although it brings a few new features, see below. **Note** that this is expected to be the last release to ship the deprecated and unmaintained autotools build system! Make sure you check out [how to build fluidsynth using CMake](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+This is mainly considered to be a maintenance release, although it brings a few new features, see below. **Note** that this is expected to be the last release to ship the deprecated and unmaintained autotools build system! Make sure you check out [how to build fluidsynth using CMake](BuildingWithCMake.md).
 
 ### Bug fixes
 * **consistently relicense libfluidsynth under LGPL-2.1+** (also addressing fluid_chorus.c, #165)

@@ -70,7 +70,9 @@ mkdir $DEV
 bash fluid-android-compile.sh
 ```
 
-That's it. All dependencies are downloaded and compiled one after another. No errors should occur. Once done you should end up with a directory `$PREFIX` containing all binaries needed to run fluidsynth on Android (about 100 MiB on arm-eabi) that you can integrate into your favorite environment or IDE (cf. [Using prebuilt libraries on Android](https://github.com/FluidSynth/fluidsynth/wiki/Using-prebuilt-libraries-on-Android)).
+That's it. All dependencies are downloaded and compiled one after another. No errors should occur. 
+Once done you should end up with a directory `$PREFIX` containing all binaries needed to run fluidsynth on Android (about 100 MiB on arm-eabi) that you can integrate into your favorite environment or IDE 
+(cf. [Using prebuilt libraries on Android](Using-prebuilt-libraries-on-Android.md)).
 
 ## If compilation of dependencies fails
 

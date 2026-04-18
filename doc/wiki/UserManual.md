@@ -68,7 +68,7 @@ FluidSynth accepts the following options (call FluidSynth with the --help option
 -f, --load-config
 
 
-> Right upon starting, load and execute a configuration file containing fluidsynth related shell commands as described [in the Section below](https://github.com/FluidSynth/fluidsynth/wiki/UserManual#shell-commands). 
+> Right upon starting, load and execute a configuration file containing fluidsynth related shell commands as described [in the Section below](UserManual.md#shell-commands). 
 
 -F, --fast-render=[file]
 

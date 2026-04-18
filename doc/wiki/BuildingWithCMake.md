@@ -136,7 +136,8 @@ http://lists.nongnu.org/mailman/listinfo/fluid-dev
 
 ## Building on Linux
 
-If your distribution already has a packaged FluidSynth, you may simply install it using the package manager, [as described here](https://github.com/FluidSynth/fluidsynth/wiki/Download#distributions). You can also grab the build dependencies automatically by running a command such as 
+If your distribution already has a packaged FluidSynth, you may simply install it using the package manager, 
+[as described here](Download.md#distributions). You can also grab the build dependencies automatically by running a command such as 
 
 ```bash
 sudo apt-get build-dep fluidsynth --no-install-recommends
@@ -173,7 +174,7 @@ pacman -S make mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64
 **This is just an example for 64-bit systems. If you are running the 32 bit version, replace `x86_64` by `i686`.**
 
 ### Building
-1. Grab FluidSynths latest release tarball, as described [here](https://github.com/FluidSynth/fluidsynth/wiki/Download#source-archives).
+1. Grab FluidSynths latest release tarball, as described [here](Download.md#source-archives).
 2. Unpack the tarball and navigate into the folder containing the extracted files.
 3. Create a new folder, we'll call it `build`.
 4. In the MSYS2 shell, navigate into that folder
@@ -196,7 +197,7 @@ Install [Cygwin](https://www.cygwin.com/) following the setup, and selecting _at
 * glib
 
 ### Building
-1. Grab FluidSynths latest release tarball, as described [here](https://github.com/FluidSynth/fluidsynth/wiki/Download#source-archives).
+1. Grab FluidSynths latest release tarball, as described [here](Download.md#source-archives).
 2. Navigate into the cloned repository and create a new folder, we'll call it 'build'.
 3. Navigate into that folder and run cmake on the previous directory, specifying the Makefile type
 `cmake -G "MSYS Makefiles" ..`
