@@ -39,7 +39,7 @@ Copyright &copy; 2026 Peter Hannape and others.
 
 repo_url = "https://github.com/FluidSynth/fluidsynth"
 repo_name = "FluidSynth/fluidsynth"
-docs_dir="wiki"
+docs_dir="doc/wiki"
 # Zensical supports both implicit navigation and explicitly defined navigation.
 # If you decide not to define a navigation here then Zensical will simply
 # derive the navigation structure from the directory structure of your
