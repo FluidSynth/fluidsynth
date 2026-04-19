@@ -14,7 +14,7 @@
 
 #### FluidSynth is a cross-platform, real-time software synthesizer based on the Soundfont 2 specification.
 
-FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play MIDI files.
+FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://www.fluidsynth.org/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play MIDI files.
 
 [![SonarQube Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FluidSynth_fluidsynth&metric=alert_status)](https://sonarcloud.io/dashboard?id=FluidSynth_fluidsynth) [![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
 
@@ -23,7 +23,7 @@ FluidSynth generates audio by reading and handling MIDI events from MIDI input d
 
 The central place for documentation and further links is our **wiki** here at GitHub:
 
-#### https://github.com/FluidSynth/fluidsynth/wiki
+#### https://www.fluidsynth.org/wiki
 
 If you are missing parts of the documentation, let us know by writing to our mailing list.
 Of course, you are welcome to edit and improve the wiki yourself. All you need is an account at GitHub. Alternatively, you may send an EMail to our mailing list along with your suggested changes. Further information about the mailing list is available in the wiki as well.
@@ -32,17 +32,17 @@ Latest information about FluidSynth is also available on the web site at https:/
 
 ## License
 
-The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the conditions how FluidSynth can be used in e.g. commercial or closed-source projects, please refer to the [LicensingFAQ in our wiki](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ).
+The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the conditions how FluidSynth can be used in e.g. commercial or closed-source projects, please refer to the [LicensingFAQ in our wiki](https://www.fluidsynth.org/wiki/LicensingFAQ).
 
 ## Building from source
 
-For information on how to build FluidSynth from source, please [refer to our wiki](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+For information on how to build FluidSynth from source, please [refer to our wiki](https://www.fluidsynth.org/wiki/BuildingWithCMake).
 
 ## Links
 
 - FluidSynth's Home Page, https://www.fluidsynth.org
 
-- FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
+- FluidSynth's wiki, https://www.fluidsynth.org/wiki
 
 - FluidSynth's API documentation, https://www.fluidsynth.org/api/
 
