@@ -474,11 +474,23 @@ add_custom_target(renderDMOD
 )
 
 add_custom_target(renderRPN
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.1 -F "${RPN_RENDER_DIR}/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid.${FEXT}" ${GENERAL_USER_GS2} "FluidSynth.pitch.bend.fine.tuning.bug.demonstration/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid"
     COMMENT "Rendering Test MIDI for RPNs"
     DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/rpn/"
-    VERBATIM
+)
+set_target_properties(renderRPN PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/rpn"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.${FEXT}"
+    -R 0 -C 0 -g 1.1 ${GENERAL_USER_GS2} "FluidSynth.pitch.bend.fine.tuning.bug.demonstration/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/modulation-range/test-rpn-00-05-modulation-depth-range.${FEXT}"
+    -R 0 -C 0 -g 1.9 ${GENERAL_USER_GS2} "modulation-range/test-rpn-00-05-modulation-depth-range.mid"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/modulation-range/mod-rpn-no-mod-wheel.${FEXT}"
+    -R 0 -C 0 -g 1.4 modulation-range/vib.sf2 "modulation-range/mod-rpn-no-mod-wheel.mid"
 )
 
 set(_gsdt1_demos
