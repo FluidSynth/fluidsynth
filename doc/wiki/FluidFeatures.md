@@ -81,7 +81,7 @@ Note that unless otherwise documented, CCs are interpreted individually, i.e. as
 | (002) RPN_CHANNEL_COARSE_TUNE   | ✔️                                   |
 | (003) Tuning Program Select     | ✔️                                   |
 | (004) Tuning Bank Select        | ✔️                                   |
-| (005) Modulation Depth Range    | ✔️ Support added in fluidsynth 2.6.0 |
+| (005) Modulation Depth Range    | ✔️ Support added in fluidsynth 2.6.0, see [#1775](https://github.com/FluidSynth/fluidsynth/pull/1775) |
 | (006) MPE Configuration Message | ❌ Not yet implemented                |
 
 ## NRPN Control Change Implementation Chart
