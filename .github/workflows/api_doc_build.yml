@@ -54,13 +54,10 @@ jobs:
     - name: Build
       run: zensical build --clean
 
-    - name: Rename zensical folder
-      run: mv .site wiki
-
     - name: Publish Wiki to GH Pages Repo
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: ${{runner.workspace}}/wiki
+        folder: ${{runner.workspace}}/.zensical/
         repository-name: FluidSynth/fluidsynth.github.io
         branch: main
         ssh-key: ${{ secrets.DEPLOY_API_TOKEN }}
