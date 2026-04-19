@@ -61,29 +61,13 @@ jobs:
     - name: Install zensical
       run: pip install zensical
 
-
-    - name: ls
-      run: ls -la
-
     - name: Build
       run: zensical build --clean
-
-    - name: ls
-      run: ls -la
-    - name: ls
-      run: ls -la .zensical
-    - name: ls
-      run: ls -la ${{runner.workspace}}/.zensical/
-    - name: ls
-      run: ls -la ${{runner.workspace}}/
-    - name: pwd
-      run: pwd
-
 
     - name: Publish Wiki to GH Pages Repo
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: ${{runner.workspace}}/.zensical/
+        folder: ${{runner.workspace}}/fluidsynth/.zensical/
         repository-name: FluidSynth/fluidsynth.github.io
         branch: main
         ssh-key: ${{ secrets.DEPLOY_API_TOKEN }}
