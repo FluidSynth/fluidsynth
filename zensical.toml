@@ -29,6 +29,9 @@ site_author = "FluidSynth contributors"
 # Read more: https://zensical.org/docs/setup/basics/#site_url
 site_url = "https://www.fluidsynth.org/wiki"
 
+# Output path to publish HTML documentation to
+site_dir = ".zensical/wiki"
+
 # The copyright notice appears in the page footer and can contain an HTML
 # fragment.
 #
