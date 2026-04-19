@@ -70,6 +70,14 @@ jobs:
 
     - name: ls
       run: ls -la
+    - name: ls
+      run: ls -la .zensical
+    - name: ls
+      run: ls -la ${{runner.workspace}}/.zensical/
+    - name: ls
+      run: ls -la ${{runner.workspace}}/
+    - name: pwd
+      run: pwd
 
 
     - name: Publish Wiki to GH Pages Repo
