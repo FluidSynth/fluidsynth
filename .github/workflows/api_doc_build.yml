@@ -67,14 +67,15 @@ jobs:
     - name: Publish Wiki to GH Pages Repo
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: ${{runner.workspace}}/fluidsynth/.zensical/
+        folder: ${{runner.workspace}}/fluidsynth/.zensical/wiki/
         repository-name: FluidSynth/fluidsynth.github.io
         branch: main
         ssh-key: ${{ secrets.DEPLOY_API_TOKEN }}
+        target-folder: wiki/
         clean: true
-        commit-message: Updating API doc from fluidsynth master
-        git-config-name: API Doc Deploy
-        git-config-email: fluid-api-deploy@fluidsynth.github.io
+        commit-message: Updating wiki from fluidsynth master
+        git-config-name: Zensical Deploy
+        git-config-email: fluid-wiki-deploy@fluidsynth.github.io
 
     - name: Publish API Docs to GH Pages
       uses: JamesIves/github-pages-deploy-action@v4
