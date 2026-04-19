@@ -5,6 +5,16 @@ on:
     branches:
       - master
       - wiki-workflow
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/rendering-regression.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/windows.yml'
+      - '.cirrus.yml'
+      - 'README.md'
 
     workflow_dispatch:
 
@@ -51,8 +61,16 @@ jobs:
     - name: Install zensical
       run: pip install zensical
 
+
+    - name: ls
+      run: ls -la
+
     - name: Build
       run: zensical build --clean
+
+    - name: ls
+      run: ls -la
+
 
     - name: Publish Wiki to GH Pages Repo
       uses: JamesIves/github-pages-deploy-action@v4
