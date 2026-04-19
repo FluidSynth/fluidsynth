@@ -1,5 +1,6 @@
 # 📝 Changelog
 
+* [2.5.4](#fluidsynth-254)
 * [2.5.3](#fluidsynth-253)
 * [2.5.2](#fluidsynth-252)
 * [2.5.1](#fluidsynth-251)
@@ -53,6 +54,10 @@
 * [2.0.0](#fluidsynth-200)
 * [1.1.11 and older](#fluidsynth-1111)
 
+# FluidSynth 2.5.4
+
+* The TCP port, fluidsynth's shell server may listen to, is now auto-selected by default (#1763)
+* The systemd lock-file `/run/lock/fluidsynth` has been removed (#1683)
 
 # FluidSynth 2.5.3
 
