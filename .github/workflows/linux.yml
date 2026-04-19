@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
+      - '.github/workflows/api_doc_build.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'

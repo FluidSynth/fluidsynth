@@ -70,6 +70,7 @@ struct _fluid_timer_t
 struct _fluid_server_socket_t
 {
     fluid_socket_t socket;
+    int port;
     fluid_thread_t *thread;
     int cont;
     fluid_server_func_t func;
@@ -1333,6 +1334,12 @@ int fluid_server_socket_join(fluid_server_socket_t *server_socket)
     return fluid_thread_join(server_socket->thread);
 }
 
+int fluid_server_socket_get_port(fluid_server_socket_t *server_socket)
+{
+    fluid_return_val_if_fail(server_socket != NULL, FLUID_FAILED);
+    return server_socket->port;
+}
+
 static int fluid_socket_init(void)
 {
 #ifdef _WIN32
@@ -1380,10 +1387,13 @@ void fluid_socket_close(fluid_socket_t sock)
 {
     if(sock != INVALID_SOCKET)
     {
+        /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
 #ifdef _WIN32
+        shutdown(sock, SD_BOTH);
         closesocket(sock);
 
 #else
+        shutdown(sock, SHUT_RDWR);
         close(sock);
 #endif
     }
@@ -1469,6 +1479,9 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     const struct sockaddr *addr;
     size_t addr_size;
     fluid_socket_t sock;
+    int current_port = port;
+    int auto_port = (port == 0);
+    int bind_error;
 
     fluid_return_val_if_fail(func != NULL, NULL);
 
@@ -1479,15 +1492,18 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     FLUID_MEMSET(&addr4, 0, sizeof(addr4));
     addr4.sin_family = AF_INET;
-    addr4.sin_port = htons((uint16_t)port);
     addr4.sin_addr.s_addr = htonl(INADDR_ANY);
 
 #ifdef IPV6_SUPPORT
     FLUID_MEMSET(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
-    addr6.sin6_port = htons((uint16_t)port);
     addr6.sin6_addr = in6addr_any;
 #endif
+
+    if(auto_port)
+    {
+        current_port = FLUID_SHELL_AUTO_PORT_START;
+    }
 
 #ifdef IPV6_SUPPORT
     sock = socket(AF_INET6, SOCK_STREAM, 0);
@@ -1516,12 +1532,49 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         return NULL;
     }
     
-    if(bind(sock, addr, (int) addr_size) == SOCKET_ERROR)
+    while(1)
     {
-        FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", fluid_socket_get_error());
-        fluid_socket_close(sock);
-        fluid_socket_cleanup();
-        return NULL;
+        addr4.sin_port = htons((uint16_t) current_port);
+#ifdef IPV6_SUPPORT
+        addr6.sin6_port = htons((uint16_t) current_port);
+#endif
+        if(bind(sock, addr, (int) addr_size) == 0)
+        {
+            break;
+        }
+
+        bind_error = fluid_socket_get_error();
+
+        if(!auto_port)
+        {
+            FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", bind_error);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+#if defined(_WIN32)
+        if(bind_error != WSAEADDRINUSE)
+#else
+        if(bind_error != EADDRINUSE)
+#endif
+        {
+            FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", bind_error);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+        if(current_port == FLUID_TCP_PORT_MAX)
+        {
+            FLUID_LOG(FLUID_ERR, "No free TCP port available for shell server auto mode (starting at %d)",
+                      FLUID_SHELL_AUTO_PORT_START);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+        current_port++;
     }
 
     if(listen(sock, SOMAXCONN) == SOCKET_ERROR)
@@ -1543,6 +1596,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     }
 
     server_socket->socket = sock;
+    server_socket->port = current_port;
     server_socket->func = func;
     server_socket->data = data;
     server_socket->cont = 1;

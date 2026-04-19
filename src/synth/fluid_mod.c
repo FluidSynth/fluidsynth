@@ -301,7 +301,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
  * transforms the initial value retrieved by \c fluid_mod_get_source_value into [0.0;1.0]
  */
 fluid_real_t
-fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid_real_t range, int is_src1)
+fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid_real_t range, int is_src1, fluid_voice_t *voice)
 {
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
@@ -315,6 +315,7 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid
      */
     unsigned char mod_src = is_src1 ? mod->src1 : mod->src2;
     unsigned char mod_flags = is_src1 ? mod->flags1 : mod->flags2;
+    unsigned char applyModulationDepth = is_src1 && (mod_flags & FLUID_MOD_CC) && (mod_src == MODULATION_MSB) && ((mod->dest == GEN_VIBLFOTOPITCH) || (mod->dest == GEN_MODLFOTOPITCH));
     mod_flags &= ~FLUID_MOD_CC;
 
     if(mod_src == FLUID_MOD_NONE)
@@ -405,6 +406,11 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid
         }
     }
 
+    if(applyModulationDepth && voice != NULL && voice->channel != NULL)
+    {
+        val *= fluid_channel_get_modulation_depth_range(voice->channel) / 50.0f;
+    }
+
     return val;
 }
 
@@ -483,13 +489,13 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
     /* transform the input value */
-    v1 = fluid_mod_transform_source_value(mod, v1, range1, TRUE);
+    v1 = fluid_mod_transform_source_value(mod, v1, range1, TRUE, voice);
 
     /* get the second input source */
     v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
     /* transform the second input value */
-    v2 = fluid_mod_transform_source_value(mod, v2, range2, FALSE);
+    v2 = fluid_mod_transform_source_value(mod, v2, range2, FALSE, voice);
 
     /* it indeed is as simple as that: */
     final_value = (fluid_real_t) mod->amount * v1 * v2;

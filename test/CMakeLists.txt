@@ -39,9 +39,10 @@ ADD_FLUID_TEST(test_synth_render_s32)
 ADD_FLUID_TEST(test_round_clip)
 ADD_FLUID_TEST(test_ABI)
 ADD_FLUID_TEST(test_file_seek_tell)
-ADD_FLUID_TEST(test_voice_callback)
+ADD_FLUID_TEST(test_shell_server_auto_port)
 ADD_FLUID_TEST(test_sample_pitch_calculation)
 ADD_FLUID_TEST(test_mts_cc_tuning)
+ADD_FLUID_TEST(test_voice_callback)
 
 if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
     # Earlier versions of GLib had broken comment handling and should not be compared to
@@ -474,11 +475,23 @@ add_custom_target(renderDMOD
 )
 
 add_custom_target(renderRPN
-    COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 1.1 -F "${RPN_RENDER_DIR}/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid.${FEXT}" ${GENERAL_USER_GS2} "FluidSynth.pitch.bend.fine.tuning.bug.demonstration/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid"
     COMMENT "Rendering Test MIDI for RPNs"
     DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/rpn/"
-    VERBATIM
+)
+set_target_properties(renderRPN PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/rpn"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.${FEXT}"
+    -R 0 -C 0 -g 1.1 ${GENERAL_USER_GS2} "FluidSynth.pitch.bend.fine.tuning.bug.demonstration/SA2 - Prison Lane -- MIDIMan - FluidSynth Test.mid"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/modulation-range/test-rpn-00-05-modulation-depth-range.${FEXT}"
+    -R 0 -C 0 -g 1.9 ${GENERAL_USER_GS2} "modulation-range/test-rpn-00-05-modulation-depth-range.mid"
+)
+add_render_job(renderRPN
+    "${RPN_RENDER_DIR}/modulation-range/mod-rpn-no-mod-wheel.${FEXT}"
+    -R 0 -C 0 -g 1.4 modulation-range/vib.sf2 "modulation-range/mod-rpn-no-mod-wheel.mid"
 )
 
 set(_gsdt1_demos
@@ -599,4 +612,4 @@ add_dependencies(check_rendering renderDMOD)
 add_dependencies(check_rendering renderRPN)
 add_dependencies(check_rendering renderMtsTests)
 # Temporarily disable limiter tests, because those tests will fail with reference fluidsynth 2.5.x, as it is lacking the limiter
-#add_dependencies(check_rendering renderLimiterTests)
+add_dependencies(check_rendering renderLimiterTests)
