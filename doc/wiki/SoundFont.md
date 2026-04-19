@@ -1,6 +1,6 @@
 # ‍🔬 About SoundFonts
 
-**SoundFont** is a file format for sample-based instrument sounds. You will need a SoundFont to use FluidSynth. If you are not familiar with them, check out Josh Green's [**Introduction to SoundFonts**](https://freepats.zenvoid.org/sf2/SF2_Intro.txt) and [**Soundfont 2.1 application note**](https://freepats.zenvoid.org/sf2/sfapp21.pdf).
+**SoundFont** is a file format for sample-based instrument sounds. You will need a SoundFont to use FluidSynth. If you are not familiar with them, check out Josh Green's [**Introduction to SoundFonts**](https://web.archive.org/web/20240331004942/https://freepats.zenvoid.org/sf2/SF2_Intro.txt) and [**Soundfont 2.1 application note**](https://freepats.zenvoid.org/sf2/sfapp21.pdf).
 
 If you just need to play General MIDI files, these SoundFonts are known to work well with FluidSynth: 
 
