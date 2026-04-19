@@ -88,6 +88,7 @@ static int fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t *synth, int c
 static int fluid_synth_update_key_pressure_LOCAL(fluid_synth_t *synth, int chan, int key);
 static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan);
+static int fluid_synth_update_modulation_depth_range_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_set_preset(fluid_synth_t *synth, int chan,
                                   fluid_preset_t *preset);
 static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
@@ -2148,6 +2149,15 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 break;
 
             case RPN_MODULATION_DEPTH_RANGE:
+                /* MSB = semitones, LSB = 1/128 semitones (cent fraction)
+                 * Default per GM2: 0 semitones + 64/128 = 50 cents
+                 * Ignored for "rhythm channels" */
+                if(chan->channel_type == CHANNEL_TYPE_MELODIC)
+                {
+                    fluid_channel_set_modulation_depth_range(chan,
+                        msb_value * 100.0f + lsb_value * 100.0f / 128.0f);
+                    fluid_synth_update_modulation_depth_range_LOCAL(synth, channum);
+                }
                 break;
             }
         }
@@ -3255,6 +3265,14 @@ static int
 fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan)
 {
     return fluid_synth_modulate_voices_LOCAL(synth, chan, 0, FLUID_MOD_PITCHWHEELSENS);
+}
+
+/* Local synthesis thread variant: update voices after modulation depth range RPN change.
+ * Re-applies GEN_VIBLFOTOPITCH and GEN_MODLFOTOPITCH with the new channel multiplier. */
+static int
+fluid_synth_update_modulation_depth_range_LOCAL(fluid_synth_t *synth, int chan)
+{
+    return fluid_synth_modulate_voices_LOCAL(synth, chan, 1, MODULATION_MSB);
 }
 
 /**
@@ -7978,7 +7996,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_reverb_mod, data, 256, TRUE);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_reverb_mod, data, 256, TRUE, NULL);
             FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
             break;
@@ -7986,7 +8004,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_CHORUSSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_chorus_mod, data, 256, TRUE);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_chorus_mod, data, 256, TRUE, NULL);
             FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
             break;
