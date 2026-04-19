@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - wiki-workflow
 
     workflow_dispatch:
 
@@ -43,9 +44,9 @@ jobs:
       run: cmake --build . --config $BUILD_TYPE --target doxygen
 
     - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-            python-version: "3.13"
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
 
     - name: Install zensical
       run: pip install zensical
