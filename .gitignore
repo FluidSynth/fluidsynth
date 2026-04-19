@@ -42,3 +42,8 @@ install_manifest.txt
 *.pro.user*
 *.user
 *.vscode
+.idea/
+
+# Built docs
+site/
+/.cache/

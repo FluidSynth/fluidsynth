@@ -1,10 +1,10 @@
-# FluidSynth LADSPA Interface
+# 🖥️ FluidSynth LADSPA Interface
 
 The [LADSPA](https://ladspa.org/) (Linux Audio Developer's Simple Plugin API)
 binding can be used to route the FluidSynth audio output through any number of
 LADSPA plugins. Please note that even though the "L" in LADSPA stands for
 "Linux", it can also be used on different platforms, for example Windows or
-MacOS. Check the "LADSPA on other Platforms" section at the end of this guide
+macOS. Check the "LADSPA on other Platforms" section at the end of this guide
 for more information.
 
 ## Configuration
@@ -30,7 +30,7 @@ file.
 
 ## Introduction to LADSPA
 
-You don't need to to have detailed knowledge of LADSPA to use effects with
+You don't need to have detailed knowledge of LADSPA to use effects with
 FluidSynth, but knowing some of the LADSPA concepts will help if you want to make the
 best use of it.
 
@@ -105,7 +105,7 @@ into the Main:L and Main:R channels after LADSPA has been invoked. Before FluidS
 the internal effects had been already mixed into Main channels at the time when LADSPA is invoked.
 Fore more details, please see the "Signal Flow" section below.
 
-For host port setups in multi-channel configurations, please see the
+For host port setups in multichannel configurations, please see the
 "Multi-Channel Output" section below.
 
 ## Creating a Configuration File
@@ -142,7 +142,7 @@ Label" in the `analyseplugin` output.
 
 ## Using the Configuration File
 
-Lets start FluidSynth with ALSA output and the standard SoundFont, enable LADSPA
+Let's start FluidSynth with ALSA output and the standard SoundFont, enable LADSPA
 effects, load the effects.txt config file and give it a test MIDI file to play:
 (You will need to replace the `test.mid` with your own MIDI file and maybe
 change the paths to the effects.txt file and the SoundFont)
@@ -151,15 +151,14 @@ change the paths to the effects.txt file and the SoundFont)
 user@host:$ fluidsynth -a alsa -o synth.ladspa.active=1 -f effects.txt FluidR3_GM.sf2 test.mid
 ```
 
-You should now hear the MIDI file played at a slightly lower volume with a one
-second delay effect added on both left and right channel. If not, please check
+You should now hear the MIDI file played at a slightly lower volume with a one-second delay effect added on both left and right channel. If not, please check
 the FluidSynth output for any error messages.
 
 ## Changing Parameters
 
 You probably noticed that we did not set any values for the "Delay (Seconds)"
 and "Dry/Wet Balance" control ports. The delay plugin specifies default
-values for these parameters: 1 second delay and a dry/wet balance of 0.5 (check
+values for these parameters: 1-second delay and a dry/wet balance of 0.5 (check
 the `analyseplugin` output above). So when you don't override them, the defaults
 are automatically used for rendering.
 
@@ -180,7 +179,7 @@ ladspa_set e2 Delay 1.5
 ladspa_start
 ```
 
-Start FluidSynth again and you should hear that the delay is shorter on the
+Start FluidSynth again, and you should hear that the delay is shorter on the
 left channel, longer on the right. You can even change control parameters while
 FluidSynth is running. Just type the `ladspa_set ...` commands into the
 FluidSynth shell.
@@ -230,7 +229,7 @@ effect send ports (`Reverb:Send` and `Chorus:Send`) according to the effect
 send amount specified in the SoundFont.
 
 If you want to replace the internal reverb or chorus effects with a LADSPA
-plugin and you want to honour the decisions made by the SoundFont designer, you
+plugin, and you want to honor the decisions made by the SoundFont designer, you
 should use the `Reverb:Send` or `Chorus:Send` ports as inputs to the effects and
 `Main:L` and `Main:R` ports as outputs. (See the "Example Setups" section
 below for an example on how to replace the internal reverb with a LADSPA plugin.)
@@ -380,7 +379,7 @@ If you would like a different reverb implementation than the one built-in to
 FluidSynth, you can use a LADSPA reverb plugin like the "TAP Reverb" from
 [Tom's Audio Processing plugins](http://tap-plugins.sourceforge.net/ladspa.html).
 
-Here is the analyseplugin output for the `tap_reverb.so` plugin:
+Here is the `analyseplugin` output for the `tap_reverb.so` plugin:
 ```
 user@host:$ analyseplugin /usr/lib/ladspa/tap_reverb.so
 
@@ -434,9 +433,9 @@ file is playing.
 
 # Multi-Channel Output
 
-FluidSynth is capable of generating multi-channel output by specifying the
+FluidSynth is capable of generating multichannel output by specifying the
 `synth.audio-groups` and `synth.audio-channels` configuration settings.
-Explaining multi-channel output in detail is out of scope for this guide. But
+Explaining multichannel output in detail is out of scope for this guide. But
 using multiple output channels has an effect on the host ports that are
 available to LADSPA plugins.
 
@@ -476,7 +475,7 @@ ladspa_effect /path/to/ladspa/plugin.so
 ```
 
 Audacity provides a large number of precompiled LADSPA plugins for Windows and
-MacOS: https://www.audacityteam.org/download/plug-ins/
+macOS: https://www.audacityteam.org/download/plug-ins/
 
 To get the `analyseplugin` and `listplugins` commands on Windows, you can either
 compile them yourself using the LADSPA-SDK source code from ladspa.org or install
