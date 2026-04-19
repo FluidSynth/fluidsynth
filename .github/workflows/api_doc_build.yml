@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - wiki-workflow
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
