@@ -855,6 +855,7 @@ static int process_info(SFData *sf, int size)
 
                     /* force terminate info item */
                     item.chr[chunk.size] = '\0';
+                    FLUID_LOG(FLUID_DBG, "INFO chunk %c%c%c%c (%d bytes) -> %s", p[0], p[1], p[2], p[3], chunk.size, item.chr);
                 }
             }
             else
@@ -873,7 +874,6 @@ static int process_info(SFData *sf, int size)
                     return FALSE;
                 }
             }
-            FLUID_LOG(FLUID_DBG, "INFO chunk %c%c%c%c (%d bytes) -> %s", p[0], p[1], p[2], p[3], chunk.size, item.chr);
         }
 
         size -= chunk.size;
