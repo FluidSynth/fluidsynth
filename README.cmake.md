@@ -2,7 +2,7 @@
 
 The latest information on how to compile FluidSynth using the cmake build system can be found in our wiki:
 
-https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake
+https://www.fluidsynth.org/wiki/BuildingWithCMake
 
 ## For developers - how to add a new feature to the CMake build system
 
