@@ -158,6 +158,7 @@ FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_i
  *
  * @{
  */
+
 FLUID_DEPRECATED FLUIDSYNTH_API void fluid_synth_set_reverb_on(fluid_synth_t *synth, int on);
 FLUIDSYNTH_API int fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on);
 
