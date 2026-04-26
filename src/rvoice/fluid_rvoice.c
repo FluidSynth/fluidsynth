@@ -573,6 +573,11 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset)
     fluid_iir_filter_reset(&voice->resonant_filter);
     fluid_iir_filter_reset(&voice->resonant_custom_filter);
 
+    /* Clear finished callback */
+    voice->finished_cb = NULL;
+    voice->finished_cb_voice = NULL;
+    voice->finished_cb_data = NULL;
+
     /* Force setting of the phase at the first DSP loop run
      * This cannot be done earlier, because it depends on modulators.
        [DH] Is that comment really true? */
@@ -943,6 +948,16 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_voiceoff)
 
     fluid_adsr_env_set_section(&voice->envlfo.volenv, FLUID_VOICE_ENVFINISHED);
     fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVFINISHED);
+}
+
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_finished_callback)
+{
+    fluid_rvoice_t *voice = obj;
+
+    voice->finished_cb = (fluid_voice_callback_t) param[0].ptr;
+    voice->finished_cb_voice = param[1].ptr;
+    voice->finished_cb_data = param[2].ptr;
 }
 
 
