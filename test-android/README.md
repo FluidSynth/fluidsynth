@@ -1,5 +1,17 @@
 # Android test runner
 
+**Note**: This directory now contains both the legacy Gradle-based approach and the new emulator-based testing system. See `README_emulator_testing.md` for the new approach that doesn't require Gradle.
+
+## New Emulator-Based Testing (Recommended)
+
+The new approach builds individual test executables and runs them directly in the Android emulator via ADB. This is more maintainable and doesn't require Gradle.
+
+See: `README_emulator_testing.md` and `run-emulator-tests.sh`
+
+## Legacy Gradle-Based Testing
+
+The original approach (maintained for compatibility) converts all tests into a single Android app.
+
 It is meant to be an Android app that runs those fluidsynth tests under `../test` directory.
 
 It is not immediately doable because everything is based on ctest where each source has `main()` function that cannot be more than one within a shared library. Therefore, we generate the modified test sources into this standalone Android tester app.
