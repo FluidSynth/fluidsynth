@@ -50,7 +50,7 @@ jobs:
         echo $PATH
 
     - name: Install Build Wrapper
-      uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v7
+      uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v8
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -79,7 +79,7 @@ jobs:
        gcovr --version
 
     - name: SonarQube Scan
-      uses: SonarSource/sonarqube-scan-action@v7
+      uses: SonarSource/sonarqube-scan-action@v8
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
