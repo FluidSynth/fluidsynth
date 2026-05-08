@@ -1,0 +1,101 @@
+# Creating the audio driver
+
+The synthesizer itself does not write any audio to the audio output. This
+allows application developers to manage the audio output themselves if they
+wish. The next section describes the use of the synthesizer without an audio
+driver in more detail.
+
+Creating the audio driver is straightforward: set the
+`audio.driver` settings and create the driver object. Because the
+FluidSynth has support for several audio systems, you may want to change
+which one you want to use. The list below shows the audio systems that are
+currently supported. It displays the name, as used by the fluidsynth library,
+and a description. 
+
+- jack: JACK Audio Connection Kit (Linux, Mac OS X, Windows)
+- alsa: Advanced Linux Sound Architecture (Linux)
+- oss: Open Sound System (primarily needed on BSD, rarely also Linux and Unix in general)
+- pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
+- coreaudio: Apple CoreAudio (Mac OS X)
+- dsound: Microsoft DirectSound (Windows)
+- wasapi: Windows Audio Session API (Windows Vista and later)
+- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86,
+  Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP
+  and later)
+- portaudio: PortAudio Library (Mac OS 9 & X, Windows, Linux)
+- sndman: Apple SoundManager (Mac OS Classic)
+- dart: DART sound driver (OS/2)
+- opensles: OpenSL ES (Android)
+- oboe: Oboe (Android)
+- sdl3*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android,
+  FreeBSD, Haiku, etc.)
+- pipewire**: PipeWire (Linux)
+- file: Driver to output audio to a file
+
+The default audio driver depends on the settings with which FluidSynth was
+compiled. You can get the default driver with
+fluid_settings_getstr_default(). To get the list of available drivers use the
+fluid_settings_foreach_option() function. Finally, you can set the driver
+with fluid_settings_setstr(). In most cases, the default driver should work
+out of the box. 
+
+Additional audio driver options that define the audio quality and latency include
+[`audio.sample-format`](../settings/audio.md#settings_audio_sample-format), [`audio.period-size`](../settings/audio.md#settings_audio_period-size), and
+[`audio.periods`](../settings/audio.md#settings_audio_periods). The synthesizer's [`synth.sample-rate`](../settings/synth.md#settings_synth_sample-rate) is also
+involved. The details are described later.
+
+Important: Configure the synthesizer before creating the audio driver.
+In particular, set [`synth.sample-rate`](../settings/synth.md#settings_synth_sample-rate) before instantiating the synth
+with new_fluid_synth(). After the synth has been created, changing
+[`synth.sample-rate`](../settings/synth.md#settings_synth_sample-rate) in the settings object may not change the sample
+rate used by the synthesizer, while audio drivers created later may
+use the updated setting value and cause the audio to be played out of tune. 
+If you need to change the sample rate, recreate both the synthesizer and the 
+audio driver using settings with the new sample rate.
+
+You can create the audio driver with the new_fluid_audio_driver() function. This
+function takes the settings and synthesizer object as arguments. For example: 
+
+```c
+void init() 
+{
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    fluid_audio_driver_t* adriver;
+    settings = new_fluid_settings();
+
+    /* Set the synthesizer settings, if necessary */
+    synth = new_fluid_synth(settings);
+
+    fluid_settings_setstr(settings, "audio.driver", "jack");
+    adriver = new_fluid_audio_driver(settings, synth);
+}
+```
+
+As soon as the audio driver is created, it will start playing. The audio
+driver creates a separate thread that receives audio samples from the
+synthesizer object and transfers them to an audio endpoint to generate
+sound.
+ 
+There are a number of general audio driver settings. The audio.driver settings
+define the audio subsystem that will be used. The [`audio.periods`](../settings/audio.md#settings_audio_periods) and
+[`audio.period-size`](../settings/audio.md#settings_audio_period-size) settings define the latency and robustness against
+scheduling delays. There are additional settings for the audio subsystems used.
+For a full list of available **audio driver settings**, please
+refer to the `audio` documentation.
+
+***Note:** In order to use sdl3 as audio driver, the application
+is responsible for initializing SDL (e.g. with SDL_Init()). This must be done
+**before** the first call to `new_fluid_settings()`!
+Also make sure to call SDL_Quit() after all fluidsynth instances have been
+destroyed. A warning may be printed if sdl3 is available, but no such call
+has been made.
+
+****Note:** In order to use pipeiwre as audio driver, the application
+is responsible for initializing PipeWire (e.g. with pw_init()). This must be done
+**before** the first call to `new_fluid_settings()`!
+Also make sure to call pw_deinit() after all fluidsynth instances have been
+destroyed.
+
+Warnings raised by audio drivers during initialization via new_fluid_settings() can
+be suppressed by disabling those audio drivers with fluid_audio_driver_register().

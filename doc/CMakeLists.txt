@@ -52,6 +52,66 @@ if ( DOXYGEN_FOUND )
       add_dependencies(doxygen doxygen_settings)
   endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
 
+  # ---------------------------------------------------------------------------
+  # Zensical documentation site
+  #
+  # The site requires Python 3 plus the packages listed in
+  # doc/zensical/requirements.txt.  Install them once with:
+  #   pip install -r doc/zensical/requirements.txt
+  #
+  # Build targets:
+  #   fluidsettings2md  – convert fluidsettings.xml → Markdown
+  #   doxy2md           – convert Doxygen XML output → API reference Markdown
+  #   zensical          – run all of the above, then build the Zensical site
+  # ---------------------------------------------------------------------------
+  find_package ( Python3 COMPONENTS Interpreter )
+  find_program ( ZENSICAL_EXECUTABLE NAMES zensical )
+
+  set ( ZENSICAL_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/zensical )
+  set ( ZENSICAL_DOCS_DIR ${ZENSICAL_DIR}/docs )
+  set ( ZENSICAL_SCRIPTS  ${ZENSICAL_DIR}/scripts )
+  set ( ZENSICAL_SITE_DIR ${CMAKE_CURRENT_BINARY_DIR}/zensical_site )
+
+  if ( Python3_FOUND )
+
+    # -- Convert fluidsettings.xml to Markdown --------------------------------
+    add_custom_target ( fluidsettings2md
+      ${Python3_EXECUTABLE}
+          ${ZENSICAL_SCRIPTS}/fluidsettings2md.py
+          ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
+          ${ZENSICAL_DOCS_DIR}/settings
+      COMMENT "Converting fluidsettings.xml to Markdown"
+    )
+
+    # -- Convert Doxygen XML output to API reference Markdown -----------------
+    add_custom_target ( doxy2md
+      ${Python3_EXECUTABLE}
+          ${ZENSICAL_SCRIPTS}/doxy2md.py
+          ${CMAKE_CURRENT_BINARY_DIR}/xml
+          ${ZENSICAL_DOCS_DIR}/api
+      DEPENDS doxygen
+      COMMENT "Converting Doxygen XML to API reference Markdown"
+    )
+
+    # -- Build the complete Zensical site -------------------------------------
+    if ( ZENSICAL_EXECUTABLE )
+      add_custom_target ( zensical
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${ZENSICAL_SITE_DIR}
+        COMMAND ${ZENSICAL_EXECUTABLE} build
+            --config-file ${ZENSICAL_DIR}/mkdocs.yml
+        WORKING_DIRECTORY ${ZENSICAL_DIR}
+        DEPENDS fluidsettings2md doxy2md
+        COMMENT "Building Zensical documentation site"
+      )
+    else ()
+      message ( STATUS "zensical executable not found – 'zensical' CMake target unavailable.\n"
+                       "Install it with: pip install -r doc/zensical/requirements.txt" )
+    endif ()
+
+  else ()
+    message ( STATUS "Python3 not found – Zensical doc targets are unavailable." )
+  endif ()
+
 endif ( DOXYGEN_FOUND )
 
 
