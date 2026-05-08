@@ -36,7 +36,7 @@ def clean_html(text: str) -> str:
     text = re.sub(r'&copy;', '©', text)
     # Escape prose [ ] brackets that aren't Markdown links to prevent
     # Zensical from treating them as unresolved reference-style link labels.
-    text = re.sub(r'(?<![!`])\[([^\]]*)\](?![\(\[#])', r'\\[\1\\]', text)
+    text = re.sub(r'(?<![!`])\[([^\]]*)\](?![\(\[#])', r'\[\1\]', text)
     return text.strip()
 
 

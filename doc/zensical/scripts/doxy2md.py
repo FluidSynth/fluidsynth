@@ -227,7 +227,7 @@ def clean_md(text: str) -> str:
     # Escape [ ... ] prose brackets that aren't Markdown links [text](url).
     # This prevents Zensical / MkDocs from treating them as unresolved
     # reference-style link labels.
-    text = re.sub(r'(?<![!`])\[([^\]]*)\](?![\(\[#])', r'\\[\1\\]', text)
+    text = re.sub(r'(?<![!`])\[([^\]]*)\](?![\(\[#])', r'\[\1\]', text)
     return text.strip()
 
 

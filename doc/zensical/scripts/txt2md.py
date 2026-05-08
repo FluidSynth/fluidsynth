@@ -175,7 +175,7 @@ def convert_doxygen_to_markdown(content: str) -> str:
 
     # Escape prose [ ] brackets that aren't Markdown links, to prevent
     # Zensical / MkDocs from treating them as unresolved reference labels.
-    content = re.sub(r'(?<![!`])\[([^\]]*)\](?![\(\[#])', r'\\[\1\\]', content)
+    content = re.sub(r'(?<![!`])\[([^\]]*)\](?![\(\[#])', r'\[\1\]', content)
 
     return content.strip() + '\n'
 
