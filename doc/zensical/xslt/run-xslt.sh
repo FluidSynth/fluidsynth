@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+# run-xslt.sh  --  XSLT-based XML-to-Markdown conversion driver
+# ==============================================================
+# Usage:
+#   run-xslt.sh fluidsettings \
+#       <fluidsettings.xml> <output_dir> [<fluidsettings2md.xsl>]
+#
+#   run-xslt.sh doxy \
+#       <doxygen_xml_dir> <output_dir> [<doxy2md.xsl>]
+#
+# Requirements: xsltproc (from libxslt)
+#
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+usage() {
+    echo "Usage: $0 {fluidsettings|doxy} <input> <output_dir> [<xsl_file>]"
+    exit 1
+}
+
+if [ "$#" -lt 3 ]; then usage; fi
+
+MODE="$1"
+INPUT="$2"
+OUTPUT_DIR="$3"
+XSL_DEFAULT_FLUIDSETTINGS="$SCRIPT_DIR/fluidsettings2md.xsl"
+XSL_DEFAULT_DOXY="$SCRIPT_DIR/doxy2md.xsl"
+
+# ---------------------------------------------------------------------------
+# Helper: split a stream that uses "__FILE__: <name>" sentinels into files
+# ---------------------------------------------------------------------------
+split_into_files() {
+    local out_dir="$1"
+    local current_file=""
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^__FILE__:\ *(.+)$ ]]; then
+            current_file="${out_dir}/${BASH_REMATCH[1]}"
+            # truncate/create
+            : > "$current_file"
+        elif [ -n "$current_file" ]; then
+            printf '%s\n' "$line" >> "$current_file"
+        fi
+    done
+}
+
+# ---------------------------------------------------------------------------
+# MODE: fluidsettings
+# ---------------------------------------------------------------------------
+if [ "$MODE" = "fluidsettings" ]; then
+    XML_FILE="$INPUT"
+    XSL_FILE="${4:-$XSL_DEFAULT_FLUIDSETTINGS}"
+
+    if [ ! -f "$XML_FILE" ]; then
+        echo "ERROR: fluidsettings.xml not found: $XML_FILE" >&2
+        exit 1
+    fi
+    if [ ! -f "$XSL_FILE" ]; then
+        echo "ERROR: XSL stylesheet not found: $XSL_FILE" >&2
+        exit 1
+    fi
+
+    mkdir -p "$OUTPUT_DIR"
+    echo "  Running xsltproc for fluidsettings.xml ..."
+    xsltproc "$XSL_FILE" "$XML_FILE" | split_into_files "$OUTPUT_DIR"
+    echo "  Settings pages written to $OUTPUT_DIR/"
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# MODE: doxy  (Doxygen XML directory → API Markdown pages)
+# ---------------------------------------------------------------------------
+if [ "$MODE" = "doxy" ]; then
+    XML_DIR="$INPUT"
+    XSL_FILE="${4:-$XSL_DEFAULT_DOXY}"
+    INDEX_XML="$XML_DIR/index.xml"
+
+    if [ ! -f "$INDEX_XML" ]; then
+        echo "ERROR: Doxygen index.xml not found: $INDEX_XML" >&2
+        exit 1
+    fi
+    if [ ! -f "$XSL_FILE" ]; then
+        echo "ERROR: XSL stylesheet not found: $XSL_FILE" >&2
+        exit 1
+    fi
+
+    mkdir -p "$OUTPUT_DIR"
+
+    # ------------------------------------------------------------------
+    # First pass: collect all group refids and build the refmap
+    # Format: "refid<TAB>filename.md#member_name"
+    # ------------------------------------------------------------------
+    echo "  First pass: building cross-reference map ..."
+    REFMAP_FILE="$(mktemp /tmp/doxy_refmap.XXXXXX)"
+    trap 'rm -f "$REFMAP_FILE"' EXIT
+
+    # Inline XSL to list group compound refids from index.xml
+    LIST_GROUPS_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//compound[@kind=&apos;group&apos;]">
+      <xsl:value-of select="@refid"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    # Inline XSL to extract "member_id TAB member_name" pairs from a group XML
+    LIST_MEMBERS_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//memberdef">
+      <xsl:value-of select="@id"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="name"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    # Collect group compound refids
+    GROUP_REFIDS=$(echo "$LIST_GROUPS_XSL" | xsltproc - "$INDEX_XML")
+
+    # For each group XML file: add refid→filename and refid→filename#name entries
+    while IFS= read -r refid; do
+        [ -z "$refid" ] && continue
+        group_xml="$XML_DIR/${refid}.xml"
+        [ -f "$group_xml" ] || continue
+
+        # Compute the output filename from the refid
+        filename=$(echo "$refid" \
+            | sed 's/^group__//' \
+            | sed 's/__/-/g')
+        filename="${filename}.md"
+
+        # Map the group compound itself
+        printf '%s|%s\n' "$refid" "$filename" >> "$REFMAP_FILE"
+
+        # Extract member pairs and append "member_id|filename#name"
+        while IFS=$'\t' read -r member_id member_name; do
+            [ -z "$member_id" ] && continue
+            printf '%s|%s#%s\n' "$member_id" "$filename" "$member_name" >> "$REFMAP_FILE"
+        done < <(echo "$LIST_MEMBERS_XSL" | xsltproc - "$group_xml")
+    done <<< "$GROUP_REFIDS"
+
+    REFMAP_TEXT="$(cat "$REFMAP_FILE")"
+
+    # Inline XSL to list innergroup refids from a compound XML
+    LIST_INNERGROUPS_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//innergroup">
+      <xsl:value-of select="@refid"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    # Inline XSL to get a compound title
+    GET_TITLE_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:value-of select="//compounddef/title"/>
+    <xsl:text>&#xa;</xsl:text>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    # ------------------------------------------------------------------
+    # Second pass: transform each group XML to a Markdown file
+    # ------------------------------------------------------------------
+    echo "  Second pass: converting group XML files ..."
+    while IFS= read -r refid; do
+        [ -z "$refid" ] && continue
+        group_xml="$XML_DIR/${refid}.xml"
+        [ -f "$group_xml" ] || continue
+
+        filename=$(echo "$refid" \
+            | sed 's/^group__//' \
+            | sed 's/__/-/g')
+        out_file="$OUTPUT_DIR/${filename}.md"
+
+        xsltproc \
+            --stringparam refmap-text "$REFMAP_TEXT" \
+            "$XSL_FILE" "$group_xml" > "$out_file"
+        echo "    $refid → ${filename}.md"
+    done <<< "$GROUP_REFIDS"
+
+    # ------------------------------------------------------------------
+    # Write api/index.md  (top-level groups only)
+    # ------------------------------------------------------------------
+    echo "  Writing api/index.md ..."
+    {
+        echo "# API Reference"
+        echo ""
+        echo "This is the complete FluidSynth public API reference, grouped by functionality."
+        echo ""
+    } > "$OUTPUT_DIR/index.md"
+
+    # Determine nested refids by scanning all group XML files for <innergroup>
+    declare -A nested_set
+    while IFS= read -r refid; do
+        [ -z "$refid" ] && continue
+        group_xml="$XML_DIR/${refid}.xml"
+        [ -f "$group_xml" ] || continue
+        while IFS= read -r inner; do
+            [ -z "$inner" ] && continue
+            nested_set["$inner"]=1
+        done < <(echo "$LIST_INNERGROUPS_XSL" | xsltproc - "$group_xml")
+    done <<< "$GROUP_REFIDS"
+
+    # Get group titles from each XML
+    declare -A group_titles
+    while IFS= read -r refid; do
+        [ -z "$refid" ] && continue
+        group_xml="$XML_DIR/${refid}.xml"
+        [ -f "$group_xml" ] || continue
+        title=$(echo "$GET_TITLE_XSL" | xsltproc - "$group_xml" | head -1)
+        group_titles["$refid"]="$title"
+    done <<< "$GROUP_REFIDS"
+
+    # Print top-level groups sorted by title
+    while IFS= read -r refid; do
+        [ -z "$refid" ] && continue
+        [ "${nested_set[$refid]+_}" ] && continue   # skip nested groups
+        title="${group_titles[$refid]}"
+        filename=$(echo "$refid" \
+            | sed 's/^group__//' \
+            | sed 's/__/-/g')
+        echo "- [$title](${filename}.md)" >> "$OUTPUT_DIR/index.md"
+    done < <(
+        for refid in "${!group_titles[@]}"; do
+            printf '%s\t%s\n' "${group_titles[$refid]}" "$refid"
+        done | sort | cut -f2
+    )
+
+    echo "  Done. API pages written to $OUTPUT_DIR/"
+    exit 0
+fi
+
+usage

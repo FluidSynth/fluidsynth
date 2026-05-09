@@ -50,6 +50,47 @@ if ( DOXYGEN_FOUND )
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       )
       add_dependencies(doxygen doxygen_settings)
+
+      # -- XSLT-based Zensical targets (alternative to Python-based targets) --
+      set ( XSLT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zensical/xslt )
+
+      # Convert fluidsettings.xml to Markdown using XSLT
+      add_custom_target ( fluidsettings2md_xslt
+          COMMAND ${CMAKE_COMMAND} -E make_directory
+              ${CMAKE_CURRENT_SOURCE_DIR}/zensical/docs/settings
+          COMMAND bash ${XSLT_DIR}/run-xslt.sh
+              fluidsettings
+              ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
+              ${CMAKE_CURRENT_SOURCE_DIR}/zensical/docs/settings
+              ${XSLT_DIR}/fluidsettings2md.xsl
+          COMMENT "Converting fluidsettings.xml to Markdown via XSLT"
+      )
+
+      # Convert Doxygen XML output to API Markdown using XSLT
+      add_custom_target ( doxy2md_xslt
+          COMMAND ${CMAKE_COMMAND} -E make_directory
+              ${CMAKE_CURRENT_SOURCE_DIR}/zensical/docs/api
+          COMMAND bash ${XSLT_DIR}/run-xslt.sh
+              doxy
+              ${CMAKE_CURRENT_BINARY_DIR}/xml
+              ${CMAKE_CURRENT_SOURCE_DIR}/zensical/docs/api
+              ${XSLT_DIR}/doxy2md.xsl
+          DEPENDS doxygen
+          COMMENT "Converting Doxygen XML to API reference Markdown via XSLT"
+      )
+
+      # Build the Zensical site using the XSLT pipeline
+      find_program ( ZENSICAL_EXECUTABLE_XSLT NAMES zensical )
+      if ( ZENSICAL_EXECUTABLE_XSLT )
+          add_custom_target ( zensical_xslt
+              COMMAND ${ZENSICAL_EXECUTABLE_XSLT} build
+                  --config-file ${CMAKE_CURRENT_SOURCE_DIR}/zensical/mkdocs.yml
+              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/zensical
+              DEPENDS fluidsettings2md_xslt doxy2md_xslt
+              COMMENT "Building Zensical documentation site (XSLT pipeline)"
+          )
+      endif ()
+
   endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
 
   # ---------------------------------------------------------------------------
