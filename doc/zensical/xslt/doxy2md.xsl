@@ -24,7 +24,7 @@
                               parameterlist parameteritem parameternamelist
                               parameterdescription enumvalue
                               itemizedlist orderedlist listitem
-                              programlisting codeline highlight
+                              programlisting codeline
                               simplesect"/>
 
   <!-- Preserve whitespace in code elements -->
@@ -212,9 +212,11 @@
     <xsl:apply-templates/>
   </xsl:template>
 
-  <!-- Inline mode: strip leading/trailing whitespace, no block formatting -->
+  <!-- Inline mode: apply child templates rather than collapsing to a string.
+       This ensures <ref> elements inside brief/detailed descriptions are
+       resolved to proper Markdown links when rendered in table cells etc. -->
   <xsl:template match="briefdescription|detaileddescription" mode="inline">
-    <xsl:value-of select="normalize-space(.)"/>
+    <xsl:apply-templates mode="inline"/>
   </xsl:template>
 
   <!-- ======================================================================
@@ -225,7 +227,7 @@
          should suppress the extra blank line wrapping -->
     <xsl:variable name="has-block"
       select="parameterlist or simplesect or programlisting
-              or itemizedlist or orderedlist or verbatim"/>
+              or itemizedlist or orderedlist or verbatim or parblock"/>
     <xsl:choose>
       <xsl:when test="$has-block">
         <xsl:apply-templates/>
@@ -464,6 +466,19 @@
     <xsl:value-of select="."/>
   </xsl:template>
 
+   <!-- programlisting in inline mode (e.g. inside simplesect note/warning):
+        handled by the template in the Code blocks section below. -->
+
+  <!-- parblock: group of paragraphs used by Doxygen for multi-para notes etc.
+       In block mode, just process children.  In inline mode, do the same. -->
+  <xsl:template match="parblock">
+    <xsl:apply-templates/>
+  </xsl:template>
+
+  <xsl:template match="parblock" mode="inline">
+    <xsl:apply-templates mode="inline"/>
+  </xsl:template>
+
   <!-- ======================================================================
        Lists
        ====================================================================== -->
@@ -495,15 +510,60 @@
   <!-- ======================================================================
        Code blocks
        ====================================================================== -->
-  <xsl:template match="programlisting">
-    <xsl:text>&#xa;```c&#xa;</xsl:text>
-    <xsl:for-each select="codeline">
-      <xsl:for-each select="highlight">
-        <xsl:value-of select="."/>
+
+  <!-- Named template: render a single codeline's text (handles <sp/> elements) -->
+  <xsl:template name="render-codeline">
+    <xsl:for-each select="highlight">
+      <xsl:for-each select="node()">
+        <xsl:choose>
+          <xsl:when test="self::sp">
+            <xsl:text> </xsl:text>
+          </xsl:when>
+          <xsl:when test="self::ref">
+            <xsl:value-of select="."/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="."/>
+          </xsl:otherwise>
+        </xsl:choose>
       </xsl:for-each>
+    </xsl:for-each>
+  </xsl:template>
+
+  <xsl:template match="programlisting">
+    <xsl:variable name="lang">
+      <xsl:choose>
+        <xsl:when test="contains(@filename,'.c') or contains(@filename,'.cpp') or contains(@filename,'.h')">c</xsl:when>
+        <xsl:otherwise></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:text>&#xa;```</xsl:text>
+    <xsl:value-of select="$lang"/>
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:for-each select="codeline">
+      <xsl:call-template name="render-codeline"/>
       <xsl:text>&#xa;</xsl:text>
     </xsl:for-each>
     <xsl:text>```&#xa;&#xa;</xsl:text>
+  </xsl:template>
+
+  <!-- programlisting in inline mode (e.g. inside simplesect note/warning):
+       break out of the inline context and render a proper fenced code block. -->
+  <xsl:template match="programlisting" mode="inline">
+    <xsl:variable name="lang">
+      <xsl:choose>
+        <xsl:when test="contains(@filename,'.c') or contains(@filename,'.cpp') or contains(@filename,'.h')">c</xsl:when>
+        <xsl:otherwise></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:text>&#xa;```</xsl:text>
+    <xsl:value-of select="$lang"/>
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:for-each select="codeline">
+      <xsl:call-template name="render-codeline"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>```&#xa;</xsl:text>
   </xsl:template>
 
   <xsl:template match="verbatim">

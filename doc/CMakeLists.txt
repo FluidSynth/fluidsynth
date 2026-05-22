@@ -79,18 +79,6 @@ if ( DOXYGEN_FOUND )
           COMMENT "Converting Doxygen XML to API reference Markdown via XSLT"
       )
 
-      # Build the Zensical site using the XSLT pipeline
-      find_program ( ZENSICAL_EXECUTABLE_XSLT NAMES zensical )
-      if ( ZENSICAL_EXECUTABLE_XSLT )
-          add_custom_target ( zensical_xslt
-              COMMAND ${ZENSICAL_EXECUTABLE_XSLT} build
-                  --config-file ${CMAKE_CURRENT_SOURCE_DIR}/zensical/mkdocs.yml
-              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/zensical
-              DEPENDS fluidsettings2md_xslt doxy2md_xslt
-              COMMENT "Building Zensical documentation site (XSLT pipeline)"
-          )
-      endif ()
-
   endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
 
   # ---------------------------------------------------------------------------
@@ -100,10 +88,19 @@ if ( DOXYGEN_FOUND )
   # doc/zensical/requirements.txt.  Install them once with:
   #   pip install -r doc/zensical/requirements.txt
   #
-  # Build targets:
-  #   fluidsettings2md  – convert fluidsettings.xml → Markdown
-  #   doxy2md           – convert Doxygen XML output → API reference Markdown
-  #   zensical          – run all of the above, then build the Zensical site
+  # Build targets (Python pipeline):
+  #   fluidsettings2md  -- convert fluidsettings.xml to settings Markdown
+  #   doxy2md           -- convert Doxygen XML output to API reference Markdown
+  #   usage2md          -- convert usage .txt files to usage Markdown
+  #   changelog2md      -- convert recent_changes.txt to changelog.md
+  #   reverbators2md    -- convert reverbators.md (strips Doxygen tags, keeps HTML)
+  #   ladspa2md         -- copy ladspa.md (already clean Markdown)
+  #   zensical          -- run all of the above, then build the Zensical site
+  #
+  # XSLT pipeline (alternative, requires xsltproc):
+  #   fluidsettings2md_xslt  -- XSLT alternative to fluidsettings2md
+  #   doxy2md_xslt           -- XSLT alternative to doxy2md
+  #   zensical_xslt          -- run all of the above (XSLT + Python shared), then build
   # ---------------------------------------------------------------------------
   find_package ( Python3 COMPONENTS Interpreter )
   find_program ( ZENSICAL_EXECUTABLE NAMES zensical )
@@ -134,23 +131,74 @@ if ( DOXYGEN_FOUND )
       COMMENT "Converting Doxygen XML to API reference Markdown"
     )
 
-    # -- Build the complete Zensical site -------------------------------------
+    # -- Convert usage .txt files to Markdown ----------------------------------
+    add_custom_target ( usage2md
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${ZENSICAL_DOCS_DIR}/usage
+      COMMAND ${Python3_EXECUTABLE}
+          ${ZENSICAL_SCRIPTS}/txt2md.py
+          --batch
+          ${CMAKE_CURRENT_SOURCE_DIR}/usage
+          ${ZENSICAL_DOCS_DIR}/usage
+      COMMENT "Converting usage .txt files to Markdown"
+    )
+
+    # -- Convert recent_changes.txt to changelog.md ---------------------------
+    add_custom_target ( changelog2md
+      ${Python3_EXECUTABLE}
+          ${ZENSICAL_SCRIPTS}/txt2md.py
+          ${CMAKE_CURRENT_SOURCE_DIR}/recent_changes.txt
+          ${ZENSICAL_DOCS_DIR}/changelog.md
+      COMMENT "Converting recent_changes.txt to changelog.md"
+    )
+
+    # -- Convert reverbators.md (Doxygen .md with \htmlonly) to Markdown ------
+    add_custom_target ( reverbators2md
+      ${Python3_EXECUTABLE}
+          ${ZENSICAL_SCRIPTS}/txt2md.py
+          ${CMAKE_CURRENT_SOURCE_DIR}/reverbators.md
+          ${ZENSICAL_DOCS_DIR}/reverbators.md
+      COMMENT "Converting reverbators.md to Zensical Markdown"
+    )
+
+    # -- Copy ladspa.md (already clean Markdown, no Doxygen tags) -------------
+    add_custom_target ( ladspa2md
+      ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/ladspa.md
+          ${ZENSICAL_DOCS_DIR}/ladspa.md
+      COMMENT "Copying ladspa.md to docs directory"
+    )
+
+    # -- Build the complete Zensical site (Python pipeline) -------------------
     if ( ZENSICAL_EXECUTABLE )
       add_custom_target ( zensical
         COMMAND ${CMAKE_COMMAND} -E make_directory ${ZENSICAL_SITE_DIR}
         COMMAND ${ZENSICAL_EXECUTABLE} build
             --config-file ${ZENSICAL_DIR}/mkdocs.yml
         WORKING_DIRECTORY ${ZENSICAL_DIR}
-        DEPENDS fluidsettings2md doxy2md
+        DEPENDS fluidsettings2md doxy2md usage2md changelog2md reverbators2md ladspa2md
         COMMENT "Building Zensical documentation site"
       )
     else ()
-      message ( STATUS "zensical executable not found – 'zensical' CMake target unavailable.\n"
+      message ( STATUS "zensical executable not found -- 'zensical' CMake target unavailable.\n"
                        "Install it with: pip install -r doc/zensical/requirements.txt" )
     endif ()
 
+    # -- Build the complete Zensical site (XSLT pipeline) ----------------------
+    # The XSLT pipeline uses xsltproc for fluidsettings and doxy conversions,
+    # but still uses Python for usage/changelog/reverbators/ladspa conversions.
+    if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
+      add_custom_target ( zensical_xslt
+          COMMAND ${ZENSICAL_EXECUTABLE} build
+              --config-file ${CMAKE_CURRENT_SOURCE_DIR}/zensical/mkdocs.yml
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/zensical
+          DEPENDS fluidsettings2md_xslt doxy2md_xslt
+                  usage2md changelog2md reverbators2md ladspa2md
+          COMMENT "Building Zensical documentation site (XSLT pipeline)"
+      )
+    endif ()
+
   else ()
-    message ( STATUS "Python3 not found – Zensical doc targets are unavailable." )
+    message ( STATUS "Python3 not found -- Zensical doc targets are unavailable." )
   endif ()
 
 endif ( DOXYGEN_FOUND )

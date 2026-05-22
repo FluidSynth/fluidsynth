@@ -1,4 +1,12 @@
-# Zensical build output – generated at build time, not committed
+# Zensical build output -- generated at build time, not committed
 site/
 # Zensical internal cache
 .cache/
+
+# Auto-generated Markdown pages -- created by CMake targets at build time
+docs/api/
+docs/settings/
+docs/usage/
+docs/changelog.md
+docs/ladspa.md
+docs/reverbators.md

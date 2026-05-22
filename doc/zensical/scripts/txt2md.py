@@ -116,9 +116,17 @@ def convert_doxygen_to_markdown(content: str) -> str:
     content = re.sub(r'\\code\s*\n(.*?)\\endcode',
                      replace_code_block, content, flags=re.DOTALL)
 
-    # \htmlonly ... \endhtmlonly  →  strip (HTML-only content like audio players)
-    content = re.sub(r'\\htmlonly\s*\n.*?\\endhtmlonly\s*\n?', '',
-                     content, flags=re.DOTALL)
+    # Protect \htmlonly ... \endhtmlonly blocks: extract them now so that the
+    # HTML-tag conversion regexes below don't mangle raw HTML (e.g. <a href>
+    # inside <audio> elements must not be converted to Markdown links).
+    htmlonly_blocks: list[str] = []
+
+    def extract_htmlonly(m: re.Match) -> str:
+        htmlonly_blocks.append(m.group(1))
+        return f"\x00HTMLONLY{len(htmlonly_blocks) - 1}\x00"
+
+    content = re.sub(r'\\htmlonly\s*\n(.*?)\\endhtmlonly\s*\n?',
+                     extract_htmlonly, content, flags=re.DOTALL)
 
     # \image html <file> "Caption"  →  ![Caption](file)
     content = re.sub(r'\\image\s+html\s+(\S+)\s+"([^"]*)"', r'![\2](\1)', content)
@@ -169,6 +177,12 @@ def convert_doxygen_to_markdown(content: str) -> str:
     content = re.sub(r'&lt;', '<', content)
     content = re.sub(r'&gt;', '>', content)
     content = re.sub(r'&amp;', '&', content)
+
+    # Restore the protected \htmlonly blocks unchanged
+    # MkDocs/Zensical renders raw HTML embedded in Markdown, so audio players
+    # and other HTML-only blocks work correctly in the generated site.
+    for idx, html in enumerate(htmlonly_blocks):
+        content = content.replace(f"\x00HTMLONLY{idx}\x00", html)
 
     # Clean up more than 2 consecutive blank lines
     content = re.sub(r'\n{3,}', '\n\n', content)
