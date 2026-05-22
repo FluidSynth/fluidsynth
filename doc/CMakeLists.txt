@@ -146,6 +146,7 @@ if ( DOXYGEN_FOUND )
     add_custom_target ( changelog2md
       COMMAND ${Python3_EXECUTABLE}
           ${ZENSICAL_SCRIPTS}/txt2md.py
+          --page-prefix usage/
           ${CMAKE_CURRENT_SOURCE_DIR}/recent_changes.txt
           ${ZENSICAL_DOCS_DIR}/changelog.md
       COMMENT "Converting recent_changes.txt to changelog.md"
@@ -155,6 +156,7 @@ if ( DOXYGEN_FOUND )
     add_custom_target ( reverbators2md
       COMMAND ${Python3_EXECUTABLE}
           ${ZENSICAL_SCRIPTS}/txt2md.py
+          --page-prefix usage/
           ${CMAKE_CURRENT_SOURCE_DIR}/reverbators.md
           ${ZENSICAL_DOCS_DIR}/reverbators.md
       COMMENT "Converting reverbators.md to Zensical Markdown"

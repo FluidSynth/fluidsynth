@@ -83,8 +83,12 @@ def setting_to_link(setting_id: str) -> str:
     return f"[`{display}`](../settings/{group}.md#{anchor})"
 
 
-def convert_doxygen_to_markdown(content: str) -> str:
-    """Convert a Doxygen .txt file content to Markdown."""
+def convert_doxygen_to_markdown(content: str, page_prefix: str = "") -> str:
+    """Convert a Doxygen .txt file content to Markdown.
+
+    page_prefix: path prefix to prepend to usage page links in PAGE_MAP
+    (e.g. "usage/" when generating docs-root files like changelog.md).
+    """
     # Strip the outer C comment delimiters  /* ... */
     content = re.sub(r'^/\*!\s*', '', content.strip())
     content = re.sub(r'\s*\*/$', '', content)
@@ -140,6 +144,8 @@ def convert_doxygen_to_markdown(content: str) -> str:
         page_ref = m.group(1)
         if page_ref in PAGE_MAP:
             file_ref, title = PAGE_MAP[page_ref]
+            if page_prefix and not file_ref.startswith("../") and not file_ref.startswith(page_prefix):
+                file_ref = page_prefix + file_ref
             return f"[{title}]({file_ref})"
         return f"`{page_ref}`"
     content = re.sub(r'\\subpage\s+(\S+)', replace_subpage, content)
@@ -149,6 +155,8 @@ def convert_doxygen_to_markdown(content: str) -> str:
         ref = m.group(1)
         if ref in PAGE_MAP:
             file_ref, title = PAGE_MAP[ref]
+            if page_prefix and not file_ref.startswith("../") and not file_ref.startswith(page_prefix):
+                file_ref = page_prefix + file_ref
             return f"[{title}]({file_ref})"
         if ref.endswith('.c') or ref.endswith('.h'):
             return f"`{ref}`"
@@ -232,6 +240,14 @@ def main() -> None:
             else:
                 print(f"  WARNING: {src} not found", file=sys.stderr)
 
+    elif len(args) >= 2 and args[0] == '--page-prefix':
+        page_prefix = args[1]
+        src = Path(args[2])
+        dst = Path(args[3])
+        converted = convert_doxygen_to_markdown(src.read_text(encoding='utf-8'), page_prefix=page_prefix)
+        dst.write_text(converted, encoding='utf-8')
+        print(f"{src} → {dst}")
+
     elif len(args) == 2:
         src = Path(args[0])
         dst = Path(args[1])
@@ -240,6 +256,7 @@ def main() -> None:
         print(f"{src} → {dst}")
     else:
         print(f"Usage: {sys.argv[0]} <input.txt> <output.md>")
+        print(f"       {sys.argv[0]} --page-prefix PREFIX <input.txt> <output.md>")
         print(f"       {sys.argv[0]} --batch <usage_dir> <output_dir>")
         sys.exit(1)
 

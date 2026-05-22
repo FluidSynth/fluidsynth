@@ -106,7 +106,7 @@ def desc_to_md(node: Optional[ET.Element], indent: int = 0) -> str:
         # their internal whitespace collapsed.
         has_blocks = any(
             child.tag in ("parameterlist", "simplesect", "programlisting",
-                          "itemizedlist", "orderedlist", "verbatim")
+                          "itemizedlist", "orderedlist", "verbatim", "parblock")
             for child in node
         )
         parts: list[str] = [node.text or ""]
@@ -158,20 +158,17 @@ def desc_to_md(node: Optional[ET.Element], indent: int = 0) -> str:
     if tag == "simplesect":
         kind = node.get("kind", "")
         inner = "".join(desc_to_md(c) for c in node).strip()
+        if kind in ("note", "warning", "attention"):
+            return f"\n\n!!! {kind}\n    {inner}\n\n"
+        if kind == "since":
+            return f'\n\n!!! tip "Since"\n    {inner}\n\n'
+        if kind == "deprecated":
+            return f'!!! warning "Deprecated"\n    {inner}\n\n'
         kind_labels = {
             "return":  "**Returns:**",
             "see":     "**See also:**",
-            "note":    "> **Note:**",
-            "warning": "> **Warning:**",
-            "attention": "> **Attention:**",
-            "since":   "**Since:**",
-            "deprecated": "!!! warning \"Deprecated\"\n    ",
         }
         label = kind_labels.get(kind, f"**{kind.capitalize()}:**")
-        if kind in ("note", "warning", "attention"):
-            return f"\n\n{label} {inner}\n\n"
-        if kind == "deprecated":
-            return f"\n\n{label}{inner}\n\n"
         return f"\n\n{label} {inner}\n\n"
 
     if tag == "parameterlist":
@@ -276,7 +273,7 @@ def render_typedef(memberdef: ET.Element) -> str:
 
     lines: list[str] = []
     lines.append(f"\n### `{name}` {{#{name}}}\n")
-    lines.append(f"\n```c\ntypedef {definition};\n```\n")
+    lines.append(f"\n```c\n{definition};\n```\n")
     if brief:
         lines.append(f"\n{brief}\n")
     if detail:
@@ -381,7 +378,14 @@ def render_group(compound_xml: Path) -> Optional[tuple[str, str, str]]:
     # Members organised by section kind
     for sectiondef in compounddef.findall("sectiondef"):
         kind = sectiondef.get("kind", "")
-        heading = SECTION_KIND_LABELS.get(kind, kind.capitalize())
+        if kind == "user-defined":
+            raw_header = (sectiondef.findtext("header") or "").strip()
+            # Strip the "_linebr@{" Doxygen suffix if present
+            heading = raw_header.split("_linebr")[0].strip() if "_linebr" in raw_header else raw_header
+            if not heading:
+                heading = "Functions"
+        else:
+            heading = SECTION_KIND_LABELS.get(kind, kind.capitalize())
         members = sectiondef.findall("memberdef")
         if not members:
             continue

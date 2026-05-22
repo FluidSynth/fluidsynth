@@ -93,6 +93,16 @@
         <xsl:when test="$kind='enum'">Enumerations</xsl:when>
         <xsl:when test="$kind='define'">Macros</xsl:when>
         <xsl:when test="$kind='var'">Variables</xsl:when>
+        <xsl:when test="$kind='user-defined'">
+          <!-- Use the <header> text, strip the Doxygen "_linebr@{" suffix -->
+          <xsl:variable name="raw-header" select="normalize-space(header)"/>
+          <xsl:choose>
+            <xsl:when test="contains($raw-header, '_linebr')">
+              <xsl:value-of select="normalize-space(substring-before($raw-header, '_linebr'))"/>
+            </xsl:when>
+            <xsl:otherwise><xsl:value-of select="$raw-header"/></xsl:otherwise>
+          </xsl:choose>
+        </xsl:when>
         <xsl:otherwise><xsl:value-of select="$kind"/></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -149,7 +159,7 @@
     <xsl:value-of select="$name"/>
     <xsl:text>}&#xa;&#xa;</xsl:text>
 
-    <xsl:text>```c&#xa;typedef </xsl:text>
+    <xsl:text>```c&#xa;</xsl:text>
     <xsl:apply-templates select="definition" mode="type-text"/>
     <xsl:text>;&#xa;```&#xa;&#xa;</xsl:text>
 
@@ -231,6 +241,7 @@
     <xsl:choose>
       <xsl:when test="$has-block">
         <xsl:apply-templates/>
+        <xsl:text>&#xa;</xsl:text>
       </xsl:when>
       <xsl:otherwise>
         <xsl:text>&#xa;</xsl:text>
@@ -400,22 +411,22 @@
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
       <xsl:when test="$kind='note'">
-        <xsl:text>&#xa;&gt; **Note:** </xsl:text>
+        <xsl:text>&#xa;!!! note&#xa;    </xsl:text>
         <xsl:apply-templates mode="inline"/>
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
       <xsl:when test="$kind='warning'">
-        <xsl:text>&#xa;&gt; **Warning:** </xsl:text>
+        <xsl:text>&#xa;!!! warning&#xa;    </xsl:text>
         <xsl:apply-templates mode="inline"/>
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
       <xsl:when test="$kind='attention'">
-        <xsl:text>&#xa;&gt; **Attention:** </xsl:text>
+        <xsl:text>&#xa;!!! attention&#xa;    </xsl:text>
         <xsl:apply-templates mode="inline"/>
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
       <xsl:when test="$kind='since'">
-        <xsl:text>&#xa;**Since:** </xsl:text>
+        <xsl:text>&#xa;!!! tip "Since"&#xa;    </xsl:text>
         <xsl:apply-templates mode="inline"/>
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
@@ -461,9 +472,20 @@
     <xsl:text>)</xsl:text>
   </xsl:template>
 
-  <!-- Inline text nodes -->
+  <!-- Inline text nodes: escape [ and ] to prevent spurious Markdown link references -->
   <xsl:template match="text()" mode="inline">
-    <xsl:value-of select="."/>
+    <xsl:variable name="t1">
+      <xsl:call-template name="str-replace">
+        <xsl:with-param name="str"     select="."/>
+        <xsl:with-param name="search"  select="'['"/>
+        <xsl:with-param name="replace" select="'\['"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:call-template name="str-replace">
+      <xsl:with-param name="str"     select="$t1"/>
+      <xsl:with-param name="search"  select="']'"/>
+      <xsl:with-param name="replace" select="'\]'"/>
+    </xsl:call-template>
   </xsl:template>
 
    <!-- programlisting in inline mode (e.g. inside simplesect note/warning):
