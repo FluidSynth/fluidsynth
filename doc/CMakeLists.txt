@@ -72,7 +72,7 @@ if ( DOXYGEN_FOUND )
               ${CMAKE_CURRENT_SOURCE_DIR}/zensical/docs/api
           COMMAND bash ${XSLT_DIR}/run-xslt.sh
               doxy
-              ${CMAKE_CURRENT_BINARY_DIR}/xml
+              ${CMAKE_CURRENT_BINARY_DIR}/api/xml
               ${CMAKE_CURRENT_SOURCE_DIR}/zensical/docs/api
               ${XSLT_DIR}/doxy2md.xsl
           DEPENDS doxygen
@@ -128,7 +128,7 @@ if ( DOXYGEN_FOUND )
     add_custom_target ( doxy2md
       ${Python3_EXECUTABLE}
           ${ZENSICAL_SCRIPTS}/doxy2md.py
-          ${CMAKE_CURRENT_BINARY_DIR}/xml
+          ${CMAKE_CURRENT_BINARY_DIR}/api/xml
           ${ZENSICAL_DOCS_DIR}/api
       DEPENDS doxygen
       COMMENT "Converting Doxygen XML to API reference Markdown"
