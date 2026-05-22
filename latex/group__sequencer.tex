@@ -1,0 +1,67 @@
+\doxysection{MIDI Sequencer}
+\hypertarget{group__sequencer}{}\label{group__sequencer}\index{MIDI Sequencer@{MIDI Sequencer}}
+Collaboration diagram for MIDI Sequencer\+:
+% FIG 0
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__sequencer__events}{Sequencer Events}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__sequencer_gae6bb99d73ba67f0b7e15883b78bfae85}{fluid\+\_\+event\+\_\+callback\+\_\+t}}) (unsigned int time, \mbox{\hyperlink{group__Types_gaca09348be1b6e6ee7fce49dd4734f1ba}{fluid\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*}event, \mbox{\hyperlink{group__Types_ga7c7acad4ee620fc954a7ad4d7e87e1c3}{fluid\+\_\+sequencer\+\_\+t}} \texorpdfstring{$\ast$}{*}seq, void \texorpdfstring{$\ast$}{*}data)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUID\+\_\+\+DEPRECATED FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga7c7acad4ee620fc954a7ad4d7e87e1c3}{fluid\+\_\+sequencer\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__sequencer_gafe1b2d471fadd139c8646ec80d73607a}{new\+\_\+fluid\+\_\+sequencer}} (void)
+\item 
+FLUIDSYNTH\+\_\+\+API int \mbox{\hyperlink{group__sequencer_ga2ae3552fe3a4f20b8a29854c93eed643}{fluid\+\_\+sequencer\+\_\+get\+\_\+use\+\_\+system\+\_\+timer}} (\mbox{\hyperlink{group__Types_ga7c7acad4ee620fc954a7ad4d7e87e1c3}{fluid\+\_\+sequencer\+\_\+t}} \texorpdfstring{$\ast$}{*}seq)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+MIDI event sequencer.
+
+The MIDI sequencer can be used to play MIDI events in a more flexible way than using the MIDI file player, which expects the events to be stored as Standard MIDI Files. Using the sequencer, you can provide the events one by one, with an optional timestamp for scheduling. 
+
+\doxysubsection{Typedef Documentation}
+\Hypertarget{group__sequencer_gae6bb99d73ba67f0b7e15883b78bfae85}\label{group__sequencer_gae6bb99d73ba67f0b7e15883b78bfae85} 
+\index{MIDI Sequencer@{MIDI Sequencer}!fluid\_event\_callback\_t@{fluid\_event\_callback\_t}}
+\index{fluid\_event\_callback\_t@{fluid\_event\_callback\_t}!MIDI Sequencer@{MIDI Sequencer}}
+\doxysubsubsection{\texorpdfstring{fluid\_event\_callback\_t}{fluid\_event\_callback\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+event\+\_\+callback\+\_\+t) (unsigned int time, \mbox{\hyperlink{group__Types_gaca09348be1b6e6ee7fce49dd4734f1ba}{fluid\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*}event, \mbox{\hyperlink{group__Types_ga7c7acad4ee620fc954a7ad4d7e87e1c3}{fluid\+\_\+sequencer\+\_\+t}} \texorpdfstring{$\ast$}{*}seq, void \texorpdfstring{$\ast$}{*}data)}
+
+Event callback prototype for destination clients.
+
+
+\begin{DoxyParams}{Parameters}
+{\em time} & Current sequencer tick value (see fluid\+\_\+sequencer\+\_\+get\+\_\+tick()). \\
+\hline
+{\em event} & The event being received \\
+\hline
+{\em seq} & The sequencer instance \\
+\hline
+{\em data} & User defined data registered with the client\\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+{\ttfamily time} may not be of the same tick value as the scheduled event! In fact, depending on the sequencer\textquotesingle{}s scale and the synth\textquotesingle{}s sample-\/rate, {\ttfamily time} may be a few ticks too late. Although this itself is inaudible, it is important to consider, when you use this callback for enqueuing additional events over and over again with fluid\+\_\+sequencer\+\_\+send\+\_\+at()\+: If you enqueue new events with a relative tick value you might introduce a timing error, which causes your sequence to sound e.\+g. slower than it\textquotesingle{}s supposed to be. If this is your use-\/case, make sure to enqueue events with an absolute tick value. 
+\end{DoxyNote}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__sequencer_ga2ae3552fe3a4f20b8a29854c93eed643}\label{group__sequencer_ga2ae3552fe3a4f20b8a29854c93eed643} 
+\index{MIDI Sequencer@{MIDI Sequencer}!fluid\_sequencer\_get\_use\_system\_timer@{fluid\_sequencer\_get\_use\_system\_timer}}
+\index{fluid\_sequencer\_get\_use\_system\_timer@{fluid\_sequencer\_get\_use\_system\_timer}!MIDI Sequencer@{MIDI Sequencer}}
+\doxysubsubsection{\texorpdfstring{fluid\_sequencer\_get\_use\_system\_timer()}{fluid\_sequencer\_get\_use\_system\_timer()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API int fluid\+\_\+sequencer\+\_\+get\+\_\+use\+\_\+system\+\_\+timer (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_ga7c7acad4ee620fc954a7ad4d7e87e1c3}{fluid\+\_\+sequencer\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{seq }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__sequencer_gafe1b2d471fadd139c8646ec80d73607a}\label{group__sequencer_gafe1b2d471fadd139c8646ec80d73607a} 
+\index{MIDI Sequencer@{MIDI Sequencer}!new\_fluid\_sequencer@{new\_fluid\_sequencer}}
+\index{new\_fluid\_sequencer@{new\_fluid\_sequencer}!MIDI Sequencer@{MIDI Sequencer}}
+\doxysubsubsection{\texorpdfstring{new\_fluid\_sequencer()}{new\_fluid\_sequencer()}}
+{\footnotesize\ttfamily FLUID\+\_\+\+DEPRECATED FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga7c7acad4ee620fc954a7ad4d7e87e1c3}{fluid\+\_\+sequencer\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+sequencer (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@startlifecycle\{MIDI Sequencer\} \input{group__sequencer__events}

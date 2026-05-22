@@ -1,0 +1,180 @@
+\doxysection{Settings}
+\hypertarget{group__settings}{}\label{group__settings}\index{Settings@{Settings}}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__settings_ga164b85b99eb8a6d13c3e7554f7d88bae}{FLUID\+\_\+\+HINT\+\_\+\+BOUNDED\+\_\+\+BELOW}}~0x1
+\item 
+\#define \mbox{\hyperlink{group__settings_ga8f09ee7b4dd3f700e571b8b6f44c2adb}{FLUID\+\_\+\+HINT\+\_\+\+BOUNDED\+\_\+\+ABOVE}}~0x2
+\item 
+\#define \mbox{\hyperlink{group__settings_ga3a8898f5a93139fbc35f5dfe39ed9f5a}{FLUID\+\_\+\+HINT\+\_\+\+TOGGLED}}~0x4
+\item 
+\#define \mbox{\hyperlink{group__settings_gae386fb0005b1896194458f15c27e3dc8}{FLUID\+\_\+\+HINT\+\_\+\+OPTIONLIST}}~0x02
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__settings_ga56719cd428f9c0b56b38409357f9ac5a}{fluid\+\_\+settings\+\_\+foreach\+\_\+option\+\_\+t}}) (void \texorpdfstring{$\ast$}{*}data, const char \texorpdfstring{$\ast$}{*}name, const char \texorpdfstring{$\ast$}{*}option)
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__settings_ga8be1761be41f9f2b14b9e32ce9a1e9df}{fluid\+\_\+settings\+\_\+foreach\+\_\+t}}) (void \texorpdfstring{$\ast$}{*}data, const char \texorpdfstring{$\ast$}{*}name, int type)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__settings_ga3f81ecae0f6b147ca8a7f3be4f24a07a}{fluid\+\_\+types\+\_\+enum}} \{ \newline
+\mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa7afc1bed56f3d4269b22e58a47e59136}{FLUID\+\_\+\+NO\+\_\+\+TYPE}} = -\/1
+, \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fd6d4d56917aa1225b0c713ab17a088}{FLUID\+\_\+\+NUM\+\_\+\+TYPE}}
+, \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aaac101015b18e0600245d930c16619659}{FLUID\+\_\+\+INT\+\_\+\+TYPE}}
+, \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fb9826b74428753caccfe01091d1000}{FLUID\+\_\+\+STR\+\_\+\+TYPE}}
+, \newline
+\mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa50b8a4a854bda93a6f59b425e8f4acad}{FLUID\+\_\+\+SET\+\_\+\+TYPE}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__settings_gab2b5445b0580a45609cc09e8e9333145}{new\+\_\+fluid\+\_\+settings}} (void)
+\item 
+FLUIDSYNTH\+\_\+\+API int \mbox{\hyperlink{group__settings_ga85ddf7b499ae6176f8d8918f44c3d5b1}{fluid\+\_\+settings\+\_\+get\+\_\+type}} (\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*}settings, const char \texorpdfstring{$\ast$}{*}name)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Functions for settings management
+
+To create a synthesizer object you will have to specify its settings. These settings are stored in a fluid\+\_\+settings\+\_\+t object. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}}
+\DoxyCodeLine{my\_synthesizer\ ()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{group__Types_gac3706330ce49cac5b7dd079e90d376d8}{fluid\_audio\_driver\_t}}\ *adriver;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ settings\ =\ \mbox{\hyperlink{group__settings_gab2b5445b0580a45609cc09e8e9333145}{new\_fluid\_settings}}\ ();}
+\DoxyCodeLine{\ \ fluid\_settings\_setstr(settings,\ \textcolor{stringliteral}{"{}audio.driver"{}},\ \textcolor{stringliteral}{"{}alsa"{}});}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ ...\ change\ settings\ ...}}
+\DoxyCodeLine{\ \ synth\ =\ \mbox{\hyperlink{group__synth_ga4a70cc91e3203ef216f7fcc195c5c9b0}{new\_fluid\_synth}}\ (settings);}
+\DoxyCodeLine{\ \ adriver\ =\ \mbox{\hyperlink{group__audio__driver_gaabdc8715e113a2935f1874e78a4a24b9}{new\_fluid\_audio\_driver}}\ (settings,\ synth);}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ All string settings are encoded in UTF-\/8. This includes the names of the audio and MIDI devices, exposed as setting options.
+
+\begin{DoxySeeAlso}{See also}
+Creating\+Settings 
+\end{DoxySeeAlso}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__settings_ga8f09ee7b4dd3f700e571b8b6f44c2adb}\label{group__settings_ga8f09ee7b4dd3f700e571b8b6f44c2adb} 
+\index{Settings@{Settings}!FLUID\_HINT\_BOUNDED\_ABOVE@{FLUID\_HINT\_BOUNDED\_ABOVE}}
+\index{FLUID\_HINT\_BOUNDED\_ABOVE@{FLUID\_HINT\_BOUNDED\_ABOVE}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{FLUID\_HINT\_BOUNDED\_ABOVE}{FLUID\_HINT\_BOUNDED\_ABOVE}}
+{\footnotesize\ttfamily \#define FLUID\+\_\+\+HINT\+\_\+\+BOUNDED\+\_\+\+ABOVE~0x2}
+
+Hint FLUID\+\_\+\+HINT\+\_\+\+BOUNDED\+\_\+\+ABOVE indicates that the Upper\+Bound field of the FLUID\+\_\+\+Port\+Range\+Hint should be considered meaningful. The value in this field should be considered the (inclusive) upper bound of the valid range. If FLUID\+\_\+\+HINT\+\_\+\+SAMPLE\+\_\+\+RATE is also specified then the value of Upper\+Bound should be multiplied by the sample rate. \Hypertarget{group__settings_ga164b85b99eb8a6d13c3e7554f7d88bae}\label{group__settings_ga164b85b99eb8a6d13c3e7554f7d88bae} 
+\index{Settings@{Settings}!FLUID\_HINT\_BOUNDED\_BELOW@{FLUID\_HINT\_BOUNDED\_BELOW}}
+\index{FLUID\_HINT\_BOUNDED\_BELOW@{FLUID\_HINT\_BOUNDED\_BELOW}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{FLUID\_HINT\_BOUNDED\_BELOW}{FLUID\_HINT\_BOUNDED\_BELOW}}
+{\footnotesize\ttfamily \#define FLUID\+\_\+\+HINT\+\_\+\+BOUNDED\+\_\+\+BELOW~0x1}
+
+Hint FLUID\+\_\+\+HINT\+\_\+\+BOUNDED\+\_\+\+BELOW indicates that the Lower\+Bound field of the FLUID\+\_\+\+Port\+Range\+Hint should be considered meaningful. The value in this field should be considered the (inclusive) lower bound of the valid range. If FLUID\+\_\+\+HINT\+\_\+\+SAMPLE\+\_\+\+RATE is also specified then the value of Lower\+Bound should be multiplied by the sample rate. \Hypertarget{group__settings_gae386fb0005b1896194458f15c27e3dc8}\label{group__settings_gae386fb0005b1896194458f15c27e3dc8} 
+\index{Settings@{Settings}!FLUID\_HINT\_OPTIONLIST@{FLUID\_HINT\_OPTIONLIST}}
+\index{FLUID\_HINT\_OPTIONLIST@{FLUID\_HINT\_OPTIONLIST}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{FLUID\_HINT\_OPTIONLIST}{FLUID\_HINT\_OPTIONLIST}}
+{\footnotesize\ttfamily \#define FLUID\+\_\+\+HINT\+\_\+\+OPTIONLIST~0x02}
+
+Setting is a list of string options \Hypertarget{group__settings_ga3a8898f5a93139fbc35f5dfe39ed9f5a}\label{group__settings_ga3a8898f5a93139fbc35f5dfe39ed9f5a} 
+\index{Settings@{Settings}!FLUID\_HINT\_TOGGLED@{FLUID\_HINT\_TOGGLED}}
+\index{FLUID\_HINT\_TOGGLED@{FLUID\_HINT\_TOGGLED}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{FLUID\_HINT\_TOGGLED}{FLUID\_HINT\_TOGGLED}}
+{\footnotesize\ttfamily \#define FLUID\+\_\+\+HINT\+\_\+\+TOGGLED~0x4}
+
+Hint FLUID\+\_\+\+HINT\+\_\+\+TOGGLED indicates that the data item should be considered a Boolean toggle. Data less than or equal to zero should be considered `off' or `false,' and data above zero should be considered `on' or `true.' FLUID\+\_\+\+HINT\+\_\+\+TOGGLED may not be used in conjunction with any other hint. 
+
+\doxysubsection{Typedef Documentation}
+\Hypertarget{group__settings_ga56719cd428f9c0b56b38409357f9ac5a}\label{group__settings_ga56719cd428f9c0b56b38409357f9ac5a} 
+\index{Settings@{Settings}!fluid\_settings\_foreach\_option\_t@{fluid\_settings\_foreach\_option\_t}}
+\index{fluid\_settings\_foreach\_option\_t@{fluid\_settings\_foreach\_option\_t}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{fluid\_settings\_foreach\_option\_t}{fluid\_settings\_foreach\_option\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+settings\+\_\+foreach\+\_\+option\+\_\+t) (void \texorpdfstring{$\ast$}{*}data, const char \texorpdfstring{$\ast$}{*}name, const char \texorpdfstring{$\ast$}{*}option)}
+
+Callback function type used with fluid\+\_\+settings\+\_\+foreach\+\_\+option()
+
+
+\begin{DoxyParams}{Parameters}
+{\em data} & User defined data pointer \\
+\hline
+{\em name} & Setting name \\
+\hline
+{\em option} & A string option for this setting (iterates through the list) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__settings_ga8be1761be41f9f2b14b9e32ce9a1e9df}\label{group__settings_ga8be1761be41f9f2b14b9e32ce9a1e9df} 
+\index{Settings@{Settings}!fluid\_settings\_foreach\_t@{fluid\_settings\_foreach\_t}}
+\index{fluid\_settings\_foreach\_t@{fluid\_settings\_foreach\_t}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{fluid\_settings\_foreach\_t}{fluid\_settings\_foreach\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+settings\+\_\+foreach\+\_\+t) (void \texorpdfstring{$\ast$}{*}data, const char \texorpdfstring{$\ast$}{*}name, int type)}
+
+Callback function type used with fluid\+\_\+settings\+\_\+foreach()
+
+
+\begin{DoxyParams}{Parameters}
+{\em data} & User defined data pointer \\
+\hline
+{\em name} & Setting name \\
+\hline
+{\em type} & Setting type (\doxylink{group__settings_ga3f81ecae0f6b147ca8a7f3be4f24a07a}{fluid\+\_\+types\+\_\+enum}) \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\Hypertarget{group__settings_ga3f81ecae0f6b147ca8a7f3be4f24a07a}\label{group__settings_ga3f81ecae0f6b147ca8a7f3be4f24a07a} 
+\index{Settings@{Settings}!fluid\_types\_enum@{fluid\_types\_enum}}
+\index{fluid\_types\_enum@{fluid\_types\_enum}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{fluid\_types\_enum}{fluid\_types\_enum}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__settings_ga3f81ecae0f6b147ca8a7f3be4f24a07a}{fluid\+\_\+types\+\_\+enum}}}
+
+Settings type
+
+Each setting has a defined type\+: numeric (double), integer, string or a set of values. The type of each setting can be retrieved using the function \doxylink{group__settings_ga85ddf7b499ae6176f8d8918f44c3d5b1}{fluid\+\_\+settings\+\_\+get\+\_\+type()} \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_NO\_TYPE@{FLUID\_NO\_TYPE}!Settings@{Settings}}\index{Settings@{Settings}!FLUID\_NO\_TYPE@{FLUID\_NO\_TYPE}}}\Hypertarget{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa7afc1bed56f3d4269b22e58a47e59136}\label{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa7afc1bed56f3d4269b22e58a47e59136} 
+FLUID\+\_\+\+NO\+\_\+\+TYPE&Undefined type \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_NUM\_TYPE@{FLUID\_NUM\_TYPE}!Settings@{Settings}}\index{Settings@{Settings}!FLUID\_NUM\_TYPE@{FLUID\_NUM\_TYPE}}}\Hypertarget{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fd6d4d56917aa1225b0c713ab17a088}\label{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fd6d4d56917aa1225b0c713ab17a088} 
+FLUID\+\_\+\+NUM\+\_\+\+TYPE&Numeric (double) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_INT\_TYPE@{FLUID\_INT\_TYPE}!Settings@{Settings}}\index{Settings@{Settings}!FLUID\_INT\_TYPE@{FLUID\_INT\_TYPE}}}\Hypertarget{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aaac101015b18e0600245d930c16619659}\label{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aaac101015b18e0600245d930c16619659} 
+FLUID\+\_\+\+INT\+\_\+\+TYPE&Integer \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_STR\_TYPE@{FLUID\_STR\_TYPE}!Settings@{Settings}}\index{Settings@{Settings}!FLUID\_STR\_TYPE@{FLUID\_STR\_TYPE}}}\Hypertarget{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fb9826b74428753caccfe01091d1000}\label{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fb9826b74428753caccfe01091d1000} 
+FLUID\+\_\+\+STR\+\_\+\+TYPE&String \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SET\_TYPE@{FLUID\_SET\_TYPE}!Settings@{Settings}}\index{Settings@{Settings}!FLUID\_SET\_TYPE@{FLUID\_SET\_TYPE}}}\Hypertarget{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa50b8a4a854bda93a6f59b425e8f4acad}\label{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa50b8a4a854bda93a6f59b425e8f4acad} 
+FLUID\+\_\+\+SET\+\_\+\+TYPE&Set of values \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__settings_ga85ddf7b499ae6176f8d8918f44c3d5b1}\label{group__settings_ga85ddf7b499ae6176f8d8918f44c3d5b1} 
+\index{Settings@{Settings}!fluid\_settings\_get\_type@{fluid\_settings\_get\_type}}
+\index{fluid\_settings\_get\_type@{fluid\_settings\_get\_type}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{fluid\_settings\_get\_type()}{fluid\_settings\_get\_type()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API int fluid\+\_\+settings\+\_\+get\+\_\+type (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{settings,  }\item[{const char \texorpdfstring{$\ast$}{*}}]{name }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__settings_gab2b5445b0580a45609cc09e8e9333145}\label{group__settings_gab2b5445b0580a45609cc09e8e9333145} 
+\index{Settings@{Settings}!new\_fluid\_settings@{new\_fluid\_settings}}
+\index{new\_fluid\_settings@{new\_fluid\_settings}!Settings@{Settings}}
+\doxysubsubsection{\texorpdfstring{new\_fluid\_settings()}{new\_fluid\_settings()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+settings (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@startlifecycle\{Settings\} 

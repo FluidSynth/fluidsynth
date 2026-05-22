@@ -1,0 +1,55 @@
+\doxysection{Miscellaneous}
+\hypertarget{group__misc}{}\label{group__misc}\index{Miscellaneous@{Miscellaneous}}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}{FLUID\+\_\+\+OK}}~(0)
+\item 
+\#define \mbox{\hyperlink{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}{FLUID\+\_\+\+FAILED}}~(-\/1)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Miscellaneous utility functions and defines 
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}\label{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61} 
+\index{Miscellaneous@{Miscellaneous}!FLUID\_FAILED@{FLUID\_FAILED}}
+\index{FLUID\_FAILED@{FLUID\_FAILED}!Miscellaneous@{Miscellaneous}}
+\doxysubsubsection{\texorpdfstring{FLUID\_FAILED}{FLUID\_FAILED}}
+{\footnotesize\ttfamily \#define FLUID\+\_\+\+FAILED~(-\/1)}
+
+Value that indicates failure, used by most libfluidsynth functions.
+
+\begin{DoxyNote}{Note}
+See \doxylink{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}{FLUID\+\_\+\+OK} for more details.
+\end{DoxyNote}
+\begin{DoxySince}{Since}
+1.\+1.\+0 
+\end{DoxySince}
+\Hypertarget{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}\label{group__misc_gae4efb1c3ce0d550c922504adfb0fb886} 
+\index{Miscellaneous@{Miscellaneous}!FLUID\_OK@{FLUID\_OK}}
+\index{FLUID\_OK@{FLUID\_OK}!Miscellaneous@{Miscellaneous}}
+\doxysubsubsection{\texorpdfstring{FLUID\_OK}{FLUID\_OK}}
+{\footnotesize\ttfamily \#define FLUID\+\_\+\+OK~(0)}
+
+Value that indicates success, used by most libfluidsynth functions.
+
+\begin{DoxyNote}{Note}
+This was not publicly defined prior to libfluidsynth 1.\+1.\+0. When writing code which should also be compatible with older versions, something like the following can be used\+:
+\end{DoxyNote}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <fluidsynth.h>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#ifndef\ FLUID\_OK}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ FLUID\_OK\ \ \ \ \ \ (0)}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ FLUID\_FAILED\ \ (-\/1)}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}
+
+
+\begin{DoxySince}{Since}
+1.\+1.\+0 
+\end{DoxySince}

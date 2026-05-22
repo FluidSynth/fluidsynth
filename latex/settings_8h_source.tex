@@ -1,0 +1,122 @@
+\doxysection{settings.\+h}
+\hypertarget{settings_8h_source}{}\label{settings_8h_source}\index{include/fluidsynth/settings.h@{include/fluidsynth/settings.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ FluidSynth\ -\/\ A\ Software\ Synthesizer}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Copyright\ (C)\ 2003\ \ Peter\ Hanappe\ and\ others.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ This\ library\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modify\ it\ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ as\ published\ by\ the\ Free\ Software\ Foundation;\ either\ version\ 2.1\ of}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ the\ License,\ or\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ This\ library\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ Lesser\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ License\ along\ with\ this\ library;\ if\ not,\ see}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ \_FLUIDSYNTH\_SETTINGS\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ \_FLUIDSYNTH\_SETTINGS\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#define\ FLUID\_HINT\_BOUNDED\_BELOW\ \ \ 0x1}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#define\ FLUID\_HINT\_BOUNDED\_ABOVE\ \ \ 0x2}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ FLUID\_HINT\_TOGGLED\ \ \ \ \ \ \ \ \ 0x4}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#define\ FLUID\_HINT\_OPTIONLIST\ \ \ \ \ \ 0x02\ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00095\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{group__settings_ga3f81ecae0f6b147ca8a7f3be4f24a07a}{fluid\_types\_enum}}}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa7afc1bed56f3d4269b22e58a47e59136}{FLUID\_NO\_TYPE}}\ =\ -\/1,\ }
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fd6d4d56917aa1225b0c713ab17a088}{FLUID\_NUM\_TYPE}},\ \ \ \ \ }
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aaac101015b18e0600245d930c16619659}{FLUID\_INT\_TYPE}},\ \ \ \ \ }
+\DoxyCodeLine{00100\ \ \ \ \ \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa5fb9826b74428753caccfe01091d1000}{FLUID\_STR\_TYPE}},\ \ \ \ \ }
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{group__settings_gga3f81ecae0f6b147ca8a7f3be4f24a07aa50b8a4a854bda93a6f59b425e8f4acad}{FLUID\_SET\_TYPE}}\ \ \ \ \ \ }
+\DoxyCodeLine{00102\ \};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00105\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *\mbox{\hyperlink{group__settings_gab2b5445b0580a45609cc09e8e9333145}{new\_fluid\_settings}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00106\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ delete\_fluid\_settings(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings);}
+\DoxyCodeLine{00109\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00110\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{group__settings_ga85ddf7b499ae6176f8d8918f44c3d5b1}{fluid\_settings\_get\_type}}(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00113\ \textcolor{keywordtype}{int}\ fluid\_settings\_get\_hints(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{int}\ *val);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{int}\ fluid\_settings\_is\_realtime(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00119\ \textcolor{keywordtype}{int}\ fluid\_settings\_setstr(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *str);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00122\ \textcolor{keywordtype}{int}\ fluid\_settings\_copystr(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{char}\ *str,\ \textcolor{keywordtype}{int}\ len);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00125\ \textcolor{keywordtype}{int}\ fluid\_settings\_dupstr(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{char}\ **str);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{int}\ fluid\_settings\_getstr\_default(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{char}\ **def);}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00131\ \textcolor{keywordtype}{int}\ fluid\_settings\_str\_equal(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *value);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00134\ \textcolor{keywordtype}{int}\ fluid\_settings\_setnum(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{double}\ val);}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00137\ \textcolor{keywordtype}{int}\ fluid\_settings\_getnum(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{double}\ *val);}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{int}\ fluid\_settings\_getnum\_default(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{double}\ *val);}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00143\ \textcolor{keywordtype}{int}\ fluid\_settings\_getnum\_range(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ *min,\ \textcolor{keywordtype}{double}\ *max);}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00147\ \textcolor{keywordtype}{int}\ fluid\_settings\_setint(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{int}\ val);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00150\ \textcolor{keywordtype}{int}\ fluid\_settings\_getint(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{int}\ *val);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00153\ \textcolor{keywordtype}{int}\ fluid\_settings\_getint\_default(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{int}\ *val);}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{int}\ fluid\_settings\_getint\_range(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ *min,\ \textcolor{keywordtype}{int}\ *max);}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{typedef}\ void\ (*\mbox{\hyperlink{group__settings_ga56719cd428f9c0b56b38409357f9ac5a}{fluid\_settings\_foreach\_option\_t}})(\textcolor{keywordtype}{void}\ *data,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *option);}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00169\ \textcolor{keywordtype}{void}\ fluid\_settings\_foreach\_option(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{void}\ *data,}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__settings_ga56719cd428f9c0b56b38409357f9ac5a}{fluid\_settings\_foreach\_option\_t}}\ func);}
+\DoxyCodeLine{00172\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00173\ \textcolor{keywordtype}{int}\ fluid\_settings\_option\_count(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name);}
+\DoxyCodeLine{00174\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{char}\ *fluid\_settings\_option\_concat(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *separator);}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00185\ \textcolor{keyword}{typedef}\ void\ (*\mbox{\hyperlink{group__settings_ga8be1761be41f9f2b14b9e32ce9a1e9df}{fluid\_settings\_foreach\_t}})(\textcolor{keywordtype}{void}\ *data,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keywordtype}{int}\ type);}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00188\ \textcolor{keywordtype}{void}\ fluid\_settings\_foreach(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \textcolor{keywordtype}{void}\ *data,}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__settings_ga8be1761be41f9f2b14b9e32ce9a1e9df}{fluid\_settings\_foreach\_t}}\ func);}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00193\ \}}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_FLUIDSYNTH\_SETTINGS\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

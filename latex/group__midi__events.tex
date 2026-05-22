@@ -1,0 +1,32 @@
+\doxysubsection{MIDI Events}
+\hypertarget{group__midi__events}{}\label{group__midi__events}\index{MIDI Events@{MIDI Events}}
+Collaboration diagram for MIDI Events\+:
+% FIG 0
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga61c72b76e3ee344637994c3071f74d94}{fluid\+\_\+midi\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__midi__events_ga0bebe360861c167c93d5651d6f53b8f7}{new\+\_\+fluid\+\_\+midi\+\_\+event}} (void)
+\item 
+FLUIDSYNTH\+\_\+\+API int \mbox{\hyperlink{group__midi__events_gab1286f2dec54372e866d6654cc9360aa}{fluid\+\_\+midi\+\_\+event\+\_\+set\+\_\+type}} (\mbox{\hyperlink{group__Types_ga61c72b76e3ee344637994c3071f74d94}{fluid\+\_\+midi\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*}evt, int type)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Functions to create, modify, query and delete MIDI events.
+
+These functions are intended to be used in MIDI routers and other filtering and processing functions in the MIDI event path. If you want to simply send MIDI messages to the synthesizer, you can use the more convenient \doxylink{group__midi__messages}{MIDI Channel Messages} interface. 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{group__midi__events_gab1286f2dec54372e866d6654cc9360aa}\label{group__midi__events_gab1286f2dec54372e866d6654cc9360aa} 
+\index{MIDI Events@{MIDI Events}!fluid\_midi\_event\_set\_type@{fluid\_midi\_event\_set\_type}}
+\index{fluid\_midi\_event\_set\_type@{fluid\_midi\_event\_set\_type}!MIDI Events@{MIDI Events}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_midi\_event\_set\_type()}{fluid\_midi\_event\_set\_type()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API int fluid\+\_\+midi\+\_\+event\+\_\+set\+\_\+type (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_ga61c72b76e3ee344637994c3071f74d94}{fluid\+\_\+midi\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{evt,  }\item[{int}]{type }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__midi__events_ga0bebe360861c167c93d5651d6f53b8f7}\label{group__midi__events_ga0bebe360861c167c93d5651d6f53b8f7} 
+\index{MIDI Events@{MIDI Events}!new\_fluid\_midi\_event@{new\_fluid\_midi\_event}}
+\index{new\_fluid\_midi\_event@{new\_fluid\_midi\_event}!MIDI Events@{MIDI Events}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_midi\_event()}{new\_fluid\_midi\_event()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga61c72b76e3ee344637994c3071f74d94}{fluid\+\_\+midi\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+midi\+\_\+event (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@startlifecycle\{MIDI Event\} 

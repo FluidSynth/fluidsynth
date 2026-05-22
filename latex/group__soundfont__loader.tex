@@ -1,0 +1,466 @@
+\doxysubsection{Sound\+Font Loader}
+\hypertarget{group__soundfont__loader}{}\label{group__soundfont__loader}\index{SoundFont Loader@{SoundFont Loader}}
+Collaboration diagram for Sound\+Font Loader\+:
+% FIG 0
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gadf9d55cd050f560b6fcdf32d330fb69c}{fluid\+\_\+sfloader\+\_\+load\+\_\+t}}) (\mbox{\hyperlink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t}} \texorpdfstring{$\ast$}{*}loader, const char \texorpdfstring{$\ast$}{*}filename)
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gaab801ff11ddf556d3f34e82c2ca02897}{fluid\+\_\+sfloader\+\_\+free\+\_\+t}}) (\mbox{\hyperlink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t}} \texorpdfstring{$\ast$}{*}loader)
+\item 
+typedef void \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gab6e63be73ebe7e29466216e0de1095ec}{fluid\+\_\+sfloader\+\_\+callback\+\_\+open\+\_\+t}}) (const char \texorpdfstring{$\ast$}{*}filename)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gac6d2f5d8a1291d3ffb7909a512badcda}{fluid\+\_\+sfloader\+\_\+callback\+\_\+read\+\_\+t}}) (void \texorpdfstring{$\ast$}{*}buf, \mbox{\hyperlink{group__Types_ga5c188d5b1e95c245ff7f3b49a6b82ad9}{fluid\+\_\+long\+\_\+long\+\_\+t}} count, void \texorpdfstring{$\ast$}{*}handle)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gad84baa9e11e760e82b7f112e7d247282}{fluid\+\_\+sfloader\+\_\+callback\+\_\+seek\+\_\+t}}) (void \texorpdfstring{$\ast$}{*}handle, \mbox{\hyperlink{group__Types_ga5c188d5b1e95c245ff7f3b49a6b82ad9}{fluid\+\_\+long\+\_\+long\+\_\+t}} offset, int origin)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gaf2f4a738ad5117ae894cc39d7e2cfed0}{fluid\+\_\+sfloader\+\_\+callback\+\_\+close\+\_\+t}}) (void \texorpdfstring{$\ast$}{*}handle)
+\item 
+typedef \mbox{\hyperlink{group__Types_ga5c188d5b1e95c245ff7f3b49a6b82ad9}{fluid\+\_\+long\+\_\+long\+\_\+t}}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga7f5f59099035b9430b82e272f23c0c6a}{fluid\+\_\+sfloader\+\_\+callback\+\_\+tell\+\_\+t}}) (void \texorpdfstring{$\ast$}{*}handle)
+\item 
+typedef const char \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga9508a5b9c09201c8cc35a5c229d5032f}{fluid\+\_\+sfont\+\_\+get\+\_\+name\+\_\+t}}) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)
+\item 
+typedef \mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga850c0cb9f32f0fe3b7127fe94e97ed4d}{fluid\+\_\+sfont\+\_\+get\+\_\+preset\+\_\+t}}) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont, int bank, int prenum)
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga80ffb76a9a2c640816f57889666c28cb}{fluid\+\_\+sfont\+\_\+iteration\+\_\+start\+\_\+t}}) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)
+\item 
+typedef \mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gae25474b7d604774a22cf76a95a6e053d}{fluid\+\_\+sfont\+\_\+iteration\+\_\+next\+\_\+t}}) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gaad47ceab3ec2c3fed9437a796225a875}{fluid\+\_\+sfont\+\_\+free\+\_\+t}}) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)
+\item 
+typedef const char \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga30914c4a5547a527060bef8499bfb91e}{fluid\+\_\+preset\+\_\+get\+\_\+name\+\_\+t}}) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga01d401c6f13113c495564a3374a3b331}{fluid\+\_\+preset\+\_\+get\+\_\+banknum\+\_\+t}}) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga833b5d3b8f625b7a708150471b584d76}{fluid\+\_\+preset\+\_\+get\+\_\+num\+\_\+t}}) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)
+\item 
+typedef int(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga5cfcda454cb43f8a6c87d9d99d902b57}{fluid\+\_\+preset\+\_\+noteon\+\_\+t}}) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset, \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\+\_\+synth\+\_\+t}} \texorpdfstring{$\ast$}{*}synth, int chan, int key, int vel)
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gaf62be2bae1c11541218480db4ac138ac}{fluid\+\_\+preset\+\_\+free\+\_\+t}}) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \{ \newline
+\mbox{\hyperlink{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba3b9d777321001517ceb0fc4f69fb35b1}{FLUID\+\_\+\+PRESET\+\_\+\+SELECTED}}
+, \mbox{\hyperlink{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba5d10f094a7a45e62fa19d559ac29e7f1}{FLUID\+\_\+\+PRESET\+\_\+\+UNSELECTED}}
+, \mbox{\hyperlink{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55bad5841d407c7bcd3b59b787de8d506a7c}{FLUID\+\_\+\+SAMPLE\+\_\+\+DONE}}
+, \mbox{\hyperlink{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55bacc42fbe06fe1d025bba674e676feff5e}{FLUID\+\_\+\+PRESET\+\_\+\+PIN}}
+, \newline
+\mbox{\hyperlink{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba7fc43e1bbbbd9dfcc90f5a743704d2a8}{FLUID\+\_\+\+PRESET\+\_\+\+UNPIN}}
+ \}
+\item 
+enum \mbox{\hyperlink{group__soundfont__loader_ga9ac3f7677aa7628653467bef1078cb43}{fluid\+\_\+sample\+\_\+type}} \{ \newline
+\mbox{\hyperlink{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43af6d6f0733d9d09f51557f0887c05c1ef}{FLUID\+\_\+\+SAMPLETYPE\+\_\+\+MONO}} = 0x1
+, \mbox{\hyperlink{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a5083af5ea9daa70caa7b9260bf1c9169}{FLUID\+\_\+\+SAMPLETYPE\+\_\+\+RIGHT}} = 0x2
+, \mbox{\hyperlink{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43aed2e7809ac228e8c4bc00d776ee7dde8}{FLUID\+\_\+\+SAMPLETYPE\+\_\+\+LEFT}} = 0x4
+, \mbox{\hyperlink{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a1f7400bc3b0572884ba1bd53cbea56c7}{FLUID\+\_\+\+SAMPLETYPE\+\_\+\+LINKED}} = 0x8
+, \newline
+\mbox{\hyperlink{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a6c1b3dabb16ac1f1194bfd46436469fb}{FLUID\+\_\+\+SAMPLETYPE\+\_\+\+OGG\+\_\+\+VORBIS}} = 0x10
+, \mbox{\hyperlink{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a4021394f9ba5cf620616889de330664a}{FLUID\+\_\+\+SAMPLETYPE\+\_\+\+ROM}} = 0x8000
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga9a1412c90ac4a1f945985d1bc1e51607}{new\+\_\+fluid\+\_\+sfloader}} (\mbox{\hyperlink{group__soundfont__loader_gadf9d55cd050f560b6fcdf32d330fb69c}{fluid\+\_\+sfloader\+\_\+load\+\_\+t}} load, \mbox{\hyperlink{group__soundfont__loader_gaab801ff11ddf556d3f34e82c2ca02897}{fluid\+\_\+sfloader\+\_\+free\+\_\+t}} free)
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga45ce37d9eeaf023d317f97013a20ef3a}{new\+\_\+fluid\+\_\+sfont}} (\mbox{\hyperlink{group__soundfont__loader_ga9508a5b9c09201c8cc35a5c229d5032f}{fluid\+\_\+sfont\+\_\+get\+\_\+name\+\_\+t}} get\+\_\+name, \mbox{\hyperlink{group__soundfont__loader_ga850c0cb9f32f0fe3b7127fe94e97ed4d}{fluid\+\_\+sfont\+\_\+get\+\_\+preset\+\_\+t}} get\+\_\+preset, \mbox{\hyperlink{group__soundfont__loader_ga80ffb76a9a2c640816f57889666c28cb}{fluid\+\_\+sfont\+\_\+iteration\+\_\+start\+\_\+t}} iter\+\_\+start, \mbox{\hyperlink{group__soundfont__loader_gae25474b7d604774a22cf76a95a6e053d}{fluid\+\_\+sfont\+\_\+iteration\+\_\+next\+\_\+t}} iter\+\_\+next, \mbox{\hyperlink{group__soundfont__loader_gaad47ceab3ec2c3fed9437a796225a875}{fluid\+\_\+sfont\+\_\+free\+\_\+t}} free)
+\item 
+FLUIDSYNTH\+\_\+\+API int \mbox{\hyperlink{group__soundfont__loader_gaaa9eb334811f608714b54c7aa93bc576}{fluid\+\_\+sfont\+\_\+set\+\_\+data}} (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont, void \texorpdfstring{$\ast$}{*}data)
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_gaf358494d7b458f8bdd41cc965f1320c7}{new\+\_\+fluid\+\_\+preset}} (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}parent\+\_\+sfont, \mbox{\hyperlink{group__soundfont__loader_ga30914c4a5547a527060bef8499bfb91e}{fluid\+\_\+preset\+\_\+get\+\_\+name\+\_\+t}} get\+\_\+name, \mbox{\hyperlink{group__soundfont__loader_ga01d401c6f13113c495564a3374a3b331}{fluid\+\_\+preset\+\_\+get\+\_\+banknum\+\_\+t}} get\+\_\+bank, \mbox{\hyperlink{group__soundfont__loader_ga833b5d3b8f625b7a708150471b584d76}{fluid\+\_\+preset\+\_\+get\+\_\+num\+\_\+t}} get\+\_\+num, \mbox{\hyperlink{group__soundfont__loader_ga5cfcda454cb43f8a6c87d9d99d902b57}{fluid\+\_\+preset\+\_\+noteon\+\_\+t}} noteon, \mbox{\hyperlink{group__soundfont__loader_gaf62be2bae1c11541218480db4ac138ac}{fluid\+\_\+preset\+\_\+free\+\_\+t}} free)
+\item 
+FLUIDSYNTH\+\_\+\+API int \mbox{\hyperlink{group__soundfont__loader_gac7738641187d269a63a3b92cf01107b5}{fluid\+\_\+preset\+\_\+set\+\_\+data}} (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset, void \texorpdfstring{$\ast$}{*}data)
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gabf9174d452679ca1a4ee7d693fb773cf}{fluid\+\_\+sample\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__soundfont__loader_ga820457c9f0231756be5b4ae52d4b6b25}{new\+\_\+fluid\+\_\+sample}} (void)
+\item 
+FLUIDSYNTH\+\_\+\+API size\+\_\+t \mbox{\hyperlink{group__soundfont__loader_gaa9eabcde724c825e039ad18e39b1dd7f}{fluid\+\_\+sample\+\_\+sizeof}} (void)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Create custom Sound\+Font loaders
+
+It is possible to add new Sound\+Font loaders to the synthesizer. This API allows for virtual Sound\+Font files to be loaded and synthesized, which may not actually be Sound\+Font files, as long as they can be represented by the Sound\+Font synthesis model.
+
+To add a new Sound\+Font loader to the synthesizer, call fluid\+\_\+synth\+\_\+add\+\_\+sfloader() and pass a pointer to an \doxylink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t} instance created by \doxylink{group__soundfont__loader_ga9a1412c90ac4a1f945985d1bc1e51607}{new\+\_\+fluid\+\_\+sfloader()}. On creation, you must specify a callback function {\ttfamily load} that will be called for every file attempting to load it and if successful returns a \doxylink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t} instance, or NULL if it fails.
+
+The \doxylink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t} structure contains a callback to obtain the name of the Sound\+Font. It contains two functions to iterate though the contained presets, and one function to obtain a preset corresponding to a bank and preset number. This function should return a \doxylink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t} instance.
+
+The \doxylink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t} instance contains some functions to obtain information from the preset (name, bank, number). The most important callback is the noteon function. The noteon function is called by fluidsynth internally and should call fluid\+\_\+synth\+\_\+alloc\+\_\+voice() for every sample that has to be played. fluid\+\_\+synth\+\_\+alloc\+\_\+voice() expects a pointer to a \doxylink{group__Types_gabf9174d452679ca1a4ee7d693fb773cf}{fluid\+\_\+sample\+\_\+t} instance and returns a pointer to the opaque \doxylink{group__Types_ga5123ae5ef2d7806475267380c33604c3}{fluid\+\_\+voice\+\_\+t} structure. To set or increment the values of a generator, use fluid\+\_\+voice\+\_\+gen\+\_\+set() or fluid\+\_\+voice\+\_\+gen\+\_\+incr(). When you are finished initializing the voice call fluid\+\_\+voice\+\_\+start() to start playing the synthesis voice. 
+
+\doxysubsubsection{Typedef Documentation}
+\Hypertarget{group__soundfont__loader_gaf62be2bae1c11541218480db4ac138ac}\label{group__soundfont__loader_gaf62be2bae1c11541218480db4ac138ac} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_preset\_free\_t@{fluid\_preset\_free\_t}}
+\index{fluid\_preset\_free\_t@{fluid\_preset\_free\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_preset\_free\_t}{fluid\_preset\_free\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+preset\+\_\+free\+\_\+t) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)}
+
+Method to free a virtual Sound\+Font preset.
+
+
+\begin{DoxyParams}{Parameters}
+{\em preset} & Virtual Sound\+Font preset \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Should return 0
+\end{DoxyReturn}
+Any custom user provided cleanup function must ultimately call delete\+\_\+fluid\+\_\+preset() to ensure proper cleanup of the \doxylink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t} struct. If no private data needs to be freed, setting this to delete\+\_\+fluid\+\_\+preset() is sufficient. \Hypertarget{group__soundfont__loader_ga01d401c6f13113c495564a3374a3b331}\label{group__soundfont__loader_ga01d401c6f13113c495564a3374a3b331} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_preset\_get\_banknum\_t@{fluid\_preset\_get\_banknum\_t}}
+\index{fluid\_preset\_get\_banknum\_t@{fluid\_preset\_get\_banknum\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_preset\_get\_banknum\_t}{fluid\_preset\_get\_banknum\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+preset\+\_\+get\+\_\+banknum\+\_\+t) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)}
+
+Method to get a virtual Sound\+Font preset MIDI bank number.
+
+
+\begin{DoxyParams}{Parameters}
+{\em preset} & Virtual Sound\+Font preset \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The bank number of the preset 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_ga30914c4a5547a527060bef8499bfb91e}\label{group__soundfont__loader_ga30914c4a5547a527060bef8499bfb91e} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_preset\_get\_name\_t@{fluid\_preset\_get\_name\_t}}
+\index{fluid\_preset\_get\_name\_t@{fluid\_preset\_get\_name\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_preset\_get\_name\_t}{fluid\_preset\_get\_name\_t}}
+{\footnotesize\ttfamily typedef const char \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} fluid\+\_\+preset\+\_\+get\+\_\+name\+\_\+t) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)}
+
+Method to get a virtual Sound\+Font preset name.
+
+
+\begin{DoxyParams}{Parameters}
+{\em preset} & Virtual Sound\+Font preset \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Should return the name of the preset. The returned string must be valid for the duration of the virtual preset (or the duration of the Sound\+Font, in the case of preset iteration). 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_ga833b5d3b8f625b7a708150471b584d76}\label{group__soundfont__loader_ga833b5d3b8f625b7a708150471b584d76} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_preset\_get\_num\_t@{fluid\_preset\_get\_num\_t}}
+\index{fluid\_preset\_get\_num\_t@{fluid\_preset\_get\_num\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_preset\_get\_num\_t}{fluid\_preset\_get\_num\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+preset\+\_\+get\+\_\+num\+\_\+t) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset)}
+
+Method to get a virtual Sound\+Font preset MIDI program number.
+
+
+\begin{DoxyParams}{Parameters}
+{\em preset} & Virtual Sound\+Font preset \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The program number of the preset 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_ga5cfcda454cb43f8a6c87d9d99d902b57}\label{group__soundfont__loader_ga5cfcda454cb43f8a6c87d9d99d902b57} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_preset\_noteon\_t@{fluid\_preset\_noteon\_t}}
+\index{fluid\_preset\_noteon\_t@{fluid\_preset\_noteon\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_preset\_noteon\_t}{fluid\_preset\_noteon\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+preset\+\_\+noteon\+\_\+t) (\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}preset, \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\+\_\+synth\+\_\+t}} \texorpdfstring{$\ast$}{*}synth, int chan, int key, int vel)}
+
+Method to handle a noteon event (synthesize the instrument).
+
+
+\begin{DoxyParams}{Parameters}
+{\em preset} & Virtual Sound\+Font preset \\
+\hline
+{\em synth} & Synthesizer instance \\
+\hline
+{\em chan} & MIDI channel number of the note on event \\
+\hline
+{\em key} & MIDI note number (0-\/127) \\
+\hline
+{\em vel} & MIDI velocity (0-\/127) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\doxylink{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}{FLUID\+\_\+\+OK} on success (0) or \doxylink{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}{FLUID\+\_\+\+FAILED} (-\/1) otherwise
+\end{DoxyReturn}
+This method may be called from within synthesis context and therefore should be as efficient as possible and not perform any operations considered bad for realtime audio output (memory allocations and other OS calls).
+
+Call fluid\+\_\+synth\+\_\+alloc\+\_\+voice() for every sample that has to be played. fluid\+\_\+synth\+\_\+alloc\+\_\+voice() expects a pointer to a \doxylink{group__Types_gabf9174d452679ca1a4ee7d693fb773cf}{fluid\+\_\+sample\+\_\+t} structure and returns a pointer to the opaque \doxylink{group__Types_ga5123ae5ef2d7806475267380c33604c3}{fluid\+\_\+voice\+\_\+t} structure. To set or increment the values of a generator, use fluid\+\_\+voice\+\_\+gen\+\_\+set() or fluid\+\_\+voice\+\_\+gen\+\_\+incr(). When you are finished initializing the voice call fluid\+\_\+voice\+\_\+start() to start playing the synthesis voice. Starting with Fluid\+Synth 1.\+1.\+0 all voices created will be started at the same time. \Hypertarget{group__soundfont__loader_gaf2f4a738ad5117ae894cc39d7e2cfed0}\label{group__soundfont__loader_gaf2f4a738ad5117ae894cc39d7e2cfed0} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_callback\_close\_t@{fluid\_sfloader\_callback\_close\_t}}
+\index{fluid\_sfloader\_callback\_close\_t@{fluid\_sfloader\_callback\_close\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_callback\_close\_t}{fluid\_sfloader\_callback\_close\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+callback\+\_\+close\+\_\+t) (void \texorpdfstring{$\ast$}{*}handle)}
+
+Closes the handle returned by \doxylink{group__soundfont__loader_gab6e63be73ebe7e29466216e0de1095ec}{fluid\+\_\+sfloader\+\_\+callback\+\_\+open\+\_\+t} and frees used resources.
+
+\begin{DoxyReturn}{Returns}
+returns \doxylink{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}{FLUID\+\_\+\+OK} on success, \doxylink{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}{FLUID\+\_\+\+FAILED} on error 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_gab6e63be73ebe7e29466216e0de1095ec}\label{group__soundfont__loader_gab6e63be73ebe7e29466216e0de1095ec} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_callback\_open\_t@{fluid\_sfloader\_callback\_open\_t}}
+\index{fluid\_sfloader\_callback\_open\_t@{fluid\_sfloader\_callback\_open\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_callback\_open\_t}{fluid\_sfloader\_callback\_open\_t}}
+{\footnotesize\ttfamily typedef void \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+callback\+\_\+open\+\_\+t) (const char \texorpdfstring{$\ast$}{*}filename)}
+
+@endlifecycle Opens the file or memory indicated by {\ttfamily filename} in binary read mode.
+
+\begin{DoxyReturn}{Returns}
+returns a file handle on success, NULL otherwise
+\end{DoxyReturn}
+{\ttfamily filename} matches the string provided during the fluid\+\_\+synth\+\_\+sfload() call. \Hypertarget{group__soundfont__loader_gac6d2f5d8a1291d3ffb7909a512badcda}\label{group__soundfont__loader_gac6d2f5d8a1291d3ffb7909a512badcda} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_callback\_read\_t@{fluid\_sfloader\_callback\_read\_t}}
+\index{fluid\_sfloader\_callback\_read\_t@{fluid\_sfloader\_callback\_read\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_callback\_read\_t}{fluid\_sfloader\_callback\_read\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+callback\+\_\+read\+\_\+t) (void \texorpdfstring{$\ast$}{*}buf, \mbox{\hyperlink{group__Types_ga5c188d5b1e95c245ff7f3b49a6b82ad9}{fluid\+\_\+long\+\_\+long\+\_\+t}} count, void \texorpdfstring{$\ast$}{*}handle)}
+
+Reads {\ttfamily count} bytes to the specified buffer {\ttfamily buf}.
+
+\begin{DoxyReturn}{Returns}
+returns \doxylink{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}{FLUID\+\_\+\+OK} if exactly {\ttfamily count} bytes were successfully read, else returns \doxylink{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}{FLUID\+\_\+\+FAILED} and leaves {\itshape buf} unmodified. 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_gad84baa9e11e760e82b7f112e7d247282}\label{group__soundfont__loader_gad84baa9e11e760e82b7f112e7d247282} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_callback\_seek\_t@{fluid\_sfloader\_callback\_seek\_t}}
+\index{fluid\_sfloader\_callback\_seek\_t@{fluid\_sfloader\_callback\_seek\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_callback\_seek\_t}{fluid\_sfloader\_callback\_seek\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+callback\+\_\+seek\+\_\+t) (void \texorpdfstring{$\ast$}{*}handle, \mbox{\hyperlink{group__Types_ga5c188d5b1e95c245ff7f3b49a6b82ad9}{fluid\+\_\+long\+\_\+long\+\_\+t}} offset, int origin)}
+
+Same purpose and behaviour as fseek.
+
+
+\begin{DoxyParams}{Parameters}
+{\em origin} & either {\ttfamily SEEK\+\_\+\+SET}, {\ttfamily SEEK\+\_\+\+CUR} or {\ttfamily SEEK\+\_\+\+END} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+returns \doxylink{group__misc_gae4efb1c3ce0d550c922504adfb0fb886}{FLUID\+\_\+\+OK} if the seek was successfully performed while not seeking beyond a buffer or file, \doxylink{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}{FLUID\+\_\+\+FAILED} otherwise 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_ga7f5f59099035b9430b82e272f23c0c6a}\label{group__soundfont__loader_ga7f5f59099035b9430b82e272f23c0c6a} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_callback\_tell\_t@{fluid\_sfloader\_callback\_tell\_t}}
+\index{fluid\_sfloader\_callback\_tell\_t@{fluid\_sfloader\_callback\_tell\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_callback\_tell\_t}{fluid\_sfloader\_callback\_tell\_t}}
+{\footnotesize\ttfamily typedef \mbox{\hyperlink{group__Types_ga5c188d5b1e95c245ff7f3b49a6b82ad9}{fluid\+\_\+long\+\_\+long\+\_\+t}}(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+callback\+\_\+tell\+\_\+t) (void \texorpdfstring{$\ast$}{*}handle)}
+
+\begin{DoxyReturn}{Returns}
+returns current file offset or \doxylink{group__misc_ga90e8bdbc5a507bbfa5c45bac85a63a61}{FLUID\+\_\+\+FAILED} on error 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_gaab801ff11ddf556d3f34e82c2ca02897}\label{group__soundfont__loader_gaab801ff11ddf556d3f34e82c2ca02897} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_free\_t@{fluid\_sfloader\_free\_t}}
+\index{fluid\_sfloader\_free\_t@{fluid\_sfloader\_free\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_free\_t}{fluid\_sfloader\_free\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+free\+\_\+t) (\mbox{\hyperlink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t}} \texorpdfstring{$\ast$}{*}loader)}
+
+The free method should free the memory allocated for a fluid\+\_\+sfloader\+\_\+t instance in addition to any private data.
+
+
+\begin{DoxyParams}{Parameters}
+{\em loader} & Sound\+Font loader\\
+\hline
+\end{DoxyParams}
+Any custom user provided cleanup function must ultimately call delete\+\_\+fluid\+\_\+sfloader() to ensure proper cleanup of the \doxylink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t} struct. If no private data needs to be freed, setting this to delete\+\_\+fluid\+\_\+sfloader() is sufficient. \Hypertarget{group__soundfont__loader_gadf9d55cd050f560b6fcdf32d330fb69c}\label{group__soundfont__loader_gadf9d55cd050f560b6fcdf32d330fb69c} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfloader\_load\_t@{fluid\_sfloader\_load\_t}}
+\index{fluid\_sfloader\_load\_t@{fluid\_sfloader\_load\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfloader\_load\_t}{fluid\_sfloader\_load\_t}}
+{\footnotesize\ttfamily typedef \mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfloader\+\_\+load\+\_\+t) (\mbox{\hyperlink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t}} \texorpdfstring{$\ast$}{*}loader, const char \texorpdfstring{$\ast$}{*}filename)}
+
+Method to load an instrument file (does not actually need to be a real file name, could be another type of string identifier that the {\itshape loader} understands).
+
+
+\begin{DoxyParams}{Parameters}
+{\em loader} & Sound\+Font loader \\
+\hline
+{\em filename} & File name or other string identifier \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The loaded instrument file (Sound\+Font) or NULL if an error occurred. 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_gaad47ceab3ec2c3fed9437a796225a875}\label{group__soundfont__loader_gaad47ceab3ec2c3fed9437a796225a875} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfont\_free\_t@{fluid\_sfont\_free\_t}}
+\index{fluid\_sfont\_free\_t@{fluid\_sfont\_free\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfont\_free\_t}{fluid\_sfont\_free\_t}}
+{\footnotesize\ttfamily typedef int(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfont\+\_\+free\+\_\+t) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)}
+
+Method to free a virtual Sound\+Font bank.
+
+
+\begin{DoxyParams}{Parameters}
+{\em sfont} & Virtual Sound\+Font to free. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Should return 0 when it was able to free all resources or non-\/zero if some of the samples could not be freed because they are still in use, in which case the free will be tried again later, until success.
+\end{DoxyReturn}
+Any custom user provided cleanup function must ultimately call delete\+\_\+fluid\+\_\+sfont() to ensure proper cleanup of the \doxylink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t} struct. If no private data needs to be freed, setting this to delete\+\_\+fluid\+\_\+sfont() is sufficient. \Hypertarget{group__soundfont__loader_ga9508a5b9c09201c8cc35a5c229d5032f}\label{group__soundfont__loader_ga9508a5b9c09201c8cc35a5c229d5032f} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfont\_get\_name\_t@{fluid\_sfont\_get\_name\_t}}
+\index{fluid\_sfont\_get\_name\_t@{fluid\_sfont\_get\_name\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfont\_get\_name\_t}{fluid\_sfont\_get\_name\_t}}
+{\footnotesize\ttfamily typedef const char \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfont\+\_\+get\+\_\+name\+\_\+t) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)}
+
+Method to return the name of a virtual Sound\+Font.
+
+
+\begin{DoxyParams}{Parameters}
+{\em sfont} & Virtual Sound\+Font \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The name of the virtual Sound\+Font. 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_ga850c0cb9f32f0fe3b7127fe94e97ed4d}\label{group__soundfont__loader_ga850c0cb9f32f0fe3b7127fe94e97ed4d} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfont\_get\_preset\_t@{fluid\_sfont\_get\_preset\_t}}
+\index{fluid\_sfont\_get\_preset\_t@{fluid\_sfont\_get\_preset\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfont\_get\_preset\_t}{fluid\_sfont\_get\_preset\_t}}
+{\footnotesize\ttfamily typedef \mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfont\+\_\+get\+\_\+preset\+\_\+t) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont, int bank, int prenum)}
+
+Get a virtual Sound\+Font preset by bank and program numbers.
+
+
+\begin{DoxyParams}{Parameters}
+{\em sfont} & Virtual Sound\+Font \\
+\hline
+{\em bank} & MIDI bank number (0-\/16383) \\
+\hline
+{\em prenum} & MIDI preset number (0-\/127) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Should return an allocated virtual preset or NULL if it could not be found. 
+\end{DoxyReturn}
+\Hypertarget{group__soundfont__loader_gae25474b7d604774a22cf76a95a6e053d}\label{group__soundfont__loader_gae25474b7d604774a22cf76a95a6e053d} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfont\_iteration\_next\_t@{fluid\_sfont\_iteration\_next\_t}}
+\index{fluid\_sfont\_iteration\_next\_t@{fluid\_sfont\_iteration\_next\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfont\_iteration\_next\_t}{fluid\_sfont\_iteration\_next\_t}}
+{\footnotesize\ttfamily typedef \mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfont\+\_\+iteration\+\_\+next\+\_\+t) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)}
+
+Virtual Sound\+Font preset iteration function.
+
+
+\begin{DoxyParams}{Parameters}
+{\em sfont} & Virtual Sound\+Font \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+NULL when no more presets are available, otherwise the a pointer to the current preset
+\end{DoxyReturn}
+Returns preset information to the caller. The returned buffer is only valid until a subsequent call to this function. \Hypertarget{group__soundfont__loader_ga80ffb76a9a2c640816f57889666c28cb}\label{group__soundfont__loader_ga80ffb76a9a2c640816f57889666c28cb} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfont\_iteration\_start\_t@{fluid\_sfont\_iteration\_start\_t}}
+\index{fluid\_sfont\_iteration\_start\_t@{fluid\_sfont\_iteration\_start\_t}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfont\_iteration\_start\_t}{fluid\_sfont\_iteration\_start\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+sfont\+\_\+iteration\+\_\+start\+\_\+t) (\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}sfont)}
+
+Start virtual Sound\+Font preset iteration method.
+
+
+\begin{DoxyParams}{Parameters}
+{\em sfont} & Virtual Sound\+Font\\
+\hline
+\end{DoxyParams}
+Starts/re-\/starts virtual preset iteration in a Sound\+Font. 
+
+\doxysubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__soundfont__loader_ga06fc87d81c62e9abb8790b6e5713c55b}\label{group__soundfont__loader_ga06fc87d81c62e9abb8790b6e5713c55b} 
+\doxysubsubsubsection{\texorpdfstring{anonymous enum}{anonymous enum}}
+{\footnotesize\ttfamily anonymous enum}
+
+Some notification enums for presets and samples. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PRESET\_SELECTED@{FLUID\_PRESET\_SELECTED}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_PRESET\_SELECTED@{FLUID\_PRESET\_SELECTED}}}\Hypertarget{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba3b9d777321001517ceb0fc4f69fb35b1}\label{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba3b9d777321001517ceb0fc4f69fb35b1} 
+FLUID\+\_\+\+PRESET\+\_\+\+SELECTED&Preset selected notify \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PRESET\_UNSELECTED@{FLUID\_PRESET\_UNSELECTED}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_PRESET\_UNSELECTED@{FLUID\_PRESET\_UNSELECTED}}}\Hypertarget{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba5d10f094a7a45e62fa19d559ac29e7f1}\label{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba5d10f094a7a45e62fa19d559ac29e7f1} 
+FLUID\+\_\+\+PRESET\+\_\+\+UNSELECTED&Preset unselected notify \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLE\_DONE@{FLUID\_SAMPLE\_DONE}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLE\_DONE@{FLUID\_SAMPLE\_DONE}}}\Hypertarget{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55bad5841d407c7bcd3b59b787de8d506a7c}\label{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55bad5841d407c7bcd3b59b787de8d506a7c} 
+FLUID\+\_\+\+SAMPLE\+\_\+\+DONE&Sample no longer needed notify \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PRESET\_PIN@{FLUID\_PRESET\_PIN}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_PRESET\_PIN@{FLUID\_PRESET\_PIN}}}\Hypertarget{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55bacc42fbe06fe1d025bba674e676feff5e}\label{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55bacc42fbe06fe1d025bba674e676feff5e} 
+FLUID\+\_\+\+PRESET\+\_\+\+PIN&Request to pin preset samples to cache \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PRESET\_UNPIN@{FLUID\_PRESET\_UNPIN}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_PRESET\_UNPIN@{FLUID\_PRESET\_UNPIN}}}\Hypertarget{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba7fc43e1bbbbd9dfcc90f5a743704d2a8}\label{group__soundfont__loader_gga06fc87d81c62e9abb8790b6e5713c55ba7fc43e1bbbbd9dfcc90f5a743704d2a8} 
+FLUID\+\_\+\+PRESET\+\_\+\+UNPIN&Request to unpin preset samples from cache \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__soundfont__loader_ga9ac3f7677aa7628653467bef1078cb43}\label{group__soundfont__loader_ga9ac3f7677aa7628653467bef1078cb43} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sample\_type@{fluid\_sample\_type}}
+\index{fluid\_sample\_type@{fluid\_sample\_type}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sample\_type}{fluid\_sample\_type}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__soundfont__loader_ga9ac3f7677aa7628653467bef1078cb43}{fluid\+\_\+sample\+\_\+type}}}
+
+Indicates the type of a sample used by the \+\_\+fluid\+\_\+sample\+\_\+t\+::sampletype field.
+
+This enum corresponds to the {\ttfamily SFSample\+Link} enum in the Sound\+Font spec. One {\ttfamily flag} may be bit-\/wise OR-\/ed with one {\ttfamily value}. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLETYPE\_MONO@{FLUID\_SAMPLETYPE\_MONO}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLETYPE\_MONO@{FLUID\_SAMPLETYPE\_MONO}}}\Hypertarget{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43af6d6f0733d9d09f51557f0887c05c1ef}\label{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43af6d6f0733d9d09f51557f0887c05c1ef} 
+FLUID\+\_\+\+SAMPLETYPE\+\_\+\+MONO&Value used for mono samples \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLETYPE\_RIGHT@{FLUID\_SAMPLETYPE\_RIGHT}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLETYPE\_RIGHT@{FLUID\_SAMPLETYPE\_RIGHT}}}\Hypertarget{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a5083af5ea9daa70caa7b9260bf1c9169}\label{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a5083af5ea9daa70caa7b9260bf1c9169} 
+FLUID\+\_\+\+SAMPLETYPE\+\_\+\+RIGHT&Value used for right samples of a stereo pair \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLETYPE\_LEFT@{FLUID\_SAMPLETYPE\_LEFT}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLETYPE\_LEFT@{FLUID\_SAMPLETYPE\_LEFT}}}\Hypertarget{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43aed2e7809ac228e8c4bc00d776ee7dde8}\label{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43aed2e7809ac228e8c4bc00d776ee7dde8} 
+FLUID\+\_\+\+SAMPLETYPE\+\_\+\+LEFT&Value used for left samples of a stereo pair \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLETYPE\_LINKED@{FLUID\_SAMPLETYPE\_LINKED}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLETYPE\_LINKED@{FLUID\_SAMPLETYPE\_LINKED}}}\Hypertarget{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a1f7400bc3b0572884ba1bd53cbea56c7}\label{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a1f7400bc3b0572884ba1bd53cbea56c7} 
+FLUID\+\_\+\+SAMPLETYPE\+\_\+\+LINKED&Value used for linked sample, which is currently not supported \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLETYPE\_OGG\_VORBIS@{FLUID\_SAMPLETYPE\_OGG\_VORBIS}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLETYPE\_OGG\_VORBIS@{FLUID\_SAMPLETYPE\_OGG\_VORBIS}}}\Hypertarget{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a6c1b3dabb16ac1f1194bfd46436469fb}\label{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a6c1b3dabb16ac1f1194bfd46436469fb} 
+FLUID\+\_\+\+SAMPLETYPE\+\_\+\+OGG\+\_\+\+VORBIS&Flag used for Ogg Vorbis compressed samples (non-\/standard compliant extension) as found in the program "{}sftools"{} developed by Werner Schweer from Muse\+Score \begin{DoxySince}{Since}
+1.\+1.\+7 
+\end{DoxySince}
+\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SAMPLETYPE\_ROM@{FLUID\_SAMPLETYPE\_ROM}!SoundFont Loader@{SoundFont Loader}}\index{SoundFont Loader@{SoundFont Loader}!FLUID\_SAMPLETYPE\_ROM@{FLUID\_SAMPLETYPE\_ROM}}}\Hypertarget{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a4021394f9ba5cf620616889de330664a}\label{group__soundfont__loader_gga9ac3f7677aa7628653467bef1078cb43a4021394f9ba5cf620616889de330664a} 
+FLUID\+\_\+\+SAMPLETYPE\+\_\+\+ROM&Flag that indicates ROM samples, causing the sample to be ignored \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{group__soundfont__loader_gac7738641187d269a63a3b92cf01107b5}\label{group__soundfont__loader_gac7738641187d269a63a3b92cf01107b5} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_preset\_set\_data@{fluid\_preset\_set\_data}}
+\index{fluid\_preset\_set\_data@{fluid\_preset\_set\_data}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_preset\_set\_data()}{fluid\_preset\_set\_data()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API int fluid\+\_\+preset\+\_\+set\+\_\+data (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{preset,  }\item[{void \texorpdfstring{$\ast$}{*}}]{data }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__soundfont__loader_gaa9eabcde724c825e039ad18e39b1dd7f}\label{group__soundfont__loader_gaa9eabcde724c825e039ad18e39b1dd7f} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sample\_sizeof@{fluid\_sample\_sizeof}}
+\index{fluid\_sample\_sizeof@{fluid\_sample\_sizeof}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sample\_sizeof()}{fluid\_sample\_sizeof()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API size\+\_\+t fluid\+\_\+sample\+\_\+sizeof (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__soundfont__loader_gaaa9eb334811f608714b54c7aa93bc576}\label{group__soundfont__loader_gaaa9eb334811f608714b54c7aa93bc576} 
+\index{SoundFont Loader@{SoundFont Loader}!fluid\_sfont\_set\_data@{fluid\_sfont\_set\_data}}
+\index{fluid\_sfont\_set\_data@{fluid\_sfont\_set\_data}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_sfont\_set\_data()}{fluid\_sfont\_set\_data()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API int fluid\+\_\+sfont\+\_\+set\+\_\+data (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{sfont,  }\item[{void \texorpdfstring{$\ast$}{*}}]{data }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__soundfont__loader_gaf358494d7b458f8bdd41cc965f1320c7}\label{group__soundfont__loader_gaf358494d7b458f8bdd41cc965f1320c7} 
+\index{SoundFont Loader@{SoundFont Loader}!new\_fluid\_preset@{new\_fluid\_preset}}
+\index{new\_fluid\_preset@{new\_fluid\_preset}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_preset()}{new\_fluid\_preset()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga985e5ee05f433da841127750f67a4723}{fluid\+\_\+preset\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+preset (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{parent\+\_\+sfont,  }\item[{\mbox{\hyperlink{group__soundfont__loader_ga30914c4a5547a527060bef8499bfb91e}{fluid\+\_\+preset\+\_\+get\+\_\+name\+\_\+t}}}]{get\+\_\+name,  }\item[{\mbox{\hyperlink{group__soundfont__loader_ga01d401c6f13113c495564a3374a3b331}{fluid\+\_\+preset\+\_\+get\+\_\+banknum\+\_\+t}}}]{get\+\_\+bank,  }\item[{\mbox{\hyperlink{group__soundfont__loader_ga833b5d3b8f625b7a708150471b584d76}{fluid\+\_\+preset\+\_\+get\+\_\+num\+\_\+t}}}]{get\+\_\+num,  }\item[{\mbox{\hyperlink{group__soundfont__loader_ga5cfcda454cb43f8a6c87d9d99d902b57}{fluid\+\_\+preset\+\_\+noteon\+\_\+t}}}]{noteon,  }\item[{\mbox{\hyperlink{group__soundfont__loader_gaf62be2bae1c11541218480db4ac138ac}{fluid\+\_\+preset\+\_\+free\+\_\+t}}}]{free }\end{DoxyParamCaption})}
+
+@startlifecycle\{Preset\} \Hypertarget{group__soundfont__loader_ga820457c9f0231756be5b4ae52d4b6b25}\label{group__soundfont__loader_ga820457c9f0231756be5b4ae52d4b6b25} 
+\index{SoundFont Loader@{SoundFont Loader}!new\_fluid\_sample@{new\_fluid\_sample}}
+\index{new\_fluid\_sample@{new\_fluid\_sample}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_sample()}{new\_fluid\_sample()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gabf9174d452679ca1a4ee7d693fb773cf}{fluid\+\_\+sample\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+sample (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@startlifecycle\{Sample\} \Hypertarget{group__soundfont__loader_ga9a1412c90ac4a1f945985d1bc1e51607}\label{group__soundfont__loader_ga9a1412c90ac4a1f945985d1bc1e51607} 
+\index{SoundFont Loader@{SoundFont Loader}!new\_fluid\_sfloader@{new\_fluid\_sfloader}}
+\index{new\_fluid\_sfloader@{new\_fluid\_sfloader}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_sfloader()}{new\_fluid\_sfloader()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gad3e880056d2262e48468719757b3f5e6}{fluid\+\_\+sfloader\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+sfloader (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__soundfont__loader_gadf9d55cd050f560b6fcdf32d330fb69c}{fluid\+\_\+sfloader\+\_\+load\+\_\+t}}}]{load,  }\item[{\mbox{\hyperlink{group__soundfont__loader_gaab801ff11ddf556d3f34e82c2ca02897}{fluid\+\_\+sfloader\+\_\+free\+\_\+t}}}]{free }\end{DoxyParamCaption})}
+
+@startlifecycle\{Sound\+Font Loader\} \Hypertarget{group__soundfont__loader_ga45ce37d9eeaf023d317f97013a20ef3a}\label{group__soundfont__loader_ga45ce37d9eeaf023d317f97013a20ef3a} 
+\index{SoundFont Loader@{SoundFont Loader}!new\_fluid\_sfont@{new\_fluid\_sfont}}
+\index{new\_fluid\_sfont@{new\_fluid\_sfont}!SoundFont Loader@{SoundFont Loader}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_sfont()}{new\_fluid\_sfont()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gaa6c18288f76608acbb10b80a153f4ab8}{fluid\+\_\+sfont\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+sfont (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__soundfont__loader_ga9508a5b9c09201c8cc35a5c229d5032f}{fluid\+\_\+sfont\+\_\+get\+\_\+name\+\_\+t}}}]{get\+\_\+name,  }\item[{\mbox{\hyperlink{group__soundfont__loader_ga850c0cb9f32f0fe3b7127fe94e97ed4d}{fluid\+\_\+sfont\+\_\+get\+\_\+preset\+\_\+t}}}]{get\+\_\+preset,  }\item[{\mbox{\hyperlink{group__soundfont__loader_ga80ffb76a9a2c640816f57889666c28cb}{fluid\+\_\+sfont\+\_\+iteration\+\_\+start\+\_\+t}}}]{iter\+\_\+start,  }\item[{\mbox{\hyperlink{group__soundfont__loader_gae25474b7d604774a22cf76a95a6e053d}{fluid\+\_\+sfont\+\_\+iteration\+\_\+next\+\_\+t}}}]{iter\+\_\+next,  }\item[{\mbox{\hyperlink{group__soundfont__loader_gaad47ceab3ec2c3fed9437a796225a875}{fluid\+\_\+sfont\+\_\+free\+\_\+t}}}]{free }\end{DoxyParamCaption})}
+
+@startlifecycle\{Sound\+Font\} 

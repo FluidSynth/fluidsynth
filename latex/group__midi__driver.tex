@@ -1,0 +1,28 @@
+\doxysubsection{MIDI Driver}
+\hypertarget{group__midi__driver}{}\label{group__midi__driver}\index{MIDI Driver@{MIDI Driver}}
+Collaboration diagram for MIDI Driver\+:
+% FIG 0
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gab0f64d7ed81d7361e9600e4a480828df}{fluid\+\_\+midi\+\_\+driver\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__midi__driver_gaf6c24c24f36c9657182d7157a2648113}{new\+\_\+fluid\+\_\+midi\+\_\+driver}} (\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*}settings, \mbox{\hyperlink{group__midi__input_ga42c3752e3adb54e0af802131c36a1129}{handle\+\_\+midi\+\_\+event\+\_\+func\+\_\+t}} handler, void \texorpdfstring{$\ast$}{*}event\+\_\+handler\+\_\+data)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Functions for managing MIDI drivers.
+
+The available MIDI drivers depend on your platform. See settings\+\_\+midi for all available configuration options.
+
+To create a MIDI driver, you need to specify a source for the MIDI events to be forwarded to via the \doxylink{group__Types_ga61c72b76e3ee344637994c3071f74d94}{fluid\+\_\+midi\+\_\+event\+\_\+t} callback. Normally this will be either a \doxylink{group__midi__router}{MIDI Router} via fluid\+\_\+midi\+\_\+router\+\_\+handle\+\_\+midi\+\_\+event() or the synthesizer via fluid\+\_\+synth\+\_\+handle\+\_\+midi\+\_\+event().
+
+But you can also write your own handler function that preprocesses the events and forwards them on to the router or synthesizer instead. 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{group__midi__driver_gaf6c24c24f36c9657182d7157a2648113}\label{group__midi__driver_gaf6c24c24f36c9657182d7157a2648113} 
+\index{MIDI Driver@{MIDI Driver}!new\_fluid\_midi\_driver@{new\_fluid\_midi\_driver}}
+\index{new\_fluid\_midi\_driver@{new\_fluid\_midi\_driver}!MIDI Driver@{MIDI Driver}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_midi\_driver()}{new\_fluid\_midi\_driver()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gab0f64d7ed81d7361e9600e4a480828df}{fluid\+\_\+midi\+\_\+driver\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+midi\+\_\+driver (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{settings,  }\item[{\mbox{\hyperlink{group__midi__input_ga42c3752e3adb54e0af802131c36a1129}{handle\+\_\+midi\+\_\+event\+\_\+func\+\_\+t}}}]{handler,  }\item[{void \texorpdfstring{$\ast$}{*}}]{event\+\_\+handler\+\_\+data }\end{DoxyParamCaption})}
+
+@startlifecycle\{MIDI Driver\} 

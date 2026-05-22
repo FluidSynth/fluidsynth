@@ -1,0 +1,54 @@
+\doxysection{audio.\+h}
+\hypertarget{audio_8h_source}{}\label{audio_8h_source}\index{include/fluidsynth/audio.h@{include/fluidsynth/audio.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ FluidSynth\ -\/\ A\ Software\ Synthesizer}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Copyright\ (C)\ 2003\ \ Peter\ Hanappe\ and\ others.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ This\ library\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modify\ it\ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ as\ published\ by\ the\ Free\ Software\ Foundation;\ either\ version\ 2.1\ of}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ the\ License,\ or\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ This\ library\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ Lesser\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ License\ along\ with\ this\ library;\ if\ not,\ see}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ \_FLUIDSYNTH\_AUDIO\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ \_FLUIDSYNTH\_AUDIO\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{typedef}\ int\ (*\mbox{\hyperlink{group__audio__driver_ga4c108916c658973df5242ae77fefa3d0}{fluid\_audio\_func\_t}})(\textcolor{keywordtype}{void}\ *data,\ \textcolor{keywordtype}{int}\ len,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ nfx,\ \textcolor{keywordtype}{float}\ *fx[],}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ nout,\ \textcolor{keywordtype}{float}\ *out[]);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00111\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_gac3706330ce49cac5b7dd079e90d376d8}{fluid\_audio\_driver\_t}}\ *\mbox{\hyperlink{group__audio__driver_gaabdc8715e113a2935f1874e78a4a24b9}{new\_fluid\_audio\_driver}}(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_gac3706330ce49cac5b7dd079e90d376d8}{fluid\_audio\_driver\_t}}\ *new\_fluid\_audio\_driver2(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__audio__driver_ga4c108916c658973df5242ae77fefa3d0}{fluid\_audio\_func\_t}}\ func,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ *data);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ delete\_fluid\_audio\_driver(\mbox{\hyperlink{group__Types_gac3706330ce49cac5b7dd079e90d376d8}{fluid\_audio\_driver\_t}}\ *driver);}
+\DoxyCodeLine{00121\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{group__audio__driver_gad35f9fb8b124e8e9e8829fa9efefeb34}{fluid\_audio\_driver\_register}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ **adrivers);}
+\DoxyCodeLine{00142\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_ga8e8a634da121763271ed819dfe866b3d}{fluid\_file\_renderer\_t}}\ *\mbox{\hyperlink{group__file__renderer_gab5b0b60a9f03d08001ddf024046438ec}{new\_fluid\_file\_renderer}}(\mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth);}
+\DoxyCodeLine{00143\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ delete\_fluid\_file\_renderer(\mbox{\hyperlink{group__Types_ga8e8a634da121763271ed819dfe866b3d}{fluid\_file\_renderer\_t}}\ *dev);}
+\DoxyCodeLine{00146\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{group__file__renderer_gabdea2fb753cf1a5fa9b5dca38c177d80}{fluid\_file\_renderer\_process\_block}}(\mbox{\hyperlink{group__Types_ga8e8a634da121763271ed819dfe866b3d}{fluid\_file\_renderer\_t}}\ *dev);}
+\DoxyCodeLine{00147\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_file\_set\_encoding\_quality(\mbox{\hyperlink{group__Types_ga8e8a634da121763271ed819dfe866b3d}{fluid\_file\_renderer\_t}}\ *dev,\ \textcolor{keywordtype}{double}\ q);}
+\DoxyCodeLine{00150\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00151\ \}}
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_FLUIDSYNTH\_AUDIO\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

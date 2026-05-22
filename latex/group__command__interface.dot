@@ -1,0 +1,15 @@
+digraph "Command Interface"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir=LR;
+  Node2 [id="Node000002",label="Command Handler",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__command__handler.html",tooltip="Handles text commands and reading of configuration files."];
+  Node1 [id="Node000001",label="Command Interface",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node4 [id="Node000004",label="Command Server",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__command__server.html",tooltip=" "];
+  Node3 [id="Node000003",label="Command Shell",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__command__shell.html",tooltip=" "];
+  Node1->Node2 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node3 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node4 [shape=plaintext, dir="back", style="solid"];
+}

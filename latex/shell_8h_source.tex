@@ -1,0 +1,80 @@
+\doxysection{shell.\+h}
+\hypertarget{shell_8h_source}{}\label{shell_8h_source}\index{include/fluidsynth/shell.h@{include/fluidsynth/shell.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ FluidSynth\ -\/\ A\ Software\ Synthesizer}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Copyright\ (C)\ 2003\ \ Peter\ Hanappe\ and\ others.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ This\ library\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modify\ it\ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ as\ published\ by\ the\ Free\ Software\ Foundation;\ either\ version\ 2.1\ of}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ the\ License,\ or\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ This\ library\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ Lesser\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ License\ along\ with\ this\ library;\ if\ not,\ see}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ \_FLUIDSYNTH\_SHELL\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ \_FLUIDSYNTH\_SHELL\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00045\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_ga436fa1df8d13a21321d39902b0d60208}{fluid\_istream\_t}}\ fluid\_get\_stdin(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00046\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_ga6d8c441b84ab0430e358438cee876c69}{fluid\_ostream\_t}}\ fluid\_get\_stdout(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00047\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{char}\ *fluid\_get\_userconf(\textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{int}\ len);}
+\DoxyCodeLine{00048\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{char}\ *fluid\_get\_sysconf(\textcolor{keywordtype}{char}\ *buf,\ \textcolor{keywordtype}{int}\ len);}
+\DoxyCodeLine{00061\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00062\ \mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *\mbox{\hyperlink{group__command__handler_ga9e7142dc083ebc85f11a59c7abdf3ab6}{new\_fluid\_cmd\_handler}}(\mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth,\ \mbox{\hyperlink{group__Types_gaa57b4746220e24506a169f109875e4ad}{fluid\_midi\_router\_t}}\ *router);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00065\ \mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *new\_fluid\_cmd\_handler2(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth,}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__Types_gaa57b4746220e24506a169f109875e4ad}{fluid\_midi\_router\_t}}\ *router,\ \mbox{\hyperlink{group__Types_gaf6c718e19d8c9c6632cb8ffac6974d80}{fluid\_player\_t}}\ *player);}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00069\ \textcolor{keywordtype}{void}\ delete\_fluid\_cmd\_handler(\mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *handler);}
+\DoxyCodeLine{00072\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00073\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__command__handler_gaf7694dc34c3d217cbcc7c2874e49e84c}{fluid\_cmd\_handler\_set\_synth}}(\mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *handler,\ \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{int}\ fluid\_command(\mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *handler,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *cmd,\ \mbox{\hyperlink{group__Types_ga6d8c441b84ab0430e358438cee876c69}{fluid\_ostream\_t}}\ out);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{int}\ fluid\_source(\mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *handler,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00098\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00099\ \mbox{\hyperlink{group__Types_gae711b266ae10eb6f4d4d6443f609e033}{fluid\_shell\_t}}\ *\mbox{\hyperlink{group__command__shell_ga918e169eed0373a80cba3cb533ec5f45}{new\_fluid\_shell}}(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *handler,}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__Types_ga436fa1df8d13a21321d39902b0d60208}{fluid\_istream\_t}}\ in,\ \mbox{\hyperlink{group__Types_ga6d8c441b84ab0430e358438cee876c69}{fluid\_ostream\_t}}\ out,\ \textcolor{keywordtype}{int}\ thread);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00103\ \textcolor{keywordtype}{void}\ fluid\_usershell(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,\ \mbox{\hyperlink{group__Types_gae1944df078b25beb347abd07e42b35a4}{fluid\_cmd\_handler\_t}}\ *handler);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ delete\_fluid\_shell(\mbox{\hyperlink{group__Types_gae711b266ae10eb6f4d4d6443f609e033}{fluid\_shell\_t}}\ *shell);}
+\DoxyCodeLine{00129\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00130\ \mbox{\hyperlink{group__Types_ga314a569c9a9ae8f99831472efda31141}{fluid\_server\_t}}\ *\mbox{\hyperlink{group__command__server_ga4235427229c3a5f1d89393e34f171d3d}{new\_fluid\_server}}(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth,\ \mbox{\hyperlink{group__Types_gaa57b4746220e24506a169f109875e4ad}{fluid\_midi\_router\_t}}\ *router);}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ FLUIDSYNTH\_API}
+\DoxyCodeLine{00134\ \mbox{\hyperlink{group__Types_ga314a569c9a9ae8f99831472efda31141}{fluid\_server\_t}}\ *new\_fluid\_server2(\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\_settings\_t}}\ *settings,}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\_synth\_t}}\ *synth,\ \mbox{\hyperlink{group__Types_gaa57b4746220e24506a169f109875e4ad}{fluid\_midi\_router\_t}}\ *router,}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__Types_gaf6c718e19d8c9c6632cb8ffac6974d80}{fluid\_player\_t}}\ *player);}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ delete\_fluid\_server(\mbox{\hyperlink{group__Types_ga314a569c9a9ae8f99831472efda31141}{fluid\_server\_t}}\ *server);}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_server\_join(\mbox{\hyperlink{group__Types_ga314a569c9a9ae8f99831472efda31141}{fluid\_server\_t}}\ *server);}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_FLUIDSYNTH\_SHELL\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

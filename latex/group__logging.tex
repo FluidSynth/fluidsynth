@@ -1,0 +1,93 @@
+\doxysection{Logging}
+\hypertarget{group__logging}{}\label{group__logging}\index{Logging@{Logging}}
+\doxysubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef void(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__logging_gae30083f987b646edf997c7ad20781b36}{fluid\+\_\+log\+\_\+function\+\_\+t}}) (int level, const char \texorpdfstring{$\ast$}{*}message, void \texorpdfstring{$\ast$}{*}data)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__logging_gaa341232c15addd9c336131984840ed9e}{fluid\+\_\+log\+\_\+level}} \{ \newline
+\mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9ea62d9ddd89d0a853606ce38d195daa99a}{FLUID\+\_\+\+PANIC}}
+, \mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9eabc0ff48d192b3b0fc721946ccf095d25}{FLUID\+\_\+\+ERR}}
+, \mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9ea394460be1ec74fce15e1ff683606df0f}{FLUID\+\_\+\+WARN}}
+, \mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9eadfa902517702f2dd8ae849b810175ac4}{FLUID\+\_\+\+INFO}}
+, \newline
+\mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9ea5542b67c606598020b832c31729175fc}{FLUID\+\_\+\+DBG}}
+, {\bfseries LAST\+\_\+\+LOG\+\_\+\+LEVEL}
+ \}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Logging interface
+
+The default logging function of the fluidsynth prints its messages to the stderr. The synthesizer uses five level of messages\+: \doxylink{group__logging_ggaa341232c15addd9c336131984840ed9ea62d9ddd89d0a853606ce38d195daa99a}{FLUID\+\_\+\+PANIC}, \doxylink{group__logging_ggaa341232c15addd9c336131984840ed9eabc0ff48d192b3b0fc721946ccf095d25}{FLUID\+\_\+\+ERR}, \doxylink{group__logging_ggaa341232c15addd9c336131984840ed9ea394460be1ec74fce15e1ff683606df0f}{FLUID\+\_\+\+WARN}, \doxylink{group__logging_ggaa341232c15addd9c336131984840ed9eadfa902517702f2dd8ae849b810175ac4}{FLUID\+\_\+\+INFO}, and \doxylink{group__logging_ggaa341232c15addd9c336131984840ed9ea5542b67c606598020b832c31729175fc}{FLUID\+\_\+\+DBG}.
+
+A client application can install a new log function to handle the messages differently. In the following example, the application sets a callback function to display \doxylink{group__logging_ggaa341232c15addd9c336131984840ed9ea62d9ddd89d0a853606ce38d195daa99a}{FLUID\+\_\+\+PANIC} messages in a dialog, and ignores all other messages by setting the log function to NULL\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{fluid\_set\_log\_function(\mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9ea62d9ddd89d0a853606ce38d195daa99a}{FLUID\_PANIC}},\ show\_dialog,\ (\textcolor{keywordtype}{void}*)\ root\_window);}
+\DoxyCodeLine{fluid\_set\_log\_function(\mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9eabc0ff48d192b3b0fc721946ccf095d25}{FLUID\_ERR}},\ NULL,\ NULL);}
+\DoxyCodeLine{fluid\_set\_log\_function(\mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9ea394460be1ec74fce15e1ff683606df0f}{FLUID\_WARN}},\ NULL,\ NULL);}
+\DoxyCodeLine{fluid\_set\_log\_function(\mbox{\hyperlink{group__logging_ggaa341232c15addd9c336131984840ed9ea5542b67c606598020b832c31729175fc}{FLUID\_DBG}},\ NULL,\ NULL);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyNote}{Note}
+The logging configuration is global and not tied to a specific synthesizer instance. That means that all synthesizer instances created in the same process share the same logging configuration. 
+\end{DoxyNote}
+
+
+\doxysubsection{Typedef Documentation}
+\Hypertarget{group__logging_gae30083f987b646edf997c7ad20781b36}\label{group__logging_gae30083f987b646edf997c7ad20781b36} 
+\index{Logging@{Logging}!fluid\_log\_function\_t@{fluid\_log\_function\_t}}
+\index{fluid\_log\_function\_t@{fluid\_log\_function\_t}!Logging@{Logging}}
+\doxysubsubsection{\texorpdfstring{fluid\_log\_function\_t}{fluid\_log\_function\_t}}
+{\footnotesize\ttfamily typedef void(\texorpdfstring{$\ast$}{*} fluid\+\_\+log\+\_\+function\+\_\+t) (int level, const char \texorpdfstring{$\ast$}{*}message, void \texorpdfstring{$\ast$}{*}data)}
+
+Log function handler callback type used by fluid\+\_\+set\+\_\+log\+\_\+function().
+
+
+\begin{DoxyParams}{Parameters}
+{\em level} & Log level (\doxylink{group__logging_gaa341232c15addd9c336131984840ed9e}{fluid\+\_\+log\+\_\+level}) \\
+\hline
+{\em message} & Log message text \\
+\hline
+{\em data} & User data pointer supplied to fluid\+\_\+set\+\_\+log\+\_\+function(). \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Enumeration Type Documentation}
+\Hypertarget{group__logging_gaa341232c15addd9c336131984840ed9e}\label{group__logging_gaa341232c15addd9c336131984840ed9e} 
+\index{Logging@{Logging}!fluid\_log\_level@{fluid\_log\_level}}
+\index{fluid\_log\_level@{fluid\_log\_level}!Logging@{Logging}}
+\doxysubsubsection{\texorpdfstring{fluid\_log\_level}{fluid\_log\_level}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__logging_gaa341232c15addd9c336131984840ed9e}{fluid\+\_\+log\+\_\+level}}}
+
+Fluid\+Synth log levels. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PANIC@{FLUID\_PANIC}!Logging@{Logging}}\index{Logging@{Logging}!FLUID\_PANIC@{FLUID\_PANIC}}}\Hypertarget{group__logging_ggaa341232c15addd9c336131984840ed9ea62d9ddd89d0a853606ce38d195daa99a}\label{group__logging_ggaa341232c15addd9c336131984840ed9ea62d9ddd89d0a853606ce38d195daa99a} 
+FLUID\+\_\+\+PANIC&The synth can\textquotesingle{}t function correctly any more \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_ERR@{FLUID\_ERR}!Logging@{Logging}}\index{Logging@{Logging}!FLUID\_ERR@{FLUID\_ERR}}}\Hypertarget{group__logging_ggaa341232c15addd9c336131984840ed9eabc0ff48d192b3b0fc721946ccf095d25}\label{group__logging_ggaa341232c15addd9c336131984840ed9eabc0ff48d192b3b0fc721946ccf095d25} 
+FLUID\+\_\+\+ERR&Serious error occurred \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_WARN@{FLUID\_WARN}!Logging@{Logging}}\index{Logging@{Logging}!FLUID\_WARN@{FLUID\_WARN}}}\Hypertarget{group__logging_ggaa341232c15addd9c336131984840ed9ea394460be1ec74fce15e1ff683606df0f}\label{group__logging_ggaa341232c15addd9c336131984840ed9ea394460be1ec74fce15e1ff683606df0f} 
+FLUID\+\_\+\+WARN&Warning \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_INFO@{FLUID\_INFO}!Logging@{Logging}}\index{Logging@{Logging}!FLUID\_INFO@{FLUID\_INFO}}}\Hypertarget{group__logging_ggaa341232c15addd9c336131984840ed9eadfa902517702f2dd8ae849b810175ac4}\label{group__logging_ggaa341232c15addd9c336131984840ed9eadfa902517702f2dd8ae849b810175ac4} 
+FLUID\+\_\+\+INFO&Verbose informational messages \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_DBG@{FLUID\_DBG}!Logging@{Logging}}\index{Logging@{Logging}!FLUID\_DBG@{FLUID\_DBG}}}\Hypertarget{group__logging_ggaa341232c15addd9c336131984840ed9ea5542b67c606598020b832c31729175fc}\label{group__logging_ggaa341232c15addd9c336131984840ed9ea5542b67c606598020b832c31729175fc} 
+FLUID\+\_\+\+DBG&Debugging messages \\
+\hline
+
+\end{DoxyEnumFields}

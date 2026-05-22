@@ -1,0 +1,186 @@
+\doxysubsection{Sequencer Events}
+\hypertarget{group__sequencer__events}{}\label{group__sequencer__events}\index{Sequencer Events@{Sequencer Events}}
+Collaboration diagram for Sequencer Events\+:
+% FIG 0
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__sequencer__events_ga98ada1fab7a3785a41aa4003645640eb}{fluid\+\_\+seq\+\_\+event\+\_\+type}} \{ \newline
+\mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba4c293bd1d1925513766f3a25699a8cbb}{FLUID\+\_\+\+SEQ\+\_\+\+NOTE}} = 0
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba4431305a2aaadde363a1b247636de7a7}{FLUID\+\_\+\+SEQ\+\_\+\+NOTEON}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba45e4e32b1c0aefaa6533c732b8f120a1}{FLUID\+\_\+\+SEQ\+\_\+\+NOTEOFF}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebac1594ded0babd5412fc714d017dd7a76}{FLUID\+\_\+\+SEQ\+\_\+\+ALLSOUNDSOFF}}
+, \newline
+\mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba05e9f160eea1d6aeb43299b7bd45530f}{FLUID\+\_\+\+SEQ\+\_\+\+ALLNOTESOFF}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebae9220e7834a0ec629320c4a4e0dd9547}{FLUID\+\_\+\+SEQ\+\_\+\+BANKSELECT}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba7981ce96e3c2feaaecf240e7095b88e8}{FLUID\+\_\+\+SEQ\+\_\+\+PROGRAMCHANGE}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba32692d9a15f57411d8e340ce042a6b95}{FLUID\+\_\+\+SEQ\+\_\+\+PROGRAMSELECT}}
+, \newline
+\mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba291c7d4e11f8fc03b562e6a32fe49901}{FLUID\+\_\+\+SEQ\+\_\+\+PITCHBEND}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebab33d89091dc878c2944a04ceeccb9b2d}{FLUID\+\_\+\+SEQ\+\_\+\+PITCHWHEELSENS}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba51375e58f50cda291818b26396df9659}{FLUID\+\_\+\+SEQ\+\_\+\+MODULATION}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba25aa6c9385a294189c6b18544350734d}{FLUID\+\_\+\+SEQ\+\_\+\+SUSTAIN}}
+, \newline
+\mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba3071c5720b0b969045a4c0f8a3be40bf}{FLUID\+\_\+\+SEQ\+\_\+\+CONTROLCHANGE}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebadbea6248d4dc02056e4c3d3c64930643}{FLUID\+\_\+\+SEQ\+\_\+\+PAN}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba0c1bce287e2eb79ab4295ca5a6ecf752}{FLUID\+\_\+\+SEQ\+\_\+\+VOLUME}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba970b2bfee1d58337bbe268475d07784e}{FLUID\+\_\+\+SEQ\+\_\+\+REVERBSEND}}
+, \newline
+\mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebafc06ca89f49f130985ee86e6550b3118}{FLUID\+\_\+\+SEQ\+\_\+\+CHORUSSEND}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba98e48d4a9631bb13cd04a79588e6fc0e}{FLUID\+\_\+\+SEQ\+\_\+\+TIMER}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebabe345ba341506786677eb843d3ad967e}{FLUID\+\_\+\+SEQ\+\_\+\+CHANNELPRESSURE}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba26dfc284999662c99ead17ef86b918b8}{FLUID\+\_\+\+SEQ\+\_\+\+KEYPRESSURE}}
+, \newline
+\mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebaa6a1f19596ef3e43d1d2c8473511c88a}{FLUID\+\_\+\+SEQ\+\_\+\+SYSTEMRESET}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba64a1e726e1c8b4f48872ef4a266a78d6}{FLUID\+\_\+\+SEQ\+\_\+\+UNREGISTERING}}
+, \mbox{\hyperlink{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba86e14d4632e02873ad4b6aee64ecb51c}{FLUID\+\_\+\+SEQ\+\_\+\+SCALE}}
+, {\bfseries FLUID\+\_\+\+SEQ\+\_\+\+LASTEVENT}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gaca09348be1b6e6ee7fce49dd4734f1ba}{fluid\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__sequencer__events_ga06d27cb73398a1651aaa08726eb3b732}{new\+\_\+fluid\+\_\+event}} (void)
+\item 
+FLUIDSYNTH\+\_\+\+API void \mbox{\hyperlink{group__sequencer__events_gabe9c6ec481cfd9791d5290a4aa4101df}{fluid\+\_\+event\+\_\+set\+\_\+source}} (\mbox{\hyperlink{group__Types_gaca09348be1b6e6ee7fce49dd4734f1ba}{fluid\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*}evt, \mbox{\hyperlink{group__Types_ga69f729a00307f2b8ec1be0dba2203c12}{fluid\+\_\+seq\+\_\+id\+\_\+t}} src)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Create, modify, query and destroy sequencer events. 
+
+\doxysubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__sequencer__events_ga98ada1fab7a3785a41aa4003645640eb}\label{group__sequencer__events_ga98ada1fab7a3785a41aa4003645640eb} 
+\index{Sequencer Events@{Sequencer Events}!fluid\_seq\_event\_type@{fluid\_seq\_event\_type}}
+\index{fluid\_seq\_event\_type@{fluid\_seq\_event\_type}!Sequencer Events@{Sequencer Events}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_seq\_event\_type}{fluid\_seq\_event\_type}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__sequencer__events_ga98ada1fab7a3785a41aa4003645640eb}{fluid\+\_\+seq\+\_\+event\+\_\+type}}}
+
+Sequencer event type enumeration. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_NOTE@{FLUID\_SEQ\_NOTE}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_NOTE@{FLUID\_SEQ\_NOTE}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba4c293bd1d1925513766f3a25699a8cbb}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba4c293bd1d1925513766f3a25699a8cbb} 
+FLUID\+\_\+\+SEQ\+\_\+\+NOTE&Note event with duration \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_NOTEON@{FLUID\_SEQ\_NOTEON}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_NOTEON@{FLUID\_SEQ\_NOTEON}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba4431305a2aaadde363a1b247636de7a7}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba4431305a2aaadde363a1b247636de7a7} 
+FLUID\+\_\+\+SEQ\+\_\+\+NOTEON&Note on event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_NOTEOFF@{FLUID\_SEQ\_NOTEOFF}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_NOTEOFF@{FLUID\_SEQ\_NOTEOFF}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba45e4e32b1c0aefaa6533c732b8f120a1}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba45e4e32b1c0aefaa6533c732b8f120a1} 
+FLUID\+\_\+\+SEQ\+\_\+\+NOTEOFF&Note off event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_ALLSOUNDSOFF@{FLUID\_SEQ\_ALLSOUNDSOFF}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_ALLSOUNDSOFF@{FLUID\_SEQ\_ALLSOUNDSOFF}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebac1594ded0babd5412fc714d017dd7a76}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebac1594ded0babd5412fc714d017dd7a76} 
+FLUID\+\_\+\+SEQ\+\_\+\+ALLSOUNDSOFF&All sounds off event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_ALLNOTESOFF@{FLUID\_SEQ\_ALLNOTESOFF}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_ALLNOTESOFF@{FLUID\_SEQ\_ALLNOTESOFF}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba05e9f160eea1d6aeb43299b7bd45530f}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba05e9f160eea1d6aeb43299b7bd45530f} 
+FLUID\+\_\+\+SEQ\+\_\+\+ALLNOTESOFF&All notes off event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_BANKSELECT@{FLUID\_SEQ\_BANKSELECT}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_BANKSELECT@{FLUID\_SEQ\_BANKSELECT}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebae9220e7834a0ec629320c4a4e0dd9547}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebae9220e7834a0ec629320c4a4e0dd9547} 
+FLUID\+\_\+\+SEQ\+\_\+\+BANKSELECT&Bank select message \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_PROGRAMCHANGE@{FLUID\_SEQ\_PROGRAMCHANGE}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_PROGRAMCHANGE@{FLUID\_SEQ\_PROGRAMCHANGE}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba7981ce96e3c2feaaecf240e7095b88e8}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba7981ce96e3c2feaaecf240e7095b88e8} 
+FLUID\+\_\+\+SEQ\+\_\+\+PROGRAMCHANGE&Program change message \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_PROGRAMSELECT@{FLUID\_SEQ\_PROGRAMSELECT}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_PROGRAMSELECT@{FLUID\_SEQ\_PROGRAMSELECT}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba32692d9a15f57411d8e340ce042a6b95}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba32692d9a15f57411d8e340ce042a6b95} 
+FLUID\+\_\+\+SEQ\+\_\+\+PROGRAMSELECT&Program select message \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_PITCHBEND@{FLUID\_SEQ\_PITCHBEND}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_PITCHBEND@{FLUID\_SEQ\_PITCHBEND}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba291c7d4e11f8fc03b562e6a32fe49901}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba291c7d4e11f8fc03b562e6a32fe49901} 
+FLUID\+\_\+\+SEQ\+\_\+\+PITCHBEND&Pitch bend message \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_PITCHWHEELSENS@{FLUID\_SEQ\_PITCHWHEELSENS}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_PITCHWHEELSENS@{FLUID\_SEQ\_PITCHWHEELSENS}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebab33d89091dc878c2944a04ceeccb9b2d}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebab33d89091dc878c2944a04ceeccb9b2d} 
+FLUID\+\_\+\+SEQ\+\_\+\+PITCHWHEELSENS&Pitch wheel sensitivity set message \begin{DoxySince}{Since}
+1.\+1.\+0 was misspelled previously 
+\end{DoxySince}
+\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_MODULATION@{FLUID\_SEQ\_MODULATION}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_MODULATION@{FLUID\_SEQ\_MODULATION}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba51375e58f50cda291818b26396df9659}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba51375e58f50cda291818b26396df9659} 
+FLUID\+\_\+\+SEQ\+\_\+\+MODULATION&Modulation controller event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_SUSTAIN@{FLUID\_SEQ\_SUSTAIN}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_SUSTAIN@{FLUID\_SEQ\_SUSTAIN}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba25aa6c9385a294189c6b18544350734d}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba25aa6c9385a294189c6b18544350734d} 
+FLUID\+\_\+\+SEQ\+\_\+\+SUSTAIN&Sustain controller event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_CONTROLCHANGE@{FLUID\_SEQ\_CONTROLCHANGE}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_CONTROLCHANGE@{FLUID\_SEQ\_CONTROLCHANGE}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba3071c5720b0b969045a4c0f8a3be40bf}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba3071c5720b0b969045a4c0f8a3be40bf} 
+FLUID\+\_\+\+SEQ\+\_\+\+CONTROLCHANGE&MIDI control change event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_PAN@{FLUID\_SEQ\_PAN}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_PAN@{FLUID\_SEQ\_PAN}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebadbea6248d4dc02056e4c3d3c64930643}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebadbea6248d4dc02056e4c3d3c64930643} 
+FLUID\+\_\+\+SEQ\+\_\+\+PAN&Stereo pan set event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_VOLUME@{FLUID\_SEQ\_VOLUME}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_VOLUME@{FLUID\_SEQ\_VOLUME}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba0c1bce287e2eb79ab4295ca5a6ecf752}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba0c1bce287e2eb79ab4295ca5a6ecf752} 
+FLUID\+\_\+\+SEQ\+\_\+\+VOLUME&Volume set event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_REVERBSEND@{FLUID\_SEQ\_REVERBSEND}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_REVERBSEND@{FLUID\_SEQ\_REVERBSEND}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba970b2bfee1d58337bbe268475d07784e}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba970b2bfee1d58337bbe268475d07784e} 
+FLUID\+\_\+\+SEQ\+\_\+\+REVERBSEND&Reverb send set event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_CHORUSSEND@{FLUID\_SEQ\_CHORUSSEND}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_CHORUSSEND@{FLUID\_SEQ\_CHORUSSEND}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebafc06ca89f49f130985ee86e6550b3118}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebafc06ca89f49f130985ee86e6550b3118} 
+FLUID\+\_\+\+SEQ\+\_\+\+CHORUSSEND&Chorus send set event \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_TIMER@{FLUID\_SEQ\_TIMER}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_TIMER@{FLUID\_SEQ\_TIMER}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba98e48d4a9631bb13cd04a79588e6fc0e}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba98e48d4a9631bb13cd04a79588e6fc0e} 
+FLUID\+\_\+\+SEQ\+\_\+\+TIMER&Timer event (useful for giving a callback at a certain time) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_CHANNELPRESSURE@{FLUID\_SEQ\_CHANNELPRESSURE}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_CHANNELPRESSURE@{FLUID\_SEQ\_CHANNELPRESSURE}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebabe345ba341506786677eb843d3ad967e}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebabe345ba341506786677eb843d3ad967e} 
+FLUID\+\_\+\+SEQ\+\_\+\+CHANNELPRESSURE&Channel aftertouch event \begin{DoxySince}{Since}
+1.\+1.\+0 
+\end{DoxySince}
+\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_KEYPRESSURE@{FLUID\_SEQ\_KEYPRESSURE}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_KEYPRESSURE@{FLUID\_SEQ\_KEYPRESSURE}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba26dfc284999662c99ead17ef86b918b8}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba26dfc284999662c99ead17ef86b918b8} 
+FLUID\+\_\+\+SEQ\+\_\+\+KEYPRESSURE&Polyphonic aftertouch event \begin{DoxySince}{Since}
+2.\+0.\+0 
+\end{DoxySince}
+\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_SYSTEMRESET@{FLUID\_SEQ\_SYSTEMRESET}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_SYSTEMRESET@{FLUID\_SEQ\_SYSTEMRESET}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebaa6a1f19596ef3e43d1d2c8473511c88a}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640ebaa6a1f19596ef3e43d1d2c8473511c88a} 
+FLUID\+\_\+\+SEQ\+\_\+\+SYSTEMRESET&System reset event \begin{DoxySince}{Since}
+1.\+1.\+0 
+\end{DoxySince}
+\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_UNREGISTERING@{FLUID\_SEQ\_UNREGISTERING}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_UNREGISTERING@{FLUID\_SEQ\_UNREGISTERING}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba64a1e726e1c8b4f48872ef4a266a78d6}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba64a1e726e1c8b4f48872ef4a266a78d6} 
+FLUID\+\_\+\+SEQ\+\_\+\+UNREGISTERING&Called when a sequencer client is being unregistered. \begin{DoxySince}{Since}
+1.\+1.\+0 
+\end{DoxySince}
+\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_SEQ\_SCALE@{FLUID\_SEQ\_SCALE}!Sequencer Events@{Sequencer Events}}\index{Sequencer Events@{Sequencer Events}!FLUID\_SEQ\_SCALE@{FLUID\_SEQ\_SCALE}}}\Hypertarget{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba86e14d4632e02873ad4b6aee64ecb51c}\label{group__sequencer__events_gga98ada1fab7a3785a41aa4003645640eba86e14d4632e02873ad4b6aee64ecb51c} 
+FLUID\+\_\+\+SEQ\+\_\+\+SCALE&Sets a new time scale for the sequencer \begin{DoxySince}{Since}
+2.\+2.\+0 
+\end{DoxySince}
+\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{group__sequencer__events_gabe9c6ec481cfd9791d5290a4aa4101df}\label{group__sequencer__events_gabe9c6ec481cfd9791d5290a4aa4101df} 
+\index{Sequencer Events@{Sequencer Events}!fluid\_event\_set\_source@{fluid\_event\_set\_source}}
+\index{fluid\_event\_set\_source@{fluid\_event\_set\_source}!Sequencer Events@{Sequencer Events}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_event\_set\_source()}{fluid\_event\_set\_source()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API void fluid\+\_\+event\+\_\+set\+\_\+source (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gaca09348be1b6e6ee7fce49dd4734f1ba}{fluid\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{evt,  }\item[{\mbox{\hyperlink{group__Types_ga69f729a00307f2b8ec1be0dba2203c12}{fluid\+\_\+seq\+\_\+id\+\_\+t}}}]{src }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__sequencer__events_ga06d27cb73398a1651aaa08726eb3b732}\label{group__sequencer__events_ga06d27cb73398a1651aaa08726eb3b732} 
+\index{Sequencer Events@{Sequencer Events}!new\_fluid\_event@{new\_fluid\_event}}
+\index{new\_fluid\_event@{new\_fluid\_event}!Sequencer Events@{Sequencer Events}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_event()}{new\_fluid\_event()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gaca09348be1b6e6ee7fce49dd4734f1ba}{fluid\+\_\+event\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+event (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@startlifecycle\{Sequencer Event\} 

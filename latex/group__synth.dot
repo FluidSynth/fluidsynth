@@ -1,0 +1,31 @@
+digraph "Synthesizer"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir=LR;
+  Node10 [id="Node000010",label="Audio Rendering",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__audio__rendering.html",tooltip=" "];
+  Node12 [id="Node000012",label="MIDI Channel Setup",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__channel__setup.html",tooltip=" "];
+  Node7 [id="Node000007",label="Effect - Chorus",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__chorus__effect.html",tooltip=" "];
+  Node11 [id="Node000011",label="Effect - IIR Filter",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__iir__filter.html",tooltip=" "];
+  Node2 [id="Node000002",label="Effect - LADSPA",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__ladspa.html",tooltip=" "];
+  Node3 [id="Node000003",label="MIDI Channel Messages",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__midi__messages.html",tooltip=" "];
+  Node6 [id="Node000006",label="Effect - Reverb",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__reverb__effect.html",tooltip=" "];
+  Node5 [id="Node000005",label="SoundFont Management",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__soundfont__management.html",tooltip=" "];
+  Node1 [id="Node000001",label="Synthesizer",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node8 [id="Node000008",label="Synthesis Parameters",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__synthesis__params.html",tooltip=" "];
+  Node9 [id="Node000009",label="MIDI Tuning",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__tuning.html",tooltip=" "];
+  Node4 [id="Node000004",label="Synthesis Voice Control",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$group__voice__control.html",tooltip=" "];
+  Node1->Node2 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node3 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node4 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node5 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node6 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node7 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node8 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node9 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node10 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node11 [shape=plaintext, dir="back", style="solid"];
+  Node1->Node12 [shape=plaintext, dir="back", style="solid"];
+}

@@ -1,0 +1,204 @@
+\doxysubsection{MIDI Channel Setup}
+\hypertarget{group__channel__setup}{}\label{group__channel__setup}\index{MIDI Channel Setup@{MIDI Channel Setup}}
+Collaboration diagram for MIDI Channel Setup\+:
+% FIG 0
+\doxysubsubsubsection*{Channel Type}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_gaada0747654fce5d0a758126fc3c99eb0}{fluid\+\_\+midi\+\_\+channel\+\_\+type}} \{ \mbox{\hyperlink{group__channel__setup_ggaada0747654fce5d0a758126fc3c99eb0aa81f75c5ad62a95bf62a276670542f57}{CHANNEL\+\_\+\+TYPE\+\_\+\+MELODIC}} = 0
+, \mbox{\hyperlink{group__channel__setup_ggaada0747654fce5d0a758126fc3c99eb0a3b26ca93ed355e9b82f1b46b8d67ae91}{CHANNEL\+\_\+\+TYPE\+\_\+\+DRUM}} = 1
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Basic Channel Mode}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_gad7602dc3b3c29a49c7a7e683f999d012}{fluid\+\_\+channel\+\_\+mode\+\_\+flags}} \{ \mbox{\hyperlink{group__channel__setup_ggad7602dc3b3c29a49c7a7e683f999d012a2d328432509e9aacd3ab3d62d0d65ae6}{FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF}} = 0x01
+, \mbox{\hyperlink{group__channel__setup_ggad7602dc3b3c29a49c7a7e683f999d012a5a4de40c4077b1c4f29c11dfdeadb3bf}{FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF}} = 0x02
+ \}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_gaaf55486a4c745bf15d2cd275a4a90978}{fluid\+\_\+basic\+\_\+channel\+\_\+modes}} \{ \newline
+\mbox{\hyperlink{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978adf1a39c25a3596c125d270e047c71468}{FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+MASK}} = (FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF \texorpdfstring{$\vert$}{|} FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF)
+, \mbox{\hyperlink{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a1bc222e8ff943e5031f490d3fa55dff8}{FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNION\+\_\+\+POLY}} = FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+MASK \& (\texorpdfstring{$\sim$}{\string~}\+FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF \& \texorpdfstring{$\sim$}{\string~}\+FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF)
+, \mbox{\hyperlink{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a343d60e90a7dac4c8014cdf561bd32b3}{FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNION\+\_\+\+MONO}} = FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+MASK \& (\texorpdfstring{$\sim$}{\string~}\+FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF \& FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF)
+, \mbox{\hyperlink{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a7d7a76c245b17e0ce95efbc1955b6a68}{FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNIOFF\+\_\+\+POLY}} = FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+MASK \& (FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF \& \texorpdfstring{$\sim$}{\string~}\+FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF)
+, \newline
+\mbox{\hyperlink{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978ab5ef8a31882ae9fb0bcec38ba092da4b}{FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNIOFF\+\_\+\+MONO}} = FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+MASK \& (FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF \texorpdfstring{$\vert$}{|} FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF)
+, {\bfseries FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+LAST}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Legato Mode}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_gaafd94b0fb1fa9d98841bed11d8418c3a}{fluid\+\_\+channel\+\_\+legato\+\_\+mode}} \{ \mbox{\hyperlink{group__channel__setup_ggaafd94b0fb1fa9d98841bed11d8418c3aa22642d8579da3b3cea75bc3c9fa2a144}{FLUID\+\_\+\+CHANNEL\+\_\+\+LEGATO\+\_\+\+MODE\+\_\+\+RETRIGGER}}
+, \mbox{\hyperlink{group__channel__setup_ggaafd94b0fb1fa9d98841bed11d8418c3aae043a64ffb83c3ed997a27c25b673e35}{FLUID\+\_\+\+CHANNEL\+\_\+\+LEGATO\+\_\+\+MODE\+\_\+\+MULTI\+\_\+\+RETRIGGER}}
+, {\bfseries FLUID\+\_\+\+CHANNEL\+\_\+\+LEGATO\+\_\+\+MODE\+\_\+\+LAST}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Portamento Mode}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_ga073e69327108f3c7c6feb24c2ca4d3f6}{fluid\+\_\+channel\+\_\+portamento\+\_\+mode}} \{ \mbox{\hyperlink{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6a69d0b169349a56f3256678d014fe0351}{FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+EACH\+\_\+\+NOTE}}
+, \mbox{\hyperlink{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6ac1993c82f3e225126eaf712c851b2675}{FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+LEGATO\+\_\+\+ONLY}}
+, \mbox{\hyperlink{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6a386c17e2efae2c4a1e3250e686861ef6}{FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+STACCATO\+\_\+\+ONLY}}
+, {\bfseries FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+LAST}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Breath Mode}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_ga1296e41d20852a8d20582f4757d5c401}{fluid\+\_\+channel\+\_\+breath\+\_\+flags}} \{ \mbox{\hyperlink{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401a9b3357ff81d41378abd0bda429774fa9}{FLUID\+\_\+\+CHANNEL\+\_\+\+BREATH\+\_\+\+POLY}} = 0x10
+, \mbox{\hyperlink{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401aa0b2240a5c4ddb4fe2c63ed184d7efd4}{FLUID\+\_\+\+CHANNEL\+\_\+\+BREATH\+\_\+\+MONO}} = 0x20
+, \mbox{\hyperlink{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401affba896d791363e07f8a44a1d6453025}{FLUID\+\_\+\+CHANNEL\+\_\+\+BREATH\+\_\+\+SYNC}} = 0x40
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Portamento Time Mode}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__channel__setup_ga1bb91603c39ef9bce39b9c09d0e0b704}{fluid\+\_\+portamento\+\_\+time\+\_\+mode}} \{ \mbox{\hyperlink{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704a4d4e290f3cf7b2e4188ad1beb628c0bb}{FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+AUTO}}
+, \mbox{\hyperlink{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704aa2b77ce202dd002cb58e21502f224b09}{FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+XG\+\_\+\+GS}}
+, \mbox{\hyperlink{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704aa6e60a09cd35e16d26ff3cecbfd8654a}{FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+LINEAR}}
+, {\bfseries FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+LAST}
+ \}
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+The functions in this section provide interfaces to change the channel type and to configure basic channels, legato and portamento setups. 
+
+\doxysubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__channel__setup_gaaf55486a4c745bf15d2cd275a4a90978}\label{group__channel__setup_gaaf55486a4c745bf15d2cd275a4a90978} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_basic\_channel\_modes@{fluid\_basic\_channel\_modes}}
+\index{fluid\_basic\_channel\_modes@{fluid\_basic\_channel\_modes}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_basic\_channel\_modes}{fluid\_basic\_channel\_modes}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_gaaf55486a4c745bf15d2cd275a4a90978}{fluid\+\_\+basic\+\_\+channel\+\_\+modes}}}
+
+Indicates the mode a basic channel is set to \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_MODE\_MASK@{FLUID\_CHANNEL\_MODE\_MASK}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_MODE\_MASK@{FLUID\_CHANNEL\_MODE\_MASK}}}\Hypertarget{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978adf1a39c25a3596c125d270e047c71468}\label{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978adf1a39c25a3596c125d270e047c71468} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+MASK&Mask Poly and Omni bits of \doxylink{group__channel__setup_gad7602dc3b3c29a49c7a7e683f999d012}{fluid\+\_\+channel\+\_\+mode\+\_\+flags}, usually only used internally \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_MODE\_OMNION\_POLY@{FLUID\_CHANNEL\_MODE\_OMNION\_POLY}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_MODE\_OMNION\_POLY@{FLUID\_CHANNEL\_MODE\_OMNION\_POLY}}}\Hypertarget{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a1bc222e8ff943e5031f490d3fa55dff8}\label{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a1bc222e8ff943e5031f490d3fa55dff8} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNION\+\_\+\+POLY&corresponds to MIDI mode 0 \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_MODE\_OMNION\_MONO@{FLUID\_CHANNEL\_MODE\_OMNION\_MONO}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_MODE\_OMNION\_MONO@{FLUID\_CHANNEL\_MODE\_OMNION\_MONO}}}\Hypertarget{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a343d60e90a7dac4c8014cdf561bd32b3}\label{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a343d60e90a7dac4c8014cdf561bd32b3} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNION\+\_\+\+MONO&corresponds to MIDI mode 1 \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_MODE\_OMNIOFF\_POLY@{FLUID\_CHANNEL\_MODE\_OMNIOFF\_POLY}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_MODE\_OMNIOFF\_POLY@{FLUID\_CHANNEL\_MODE\_OMNIOFF\_POLY}}}\Hypertarget{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a7d7a76c245b17e0ce95efbc1955b6a68}\label{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978a7d7a76c245b17e0ce95efbc1955b6a68} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNIOFF\+\_\+\+POLY&corresponds to MIDI mode 2 \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_MODE\_OMNIOFF\_MONO@{FLUID\_CHANNEL\_MODE\_OMNIOFF\_MONO}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_MODE\_OMNIOFF\_MONO@{FLUID\_CHANNEL\_MODE\_OMNIOFF\_MONO}}}\Hypertarget{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978ab5ef8a31882ae9fb0bcec38ba092da4b}\label{group__channel__setup_ggaaf55486a4c745bf15d2cd275a4a90978ab5ef8a31882ae9fb0bcec38ba092da4b} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+MODE\+\_\+\+OMNIOFF\+\_\+\+MONO&corresponds to MIDI mode 3 \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__channel__setup_ga1296e41d20852a8d20582f4757d5c401}\label{group__channel__setup_ga1296e41d20852a8d20582f4757d5c401} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_channel\_breath\_flags@{fluid\_channel\_breath\_flags}}
+\index{fluid\_channel\_breath\_flags@{fluid\_channel\_breath\_flags}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_channel\_breath\_flags}{fluid\_channel\_breath\_flags}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_ga1296e41d20852a8d20582f4757d5c401}{fluid\+\_\+channel\+\_\+breath\+\_\+flags}}}
+
+Indicates the breath mode a channel is set to \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_BREATH\_POLY@{FLUID\_CHANNEL\_BREATH\_POLY}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_BREATH\_POLY@{FLUID\_CHANNEL\_BREATH\_POLY}}}\Hypertarget{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401a9b3357ff81d41378abd0bda429774fa9}\label{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401a9b3357ff81d41378abd0bda429774fa9} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+BREATH\+\_\+\+POLY&when channel is poly, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath to initial attenuation modulator \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_BREATH\_MONO@{FLUID\_CHANNEL\_BREATH\_MONO}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_BREATH\_MONO@{FLUID\_CHANNEL\_BREATH\_MONO}}}\Hypertarget{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401aa0b2240a5c4ddb4fe2c63ed184d7efd4}\label{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401aa0b2240a5c4ddb4fe2c63ed184d7efd4} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+BREATH\+\_\+\+MONO&when channel is mono, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath modulator \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_BREATH\_SYNC@{FLUID\_CHANNEL\_BREATH\_SYNC}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_BREATH\_SYNC@{FLUID\_CHANNEL\_BREATH\_SYNC}}}\Hypertarget{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401affba896d791363e07f8a44a1d6453025}\label{group__channel__setup_gga1296e41d20852a8d20582f4757d5c401affba896d791363e07f8a44a1d6453025} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+BREATH\+\_\+\+SYNC&when channel is mono, this flag indicates that the breath controller(\+MSB)triggers noteon/noteoff on the running note \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__channel__setup_gaafd94b0fb1fa9d98841bed11d8418c3a}\label{group__channel__setup_gaafd94b0fb1fa9d98841bed11d8418c3a} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_channel\_legato\_mode@{fluid\_channel\_legato\_mode}}
+\index{fluid\_channel\_legato\_mode@{fluid\_channel\_legato\_mode}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_channel\_legato\_mode}{fluid\_channel\_legato\_mode}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_gaafd94b0fb1fa9d98841bed11d8418c3a}{fluid\+\_\+channel\+\_\+legato\+\_\+mode}}}
+
+Indicates the legato mode a channel is set to n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played legato with previous note. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_LEGATO\_MODE\_RETRIGGER@{FLUID\_CHANNEL\_LEGATO\_MODE\_RETRIGGER}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_LEGATO\_MODE\_RETRIGGER@{FLUID\_CHANNEL\_LEGATO\_MODE\_RETRIGGER}}}\Hypertarget{group__channel__setup_ggaafd94b0fb1fa9d98841bed11d8418c3aa22642d8579da3b3cea75bc3c9fa2a144}\label{group__channel__setup_ggaafd94b0fb1fa9d98841bed11d8418c3aa22642d8579da3b3cea75bc3c9fa2a144} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+LEGATO\+\_\+\+MODE\+\_\+\+RETRIGGER&Mode 0 -\/ Release previous note, start a new note \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_LEGATO\_MODE\_MULTI\_RETRIGGER@{FLUID\_CHANNEL\_LEGATO\_MODE\_MULTI\_RETRIGGER}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_LEGATO\_MODE\_MULTI\_RETRIGGER@{FLUID\_CHANNEL\_LEGATO\_MODE\_MULTI\_RETRIGGER}}}\Hypertarget{group__channel__setup_ggaafd94b0fb1fa9d98841bed11d8418c3aae043a64ffb83c3ed997a27c25b673e35}\label{group__channel__setup_ggaafd94b0fb1fa9d98841bed11d8418c3aae043a64ffb83c3ed997a27c25b673e35} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+LEGATO\+\_\+\+MODE\+\_\+\+MULTI\+\_\+\+RETRIGGER&Mode 1 -\/ On contiguous notes retrigger in attack section using current value, shape attack using current dynamic and make use of previous voices if any \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__channel__setup_gad7602dc3b3c29a49c7a7e683f999d012}\label{group__channel__setup_gad7602dc3b3c29a49c7a7e683f999d012} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_channel\_mode\_flags@{fluid\_channel\_mode\_flags}}
+\index{fluid\_channel\_mode\_flags@{fluid\_channel\_mode\_flags}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_channel\_mode\_flags}{fluid\_channel\_mode\_flags}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_gad7602dc3b3c29a49c7a7e683f999d012}{fluid\+\_\+channel\+\_\+mode\+\_\+flags}}}
+
+Channel mode bits OR-\/ed together so that it matches with the midi spec\+: poly omnion (0), mono omnion (1), poly omnioff (2), mono omnioff (3) \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_POLY\_OFF@{FLUID\_CHANNEL\_POLY\_OFF}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_POLY\_OFF@{FLUID\_CHANNEL\_POLY\_OFF}}}\Hypertarget{group__channel__setup_ggad7602dc3b3c29a49c7a7e683f999d012a2d328432509e9aacd3ab3d62d0d65ae6}\label{group__channel__setup_ggad7602dc3b3c29a49c7a7e683f999d012a2d328432509e9aacd3ab3d62d0d65ae6} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+POLY\+\_\+\+OFF&if flag is set, the basic channel is in mono on state, if not set poly is on \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_OMNI\_OFF@{FLUID\_CHANNEL\_OMNI\_OFF}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_OMNI\_OFF@{FLUID\_CHANNEL\_OMNI\_OFF}}}\Hypertarget{group__channel__setup_ggad7602dc3b3c29a49c7a7e683f999d012a5a4de40c4077b1c4f29c11dfdeadb3bf}\label{group__channel__setup_ggad7602dc3b3c29a49c7a7e683f999d012a5a4de40c4077b1c4f29c11dfdeadb3bf} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+OMNI\+\_\+\+OFF&if flag is set, the basic channel is in omni off state, if not set omni is on \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__channel__setup_ga073e69327108f3c7c6feb24c2ca4d3f6}\label{group__channel__setup_ga073e69327108f3c7c6feb24c2ca4d3f6} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_channel\_portamento\_mode@{fluid\_channel\_portamento\_mode}}
+\index{fluid\_channel\_portamento\_mode@{fluid\_channel\_portamento\_mode}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_channel\_portamento\_mode}{fluid\_channel\_portamento\_mode}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_ga073e69327108f3c7c6feb24c2ca4d3f6}{fluid\+\_\+channel\+\_\+portamento\+\_\+mode}}}
+
+Indicates the portamento mode a channel is set to \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_EACH\_NOTE@{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_EACH\_NOTE}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_PORTAMENTO\_MODE\_EACH\_NOTE@{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_EACH\_NOTE}}}\Hypertarget{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6a69d0b169349a56f3256678d014fe0351}\label{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6a69d0b169349a56f3256678d014fe0351} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+EACH\+\_\+\+NOTE&Mode 0 -\/ Portamento on each note (staccato or legato) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_LEGATO\_ONLY@{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_LEGATO\_ONLY}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_PORTAMENTO\_MODE\_LEGATO\_ONLY@{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_LEGATO\_ONLY}}}\Hypertarget{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6ac1993c82f3e225126eaf712c851b2675}\label{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6ac1993c82f3e225126eaf712c851b2675} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+LEGATO\+\_\+\+ONLY&Mode 1 -\/ Portamento only on legato note \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_STACCATO\_ONLY@{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_STACCATO\_ONLY}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_CHANNEL\_PORTAMENTO\_MODE\_STACCATO\_ONLY@{FLUID\_CHANNEL\_PORTAMENTO\_MODE\_STACCATO\_ONLY}}}\Hypertarget{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6a386c17e2efae2c4a1e3250e686861ef6}\label{group__channel__setup_gga073e69327108f3c7c6feb24c2ca4d3f6a386c17e2efae2c4a1e3250e686861ef6} 
+FLUID\+\_\+\+CHANNEL\+\_\+\+PORTAMENTO\+\_\+\+MODE\+\_\+\+STACCATO\+\_\+\+ONLY&Mode 2 -\/ Portamento only on staccato note \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__channel__setup_gaada0747654fce5d0a758126fc3c99eb0}\label{group__channel__setup_gaada0747654fce5d0a758126fc3c99eb0} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_midi\_channel\_type@{fluid\_midi\_channel\_type}}
+\index{fluid\_midi\_channel\_type@{fluid\_midi\_channel\_type}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_midi\_channel\_type}{fluid\_midi\_channel\_type}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_gaada0747654fce5d0a758126fc3c99eb0}{fluid\+\_\+midi\+\_\+channel\+\_\+type}}}
+
+The midi channel type used by fluid\+\_\+synth\+\_\+set\+\_\+channel\+\_\+type() \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CHANNEL\_TYPE\_MELODIC@{CHANNEL\_TYPE\_MELODIC}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!CHANNEL\_TYPE\_MELODIC@{CHANNEL\_TYPE\_MELODIC}}}\Hypertarget{group__channel__setup_ggaada0747654fce5d0a758126fc3c99eb0aa81f75c5ad62a95bf62a276670542f57}\label{group__channel__setup_ggaada0747654fce5d0a758126fc3c99eb0aa81f75c5ad62a95bf62a276670542f57} 
+CHANNEL\+\_\+\+TYPE\+\_\+\+MELODIC&Melodic midi channel \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CHANNEL\_TYPE\_DRUM@{CHANNEL\_TYPE\_DRUM}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!CHANNEL\_TYPE\_DRUM@{CHANNEL\_TYPE\_DRUM}}}\Hypertarget{group__channel__setup_ggaada0747654fce5d0a758126fc3c99eb0a3b26ca93ed355e9b82f1b46b8d67ae91}\label{group__channel__setup_ggaada0747654fce5d0a758126fc3c99eb0a3b26ca93ed355e9b82f1b46b8d67ae91} 
+CHANNEL\+\_\+\+TYPE\+\_\+\+DRUM&Drum midi channel \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__channel__setup_ga1bb91603c39ef9bce39b9c09d0e0b704}\label{group__channel__setup_ga1bb91603c39ef9bce39b9c09d0e0b704} 
+\index{MIDI Channel Setup@{MIDI Channel Setup}!fluid\_portamento\_time\_mode@{fluid\_portamento\_time\_mode}}
+\index{fluid\_portamento\_time\_mode@{fluid\_portamento\_time\_mode}!MIDI Channel Setup@{MIDI Channel Setup}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_portamento\_time\_mode}{fluid\_portamento\_time\_mode}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__channel__setup_ga1bb91603c39ef9bce39b9c09d0e0b704}{fluid\+\_\+portamento\+\_\+time\+\_\+mode}}}
+
+Indicates the portamento time mode the synthesizer is set to \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PORTAMENTO\_TIME\_MODE\_AUTO@{FLUID\_PORTAMENTO\_TIME\_MODE\_AUTO}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_PORTAMENTO\_TIME\_MODE\_AUTO@{FLUID\_PORTAMENTO\_TIME\_MODE\_AUTO}}}\Hypertarget{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704a4d4e290f3cf7b2e4188ad1beb628c0bb}\label{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704a4d4e290f3cf7b2e4188ad1beb628c0bb} 
+FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+AUTO&Auto mode -\/ Start with 7-\/bit MSB, switch to 14-\/bit when LSB seen \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PORTAMENTO\_TIME\_MODE\_XG\_GS@{FLUID\_PORTAMENTO\_TIME\_MODE\_XG\_GS}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_PORTAMENTO\_TIME\_MODE\_XG\_GS@{FLUID\_PORTAMENTO\_TIME\_MODE\_XG\_GS}}}\Hypertarget{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704aa2b77ce202dd002cb58e21502f224b09}\label{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704aa2b77ce202dd002cb58e21502f224b09} 
+FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+XG\+\_\+\+GS&XG/\+GS mode -\/ Always use 7-\/bit MSB only \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_PORTAMENTO\_TIME\_MODE\_LINEAR@{FLUID\_PORTAMENTO\_TIME\_MODE\_LINEAR}!MIDI Channel Setup@{MIDI Channel Setup}}\index{MIDI Channel Setup@{MIDI Channel Setup}!FLUID\_PORTAMENTO\_TIME\_MODE\_LINEAR@{FLUID\_PORTAMENTO\_TIME\_MODE\_LINEAR}}}\Hypertarget{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704aa6e60a09cd35e16d26ff3cecbfd8654a}\label{group__channel__setup_gga1bb91603c39ef9bce39b9c09d0e0b704aa6e60a09cd35e16d26ff3cecbfd8654a} 
+FLUID\+\_\+\+PORTAMENTO\+\_\+\+TIME\+\_\+\+MODE\+\_\+\+LINEAR&Linear mode -\/ Always use 14-\/bit MSB+\+LSB \\
+\hline
+
+\end{DoxyEnumFields}

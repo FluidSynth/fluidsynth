@@ -1,0 +1,217 @@
+\doxysubsection{Sound\+Font Modulators}
+\hypertarget{group__modulators}{}\label{group__modulators}\index{SoundFont Modulators@{SoundFont Modulators}}
+Collaboration diagram for Sound\+Font Modulators\+:
+% FIG 0
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef double(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__modulators_gaf0faa8d3e185fcb03a978d5e516c537d}{fluid\+\_\+mod\+\_\+mapping\+\_\+t}}) (const \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\+\_\+mod\+\_\+t}} \texorpdfstring{$\ast$}{*}mod, int value, int range, int is\+\_\+src1, void \texorpdfstring{$\ast$}{*}data)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__modulators_ga4b2419150b2a167df7807d5020a6e996}{fluid\+\_\+mod\+\_\+flags}} \{ \newline
+\mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a915b9287ca1694b748d18e0fb95291bd}{FLUID\+\_\+\+MOD\+\_\+\+POSITIVE}} = 0
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996ae36b75d882c477b9c708090b8f39ee2e}{FLUID\+\_\+\+MOD\+\_\+\+NEGATIVE}} = 1
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a55e25d082340bab94f5e76c4942882a6}{FLUID\+\_\+\+MOD\+\_\+\+UNIPOLAR}} = 0
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996ab4ead04aee2460cc730aa5618e1e190d}{FLUID\+\_\+\+MOD\+\_\+\+BIPOLAR}} = 2
+, \newline
+\mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a44ce690ff0d02cbbeb5ff8df71a5f9f0}{FLUID\+\_\+\+MOD\+\_\+\+LINEAR}} = 0
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996aa7976f44cbfd3c8fea58a3c9e03152a2}{FLUID\+\_\+\+MOD\+\_\+\+CONCAVE}} = 4
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a9a7d17a249db378442bd24f9ed62113d}{FLUID\+\_\+\+MOD\+\_\+\+CONVEX}} = 8
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996aea14d1629c4a8dfdf3241b5b61827aec}{FLUID\+\_\+\+MOD\+\_\+\+SWITCH}} = 12
+, \newline
+\mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a8705ffb835e7e2e991a74e9827e9409e}{FLUID\+\_\+\+MOD\+\_\+\+GC}} = 0
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a61e4c4ad391548b2d12764644e6e8a45}{FLUID\+\_\+\+MOD\+\_\+\+CC}} = 16
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a7eddf66883e2c3d275ad9c1a1e715753}{FLUID\+\_\+\+MOD\+\_\+\+CUSTOM}} = 0x40
+, \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a5ac8e594df1dff6c76d49c6258127d5a}{FLUID\+\_\+\+MOD\+\_\+\+SIN}} = 0x80
+ \}
+\item 
+enum \mbox{\hyperlink{group__modulators_ga0efdc13cd34bde402245f5c3175938bd}{fluid\+\_\+mod\+\_\+transforms}} \{ \mbox{\hyperlink{group__modulators_gga0efdc13cd34bde402245f5c3175938bda31a9129ed87fce32ea6042903fc2754a}{FLUID\+\_\+\+MOD\+\_\+\+TRANSFORM\+\_\+\+LINEAR}} = 0
+, \mbox{\hyperlink{group__modulators_gga0efdc13cd34bde402245f5c3175938bda66ae09aa283a57a076712b19aafc85e3}{FLUID\+\_\+\+MOD\+\_\+\+TRANSFORM\+\_\+\+ABS}} = 2
+ \}
+\item 
+enum \mbox{\hyperlink{group__modulators_ga801993d69390b21a2d0311d44afb1932}{fluid\+\_\+mod\+\_\+src}} \{ \newline
+\mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932af9eebfce95d1bca7d5046612f43764b5}{FLUID\+\_\+\+MOD\+\_\+\+NONE}} = 0
+, \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932ac93d47a173ddc26568d112b7fc8fb28b}{FLUID\+\_\+\+MOD\+\_\+\+VELOCITY}} = 2
+, \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932ad708e1755740964c31fb9c368c4a1e97}{FLUID\+\_\+\+MOD\+\_\+\+KEY}} = 3
+, \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932a1dc8abdda3f6833bbcfe3bce49317796}{FLUID\+\_\+\+MOD\+\_\+\+KEYPRESSURE}} = 10
+, \newline
+\mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932aff8746ab2f8fdba605cbafba4ace1217}{FLUID\+\_\+\+MOD\+\_\+\+CHANNELPRESSURE}} = 13
+, \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932a72f5b8e63c997525574d15f83a5a2e24}{FLUID\+\_\+\+MOD\+\_\+\+PITCHWHEEL}} = 14
+, \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932ad5b4a5332b13ad547dacdade2c7c9d16}{FLUID\+\_\+\+MOD\+\_\+\+PITCHWHEELSENS}} = 16
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\+\_\+mod\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__modulators_ga30c62e4eac3a778e4c7df1c731a1acf2}{new\+\_\+fluid\+\_\+mod}} (void)
+\item 
+FLUIDSYNTH\+\_\+\+API size\+\_\+t \mbox{\hyperlink{group__modulators_ga974c2e189c8657d0265685ee30310dd2}{fluid\+\_\+mod\+\_\+sizeof}} (void)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Sound\+Font modulator functions and constants. 
+
+\doxysubsubsection{Typedef Documentation}
+\Hypertarget{group__modulators_gaf0faa8d3e185fcb03a978d5e516c537d}\label{group__modulators_gaf0faa8d3e185fcb03a978d5e516c537d} 
+\index{SoundFont Modulators@{SoundFont Modulators}!fluid\_mod\_mapping\_t@{fluid\_mod\_mapping\_t}}
+\index{fluid\_mod\_mapping\_t@{fluid\_mod\_mapping\_t}!SoundFont Modulators@{SoundFont Modulators}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_mod\_mapping\_t}{fluid\_mod\_mapping\_t}}
+{\footnotesize\ttfamily typedef double(\texorpdfstring{$\ast$}{*} fluid\+\_\+mod\+\_\+mapping\+\_\+t) (const \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\+\_\+mod\+\_\+t}} \texorpdfstring{$\ast$}{*}mod, int value, int range, int is\+\_\+src1, void \texorpdfstring{$\ast$}{*}data)}
+
+This function transforms or maps a modulator source value into a normalized range of {\ttfamily \mbox{[}-\/1.\+0;+1.\+0\mbox{]}}.
+
+See fluid\+\_\+mod\+\_\+set\+\_\+custom\+\_\+mapping().
+
+
+\begin{DoxyParams}{Parameters}
+{\em mod} & The modulator instance. The behavior is undefined if you modify {\ttfamily mod} through any of the {\ttfamily fluid\+\_\+mod\+\_\+set\texorpdfstring{$\ast$}{*}()} functions from within the callback. \\
+\hline
+{\em value} & The input value from the modulator source, which will be in range {\ttfamily \mbox{[}0;16383\mbox{]}} if the input source value is \doxylink{group__modulators_gga801993d69390b21a2d0311d44afb1932a72f5b8e63c997525574d15f83a5a2e24}{FLUID\+\_\+\+MOD\+\_\+\+PITCHWHEEL}, or {\ttfamily \mbox{[}0;127\mbox{]}} otherwise. \\
+\hline
+{\em range} & The value-\/range of the modulator source, i.\+e. {\ttfamily 16384}, if the input source value is \doxylink{group__modulators_gga801993d69390b21a2d0311d44afb1932a72f5b8e63c997525574d15f83a5a2e24}{FLUID\+\_\+\+MOD\+\_\+\+PITCHWHEEL}, otherwise {\ttfamily 128}. \\
+\hline
+{\em data} & Custom data pointer, as supplied via fluid\+\_\+mod\+\_\+set\+\_\+custom\+\_\+mapping(). \\
+\hline
+{\em is\+\_\+src1} & A boolean, which, if true, indicates that the mapping function is called for source1. Otherwise, it\textquotesingle{}s called for source2. Only useful if two sources have been specified with the \doxylink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a7eddf66883e2c3d275ad9c1a1e715753}{FLUID\+\_\+\+MOD\+\_\+\+CUSTOM} flag set. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A value mapped into range {\ttfamily \mbox{[}-\/1.\+0;+1.\+0\mbox{]}}. For return values that exceed the mentioned range, the behavior is unspecified (i.\+e. it may be honored, it may be clipped, ignored, the entire modulator may be disabled, etc.). 
+\end{DoxyReturn}
+\begin{DoxySince}{Since}
+2.\+5.\+0 
+\end{DoxySince}
+
+
+\doxysubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__modulators_ga4b2419150b2a167df7807d5020a6e996}\label{group__modulators_ga4b2419150b2a167df7807d5020a6e996} 
+\index{SoundFont Modulators@{SoundFont Modulators}!fluid\_mod\_flags@{fluid\_mod\_flags}}
+\index{fluid\_mod\_flags@{fluid\_mod\_flags}!SoundFont Modulators@{SoundFont Modulators}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_mod\_flags}{fluid\_mod\_flags}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__modulators_ga4b2419150b2a167df7807d5020a6e996}{fluid\+\_\+mod\+\_\+flags}}}
+
+Flags defining the polarity, mapping function and type of a modulator source. Compare with Sound\+Font 2.\+04 PDF section 8.\+2.
+
+Note\+: Bit values do not correspond to the Sound\+Font spec! Also note that \doxylink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a8705ffb835e7e2e991a74e9827e9409e}{FLUID\+\_\+\+MOD\+\_\+\+GC} and \doxylink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a61e4c4ad391548b2d12764644e6e8a45}{FLUID\+\_\+\+MOD\+\_\+\+CC} are in the flags field instead of the source field. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_POSITIVE@{FLUID\_MOD\_POSITIVE}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_POSITIVE@{FLUID\_MOD\_POSITIVE}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a915b9287ca1694b748d18e0fb95291bd}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a915b9287ca1694b748d18e0fb95291bd} 
+FLUID\+\_\+\+MOD\+\_\+\+POSITIVE&Mapping function is positive \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_NEGATIVE@{FLUID\_MOD\_NEGATIVE}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_NEGATIVE@{FLUID\_MOD\_NEGATIVE}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996ae36b75d882c477b9c708090b8f39ee2e}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996ae36b75d882c477b9c708090b8f39ee2e} 
+FLUID\+\_\+\+MOD\+\_\+\+NEGATIVE&Mapping function is negative \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_UNIPOLAR@{FLUID\_MOD\_UNIPOLAR}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_UNIPOLAR@{FLUID\_MOD\_UNIPOLAR}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a55e25d082340bab94f5e76c4942882a6}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a55e25d082340bab94f5e76c4942882a6} 
+FLUID\+\_\+\+MOD\+\_\+\+UNIPOLAR&Mapping function is unipolar \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_BIPOLAR@{FLUID\_MOD\_BIPOLAR}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_BIPOLAR@{FLUID\_MOD\_BIPOLAR}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996ab4ead04aee2460cc730aa5618e1e190d}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996ab4ead04aee2460cc730aa5618e1e190d} 
+FLUID\+\_\+\+MOD\+\_\+\+BIPOLAR&Mapping function is bipolar \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_LINEAR@{FLUID\_MOD\_LINEAR}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_LINEAR@{FLUID\_MOD\_LINEAR}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a44ce690ff0d02cbbeb5ff8df71a5f9f0}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a44ce690ff0d02cbbeb5ff8df71a5f9f0} 
+FLUID\+\_\+\+MOD\+\_\+\+LINEAR&Linear mapping function \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_CONCAVE@{FLUID\_MOD\_CONCAVE}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_CONCAVE@{FLUID\_MOD\_CONCAVE}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996aa7976f44cbfd3c8fea58a3c9e03152a2}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996aa7976f44cbfd3c8fea58a3c9e03152a2} 
+FLUID\+\_\+\+MOD\+\_\+\+CONCAVE&Concave mapping function \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_CONVEX@{FLUID\_MOD\_CONVEX}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_CONVEX@{FLUID\_MOD\_CONVEX}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a9a7d17a249db378442bd24f9ed62113d}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a9a7d17a249db378442bd24f9ed62113d} 
+FLUID\+\_\+\+MOD\+\_\+\+CONVEX&Convex mapping function \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_SWITCH@{FLUID\_MOD\_SWITCH}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_SWITCH@{FLUID\_MOD\_SWITCH}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996aea14d1629c4a8dfdf3241b5b61827aec}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996aea14d1629c4a8dfdf3241b5b61827aec} 
+FLUID\+\_\+\+MOD\+\_\+\+SWITCH&Switch (on/off) mapping function \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_GC@{FLUID\_MOD\_GC}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_GC@{FLUID\_MOD\_GC}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a8705ffb835e7e2e991a74e9827e9409e}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a8705ffb835e7e2e991a74e9827e9409e} 
+FLUID\+\_\+\+MOD\+\_\+\+GC&General controller source type (\doxylink{group__modulators_ga801993d69390b21a2d0311d44afb1932}{fluid\+\_\+mod\+\_\+src}) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_CC@{FLUID\_MOD\_CC}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_CC@{FLUID\_MOD\_CC}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a61e4c4ad391548b2d12764644e6e8a45}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a61e4c4ad391548b2d12764644e6e8a45} 
+FLUID\+\_\+\+MOD\+\_\+\+CC&MIDI CC controller (source will be a MIDI CC number) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_CUSTOM@{FLUID\_MOD\_CUSTOM}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_CUSTOM@{FLUID\_MOD\_CUSTOM}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a7eddf66883e2c3d275ad9c1a1e715753}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a7eddf66883e2c3d275ad9c1a1e715753} 
+FLUID\+\_\+\+MOD\+\_\+\+CUSTOM&Custom mapping function \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_SIN@{FLUID\_MOD\_SIN}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_SIN@{FLUID\_MOD\_SIN}}}\Hypertarget{group__modulators_gga4b2419150b2a167df7807d5020a6e996a5ac8e594df1dff6c76d49c6258127d5a}\label{group__modulators_gga4b2419150b2a167df7807d5020a6e996a5ac8e594df1dff6c76d49c6258127d5a} 
+FLUID\+\_\+\+MOD\+\_\+\+SIN&Custom non-\/standard sinus mapping function \begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000001}{Deprecated}}]Deprecated and non-\/functional since 2.\+5.\+0, use \doxylink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a7eddf66883e2c3d275ad9c1a1e715753}{FLUID\+\_\+\+MOD\+\_\+\+CUSTOM} and fluid\+\_\+mod\+\_\+set\+\_\+custom\+\_\+mapping() instead. \end{DoxyRefDesc}
+\\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__modulators_ga801993d69390b21a2d0311d44afb1932}\label{group__modulators_ga801993d69390b21a2d0311d44afb1932} 
+\index{SoundFont Modulators@{SoundFont Modulators}!fluid\_mod\_src@{fluid\_mod\_src}}
+\index{fluid\_mod\_src@{fluid\_mod\_src}!SoundFont Modulators@{SoundFont Modulators}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_mod\_src}{fluid\_mod\_src}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__modulators_ga801993d69390b21a2d0311d44afb1932}{fluid\+\_\+mod\+\_\+src}}}
+
+General controller (if \doxylink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a8705ffb835e7e2e991a74e9827e9409e}{FLUID\+\_\+\+MOD\+\_\+\+GC} in flags). This corresponds to Sound\+Font 2.\+04 PDF section 8.\+2.\+1 \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_NONE@{FLUID\_MOD\_NONE}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_NONE@{FLUID\_MOD\_NONE}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932af9eebfce95d1bca7d5046612f43764b5}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932af9eebfce95d1bca7d5046612f43764b5} 
+FLUID\+\_\+\+MOD\+\_\+\+NONE&No source controller \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_VELOCITY@{FLUID\_MOD\_VELOCITY}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_VELOCITY@{FLUID\_MOD\_VELOCITY}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932ac93d47a173ddc26568d112b7fc8fb28b}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932ac93d47a173ddc26568d112b7fc8fb28b} 
+FLUID\+\_\+\+MOD\+\_\+\+VELOCITY&MIDI note-\/on velocity \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_KEY@{FLUID\_MOD\_KEY}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_KEY@{FLUID\_MOD\_KEY}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932ad708e1755740964c31fb9c368c4a1e97}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932ad708e1755740964c31fb9c368c4a1e97} 
+FLUID\+\_\+\+MOD\+\_\+\+KEY&MIDI note-\/on note number \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_KEYPRESSURE@{FLUID\_MOD\_KEYPRESSURE}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_KEYPRESSURE@{FLUID\_MOD\_KEYPRESSURE}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932a1dc8abdda3f6833bbcfe3bce49317796}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932a1dc8abdda3f6833bbcfe3bce49317796} 
+FLUID\+\_\+\+MOD\+\_\+\+KEYPRESSURE&MIDI key pressure \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_CHANNELPRESSURE@{FLUID\_MOD\_CHANNELPRESSURE}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_CHANNELPRESSURE@{FLUID\_MOD\_CHANNELPRESSURE}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932aff8746ab2f8fdba605cbafba4ace1217}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932aff8746ab2f8fdba605cbafba4ace1217} 
+FLUID\+\_\+\+MOD\+\_\+\+CHANNELPRESSURE&MIDI channel pressure \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_PITCHWHEEL@{FLUID\_MOD\_PITCHWHEEL}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_PITCHWHEEL@{FLUID\_MOD\_PITCHWHEEL}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932a72f5b8e63c997525574d15f83a5a2e24}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932a72f5b8e63c997525574d15f83a5a2e24} 
+FLUID\+\_\+\+MOD\+\_\+\+PITCHWHEEL&Pitch wheel \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_PITCHWHEELSENS@{FLUID\_MOD\_PITCHWHEELSENS}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_PITCHWHEELSENS@{FLUID\_MOD\_PITCHWHEELSENS}}}\Hypertarget{group__modulators_gga801993d69390b21a2d0311d44afb1932ad5b4a5332b13ad547dacdade2c7c9d16}\label{group__modulators_gga801993d69390b21a2d0311d44afb1932ad5b4a5332b13ad547dacdade2c7c9d16} 
+FLUID\+\_\+\+MOD\+\_\+\+PITCHWHEELSENS&Pitch wheel sensitivity \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__modulators_ga0efdc13cd34bde402245f5c3175938bd}\label{group__modulators_ga0efdc13cd34bde402245f5c3175938bd} 
+\index{SoundFont Modulators@{SoundFont Modulators}!fluid\_mod\_transforms@{fluid\_mod\_transforms}}
+\index{fluid\_mod\_transforms@{fluid\_mod\_transforms}!SoundFont Modulators@{SoundFont Modulators}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_mod\_transforms}{fluid\_mod\_transforms}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__modulators_ga0efdc13cd34bde402245f5c3175938bd}{fluid\+\_\+mod\+\_\+transforms}}}
+
+Transform types for the Sound\+Font2 modulators as defined by Sound\+Font 2.\+04 section 8.\+3. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_TRANSFORM\_LINEAR@{FLUID\_MOD\_TRANSFORM\_LINEAR}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_TRANSFORM\_LINEAR@{FLUID\_MOD\_TRANSFORM\_LINEAR}}}\Hypertarget{group__modulators_gga0efdc13cd34bde402245f5c3175938bda31a9129ed87fce32ea6042903fc2754a}\label{group__modulators_gga0efdc13cd34bde402245f5c3175938bda31a9129ed87fce32ea6042903fc2754a} 
+FLUID\+\_\+\+MOD\+\_\+\+TRANSFORM\+\_\+\+LINEAR&Linear\+: directly add the computed value to summing node \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_MOD\_TRANSFORM\_ABS@{FLUID\_MOD\_TRANSFORM\_ABS}!SoundFont Modulators@{SoundFont Modulators}}\index{SoundFont Modulators@{SoundFont Modulators}!FLUID\_MOD\_TRANSFORM\_ABS@{FLUID\_MOD\_TRANSFORM\_ABS}}}\Hypertarget{group__modulators_gga0efdc13cd34bde402245f5c3175938bda66ae09aa283a57a076712b19aafc85e3}\label{group__modulators_gga0efdc13cd34bde402245f5c3175938bda66ae09aa283a57a076712b19aafc85e3} 
+FLUID\+\_\+\+MOD\+\_\+\+TRANSFORM\+\_\+\+ABS&Abs\+: add the absolute value of the computed to summing node \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{group__modulators_ga974c2e189c8657d0265685ee30310dd2}\label{group__modulators_ga974c2e189c8657d0265685ee30310dd2} 
+\index{SoundFont Modulators@{SoundFont Modulators}!fluid\_mod\_sizeof@{fluid\_mod\_sizeof}}
+\index{fluid\_mod\_sizeof@{fluid\_mod\_sizeof}!SoundFont Modulators@{SoundFont Modulators}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_mod\_sizeof()}{fluid\_mod\_sizeof()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API size\+\_\+t fluid\+\_\+mod\+\_\+sizeof (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__modulators_ga30c62e4eac3a778e4c7df1c731a1acf2}\label{group__modulators_ga30c62e4eac3a778e4c7df1c731a1acf2} 
+\index{SoundFont Modulators@{SoundFont Modulators}!new\_fluid\_mod@{new\_fluid\_mod}}
+\index{new\_fluid\_mod@{new\_fluid\_mod}!SoundFont Modulators@{SoundFont Modulators}}
+\doxysubsubsubsection{\texorpdfstring{new\_fluid\_mod()}{new\_fluid\_mod()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\+\_\+mod\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+mod (\begin{DoxyParamCaption}\item[{void}]{ }\end{DoxyParamCaption})}
+
+@startlifecycle\{Modulator\} 

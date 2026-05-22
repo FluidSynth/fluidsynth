@@ -1,0 +1,69 @@
+\doxysubsection{Effect -\/ IIR Filter}
+\hypertarget{group__iir__filter}{}\label{group__iir__filter}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}
+Collaboration diagram for Effect -\/ IIR Filter\+:
+% FIG 0
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__iir__filter_ga8a4cb4bd240d3654707ac0c5c7337a63}{fluid\+\_\+iir\+\_\+filter\+\_\+type}} \{ \mbox{\hyperlink{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63ac8e3072f6f29ea00c9cf728aeb900b00}{FLUID\+\_\+\+IIR\+\_\+\+DISABLED}} = 0
+, \mbox{\hyperlink{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63a9e074b95c56f5ded53947c4169eb9785}{FLUID\+\_\+\+IIR\+\_\+\+LOWPASS}}
+, \mbox{\hyperlink{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63ae3452abeba2f78ab30598b712da63cdd}{FLUID\+\_\+\+IIR\+\_\+\+HIGHPASS}}
+, {\bfseries FLUID\+\_\+\+IIR\+\_\+\+LAST}
+ \}
+\item 
+enum \mbox{\hyperlink{group__iir__filter_ga1e682c5d6f22e13947cc07bcd92d7525}{fluid\+\_\+iir\+\_\+filter\+\_\+flags}} \{ \mbox{\hyperlink{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a7a307ecda3d6856dc4da345df9dea667}{FLUID\+\_\+\+IIR\+\_\+\+Q\+\_\+\+LINEAR}} = 1 \texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<} 0
+, \mbox{\hyperlink{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a5aa913329adc2c9663486d8e7ceb1104}{FLUID\+\_\+\+IIR\+\_\+\+Q\+\_\+\+ZERO\+\_\+\+OFF}} = 1 \texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<} 1
+, \mbox{\hyperlink{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a5ecac11504abbdc9c10843670799369d}{FLUID\+\_\+\+IIR\+\_\+\+NO\+\_\+\+GAIN\+\_\+\+AMP}} = 1 \texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<} 2
+, \mbox{\hyperlink{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a347c1326bd6f2ecca54ede27e2d170d5}{FLUID\+\_\+\+IIR\+\_\+\+BEANLAND}} = 1 \texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<} 3
+ \}
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Functions for configuring the built-\/in IIR filter effect 
+
+\doxysubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__iir__filter_ga1e682c5d6f22e13947cc07bcd92d7525}\label{group__iir__filter_ga1e682c5d6f22e13947cc07bcd92d7525} 
+\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!fluid\_iir\_filter\_flags@{fluid\_iir\_filter\_flags}}
+\index{fluid\_iir\_filter\_flags@{fluid\_iir\_filter\_flags}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_iir\_filter\_flags}{fluid\_iir\_filter\_flags}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__iir__filter_ga1e682c5d6f22e13947cc07bcd92d7525}{fluid\+\_\+iir\+\_\+filter\+\_\+flags}}}
+
+Specifies optional settings to use for the custom IIR filter. Can be bitwise ORed. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_Q\_LINEAR@{FLUID\_IIR\_Q\_LINEAR}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_Q\_LINEAR@{FLUID\_IIR\_Q\_LINEAR}}}\Hypertarget{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a7a307ecda3d6856dc4da345df9dea667}\label{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a7a307ecda3d6856dc4da345df9dea667} 
+FLUID\+\_\+\+IIR\+\_\+\+Q\+\_\+\+LINEAR&The Soundfont spec requires the filter Q to be interpreted in dB. If this flag is set the filter Q is instead assumed to be in a linear range \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_Q\_ZERO\_OFF@{FLUID\_IIR\_Q\_ZERO\_OFF}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_Q\_ZERO\_OFF@{FLUID\_IIR\_Q\_ZERO\_OFF}}}\Hypertarget{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a5aa913329adc2c9663486d8e7ceb1104}\label{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a5aa913329adc2c9663486d8e7ceb1104} 
+FLUID\+\_\+\+IIR\+\_\+\+Q\+\_\+\+ZERO\+\_\+\+OFF&If this flag the filter is switched off if Q == 0 (prior to any transformation) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_NO\_GAIN\_AMP@{FLUID\_IIR\_NO\_GAIN\_AMP}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_NO\_GAIN\_AMP@{FLUID\_IIR\_NO\_GAIN\_AMP}}}\Hypertarget{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a5ecac11504abbdc9c10843670799369d}\label{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a5ecac11504abbdc9c10843670799369d} 
+FLUID\+\_\+\+IIR\+\_\+\+NO\+\_\+\+GAIN\+\_\+\+AMP&The Soundfont spec requires to correct the gain of the filter depending on the filter\textquotesingle{}s Q. If this flag is set the filter gain will not be corrected. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_BEANLAND@{FLUID\_IIR\_BEANLAND}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_BEANLAND@{FLUID\_IIR\_BEANLAND}}}\Hypertarget{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a347c1326bd6f2ecca54ede27e2d170d5}\label{group__iir__filter_gga1e682c5d6f22e13947cc07bcd92d7525a347c1326bd6f2ecca54ede27e2d170d5} 
+FLUID\+\_\+\+IIR\+\_\+\+BEANLAND&Setting this flag causes the custom filter\textquotesingle{}s cutoff frequency (fc) to dynamically adjust to the notes played, so that it is possible to filter at the same spot relative to the sound of the sample playing. In this sense, the filter fc honors the key and pitch of a note relative to the sample\textquotesingle{}s root\+\_\+key\+: if the key of a note is 2 semitones above the sample\textquotesingle{}s root\+\_\+key and additionally it\textquotesingle{}s pitched up by 30 cents, the cutoff frequency would be automatically adjusted by +230 cents. E.\+g. for horns, one can add an emphasis on tones that would "{}stick to"{} the horn as it played different notes (provided that these notes use the same sample). The enum is named after Robin Beanland, who has used this technique in Conker\textquotesingle{}s Bad Fur Day and (together with other composers) in Jet Force Gemini, implemented by Mike Currington on the N64. \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__iir__filter_ga8a4cb4bd240d3654707ac0c5c7337a63}\label{group__iir__filter_ga8a4cb4bd240d3654707ac0c5c7337a63} 
+\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!fluid\_iir\_filter\_type@{fluid\_iir\_filter\_type}}
+\index{fluid\_iir\_filter\_type@{fluid\_iir\_filter\_type}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}
+\doxysubsubsubsection{\texorpdfstring{fluid\_iir\_filter\_type}{fluid\_iir\_filter\_type}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__iir__filter_ga8a4cb4bd240d3654707ac0c5c7337a63}{fluid\+\_\+iir\+\_\+filter\+\_\+type}}}
+
+Specifies the type of filter to use for the custom IIR filter \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_DISABLED@{FLUID\_IIR\_DISABLED}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_DISABLED@{FLUID\_IIR\_DISABLED}}}\Hypertarget{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63ac8e3072f6f29ea00c9cf728aeb900b00}\label{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63ac8e3072f6f29ea00c9cf728aeb900b00} 
+FLUID\+\_\+\+IIR\+\_\+\+DISABLED&Custom IIR filter is not operating \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_LOWPASS@{FLUID\_IIR\_LOWPASS}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_LOWPASS@{FLUID\_IIR\_LOWPASS}}}\Hypertarget{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63a9e074b95c56f5ded53947c4169eb9785}\label{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63a9e074b95c56f5ded53947c4169eb9785} 
+FLUID\+\_\+\+IIR\+\_\+\+LOWPASS&Custom IIR filter is operating as low-\/pass filter \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FLUID\_IIR\_HIGHPASS@{FLUID\_IIR\_HIGHPASS}!Effect -\/ IIR Filter@{Effect -\/ IIR Filter}}\index{Effect -\/ IIR Filter@{Effect -\/ IIR Filter}!FLUID\_IIR\_HIGHPASS@{FLUID\_IIR\_HIGHPASS}}}\Hypertarget{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63ae3452abeba2f78ab30598b712da63cdd}\label{group__iir__filter_gga8a4cb4bd240d3654707ac0c5c7337a63ae3452abeba2f78ab30598b712da63cdd} 
+FLUID\+\_\+\+IIR\+\_\+\+HIGHPASS&Custom IIR filter is operating as high-\/pass filter \\
+\hline
+
+\end{DoxyEnumFields}

@@ -1,0 +1,73 @@
+\doxysection{Synthesizer}
+\hypertarget{group__synth}{}\label{group__synth}\index{Synthesizer@{Synthesizer}}
+Collaboration diagram for Synthesizer\+:
+% FIG 0
+\doxysubsubsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__ladspa}{Effect -\/ LADSPA}}
+\item 
+\mbox{\hyperlink{group__midi__messages}{MIDI Channel Messages}}
+\item 
+\mbox{\hyperlink{group__voice__control}{Synthesis Voice Control}}
+\item 
+\mbox{\hyperlink{group__soundfont__management}{Sound\+Font Management}}
+\item 
+\mbox{\hyperlink{group__reverb__effect}{Effect -\/ Reverb}}
+\item 
+\mbox{\hyperlink{group__chorus__effect}{Effect -\/ Chorus}}
+\item 
+\mbox{\hyperlink{group__synthesis__params}{Synthesis Parameters}}
+\item 
+\mbox{\hyperlink{group__tuning}{MIDI Tuning}}
+\item 
+\mbox{\hyperlink{group__audio__rendering}{Audio Rendering}}
+\item 
+\mbox{\hyperlink{group__iir__filter}{Effect -\/ IIR Filter}}
+\item 
+\mbox{\hyperlink{group__channel__setup}{MIDI Channel Setup}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\+\_\+synth\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__synth_ga4a70cc91e3203ef216f7fcc195c5c9b0}{new\+\_\+fluid\+\_\+synth}} (\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*}settings)
+\item 
+FLUIDSYNTH\+\_\+\+API double \mbox{\hyperlink{group__synth_ga28e932a61ee59fa46d5a1b2047872995}{fluid\+\_\+synth\+\_\+get\+\_\+cpu\+\_\+load}} (\mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\+\_\+synth\+\_\+t}} \texorpdfstring{$\ast$}{*}synth)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Sound\+Font synthesizer
+
+You create a new synthesizer with \doxylink{group__synth_ga4a70cc91e3203ef216f7fcc195c5c9b0}{new\+\_\+fluid\+\_\+synth()} and you destroy it with delete\+\_\+fluid\+\_\+synth(). Use the fluid\+\_\+settings\+\_\+t structure to specify the synthesizer characteristics.
+
+You have to load a Sound\+Font in order to hear any sound. For that you use the fluid\+\_\+synth\+\_\+sfload() function.
+
+You can use the audio driver functions to open the audio device and create a background audio thread.
+
+The API for sending MIDI events is probably what you expect\+: fluid\+\_\+synth\+\_\+noteon(), fluid\+\_\+synth\+\_\+noteoff(), ... 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__synth_ga28e932a61ee59fa46d5a1b2047872995}\label{group__synth_ga28e932a61ee59fa46d5a1b2047872995} 
+\index{Synthesizer@{Synthesizer}!fluid\_synth\_get\_cpu\_load@{fluid\_synth\_get\_cpu\_load}}
+\index{fluid\_synth\_get\_cpu\_load@{fluid\_synth\_get\_cpu\_load}!Synthesizer@{Synthesizer}}
+\doxysubsubsection{\texorpdfstring{fluid\_synth\_get\_cpu\_load()}{fluid\_synth\_get\_cpu\_load()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API double fluid\+\_\+synth\+\_\+get\+\_\+cpu\+\_\+load (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\+\_\+synth\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{synth }\end{DoxyParamCaption})}
+
+@endlifecycle \Hypertarget{group__synth_ga4a70cc91e3203ef216f7fcc195c5c9b0}\label{group__synth_ga4a70cc91e3203ef216f7fcc195c5c9b0} 
+\index{Synthesizer@{Synthesizer}!new\_fluid\_synth@{new\_fluid\_synth}}
+\index{new\_fluid\_synth@{new\_fluid\_synth}!Synthesizer@{Synthesizer}}
+\doxysubsubsection{\texorpdfstring{new\_fluid\_synth()}{new\_fluid\_synth()}}
+{\footnotesize\ttfamily FLUIDSYNTH\+\_\+\+API \mbox{\hyperlink{group__Types_gae265f10ae174a13afe010de50d87e1a4}{fluid\+\_\+synth\+\_\+t}} \texorpdfstring{$\ast$}{*} new\+\_\+fluid\+\_\+synth (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__Types_gaa363402d3c77333b0f070ba531d034ba}{fluid\+\_\+settings\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{settings }\end{DoxyParamCaption})}
+
+@startlifecycle\{Synthesizer\} \input{group__ladspa}
+\input{group__midi__messages}
+\input{group__voice__control}
+\input{group__soundfont__management}
+\input{group__reverb__effect}
+\input{group__chorus__effect}
+\input{group__synthesis__params}
+\input{group__tuning}
+\input{group__audio__rendering}
+\input{group__iir__filter}
+\input{group__channel__setup}

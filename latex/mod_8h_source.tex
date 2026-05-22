@@ -1,0 +1,96 @@
+\doxysection{mod.\+h}
+\hypertarget{mod_8h_source}{}\label{mod_8h_source}\index{include/fluidsynth/mod.h@{include/fluidsynth/mod.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ FluidSynth\ -\/\ A\ Software\ Synthesizer}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Copyright\ (C)\ 2003\ \ Peter\ Hanappe\ and\ others.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ This\ library\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modify\ it\ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ as\ published\ by\ the\ Free\ Software\ Foundation;\ either\ version\ 2.1\ of}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ the\ License,\ or\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ This\ library\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ Lesser\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ License\ along\ with\ this\ library;\ if\ not,\ see}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ \_FLUIDSYNTH\_MOD\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ \_FLUIDSYNTH\_MOD\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{group__modulators_ga4b2419150b2a167df7807d5020a6e996}{fluid\_mod\_flags}}}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a915b9287ca1694b748d18e0fb95291bd}{FLUID\_MOD\_POSITIVE}}\ =\ 0,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00046\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996ae36b75d882c477b9c708090b8f39ee2e}{FLUID\_MOD\_NEGATIVE}}\ =\ 1,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a55e25d082340bab94f5e76c4942882a6}{FLUID\_MOD\_UNIPOLAR}}\ =\ 0,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996ab4ead04aee2460cc730aa5618e1e190d}{FLUID\_MOD\_BIPOLAR}}\ =\ 2,\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a44ce690ff0d02cbbeb5ff8df71a5f9f0}{FLUID\_MOD\_LINEAR}}\ =\ 0,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996aa7976f44cbfd3c8fea58a3c9e03152a2}{FLUID\_MOD\_CONCAVE}}\ =\ 4,\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a9a7d17a249db378442bd24f9ed62113d}{FLUID\_MOD\_CONVEX}}\ =\ 8,\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996aea14d1629c4a8dfdf3241b5b61827aec}{FLUID\_MOD\_SWITCH}}\ =\ 12,\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a8705ffb835e7e2e991a74e9827e9409e}{FLUID\_MOD\_GC}}\ =\ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a61e4c4ad391548b2d12764644e6e8a45}{FLUID\_MOD\_CC}}\ =\ 16,\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00056\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a7eddf66883e2c3d275ad9c1a1e715753}{FLUID\_MOD\_CUSTOM}}\ =\ 0x40,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga4b2419150b2a167df7807d5020a6e996a5ac8e594df1dff6c76d49c6258127d5a}{FLUID\_MOD\_SIN}}\ =\ 0x80,\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00058\ \};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{group__modulators_ga0efdc13cd34bde402245f5c3175938bd}{fluid\_mod\_transforms}}}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga0efdc13cd34bde402245f5c3175938bda31a9129ed87fce32ea6042903fc2754a}{FLUID\_MOD\_TRANSFORM\_LINEAR}}\ =\ 0,\ }
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga0efdc13cd34bde402245f5c3175938bda66ae09aa283a57a076712b19aafc85e3}{FLUID\_MOD\_TRANSFORM\_ABS}}\ =\ 2\ \ \ \ \ }
+\DoxyCodeLine{00067\ \};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00073\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{group__modulators_ga801993d69390b21a2d0311d44afb1932}{fluid\_mod\_src}}}
+\DoxyCodeLine{00074\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932af9eebfce95d1bca7d5046612f43764b5}{FLUID\_MOD\_NONE}}\ =\ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932ac93d47a173ddc26568d112b7fc8fb28b}{FLUID\_MOD\_VELOCITY}}\ =\ 2,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932ad708e1755740964c31fb9c368c4a1e97}{FLUID\_MOD\_KEY}}\ =\ 3,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932a1dc8abdda3f6833bbcfe3bce49317796}{FLUID\_MOD\_KEYPRESSURE}}\ =\ 10,\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932aff8746ab2f8fdba605cbafba4ace1217}{FLUID\_MOD\_CHANNELPRESSURE}}\ =\ 13,\ \ \ \ \ \ \ }
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932a72f5b8e63c997525574d15f83a5a2e24}{FLUID\_MOD\_PITCHWHEEL}}\ =\ 14,\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{group__modulators_gga801993d69390b21a2d0311d44afb1932ad5b4a5332b13ad547dacdade2c7c9d16}{FLUID\_MOD\_PITCHWHEELSENS}}\ =\ 16\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00082\ \};}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{typedef}\ double\ (*\mbox{\hyperlink{group__modulators_gaf0faa8d3e185fcb03a978d5e516c537d}{fluid\_mod\_mapping\_t}})(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ value,\ \textcolor{keywordtype}{int}\ range,\ \textcolor{keywordtype}{int}\ is\_src1,\ \textcolor{keywordtype}{void}\ *data);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00101\ FLUIDSYNTH\_API\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *\mbox{\hyperlink{group__modulators_ga30c62e4eac3a778e4c7df1c731a1acf2}{new\_fluid\_mod}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00102\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ delete\_fluid\_mod(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00105\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{group__modulators_ga974c2e189c8657d0265685ee30310dd2}{fluid\_mod\_sizeof}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_set\_source1(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ src,\ \textcolor{keywordtype}{int}\ flags);}
+\DoxyCodeLine{00108\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_set\_source2(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ src,\ \textcolor{keywordtype}{int}\ flags);}
+\DoxyCodeLine{00109\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_set\_dest(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ dst);}
+\DoxyCodeLine{00110\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_set\_amount(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{double}\ amount);}
+\DoxyCodeLine{00111\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_set\_transform(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ type);}
+\DoxyCodeLine{00112\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_set\_custom\_mapping(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \mbox{\hyperlink{group__modulators_gaf0faa8d3e185fcb03a978d5e516c537d}{fluid\_mod\_mapping\_t}}\ mapping\_function,\ \textcolor{keywordtype}{void}*\ data);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_get\_source1(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00115\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_get\_flags1(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00116\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_get\_source2(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00117\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_get\_flags2(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00118\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_get\_dest(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00119\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{double}\ fluid\_mod\_get\_amount(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00120\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_get\_transform(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_test\_identity(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod2);}
+\DoxyCodeLine{00123\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_has\_source(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ cc,\ \textcolor{keywordtype}{int}\ ctrl);}
+\DoxyCodeLine{00124\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{int}\ fluid\_mod\_has\_dest(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keywordtype}{int}\ gen);}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ FLUIDSYNTH\_API\ \textcolor{keywordtype}{void}\ fluid\_mod\_clone(\mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *mod,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{group__Types_ga6c727efab500d6c0c350d4292e9aa5ef}{fluid\_mod\_t}}\ *src);}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_FLUIDSYNTH\_MOD\_H\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00133\ }
+
+\end{DoxyCode}

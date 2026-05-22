@@ -1,0 +1,106 @@
+\doxysection{gen.\+h}
+\hypertarget{gen_8h_source}{}\label{gen_8h_source}\index{include/fluidsynth/gen.h@{include/fluidsynth/gen.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ FluidSynth\ -\/\ A\ Software\ Synthesizer}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ Copyright\ (C)\ 2003\ \ Peter\ Hanappe\ and\ others.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ This\ library\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ modify\ it\ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ as\ published\ by\ the\ Free\ Software\ Foundation;\ either\ version\ 2.1\ of}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ the\ License,\ or\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ This\ library\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ Lesser\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ License\ along\ with\ this\ library;\ if\ not,\ see}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ \_FLUIDSYNTH\_GEN\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ \_FLUIDSYNTH\_GEN\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{group__generators_gad17a24ae3b25f3b8cc5762f818eef9b4}{fluid\_gen\_type}}}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a446337bebed34df88f998132a5a8492a}{GEN\_STARTADDROFS}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a5728b1022388e8e5218383c5f72cf087}{GEN\_ENDADDROFS}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a23d8f7a3906fa3d8385cea0e1d7119f3}{GEN\_STARTLOOPADDROFS}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a989927f815f1be4e32603719f99b6169}{GEN\_ENDLOOPADDROFS}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ac60e7883e31e05f35202eba013e33030}{GEN\_STARTADDRCOARSEOFS}},\ \ \ }
+\DoxyCodeLine{00046\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ab8343028edd99ad0a23585760bdb1b78}{GEN\_MODLFOTOPITCH}},\ \ \ \ \ }
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a99387606556a9024de640b4519f7e559}{GEN\_VIBLFOTOPITCH}},\ \ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ac767cd6d4156318428bcfc9b3a2a087c}{GEN\_MODENVTOPITCH}},\ \ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ae43e689b0b6349a676d26ea3096ed8d2}{GEN\_FILTERFC}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a587a7ca42e99238fca39cdf42496af6e}{GEN\_FILTERQ}},\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4add1b67c6e56efccf734e98da71816315}{GEN\_MODLFOTOFILTERFC}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a0c51d005b15718a7c7e84addd51073c8}{GEN\_MODENVTOFILTERFC}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a4795d4f36d830b51ba20af142cd17625}{GEN\_ENDADDRCOARSEOFS}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a488cdd7c1a9f15b82a3c317ce5951cc1}{GEN\_MODLFOTOVOL}},\ \ \ \ \ }
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ad69d8934c1948487f59ebb2bb128d1c6}{GEN\_UNUSED1}},\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00056\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a20dc580d6c53d30eb97efe3e910793b6}{GEN\_CHORUSSEND}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a8de830acd064933f55e0c1615d1e7f78}{GEN\_REVERBSEND}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a5b713ab8c931017d98f11b5ed5a81fb1}{GEN\_PAN}},\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4adde8f8746ee200e01c20271da91347f9}{GEN\_UNUSED2}},\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00060\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4aa1ac7b036eda39aa74ba970e272f1672}{GEN\_UNUSED3}},\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a20eb3ba79461ca98e9c3e8403bc04e0c}{GEN\_UNUSED4}},\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a9ea8904d2decc65b0239bd11c9e97250}{GEN\_MODLFODELAY}},\ \ \ \ \ }
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a66a660a7b0bebd6d6104dfd8e15b558d}{GEN\_MODLFOFREQ}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ae61bfcf61774784a5e9aeb9865996a0f}{GEN\_VIBLFODELAY}},\ \ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ae06bcc982faadd741450780989cbd1b0}{GEN\_VIBLFOFREQ}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a1dbd9220ed3cdf594dbcc51f2edb888c}{GEN\_MODENVDELAY}},\ \ \ \ \ }
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a9ed1b5c95bd9c461558bbf98eb75157d}{GEN\_MODENVATTACK}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00068\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a65a52aafce25d202e01ace9c8f170a58}{GEN\_MODENVHOLD}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a95141e243fd2cfd056af89116038bd22}{GEN\_MODENVDECAY}},\ \ \ \ \ }
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4aa8216db47eb4508e8f810da36a3e3199}{GEN\_MODENVSUSTAIN}},\ \ \ \ \ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ad7594c8e4d03e62f7bd5a8770fc6e3d2}{GEN\_MODENVRELEASE}},\ \ \ \ \ }
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ada2d2d053e33b9b54870bc7b6b18c4c3}{GEN\_KEYTOMODENVHOLD}},\ \ \ \ \ }
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a6f26ca6855cfb526ff0d550a98a1e07a}{GEN\_KEYTOMODENVDECAY}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00074\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ac4ee056799e46d7877cfb4f244aa6922}{GEN\_VOLENVDELAY}},\ \ \ \ \ }
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a8719daf5507805113f443c16d19b7d64}{GEN\_VOLENVATTACK}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a948f8a99eba9400ab3d361ac49a831cb}{GEN\_VOLENVHOLD}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a034ca3f2dc95233efbba099ef33d8e51}{GEN\_VOLENVDECAY}},\ \ \ \ \ }
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a0741e826d8acb00bde4810ec07c3bcd0}{GEN\_VOLENVSUSTAIN}},\ \ \ \ \ }
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4aca3b587527e748ea7aabb2e3a28e70e7}{GEN\_VOLENVRELEASE}},\ \ \ \ \ }
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4abb0287401874a3e223f9a79b50c29e6a}{GEN\_KEYTOVOLENVHOLD}},\ \ \ \ \ }
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a72ec6209fab9decf6ed9cb5283cdc019}{GEN\_KEYTOVOLENVDECAY}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a6c5a3ae50334d0ccf9e34110f8042234}{GEN\_INSTRUMENT}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a3372e83322e8c2aac65781599b05972d}{GEN\_RESERVED1}},\ \ \ \ \ }
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a03ad65135a7789d6bfed156eebd820d9}{GEN\_KEYRANGE}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a8803259e0b53574f3902a6dccb84ce7a}{GEN\_VELRANGE}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a1746f056035cc6e4ed07161a7259bbe6}{GEN\_STARTLOOPADDRCOARSEOFS}},\ \ \ }
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4acb52265c898014662ec34a0bc5e71aab}{GEN\_KEYNUM}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ae94f0b3bf830e3363041e7c9e1d90095}{GEN\_VELOCITY}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00089\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a2db65ad593aeff4e814f9a7b7324c0df}{GEN\_ATTENUATION}},\ \ \ \ \ }
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a80970aaa05d48a8678b4c038a7c20b8b}{GEN\_RESERVED2}},\ \ \ \ \ }
+\DoxyCodeLine{00091\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ae57660306a59b9547798d52ce90bb4bb}{GEN\_ENDLOOPADDRCOARSEOFS}},\ \ \ }
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a5ffa8b961965bad3ec420e049e399c33}{GEN\_COARSETUNE}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a68229fec83f8d5d62246d98c6868320d}{GEN\_FINETUNE}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ab9248845cfc030ec288631e8830e4a71}{GEN\_SAMPLEID}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a5b654b7cb64659b6a48d39bf0b11bc06}{GEN\_SAMPLEMODE}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00096\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a23c463aeb10b503f217bdca4c7a01ab8}{GEN\_RESERVED3}},\ \ \ \ \ }
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a8d2c25fc136b28599eb551b761a6a24f}{GEN\_SCALETUNE}},\ \ \ \ \ }
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a900ee448f717ec582dac28ce51d08914}{GEN\_EXCLUSIVECLASS}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4af9dcf53c06eaf19d595685d7fac0f678}{GEN\_OVERRIDEROOTKEY}},\ \ \ \ \ }
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4ab9a5716b5af1baf131a6225da6687ff0}{GEN\_PITCH}},}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4a11703f028db7b912ac3a08adb85b3a7e}{GEN\_CUSTOM\_BALANCE}},\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{/*\ non-\/standard\ generator\ for\ an\ additional\ custom\ high-\/\ or\ low-\/pass\ filter\ */}}
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4af4f15642f21d7daa860231651827103e}{GEN\_CUSTOM\_FILTERFC}},\ \ \ \ \ }
+\DoxyCodeLine{00121\ \ \ \ \ \mbox{\hyperlink{group__generators_ggad17a24ae3b25f3b8cc5762f818eef9b4afe8f35290c1a5dace4e0e32d827507c8}{GEN\_CUSTOM\_FILTERQ}},\ \ \ \ \ \ \ }
+\DoxyCodeLine{00122\ \ \ \ \ GEN\_LAST\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00125\ \};}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_FLUIDSYNTH\_GEN\_H\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00132\ }
+
+\end{DoxyCode}
