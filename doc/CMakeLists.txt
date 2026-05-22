@@ -144,7 +144,7 @@ if ( DOXYGEN_FOUND )
 
     # -- Convert recent_changes.txt to changelog.md ---------------------------
     add_custom_target ( changelog2md
-      ${Python3_EXECUTABLE}
+      COMMAND ${Python3_EXECUTABLE}
           ${ZENSICAL_SCRIPTS}/txt2md.py
           ${CMAKE_CURRENT_SOURCE_DIR}/recent_changes.txt
           ${ZENSICAL_DOCS_DIR}/changelog.md
@@ -153,7 +153,7 @@ if ( DOXYGEN_FOUND )
 
     # -- Convert reverbators.md (Doxygen .md with \htmlonly) to Markdown ------
     add_custom_target ( reverbators2md
-      ${Python3_EXECUTABLE}
+      COMMAND ${Python3_EXECUTABLE}
           ${ZENSICAL_SCRIPTS}/txt2md.py
           ${CMAKE_CURRENT_SOURCE_DIR}/reverbators.md
           ${ZENSICAL_DOCS_DIR}/reverbators.md
@@ -162,7 +162,7 @@ if ( DOXYGEN_FOUND )
 
     # -- Copy ladspa.md (already clean Markdown, no Doxygen tags) -------------
     add_custom_target ( ladspa2md
-      ${CMAKE_COMMAND} -E copy
+      COMMAND ${CMAKE_COMMAND} -E copy
           ${CMAKE_CURRENT_SOURCE_DIR}/ladspa.md
           ${ZENSICAL_DOCS_DIR}/ladspa.md
       COMMENT "Copying ladspa.md to docs directory"

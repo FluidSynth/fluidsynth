@@ -530,15 +530,16 @@
     </xsl:for-each>
   </xsl:template>
 
+  <!-- Named template: output the fenced-code language tag for a programlisting.
+       Outputs "c" for C/C++/header files; empty string otherwise. -->
+  <xsl:template name="code-lang">
+    <xsl:param name="filename" select="@filename"/>
+    <xsl:if test="contains($filename,'.c') or contains($filename,'.cpp') or contains($filename,'.h')">c</xsl:if>
+  </xsl:template>
+
   <xsl:template match="programlisting">
-    <xsl:variable name="lang">
-      <xsl:choose>
-        <xsl:when test="contains(@filename,'.c') or contains(@filename,'.cpp') or contains(@filename,'.h')">c</xsl:when>
-        <xsl:otherwise></xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
     <xsl:text>&#xa;```</xsl:text>
-    <xsl:value-of select="$lang"/>
+    <xsl:call-template name="code-lang"/>
     <xsl:text>&#xa;</xsl:text>
     <xsl:for-each select="codeline">
       <xsl:call-template name="render-codeline"/>
@@ -550,14 +551,8 @@
   <!-- programlisting in inline mode (e.g. inside simplesect note/warning):
        break out of the inline context and render a proper fenced code block. -->
   <xsl:template match="programlisting" mode="inline">
-    <xsl:variable name="lang">
-      <xsl:choose>
-        <xsl:when test="contains(@filename,'.c') or contains(@filename,'.cpp') or contains(@filename,'.h')">c</xsl:when>
-        <xsl:otherwise></xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
     <xsl:text>&#xa;```</xsl:text>
-    <xsl:value-of select="$lang"/>
+    <xsl:call-template name="code-lang"/>
     <xsl:text>&#xa;</xsl:text>
     <xsl:for-each select="codeline">
       <xsl:call-template name="render-codeline"/>
