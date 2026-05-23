@@ -29,159 +29,40 @@ For some scenarios, it might be useful to execute certain shell commands right u
 
 ## OPTIONS
 
-FluidSynth accepts the following options (call FluidSynth with the --help option to get most up-to-date information): 
-
--a, --audio-driver=[label]
-
-
-> The audio driver to use. "-a help" to list valid options 
-
--b, --bank-offset=[num]
-
-> A positional flag that specifies the bank-offset for any Soundfonts following that flag. Can be specified multiple times. Available since FluidSynth 2.5.0. Example:
->
-> fluidsynth A.sf2 -b 1 someTune.mid B.sf2 C.sf2 -b 2 D.sf2
->
-> Would cause A.sf2 to be loaded with a bank-offset of zero, B.sf2 and C.sf2 loaded with bank-offset=1, and D.sf2 loaded with bank-offset=2.
-
-
--C, --chorus
-
-
-> Turn the chorus on or off [0|1|yes|no, default = on] 
-
--c, --audio-bufcount=[count]
-
-
-> Number of audio buffers 
-
--d, --dump
-
-
-> Dump incoming and outgoing MIDI events to stdout 
-
--E, --audio-file-endian
-
-
-> Audio file endian for fast rendering or aufile driver ("-E help" for list) 
-
--f, --load-config
-
-
-> Right upon starting, load and execute a configuration file containing fluidsynth related shell commands as described [in the Section below](UserManual.md#shell-commands). 
-
--F, --fast-render=[file]
-
-
-> Render MIDI file to raw audio data and store in [file] 
-
--G, --audio-groups
-
-
-> Defines the number of LADSPA audio nodes 
-
--g, --gain
-
-
-> Set the master gain [0 &lt; gain &lt; 10, default = 0.2] 
-
--h, --help
-
-
-> Print out this help summary 
-
--i, --no-shell
-
-
-> Don't read commands from the shell [default = yes] 
-
--j, --connect-jack-outputs
-
-
-> Attempt to connect the jack outputs to the physical ports 
-
--K, --midi-channels=[num]
-
-
-> The number of midi channels [default = 16] 
-
--L, --audio-channels=[num]
-
-
-> The number of stereo audio channels [default = 1] 
-
--l, --disable-lash
-
-
-> Don't connect to LASH server 
-
--m, --midi-driver=[label]
-
-
-> The name of the midi driver to use [oss,alsa,alsa_seq,...] 
-
--n, --no-midi-in
-
-
-> Don't create a midi driver to read MIDI input events [default = yes] 
-
--O, --audio-file-format
-
-
-> Audio file format for fast rendering or aufile driver ("-O help" for list) 
-
--o
-
-
-> Define a setting, -o name=value ("-o help" to dump current values). See [FluidSettings](FluidSettings.md) for details 
-
--p, --portname=[label]
-
-> Set MIDI port name (alsa_seq, coremidi drivers) 
-
--q, --quiet
-
-> Do not print welcome message or other informational output. (Windows only: also suppress all log messages lower than PANIC)
-
--Q, --query-audio-devices
-
-> Windows only, enumerate available WASAPI devices and their supported sample rates
-
-
--R, --reverb
-
-
-> Turn the reverb on or off [0|1|yes|no, default = on] 
-
--r, --sample-rate
-
-
-> Set the sample rate 
-
--s, --server
-
-
-> Start FluidSynth as a server process 
-
--T, --audio-file-type
-
-
-> Audio file type for fast rendering or aufile driver ("-T help" for list) 
-
--v, --verbose
-
-
-> Print out verbose messages about midi events (synth.verbose=1) as well as other debug messages
-
--V, --version
-
-
-> Show version of program 
-
--z, --audio-bufsize=[size]
-
-
-> Size of each audio buffer 
+FluidSynth accepts the following options (call FluidSynth with the --help option to get most up-to-date information):
+
+| Long Option | Short | Description |
+|---|---|---|
+| `--audio-driver=[label]` | `-a` | The audio driver to use. `-a help` to list valid options |
+| `--bank-offset=[num]` | `-b` | A positional flag that specifies the bank-offset for any Soundfonts following that flag. Can be specified multiple times. Available since FluidSynth 2.5.0. Example: `fluidsynth A.sf2 -b 1 someTune.mid B.sf2 C.sf2 -b 2 D.sf2` Would cause A.sf2 to be loaded with a bank-offset of zero, B.sf2 and C.sf2 loaded with bank-offset=1, and D.sf2 loaded with bank-offset=2. |
+| `--chorus` | `-C` | Turn the chorus on or off `[0|1|yes|no, default = on]` |
+| `--audio-bufcount=[count]` | `-c` | Number of audio buffers |
+| `--dump` | `-d` | Dump incoming and outgoing MIDI events to stdout |
+| `--audio-file-endian` | `-E` | Audio file endian for fast rendering or aufile driver (`-E help` for list) |
+| `--load-config` | `-f` | Right upon starting, load and execute a configuration file containing fluidsynth related shell commands as described [in the Section below](#shell-commands). |
+| `--fast-render=[file]` | `-F` | Render MIDI file to raw audio data and store in `[file]` |
+| `--audio-groups` | `-G` | Defines the number of LADSPA audio nodes |
+| `--gain` | `-g` | Set the master gain `[0 < gain < 10, default = 0.2]` |
+| `--help` | `-h` | Print out this help summary |
+| `--no-shell` | `-i` | Don't read commands from the shell `[default = yes]` |
+| `--connect-jack-outputs` | `-j` | Attempt to connect the jack outputs to the physical ports |
+| `--midi-channels=[num]` | `-K` | The number of midi channels `[default = 16]` |
+| `--audio-channels=[num]` | `-L` | The number of stereo audio channels `[default = 1]` |
+| `--disable-lash` | `-l` | Don't connect to LASH server |
+| `--midi-driver=[label]` | `-m` | The name of the midi driver to use `[oss,alsa,alsa_seq,...]` |
+| `--no-midi-in` | `-n` | Don't create a midi driver to read MIDI input events `[default = yes]` |
+| `--audio-file-format` | `-O` | Audio file format for fast rendering or aufile driver (`-O help` for list) |
+| (none) | `-o` | Define a setting, `-o name=value` (`-o help` to dump current values). See [FluidSettings](FluidSettings.md) for details. |
+| `--portname=[label]` | `-p` | Set MIDI port name (alsa_seq, coremidi drivers) |
+| `--quiet` | `-q` | Do not print welcome message or other informational output. (Windows only: also suppress all log messages lower than PANIC) |
+| `--query-audio-devices` | `-Q` | Windows only, enumerate available WASAPI devices and their supported sample rates |
+| `--reverb` | `-R` | Turn the reverb on or off `[0|1|yes|no, default = on]` |
+| `--sample-rate` | `-r` | Set the sample rate |
+| `--server` | `-s` | Start FluidSynth as a server process |
+| `--audio-file-type` | `-T` | Audio file type for fast rendering or aufile driver (`-T help` for list) |
+| `--verbose` | `-v` | Print out verbose messages about midi events (synth.verbose=1) as well as other debug messages |
+| `--version` | `-V` | Show version of program |
+| `--audio-bufsize=[size]` | `-z` | Size of each audio buffer |
 
 ## SETTINGS
 
