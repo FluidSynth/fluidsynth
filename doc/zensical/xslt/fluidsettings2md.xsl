@@ -125,19 +125,25 @@
     <!-- Type row -->
     <xsl:text>| Type | `</xsl:text>
     <xsl:choose>
-      <xsl:when test="type = 'bool'">bool (int)</xsl:when>
-      <xsl:when test="type = 'int'">int</xsl:when>
-      <xsl:when test="type = 'num'">float (num)</xsl:when>
-      <xsl:when test="type = 'str' and vals">str (selection)</xsl:when>
-      <xsl:when test="type = 'str'">str</xsl:when>
-      <xsl:otherwise><xsl:value-of select="type"/></xsl:otherwise>
+        <xsl:when test="type = 'bool'">Boolean (int)</xsl:when>
+        <xsl:when test="type = 'int'">Integer (int)</xsl:when>
+        <xsl:when test="type = 'str'">
+            <xsl:choose>
+                <xsl:when test="vals">Selection (str)</xsl:when>
+                <xsl:otherwise>String (str)</xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:when test="type = 'num'">Float (num)</xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="type" />
+        </xsl:otherwise>
     </xsl:choose>
     <xsl:text>` |&#xa;</xsl:text>
 
     <!-- Default row (may contain HTML markup like <br/>) -->
     <xsl:text>| Default | `</xsl:text>
     <xsl:call-template name="inline-html">
-      <xsl:with-param name="node" select="def[last()]"/>
+      <xsl:with-param name="node" select="def"/>
     </xsl:call-template>
     <xsl:text>` |&#xa;</xsl:text>
 
@@ -183,7 +189,8 @@
           <xsl:value-of select="normalize-space(.)"/>
         </xsl:when>
         <xsl:when test="self::*[name()='br' or name()='BR']">
-          <xsl:text>  &#xa;</xsl:text>
+          <!-- Linebreaks in tables are tricky, so just replace that with a space -->
+          <xsl:text> </xsl:text>
         </xsl:when>
         <xsl:when test="self::*[name()='code']">
           <xsl:text>`</xsl:text>
