@@ -136,12 +136,21 @@ if ( DOXYGEN_FOUND )
     )
 
     # -- Build the unified wiki + API documentation site (XSLT pipeline) ------
-    # Uses zensical.toml from the repository root which points docs_dir to
-    # doc/wiki/.  Generated API/settings/usage pages are written there by the
-    # XSLT and Python targets above before zensical is invoked.
+    # All content is generated into doc/wiki/ by the targets above.
+    # A Python script then patches zensical.toml with the full list of
+    # generated API pages (so the sidebar and breadcrumbs work for every page),
+    # and writes the result to a temporary runtime config file.
+    # zensical is then invoked with that runtime config via -f.
+    set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_CURRENT_BINARY_DIR}/zensical_runtime.toml )
     if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
       add_custom_target ( zensical_xslt
+          COMMAND ${Python3_EXECUTABLE}
+              ${ZENSICAL_SCRIPTS}/gen-zensical-config.py
+              ${ZENSICAL_RUNTIME_CONFIG}
+              ${WIKI_DOCS_DIR}
+              ${CMAKE_SOURCE_DIR}/zensical.toml
           COMMAND ${ZENSICAL_EXECUTABLE} build --clean
+              -f ${ZENSICAL_RUNTIME_CONFIG}
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
           DEPENDS fluidsettings2md_xslt doxy2md_xslt
                   usage2md recent_changes2md examples2md

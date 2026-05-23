@@ -145,6 +145,38 @@ if [ "$MODE" = "doxy" ]; then
         done < <(echo "$LIST_MEMBERS_XSL" | xsltproc - "$group_xml")
     done <<< "$GROUP_REFIDS"
 
+    # ------------------------------------------------------------------
+    # Add Doxygen \page refids to the refmap so @sa @ref PageId links work.
+    # Keys are the Doxygen page compound IDs; values are paths relative to
+    # the generated api/ directory (where the API .md files live).
+    # ------------------------------------------------------------------
+    declare -A PAGE_REFMAP=(
+        ["CreatingSettings"]="../usage/creating-settings.md"
+        ["CreatingSynth"]="../usage/creating-synth.md"
+        ["LoadingSoundfonts"]="../usage/loading-soundfonts.md"
+        ["CreatingAudioDriver"]="../usage/audio-driver.md"
+        ["UsingSynth"]="../usage/using-synth.md"
+        ["SendingMIDI"]="../usage/sending-midi.md"
+        ["RealtimeMIDI"]="../usage/realtime-midi.md"
+        ["MIDIPlayer"]="../usage/midi-player.md"
+        ["FileRenderer"]="../usage/file-renderer.md"
+        ["MIDIPlayerMem"]="../usage/midi-player-mem.md"
+        ["MIDIRouter"]="../usage/midi-router.md"
+        ["Sequencer"]="../usage/sequencer.md"
+        ["Shell"]="../usage/shell.md"
+        ["Multi-channel"]="../usage/multi-channel.md"
+        ["synth-context"]="../usage/synth-context.md"
+        ["Advanced"]="../usage/advanced.md"
+        ["UsageGuide"]="../usage/index.md"
+        ["RecentChanges"]="recent-changes.md"
+        ["ReverbOverview"]="../reverbators.md"
+        ["fluidsettings"]="../settings/index.md"
+        ["deprecated"]="deprecated.md"
+    )
+    for page_id in "${!PAGE_REFMAP[@]}"; do
+        printf '%s|%s\n' "$page_id" "${PAGE_REFMAP[$page_id]}" >> "$REFMAP_FILE"
+    done
+
     REFMAP_TEXT="$(cat "$REFMAP_FILE")"
 
     # Inline XSL to list innergroup refids from a compound XML
@@ -288,7 +320,7 @@ if [ "$MODE" = "doxy" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# MODE: examples  (doc/examples/ → api/examples.md + api/examples/*.c)
+# MODE: examples  (doc/examples/ → api/examples.md + api/examples/<name>.md)
 # ---------------------------------------------------------------------------
 if [ "$MODE" = "examples" ]; then
     EXAMPLES_SRC="$INPUT"
@@ -301,6 +333,7 @@ if [ "$MODE" = "examples" ]; then
 
     mkdir -p "$API_DIR/examples"
 
+    # --- Write index page linking to each individual example page -----------
     {
         printf "# Code Examples\n\n"
         printf "The following self-contained example programs demonstrate how to use the FluidSynth API.\n\n"
@@ -308,25 +341,40 @@ if [ "$MODE" = "examples" ]; then
         for src in "$EXAMPLES_SRC"/*.c "$EXAMPLES_SRC"/*.cxx; do
             [ -f "$src" ] || continue
             base=$(basename "$src")
-            ext="${base##*.}"
             name="${base%.*}"
-            # Copy the source file
-            cp "$src" "$API_DIR/examples/$base"
-            # Determine fenced code language
-            lang="c"
-            [ "$ext" = "cxx" ] && lang="cpp"
-            # Extract brief description from first comment line
+            # Extract brief description from first comment line starting with capital letter
             desc=$(grep -m1 '^ \* [A-Z]' "$src" | sed 's/^ \* //' || true)
-            printf "## %s\n\n" "$name"
+            if [ -n "$desc" ]; then
+                printf -- "- [**%s**](examples/%s.md) \xe2\x80\x93 %s\n" "$name" "$name" "$desc"
+            else
+                printf -- "- [**%s**](examples/%s.md)\n" "$name" "$name"
+            fi
+        done
+    } > "$API_DIR/examples.md"
+
+    # --- Write one page per example file ------------------------------------
+    for src in "$EXAMPLES_SRC"/*.c "$EXAMPLES_SRC"/*.cxx; do
+        [ -f "$src" ] || continue
+        base=$(basename "$src")
+        ext="${base##*.}"
+        name="${base%.*}"
+        lang="c"
+        [ "$ext" = "cxx" ] && lang="cpp"
+        desc=$(grep -m1 '^ \* [A-Z]' "$src" | sed 's/^ \* //' || true)
+
+        {
+            printf "# %s\n\n" "$name"
             if [ -n "$desc" ]; then
                 printf "%s\n\n" "$desc"
             fi
             printf '```%s\n' "$lang"
             cat "$src"
-            printf '\n```\n\n'
-        done
-    } > "$API_DIR/examples.md"
-    echo "  Examples page written to $API_DIR/examples.md"
+            printf '\n```\n'
+        } > "$API_DIR/examples/${name}.md"
+        echo "    → examples/${name}.md"
+    done
+
+    echo "  Examples pages written to $API_DIR/examples/"
     exit 0
 fi
 

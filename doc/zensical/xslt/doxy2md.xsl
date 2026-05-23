@@ -237,7 +237,7 @@
          should suppress the extra blank line wrapping -->
     <xsl:variable name="has-block"
       select="parameterlist or simplesect or programlisting
-              or itemizedlist or orderedlist or verbatim or parblock"/>
+              or itemizedlist or orderedlist or verbatim or parblock or xrefsect"/>
     <xsl:choose>
       <xsl:when test="$has-block">
         <xsl:apply-templates/>
@@ -306,11 +306,15 @@
         <xsl:with-param name="refmap"  select="$refmap-text"/>
       </xsl:call-template>
     </xsl:variable>
+    <!-- Use plain link text for page/compound refs; backtick style for code symbols -->
+    <xsl:variable name="is-page" select="@kindref = 'compound' and not(starts-with($refid, 'group__'))"/>
     <xsl:choose>
       <xsl:when test="$refmap-line != ''">
-        <xsl:text>[`</xsl:text>
+        <xsl:text>[</xsl:text>
+        <xsl:if test="not($is-page)"><xsl:text>`</xsl:text></xsl:if>
         <xsl:value-of select="$name"/>
-        <xsl:text>`](</xsl:text>
+        <xsl:if test="not($is-page)"><xsl:text>`</xsl:text></xsl:if>
+        <xsl:text>](</xsl:text>
         <xsl:value-of select="$refmap-line"/>
         <xsl:text>)</xsl:text>
       </xsl:when>
@@ -332,11 +336,14 @@
         <xsl:with-param name="refmap"  select="$refmap-text"/>
       </xsl:call-template>
     </xsl:variable>
+    <xsl:variable name="is-page" select="@kindref = 'compound' and not(starts-with($refid, 'group__'))"/>
     <xsl:choose>
       <xsl:when test="$refmap-line != ''">
-        <xsl:text>[`</xsl:text>
+        <xsl:text>[</xsl:text>
+        <xsl:if test="not($is-page)"><xsl:text>`</xsl:text></xsl:if>
         <xsl:value-of select="$name"/>
-        <xsl:text>`](</xsl:text>
+        <xsl:if test="not($is-page)"><xsl:text>`</xsl:text></xsl:if>
+        <xsl:text>](</xsl:text>
         <xsl:value-of select="$refmap-line"/>
         <xsl:text>)</xsl:text>
       </xsl:when>
@@ -709,6 +716,42 @@
        Suppress elements that should not appear in the output
        ====================================================================== -->
   <xsl:template match="location|inbodydescription|inheritancegraph|collaborationgraph"/>
+
+  <!-- ======================================================================
+       xrefsect: Doxygen @deprecated / @bug / @todo cross-reference sections.
+       Rendered as a named admonition.  The xreftitle (e.g. "Deprecated")
+       maps to the admonition type used by Zensical.
+       ====================================================================== -->
+  <xsl:template match="xrefsect">
+    <xsl:variable name="title" select="normalize-space(xreftitle)"/>
+    <xsl:variable name="admonition-type">
+      <xsl:choose>
+        <xsl:when test="$title = 'Deprecated'">warning</xsl:when>
+        <xsl:when test="$title = 'Bug'">danger</xsl:when>
+        <xsl:when test="$title = 'Todo'">note</xsl:when>
+        <xsl:otherwise>note</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:text>&#xa;!!! </xsl:text>
+    <xsl:value-of select="$admonition-type"/>
+    <xsl:text> "</xsl:text>
+    <xsl:value-of select="$title"/>
+    <xsl:text>"&#xa;    </xsl:text>
+    <xsl:apply-templates select="xrefdescription" mode="inline"/>
+    <xsl:text>&#xa;&#xa;</xsl:text>
+  </xsl:template>
+
+  <!-- Suppress the xreftitle (already consumed by xrefsect template above) -->
+  <xsl:template match="xreftitle"/>
+  <xsl:template match="xreftitle" mode="inline"/>
+
+  <!-- xrefdescription: block container inside xrefsect -->
+  <xsl:template match="xrefdescription">
+    <xsl:apply-templates/>
+  </xsl:template>
+  <xsl:template match="xrefdescription" mode="inline">
+    <xsl:apply-templates mode="inline"/>
+  </xsl:template>
 
   <!-- Fall-through for unrecognised desc elements: emit their text inline -->
   <xsl:template match="*" mode="inline">

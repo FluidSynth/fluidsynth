@@ -98,12 +98,14 @@ nav = [
                 "usage/synth-context.md",
                 "usage/advanced.md",
             ]},
+            # __API_NAV_BEGIN__
             {"🔍 API Reference" = [
                 "api/index.md",
                 "api/recent-changes.md",
                 "api/deprecated.md",
                 "api/examples.md",
             ]},
+            # __API_NAV_END__
             {"⚙️ Settings Reference" = [
                 "settings/index.md",
                 "settings/audio.md",
