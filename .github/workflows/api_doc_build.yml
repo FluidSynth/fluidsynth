@@ -1,12 +1,28 @@
-name: API Doc Build
+name: API Doc & Wiki Build
 
 on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/rendering-regression.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/windows.yml'
+      - '.cirrus.yml'
+      - 'README.md'
+
+    workflow_dispatch:
 
 env:
   BUILD_TYPE: Release
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
   build:
@@ -35,6 +51,30 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config $BUILD_TYPE --target doxygen
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+
+    - name: Install zensical
+      run: pip install zensical
+
+    - name: Build
+      run: zensical build --clean
+
+    - name: Publish Wiki to GH Pages Repo
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: ${{runner.workspace}}/fluidsynth/.zensical/wiki/
+        repository-name: FluidSynth/fluidsynth.github.io
+        branch: main
+        ssh-key: ${{ secrets.DEPLOY_API_TOKEN }}
+        target-folder: wiki/
+        clean: true
+        commit-message: Updating wiki from fluidsynth master
+        git-config-name: Zensical Deploy
+        git-config-email: fluid-wiki-deploy@fluidsynth.github.io
 
     - name: Publish API Docs to GH Pages
       uses: JamesIves/github-pages-deploy-action@v4

@@ -67,7 +67,7 @@ static int fluid_handle_voice_count(void *data, int ac, char **av,
 void fluid_shell_settings(fluid_settings_t *settings)
 {
     fluid_settings_register_str(settings, "shell.prompt", "", 0);
-    fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0);
+    fluid_settings_register_int(settings, "shell.port", 0, 0, 65535, 0);
 }
 
 
@@ -4480,6 +4480,17 @@ new_fluid_server2(fluid_settings_t *settings,
     {
         FLUID_FREE(server);
         return NULL;
+    }
+
+    if(port == 0)
+    {
+        int selected_port = fluid_server_socket_get_port(server->socket);
+
+        if(selected_port != FLUID_FAILED)
+        {
+            fluid_settings_setint(settings, "shell.port", selected_port);
+            FLUID_LOG(FLUID_INFO, "shell.port=0, using automatically selected port %d", selected_port);
+        }
     }
 
     return server;

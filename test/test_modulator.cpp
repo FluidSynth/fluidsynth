@@ -43,28 +43,28 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                             | FLUID_MOD_POSITIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 0, Range, true, nullptr);
             TEST_ASSERT(v1 == 0.0f);
 
             // skip midpoint validation for concave and convex since we're not checking correctness of concave and convex implementations here
             if(Mapping[i] != FLUID_MOD_CONCAVE && Mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 TEST_ASSERT(std::fabs(v1 - UnipolarConvexMid) <= 1e-6);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 TEST_ASSERT(std::fabs(v1 - UnipolarConcaveMid) <= 1e-6);
             }
 
-            v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 127, Range, true, nullptr);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
@@ -80,27 +80,27 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                             | FLUID_MOD_NEGATIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 127, Range, true, nullptr);
             TEST_ASSERT(v1 == 0.0f);
 
             if(Mapping[i] != FLUID_MOD_CONCAVE && Mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 0.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true, nullptr);
                 TEST_ASSERT(std::fabs(v1 - UnipolarConvexMid) <= 1e-6);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true, nullptr);
                 TEST_ASSERT(std::fabs(v1 - UnipolarConcaveMid) <= 1e-6);
             }
             
-            v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 0, Range, true, nullptr);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
@@ -116,29 +116,29 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                             | FLUID_MOD_POSITIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 0, Range, true, nullptr);
             TEST_ASSERT(v1 == -1.0f);
 
             if(Mapping[i] != FLUID_MOD_CONCAVE && Mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? 1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
                 // v1 should be zero exactly
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 TEST_ASSERT(v1 == BipolarConvexMid);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
                 // v1 should be zero exactly
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 TEST_ASSERT(v1 == BipolarConcaveMid);
             }
 
-            v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 127, Range, true, nullptr);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
@@ -154,29 +154,29 @@ static void test_mod_source_mapping(fluid_mod_t *mod)
                             | FLUID_MOD_NEGATIVE
                             );
 
-            v1 = fluid_mod_transform_source_value(mod, 127, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 127, Range, true, nullptr);
             TEST_ASSERT(v1 == -1.0f);
 
             if(Mapping[i] != FLUID_MOD_CONCAVE && Mapping[i] != FLUID_MOD_CONVEX)
             {
-                v1 = fluid_mod_transform_source_value(mod, 64, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64, Range, true, nullptr);
                 tmp = ((mod->flags1 & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH) ? -1.0f : mid;
                 TEST_ASSERT(v1 == tmp);
             }
             else if(Mapping[i] == FLUID_MOD_CONVEX)
             {
                 // v1 should be zero exactly
-                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true, nullptr);
                 TEST_ASSERT(v1 == BipolarConvexMid);
             }
             else if(Mapping[i] == FLUID_MOD_CONCAVE)
             {
                 // v1 should be zero exactly
-                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true);
+                v1 = fluid_mod_transform_source_value(mod, 64-1, Range, true, nullptr);
                 TEST_ASSERT(v1 == BipolarConcaveMid);
             }
 
-            v1 = fluid_mod_transform_source_value(mod, 0, Range, true);
+            v1 = fluid_mod_transform_source_value(mod, 0, Range, true, nullptr);
             tmp = get_mod_max(mod);
             TEST_ASSERT(v1 == tmp);
         }
@@ -201,7 +201,7 @@ static void test_mod_no_source(fluid_mod_t *mod)
                 v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, nullptr);
                 TEST_ASSERT(tmp == Range);
                 TEST_ASSERT(v1 == Range);
-                v1 = fluid_mod_transform_source_value(mod, v1, Range, false);
+                v1 = fluid_mod_transform_source_value(mod, v1, Range, false, nullptr);
                 TEST_ASSERT(v1 == 1.0f);
             }
         }
@@ -212,7 +212,7 @@ static void test_mod_no_source(fluid_mod_t *mod)
     v1 = fluid_mod_get_source_value(mod->src2, mod->flags2, &tmp, nullptr);
     TEST_ASSERT(tmp == Range);
     TEST_ASSERT(v1 == Range);
-    v1 = fluid_mod_transform_source_value(mod, v1, Range, false);
+    v1 = fluid_mod_transform_source_value(mod, v1, Range, false, nullptr);
     TEST_ASSERT(v1 == 1.0f);
 }
 
@@ -234,7 +234,7 @@ static void test_custom_mapping(fluid_mod_t *mod)
     for(int i = 0; i <= Range; i++)
     {
         v = i;
-        v = fluid_mod_transform_source_value(mod, v, Range, false);
+        v = fluid_mod_transform_source_value(mod, v, Range, false, nullptr);
         TEST_ASSERT(-1. <= v && v <= 1. && v == (i*1.)/Range);
     }
 }

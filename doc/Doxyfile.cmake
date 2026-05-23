@@ -24,7 +24,7 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS = YES
 SEPARATE_MEMBER_PAGES = NO
 TAB_SIZE = 8
-ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1\_linebr@{"
+ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1^^@{"
 ALIASES += endlifecycle="@}"
 ALIASES += setting{1}="\ref settings_\1"
 OPTIMIZE_OUTPUT_FOR_C = YES
@@ -89,7 +89,6 @@ INPUT = \
 @CMAKE_SOURCE_DIR@/doc/usage \
 @CMAKE_SOURCE_DIR@/doc/reverbators.md \
 @CMAKE_SOURCE_DIR@/include \
-@CMAKE_SOURCE_DIR@/include/fluidsynth \
 @CMAKE_SOURCE_DIR@/src \
 @CMAKE_BINARY_DIR@/include/fluidsynth \
 @CMAKE_BINARY_DIR@/doc/fluidsettings.txt

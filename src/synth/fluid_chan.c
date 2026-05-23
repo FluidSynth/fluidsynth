@@ -191,6 +191,9 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
 
         chan->pitch_wheel_sensitivity = 2; /* two semi-tones */
 
+        /* Modulation depth range (GM2 RPN 0x05): default is 50 cents (half a semitone) */
+        chan->modulation_depth_range = 50.0f;
+
         /* Just like panning, a value of 64 indicates no change for sound ctrls */
         for(i = SOUND_CTRL1; i <= SOUND_CTRL10; i++)
         {

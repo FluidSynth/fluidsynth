@@ -43,13 +43,13 @@ out of the box.
 
 Additional audio driver options that define the audio quality and latency include
 \setting{audio_sample-format}, \setting{audio_period-size}, and
-\setting{audio_periods}. The synthesizer's \setting{synth.sample-rate} is also
+\setting{audio_periods}. The synthesizer's \setting{synth_sample-rate} is also
 involved. The details are described later.
 
 Important: Configure the synthesizer before creating the audio driver.
-In particular, set \setting{synth.sample-rate} before instantiating the synth
+In particular, set \setting{synth_sample-rate} before instantiating the synth
 with new_fluid_synth(). After the synth has been created, changing
-\setting{synth.sample-rate} in the settings object may not change the sample
+\setting{synth_sample-rate} in the settings object may not change the sample
 rate used by the synthesizer, while audio drivers created later may
 use the updated setting value and cause the audio to be played out of tune. 
 If you need to change the sample rate, recreate both the synthesizer and the 

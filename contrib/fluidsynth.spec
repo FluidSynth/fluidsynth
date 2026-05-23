@@ -97,7 +97,6 @@ This package contains the shared library for Fluidsynth.
 # manually install systemd files
 install -Dm 644 build/fluidsynth.conf %{buildroot}%{_fillupdir}/sysconfig.%{name}
 install -Dm 644 build/fluidsynth.service %{buildroot}%{_unitdir}/%{name}.service
-install -Dm 644 build/fluidsynth.tmpfiles %{buildroot}%{_tmpfilesdir}/%{name}.conf
 install -d %{buildroot}%{_sbindir}
 ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
@@ -128,7 +127,6 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 %{_unitdir}/%{name}.service
 %{_sbindir}/rc%{name}
 %{_fillupdir}/sysconfig.%{name}
-%{_tmpfilesdir}/%{name}.conf
 %endif
 
 %files devel

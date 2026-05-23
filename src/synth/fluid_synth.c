@@ -87,6 +87,7 @@ static int fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t *synth, int c
 static int fluid_synth_update_key_pressure_LOCAL(fluid_synth_t *synth, int chan, int key);
 static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan);
+static int fluid_synth_update_modulation_depth_range_LOCAL(fluid_synth_t *synth, int chan);
 static int fluid_synth_set_preset(fluid_synth_t *synth, int chan,
                                   fluid_preset_t *preset);
 static int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
@@ -661,6 +662,36 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
     return (unsigned int)(i * synth->sample_rate / 1000.0f);
 }
 
+/* Create the default tuning (bank 0, prog 0) and assign it to all channels. See MIDI RP-020:
+ * Defaults for Scale/Octave Tuning
+ * "If tuning presets are not supported by the instrument, it is assumed that the initial tuning of the instrument is equal
+ * temperament. If [tuning] presets are supported, it is suggested that the first [tuning] preset, selected by Bank 0H and Preset 0H, would be
+ * equal temperament. Tuning adjusters should begin by selecting Bank 0H, Preset 0H in order to start from equal
+ * temperament, if that is the desired behavior."
+ *
+ * This ensures that MTS SysEx messages modifying tuning 0/0 will automatically affect all channels.
+ */
+static FLUID_INLINE int fluid_synth_reinitialize_tuning(fluid_synth_t *synth)
+{
+    int i, res;
+
+    // Unassign the default tuning from all channels, unreferenced and delete it
+    res = fluid_synth_replace_tuning_LOCK(synth, NULL, 0, 0, FALSE);
+    if(res != FLUID_OK)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to reset default tuning during system reset");
+    }
+
+    /* Reset tuning 0/0 back to equal temperament, as per MIDI RP-020.
+     * This also propagates the new tuning to all channels currently using tuning 0/0. */
+    for(i = 0; i < synth->midi_channels && res == FLUID_OK; i++)
+    {
+        res = fluid_synth_activate_tuning(synth, i, 0, 0, FALSE);
+    }
+
+    return res;
+}
+
 /**
  * Create new FluidSynth instance.
  * @param settings Configuration parameters to use (used directly).
@@ -1130,6 +1161,12 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->bank_select = FLUID_BANK_STYLE_MMA;
     }
 
+    if(fluid_synth_reinitialize_tuning(synth) != FLUID_OK)
+    {
+        // out of memory
+        goto error_recovery;
+    }
+
     fluid_iir_filter_init_table(synth->iir_sincos_table, synth->sample_rate);
     fluid_synth_process_event_queue(synth);
 
@@ -1309,7 +1346,6 @@ delete_fluid_synth(fluid_synth_t *synth)
 
         FLUID_FREE(synth->voice);
     }
-
 
     /* free the tunings, if any */
     if(synth->tuning != NULL)
@@ -1695,7 +1731,7 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
  * Send a MIDI controller event on a MIDI channel.
  *
  * Most CCs are 7-bits wide in FluidSynth. There are a few exceptions which may be 14-bits wide as are documented here:
- * https://github.com/FluidSynth/fluidsynth/wiki/FluidFeatures#midi-control-change-implementation-chart
+ * https://www.fluidsynth.org/wiki/FluidFeatures#midi-control-change-implementation-chart
  *
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -2072,6 +2108,15 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 break;
 
             case RPN_MODULATION_DEPTH_RANGE:
+                /* MSB = semitones, LSB = 1/128 semitones (cent fraction)
+                 * Default per GM2: 0 semitones + 64/128 = 50 cents
+                 * Ignored for "rhythm channels" */
+                if(chan->channel_type == CHANNEL_TYPE_MELODIC)
+                {
+                    fluid_channel_set_modulation_depth_range(chan,
+                        msb_value * 100.0f + lsb_value * 100.0f / 128.0f);
+                    fluid_synth_update_modulation_depth_range_LOCAL(synth, channum);
+                }
                 break;
             }
         }
@@ -2909,7 +2954,7 @@ fluid_synth_system_reset(fluid_synth_t *synth)
 static int
 fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
 {
-    int i;
+    int i, res;
 
     if(synth->verbose)
     {
@@ -2922,6 +2967,8 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
     {
         fluid_channel_reset(synth->channel[i]);
     }
+
+    res = fluid_synth_reinitialize_tuning(synth);
 
     /* Basic channel 0, Mode Omni On Poly */
     fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
@@ -2936,7 +2983,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t *synth)
         synth->portamento_time_has_seen_lsb = 0;
     }
 
-    return FLUID_OK;
+    return res;
 }
 
 /**
@@ -3177,6 +3224,14 @@ static int
 fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t *synth, int chan)
 {
     return fluid_synth_modulate_voices_LOCAL(synth, chan, 0, FLUID_MOD_PITCHWHEELSENS);
+}
+
+/* Local synthesis thread variant: update voices after modulation depth range RPN change.
+ * Re-applies GEN_VIBLFOTOPITCH and GEN_MODLFOTOPITCH with the new channel multiplier. */
+static int
+fluid_synth_update_modulation_depth_range_LOCAL(fluid_synth_t *synth, int chan)
+{
+    return fluid_synth_modulate_voices_LOCAL(synth, chan, 1, MODULATION_MSB);
 }
 
 /**
@@ -7899,7 +7954,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_reverb_mod, data, 256, TRUE);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_reverb_mod, data, 256, TRUE, NULL);
             FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
             break;
@@ -7907,7 +7962,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
         case GEN_CHORUSSEND:
             fluid_clip(data, 0, 255);
             /* transform the input value */
-            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_chorus_mod, data, 256, TRUE);
+            converted_sf2_generator_value = fluid_mod_transform_source_value(&default_chorus_mod, data, 256, TRUE, NULL);
             FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
             converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
             break;
