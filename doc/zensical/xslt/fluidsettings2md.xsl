@@ -182,6 +182,7 @@
        ====================================================================== -->
   <xsl:template name="inline-html">
     <xsl:param name="node"/>
+    <xsl:param name="list-indent" select="'  '"/>
     <xsl:for-each select="$node/node()">
       <xsl:choose>
         <xsl:when test="self::text()">
@@ -196,6 +197,26 @@
           <xsl:text>`</xsl:text>
           <xsl:value-of select="."/>
           <xsl:text>`</xsl:text>
+        </xsl:when>
+        <xsl:when test="self::*[name()='ul']">
+          <xsl:text>&#xa;&#xa;</xsl:text>
+          <xsl:for-each select="li">
+            <xsl:value-of select="concat($list-indent, '* ')"/>
+            <!-- Recurse for the content of the li, pass increased indent for nested lists -->
+            <xsl:call-template name="inline-html">
+              <xsl:with-param name="node" select="."/>
+              <xsl:with-param name="list-indent" select="concat($list-indent, '  ')"/>
+            </xsl:call-template>
+          <xsl:text>&#xa;&#xa;</xsl:text>
+          </xsl:for-each>
+        </xsl:when>
+        <xsl:when test="self::*[name()='li']">
+          <xsl:value-of select="concat($list-indent, '* ')"/>
+          <xsl:call-template name="inline-html">
+            <xsl:with-param name="node" select="."/>
+            <xsl:with-param name="list-indent" select="concat($list-indent, '  ')"/>
+          </xsl:call-template>
+          <xsl:text>&#xa;</xsl:text>
         </xsl:when>
         <xsl:when test="self::*[name()='strong' or name()='b']">
           <xsl:text>**</xsl:text>
