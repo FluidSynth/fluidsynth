@@ -237,8 +237,98 @@ if [ "$MODE" = "doxy" ]; then
         done | sort | cut -f2
     )
 
+    echo "  Writing api/index.md done."
+
+    # ------------------------------------------------------------------
+    # Generate api/deprecated.md (list of deprecated members)
+    # ------------------------------------------------------------------
+    echo "  Generating deprecated.md ..."
+    DEPRECATED_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//memberdef[.//simplesect[@kind=&apos;deprecated&apos;] or .//xrefsect[xreftitle=&apos;Deprecated&apos;]]">
+      <xsl:value-of select="name"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="normalize-space(briefdescription)"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="@id"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    {
+        printf "# Deprecated API\n\n"
+        printf "The following API members have been deprecated and may be removed in a future release.\n\n"
+        printf "| Name | Description |\n"
+        printf "|------|-------------|\n"
+
+        while IFS= read -r refid; do
+            [ -z "$refid" ] && continue
+            group_xml="$XML_DIR/${refid}.xml"
+            [ -f "$group_xml" ] || continue
+
+            while IFS=$'\t' read -r member_name member_brief _member_id; do
+                [ -z "$member_name" ] && continue
+                # Compute the filename from the refid
+                filename=$(echo "$refid" \
+                    | sed 's/^group__//' \
+                    | sed 's/__/-/g')
+                # The anchor matches the {#member_name} heading IDs emitted by doxy2md.xsl
+                printf '| [`%s`](%s.md#%s) | %s |\n' \
+                    "$member_name" "$filename" "$member_name" "$member_brief"
+            done < <(echo "$DEPRECATED_XSL" | xsltproc - "$group_xml")
+        done <<< "$GROUP_REFIDS"
+    } > "$OUTPUT_DIR/deprecated.md"
+    echo "    → deprecated.md"
+
     echo "  Done. API pages written to $OUTPUT_DIR/"
     exit 0
 fi
 
+# ---------------------------------------------------------------------------
+# MODE: examples  (doc/examples/ → api/examples.md + api/examples/*.c)
+# ---------------------------------------------------------------------------
+if [ "$MODE" = "examples" ]; then
+    EXAMPLES_SRC="$INPUT"
+    API_DIR="$OUTPUT_DIR"
+
+    if [ ! -d "$EXAMPLES_SRC" ]; then
+        echo "ERROR: examples directory not found: $EXAMPLES_SRC" >&2
+        exit 1
+    fi
+
+    mkdir -p "$API_DIR/examples"
+
+    {
+        printf "# Code Examples\n\n"
+        printf "The following self-contained example programs demonstrate how to use the FluidSynth API.\n\n"
+
+        for src in "$EXAMPLES_SRC"/*.c "$EXAMPLES_SRC"/*.cxx; do
+            [ -f "$src" ] || continue
+            base=$(basename "$src")
+            ext="${base##*.}"
+            name="${base%.*}"
+            # Copy the source file
+            cp "$src" "$API_DIR/examples/$base"
+            # Determine fenced code language
+            lang="c"
+            [ "$ext" = "cxx" ] && lang="cpp"
+            # Extract brief description from first comment line
+            desc=$(grep -m1 '^ \* [A-Z]' "$src" | sed 's/^ \* //' || true)
+            printf "## %s\n\n" "$name"
+            if [ -n "$desc" ]; then
+                printf "%s\n\n" "$desc"
+            fi
+            printf '```%s\n' "$lang"
+            cat "$src"
+            printf '\n```\n\n'
+        done
+    } > "$API_DIR/examples.md"
+    echo "  Examples page written to $API_DIR/examples.md"
+    exit 0
+fi
+
 usage
+

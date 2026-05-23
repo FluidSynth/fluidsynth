@@ -100,6 +100,9 @@ nav = [
             ]},
             {"🔍 API Reference" = [
                 "api/index.md",
+                "api/recent-changes.md",
+                "api/deprecated.md",
+                "api/examples.md",
             ]},
             {"⚙️ Settings Reference" = [
                 "settings/index.md",
@@ -275,8 +278,10 @@ features = [
 
     # When pruning is enabled, only the visible navigation items are included
     # in the rendered HTML, reducing the size of the built site by 33% or more.
+    # NOTE: keep disabled so that dynamically-generated API pages (not listed
+    # individually in nav) still render with a visible sidebar.
     # https://zensical.org/docs/setup/navigation/#navigation-pruning
-    "navigation.prune",
+    #"navigation.prune",
 
     # When sections are enabled, top-level sections are rendered as groups in
     # the sidebar for viewports above 1220px, but remain as-is on mobile.
@@ -393,6 +398,7 @@ icon = "lucide/globe"
 link = "https://www.fluidsynth.org/"
 
 
+[project.markdown_extensions.attr_list]
 [project.markdown_extensions.admonition]
 [project.markdown_extensions.pymdownx.details]
 [project.markdown_extensions.pymdownx.magiclink]

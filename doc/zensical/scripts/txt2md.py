@@ -31,7 +31,7 @@ PAGE_MAP = {
     "synth-context":      ("synth-context.md",       'Understanding the "synthesis context"'),
     "Advanced":           ("advanced.md",            "Advanced features"),
     "UsageGuide":         ("index.md",               "Usage Guide"),
-    "RecentChanges":      ("../changelog.md",        "Recent Changes"),
+    "RecentChanges":      ("../api/recent-changes.md", "Recent API Changes"),
     "ReverbOverview":     ("../reverbators.md",      "Reverb Overview"),
     "fluidsettings":      ("../settings/index.md",   "Settings Reference"),
     "deprecated":         ("../deprecated.md",       "Deprecated Functions"),
@@ -80,7 +80,7 @@ def setting_to_link(setting_id: str) -> str:
     display = f"{group}.{name}"
     # Anchor uses underscores throughout (matches XSL translate(name, '.', '_'))
     anchor = f"settings_{group}_{name.replace('.', '_')}"
-    return f"[`{display}`](../settings/{group}.md#{anchor})"
+    return f"[{display}](../settings/{group}.md#{anchor})"
 
 
 def convert_doxygen_to_markdown(content: str, page_prefix: str = "") -> str:

@@ -115,6 +115,26 @@ if ( DOXYGEN_FOUND )
       COMMENT "Converting usage .txt files to Markdown"
     )
 
+    # -- Convert recent_changes.txt to API changelog Markdown -----------------
+    add_custom_target ( recent_changes2md
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${WIKI_DOCS_DIR}/api
+      COMMAND ${Python3_EXECUTABLE}
+          ${ZENSICAL_SCRIPTS}/txt2md.py
+          --page-prefix ../usage/
+          ${CMAKE_CURRENT_SOURCE_DIR}/recent_changes.txt
+          ${WIKI_DOCS_DIR}/api/recent-changes.md
+      COMMENT "Converting recent_changes.txt to Markdown"
+    )
+
+    # -- Generate API examples page --------------------------------------------
+    add_custom_target ( examples2md
+      COMMAND bash ${XSLT_DIR}/run-xslt.sh
+          examples
+          ${CMAKE_CURRENT_SOURCE_DIR}/examples
+          ${WIKI_DOCS_DIR}/api
+      COMMENT "Generating API examples page"
+    )
+
     # -- Build the unified wiki + API documentation site (XSLT pipeline) ------
     # Uses zensical.toml from the repository root which points docs_dir to
     # doc/wiki/.  Generated API/settings/usage pages are written there by the
@@ -124,7 +144,7 @@ if ( DOXYGEN_FOUND )
           COMMAND ${ZENSICAL_EXECUTABLE} build --clean
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
           DEPENDS fluidsettings2md_xslt doxy2md_xslt
-                  usage2md
+                  usage2md recent_changes2md examples2md
           COMMENT "Building unified wiki and API documentation site (XSLT pipeline)"
       )
     elseif ( NOT LIBXSLT_XSLTPROC_EXECUTABLE )
