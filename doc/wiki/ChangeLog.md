@@ -1,65 +1,11 @@
-# 📝 Changelog
+# 📝 Release Notes
 
-* [2.5.4](#fluidsynth-254)
-* [2.5.3](#fluidsynth-253)
-* [2.5.2](#fluidsynth-252)
-* [2.5.1](#fluidsynth-251)
-* [2.5.0](#fluidsynth-250)
-* [2.4.8](#fluidsynth-248)
-* [2.4.7](#fluidsynth-247)
-* [2.4.6](#fluidsynth-246)
-* [2.4.5](#fluidsynth-245)
-* [2.4.4](#fluidsynth-244)
-* [2.4.3](#fluidsynth-243)
-* [2.4.2](#fluidsynth-242)
-* [2.4.1](#fluidsynth-241)
-* [2.4.0](#fluidsynth-240)
-* [2.3.7](#fluidsynth-237)
-* [2.3.6](#fluidsynth-236)
-* [2.3.5](#fluidsynth-235)
-* [2.3.4](#fluidsynth-234)
-* [2.3.3](#fluidsynth-233)
-* [2.3.2](#fluidsynth-232)
-* [2.3.1](#fluidsynth-231)
-* [2.3.0](#fluidsynth-230)
-* [2.2.9](#fluidsynth-229)
-* [2.2.8](#fluidsynth-228)
-* [2.2.7](#fluidsynth-227)
-* [2.2.6](#fluidsynth-226)
-* [2.2.5](#fluidsynth-225)
-* [2.2.4](#fluidsynth-224)
-* [2.2.3](#fluidsynth-223)
-* [2.2.2](#fluidsynth-222)
-* [2.2.1](#fluidsynth-221)
-* [2.2.0](#fluidsynth-220)
-* [2.1.9](#fluidsynth-219)
-* [2.1.8](#fluidsynth-218)
-* [2.1.7](#fluidsynth-217)
-* [2.1.6](#fluidsynth-216)
-* [2.1.5](#fluidsynth-215)
-* [2.1.4](#fluidsynth-214)
-* [2.1.3](#fluidsynth-213)
-* [2.1.2](#fluidsynth-212)
-* [2.1.1](#fluidsynth-211)
-* [2.1.0](#fluidsynth-210)
-* [2.0.9](#fluidsynth-209)
-* [2.0.8](#fluidsynth-208)
-* [2.0.7](#fluidsynth-207)
-* [2.0.6](#fluidsynth-206)
-* [2.0.5](#fluidsynth-205)
-* [2.0.4](#fluidsynth-204)
-* [2.0.3](#fluidsynth-203)
-* [2.0.2](#fluidsynth-202)
-* [2.0.1](#fluidsynth-201)
-* [2.0.0](#fluidsynth-200)
-* [1.1.11 and older](#fluidsynth-1111)
-
-# FluidSynth 2.5.4
+## FluidSynth 2.5.4
 
 * The TCP port, fluidsynth's shell server may listen to, is now auto-selected by default (#1763)
 * The systemd lock-file `/run/lock/fluidsynth` has been removed (#1683)
 
-# FluidSynth 2.5.3
+## FluidSynth 2.5.3
 
 * Support building for tvOS (#1743, thanks to @Ghabry)
 * Several minor fixes for the CMake buildsystem (#1742)
@@ -67,14 +13,14 @@
 * Fix a build issue when fluidsynth is consumed as part of a bigger CMake project (#1752, thanks to @thal)
 * Fix fluidsynth being unable to load SoundFonts when being compiled with an old version of MinGW (#1755)
 
-# FluidSynth 2.5.2
+## FluidSynth 2.5.2
 
 * The CoreAudio driver has gained iOS support (#1720, thanks to @neoharp-dev)
 * Improve error handling and reporting when loading default soundfont (#1712)
 * Improve logging and side effect mitigation when basic channel configuration changes (#1695)
 * Fix `CVE-2025-68617` - a heap-based use-after-free involving DLS files (GHSA-ffw2-xvvp-39ch)
 
-# FluidSynth 2.5.1
+## FluidSynth 2.5.1
 
 * Previous versions have incorrectly exposed private C++ and inline symbols; they are now hidden from the library (#1676)
 * FluidSynth now resets DataEntry values when it receives (N)RPN MSB/LSB to prevent off-tuned channels (#1672, thanks to @rsp4jack)
@@ -88,7 +34,7 @@
 * Fix a build issue on macOS (#1684, thanks to @pedrolcl)
 * Fix typos in ALSA log messages (#1704, thanks to @toadster172)
 
-# FluidSynth 2.5.0
+## FluidSynth 2.5.0
 
 Starting with 2.5.0, a C++11-compliant compiler and standard library will be required to compile fluidsynth! Additionally, users now have to link FluidSynth's library `libfluidsynth` against the C++ standard library that was used when compiling fluidsynth.
 
@@ -130,13 +76,13 @@ Starting with 2.5.0, a C++11-compliant compiler and standard library will be req
 For changes related to the public API, pls. [consult the API docs](https://www.fluidsynth.org/api/RecentChanges.html).
 
 
-# FluidSynth 2.4.8
+## FluidSynth 2.4.8
 
 * Fix systemd daemon failing with spaces in Soundfont filenames (#1608)
 * Fix a build issue on OpenIndiana (#1615)
 * FluidSynth now explains why it discards invalid generators when run in verbose mode (#829)
 
-# FluidSynth 2.4.7
+## FluidSynth 2.4.7
 
 * All previous versions of fluidsynth have incorrectly rejected Soundfont files with unknown `INFO` subchunks (#1580, thanks to @spessasus)
 * Fix build for Windows on ARM64 (#1586, thanks to @carlo-bramini)
@@ -146,7 +92,7 @@ For changes related to the public API, pls. [consult the API docs](https://www.f
 * Due to continuing problems with openMP, precompiled Android binaries are now built without openMP support (#1603)
 * Fix a NULL pointer dereference during legato mono playing (#1602)
 
-# FluidSynth 2.4.6
+## FluidSynth 2.4.6
 
 * Fix inconsistent library naming for MSVC vs. MinGW builds (#1543)
 * Fix MIDI player skipping some events when seeking (#1532)
@@ -154,7 +100,7 @@ For changes related to the public API, pls. [consult the API docs](https://www.f
 * Fix several issues when generating API docs with recent versions of Doxygen (#1566, thanks to @mmlr)
 
 
-# FluidSynth 2.4.5
+## FluidSynth 2.4.5
 
 * Prebuilt Windows Binaries were missing `SDL3.dll` (#1510)
 * Fix SDL3 intercepting signals, causing `CTRL+C` to not quit fluidsynth (#1509)
@@ -168,7 +114,7 @@ For changes related to the public API, pls. [consult the API docs](https://www.f
 _Hint to package maintainers: Pls. make sure to install the newly added `fluidsynth.tmpfile`, as [shown here](https://github.com/FluidSynth/fluidsynth/blob/f8cdcb846b5c7c32a1de99db0ff69c4841142a99/contrib/fluidsynth.spec#L101C1-L101C83)._
 
 
-# FluidSynth 2.4.4
+## FluidSynth 2.4.4
 
 * Support for SDL3 has been added, support for SDL2 has been deprecated (#1485, #1478, thanks to @andyvand)
 * Soundfonts that are not respecting the 46 zero-sample padding-space previously sounded incorrect when
@@ -183,7 +129,7 @@ _Hint to package maintainers: Pls. make sure to install the newly added `fluidsy
 Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been superseded by the Autools convention of using environment variables like `CC_FOR_BUILD` and friends (#1501, thanks to @fabiangreffrath)
 
 
-# FluidSynth 2.4.3
+## FluidSynth 2.4.3
 
 * It was discovered, that exclusive class note terminations were too slow (#1467, thanks to @mrbumpy409)
 * Fix a regression introduced in 2.4.0 that allowed the amplitude of a voice playing in delay phase to rise infinitely (#1451)
@@ -195,7 +141,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 *It was found that SDL2 hijacks fluidsynth's `main()` function which causes build problems on Windows, see (#1472). A PR for migrating to SDL3 is highly welcome! If you still want to compile with SDL2 support, you need to explicitly enable it using CMake flag `-Denable-sdl2=1`.
 
 
-# FluidSynth 2.4.2
+## FluidSynth 2.4.2
 
 * Fix audible clicks when turning off voices while using a high filter resonance (#1427)
 * Fix a build failure with MSYS2 and MinGW when processing `VersionResource.rc` (#1448, thanks to @pedrolcl)
@@ -204,7 +150,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Fix a race condition when loading SF3 files containing multiple uncompressed samples (#1457)
 
 
-# FluidSynth 2.4.1
+## FluidSynth 2.4.1
 
 * Enable libsndfile to use filename with non-ASCII characters on Windows (#1416, thanks to @pedrolcl and @stardusteyes)
 * Fix a few commandline encoding related issues on Windows (#1388, #1421, thanks to @pedrolcl)
@@ -213,7 +159,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Minor adjustment to AWE32 NRPN behavior (#1430)
 
 
-# FluidSynth 2.4.0
+## FluidSynth 2.4.0
 
 ### New Features
 
@@ -240,7 +186,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Bogus interpolation of IIR filter coefficients could have caused audible clicks and cracks (#1345)  - yet there is still a potential for clicks and cracks, see #1415
 
 
-# FluidSynth 2.3.7
+## FluidSynth 2.3.7
 
 * Fix SF3 decoder producing crackling sound for loud samples (#1380)
 * MIDI Format 2 is now rejected correctly since it was never supported (#1366)
@@ -248,7 +194,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Fix a regression introduced in 2.3.2 causing fluidsynth to fail discovering Oboe (#1393)
 * Other minor bugs (#1291, #1403)
 
-# FluidSynth 2.3.6
+## FluidSynth 2.3.6
 
 * Fix a build issue on OS/2 (#1320, thanks to @komh)
 * Fix various encoding issues on Windows related to device names (#1322, thanks to @pedrolcl)
@@ -257,7 +203,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Fix timing issues in MIDI player related to incorrect handling of running status (#1351)
 * Fix ignoring LSB for RPN Pitch bend range events (#1357, thanks to @spessasus)
 
-# FluidSynth 2.3.5
+## FluidSynth 2.3.5
 
 * Fix setting `synth.chorus.speed` to its minimum value being reported as out of range (#1284)
 * Fix a regression causing libinstpatch and libsndfile not to be discovered on Windows (#1299)
@@ -266,7 +212,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Add cmake flag `FLUID_HOST_COMPILER` to allow overriding default host compiler required during compilation (#1301)
 * LASH support has been deprecated (#1285)
 
-# FluidSynth 2.3.4
+## FluidSynth 2.3.4
 
 * Fix a build failure when specifying `CMAKE_INSTALL_LIBDIR` as an absolute path (#1261, thanks to @OPNA2608)
 * Fix some MIDI files never finish playing (#1257, thanks to @joanbm)
@@ -275,28 +221,28 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Fix pipewire's Jack implementation not found by CMake (#1268, thanks to @pedrolcl)
 * Fix a regression causing the MIDI Player to terminate prematurely (#1272, thanks to @albedozero)
 
-# FluidSynth 2.3.3
+## FluidSynth 2.3.3
 
 * Fix choppy sound when selecting pipewire output (#1230, thanks to @nilninull)
 * Fix build issues on musl-based distros (#1229)
 * Terminate MIDI player once internal synth-ticks overflow to prevent filling up the filesystem (#1233)
 * Fix a bug that allowed playing notes outside of key and velocity ranges (#1250)
 
-# FluidSynth 2.3.2
+## FluidSynth 2.3.2
 
 * Add support for processing all SysEx messages with `synth.device-id=127` (#1206, thanks to @trolley813)
 * Various fixes to linking against static libfluidsynth when consumed through CMake or pkg-config (#1211, #1224, thanks to @FtZPetruska)
 * Added `fluid_player_get_division` (#1220, thanks to @Fruchtzwerg94)
 * Fix a regression introduced in 2.3.1 which broke MIDI player's seamless looping (#1227, thanks to @fabiangreffrath)
 
-# FluidSynth 2.3.1
+## FluidSynth 2.3.1
 
 * Prevent MIDI player from finishing prematurely (#1159, thanks to @topaz)
 * Fix a crash when enumerating rawmidi ALSA devices (#1174, thanks to @Bob131)
 * Restore systemd sandboxing options and make it work with user units (#1181, thanks to @bluca)
 * Handle conflict with pipewire systemd daemon (#1177)
 
-# FluidSynth 2.3.0
+## FluidSynth 2.3.0
 
 ### New Features
 
@@ -314,7 +260,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 *  `audio.jack.autoconnect` erroneously connected to MIDI ports (#1149, thanks to @ReinholdH)
 * Fix build when compiling against OSS 4.0 API (#1150)
 
-# FluidSynth 2.2.9
+## FluidSynth 2.2.9
 
 * Fix regression in WinMIDI driver introduced in 2.2.8 (#1131, #1141 thanks to @albedozero) 
 * Tracks cannot be restarted in MIDI player after reaching EOT (#1138, thanks to @albedozero)
@@ -322,21 +268,21 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Harden systemd service file
 * Dependency libs for precompiled Android binaries have been updated
 
-# FluidSynth 2.2.8
+## FluidSynth 2.2.8
 
 * ALSA and WinMIDI drivers now pass system real-time messages on to user callback (#1115, thanks to @albedozero)
 * Fix FPU division by zero in `fluid_player_set_tempo()` (#1111)
 * Fix system-wide config file not loaded (#1118)
 * PulseAudio driver now honors `audio.periods` setting (#1127, thanks to @pedrolcl)
 
-# FluidSynth 2.2.7
+## FluidSynth 2.2.7
 
 * Fix file driver not working correctly on Windows (#1076)
 * Add a function to create a sequencer event from a midi event (#1078, thanks to @jimhen3ry)
 * Precompiled x86 binaries are now x87-FPU compatible (#1079)
 * Fix fluidsynth not responding to SIGINT and SIGTERM when using recent SDL2 (#1071, thanks to @mawe42)
 
-# FluidSynth 2.2.6
+## FluidSynth 2.2.6
 
 * Undeprecation and minor revisal of the OSS driver (#1038)
 * Minor improvements to CoreAudio and CoreMidi drivers (#1047, thanks to @bradhowes)
@@ -345,7 +291,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 * Prevent Modulation Envelope from being stuck in decay phase, causing detuned voices and potentially other audible glitches for some soundfonts (#1059)
 * Fix a compilation issue with recent glib (#1063, thanks to @devingryu)
 
-# FluidSynth 2.2.5
+## FluidSynth 2.2.5
 
 * Fix a build failure with CMake < 3.12 (#1003, thanks to @komh)
 * OSS and MidiShare drivers are now deprecated (#1010)
@@ -354,20 +300,20 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 
 _Pls. note that fluidsynth 2.3.0 will require CMake >= 3.13_
 
-# FluidSynth 2.2.4
+## FluidSynth 2.2.4
 
 * Per-channel `ALL_SOUND_OFF` when seeking/stopping player  (#980, thanks to @albedozero)
 * Fix windows related encoding problems (#984, thanks to @tsingakbar)
 * Rewind playlist when calling `fluid_player_play` after all loops are complete (#994, thanks to @albedozero)
 * Fix MinGW related static linking issues (#990, thanks to @realnc) 
 
-# FluidSynth 2.2.3
+## FluidSynth 2.2.3
 
 * FluidSynth did not build on macOS 10.5 and earlier (#946, thanks to @evanmiller)
 * Fix build with CMake <3.7 (#944, thanks to @komh)
 * Fix a NULL dereference in `delete_fluid_ladspa_effect()` (#963)
 
-# FluidSynth 2.2.2
+## FluidSynth 2.2.2
 
 * The MIDI router now handles out-of-range parameters in a smarter manner (#891, thanks to @jjceresa)
 * Keep pedaling effective when the same note is played more than once (#905, thanks to @jjceresa)
@@ -382,7 +328,7 @@ _Pls. note that fluidsynth 2.3.0 will require CMake >= 3.13_
 * `fluidsynth.pc` now includes private libraries for static linking (#904)
 * Fix typos in code and documentation (#939, thanks to @luzpaz)
 
-# FluidSynth 2.2.1
+## FluidSynth 2.2.1
 
 * Make ALSA the default driver on Linux (#878)
 * Coreaudio driver failed to initialize on macOS 11 (#803, thanks to @ringoz)
@@ -393,7 +339,7 @@ _Pls. note that fluidsynth 2.3.0 will require CMake >= 3.13_
 * Old behavior of `fluid_player_join` has been restored to prevent infinite loop in client code (#872)
 * The Soundfont loader code has been refactored, illegal generators will now be skipped more consequently (#823, thanks to @mawe42)
 
-# FluidSynth 2.2.0
+## FluidSynth 2.2.0
 **This release breaks ABI compatibility!** Refer to the [API docs](https://www.fluidsynth.org/api/RecentChanges.html#NewIn2_2_0) for details.
 
 A C++98 compliant compiler is now required to build fluidsynth ([mailing list thread](https://lists.nongnu.org/archive/html/fluid-dev/2020-01/msg00010.html))
@@ -422,23 +368,23 @@ A C++98 compliant compiler is now required to build fluidsynth ([mailing list th
 * Fix race condition in `fluid_player_callback` (#783, thanks to @arcln)
 * Improvements to LADSPA subsystem (#795, thanks to @mawe42)
 
-# FluidSynth 2.1.9
+## FluidSynth 2.1.9
 
 Coreaudio driver failed to initialize on macOS 11 (#803, backport from 2.2.1)
 
-# FluidSynth 2.1.8
+## FluidSynth 2.1.8
 
 * Rapidly changing channel panning could have caused audible artifacts (#768). Affects all versions back to at least `1.1.2`.
 * Fix a use-after-free when loading malformed soundfonts (#808, [CVE-2021-21417](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-6fcq-pxhc-jxc9)). Affects all versions back to at least `1.1.2`.
 * The number of allowed LADSPA effect units has been increased.
 
-# FluidSynth 2.1.7
+## FluidSynth 2.1.7
 
 * a regression introduced in `2.1.0` prevented chorus from being audible when `fluid_synth_process()` was used (#751, thanks to @chirs241097)
 * a regression introduced in `2.0.6` prevented the MIDI player from restarting playback after all files have been played (#755, thanks to @rncbc)
 * fix a double-free violation introduced in `2.0.0` after executing the `info` shell command (#756)
 
-# FluidSynth 2.1.6
+## FluidSynth 2.1.6
 
 SoundFonts may never be unloaded correctly, if
   * polyphony is ever exceeded (#727), or
@@ -450,12 +396,12 @@ Calling `delete_fluid_synth()` does not free those SoundFonts either. Affected a
 
 * fix a heap-based use-after-free (#733)
 
-# FluidSynth 2.1.5
+## FluidSynth 2.1.5
 
 * loading DLS may have failed in certain setup environments (#666)
 * fix a build failure with GCC 4.8 (#661, thanks to @ffontaine)
 
-# FluidSynth 2.1.4
+## FluidSynth 2.1.4
 
 * fix an uninitialized memory access possibly triggering an FPE trap
 * fix several regressions introduced in `2.1.3`:
@@ -463,7 +409,7 @@ Calling `delete_fluid_synth()` does not free those SoundFonts either. Affected a
   * fix a NULL dereference in jack driver
   * fix a stack-based overflow when creating the synth
 
-# FluidSynth 2.1.3
+## FluidSynth 2.1.3
 
 * fix a cross-compilation failure from Win32 to WinARM (#630)
 * fix issues while `fluid_player` is seeking (#634, #646)
@@ -473,14 +419,14 @@ Calling `delete_fluid_synth()` does not free those SoundFonts either. Affected a
 * fix dsound driver playing garbage when terminating fluidsynth (#642, thanks to @jjceresa)
 * avoid memory leaks when using libinstpatch (#643)
 
-# FluidSynth 2.1.2
+## FluidSynth 2.1.2
 
 * fluidsynth now exits with error when user-provided command-line arguments are out-of-range (#623)
 * add verbose error logging to opensles and oboe drivers (#627)
 * fix a memory leak in oboe driver (#626)
 * fix a NULL dereference in the fluidsynth commandline program
 
-# FluidSynth 2.1.1
+## FluidSynth 2.1.1
 
 * a regression introduced in 2.1.0 caused the jack audio driver to not correct a sample-rate mismatch (#607)
 * pkg-config is now being to used to find readline (#606, thanks to @ffontaine)
@@ -490,7 +436,7 @@ Calling `delete_fluid_synth()` does not free those SoundFonts either. Affected a
 * fix a heap-based use-after-free in jack driver (#613)
 * fix the linker possibly not finding libinstpatch (#617, thanks to @realnc)
 
-# FluidSynth 2.1.0
+## FluidSynth 2.1.0
 
 ### New features
 
@@ -512,31 +458,31 @@ Calling `delete_fluid_synth()` does not free those SoundFonts either. Affected a
 * the default `MIDI Pitch Wheel to Initial Pitch` modulator now uses `Fine Tune` as destination generator, allowing it to be overridden by the soundfont designer (#154, thanks to @jjceresa)
 
 
-# FluidSynth 2.0.9
+## FluidSynth 2.0.9
 
 * an implicitly declared function (regression of 2.0.8) caused a pointer to int truncation in CoreAudio driver (#591)
 * fix a stack-based overflow in CoreAudio driver (#594, thanks to @fkmclane)
 
 _Note that this version mistakenly reports as `2.0.8`._
 
-# FluidSynth 2.0.8
+## FluidSynth 2.0.8
 
 * fix incorrect behavior of `fluid_sample_set_sound_data()` (#576, thanks to @swesterfeld)
 * fix voices being mixed incorrectly, causing audible crackle esp. at sample-rates >48kHz (#580)
 * make sure that defining `NDEBUG` disables assertions
 
-# FluidSynth 2.0.7
+## FluidSynth 2.0.7
 
 * fix broken audio output when reverb was active after synth creation (#563)
 * fix debug console messages not being visible for debug builds on Windows
 
-# FluidSynth 2.0.6
+## FluidSynth 2.0.6
 
 * fix an uninitialized memory access, which could have led to NULL dereference or heap corruption in an out-of-memory situation
 * fix a use-after-free when calling `fluid_player_stop()`
 * fix the MIDI player not outputting any sound after stopping and restarting the playback (#550)
 
-# FluidSynth 2.0.5
+## FluidSynth 2.0.5
 
 * the MIDI player erroneously assumed a default tempo of 125 BPM rather than 120 BPM (#519)
 * improve integration of systemd (#516, thanks to @fleger)
@@ -545,7 +491,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * fix several NULL dereferences and memory leaks in jack driver
 * fix a memory leak when creating threads
 
-# FluidSynth 2.0.4
+## FluidSynth 2.0.4
 
 * introduce verbose error reporting for `fluid_settings_*` functions 
 * avoid undefined behavior when `fopen()` directories
@@ -555,7 +501,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * fix build when compiling with MinGW
 * enable network support on Mac by default (#513)
 
-# FluidSynth 2.0.3
+## FluidSynth 2.0.3
 
 * fix handle leak in winmidi driver (#469, thanks to @carlo-bramini)
 * fix build failures when cross compiling (#484)
@@ -564,7 +510,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * silence a warning when loading soundfonts from memory (#485, thanks to @mawe42)
 * minor performance improvements (#461, #471, #482, #486, thanks to @carlo-bramini and @jjceresa)
 
-# FluidSynth 2.0.2
+## FluidSynth 2.0.2
 
 * fix building fluidsynth without any audio drivers  (#447)
 * fix a possibly misaligned memory access in the soundfont loader (#457)
@@ -576,7 +522,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * implement `midi.autoconnect` for jack (#450, thanks to @ColinKinloch)
 * add a cmake option to disable multi-threading (#463, thanks to @carlo-bramini)
 
-# FluidSynth 2.0.1
+## FluidSynth 2.0.1
 
 * implement auto-conntect for CoreMidi  (#427, thanks to @ColinKinloch)
 * fix a build issue with cmake < 3.3
@@ -586,7 +532,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * fix two memory leaks in the soundfont loader (#437)
 * correct upper threshold of `synth.chorus.depth`
 
-# FluidSynth 2.0.0
+## FluidSynth 2.0.0
 
 ### New Features
 * implement polyphonic key pressure (#185, thanks to @mawe42)
@@ -629,7 +575,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * cleanup internal audio rendering and mixing engine (#197)
 * reduce memory consumption of loaded soundfonts (#370, thanks to @mawe42)
 
-# FluidSynth 1.1.11
+## FluidSynth 1.1.11
 
 * fix pkgconfig file for absolute paths (#347, thanks to @krop)
 * add a cmake option for OSS support  (#350, thanks to @Ne01eX)
@@ -639,7 +585,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * avoid SF3 files to be loaded incorrectly (#354, thanks to @mawe42)
 * fix an endless loop in fast file renderer (#367)
 
-# FluidSynth 1.1.10
+## FluidSynth 1.1.10
 
 ### Bug Fixes
 
@@ -656,7 +602,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * enable jack midi driver to support more than 16 midi channels (#326)
 * enable fluidsynth to be set up as systemd user service (#66, #342, thanks to @dvzrv)
 
-# FluidSynth 1.1.9
+## FluidSynth 1.1.9
 
 ### Bug Fixes
 
@@ -679,7 +625,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * implement handling of `FLUID_SEQ_ALLSOUNDSOFF` events in `fluid_seq_fluidsynth_callback()`
 * support for registering audio drivers based on actual needs (#218)
 
-# FluidSynth 1.1.8
+## FluidSynth 1.1.8
 Minor maintenance release to address some issues introduced with 1.1.7:
 
 * fix build against glib < 2.30 (#202)
@@ -689,7 +635,7 @@ Minor maintenance release to address some issues introduced with 1.1.7:
 * compilation with clang is now possible
 * build fixes on OS/2 (thanks to @komh)
 
-# FluidSynth 1.1.7
+## FluidSynth 1.1.7
 This is mainly considered to be a maintenance release, although it brings a few new features, see below. **Note** that this is expected to be the last release to ship the deprecated and unmaintained autotools build system! Make sure you check out [how to build fluidsynth using CMake](BuildingWithCMake.md).
 
 ### Bug fixes
@@ -729,7 +675,7 @@ This is mainly considered to be a maintenance release, although it brings a few 
 * channel, key, velocity and state getter for `fluid_voice_t`
 * tempo, bpm, total length and currentBeat getter for `fluid_player` (#190, thanks to @quiasmo)
 
-# FluidSynth 1.1.6
+## FluidSynth 1.1.6
 ### Fixes and changes
 
 * Handle MIDI End of track events, ticket #100 (Matt Giuca)
@@ -789,7 +735,7 @@ This is mainly considered to be a maintenance release, although it brings a few 
     FluidSynth as backend to DOSBox 
     OK 
 
-# FluidSynth 1.1.5
+## FluidSynth 1.1.5
 This is a pure bug fix release compared to 1.1.4. 
 
 The following bugs are fixed: 
@@ -800,7 +746,7 @@ The following bugs are fixed:
   * JACK: Using jack_free instead of free when needed. Note that this might require a later version of JACK than previously. (reported by Graham Goode) 
   * Update Free Software Foundation address (reported by ogetbilo) 
 
-# FluidSynth 1.1.4
+## FluidSynth 1.1.4
 ### In short
 
 Version 1.1.4 brings: 
@@ -871,7 +817,7 @@ Version 1.1.4 brings:
   * Add out-of-memory checks to fluid_player_add and fluid_player_add_mem [diwic] 
   * reformat fluid_midi.c source according to the coding style. [plcl] 
 
-# FluidSynth 1.1.3
+## FluidSynth 1.1.3
 FluidSynth 1.1.3 is a pure bug-fix release and contains no new functionality. 
 
   * Compilation with LADSPA enabled was broken in 1.1.2 - fixed (plcl, diwic) 
@@ -884,7 +830,7 @@ FluidSynth 1.1.3 is a pure bug-fix release and contains no new functionality.
   * Race condition in alsa_seq / alsa_raw drivers caused them not to quit (diwic) 
   * Only free [example papers online](http://goodexamplepapers.com/) for students 
 
-# FluidSynth 1.1.2
+## FluidSynth 1.1.2
 ### Big changes: 
 
   * New CMake build system [plcl] 
@@ -907,7 +853,7 @@ FluidSynth 1.1.3 is a pure bug-fix release and contains no new functionality.
 
 For a complete list of changes, please see the svn commit log.
 
-# FluidSynth 1.1.1 - "Clarity"
+## FluidSynth 1.1.1 - "Clarity"
 
 Changes from previous version 1.1.0
 
@@ -952,7 +898,7 @@ See "What's new in 1.1.1?" section in developer API documentation for more detai
   * David Fang 
   * Hans Petter Selasky 
 
-# FluidSynth 1.1.0 - "A More Solid Fluid"
+## FluidSynth 1.1.0 - "A More Solid Fluid"
 
 Changes from previous version 1.0.9 
 
@@ -1032,7 +978,7 @@ See "What's new in 1.1.0?" section in developer API documentation for more detai
 
 And many others! 
 
-# FluidSynth 1.0.9 - "A Sound Future"
+## FluidSynth 1.0.9 - "A Sound Future"
 
 Changes from previous version 1.0.8 
 
@@ -1075,7 +1021,7 @@ Changes from previous version 1.0.8
   * [FluidSynth] fink package accepted for Mac OS X (Ebrahim Mayat) 
   * Minor fixes to [FluidSynth] man page (Sven Hoexter) 
 
-# FluidSynth 1.0.8 - "Its about funky time!"
+## FluidSynth 1.0.8 - "Its about funky time!"
 
 Changes from previous version 1.0.7a 
 
