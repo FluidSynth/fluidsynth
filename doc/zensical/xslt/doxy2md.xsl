@@ -427,6 +427,11 @@
         <xsl:apply-templates mode="inline"/>
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
+      <xsl:when test="$kind='important'">
+        <xsl:text>&#xa;!!! danger&#xa;    </xsl:text>
+        <xsl:apply-templates mode="inline"/>
+        <xsl:text>&#xa;&#xa;</xsl:text>
+      </xsl:when>
       <xsl:when test="$kind='attention'">
         <xsl:text>&#xa;!!! attention&#xa;    </xsl:text>
         <xsl:apply-templates mode="inline"/>
@@ -439,6 +444,11 @@
       </xsl:when>
       <xsl:when test="$kind='deprecated'">
         <xsl:text>&#xa;!!! warning "Deprecated"&#xa;    </xsl:text>
+        <xsl:apply-templates mode="inline"/>
+        <xsl:text>&#xa;&#xa;</xsl:text>
+      </xsl:when>
+      <xsl:when test="$kind='bug'">
+        <xsl:text>&#xa;!!! bug&#xa;    </xsl:text>
         <xsl:apply-templates mode="inline"/>
         <xsl:text>&#xa;&#xa;</xsl:text>
       </xsl:when>
