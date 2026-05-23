@@ -173,7 +173,7 @@ def convert_doxygen_to_markdown(content: str, page_prefix: str = "") -> str:
     # #SymbolName / #fluid_symbol_t  →  [`symbol`](../api/index.md) (Doxygen auto-link)
     # Matches C identifiers: start with letter or underscore, followed by letters/digits/underscores.
     # The negative lookbehind prevents matching inside URLs (e.g. "http://foo#anchor").
-    content = re.sub(r'(?<!["\w])#([A-Za-z_][A-Za-z0-9_]{1,})',
+    content = re.sub(r'(?<!["\w])#([A-Za-z_][A-Za-z0-9_]*)',
                      r'[`\1`](../api/index.md)', content)
 
     # HTML entity/tag conversions

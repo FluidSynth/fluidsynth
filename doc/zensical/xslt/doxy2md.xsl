@@ -736,9 +736,14 @@
     <xsl:value-of select="$admonition-type"/>
     <xsl:text> "</xsl:text>
     <xsl:value-of select="$title"/>
-    <xsl:text>"&#xa;    </xsl:text>
-    <xsl:apply-templates select="xrefdescription" mode="inline"/>
-    <xsl:text>&#xa;&#xa;</xsl:text>
+    <xsl:text>"&#xa;</xsl:text>
+    <!-- Render each paragraph of xrefdescription with 4-space indent -->
+    <xsl:for-each select="xrefdescription/para">
+      <xsl:text>    </xsl:text>
+      <xsl:apply-templates mode="inline"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+    <xsl:text>&#xa;</xsl:text>
   </xsl:template>
 
   <!-- Suppress the xreftitle (already consumed by xrefsect template above) -->

@@ -63,13 +63,14 @@ def build_nav_block(nav_entries: list, indent: str = "            ") -> str:
         lines.append(f'{indent}    "{entry}",')
     lines.append(f'{indent}]}},')
     lines.append(f'{indent}# __API_NAV_END__')
-    return "\n".join(lines)
+    # The pattern matches the trailing newline; put it back
+    return "\n".join(lines) + "\n"
 
 
 def patch_config(src_text: str, nav_entries: list) -> str:
     """Replace the __API_NAV_BEGIN__ ... __API_NAV_END__ block."""
     pattern = re.compile(
-        r'[ \t]*# __API_NAV_BEGIN__\n.*?[ \t]*# __API_NAV_END__',
+        r'[ \t]*# __API_NAV_BEGIN__\n.*?[ \t]*# __API_NAV_END__\n?',
         re.DOTALL,
     )
 
