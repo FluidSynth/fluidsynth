@@ -18,7 +18,7 @@ hide:
   * Cross-platform support (Linux, macOS and Windows to name a few)
   * [SoundFont](SoundFont.md) 2 support
   * [SoundFont](SoundFont.md) 3 support (vorbis-compressed SF2)
-  * Realtime effect modulation using [SoundFont](SoundFont.md) 2.01 modulators
+  * Realtime effect modulation using [SoundFont](SoundFont.md) 2.04 modulators
   * Limited support for Downloadable Sounds (DLS) Level 1 & 2
   * Playback of MIDI files
   * Audio files rendering from MIDI files
