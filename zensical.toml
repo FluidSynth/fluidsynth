@@ -71,9 +71,9 @@ nav = [
             "LowLatency.md",
             "FluidSynth-configuration-files.md",
             "reverbators.md",
+            "ChangeLog.md",
         ]},
         {"🤓 For Developers" = [
-            "ChangeLog.md",
             "BuildingWithCMake.md",
             {"🤖 Build for Android" = [
                 "BuildingForAndroid.md",

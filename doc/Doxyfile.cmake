@@ -87,7 +87,6 @@ INPUT = \
 @CMAKE_SOURCE_DIR@/doc/fluidsynth-v20-devdoc.txt \
 @CMAKE_SOURCE_DIR@/doc/recent_changes.txt \
 @CMAKE_SOURCE_DIR@/doc/usage \
-@CMAKE_SOURCE_DIR@/doc/reverbators.md \
 @CMAKE_SOURCE_DIR@/include \
 @CMAKE_SOURCE_DIR@/src \
 @CMAKE_BINARY_DIR@/include/fluidsynth \
