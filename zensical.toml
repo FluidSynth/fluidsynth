@@ -69,7 +69,8 @@ nav = [
             "FluidSettings.md",
             "FluidFeatures.md",
             "LowLatency.md",
-            "FluidSynth-configuration-files.md"
+            "FluidSynth-configuration-files.md",
+            "reverbators.md",
         ]},
         {"🤓 For Developers" = [
             "ChangeLog.md",
@@ -109,7 +110,6 @@ nav = [
                 "settings/synth.md",
             ]},
             "ladspa.md",
-            "reverbators.md",
             {"🔗 FluidSynth legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
             "SoundFont3Format.md",
             "NotesForPackagers.md",

@@ -1,4 +1,4 @@
-# Reverb Overview
+# 🌀 Reverb Overview
 
 The following page gives an overview of different reverbator engines. It concentrates on objective criteria rather than trying to elaborate on the "quality" of the reverb engines. Listening examples are provided so you can make up your own opinion. Here are the dry versions. The reverb settings of all examples below share those settings: `-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7`
 
