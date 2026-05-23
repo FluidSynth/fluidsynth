@@ -752,7 +752,7 @@ The following bugs are fixed:
 Version 1.1.4 brings: 
 
   * Several improvements and fixes to the CMake build system, especially for Mac OS X 
-  * Several bug fixes to the engine, notably quite a few which could cause [FluidSynth] to sound bad in some cases. 
+  * Several bug fixes to the engine, notably quite a few which could cause FluidSynth to sound bad in some cases. 
   * API additions, that make it possible to 
     * load MIDI files from memory 
     * to inspect/modify MIDI events as they are being played from a MIDI file 
@@ -766,56 +766,56 @@ Version 1.1.4 brings:
 
 #### Enhancements and API additions
 
-  * Add playback callback from the MIDI file player for intercepting MIDI data on playback. [Jason Vasquez, plcl, diwic, etc] 
-  * Use glib utility function for shell parsing (ticket [#44](https://github.com/FluidSynth/fluidsynth/issues/44)) [diwic] 
-  * Allow in-memory midi file to be loaded by the midi engine [Matt Giuca] 
-  * fluid_synth_all_notes_off and fluid_synth_all_sounds_off can now silence all channels at once, and are now public API functions. [jimmy, diwic] 
-  * Allow channels to change state between melodic and drum channels [jimmy] 
-  * support for "audio.coreaudio.device" option in Mac OS X CoreAudio driver [plcl] 
-  * Mac CoreAudio driver adapted to AuHAL [plcl] 
+  * Add playback callback from the MIDI file player for intercepting MIDI data on playback. (Jason Vasquez, plcl, diwic, etc) 
+  * Use glib utility function for shell parsing (ticket [#44](https://github.com/FluidSynth/fluidsynth/issues/44)) (diwic) 
+  * Allow in-memory midi file to be loaded by the midi engine (Matt Giuca) 
+  * fluid_synth_all_notes_off and fluid_synth_all_sounds_off can now silence all channels at once, and are now public API functions. (jimmy, diwic) 
+  * Allow channels to change state between melodic and drum channels (jimmy) 
+  * support for "audio.coreaudio.device" option in Mac OS X CoreAudio driver (plcl) 
+  * Mac CoreAudio driver adapted to AuHAL (plcl) 
 
 #### Build system enhancements and fixes
 
-  * Preliminary support for creating in Mac OS X a "[FluidSynth].framework" [plcl] 
-  * Platform dependent options scoped to only the relevant platform [plcl] 
-  * CMake build system fix: unset the variables created by check_pkg_modules() allowing to disable optional features that were formerly enabled [plcl] 
-  * CMake build system fix for ticket [#90](https://github.com/FluidSynth/fluidsynth/issues/90): install dirs configurable [plcl] 
-  * New macro: unset_pkg_config() [plcl] 
-  * The unset() command requires CMake 2.6.3 or newer [plcl] 
-  * fixed creation of the file "fluidsynth.pc", using the new *_INSTALL_DIR variables [plcl] 
-  * removed the deprecated macro "CreateLibtoolFile" (unused) [plcl] 
-  * renamed LT_VERSION_* variables as LIB_VERSION_* [plcl] 
-  * build system fixes for OS/2 [KO Myung-Hun] 
-  * Don't enable PortAudio support by default [plcl] 
-  * Fix CoreAudio build problem [plcl, reported by Sven Meier] 
-  * fix for ticket [#97](https://github.com/FluidSynth/fluidsynth/issues/97) : Latest fluid_midi.c fails to build under MSVC 2010 [plcl] 
-  * gcc flags again: -Wno-vla removed because it is not supported by an Apple compiler [plcl] 
-  * avoid to output a wrong error message [plcl] 
-  * new GCC warning flag, trying to avoid a common MSVC unsupported C language construct [plcl] 
-  * Build documentation instructions [plcl] 
-  * Mac OS X fixes: frameworks build, midi.coremidi.id option. [plcl] 
+  * Preliminary support for creating in Mac OS X a "FluidSynth.framework" (plcl) 
+  * Platform dependent options scoped to only the relevant platform (plcl) 
+  * CMake build system fix: unset the variables created by check_pkg_modules() allowing to disable optional features that were formerly enabled (plcl) 
+  * CMake build system fix for ticket [#90](https://github.com/FluidSynth/fluidsynth/issues/90): install dirs configurable (plcl) 
+  * New macro: unset_pkg_config() (plcl) 
+  * The unset() command requires CMake 2.6.3 or newer (plcl) 
+  * fixed creation of the file "fluidsynth.pc", using the new *_INSTALL_DIR variables (plcl) 
+  * removed the deprecated macro "CreateLibtoolFile" (unused) (plcl) 
+  * renamed LT_VERSION_* variables as LIB_VERSION_* (plcl) 
+  * build system fixes for OS/2 (KO Myung-Hun) 
+  * Don't enable PortAudio support by default (plcl) 
+  * Fix CoreAudio build problem (plcl, reported by Sven Meier) 
+  * fix for ticket [#97](https://github.com/FluidSynth/fluidsynth/issues/97) : Latest fluid_midi.c fails to build under MSVC 2010 (plcl) 
+  * gcc flags again: -Wno-vla removed because it is not supported by an Apple compiler (plcl) 
+  * avoid to output a wrong error message (plcl) 
+  * new GCC warning flag, trying to avoid a common MSVC unsupported C language construct (plcl) 
+  * Build documentation instructions (plcl) 
+  * Mac OS X fixes: frameworks build, midi.coremidi.id option. (plcl) 
 
 #### Bug fixes (misc)
 
-  * Do not use loop noise floor if sample continues in release phase (ticket [#93](https://github.com/FluidSynth/fluidsynth/issues/93)) [diwic, reported by Graham Goode] 
-  * Prevent the IIR filter from loud pops on quick frequency changes (ticket [#82](https://github.com/FluidSynth/fluidsynth/issues/82)) [diwic] 
-  * Fix memory leak causing soundfonts not to be deleted in delete_fluid_synth [diwic, reported by R\u0102\u0160mi Denis-Courmont] 
-  * Fix incorrect samplerate for reverb and chorus (ticket [#89](https://github.com/FluidSynth/fluidsynth/issues/89)) [jaz001] 
-  * Empty event queue from non-realtime context on startup, prevents timeout [diwic, reported by Krysztof Foltman] 
-  * Allow sample rates down to 8 kHz [diwic] 
-  * Fix for bug with duplicate sample names in [SoundFont] files [jgreen] 
-  * Ignore extra size in [SoundFont] smpl chunk so that [FluidSynth] can load 24 bit [SoundFont] files as 16 bit, rather than rejecting the file. [jgreen] 
-  * Better message when substituting presets, and store XG LSB changes even in drum mode. [diwic] 
-  * Fix notes slightly off pitch (with floats and short loops) [diwic] 
-  * fix for bug "Undefined behavior parsing a MIDI file which unexpectedly ends" (ticket [#92](https://github.com/FluidSynth/fluidsynth/issues/92)) [plcl, reported by Matt Giuca] 
+  * Do not use loop noise floor if sample continues in release phase (ticket [#93](https://github.com/FluidSynth/fluidsynth/issues/93)) (diwic, reported by Graham Goode) 
+  * Prevent the IIR filter from loud pops on quick frequency changes (ticket [#82](https://github.com/FluidSynth/fluidsynth/issues/82)) (diwic) 
+  * Fix memory leak causing soundfonts not to be deleted in delete_fluid_synth (diwic, reported by R\u0102\u0160mi Denis-Courmont) 
+  * Fix incorrect samplerate for reverb and chorus (ticket [#89](https://github.com/FluidSynth/fluidsynth/issues/89)) (jaz001) 
+  * Empty event queue from non-realtime context on startup, prevents timeout (diwic, reported by Krysztof Foltman) 
+  * Allow sample rates down to 8 kHz (diwic) 
+  * Fix for bug with duplicate sample names in (SoundFont) files (jgreen) 
+  * Ignore extra size in (SoundFont) smpl chunk so that FluidSynth can load 24 bit (SoundFont) files as 16 bit, rather than rejecting the file. (jgreen) 
+  * Better message when substituting presets, and store XG LSB changes even in drum mode. (diwic) 
+  * Fix notes slightly off pitch (with floats and short loops) (diwic) 
+  * fix for bug "Undefined behavior parsing a MIDI file which unexpectedly ends" (ticket [#92](https://github.com/FluidSynth/fluidsynth/issues/92)) (plcl, reported by Matt Giuca) 
 
 #### Code cleanup / refactoring
 
-  * Code cleanup, and remove unnecessary atomicy and shadow variables, now that the new architecture is in place [diwic] 
-  * Rewrite overflow so that an extra rvoice is used [diwic] 
-  * Fixed warning in fluid_synth.c [plcl] 
-  * Add out-of-memory checks to fluid_player_add and fluid_player_add_mem [diwic] 
-  * reformat fluid_midi.c source according to the coding style. [plcl] 
+  * Code cleanup, and remove unnecessary atomicy and shadow variables, now that the new architecture is in place (diwic) 
+  * Rewrite overflow so that an extra rvoice is used (diwic) 
+  * Fixed warning in fluid_synth.c (plcl) 
+  * Add out-of-memory checks to fluid_player_add and fluid_player_add_mem (diwic) 
+  * reformat fluid_midi.c source according to the coding style. (plcl) 
 
 ## FluidSynth 1.1.3
 FluidSynth 1.1.3 is a pure bug-fix release and contains no new functionality. 
@@ -833,23 +833,23 @@ FluidSynth 1.1.3 is a pure bug-fix release and contains no new functionality.
 ## FluidSynth 1.1.2
 ### Big changes: 
 
-  * New CMake build system [plcl] 
+  * New CMake build system (plcl) 
     * Winbuild and Macbuild directories dropped 
     * Autotools build system is deprecated, but is still working 
-  * Rewriting of thread safety [diwic] 
+  * Rewriting of thread safety (diwic) 
     * Two new settings control the thread safety mode. The default is to be backwards compatible. 
 
 ### Smaller changes: 
 
-  * Voice overflow settings [diwic] 
-  * Possible to update polyphony, up to 65536 (and beyond initial setting) [diwic] 
-  * Possible to update sample rate (jack driver updates sample rate correctly) [diwic] 
-  * MIDI Bank Select handling fixed [plcl] 
-  * Source files moved into different subdirectories [diwic] 
-  * Can use RealTimeKit (on Linux) to get real-time priority [diwic] 
-  * Shell commands for pitch bend and pitch bend range [monk] 
-  * PulseAudio driver: specify media role, and allow PulseAudio to adjust latency [diwic] 
-  * Bug fixes [diwic, plcl, KO Myung hun, Felix Krause, laurent, nshepperd] 
+  * Voice overflow settings (diwic) 
+  * Possible to update polyphony, up to 65536 (and beyond initial setting) (diwic) 
+  * Possible to update sample rate (jack driver updates sample rate correctly) (diwic) 
+  * MIDI Bank Select handling fixed (plcl) 
+  * Source files moved into different subdirectories (diwic) 
+  * Can use RealTimeKit (on Linux) to get real-time priority (diwic) 
+  * Shell commands for pitch bend and pitch bend range (monk) 
+  * PulseAudio driver: specify media role, and allow PulseAudio to adjust latency (diwic) 
+  * Bug fixes (diwic, plcl, KO Myung hun, Felix Krause, laurent, nshepperd) 
 
 For a complete list of changes, please see the svn commit log.
 
@@ -904,7 +904,7 @@ Changes from previous version 1.0.9
 
 ### Features and improvements
 
-  * Extensive work on making [FluidSynth](index.md) more thread safe, resulting in better stability. 
+  * Extensive work on making FluidSynth(index.md) more thread safe, resulting in better stability. 
   * Audio file rendering for MIDI to audio file conversion, faster than realtime (#15). 
   * Optional libsndfile support for file rendering in different audio file formats (wav, flac, Ogg Vorbis, etc.) (#30). 
   * Audio and MIDI are synchronized for MIDI file playback. 
@@ -927,7 +927,7 @@ Changes from previous version 1.0.9
 
 ### New command line options
 
-  * -F, --fast-render=[file] 
+  * -F, --fast-render=(file) 
   * -T, --audio-file-type 
   * -O, --audio-file-format 
   * -E, --audio-file-endian 
@@ -994,11 +994,11 @@ Changes from previous version 1.0.8
   * MIDI Program/Bank instrument fallback selection logic (Josh Green and thanks also to Jimmy) 
   * Added midi.portname setting to ALSA sequencer, -p command line switch (Nicolas Boulicault) 
   * Added midi.winmidi.device setting to winmidi driver (Pedro Lopez-Cabanillas) 
-  * Updated Max/MSP [FluidSynth] binding (Norbert Schnell) 
+  * Updated Max/MSP FluidSynth binding (Norbert Schnell) 
 
 ### Synthesis Changes
 
-  * Volume attenuation [SoundFont] generator now behaves more like EMU10K1 (S. Christian Collins) 
+  * Volume attenuation (SoundFont) generator now behaves more like EMU10K1 (S. Christian Collins) 
   * Stop forcing velocity based filtering (S. Christian Collins) 
   * Fixes to linear/bipolar/positive and convex/bipolar/positive modulator functions (S. Christian Collins) 
   * Added fix to properly search for percussion instrument (Josh Green) 
@@ -1018,8 +1018,8 @@ Changes from previous version 1.0.8
 ### Misc. stuff
 
   * Updated README-OSX build instructions (Ebrahim Mayat) 
-  * [FluidSynth] fink package accepted for Mac OS X (Ebrahim Mayat) 
-  * Minor fixes to [FluidSynth] man page (Sven Hoexter) 
+  * FluidSynth fink package accepted for Mac OS X (Ebrahim Mayat) 
+  * Minor fixes to FluidSynth man page (Sven Hoexter) 
 
 ## FluidSynth 1.0.8 - "Its about funky time!"
 
@@ -1040,7 +1040,7 @@ Changes from previous version 1.0.7a
   * FluidSynth crashes with QSynth and audio meters turned on (Ticket #5 \\- Thanks to **David Hilvert** for reporting) 
   * ALSA sequencer driver no longer prints out false error messages 
   * Many memory leaks plugged (thanks to **Paul Millar** for pointing out issues and providing some patches) 
-  * Warning message printed if a non option is not a valid [SoundFont] or MIDI file (thanks to **Nick Daly** for the patch). 
+  * Warning message printed if a non option is not a valid (SoundFont) or MIDI file (thanks to **Nick Daly** for the patch). 
 
 ### Code cleanup other misc. stuff
 
