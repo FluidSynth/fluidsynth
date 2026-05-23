@@ -94,7 +94,6 @@ if ( DOXYGEN_FOUND )
   #   fluidsettings2md_xslt -- convert fluidsettings.xml to settings Markdown (XSLT)
   #   doxy2md_xslt          -- convert Doxygen XML output to API reference Markdown (XSLT)
   #   usage2md              -- convert usage .txt files to usage Markdown (Python)
-  #   reverbators2md        -- convert reverbators.md (Python, strips Doxygen tags)
   #   zensical_xslt         -- run all of the above, then build the unified wiki+API site
   # ---------------------------------------------------------------------------
   find_package ( Python3 COMPONENTS Interpreter )
@@ -116,16 +115,6 @@ if ( DOXYGEN_FOUND )
       COMMENT "Converting usage .txt files to Markdown"
     )
 
-    # -- Convert reverbators.md (Doxygen .md with \htmlonly) to Markdown ------
-    add_custom_target ( reverbators2md
-      COMMAND ${Python3_EXECUTABLE}
-          ${ZENSICAL_SCRIPTS}/txt2md.py
-          --page-prefix usage/
-          ${CMAKE_CURRENT_SOURCE_DIR}/reverbators.md
-          ${WIKI_DOCS_DIR}/reverbators.md
-      COMMENT "Converting reverbators.md to Zensical Markdown"
-    )
-
     # -- Build the unified wiki + API documentation site (XSLT pipeline) ------
     # Uses zensical.toml from the repository root which points docs_dir to
     # doc/wiki/.  Generated API/settings/usage pages are written there by the
@@ -135,7 +124,7 @@ if ( DOXYGEN_FOUND )
           COMMAND ${ZENSICAL_EXECUTABLE} build --clean
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
           DEPENDS fluidsettings2md_xslt doxy2md_xslt
-                  usage2md reverbators2md
+                  usage2md
           COMMENT "Building unified wiki and API documentation site (XSLT pipeline)"
       )
     elseif ( NOT LIBXSLT_XSLTPROC_EXECUTABLE )
