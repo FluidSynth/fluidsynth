@@ -20,6 +20,20 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Inline XSL to list group names from a fluidsettings.xml file.
+# Outputs one group name per line (e.g. "synth", "audio", "midi" …).
+# Used by both doxy and pages modes to build per-group page-level refmap entries.
+FLUIDSETTINGS_GROUPS_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="/fluidsettings/*">
+      <xsl:value-of select="name(.)"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
 usage() {
     echo "Usage: $0 {fluidsettings|doxy|pages|examples} <input> <output_dir> [<xsl_file>]"
     exit 1
@@ -231,19 +245,7 @@ SETTINGS_XSL
         while IFS= read -r grp; do
             [ -z "$grp" ] && continue
             printf 'settings_%s|../settings/%s.md\n' "$grp" "$grp" >> "$REFMAP_FILE"
-        done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'GROUPS_XSL'
-<?xml version="1.0"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  <xsl:output method="text"/>
-  <xsl:template match="/">
-    <xsl:for-each select="/fluidsettings/*">
-      <xsl:value-of select="name(.)"/>
-      <xsl:text>&#xa;</xsl:text>
-    </xsl:for-each>
-  </xsl:template>
-</xsl:stylesheet>
-GROUPS_XSL
-        )
+        done < <(echo "$FLUIDSETTINGS_GROUPS_XSL" | xsltproc - "$FLUIDSETTINGS_XML")
     fi
 
     REFMAP_TEXT="$(cat "$REFMAP_FILE")"
@@ -573,19 +575,7 @@ SETTINGS_XSL
         while IFS= read -r grp; do
             [ -z "$grp" ] && continue
             printf 'settings_%s|%s%s.md\n' "$grp" "$SETTINGS_PREFIX" "$grp" >> "$REFMAP_FILE"
-        done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'GROUPS_XSL'
-<?xml version="1.0"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  <xsl:output method="text"/>
-  <xsl:template match="/">
-    <xsl:for-each select="/fluidsettings/*">
-      <xsl:value-of select="name(.)"/>
-      <xsl:text>&#xa;</xsl:text>
-    </xsl:for-each>
-  </xsl:template>
-</xsl:stylesheet>
-GROUPS_XSL
-        )
+        done < <(echo "$FLUIDSETTINGS_GROUPS_XSL" | xsltproc - "$FLUIDSETTINGS_XML")
     fi
 
     PAGES_REFMAP_TEXT="$(cat "$REFMAP_FILE")"
