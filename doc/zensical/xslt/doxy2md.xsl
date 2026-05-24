@@ -91,8 +91,10 @@
     <xsl:apply-templates mode="inline"/>
   </xsl:template>
 
-  <!-- Suppress bare title elements in block mode (already consumed by sect* templates) -->
-  <xsl:template match="title"/>
+  <!-- Suppress title as a direct child of compounddef (already output by the heading
+       at the top of the page/group template via xsl:value-of).  Only matches in
+       default (block) mode to avoid hiding refs inside titles that appear elsewhere. -->
+  <xsl:template match="compounddef/title"/>
 
   <!-- ======================================================================
        Group (compounddef)
@@ -586,14 +588,14 @@
 
   <xsl:template match="itemizedlist/listitem">
     <xsl:text>- </xsl:text>
-    <xsl:value-of select="normalize-space(.)"/>
+    <xsl:apply-templates mode="inline"/>
     <xsl:text>&#xa;</xsl:text>
   </xsl:template>
 
   <xsl:template match="orderedlist/listitem">
     <xsl:number/>
     <xsl:text>. </xsl:text>
-    <xsl:value-of select="normalize-space(.)"/>
+    <xsl:apply-templates mode="inline"/>
     <xsl:text>&#xa;</xsl:text>
   </xsl:template>
 
