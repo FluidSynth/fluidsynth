@@ -1038,7 +1038,7 @@ int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sam
  * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
- * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
+ * @param set Flags indicating which parameters should be set (fluid_revmodel_set_t)
  * @param values table of parameters values.
  */
 void
@@ -1102,7 +1102,7 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
  *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
- * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
+ * @param set Flags indicating which parameters to set (fluid_chorus_set_t)
  * @param values table of pararameters.
  */
 void

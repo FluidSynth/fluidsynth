@@ -425,9 +425,9 @@ new_fluid_hashtable_full(fluid_hash_func_t hash_func,
     return hashtable;
 }
 
-/**
+/*
  * fluid_hashtable_iter_init:
- * iter: an uninitialized #fluid_hashtable_iter_t.
+ * iter: an uninitialized fluid_hashtable_iter_t.
  * hashtable: a #fluid_hashtable_t.
  *
  * Initializes a key/value pair iterator and associates it with
@@ -445,7 +445,7 @@ new_fluid_hashtable_full(fluid_hash_func_t hash_func,
  * ]|
  *
  * Since: 2.16
- **/
+ */
 void
 fluid_hashtable_iter_init(fluid_hashtable_iter_t *iter,
                           fluid_hashtable_t *hashtable)
@@ -464,7 +464,7 @@ fluid_hashtable_iter_init(fluid_hashtable_iter_t *iter,
 
 /**
  * fluid_hashtable_iter_next:
- * iter: an initialized #fluid_hashtable_iter_t.
+ * iter: an initialized fluid_hashtable_iter_t.
  * key: a location to store the key, or NULL.
  * value: a location to store the value, or NULL.
  *
@@ -530,7 +530,7 @@ fluid_hashtable_iter_next(fluid_hashtable_iter_t *iter, void **key,
 
 /**
  * fluid_hashtable_iter_get_hash_table:
- * iter: an initialized #fluid_hashtable_iter_t.
+ * iter: an initialized fluid_hashtable_iter_t.
  *
  * Returns the #fluid_hashtable_t associated with iter.
  *
@@ -611,7 +611,7 @@ iter_remove_or_steal(RealIter *ri, int notify)
 
 /**
  * fluid_hashtable_iter_remove():
- * iter: an initialized #fluid_hashtable_iter_t.
+ * iter: an initialized fluid_hashtable_iter_t.
  *
  * Removes the key/value pair currently pointed to by the iterator
  * from its associated #fluid_hashtable_t. Can only be called after
@@ -633,7 +633,7 @@ fluid_hashtable_iter_remove(fluid_hashtable_iter_t *iter)
 
 /**
  * fluid_hashtable_iter_steal():
- * iter: an initialized #fluid_hashtable_iter_t.
+ * iter: an initialized fluid_hashtable_iter_t.
  *
  * Removes the key/value pair currently pointed to by the iterator
  * from its associated #fluid_hashtable_t, without calling the key and value
@@ -1068,7 +1068,7 @@ fluid_hashtable_foreach_remove_or_steal(fluid_hashtable_t *hashtable,
  * the #fluid_hashtable_t, they are used to free the memory allocated for the removed
  * keys and values.
  *
- * See #fluid_hashtable_iter_t for an alternative way to loop over the
+ * See fluid_hashtable_iter_t for an alternative way to loop over the
  * key/value pairs in the hash table.
  *
  * Return value: the number of key/value pairs removed.
@@ -1094,7 +1094,7 @@ fluid_hashtable_foreach_remove(fluid_hashtable_t *hashtable,
  * If the function returns TRUE, then the key/value pair is removed from the
  * #fluid_hashtable_t, but no key or value destroy functions are called.
  *
- * See #fluid_hashtable_iter_t for an alternative way to loop over the
+ * See fluid_hashtable_iter_t for an alternative way to loop over the
  * key/value pairs in the hash table.
  *
  * Return value: the number of key/value pairs removed.

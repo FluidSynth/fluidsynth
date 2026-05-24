@@ -6738,7 +6738,7 @@ fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int fx_group, int type)
  *  FLUID_CHORUS_DEPTH, chorus depth (max value depends on synth sample-rate,
  *   0.0-21.0 is safe for sample-rate values up to 96KHz).
  *  FLUID_CHORUS_TYPE, chorus waveform type (#fluid_chorus_mod)
- * @param value, parameter value
+ * @param value parameter value
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int

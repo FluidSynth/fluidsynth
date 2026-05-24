@@ -706,7 +706,7 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
  * Set one or more chorus parameters.
  *
  * @param chorus Chorus instance.
- * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t).
+ * @param set Flags indicating which chorus parameters to set (fluid_chorus_set_t).
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value).
  * @param level Chorus level (0.0-10.0).
