@@ -111,6 +111,7 @@ if ( DOXYGEN_FOUND )
     # Skips RecentChanges (handled by recent_changes2md below).
     # The api_prefix "../api/" is passed so that cross-references from usage/
     # pages to API symbols resolve to ../api/<group>.md#<symbol>.
+    # The empty string arg is the optional page_id_filter (no filter = process all pages).
     add_custom_target ( usage2md
       COMMAND ${CMAKE_COMMAND} -E make_directory ${WIKI_DOCS_DIR}/usage
       COMMAND bash ${XSLT_DIR}/run-xslt.sh
