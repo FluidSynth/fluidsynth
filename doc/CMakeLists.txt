@@ -77,6 +77,7 @@ if ( DOXYGEN_FOUND )
               ${CMAKE_CURRENT_BINARY_DIR}/api/xml
               ${CMAKE_CURRENT_SOURCE_DIR}/wiki/api
               ${XSLT_DIR}/doxy2md.xsl
+              ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
           DEPENDS doxygen
           COMMENT "Converting Doxygen XML to API reference Markdown via XSLT"
       )
@@ -118,6 +119,8 @@ if ( DOXYGEN_FOUND )
           ${WIKI_DOCS_DIR}/usage
           ${XSLT_DIR}/doxy2md.xsl
           "../api/"
+          ""
+          ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
       DEPENDS doxygen
       COMMENT "Converting Doxygen page XML to usage guide Markdown via XSLT"
     )
@@ -134,6 +137,7 @@ if ( DOXYGEN_FOUND )
           ${XSLT_DIR}/doxy2md.xsl
           "./"
           "RecentChanges"
+          ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
       DEPENDS doxygen
       COMMENT "Converting RecentChanges page XML to Markdown via XSLT"
     )

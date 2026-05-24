@@ -561,6 +561,31 @@
    <!-- programlisting in inline mode (e.g. inside simplesect note/warning):
         handled by the template in the Code blocks section below. -->
 
+  <!-- itemizedlist in inline mode (nested inside a listitem or para) -->
+  <xsl:template match="itemizedlist" mode="inline">
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:for-each select="listitem">
+      <xsl:text>    - </xsl:text>
+      <xsl:apply-templates mode="inline"/>
+      <xsl:if test="position() != last()">
+        <xsl:text>&#xa;</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+  </xsl:template>
+
+  <!-- orderedlist in inline mode (nested inside a listitem or para) -->
+  <xsl:template match="orderedlist" mode="inline">
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:for-each select="listitem">
+      <xsl:number/>
+      <xsl:text>. </xsl:text>
+      <xsl:apply-templates mode="inline"/>
+      <xsl:if test="position() != last()">
+        <xsl:text>&#xa;</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+  </xsl:template>
+
   <!-- parblock: group of paragraphs used by Doxygen for multi-para notes etc.
        In block mode, just process children.  In inline mode, do the same. -->
   <xsl:template match="parblock">

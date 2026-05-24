@@ -112,7 +112,9 @@ if [ "$MODE" = "doxy" ]; then
   </xsl:template>
 </xsl:stylesheet>'
 
-    # Inline XSL to extract "member_id TAB member_name" pairs from a group XML
+    # Inline XSL to extract "id TAB name" pairs from a group XML.
+    # Outputs both memberdef entries AND enumvalue entries (the latter mapped to
+    # their parent enum type name so they link to the correct heading anchor).
     LIST_MEMBERS_XSL='<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:output method="text"/>
@@ -123,8 +125,17 @@ if [ "$MODE" = "doxy" ]; then
       <xsl:value-of select="name"/>
       <xsl:text>&#xa;</xsl:text>
     </xsl:for-each>
+    <xsl:for-each select="//enumvalue">
+      <xsl:value-of select="@id"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="parent::memberdef/name"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
   </xsl:template>
 </xsl:stylesheet>'
+
+    # Optional: path to fluidsettings.xml so \setting{} cross-refs can be resolved.
+    FLUIDSETTINGS_XML="${5:-}"
 
     # Collect group compound refids
     GROUP_REFIDS=$(echo "$LIST_GROUPS_XSL" | xsltproc - "$INDEX_XML")
@@ -182,6 +193,34 @@ if [ "$MODE" = "doxy" ]; then
     for page_id in "${!PAGE_REFMAP[@]}"; do
         printf '%s|%s\n' "$page_id" "${PAGE_REFMAP[$page_id]}" >> "$REFMAP_FILE"
     done
+
+    # ------------------------------------------------------------------
+    # Add individual \setting{} cross-references from fluidsettings.xml.
+    # Each setting produces an entry  settings_GROUP_NAME|../settings/GROUP.md#settings_GROUP_NAME
+    # where NAME has dots replaced by underscores.
+    # ------------------------------------------------------------------
+    if [ -n "$FLUIDSETTINGS_XML" ] && [ -f "$FLUIDSETTINGS_XML" ]; then
+        echo "  Adding settings cross-references from fluidsettings.xml ..."
+        while IFS=$'\t' read -r grp raw_name; do
+            [ -z "$grp" ] && continue
+            anchor="settings_${grp}_$(echo "$raw_name" | tr '.' '_')"
+            printf '%s|../settings/%s.md#%s\n' "$anchor" "$grp" "$anchor" >> "$REFMAP_FILE"
+        done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'SETTINGS_XSL'
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//setting">
+      <xsl:value-of select="name(..)"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="name"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>
+SETTINGS_XSL
+        )
+    fi
 
     REFMAP_TEXT="$(cat "$REFMAP_FILE")"
 
@@ -332,18 +371,21 @@ fi
 # this mode handles \page narrative documentation (usage guides, changelog …).
 #
 # Usage:
-#   run-xslt.sh pages <doxygen_xml_dir> <output_dir> [<xsl_file>] [<api_prefix>] [<page_id_filter>]
+#   run-xslt.sh pages <doxygen_xml_dir> <output_dir> [<xsl_file>] [<api_prefix>] [<page_id_filter>] [<fluidsettings.xml>]
 #
-# <api_prefix>       relative path from <output_dir> to the generated api/ directory.
-#                    Defaults to "../api/"; use "" when output_dir IS the api dir.
-# <page_id_filter>   optional: if given, only this single page ID is processed.
-#                    Useful for generating just "RecentChanges" into api/.
+# <api_prefix>         relative path from <output_dir> to the generated api/ directory.
+#                      Defaults to "../api/"; use "" when output_dir IS the api dir.
+# <page_id_filter>     optional: if given, only this single page ID is processed.
+#                      Useful for generating just "RecentChanges" into api/.
+# <fluidsettings.xml>  optional: path to fluidsettings.xml; when provided, per-setting
+#                      \setting{} cross-references are added to the refmap.
 # ---------------------------------------------------------------------------
 if [ "$MODE" = "pages" ]; then
     XML_DIR="$INPUT"
     XSL_FILE="${4:-$XSL_DEFAULT_DOXY}"
     API_PREFIX="${5:-../api/}"
     PAGE_FILTER="${6:-}"      # optional: restrict to a single page ID
+    FLUIDSETTINGS_XML="${7:-}"  # optional: path to fluidsettings.xml
     INDEX_XML="$XML_DIR/index.xml"
 
     if [ ! -f "$INDEX_XML" ]; then
@@ -412,7 +454,9 @@ if [ "$MODE" = "pages" ]; then
   </xsl:template>
 </xsl:stylesheet>'
 
-    # Inline XSL to extract "member_id TAB member_name" pairs from a group XML
+    # Inline XSL to extract "id TAB name" pairs from a group XML.
+    # Outputs both memberdef entries AND enumvalue entries (the latter mapped to
+    # their parent enum type name so they link to the correct heading anchor).
     LIST_MEMBERS_XSL='<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:output method="text"/>
@@ -421,6 +465,12 @@ if [ "$MODE" = "pages" ]; then
       <xsl:value-of select="@id"/>
       <xsl:text>&#9;</xsl:text>
       <xsl:value-of select="name"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+    <xsl:for-each select="//enumvalue">
+      <xsl:value-of select="@id"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="parent::memberdef/name"/>
       <xsl:text>&#xa;</xsl:text>
     </xsl:for-each>
   </xsl:template>
@@ -463,6 +513,30 @@ if [ "$MODE" = "pages" ]; then
     # Add settings page references (relative from output_dir to settings/)
     SETTINGS_PREFIX="${API_PREFIX%api/}settings/"
     printf '%s|%s\n' "fluidsettings" "${SETTINGS_PREFIX}index.md" >> "$REFMAP_FILE"
+
+    # Add individual \setting{} cross-references from fluidsettings.xml if provided.
+    if [ -n "$FLUIDSETTINGS_XML" ] && [ -f "$FLUIDSETTINGS_XML" ]; then
+        echo "  Adding settings cross-references from fluidsettings.xml ..."
+        while IFS=$'\t' read -r grp raw_name; do
+            [ -z "$grp" ] && continue
+            anchor="settings_${grp}_$(echo "$raw_name" | tr '.' '_')"
+            printf '%s|%s%s.md#%s\n' "$anchor" "$SETTINGS_PREFIX" "$grp" "$anchor" >> "$REFMAP_FILE"
+        done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'SETTINGS_XSL'
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//setting">
+      <xsl:value-of select="name(..)"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="name"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>
+SETTINGS_XSL
+        )
+    fi
 
     PAGES_REFMAP_TEXT="$(cat "$REFMAP_FILE")"
 
