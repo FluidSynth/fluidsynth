@@ -87,7 +87,7 @@ enum fluid_voice_callback_reason
  *
  * @since 2.6.0
  */
-typedef void (*fluid_voice_callback_t)(const fluid_voice_t *voice, enum fluid_voice_callback_reason reason, void *data);
+typedef void (*fluid_voice_callback_t)(const fluid_voice_t *voice, int reason, void *data);
 
 FLUIDSYNTH_API void fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode);
 FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t *voice, int gen);
