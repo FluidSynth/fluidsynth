@@ -8,6 +8,12 @@
 #   run-xslt.sh doxy \
 #       <doxygen_xml_dir> <output_dir> [<doxy2md.xsl>]
 #
+#   run-xslt.sh pages \
+#       <doxygen_xml_dir> <output_dir> [<doxy2md.xsl>] [<api_prefix>]
+#       Converts Doxygen \page compound XML to Markdown.
+#       <api_prefix>  relative path prefix to prepend to API symbol links in the
+#                     refmap (default "../api/"); use "" when output_dir IS the api dir.
+#
 # Requirements: xsltproc (from libxslt)
 #
 set -euo pipefail
@@ -15,7 +21,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
-    echo "Usage: $0 {fluidsettings|doxy} <input> <output_dir> [<xsl_file>]"
+    echo "Usage: $0 {fluidsettings|doxy|pages|examples} <input> <output_dir> [<xsl_file>]"
     exit 1
 }
 
@@ -316,6 +322,190 @@ if [ "$MODE" = "doxy" ]; then
     echo "    → deprecated.md"
 
     echo "  Done. API pages written to $OUTPUT_DIR/"
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# MODE: pages  (Doxygen page XML → narrative Markdown pages)
+# Converts Doxygen \page compound XML files to Markdown.
+# Unlike the "doxy" mode (which handles \defgroup API reference pages),
+# this mode handles \page narrative documentation (usage guides, changelog …).
+#
+# Usage:
+#   run-xslt.sh pages <doxygen_xml_dir> <output_dir> [<xsl_file>] [<api_prefix>] [<page_id_filter>]
+#
+# <api_prefix>       relative path from <output_dir> to the generated api/ directory.
+#                    Defaults to "../api/"; use "" when output_dir IS the api dir.
+# <page_id_filter>   optional: if given, only this single page ID is processed.
+#                    Useful for generating just "RecentChanges" into api/.
+# ---------------------------------------------------------------------------
+if [ "$MODE" = "pages" ]; then
+    XML_DIR="$INPUT"
+    XSL_FILE="${4:-$XSL_DEFAULT_DOXY}"
+    API_PREFIX="${5:-../api/}"
+    PAGE_FILTER="${6:-}"      # optional: restrict to a single page ID
+    INDEX_XML="$XML_DIR/index.xml"
+
+    if [ ! -f "$INDEX_XML" ]; then
+        echo "ERROR: Doxygen index.xml not found: $INDEX_XML" >&2
+        exit 1
+    fi
+    if [ ! -f "$XSL_FILE" ]; then
+        echo "ERROR: XSL stylesheet not found: $XSL_FILE" >&2
+        exit 1
+    fi
+
+    mkdir -p "$OUTPUT_DIR"
+
+    # ------------------------------------------------------------------
+    # Static mapping: Doxygen page ID → output Markdown filename
+    # PAGE_FILE_MAP contains the usage guide pages (the default set).
+    # EXTRA_PAGE_FILE_MAP contains pages that are NOT usage guide pages
+    # (e.g. RecentChanges → api/recent-changes.md).
+    # When PAGE_FILTER is given, only that page ID is processed.
+    # Both maps contribute to the refmap for cross-reference resolution.
+    # ------------------------------------------------------------------
+    declare -A PAGE_FILE_MAP=(
+        ["UsageGuide"]="index.md"
+        ["CreatingSettings"]="creating-settings.md"
+        ["CreatingSynth"]="creating-synth.md"
+        ["LoadingSoundfonts"]="loading-soundfonts.md"
+        ["CreatingAudioDriver"]="audio-driver.md"
+        ["UsingSynth"]="using-synth.md"
+        ["SendingMIDI"]="sending-midi.md"
+        ["RealtimeMIDI"]="realtime-midi.md"
+        ["MIDIPlayer"]="midi-player.md"
+        ["FileRenderer"]="file-renderer.md"
+        ["MIDIPlayerMem"]="midi-player-mem.md"
+        ["MIDIRouter"]="midi-router.md"
+        ["Sequencer"]="sequencer.md"
+        ["Shell"]="shell.md"
+        ["Multi-channel"]="multi-channel.md"
+        ["synth-context"]="synth-context.md"
+        ["Advanced"]="advanced.md"
+    )
+
+    # Pages in EXTRA_PAGE_FILE_MAP are only processed when PAGE_FILTER matches them.
+    # They are always added to the refmap so sibling pages can link to them.
+    declare -A EXTRA_PAGE_FILE_MAP=(
+        ["RecentChanges"]="recent-changes.md"
+    )
+
+    # ------------------------------------------------------------------
+    # Build cross-reference map (same structure as doxy mode):
+    #  - API group members  →  ${API_PREFIX}<group-file>.md#<member>
+    #  - Page IDs           →  relative path to sibling page .md
+    # ------------------------------------------------------------------
+    echo "  Building cross-reference map for pages mode ..."
+    REFMAP_FILE="$(mktemp /tmp/pages_refmap.XXXXXX)"
+    trap 'rm -f "$REFMAP_FILE"' EXIT
+
+    # Inline XSL to list group compound refids from index.xml
+    LIST_GROUPS_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//compound[@kind=&apos;group&apos;]">
+      <xsl:value-of select="@refid"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    # Inline XSL to extract "member_id TAB member_name" pairs from a group XML
+    LIST_MEMBERS_XSL='<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="//memberdef">
+      <xsl:value-of select="@id"/>
+      <xsl:text>&#9;</xsl:text>
+      <xsl:value-of select="name"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>'
+
+    # Collect group compound refids and build refmap with API_PREFIX
+    GROUP_REFIDS_PAGES=$(echo "$LIST_GROUPS_XSL" | xsltproc - "$INDEX_XML")
+
+    while IFS= read -r refid; do
+        [ -z "$refid" ] && continue
+        group_xml="$XML_DIR/${refid}.xml"
+        [ -f "$group_xml" ] || continue
+
+        grp_filename=$(echo "$refid" \
+            | sed 's/^group__//' \
+            | sed 's/__/-/g')
+        grp_link="${API_PREFIX}${grp_filename}.md"
+
+        # Map the group compound itself
+        printf '%s|%s\n' "$refid" "$grp_link" >> "$REFMAP_FILE"
+
+        # Extract member pairs and append "member_id|${API_PREFIX}filename#name"
+        while IFS=$'\t' read -r member_id member_name; do
+            [ -z "$member_id" ] && continue
+            printf '%s|%s#%s\n' "$member_id" "$grp_link" "$member_name" >> "$REFMAP_FILE"
+        done < <(echo "$LIST_MEMBERS_XSL" | xsltproc - "$group_xml")
+    done <<< "$GROUP_REFIDS_PAGES"
+
+    # Add cross-page references among the pages themselves.
+    # Keys are Doxygen page IDs; values are paths relative to OUTPUT_DIR.
+    # Both PAGE_FILE_MAP and EXTRA_PAGE_FILE_MAP contribute so that links between
+    # usage pages and recent-changes are properly resolved.
+    for page_id in "${!PAGE_FILE_MAP[@]}"; do
+        printf '%s|%s\n' "$page_id" "${PAGE_FILE_MAP[$page_id]}" >> "$REFMAP_FILE"
+    done
+    for page_id in "${!EXTRA_PAGE_FILE_MAP[@]}"; do
+        printf '%s|%s\n' "$page_id" "${EXTRA_PAGE_FILE_MAP[$page_id]}" >> "$REFMAP_FILE"
+    done
+
+    # Add settings page references (relative from output_dir to settings/)
+    SETTINGS_PREFIX="${API_PREFIX%api/}settings/"
+    printf '%s|%s\n' "fluidsettings" "${SETTINGS_PREFIX}index.md" >> "$REFMAP_FILE"
+
+    PAGES_REFMAP_TEXT="$(cat "$REFMAP_FILE")"
+
+    # ------------------------------------------------------------------
+    # Convert each page XML to Markdown.
+    # If PAGE_FILTER is set, only convert that single page ID
+    # (searched in both PAGE_FILE_MAP and EXTRA_PAGE_FILE_MAP).
+    # If no filter, process all pages in PAGE_FILE_MAP (not EXTRA_PAGE_FILE_MAP).
+    # ------------------------------------------------------------------
+    echo "  Converting page XML files ..."
+
+    _convert_page() {
+        local page_id="$1"
+        local out_filename="$2"
+        local page_xml="$XML_DIR/${page_id}.xml"
+        if [ ! -f "$page_xml" ]; then
+            echo "    WARNING: page XML not found for ${page_id}: ${page_xml}" >&2
+            return 0
+        fi
+        local out_file="$OUTPUT_DIR/${out_filename}"
+        xsltproc \
+            --stringparam refmap-text "$PAGES_REFMAP_TEXT" \
+            "$XSL_FILE" "$page_xml" > "$out_file"
+        echo "    ${page_id} → ${out_filename}"
+    }
+
+    if [ -n "$PAGE_FILTER" ]; then
+        # Filter: look up the page ID in both maps
+        if [ -n "${PAGE_FILE_MAP[$PAGE_FILTER]+_}" ]; then
+            _convert_page "$PAGE_FILTER" "${PAGE_FILE_MAP[$PAGE_FILTER]}"
+        elif [ -n "${EXTRA_PAGE_FILE_MAP[$PAGE_FILTER]+_}" ]; then
+            _convert_page "$PAGE_FILTER" "${EXTRA_PAGE_FILE_MAP[$PAGE_FILTER]}"
+        else
+            echo "    WARNING: page ID '$PAGE_FILTER' not found in page maps" >&2
+        fi
+    else
+        # No filter: process all usage pages (PAGE_FILE_MAP only, not EXTRA)
+        for page_id in "${!PAGE_FILE_MAP[@]}"; do
+            _convert_page "$page_id" "${PAGE_FILE_MAP[$page_id]}"
+        done
+    fi
+
+    echo "  Done. Page docs written to $OUTPUT_DIR/"
     exit 0
 fi
 

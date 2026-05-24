@@ -40,8 +40,59 @@
        Root template
        ====================================================================== -->
   <xsl:template match="/doxygen">
-    <xsl:apply-templates select="compounddef[@kind='group']"/>
+    <xsl:apply-templates select="compounddef[@kind='group' or @kind='page']"/>
   </xsl:template>
+
+  <!-- ======================================================================
+       Page (compounddef kind="page") – usage guides and similar narrative docs
+       ====================================================================== -->
+  <xsl:template match="compounddef[@kind='page']">
+    <xsl:text># </xsl:text>
+    <xsl:value-of select="title"/>
+    <xsl:text>&#xa;&#xa;</xsl:text>
+
+    <xsl:apply-templates select="detaileddescription"/>
+  </xsl:template>
+
+  <!-- sect1 → ## heading (used in \page narrative docs) -->
+  <xsl:template match="sect1">
+    <xsl:text>## </xsl:text>
+    <xsl:apply-templates select="title" mode="inline"/>
+    <xsl:text>&#xa;&#xa;</xsl:text>
+    <xsl:apply-templates select="*[not(self::title)]"/>
+  </xsl:template>
+
+  <!-- sect2 → ### heading -->
+  <xsl:template match="sect2">
+    <xsl:text>### </xsl:text>
+    <xsl:apply-templates select="title" mode="inline"/>
+    <xsl:text>&#xa;&#xa;</xsl:text>
+    <xsl:apply-templates select="*[not(self::title)]"/>
+  </xsl:template>
+
+  <!-- sect3 → #### heading -->
+  <xsl:template match="sect3">
+    <xsl:text>#### </xsl:text>
+    <xsl:apply-templates select="title" mode="inline"/>
+    <xsl:text>&#xa;&#xa;</xsl:text>
+    <xsl:apply-templates select="*[not(self::title)]"/>
+  </xsl:template>
+
+  <!-- sect4 → ##### heading -->
+  <xsl:template match="sect4">
+    <xsl:text>##### </xsl:text>
+    <xsl:apply-templates select="title" mode="inline"/>
+    <xsl:text>&#xa;&#xa;</xsl:text>
+    <xsl:apply-templates select="*[not(self::title)]"/>
+  </xsl:template>
+
+  <!-- title element in inline mode: render text content (may contain refs) -->
+  <xsl:template match="title" mode="inline">
+    <xsl:apply-templates mode="inline"/>
+  </xsl:template>
+
+  <!-- Suppress bare title elements in block mode (already consumed by sect* templates) -->
+  <xsl:template match="title"/>
 
   <!-- ======================================================================
        Group (compounddef)

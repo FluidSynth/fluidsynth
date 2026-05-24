@@ -16,4 +16,10 @@ RUN zypper refresh && zypper install --no-recommends -y doxygen astyle gdb sox f
 
 RUN zypper refresh && zypper install --no-recommends -y glib2-devel ninja
 
+# Documentation build dependencies:
+#   python3 + pip  -- for zensical and txt2md.py
+#   libxslt-tools  -- provides xsltproc for the XSLT pipeline
+RUN zypper refresh && zypper install --no-recommends -y python3 python3-pip libxslt-tools
+RUN pip install --break-system-packages zensical
+
 ENTRYPOINT ["/bin/bash"]

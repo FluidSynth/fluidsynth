@@ -90,10 +90,11 @@ if ( DOXYGEN_FOUND )
   # doc/zensical/requirements.txt.  Install them once with:
   #   pip install -r doc/zensical/requirements.txt
   #
-  # Build targets (XSLT + Python pipeline):
+  # Build targets (XSLT pipeline):
   #   fluidsettings2md_xslt -- convert fluidsettings.xml to settings Markdown (XSLT)
-  #   doxy2md_xslt          -- convert Doxygen XML output to API reference Markdown (XSLT)
-  #   usage2md              -- convert usage .txt files to usage Markdown (Python)
+  #   doxy2md_xslt          -- convert Doxygen XML group output to API reference Markdown (XSLT)
+  #   usage2md              -- convert Doxygen page XML to usage guide Markdown (XSLT)
+  #   recent_changes2md     -- convert RecentChanges page XML to api/recent-changes.md (XSLT)
   #   zensical_xslt         -- run all of the above, then build the unified wiki+API site
   # ---------------------------------------------------------------------------
   find_package ( Python3 COMPONENTS Interpreter )
@@ -102,28 +103,39 @@ if ( DOXYGEN_FOUND )
   set ( WIKI_DOCS_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/wiki )
   set ( ZENSICAL_SCRIPTS  ${CMAKE_CURRENT_SOURCE_DIR}/zensical/scripts )
 
-  if ( Python3_FOUND )
+  if ( LIBXSLT_XSLTPROC_EXECUTABLE )
 
-    # -- Convert usage .txt files to Markdown ----------------------------------
+    # -- Convert usage \page XML to usage guide Markdown (XSLT) ---------------
+    # Processes all usage guide pages from Doxygen page XML (built by doxygen target).
+    # Skips RecentChanges (handled by recent_changes2md below).
+    # The api_prefix "../api/" is passed so that cross-references from usage/
+    # pages to API symbols resolve to ../api/<group>.md#<symbol>.
     add_custom_target ( usage2md
       COMMAND ${CMAKE_COMMAND} -E make_directory ${WIKI_DOCS_DIR}/usage
-      COMMAND ${Python3_EXECUTABLE}
-          ${ZENSICAL_SCRIPTS}/txt2md.py
-          --batch
-          ${CMAKE_CURRENT_SOURCE_DIR}/usage
+      COMMAND bash ${XSLT_DIR}/run-xslt.sh
+          pages
+          ${CMAKE_CURRENT_BINARY_DIR}/api/xml
           ${WIKI_DOCS_DIR}/usage
-      COMMENT "Converting usage .txt files to Markdown"
+          ${XSLT_DIR}/doxy2md.xsl
+          "../api/"
+      DEPENDS doxygen
+      COMMENT "Converting Doxygen page XML to usage guide Markdown via XSLT"
     )
 
-    # -- Convert recent_changes.txt to API changelog Markdown -----------------
+    # -- Convert RecentChanges page XML to api/recent-changes.md (XSLT) -------
+    # Uses the same pages mode but filters to only the RecentChanges page.
+    # API prefix is "./" (already in the api/ directory).
     add_custom_target ( recent_changes2md
       COMMAND ${CMAKE_COMMAND} -E make_directory ${WIKI_DOCS_DIR}/api
-      COMMAND ${Python3_EXECUTABLE}
-          ${ZENSICAL_SCRIPTS}/txt2md.py
-          --page-prefix ../usage/
-          ${CMAKE_CURRENT_SOURCE_DIR}/recent_changes.txt
-          ${WIKI_DOCS_DIR}/api/recent-changes.md
-      COMMENT "Converting recent_changes.txt to Markdown"
+      COMMAND bash ${XSLT_DIR}/run-xslt.sh
+          pages
+          ${CMAKE_CURRENT_BINARY_DIR}/api/xml
+          ${WIKI_DOCS_DIR}/api
+          ${XSLT_DIR}/doxy2md.xsl
+          "./"
+          "RecentChanges"
+      DEPENDS doxygen
+      COMMENT "Converting RecentChanges page XML to Markdown via XSLT"
     )
 
     # -- Generate API examples page --------------------------------------------
@@ -135,13 +147,19 @@ if ( DOXYGEN_FOUND )
       COMMENT "Generating API examples page"
     )
 
+  endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
+
+  if ( Python3_FOUND )
+
     # -- Build the unified wiki + API documentation site (XSLT pipeline) ------
     # All content is generated into doc/wiki/ by the targets above.
-    # A Python script then patches zensical.toml with the full list of
-    # generated API pages (so the sidebar and breadcrumbs work for every page),
-    # and writes the result to a temporary runtime config file.
-    # zensical is then invoked with that runtime config via -f.
-    set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_CURRENT_BINARY_DIR}/zensical_runtime.toml )
+    # A Python script patches zensical.toml with the full list of generated API
+    # pages (so the sidebar and breadcrumbs work for every page) and writes a
+    # runtime config to the PROJECT SOURCE ROOT (not the build dir).
+    # Writing it there ensures that docs_dir = "doc/wiki" in the config resolves
+    # correctly relative to the config file – zensical requires docs_dir to be
+    # a relative path.  The file is gitignored via the root .gitignore.
+    set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_SOURCE_DIR}/zensical_runtime.toml )
     if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
       add_custom_target ( zensical_xslt
           COMMAND ${Python3_EXECUTABLE}
