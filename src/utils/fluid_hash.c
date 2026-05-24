@@ -114,7 +114,7 @@ spaced_primes_closest(unsigned int num)
 /*
  * hashtable: our #fluid_hashtable_t
  * key: the key to lookup against
- * @hash_return: optional key hash return location
+ * hash_return: optional key hash return location
  * Return value: a pointer to the described #fluid_hashnode_t pointer
  *
  * Performs a lookup in the hash table.  Virtually all hash operations
@@ -123,7 +123,7 @@ spaced_primes_closest(unsigned int num)
  * This function first computes the hash value of the key using the
  * user's hash function.
  *
- * If an entry in the table matching @key is found then this function
+ * If an entry in the table matching key is found then this function
  * returns a pointer to the pointer to that entry in the table.  In
  * the case that the entry is at the head of a chain, this pointer
  * will be an item in the nodes[] array.  In the case that the entry
@@ -134,7 +134,7 @@ spaced_primes_closest(unsigned int num)
  * to a NULL pointer will be returned.  To insert a item, this NULL
  * pointer should be updated to point to the new #fluid_hashnode_t.
  *
- * If @hash_return is a pass-by-reference parameter.  If it is
+ * If hash_return is a pass-by-reference parameter.  If it is
  * non-NULL then the computed hash value is returned.  This is to
  * save insertions from having to compute the hash record again for
  * the new record.
@@ -194,22 +194,22 @@ fluid_hashtable_lookup_node(fluid_hashtable_t *hashtable, const void *key,
 
 /*
  * hashtable: our #fluid_hashtable_t
- * @node_ptr_ptr: a pointer to the return value from
+ * node_ptr_ptr: a pointer to the return value from
  *   fluid_hashtable_lookup_node()
- * @notify: TRUE if the destroy notify handlers are to be called
+ * notify: TRUE if the destroy notify handlers are to be called
  *
  * Removes a node from the hash table and updates the node count.  The
  * node is freed.  No table resize is performed.
  *
- * If @notify is TRUE then the destroy notify functions are called
+ * If notify is TRUE then the destroy notify functions are called
  * for the key and value of the hash node.
  *
- * @node_ptr_ptr is a pass-by-reference in/out parameter.  When the
+ * node_ptr_ptr is a pass-by-reference in/out parameter.  When the
  * function is called, it should point to the pointer to the node to
  * remove.  This level of indirection is required so that the pointer
  * may be updated appropriately once the node has been removed.
  *
- * Before the function returns, the pointer at @node_ptr_ptr will be
+ * Before the function returns, the pointer at node_ptr_ptr will be
  * updated to point to the position in the table that contains the
  * pointer to the "next" node in the chain.  This makes this function
  * convenient to use from functions that iterate over the entire
@@ -218,7 +218,7 @@ fluid_hashtable_lookup_node(fluid_hashtable_t *hashtable, const void *key,
  *
  * Since the pointer in the table to the removed node is replaced with
  * either a pointer to the next node or a NULL pointer as
- * appropriate, the pointer at the end of @node_ptr_ptr will never be
+ * appropriate, the pointer at the end of node_ptr_ptr will never be
  * modified at all.  Stay tuned. :)
  */
 static void
@@ -250,12 +250,12 @@ fluid_hashtable_remove_node(fluid_hashtable_t *hashtable,
 /*
  * fluid_hashtable_remove_all_nodes:
  * hashtable: our #fluid_hashtable_t
- * @notify: TRUE if the destroy notify handlers are to be called
+ * notify: TRUE if the destroy notify handlers are to be called
  *
  * Removes all nodes from the table.  Since this may be a precursor to
  * freeing the table entirely, no resize is performed.
  *
- * If @notify is TRUE then the destroy notify functions are called
+ * If notify is TRUE then the destroy notify functions are called
  * for the key and value of the hash node.
  */
 static void
@@ -358,7 +358,7 @@ fluid_hashtable_maybe_resize(fluid_hashtable_t *hashtable)
  * key_equal_func: a function to check two keys for equality.  This is
  *   used when looking up keys in the #fluid_hashtable_t.  The fluid_direct_equal(),
  *   fluid_int_equal() and fluid_str_equal() functions are provided for the most
- *   common types of keys. If @key_equal_func is NULL, keys are compared
+ *   common types of keys. If key_equal_func is NULL, keys are compared
  *   directly in a similar fashion to fluid_direct_equal(), but without the
  *   overhead of a function call.
  *
@@ -431,7 +431,7 @@ new_fluid_hashtable_full(fluid_hash_func_t hash_func,
  * hashtable: a #fluid_hashtable_t.
  *
  * Initializes a key/value pair iterator and associates it with
- * @hashtable. Modifying the hash table after calling this function
+ * hashtable. Modifying the hash table after calling this function
  * invalidates the returned iterator.
  * |[
  * fluid_hashtable_iter_t iter;
@@ -468,9 +468,9 @@ fluid_hashtable_iter_init(fluid_hashtable_iter_t *iter,
  * key: a location to store the key, or NULL.
  * value: a location to store the value, or NULL.
  *
- * Advances @iter and retrieves the key and/or value that are now
+ * Advances iter and retrieves the key and/or value that are now
  * pointed to as a result of this advancement. If FALSE is returned,
- * @key and @value are not set, and the iterator becomes invalid.
+ * key and value are not set, and the iterator becomes invalid.
  *
  * Return value: FALSE if the end of the #fluid_hashtable_t has been reached.
  *
@@ -532,9 +532,9 @@ fluid_hashtable_iter_next(fluid_hashtable_iter_t *iter, void **key,
  * fluid_hashtable_iter_get_hash_table:
  * iter: an initialized #fluid_hashtable_iter_t.
  *
- * Returns the #fluid_hashtable_t associated with @iter.
+ * Returns the #fluid_hashtable_t associated with iter.
  *
- * Return value: the #fluid_hashtable_t associated with @iter.
+ * Return value: the #fluid_hashtable_t associated with iter.
  *
  * Since: 2.16
  **/
@@ -654,7 +654,7 @@ fluid_hashtable_iter_steal(fluid_hashtable_iter_t *iter)
  * fluid_hashtable_ref:
  * hashtable: a valid #fluid_hashtable_t.
  *
- * Atomically increments the reference count of @hashtable by one.
+ * Atomically increments the reference count of hashtable by one.
  * This function is MT-safe and may be called from any thread.
  *
  * Return value: the passed in #fluid_hashtable_t.
@@ -675,7 +675,7 @@ fluid_hashtable_ref(fluid_hashtable_t *hashtable)
  * fluid_hashtable_unref:
  * hashtable: a valid #fluid_hashtable_t.
  *
- * Atomically decrements the reference count of @hashtable by one.
+ * Atomically decrements the reference count of hashtable by one.
  * If the reference count drops to 0, all keys and values will be
  * destroyed, and all memory allocated by the hash table is released.
  * This function is MT-safe and may be called from any thread.
@@ -789,15 +789,15 @@ fluid_hashtable_lookup_extended(fluid_hashtable_t *hashtable,
  * hashtable: our #fluid_hashtable_t
  * key: the key to insert
  * value: the value to insert
- * @keep_new_key: if TRUE and this key already exists in the table
+ * keep_new_key: if TRUE and this key already exists in the table
  *   then call the destroy notify function on the old key.  If FALSE
  *   then call the destroy notify function on the new key.
  *
  * Implements the common logic for the fluid_hashtable_insert() and
  * fluid_hashtable_replace() functions.
  *
- * Do a lookup of @key.  If it is found, replace it with the new
- * @value (and perhaps the new @key).  If it is not found, create a
+ * Do a lookup of key.  If it is found, replace it with the new
+ * value (and perhaps the new key).  If it is not found, create a
  * new node.
  */
 static void
@@ -868,9 +868,9 @@ fluid_hashtable_insert_internal(fluid_hashtable_t *hashtable, void *key,
  * Inserts a new key and value into a #fluid_hashtable_t.
  *
  * If the key already exists in the #fluid_hashtable_t its current value is replaced
- * with the new value. If you supplied a @value_destroy_func when creating the
+ * with the new value. If you supplied a value_destroy_func when creating the
  * #fluid_hashtable_t, the old value is freed using that function. If you supplied
- * a @key_destroy_func when creating the #fluid_hashtable_t, the passed key is freed
+ * a key_destroy_func when creating the #fluid_hashtable_t, the passed key is freed
  * using that function.
  **/
 void
@@ -888,8 +888,8 @@ fluid_hashtable_insert(fluid_hashtable_t *hashtable, void *key, void *value)
  * Inserts a new key and value into a #fluid_hashtable_t similar to
  * fluid_hashtable_insert(). The difference is that if the key already exists
  * in the #fluid_hashtable_t, it gets replaced by the new key. If you supplied a
- * @value_destroy_func when creating the #fluid_hashtable_t, the old value is freed
- * using that function. If you supplied a @key_destroy_func when creating the
+ * value_destroy_func when creating the #fluid_hashtable_t, the old value is freed
+ * using that function. If you supplied a key_destroy_func when creating the
  * #fluid_hashtable_t, the old key is freed using that function.
  **/
 void
@@ -902,14 +902,14 @@ fluid_hashtable_replace(fluid_hashtable_t *hashtable, void *key, void *value)
  * fluid_hashtable_remove_internal:
  * hashtable: our #fluid_hashtable_t
  * key: the key to remove
- * @notify: TRUE if the destroy notify handlers are to be called
+ * notify: TRUE if the destroy notify handlers are to be called
  * Return value: TRUE if a node was found and removed, else FALSE
  *
  * Implements the common logic for the fluid_hashtable_remove() and
  * fluid_hashtable_steal() functions.
  *
- * Do a lookup of @key and remove it if it is found, calling the
- * destroy notify handlers only if @notify is TRUE.
+ * Do a lookup of key and remove it if it is found, calling the
+ * destroy notify handlers only if notify is TRUE.
  */
 static int
 fluid_hashtable_remove_internal(fluid_hashtable_t *hashtable, const void *key,
@@ -1012,17 +1012,17 @@ fluid_hashtable_steal_all(fluid_hashtable_t *hashtable)
  * fluid_hashtable_foreach_remove_or_steal:
  * hashtable: our #fluid_hashtable_t
  * func: the user's callback function
- * user_data: data for @func
- * @notify: TRUE if the destroy notify handlers are to be called
+ * user_data: data for func
+ * notify: TRUE if the destroy notify handlers are to be called
  *
  * Implements the common logic for fluid_hashtable_foreach_remove() and
  * fluid_hashtable_foreach_steal().
  *
- * Iterates over every node in the table, calling @func with the key
- * and value of the node (and @user_data).  If @func returns TRUE the
+ * Iterates over every node in the table, calling func with the key
+ * and value of the node (and user_data).  If func returns TRUE the
  * node is removed from the table.
  *
- * If @notify is true then the destroy notify handlers will be called
+ * If notify is true then the destroy notify handlers will be called
  * for each removed node.
  */
 static unsigned int
@@ -1117,7 +1117,7 @@ fluid_hashtable_foreach_steal(fluid_hashtable_t *hashtable,
  *
  * Calls the given function for each of the key/value pairs in the
  * #fluid_hashtable_t.  The function is passed the key and value of each
- * pair, and the given @user_data parameter.  The hash table may not
+ * pair, and the given user_data parameter.  The hash table may not
  * be modified while iterating over it (you can't add/remove
  * items). To remove all items matching a predicate, use
  * fluid_hashtable_foreach_remove().
@@ -1151,8 +1151,8 @@ fluid_hashtable_foreach(fluid_hashtable_t *hashtable, fluid_hr_func_t func,
  * user_data:  user data to pass to the function.
  *
  * Calls the given function for key/value pairs in the #fluid_hashtable_t until
- * @predicate returns TRUE.  The function is passed the key and value of
- * each pair, and the given @user_data parameter. The hash table may not
+ * predicate returns TRUE.  The function is passed the key and value of
+ * each pair, and the given user_data parameter. The hash table may not
  * be modified while iterating over it (you can't add/remove items).
  *
  * Note, that hash tables are really only optimized for forward lookups,
@@ -1214,8 +1214,8 @@ fluid_hashtable_size(fluid_hashtable_t *hashtable)
  * fluid_hashtable_get_keys:
  * hashtable: a #fluid_hashtable_t
  *
- * Retrieves every key inside @hashtable. The returned data is valid
- * until @hashtable is modified.
+ * Retrieves every key inside hashtable. The returned data is valid
+ * until hashtable is modified.
  *
  * Return value: a (see glib documentation for GList) containing all the keys inside the hash
  *   table. The content of the list is owned by the hash table and
@@ -1250,8 +1250,8 @@ fluid_hashtable_get_keys(fluid_hashtable_t *hashtable)
  * fluid_hashtable_get_values:
  * hashtable: a #fluid_hashtable_t
  *
- * Retrieves every value inside @hashtable. The returned data is
- * valid until @hashtable is modified.
+ * Retrieves every value inside hashtable. The returned data is
+ * valid until hashtable is modified.
  *
  * Return value: a (see glib documentation for GList) containing all the values inside the hash
  *   table. The content of the list is owned by the hash table and
@@ -1289,11 +1289,11 @@ fluid_hashtable_get_values(fluid_hashtable_t *hashtable)
 /**
  * fluid_str_equal:
  * v1: a key
- * v2: a key to compare with @v1
+ * v2: a key to compare with v1
  *
  * Compares two strings for byte-by-byte equality and returns TRUE
  * if they are equal. It can be passed to new_fluid_hashtable() as the
- * @key_equal_func parameter, when using strings as keys in a (see glib documentation for Ghashtable).
+ * key_equal_func parameter, when using strings as keys in a (see glib documentation for Ghashtable).
  *
  * Returns: TRUE if the two keys match
  */
@@ -1311,7 +1311,7 @@ fluid_str_equal(const void *v1, const void *v2)
  * v: a string key
  *
  * Converts a string to a hash value.
- * It can be passed to new_fluid_hashtable() as the @hash_func
+ * It can be passed to new_fluid_hashtable() as the hash_func
  * parameter, when using strings as keys in a #fluid_hashtable_t.
  *
  * Returns: a hash value corresponding to the key
@@ -1341,10 +1341,10 @@ fluid_str_hash(const void *v)
 /**
  * fluid_direct_equal:
  * v1: a key.
- * v2: a key to compare with @v1.
+ * v2: a key to compare with v1.
  *
  * Compares two (see glib documentation for gpointer) arguments and returns TRUE if they are equal.
- * It can be passed to new_fluid_hashtable() as the @key_equal_func
+ * It can be passed to new_fluid_hashtable() as the key_equal_func
  * parameter, when using pointers as keys in a #fluid_hashtable_t.
  *
  * Returns: TRUE if the two keys match.
@@ -1360,7 +1360,7 @@ fluid_direct_equal(const void *v1, const void *v2)
  * v: a void * key
  *
  * Converts a gpointer to a hash value.
- * It can be passed to g_hashtable_new() as the @hash_func parameter,
+ * It can be passed to g_hashtable_new() as the hash_func parameter,
  * when using pointers as keys in a #fluid_hashtable_t.
  *
  * Returns: a hash value corresponding to the key.
@@ -1374,11 +1374,11 @@ fluid_direct_hash(const void *v)
 /**
  * fluid_int_equal:
  * v1: a pointer to a int key.
- * v2: a pointer to a int key to compare with @v1.
+ * v2: a pointer to a int key to compare with v1.
  *
  * Compares the two (see glib documentation for gint) values being pointed to and returns
  * TRUE if they are equal.
- * It can be passed to g_hashtable_new() as the @key_equal_func
+ * It can be passed to g_hashtable_new() as the key_equal_func
  * parameter, when using pointers to integers as keys in a #fluid_hashtable_t.
  *
  * Returns: TRUE if the two keys match.
@@ -1394,7 +1394,7 @@ fluid_int_equal(const void *v1, const void *v2)
  * v: a pointer to a int key
  *
  * Converts a pointer to a (see glib documentation for gint) to a hash value.
- * It can be passed to g_hashtable_new() as the @hash_func parameter,
+ * It can be passed to g_hashtable_new() as the hash_func parameter,
  * when using pointers to integers values as keys in a #fluid_hashtable_t.
  *
  * Returns: a hash value corresponding to the key.
