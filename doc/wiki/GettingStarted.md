@@ -1,4 +1,4 @@
-# 🚀 Getting started with FluidSynth
+# 🚀 Getting started
 
 ## Introduction
 

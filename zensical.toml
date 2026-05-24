@@ -60,7 +60,7 @@ nav = [
         "LicensingFAQ.md"
     ]},
     "ChangeLog.md",
-    {"📚 User Documentation" = [
+    {"📚 Documentation" = [
         "GettingStarted.md",
         "ExampleCommandLines.md",
         "Audio-Drivers.md",
@@ -72,51 +72,51 @@ nav = [
         "reverbators.md",
         "ladspa.md",
         "SoundFont3Format.md",
-    ]},
-    {"🤓 Developer Documentation" = [
-        {"🛠️ Compiling Fluidsynth" = [
-            "BuildingWithCMake.md",
-            "BuildingForAndroid.md",
-            "Using-prebuilt-libraries-on-Android.md",
-            "NotesForPackagers.md",
+        {"🤓 Developer Documentation" = [
+            {"🛠️ Compiling Fluidsynth" = [
+                "BuildingWithCMake.md",
+                "BuildingForAndroid.md",
+                "Using-prebuilt-libraries-on-Android.md",
+                "NotesForPackagers.md",
+            ]},
+            {"⚙️ Fluid Settings Reference" = [
+                "settings/index.md",
+                "settings/audio.md",
+                "settings/midi.md",
+                "settings/player.md",
+                "settings/shell.md",
+                "settings/synth.md",
+            ]},
+            {"📖 Developer Guide" = [
+                "usage/index.md",
+                "usage/creating-settings.md",
+                "usage/creating-synth.md",
+                "usage/loading-soundfonts.md",
+                "usage/audio-driver.md",
+                "usage/using-synth.md",
+                "usage/sending-midi.md",
+                "usage/realtime-midi.md",
+                "usage/midi-player.md",
+                "usage/file-renderer.md",
+                "usage/midi-player-mem.md",
+                "usage/midi-router.md",
+                "usage/sequencer.md",
+                "usage/shell.md",
+                "usage/multi-channel.md",
+                "usage/synth-context.md",
+                "usage/advanced.md",
+            ]},
+            # __API_NAV_BEGIN__
+            {"🔍 API Reference" = [
+                "api/index.md",
+                "api/recent-changes.md",
+                "api/deprecated.md",
+                "api/examples.md",
+            ]},
+            # __API_NAV_END__
+            {"🔗 Legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
+            "ReleaseCheckList.md"
         ]},
-        {"⚙️ Fluid Settings Reference" = [
-            "settings/index.md",
-            "settings/audio.md",
-            "settings/midi.md",
-            "settings/player.md",
-            "settings/shell.md",
-            "settings/synth.md",
-        ]},
-        {"📖 Developer Guide" = [
-            "usage/index.md",
-            "usage/creating-settings.md",
-            "usage/creating-synth.md",
-            "usage/loading-soundfonts.md",
-            "usage/audio-driver.md",
-            "usage/using-synth.md",
-            "usage/sending-midi.md",
-            "usage/realtime-midi.md",
-            "usage/midi-player.md",
-            "usage/file-renderer.md",
-            "usage/midi-player-mem.md",
-            "usage/midi-router.md",
-            "usage/sequencer.md",
-            "usage/shell.md",
-            "usage/multi-channel.md",
-            "usage/synth-context.md",
-            "usage/advanced.md",
-        ]},
-        # __API_NAV_BEGIN__
-        {"🔍 API Reference" = [
-            "api/index.md",
-            "api/recent-changes.md",
-            "api/deprecated.md",
-            "api/examples.md",
-        ]},
-        # __API_NAV_END__
-        {"🔗 FluidSynth legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
-        "ReleaseCheckList.md"
     ]},
     {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"}
 ]
@@ -241,7 +241,7 @@ features = [
     # Turn on this feature to expand all collapsible sections in the
     # navigation sidebar by default.
     # https://zensical.org/docs/setup/navigation/#navigation-expansion
-    "navigation.expand",
+    #"navigation.expand",
 
     # This feature turns on navigation elements in the footer that allow the
     # user to navigate to a next or previous page.
