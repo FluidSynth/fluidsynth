@@ -1,4 +1,4 @@
-# 🖥️ FluidSynth LADSPA Interface
+# 🖥️ LADSPA Interface
 
 The [LADSPA](https://ladspa.org/) (Linux Audio Developer's Simple Plugin API)
 binding can be used to route the FluidSynth audio output through any number of

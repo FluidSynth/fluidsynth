@@ -1,5 +1,7 @@
 # ✅ Release Checklist
 
+Checklist used by FluidSynth's current maintainer.
+
 ## Preparation
 
   * Mention that CMAKE 3.13 will be required

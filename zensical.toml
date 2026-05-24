@@ -70,12 +70,23 @@ nav = [
         "LowLatency.md",
         "FluidSynth-configuration-files.md",
         "reverbators.md",
+        "ladspa.md",
+        "SoundFont3Format.md",
     ]},
     {"🤓 Developer Documentation" = [
-        "BuildingWithCMake.md",
-        {"🤖 Build for Android" = [
+        {"🛠️ Compiling Fluidsynth" = [
+            "BuildingWithCMake.md",
             "BuildingForAndroid.md",
             "Using-prebuilt-libraries-on-Android.md",
+            "NotesForPackagers.md",
+        ]},
+        {"⚙️ Fluid Settings Reference" = [
+            "settings/index.md",
+            "settings/audio.md",
+            "settings/midi.md",
+            "settings/player.md",
+            "settings/shell.md",
+            "settings/synth.md",
         ]},
         {"📖 Developer Guide" = [
             "usage/index.md",
@@ -104,18 +115,7 @@ nav = [
             "api/examples.md",
         ]},
         # __API_NAV_END__
-        {"⚙️ Settings Reference" = [
-            "settings/index.md",
-            "settings/audio.md",
-            "settings/midi.md",
-            "settings/player.md",
-            "settings/shell.md",
-            "settings/synth.md",
-        ]},
-        "ladspa.md",
         {"🔗 FluidSynth legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
-        "SoundFont3Format.md",
-        "NotesForPackagers.md",
         "ReleaseCheckList.md"
     ]},
     {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"}
