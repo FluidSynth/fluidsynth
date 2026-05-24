@@ -38,7 +38,7 @@ extern "C" {
  * For a full list of available commands, type \c help in the
  * \ref command_shell or send the same command via a command handler.
  * Further documentation can be found at
- * https://github.com/FluidSynth/fluidsynth/wiki/UserManual#shell-commands
+ * https://www.fluidsynth.org/wiki/UserManual#shell-commands
  *
  * @{
  */
