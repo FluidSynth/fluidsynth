@@ -397,7 +397,7 @@ if [ "$MODE" = "pages" ]; then
     #  - Page IDs           →  relative path to sibling page .md
     # ------------------------------------------------------------------
     echo "  Building cross-reference map for pages mode ..."
-    REFMAP_FILE="$(mktemp /tmp/pages_refmap.XXXXXX)"
+    REFMAP_FILE="$(mktemp pages_refmap.XXXXXX)"
     trap 'rm -f "$REFMAP_FILE"' EXIT
 
     # Inline XSL to list group compound refids from index.xml
