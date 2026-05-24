@@ -442,7 +442,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t *chan)
  * @param chan  fluid_channel_t.
  * @param key MIDI note number (0-127).
  * @param vel MIDI velocity (0-127, 0=noteoff).
- * @param onenote. When 1 the function adds the note but the monophonic list
+ * @param onenote When 1 the function adds the note but the monophonic list
  *                 keeps only one note (used on noteOn poly).
  * Note: i_last index keeps a trace of the most recent note added.
  *       prev_note keeps a trace of the note prior i_last note.
@@ -543,11 +543,9 @@ fluid_channel_search_monolist(fluid_channel_t *chan, unsigned char key, int *i_p
  * and relinked after the i_last element.
  *
  * @param chan  fluid_channel_t.
- * @param
- *   i, index of the note to remove. If i is invalid or the list is
+ * @param i index of the note to remove. If i is invalid or the list is
  *      empty, the function do nothing and returns FLUID_FAILED.
- * @param
- *   On input, i_prev is a pointer on index of the note previous i.
+ * @param i_prev pointer on index of the note previous i.
  *   On output i_prev is a pointer on index of the note previous i if i is the last note
  *   in the list,FLUID_FAILED otherwise. When the returned index is valid it means
  *   a legato detection on noteoff.
@@ -633,9 +631,9 @@ void fluid_channel_clear_monolist(fluid_channel_t *chan)
 /**
  * On noteOn on a polyphonic channel,adds the note into the monophonic list
  * keeping only this note.
- * @param
- *   chan  fluid_channel_t.
- *   key, vel, note and velocity added in the monolist
+ * @param chan  fluid_channel_t.
+ * @param key note number added in the monolist.
+ * @param vel velocity added in the monolist.
  * Note: i_last index keeps a trace of the most recent note inserted.
  *       prev_note keeps a trace of the note prior i_last note.
  *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
@@ -681,7 +679,7 @@ void fluid_channel_invalid_prev_note_staccato(fluid_channel_t *chan)
 /**
  * The function handles poly/mono commutation on legato pedal On/Off.
  * @param chan  fluid_channel_t.
- * @param value, value of the CC legato.
+ * @param value value of the CC legato.
  */
 void fluid_channel_cc_legato(fluid_channel_t *chan, int value)
 {
@@ -719,7 +717,7 @@ void fluid_channel_cc_legato(fluid_channel_t *chan, int value)
  * to trigger noteon/noteoff note when the musician starts to breath (noteon) and
  * stops to breath (noteoff).
  * @param chan  fluid_channel_t.
- * @param value, value of the CC Breath..
+ * @param value value of the CC Breath.
  */
 void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value)
 {

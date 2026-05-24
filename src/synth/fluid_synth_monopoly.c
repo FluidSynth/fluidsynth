@@ -142,7 +142,7 @@
  *
  * On input
  * @param chan  fluid_channel_t.
- * @param defaultFromkey, the default 'fromkey portamento' note or 'fromkey legato'
+ * @param default_fromkey the default 'fromkey portamento' note or 'fromkey legato'
  *       note (see description above).
  *
  * @return
@@ -530,8 +530,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t *synth, int chan, int key, int ve
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param key MIDI note number (0-127).
- * @param Mono, 1 noteoff on monophonic note.
- *              0 noteoff on polyphonic note.
+ * @param Mono 1 for noteoff on monophonic note, 0 for noteoff on polyphonic note.
  * @return FLUID_OK on success, FLUID_FAILED otherwise.
  *
  * Note: On return, on monophonic, possible sustained note is memorized in
