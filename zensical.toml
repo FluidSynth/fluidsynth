@@ -116,8 +116,7 @@ nav = [
         {"🔗 FluidSynth legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
         "SoundFont3Format.md",
         "NotesForPackagers.md",
-        "ReleaseCheckList.md",
-        "Future.md"
+        "ReleaseCheckList.md"
     ]},
     {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"}
 ]
