@@ -196,15 +196,22 @@ if [ "$MODE" = "doxy" ]; then
 
     # ------------------------------------------------------------------
     # Add individual \setting{} cross-references from fluidsettings.xml.
-    # Each setting produces an entry  settings_GROUP_NAME|../settings/GROUP.md#settings_GROUP_NAME
-    # where NAME has dots replaced by underscores.
+    # \setting{GROUP_NAME} expands to \ref settings_GROUP_NAME.
+    # Doxygen generates a \section settings_GROUP_NAME inside the page settings_GROUP,
+    # and the XML refid for a section within a page is: <page_id>_1<section_id>
+    # e.g. settings_synth_1settings_synth_limiter_active
+    # The Markdown anchor (from fluidsettings2md.xsl) is: settings_GROUP_NAME
+    # (dots replaced by underscores, hyphens preserved).
+    # We also add page-level entries for \ref settings_GROUP page references.
     # ------------------------------------------------------------------
     if [ -n "$FLUIDSETTINGS_XML" ] && [ -f "$FLUIDSETTINGS_XML" ]; then
         echo "  Adding settings cross-references from fluidsettings.xml ..."
         while IFS=$'\t' read -r grp raw_name; do
             [ -z "$grp" ] && continue
-            anchor="settings_${grp}_$(echo "$raw_name" | tr '.' '_')"
-            printf '%s|../settings/%s.md#%s\n' "$anchor" "$grp" "$anchor" >> "$REFMAP_FILE"
+            translated="$(echo "$raw_name" | tr '.' '_')"
+            section_id="settings_${grp}_${translated}"
+            doxy_refid="settings_${grp}_1${section_id}"
+            printf '%s|../settings/%s.md#%s\n' "$doxy_refid" "$grp" "$section_id" >> "$REFMAP_FILE"
         done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'SETTINGS_XSL'
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
@@ -219,6 +226,23 @@ if [ "$MODE" = "doxy" ]; then
   </xsl:template>
 </xsl:stylesheet>
 SETTINGS_XSL
+        )
+        # Add page-level entries for \ref settings_GROUP references
+        while IFS= read -r grp; do
+            [ -z "$grp" ] && continue
+            printf 'settings_%s|../settings/%s.md\n' "$grp" "$grp" >> "$REFMAP_FILE"
+        done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'GROUPS_XSL'
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="/fluidsettings/*">
+      <xsl:value-of select="name(.)"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>
+GROUPS_XSL
         )
     fi
 
@@ -511,16 +535,25 @@ if [ "$MODE" = "pages" ]; then
     done
 
     # Add settings page references (relative from output_dir to settings/)
-    SETTINGS_PREFIX="${API_PREFIX%api/}settings/"
+    # When API_PREFIX ends with "api/" (e.g. "../api/"), strip "api/" to get the parent.
+    # When API_PREFIX is "./" (we are already inside api/), settings/ is one level up.
+    if [[ "$API_PREFIX" == *"api/" ]]; then
+        SETTINGS_PREFIX="${API_PREFIX%api/}settings/"
+    else
+        SETTINGS_PREFIX="../settings/"
+    fi
     printf '%s|%s\n' "fluidsettings" "${SETTINGS_PREFIX}index.md" >> "$REFMAP_FILE"
 
     # Add individual \setting{} cross-references from fluidsettings.xml if provided.
+    # See the doxy mode block above for a full explanation of the refid format.
     if [ -n "$FLUIDSETTINGS_XML" ] && [ -f "$FLUIDSETTINGS_XML" ]; then
         echo "  Adding settings cross-references from fluidsettings.xml ..."
         while IFS=$'\t' read -r grp raw_name; do
             [ -z "$grp" ] && continue
-            anchor="settings_${grp}_$(echo "$raw_name" | tr '.' '_')"
-            printf '%s|%s%s.md#%s\n' "$anchor" "$SETTINGS_PREFIX" "$grp" "$anchor" >> "$REFMAP_FILE"
+            translated="$(echo "$raw_name" | tr '.' '_')"
+            section_id="settings_${grp}_${translated}"
+            doxy_refid="settings_${grp}_1${section_id}"
+            printf '%s|%s%s.md#%s\n' "$doxy_refid" "$SETTINGS_PREFIX" "$grp" "$section_id" >> "$REFMAP_FILE"
         done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'SETTINGS_XSL'
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
@@ -535,6 +568,23 @@ if [ "$MODE" = "pages" ]; then
   </xsl:template>
 </xsl:stylesheet>
 SETTINGS_XSL
+        )
+        # Add page-level entries for \ref settings_GROUP references
+        while IFS= read -r grp; do
+            [ -z "$grp" ] && continue
+            printf 'settings_%s|%s%s.md\n' "$grp" "$SETTINGS_PREFIX" "$grp" >> "$REFMAP_FILE"
+        done < <(xsltproc - "$FLUIDSETTINGS_XML" <<'GROUPS_XSL'
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="text"/>
+  <xsl:template match="/">
+    <xsl:for-each select="/fluidsettings/*">
+      <xsl:value-of select="name(.)"/>
+      <xsl:text>&#xa;</xsl:text>
+    </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet>
+GROUPS_XSL
         )
     fi
 
