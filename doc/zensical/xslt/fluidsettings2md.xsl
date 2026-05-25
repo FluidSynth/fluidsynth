@@ -144,6 +144,7 @@
     <xsl:text>| Default | `</xsl:text>
     <xsl:call-template name="inline-html">
       <xsl:with-param name="node" select="def"/>
+      <xsl:with-param name="in-table" select="'1'"/>
     </xsl:call-template>
     <xsl:text>` |&#xa;</xsl:text>
 
@@ -179,10 +180,14 @@
   <!-- ======================================================================
        inline-html: serialize child nodes of an element as plain text,
        converting HTML tags to Markdown equivalents.
+       in-table: when '1', <br/> is rendered as a space (linebreaks not
+       allowed in Markdown table cells); otherwise a Markdown hard line
+       break (two trailing spaces + newline) is emitted.
        ====================================================================== -->
   <xsl:template name="inline-html">
     <xsl:param name="node"/>
     <xsl:param name="list-indent" select="'  '"/>
+    <xsl:param name="in-table" select="'0'"/>
     <xsl:for-each select="$node/node()">
       <xsl:choose>
         <xsl:when test="self::text()">
@@ -190,8 +195,16 @@
           <xsl:value-of select="normalize-space(.)"/>
         </xsl:when>
         <xsl:when test="self::*[name()='br' or name()='BR']">
-          <!-- Linebreaks in tables are tricky, so just replace that with a space -->
-          <xsl:text> </xsl:text>
+          <xsl:choose>
+            <xsl:when test="$in-table = '1'">
+              <!-- Linebreaks inside Markdown table cells must be a space -->
+              <xsl:text> </xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+              <!-- Hard line break outside a table: two trailing spaces + newline -->
+              <xsl:text>  &#xa;</xsl:text>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:when>
         <xsl:when test="self::*[name()='code']">
           <xsl:text>`</xsl:text>
@@ -206,6 +219,7 @@
             <xsl:call-template name="inline-html">
               <xsl:with-param name="node" select="."/>
               <xsl:with-param name="list-indent" select="concat($list-indent, '  ')"/>
+              <xsl:with-param name="in-table" select="$in-table"/>
             </xsl:call-template>
           <xsl:text>&#xa;&#xa;</xsl:text>
           </xsl:for-each>
@@ -215,6 +229,7 @@
           <xsl:call-template name="inline-html">
             <xsl:with-param name="node" select="."/>
             <xsl:with-param name="list-indent" select="concat($list-indent, '  ')"/>
+            <xsl:with-param name="in-table" select="$in-table"/>
           </xsl:call-template>
           <xsl:text>&#xa;</xsl:text>
         </xsl:when>
