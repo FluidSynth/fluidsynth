@@ -250,6 +250,24 @@
           <xsl:value-of select="@href"/>
           <xsl:text>)</xsl:text>
         </xsl:when>
+        <xsl:when test="self::*[name()='note']">
+          <!-- Zensical admonition: note -->
+          <xsl:text>&#xa;&#xa;!!! note&#xa;    </xsl:text>
+          <xsl:call-template name="inline-html">
+            <xsl:with-param name="node" select="."/>
+            <xsl:with-param name="in-table" select="$in-table"/>
+          </xsl:call-template>
+          <xsl:text>&#xa;</xsl:text>
+        </xsl:when>
+        <xsl:when test="self::*[name()='attention']">
+          <!-- Zensical admonition: warning (attention = stronger notice) -->
+          <xsl:text>&#xa;&#xa;!!! warning&#xa;    </xsl:text>
+          <xsl:call-template name="inline-html">
+            <xsl:with-param name="node" select="."/>
+            <xsl:with-param name="in-table" select="$in-table"/>
+          </xsl:call-template>
+          <xsl:text>&#xa;</xsl:text>
+        </xsl:when>
         <xsl:otherwise>
           <!-- Unknown element: just output its text content -->
           <xsl:value-of select="."/>
