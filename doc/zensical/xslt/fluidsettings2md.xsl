@@ -273,7 +273,7 @@ For legacy FluidSynth 1.1 pls. refer to FluidSynths man page at that time.&#xa;<
         </xsl:when>
         <xsl:when test="self::*[name()='attention']">
           <!-- Zensical admonition: warning (attention = stronger notice) -->
-          <xsl:text>&#xa;&#xa;!!! warning&#xa;    </xsl:text>
+          <xsl:text>&#xa;&#xa;!!! warning "Attention"&#xa;    </xsl:text>
           <xsl:call-template name="inline-html">
             <xsl:with-param name="node" select="."/>
             <xsl:with-param name="in-table" select="$in-table"/>
