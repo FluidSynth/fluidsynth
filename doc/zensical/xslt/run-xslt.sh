@@ -652,12 +652,12 @@ if [ "$MODE" = "examples" ]; then
             # Extract brief description from first comment line starting with capital letter
             desc=$(grep -m1 '^ \* [A-Z]' "$src" | sed 's/^ \* //' || true)
             if [ -n "$desc" ]; then
-                printf -- "- [**%s**](examples/%s.md) \xe2\x80\x93 %s\n" "$name" "$name" "$desc"
+                printf -- "- [**%s**](%s.md) \xe2\x80\x93 %s\n" "$name" "$name" "$desc"
             else
-                printf -- "- [**%s**](examples/%s.md)\n" "$name" "$name"
+                printf -- "- [**%s**](%s.md)\n" "$name" "$name"
             fi
         done
-    } > "$API_DIR/examples.md"
+    } > "$API_DIR/examples/index.md"
 
     # --- Write one page per example file ------------------------------------
     for src in "$EXAMPLES_SRC"/*.c "$EXAMPLES_SRC"/*.cxx; do

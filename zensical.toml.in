@@ -108,6 +108,8 @@ nav = [
             ]},
             {"🔍 API Reference" = [
 @API_NAV_ENTRIES@            ]},
+            {"📄 Code Examples" = [
+@EXA_NAV_ENTRIES@            ]},
             {"🔗 Legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
             "ReleaseCheckList.md"
         ]},

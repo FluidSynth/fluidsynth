@@ -43,25 +43,18 @@ foreach(_n IN LISTS _sorted_top)
     string(APPEND API_NAV_ENTRIES "                \"api/${_n}\",\n")
 endforeach()
 
-# Emit the Examples subsection: api/examples.md is the section index page,
-# followed by each individual example as a child entry.
-set(_has_examples_index FALSE)
-if(EXISTS "${WIKI_DIR}/api/examples.md")
-    set(_has_examples_index TRUE)
-endif()
-if(_has_examples_index OR _api_examples)
-    string(APPEND API_NAV_ENTRIES "                {\"📝 Examples\" = [\n")
-    if(_has_examples_index)
-        string(APPEND API_NAV_ENTRIES "                    \"api/examples.md\",\n")
-    endif()
+if(_api_examples)
     foreach(_n IN LISTS _api_examples)
-        string(APPEND API_NAV_ENTRIES "                    \"api/examples/${_n}\",\n")
+        string(APPEND EXA_NAV_ENTRIES "                    \"api/examples/${_n}\",\n")
     endforeach()
-    string(APPEND API_NAV_ENTRIES "                ]},\n")
 endif()
 
 if(NOT API_NAV_ENTRIES)
-    set(API_NAV_ENTRIES "                \"api/index.md\",\n")
+    message(FATAL "API_NAV_ENTRIES was empty, possibly doxygen XML to markdown conversion failed.")
+endif()
+
+if(NOT EXA_NAV_ENTRIES)
+    message(FATAL "No examples have been discovered, though there should be some...")
 endif()
 
 # Substitute @API_NAV_ENTRIES@ in the template and write the runtime config
