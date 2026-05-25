@@ -30,13 +30,25 @@
   <xsl:template match="/fluidsettings">
     <!-- index.md -->
     <xsl:text>__FILE__: index.md&#xa;</xsl:text>
-    <xsl:text># Settings Reference&#xa;&#xa;</xsl:text>
-    <xsl:text>FluidSynth settings are organised into the following groups.&#xa;</xsl:text>
-    <xsl:text>Each setting has a name in *group.name* dotted notation, a type,&#xa;</xsl:text>
-    <xsl:text>a default value, and an optional range.&#xa;&#xa;</xsl:text>
+    <xsl:text># ⚙️ Fluid Settings&#xa;</xsl:text>
+    <xsl:text>
+FluidSynth provides numerous options that allow tweaking various aspects of the synthesizing process, midi player and audio drivers. These are referred to as **FluidSettings**. Each setting is handled as a string, while the value this setting can be set to may either be an integer, number (float), bool or string type. They can be either used via [fluidsynth's API](https://www.fluidsynth.org/api/fluidsettings.html) or with the fluidsynth executable like:
+
+```
+fluidsynth -o audio.driver=alsa -o audio.alsa.device=plughw:0
+```
+
+FluidSynth settings are organised into the following groups. Each setting has a name in *group.name* dotted notation, a type, a default value, and an optional range:&#xa;&#xa;</xsl:text>
     <xsl:apply-templates select="*" mode="index-entry">
       <xsl:sort select="@label"/>
     </xsl:apply-templates>
+
+    <xsl:text>
+Starting with **FluidSynth 2.0**, the [**FluidSettings are documented in this XML file**](https://github.com/FluidSynth/fluidsynth/blob/master/doc/fluidsettings.xml). If you want to propose changes, this is the place to look for.
+
+---
+
+For legacy FluidSynth 1.1 pls. refer to FluidSynths man page at that time.&#xa;</xsl:text>
 
     <!-- per-group pages -->
     <xsl:apply-templates select="*" mode="page">
