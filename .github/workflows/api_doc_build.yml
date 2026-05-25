@@ -55,7 +55,7 @@ jobs:
     - name: Build unified wiki and API documentation site
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config $BUILD_TYPE --target zensical_xslt
+      run: cmake --build . --config $BUILD_TYPE --target zensical
 
     - name: Upload documentation site as artifact
       uses: actions/upload-artifact@v4

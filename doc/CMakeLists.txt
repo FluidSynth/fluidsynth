@@ -56,7 +56,7 @@ if ( DOXYGEN_FOUND )
 
       # Convert fluidsettings.xml to Markdown using XSLT
       # Output goes directly into the wiki docs_dir so zensical.toml picks it up
-      add_custom_target ( fluidsettings2md_xslt
+      add_custom_target ( fluidsettings2md
           COMMAND ${CMAKE_COMMAND} -E make_directory
               ${CMAKE_CURRENT_SOURCE_DIR}/wiki/settings
           COMMAND bash ${XSLT_DIR}/run-xslt.sh
@@ -69,7 +69,7 @@ if ( DOXYGEN_FOUND )
 
       # Convert Doxygen XML output to API Markdown using XSLT
       # Output goes directly into the wiki docs_dir so zensical.toml picks it up
-      add_custom_target ( doxy2md_xslt
+      add_custom_target ( doxy2md
           COMMAND ${CMAKE_COMMAND} -E make_directory
               ${CMAKE_CURRENT_SOURCE_DIR}/wiki/api
           COMMAND bash ${XSLT_DIR}/run-xslt.sh
@@ -92,11 +92,11 @@ if ( DOXYGEN_FOUND )
   #   pip install -r doc/zensical/requirements.txt
   #
   # Build targets (XSLT pipeline):
-  #   fluidsettings2md_xslt -- convert fluidsettings.xml to settings Markdown (XSLT)
-  #   doxy2md_xslt          -- convert Doxygen XML group output to API reference Markdown (XSLT)
+  #   fluidsettings2md -- convert fluidsettings.xml to settings Markdown (XSLT)
+  #   doxy2md          -- convert Doxygen XML group output to API reference Markdown (XSLT)
   #   usage2md              -- convert Doxygen page XML to usage guide Markdown (XSLT)
   #   recent_changes2md     -- convert RecentChanges page XML to api/recent-changes.md (XSLT)
-  #   zensical_xslt         -- run all of the above, then build the unified wiki+API site
+  #   zensical         -- run all of the above, then build the unified wiki+API site
   # ---------------------------------------------------------------------------
   find_program ( ZENSICAL_EXECUTABLE NAMES zensical )
 
@@ -165,7 +165,7 @@ if ( DOXYGEN_FOUND )
   # a relative path.  The file is gitignored via the root .gitignore.
   if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
     set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_SOURCE_DIR}/zensical_runtime.toml )
-    add_custom_target ( zensical_xslt
+    add_custom_target ( zensical
         COMMAND ${CMAKE_COMMAND}
             -D WIKI_DIR=${WIKI_DOCS_DIR}
             -D OUTPUT=${ZENSICAL_RUNTIME_CONFIG}
@@ -174,15 +174,15 @@ if ( DOXYGEN_FOUND )
         COMMAND ${ZENSICAL_EXECUTABLE} build --clean
             -f ${ZENSICAL_RUNTIME_CONFIG}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        DEPENDS fluidsettings2md_xslt doxy2md_xslt
+        DEPENDS fluidsettings2md doxy2md
                 usage2md recent_changes2md examples2md
         COMMENT "Building unified wiki and API documentation site (XSLT pipeline)"
     )
   elseif ( NOT LIBXSLT_XSLTPROC_EXECUTABLE )
-    message ( STATUS "xsltproc not found -- 'zensical_xslt' CMake target unavailable.\n"
+    message ( STATUS "xsltproc not found -- 'zensical' CMake target unavailable.\n"
                      "Install it with: sudo apt-get install xsltproc" )
   else ()
-    message ( STATUS "zensical executable not found -- 'zensical_xslt' CMake target unavailable.\n"
+    message ( STATUS "zensical executable not found -- 'zensical' CMake target unavailable.\n"
                      "Install it with: pip install -r doc/zensical/requirements.txt" )
   endif ()
 
