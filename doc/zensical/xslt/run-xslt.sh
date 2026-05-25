@@ -411,6 +411,9 @@ if [ "$MODE" = "pages" ]; then
     XSL_FILE="${4:-$XSL_DEFAULT_DOXY}"
     API_PREFIX="${5:-../api/}"
     PAGE_FILTER="${6:-}"      # optional: restrict to a single page ID
+    # CMake strips empty-string arguments from COMMAND lists; treat the
+    # sentinel "_nofilter_" as equivalent to an empty filter (process all pages).
+    [ "$PAGE_FILTER" = "_nofilter_" ] && PAGE_FILTER=""
     FLUIDSETTINGS_XML="${7:-}"  # optional: path to fluidsettings.xml
     INDEX_XML="$XML_DIR/index.xml"
 

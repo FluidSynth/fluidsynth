@@ -111,7 +111,8 @@ if ( DOXYGEN_FOUND )
     # Skips RecentChanges (handled by recent_changes2md below).
     # The api_prefix "../api/" is passed so that cross-references from usage/
     # pages to API symbols resolve to ../api/<group>.md#<symbol>.
-    # The empty string arg is the optional page_id_filter (no filter = process all pages).
+    # NOTE: CMake strips empty-string arguments from COMMAND lists. Use the
+    #       sentinel "_nofilter_" (handled by run-xslt.sh) to mean "no filter".
     add_custom_target ( usage2md
       COMMAND ${CMAKE_COMMAND} -E make_directory ${WIKI_DOCS_DIR}/usage
       COMMAND bash ${XSLT_DIR}/run-xslt.sh
@@ -120,7 +121,7 @@ if ( DOXYGEN_FOUND )
           ${WIKI_DOCS_DIR}/usage
           ${XSLT_DIR}/doxy2md.xsl
           "../api/"
-          ""
+          "_nofilter_"
           ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
       DEPENDS doxygen
       COMMENT "Converting Doxygen page XML to usage guide Markdown via XSLT"
