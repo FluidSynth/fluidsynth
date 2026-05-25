@@ -93,9 +93,9 @@ Example 3 - Water drops + Triangle:
 
 # 2. FDN
 
-Due to its rinning nature, Freeverb was replaced by "Feedback Delay Networks"-reverbator in version 2.1.0. It's based on: https://ccrma.stanford.edu/~jos/pasp/FDN_Reverberation.html
+Due to its ringing nature, Freeverb was replaced by "Feedback Delay Networks"-reverbator in version 2.1.0. It's based on: https://ccrma.stanford.edu/~jos/pasp/FDN_Reverberation.html
 
-FDN receives a monophonic input signal and - as the name suggests - routes it through several delay lines. Fluidsynth's default implementation makes use of 8 delay lines, although there is a compile-time switch to allow using 12 delay lines, that slightly increases the reverb's quality by an increased frequency density. However, it also increases CPU usage beyound what the previous Freeverb would have required, so it was decided to use only 8 delay lines.
+FDN receives a monophonic input signal and - as the name suggests - routes it through several delay lines. Fluidsynth's default implementation makes use of 8 delay lines, although there is a compile-time switch to allow using 12 delay lines, that slightly increases the reverb's quality by an increased frequency density. However, it also increases CPU usage beyond what the previous Freeverb would have required, so it was decided to use only 8 delay lines.
 
 To fight ringing and high-frequency reverb "reflections", the delay lines are modulated with a sine. While this is generally inaudible, it can be perceived on certain high-frequent usually clear sounding instruments, like a triangle, causing a slight vibrato effect to be applied to them.
 
