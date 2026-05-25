@@ -48,7 +48,7 @@ Developers:
             <def>1 (TRUE)</def>
             <realtime/>
             <desc>
-                When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.</desc>
+                When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. The amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.</desc>
         </setting>
         <setting>
             <name>chorus.depth</name>
@@ -142,7 +142,7 @@ Developers:
             <def>1</def>
             <min>1</min>
             <max>128</max>
-            <desc>Specifies the number of effects groups. By default, the sound of all voices is rendered by one reverb and one chorus effect respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller than the number of MIDI channels, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
+            <desc>Specifies the number of effects groups. By default, the sound of all voices is rendered by one reverb and one chorus effect respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller than the number of MIDI channels, it will wrap around. <note>Any value <code>&gt;1</code> will significantly increase CPU usage.</note></desc>
         </setting>
         <setting>
             <name>gain</name>
@@ -158,14 +158,14 @@ Developers:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE) the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem can be found in doc/ladspa.md or on the FluidSynth website.</desc>
+                When set to 1 (TRUE) the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. <note>FluidSynth has to be compiled with LADSPA support! More information about the LADSPA subsystem can be found in doc/ladspa.md or on the FluidSynth website.</note></desc>
         </setting>
         <setting>
             <name>limiter.active</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. Note that fluidsynth has to be compiled with limiter support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</desc>
+                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. <note>FluidSynth has to be compiled with limiter support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</note></desc>
         </setting>
         <setting>
             <name>limiter.attack</name>
@@ -248,7 +248,7 @@ Developers:
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
                     <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
-                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic and CC32 becomes the bank number. Note that before fluidsynth 2.3.5 the logic for CC0 was broken.</li>
+                    <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic and CC32 becomes the bank number. Before fluidsynth 2.3.5 the logic for CC0 was broken.</li>
                 </ul>
             </desc>
         </setting>
@@ -268,12 +268,13 @@ Developers:
             <min>0</min>
             <max>2</max>
             <desc>
-                This setting specifies the behavior for releasing voices, if the same note is hit twice on the same channel. Early synthesizers like the Roland SC-55 and Microsoft Wavetable GS MIDI synthesizer (MSGS) are terminating notes abruptly that have already received a noteOff after receiving a noteOn for the same key. This behavior was presumably implemented to save polyphony in these systems. This setting was introduced in fluidsynth 2.4.3 and can be enabled to mimic this behavior, to esp. play back old tunes like Doom E1M1 more accurately. Please note that using a SoundFont which makes proper use of exclusive classes for esp. percussion instruments will yield a similar or better result. Also, this approach is generally preferable because it's portable among SF2 compliant synths and can be applied more fine-grained among instruments. This setting supports the following values:
+                This setting specifies the behavior for releasing voices, if the same note is hit twice on the same channel. Early synthesizers like the Roland SC-55 and Microsoft Wavetable GS MIDI synthesizer (MSGS) are terminating notes abruptly that have already received a noteOff after receiving a noteOn for the same key. This behavior was presumably implemented to save polyphony in these systems. This setting was introduced in fluidsynth 2.4.3 and can be enabled to mimic this behavior, to esp. play back old tunes like Doom E1M1 more accurately. 
+                This setting supports the following values:
                 <ul>
                     <li>0: A regular noteOff is applied to the previous note, which is the default SF2 compliant behavior.</li>
                     <li>1: Note-cut is only applied on drum MIDI channels (i.e. CHANNEL_TYPE_DRUM). Fluidsynth 2.4.0, 2.4.1, and 2.4.2 unconditionally used this mode.</li>
                     <li>2: Note-cut is applied to both, drum and melodic MIDI channels (i.e. CHANNEL_TYPE_DRUM and CHANNEL_TYPE_MELODIC).</li>
-                </ul></desc>
+                </ul><attention>Using a SoundFont which makes proper use of exclusive classes for esp. percussion instruments will yield a similar or better result. Also, this approach is generally preferable because it's portable among SF2 compliant synths and can be applied more fine-grained among instruments.</attention></desc>
         </setting>
         <setting>
             <name>overflow.age</name>
@@ -403,7 +404,7 @@ Developers:
             <def>1 (TRUE)</def>
             <realtime/>
             <desc>
-                When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
+                When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. The amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
             </desc>
         </setting>
         <setting>
@@ -444,7 +445,7 @@ Developers:
             <max>100.0</max>
             <realtime/>
             <desc>
-                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange <code>[0;1]</code> is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. Please note that under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</desc>
+                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange <code>[0;1]</code> is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. <attention>Under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</attention></desc>
         </setting>
         <setting>
             <name>sample-rate</name>
@@ -474,7 +475,7 @@ Developers:
             <type>bool</type>
             <def>1 (TRUE)</def>
             <desc>
-                Controls whether the synth's public API is protected by a mutex or not. Default is on, turn it off for slightly better performance if you know you're only accessing the synth from one thread only, this could be the case in many embedded use cases for example. Note that libfluidsynth can use many threads by itself (shell is one, midi driver is one, midi player is one etc) so you should usually leave it on.
+                Controls whether the synth's public API is protected by a mutex or not. Default is on, turn it off for slightly better performance if you know you're only accessing the synth from one thread only, this could be the case in many embedded use cases for example. <note>libfluidsynth can use many threads by itself (shell is one, midi driver is one, midi player is one etc) so you should usually leave it on.</note>
             </desc>
         </setting>
         <setting>
@@ -506,8 +507,8 @@ Developers:
 				In order to use sdl3 as audio driver, the application is responsible for initializing
 				SDL's audio subsystem.
 				<br /><br />
-				<strong>Note:</strong> waveout is available since fluidsynth 2.1.0, sdl3 since
-				fluidsynth 2.4.4.
+				<note><code>waveout</code> is available since fluidsynth 2.1.0, <code>sdl3</code> since
+				fluidsynth 2.4.4.</note>
 			</desc>
         </setting>
         <setting>
@@ -785,7 +786,8 @@ Developers:
             <type>str</type>
             <def>PortAudio Default</def>
             <desc>
-                Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value which outputs to the default PortAudio device. The format of the device name is: "&lt;device_index&gt;:&lt;host_api_name&gt;:&lt;host_device_name&gt;" e.g. "11:Windows DirectSound:SB PCI"
+                Device to use for PortAudio driver output. The format of the device name is: "&lt;device_index&gt;:&lt;host_api_name&gt;:&lt;host_device_name&gt;" e.g. "11:Windows DirectSound:SB PCI".
+                <note><code>'PortAudio Default'</code> is a special value which outputs to the default PortAudio device.</note>
             </desc>
         </setting>
         <setting>
@@ -835,7 +837,7 @@ Developers:
             <desc>
                 Device to use for WASAPI driver output. Starting with 2.3.6 all device names are expected to be UTF8 encoded.
                 <br /><br />
-                <strong>Note</strong><br />
+                <note>
                 When using the WASAPI audio driver, more detailed information about device and format negotiation (e.g. whether the requested format was accepted natively, adjusted, or rejected) may be obtained by installing a custom log callback using <code>fluid_set_log_function()</code>.
                 <br />
                 The WASAPI driver reports informational, warning, and error messages received from the OS during device initialization, which can be used as a best-effort heuristic to distinguish between:
@@ -845,6 +847,7 @@ Developers:
                 <li>failed opens.</li>
                 </ul>
                 This mechanism is used internally by the <code>fluidsynth -Q</code> command, see <a href="https://github.com/FluidSynth/fluidsynth/blob/master/src/fluid_wasapi_device_enumerate.c"><code>fluid_wasapi_device_enumerate.c</code></a> for a reference implementation. The content and meaning of log messages are not part of the public API contract and may change between releases.
+                </note>
             </desc>
         </setting>
         <setting>
@@ -987,7 +990,7 @@ Developers:
             <def>0</def>
             <min>0</min>
             <max>65535</max>
-            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses. Since fluidsynth 2.5.4, a value of 0 enables auto mode and selects the first free port, probing from 9800 upwards. Older versions used 9800 as default port. Note that when set to 0, fluidsynth will update the setting during server creation (new_fluid_server2()) with the actual port number used.</desc>
+            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses. Since fluidsynth 2.5.4, a value of 0 enables auto mode and selects the first free port, probing from 9800 upwards. Older versions used 9800 as default port. <note>When set to 0, fluidsynth will update the setting during server creation (new_fluid_server2()) with the actual port number used.</note></desc>
         </setting>
     </shell>
 </fluidsettings>
