@@ -9,12 +9,14 @@
 #         -D TEMPLATE=<path/to/zensical.toml.in>
 #         -P gen-zensical-config.cmake
 
-# Priority ordering for well-known top-level API pages (everything else is sorted alphabetically)
-set(_priority_files "index.md" "recent-changes.md" "deprecated.md" "examples.md")
+# Priority ordering for well-known top-level API pages (everything else is sorted alphabetically).
+# "examples.md" is intentionally excluded here; it becomes the index of the Examples subsection.
+set(_priority_files "index.md" "recent-changes.md" "deprecated.md")
 
-# Collect top-level API pages
+# Collect top-level API pages (exclude examples.md — it goes into the subsection below)
 file(GLOB _api_top RELATIVE "${WIKI_DIR}/api" "${WIKI_DIR}/api/*.md")
 list(SORT _api_top)
+list(REMOVE_ITEM _api_top "examples.md")
 
 # Build sorted list: priority pages first, then remaining alphabetically
 set(_sorted_top "")
@@ -31,29 +33,32 @@ foreach(_n IN LISTS _api_top)
     endif()
 endforeach()
 
-# Collect api/examples/ sub-pages
+# Collect api/examples/ sub-pages (individual example files)
 file(GLOB _api_examples RELATIVE "${WIKI_DIR}/api/examples" "${WIKI_DIR}/api/examples/*.md")
 list(SORT _api_examples)
-# Put index.md first inside examples/
-set(_examples_sorted "")
-list(FIND _api_examples "index.md" _idx)
-if(NOT _idx EQUAL -1)
-    list(APPEND _examples_sorted "index.md")
-endif()
-foreach(_n IN LISTS _api_examples)
-    if(NOT _n STREQUAL "index.md")
-        list(APPEND _examples_sorted "${_n}")
-    endif()
-endforeach()
 
 # Build the TOML nav entries string (one quoted entry per line, 16 spaces indent)
 set(API_NAV_ENTRIES "")
 foreach(_n IN LISTS _sorted_top)
     string(APPEND API_NAV_ENTRIES "                \"api/${_n}\",\n")
 endforeach()
-foreach(_n IN LISTS _examples_sorted)
-    string(APPEND API_NAV_ENTRIES "                \"api/examples/${_n}\",\n")
-endforeach()
+
+# Emit the Examples subsection: api/examples.md is the section index page,
+# followed by each individual example as a child entry.
+set(_has_examples_index FALSE)
+if(EXISTS "${WIKI_DIR}/api/examples.md")
+    set(_has_examples_index TRUE)
+endif()
+if(_has_examples_index OR _api_examples)
+    string(APPEND API_NAV_ENTRIES "                {\"📝 Examples\" = [\n")
+    if(_has_examples_index)
+        string(APPEND API_NAV_ENTRIES "                    \"api/examples.md\",\n")
+    endif()
+    foreach(_n IN LISTS _api_examples)
+        string(APPEND API_NAV_ENTRIES "                    \"api/examples/${_n}\",\n")
+    endforeach()
+    string(APPEND API_NAV_ENTRIES "                ]},\n")
+endif()
 
 if(NOT API_NAV_ENTRIES)
     set(API_NAV_ENTRIES "                \"api/index.md\",\n")
