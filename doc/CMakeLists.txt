@@ -98,7 +98,6 @@ if ( DOXYGEN_FOUND )
   #   recent_changes2md     -- convert RecentChanges page XML to api/recent-changes.md (XSLT)
   #   zensical_xslt         -- run all of the above, then build the unified wiki+API site
   # ---------------------------------------------------------------------------
-  find_package ( Python3 COMPONENTS Interpreter )
   find_program ( ZENSICAL_EXECUTABLE NAMES zensical )
 
   set ( WIKI_DOCS_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/wiki )
@@ -155,41 +154,36 @@ if ( DOXYGEN_FOUND )
 
   endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
 
-  if ( Python3_FOUND )
-
-    # -- Build the unified wiki + API documentation site (XSLT pipeline) ------
-    # All content is generated into doc/wiki/ by the targets above.
-    # A Python script patches zensical.toml with the full list of generated API
-    # pages (so the sidebar and breadcrumbs work for every page) and writes a
-    # runtime config to the PROJECT SOURCE ROOT (not the build dir).
-    # Writing it there ensures that docs_dir = "doc/wiki" in the config resolves
-    # correctly relative to the config file – zensical requires docs_dir to be
-    # a relative path.  The file is gitignored via the root .gitignore.
+  # -- Build the unified wiki + API documentation site (XSLT pipeline) ------
+  # All content is generated into doc/wiki/ by the targets above.
+  # A CMake script (gen-zensical-config.cmake) reads zensical.toml.in, fills in
+  # @API_NAV_ENTRIES@ with the list of generated API pages (so the sidebar and
+  # breadcrumbs work for every page), and writes a runtime config to the PROJECT
+  # SOURCE ROOT (not the build dir).
+  # Writing it there ensures that docs_dir = "doc/wiki" in the config resolves
+  # correctly relative to the config file – zensical requires docs_dir to be
+  # a relative path.  The file is gitignored via the root .gitignore.
+  if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
     set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_SOURCE_DIR}/zensical_runtime.toml )
-    if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
-      add_custom_target ( zensical_xslt
-          COMMAND ${Python3_EXECUTABLE}
-              ${ZENSICAL_SCRIPTS}/gen-zensical-config.py
-              ${ZENSICAL_RUNTIME_CONFIG}
-              ${WIKI_DOCS_DIR}
-              ${CMAKE_SOURCE_DIR}/zensical.toml
-          COMMAND ${ZENSICAL_EXECUTABLE} build --clean
-              -f ${ZENSICAL_RUNTIME_CONFIG}
-          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-          DEPENDS fluidsettings2md_xslt doxy2md_xslt
-                  usage2md recent_changes2md examples2md
-          COMMENT "Building unified wiki and API documentation site (XSLT pipeline)"
-      )
-    elseif ( NOT LIBXSLT_XSLTPROC_EXECUTABLE )
-      message ( STATUS "xsltproc not found -- 'zensical_xslt' CMake target unavailable.\n"
-                       "Install it with: sudo apt-get install xsltproc" )
-    else ()
-      message ( STATUS "zensical executable not found -- 'zensical_xslt' CMake target unavailable.\n"
-                       "Install it with: pip install -r doc/zensical/requirements.txt" )
-    endif ()
-
+    add_custom_target ( zensical_xslt
+        COMMAND ${CMAKE_COMMAND}
+            -D WIKI_DIR=${WIKI_DOCS_DIR}
+            -D OUTPUT=${ZENSICAL_RUNTIME_CONFIG}
+            -D TEMPLATE=${CMAKE_SOURCE_DIR}/zensical.toml.in
+            -P ${ZENSICAL_SCRIPTS}/gen-zensical-config.cmake
+        COMMAND ${ZENSICAL_EXECUTABLE} build --clean
+            -f ${ZENSICAL_RUNTIME_CONFIG}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS fluidsettings2md_xslt doxy2md_xslt
+                usage2md recent_changes2md examples2md
+        COMMENT "Building unified wiki and API documentation site (XSLT pipeline)"
+    )
+  elseif ( NOT LIBXSLT_XSLTPROC_EXECUTABLE )
+    message ( STATUS "xsltproc not found -- 'zensical_xslt' CMake target unavailable.\n"
+                     "Install it with: sudo apt-get install xsltproc" )
   else ()
-    message ( STATUS "Python3 not found -- Zensical doc targets are unavailable." )
+    message ( STATUS "zensical executable not found -- 'zensical_xslt' CMake target unavailable.\n"
+                     "Install it with: pip install -r doc/zensical/requirements.txt" )
   endif ()
 
 endif ( DOXYGEN_FOUND )
