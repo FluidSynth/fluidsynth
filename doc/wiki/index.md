@@ -33,8 +33,6 @@ The [Applications](Applications) page has a growing list of other software that 
 
 ### Documentation
 
-The [Documentation](Documentation.md) page contains information for both users and developers on FluidSynth. 
-
 #### Applications
 
 FluidSynth currently has only a command line and shell interface which comes built-in. Most users will likely want to use another application which interfaces to FluidSynth and provides a more friendly GUI. 
