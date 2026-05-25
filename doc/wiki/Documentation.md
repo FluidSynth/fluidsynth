@@ -9,7 +9,7 @@ Feel free to contribute or let us know if something is missing or unclear.
   * [ExampleCommandLines](ExampleCommandLines.md) - running FluidSynth with different configurations.
   * [Audio Drivers](Audio-Drivers.md) - ways to make FluidSynth play sound.
   * [UserManual](UserManual.md) - FluidSynth's ManPage
-  * [FluidSettings](FluidSettings.md)
+  * [FluidSettings](settings/index.md)
   * [FluidFeatures](FluidFeatures.md) - A chart showing implemented and ready to use MIDI messages.
   * [LowLatency](LowLatency.md) - Getting low latency response from FluidSynth for live playback.
   * [FluidSynth configuration files](FluidSynth-configuration-files.md)

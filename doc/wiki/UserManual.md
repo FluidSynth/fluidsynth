@@ -1,6 +1,6 @@
 # 📖 User Manual
 
-This document has the same layout as the manpage, but it contains links to other pages for more information: [FluidFeatures](FluidFeatures.md) and [FluidSettings](FluidSettings.md).
+This document has the same layout as the manpage, but it contains links to other pages for more information: [FluidFeatures](FluidFeatures.md) and [FluidSettings](settings/index.md).
 
 ## NAME
 
@@ -52,7 +52,7 @@ FluidSynth accepts the following options (call FluidSynth with the --help option
 | `--midi-driver=[label]` | `-m` | The name of the midi driver to use `[oss,alsa,alsa_seq,...]` |
 | `--no-midi-in` | `-n` | Don't create a midi driver to read MIDI input events `[default = yes]` |
 | `--audio-file-format` | `-O` | Audio file format for fast rendering or aufile driver (`-O help` for list) |
-| (none) | `-o` | Define a setting, `-o name=value` (`-o help` to dump current values). See [FluidSettings](FluidSettings.md) for details. |
+| (none) | `-o` | Define a setting, `-o name=value` (`-o help` to dump current values). See [FluidSettings](settings/index.md) for details. |
 | `--portname=[label]` | `-p` | Set MIDI port name (alsa_seq, coremidi drivers) |
 | `--quiet` | `-q` | Do not print welcome message or other informational output. (Windows only: also suppress all log messages lower than PANIC) |
 | `--query-audio-devices` | `-Q` | Windows only, enumerate available WASAPI devices and their supported sample rates |
@@ -66,7 +66,7 @@ FluidSynth accepts the following options (call FluidSynth with the --help option
 
 ## SETTINGS
 
-All the settings that can be passed with the `-o` flag to FluidSynth are known as [FluidSettings](FluidSettings.md). Refer to the wiki page for more details.
+All the settings that can be passed with the `-o` flag to FluidSynth are known as [FluidSettings](settings/index.md). Refer to the wiki page for more details.
 
 ## SHELL COMMANDS
 
@@ -232,7 +232,7 @@ When starting FluidSynth an interactive shell opens. This section describes the 
 !!! Note
 
     Before FluidSynth 2.0 custom reverb commands existed. 
-    Starting with 2.0 users are encouraged to set reverb parameters via the realtime [FluidSettings](FluidSettings.md) as described below.
+    Starting with 2.0 users are encouraged to set reverb parameters via the realtime [FluidSettings](settings/index.md) as described below.
 
 - `set synth.reverb.active [0|1]`  
   Turn the reverb on or off 
@@ -261,7 +261,7 @@ When starting FluidSynth an interactive shell opens. This section describes the 
 !!! Note
 
     Before FluidSynth 2.0 custom chorus commands existed. 
-    Starting with 2.0 users are encouraged to set chorus parameters via the realtime [FluidSettings](FluidSettings.md) as described below.
+    Starting with 2.0 users are encouraged to set chorus parameters via the realtime [FluidSettings](settings/index.md) as described below.
 
 - `set synth.chorus.active [0|1]`  
   Turn the chorus on or off

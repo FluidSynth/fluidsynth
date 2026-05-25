@@ -61,31 +61,32 @@ nav = [
     ]},
     "ChangeLog.md",
     {"📚 Documentation" = [
-        "GettingStarted.md",
-        "ExampleCommandLines.md",
-        "Audio-Drivers.md",
-        "UserManual.md",
-        "FluidSettings.md",
-        "FluidFeatures.md",
-        "LowLatency.md",
-        "FluidSynth-configuration-files.md",
-        "reverbators.md",
-        "ladspa.md",
-        "SoundFont3Format.md",
-        {"🤓 Developer Documentation" = [
-            {"🛠️ Compiling Fluidsynth" = [
-                "BuildingWithCMake.md",
-                "BuildingForAndroid.md",
-                "Using-prebuilt-libraries-on-Android.md",
-                "NotesForPackagers.md",
-            ]},
-            {"⚙️ Fluid Settings Reference" = [
+        {"🧑 For Users" = [
+            "GettingStarted.md",
+            "ExampleCommandLines.md",
+            "Audio-Drivers.md",
+            "UserManual.md",
+            {"⚙️ Fluid Settings" = [
                 "settings/index.md",
                 "settings/audio.md",
                 "settings/midi.md",
                 "settings/player.md",
                 "settings/shell.md",
                 "settings/synth.md",
+            ]},
+            "FluidFeatures.md",
+            "LowLatency.md",
+            "FluidSynth-configuration-files.md",
+            "reverbators.md",
+            "ladspa.md",
+            "SoundFont3Format.md",
+        ]},
+        {"🤓 For Developer" = [
+            {"🛠️ Compiling Fluidsynth" = [
+                "BuildingWithCMake.md",
+                "BuildingForAndroid.md",
+                "Using-prebuilt-libraries-on-Android.md",
+                "NotesForPackagers.md",
             ]},
             {"📖 Developer Guide" = [
                 "usage/index.md",
