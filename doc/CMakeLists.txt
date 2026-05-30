@@ -165,6 +165,10 @@ if ( DOXYGEN_FOUND )
   # a relative path.  The file is gitignored via the root .gitignore.
   if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
     set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_SOURCE_DIR}/zensical_runtime.toml )
+    if ( DOXYGEN_VERSION VERSION_LESS "1.17.0" )
+      message ( WARNING "You need at least doxygen version 1.17 to generate the API docs with Zensical. You're using doxygen ${DOXYGEN_VERSION} API docs will be missing in this build!" )
+    endif ()
+
     add_custom_target ( zensical
         COMMAND ${CMAKE_COMMAND}
             -D WIKI_DIR=${WIKI_DOCS_DIR}
