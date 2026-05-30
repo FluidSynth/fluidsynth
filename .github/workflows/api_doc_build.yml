@@ -16,6 +16,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  DOXYGEN_VERSION: "1.17.0"
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,7 +35,14 @@ jobs:
       run: sudo apt-get update
 
     - name: Install Dependencies
-      run: sudo apt-get install doxygen xsltproc libxslt1-dev
+      run: sudo apt-get install xsltproc libxslt1-dev
+
+    - name: Install Doxygen ${{ env.DOXYGEN_VERSION }}
+      run: |
+        DOXYGEN_VERSION_UNDERSCORED="${DOXYGEN_VERSION//./_}"
+        curl --proto-redir =https -fsSL "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION_UNDERSCORED}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" \
+          | sudo tar -xz --strip-components=1 -C /usr/local
+        doxygen --version
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build

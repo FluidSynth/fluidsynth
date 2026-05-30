@@ -1299,8 +1299,8 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t *preset_zone
 /**
  * Checks if modulator mod is identical to another modulator in the list
  * (specs SF 2.0X  7.4, 7.8).
- * @param mod, modulator list.
- * @param name, if not NULL, pointer on a string displayed as warning.
+ * @param mod modulator list.
+ * @param name if not NULL, pointer on a string displayed as warning.
  * @return TRUE if mod is identical to another modulator, FALSE otherwise.
  */
 static int
@@ -1332,8 +1332,8 @@ fluid_zone_is_mod_identical(fluid_mod_t *mod, char *name)
  * This is appropriate to internal synthesizer modulators tables
  * which have a fixed size (FLUID_NUM_MOD).
  *
- * @param zone_name, zone name
- * @param list_mod, address of pointer on modulator list.
+ * @param zone_name zone name
+ * @param list_mod address of pointer on modulator list.
  */
 static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
 {
@@ -1371,8 +1371,8 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identical modulators in the list (specs SF 2.01  7.4, 7.8).
- * @param zone_name, zone name.
- * @param list_mod, address of pointer on modulators list.
+ * @param zone_name zone name.
+ * @param list_mod address of pointer on modulators list.
  */
 static void
 fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)

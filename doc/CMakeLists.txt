@@ -165,6 +165,10 @@ if ( DOXYGEN_FOUND )
   # a relative path.  The file is gitignored via the root .gitignore.
   if ( LIBXSLT_XSLTPROC_EXECUTABLE AND ZENSICAL_EXECUTABLE )
     set ( ZENSICAL_RUNTIME_CONFIG ${CMAKE_SOURCE_DIR}/zensical_runtime.toml )
+    if ( DOXYGEN_VERSION VERSION_LESS "1.15.0" )
+      message ( WARNING "Your doxygen version ${DOXYGEN_VERSION} is old. This logic has only been tested to work correctly with doxygen 1.15 and newer." )
+    endif ()
+
     add_custom_target ( zensical
         COMMAND ${CMAKE_COMMAND}
             -D WIKI_DIR=${WIKI_DOCS_DIR}

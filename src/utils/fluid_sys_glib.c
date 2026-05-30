@@ -22,7 +22,7 @@
 
 /**
  * Suspend the execution of the current thread for the specified amount of time.
- * @param milliseconds to wait.
+ * @param msecs milliseconds to wait.
  */
 void fluid_msleep(unsigned int msecs)
 {
@@ -104,6 +104,7 @@ new_fluid_cond(void)
 
 /**
  * Create a new thread.
+ * @param name Name for the thread
  * @param func Function to execute in new thread context
  * @param data User defined data to pass to func
  * @param prio_level Priority level.  If greater than 0 then high priority scheduling will

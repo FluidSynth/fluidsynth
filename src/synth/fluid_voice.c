@@ -465,6 +465,7 @@ void fluid_voice_start(fluid_voice_t *voice)
 /**
  * Calculate the amplitude of a voice.
  *
+ * @param voice the voice
  * @param gain The gain value in the range [0.0 ; 1.0]
  * @return An amplitude used by rvoice_mixer's buffers
  */
@@ -1488,7 +1489,9 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 /**
  * Adds a modulator to the voice.
  * local version of fluid_voice_add_mod function. Called at noteon time.
- * @param voice, mod, mode, same as for fluid_voice_add_mod() (see above).
+ * @param voice the voice
+ * @param mod the modulator to add
+ * @param mode the mode (see fluid_voice_add_mod)
  * @param check_limit_count is the modulator number limit to handle with existing
  *   identical modulator(i.e mode FLUID_VOICE_OVERWRITE, FLUID_VOICE_ADD).
  *   - When FLUID_NUM_MOD, all the voices modulators (since the previous call)
