@@ -115,8 +115,8 @@ nav = [
             "ReleaseCheckList.md"
         ]},
     ]},
-    {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"},
-    {"🔍 API" = "/wiki/api"}
+    {"🔍 API" = "/wiki/api"},
+    {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"}
 ]
 
 # With the "extra_css" option you can add your own CSS styling to customize
