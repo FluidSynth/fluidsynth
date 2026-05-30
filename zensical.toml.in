@@ -81,7 +81,7 @@ nav = [
             "ladspa.md",
             "SoundFont3Format.md",
         ]},
-        {"🤓 For Developer" = [
+        {"🤓 For Developers" = [
             {"🛠️ Compiling Fluidsynth" = [
                 "BuildingWithCMake.md",
                 "BuildingForAndroid.md",
@@ -115,7 +115,8 @@ nav = [
             "ReleaseCheckList.md"
         ]},
     ]},
-    {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"}
+    {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"},
+    {"🔍 API" = "/wiki/api"}
 ]
 
 # With the "extra_css" option you can add your own CSS styling to customize
