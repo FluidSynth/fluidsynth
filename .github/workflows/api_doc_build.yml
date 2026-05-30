@@ -45,7 +45,7 @@ jobs:
         python-version: "3.13"
 
     - name: Install Python dependencies
-      run: pip install -r doc/zensical/requirements.txt
+      run: 'pip install --only-binary :all: --require-hashes -r doc/zensical/requirements.lock'
 
     - name: Configure CMake
       shell: bash
