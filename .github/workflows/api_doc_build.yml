@@ -40,7 +40,7 @@ jobs:
     - name: Install Doxygen ${{ env.DOXYGEN_VERSION }}
       run: |
         DOXYGEN_VERSION_UNDERSCORED="${DOXYGEN_VERSION//./_}"
-        curl -fsSL "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION_UNDERSCORED}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" \
+        curl --proto-redir =https -fsSL "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION_UNDERSCORED}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz" \
           | sudo tar -xz --strip-components=1 -C /usr/local
         doxygen --version
 
