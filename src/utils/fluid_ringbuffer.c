@@ -29,6 +29,7 @@
 /**
  * Create a lock free queue with a fixed maximum count and size of elements.
  * @param count Count of elements in queue (fixed max number of queued elements)
+ * @param elementsize Size of each element in bytes
  * @return New lock free queue or NULL if out of memory (error message logged)
  *
  * Lockless FIFO queues don't use any locking mechanisms and can therefore be

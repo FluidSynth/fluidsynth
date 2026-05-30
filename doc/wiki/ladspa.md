@@ -1,4 +1,4 @@
-# 🖥️ FluidSynth LADSPA Interface
+# 🖥️ LADSPA Interface
 
 The [LADSPA](https://ladspa.org/) (Linux Audio Developer's Simple Plugin API)
 binding can be used to route the FluidSynth audio output through any number of
@@ -103,7 +103,7 @@ Please note that if you run FluidSynth 2.3.0 with the internal reverb and chorus
 effects active (which is the default), then those effects are mixed
 into the Main:L and Main:R channels after LADSPA has been invoked. Before FluidSynth 2.3.0
 the internal effects had been already mixed into Main channels at the time when LADSPA is invoked.
-Fore more details, please see the "Signal Flow" section below.
+For more details, please see the "Signal Flow" section below.
 
 For host port setups in multichannel configurations, please see the
 "Multi-Channel Output" section below.

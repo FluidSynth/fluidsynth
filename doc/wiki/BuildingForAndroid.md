@@ -1,4 +1,4 @@
-# 🤖 Build for Android
+# 🤖 Building for Android
 
 This page demonstrates how to cross-compile the upstream version of fluidsynth for Android, along with **all the dependencies** that fluidsynth requires. Other users have taken shortcuts by custom modifications to fluidsynth's code base that we do not officially support.
 
@@ -51,7 +51,7 @@ to capture even more missing dependencies that the NDK requires and make sure th
 ## Getting started
 
 * Read the preface above!
-* [Seriously, read the preface](#Preface)!!
+* [Seriously, read the preface](#preface)!!
 * Download the Android NDK
 * Download [fluid-android-prepare.sh](https://gist.github.com/derselbst/885641b86b8bd0e5fd1b1d846d4b286b) and [fluid-android-compile.sh](https://gist.github.com/derselbst/88917bf177d25cfc1067a37b442dd5ff)
 * Open `fluid-android-prepare.sh` and study it

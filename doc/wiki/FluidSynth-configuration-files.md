@@ -1,4 +1,4 @@
-# 🗂️ FluidSynth configuration files
+# 🗂️ Configuration files
 
 These are the defined names and locations of the configuration file which is automatically loaded at startup if the client application implements the mechanism. Currently only fluidsynth's CLI program (`fluidsynth.exe` in Windows, `fluidsynth` otherwise) honors this feature.
 

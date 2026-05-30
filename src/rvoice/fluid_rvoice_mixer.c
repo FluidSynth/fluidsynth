@@ -823,6 +823,12 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 /**
  * @param buf_count number of primary stereo buffers
  * @param fx_buf_count number of stereo effect buffers
+ * @param fx_units number of effects units
+ * @param sample_rate_max maximum sample rate
+ * @param sample_rate audio sample rate
+ * @param evthandler event handler for voice events
+ * @param extra_threads number of extra threads to use for rendering
+ * @param prio thread priority level
  */
 fluid_rvoice_mixer_t *
 new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
@@ -1034,7 +1040,7 @@ int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sam
  * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
- * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
+ * @param set Flags indicating which parameters should be set (fluid_revmodel_set_t)
  * @param values table of parameters values.
  */
 void
@@ -1074,7 +1080,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
  * @param mixer that contains all fx group units.
  * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param enum indicating the parameter to get.
+ * @param param indicating the parameter to get.
  *  FLUID_REVERB_ROOMSIZE, reverb room size value.
  *  FLUID_REVERB_DAMP, reverb damping value.
  *  FLUID_REVERB_WIDTH, reverb width value.
@@ -1098,7 +1104,7 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
  *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
- * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
+ * @param set Flags indicating which parameters to set (fluid_chorus_set_t)
  * @param values table of pararameters.
  */
 void
@@ -1138,7 +1144,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
  * @param mixer that contains all fx groups units.
  * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param get Flags indicating which parameter to get (#fluid_chorus_set_t)
+ * @param param Flags indicating which parameter to get
  * @return the parameter value (0.0 is returned if error)
  */
 double
@@ -1725,6 +1731,7 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
 
 /**
  * Synthesize audio into buffers
+ * @param mixer the mixer to render
  * @param blockcount number of blocks to render, each having FLUID_BUFSIZE samples
  * @return number of blocks rendered
  */

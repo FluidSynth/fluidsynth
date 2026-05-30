@@ -569,7 +569,7 @@ size_t fluid_mod_sizeof(void)
 /**
  * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE.
  *
- * @param mod, modulator.
+ * @param mod modulator.
  * @return TRUE if modulator source 1 other than cc is FLUID_MOD_NONE, FALSE otherwise.
  */
 static int
@@ -581,8 +581,8 @@ fluid_mod_is_src1_none(const fluid_mod_t *mod)
 /**
  * Checks if modulators source other than CC source is invalid.
  *
- * @param mod, modulator.
- * @param src1_select, source input selection to check.
+ * @param mod modulator.
+ * @param src1_select source input selection to check.
  *   1 to check src1 source.
  *   0 to check src2 source.
  * @return FALSE if selected modulator source other than cc is invalid, TRUE otherwise.
@@ -620,8 +620,8 @@ fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 /**
  * Checks if modulator CC source is invalid (specs SF 2.01  7.4, 7.8, 8.2.1).
  *
- * @param mod, modulator.
- * @src1_select, source input selection:
+ * @param mod modulator.
+ * @param src1_select source input selection:
  *   1 to check src1 source or
  *   0 to check src2 source.
  * @return FALSE if selected modulator's source CC is invalid, TRUE otherwise.
@@ -664,8 +664,8 @@ fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 /**
  * Checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1)
  *
- * @param mod, modulator.
- * @param name,if not NULL, pointer on a string displayed as a warning.
+ * @param mod modulator.
+ * @param name if not NULL, pointer on a string displayed as a warning.
  * @return TRUE if modulator sources src1, src2 are valid, FALSE otherwise.
  */
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
