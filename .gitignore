@@ -42,10 +42,12 @@ install_manifest.txt
 *.pro.user*
 *.user
 *.vscode
+latex/
 .idea/
 
 # Built docs
 /.zensical/
 /.cache/
+/zensical_runtime.toml
 _codeql_build_dir/
 _codeql_detected_source_root

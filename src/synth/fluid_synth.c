@@ -3784,7 +3784,7 @@ fluid_synth_set_sample_rate_LOCAL(fluid_synth_t *synth, float sample_rate)
 
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
- * @warning This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
+ * @important This function is broken-by-design! Don't use it! Starting with fluidsynth 2.4.4 it's a no-op. Instead, specify the sample-rate when creating the synth.
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
  * Changing the sample-rate is generally not considered to be a realtime use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.

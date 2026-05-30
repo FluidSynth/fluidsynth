@@ -1,13 +1,23 @@
-To build FluidSynth API reference documentation, make sure you have Doxygen
-installed.
+This directory contains most of FluidSynth's documentation. It's historically grown.
+
+* The wiki/ folder is probably the most important one, as it contains the markdown files for fluidsynth's wiki page.
+* The usage/ folder contains doxygen text files that explain some aspects of fluidsynth's API
+* The zensical/ folder contains stuff needed for generating the Zensical based webpage
+
+To build FluidSynth API reference documentation, make sure you have Zensical https://zensical.org/docs/get-started/
+installed. Alternatively, use their docker container found on DockerHub.
 
 If you are using the cmake build system, change to the build directory and
-execute the following command in this doc/ directory:
+execute the following command:
 
-$ make doxygen
+$ make zensical
+
+Then, cd to the repository root directory and run Zensical in a container to preview the webpage, e.g.:
+
+$ docker run --user $(id -u):$(id -g) --rm -it -p 8000:8000 -v ${PWD}:/docs zensical/zensical serve -f zensical_runtime.toml --dev-addr=0.0.0.0:8000
 
 The latest generated API HTML docs can also be found at:
 https://www.fluidsynth.org/api/
 
 Even more documentation references are provided on our wiki page:
-https://www.fluidsynth.org/wiki/Documentation
+https://www.fluidsynth.org/wiki/
