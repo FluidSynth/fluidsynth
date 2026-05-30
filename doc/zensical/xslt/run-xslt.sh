@@ -39,7 +39,7 @@ usage() {
     exit 1
 }
 
-if [ "$#" -lt 3 ]; then usage; fi
+if [[ "$#" -lt 3 ]]; then usage; fi
 
 MODE="$1"
 INPUT="$2"
@@ -58,7 +58,7 @@ split_into_files() {
             current_file="${out_dir}/${BASH_REMATCH[1]}"
             # truncate/create
             : > "$current_file"
-        elif [ -n "$current_file" ]; then
+        elif [[ -n "$current_file" ]]; then
             printf '%s\n' "$line" >> "$current_file"
         fi
     done
@@ -67,15 +67,15 @@ split_into_files() {
 # ---------------------------------------------------------------------------
 # MODE: fluidsettings
 # ---------------------------------------------------------------------------
-if [ "$MODE" = "fluidsettings" ]; then
+if [[ "$MODE" = "fluidsettings" ]]; then
     XML_FILE="$INPUT"
     XSL_FILE="${4:-$XSL_DEFAULT_FLUIDSETTINGS}"
 
-    if [ ! -f "$XML_FILE" ]; then
+    if [[ ! -f "$XML_FILE" ]]; then
         echo "ERROR: fluidsettings.xml not found: $XML_FILE" >&2
         exit 1
     fi
-    if [ ! -f "$XSL_FILE" ]; then
+    if [[ ! -f "$XSL_FILE" ]]; then
         echo "ERROR: XSL stylesheet not found: $XSL_FILE" >&2
         exit 1
     fi
@@ -90,16 +90,16 @@ fi
 # ---------------------------------------------------------------------------
 # MODE: doxy  (Doxygen XML directory → API Markdown pages)
 # ---------------------------------------------------------------------------
-if [ "$MODE" = "doxy" ]; then
+if [[ "$MODE" = "doxy" ]]; then
     XML_DIR="$INPUT"
     XSL_FILE="${4:-$XSL_DEFAULT_DOXY}"
     INDEX_XML="$XML_DIR/index.xml"
 
-    if [ ! -f "$INDEX_XML" ]; then
+    if [[ ! -f "$INDEX_XML" ]]; then
         echo "ERROR: Doxygen index.xml not found: $INDEX_XML" >&2
         exit 1
     fi
-    if [ ! -f "$XSL_FILE" ]; then
+    if [[ ! -f "$XSL_FILE" ]]; then
         echo "ERROR: XSL stylesheet not found: $XSL_FILE" >&2
         exit 1
     fi
@@ -156,9 +156,9 @@ if [ "$MODE" = "doxy" ]; then
 
     # For each group XML file: add refid→filename and refid→filename#name entries
     while IFS= read -r refid; do
-        [ -z "$refid" ] && continue
+        [[ -z "$refid" ]] && continue
         group_xml="$XML_DIR/${refid}.xml"
-        [ -f "$group_xml" ] || continue
+        [[ -f "$group_xml" ]] || continue
 
         # Compute the output filename from the refid
         filename=$(echo "$refid" \
@@ -171,7 +171,7 @@ if [ "$MODE" = "doxy" ]; then
 
         # Extract member pairs and append "member_id|filename#name"
         while IFS=$'\t' read -r member_id member_name; do
-            [ -z "$member_id" ] && continue
+            [[ -z "$member_id" ]] && continue
             printf '%s|%s#%s\n' "$member_id" "$filename" "$member_name" >> "$REFMAP_FILE"
         done < <(echo "$LIST_MEMBERS_XSL" | xsltproc - "$group_xml")
     done <<< "$GROUP_REFIDS"
@@ -218,10 +218,10 @@ if [ "$MODE" = "doxy" ]; then
     # (dots replaced by underscores, hyphens preserved).
     # We also add page-level entries for \ref settings_GROUP page references.
     # ------------------------------------------------------------------
-    if [ -n "$FLUIDSETTINGS_XML" ] && [ -f "$FLUIDSETTINGS_XML" ]; then
+    if [[ -n "$FLUIDSETTINGS_XML" ]] && [[ -f "$FLUIDSETTINGS_XML" ]]; then
         echo "  Adding settings cross-references from fluidsettings.xml ..."
         while IFS=$'\t' read -r grp raw_name; do
-            [ -z "$grp" ] && continue
+            [[ -z "$grp" ]] && continue
             translated="$(echo "$raw_name" | tr '.' '_')"
             section_id="settings_${grp}_${translated}"
             doxy_refid="settings_${grp}_1${section_id}"
@@ -243,7 +243,7 @@ SETTINGS_XSL
         )
         # Add page-level entries for \ref settings_GROUP references
         while IFS= read -r grp; do
-            [ -z "$grp" ] && continue
+            [[ -z "$grp" ]] && continue
             printf 'settings_%s|../settings/%s.md\n' "$grp" "$grp" >> "$REFMAP_FILE"
         done < <(echo "$FLUIDSETTINGS_GROUPS_XSL" | xsltproc - "$FLUIDSETTINGS_XML")
     fi
@@ -277,9 +277,9 @@ SETTINGS_XSL
     # ------------------------------------------------------------------
     echo "  Second pass: converting group XML files ..."
     while IFS= read -r refid; do
-        [ -z "$refid" ] && continue
+        [[ -z "$refid" ]] && continue
         group_xml="$XML_DIR/${refid}.xml"
-        [ -f "$group_xml" ] || continue
+        [[ -f "$group_xml" ]] || continue
 
         filename=$(echo "$refid" \
             | sed 's/^group__//' \
@@ -306,11 +306,11 @@ SETTINGS_XSL
     # Determine nested refids by scanning all group XML files for <innergroup>
     declare -A nested_set
     while IFS= read -r refid; do
-        [ -z "$refid" ] && continue
+        [[ -z "$refid" ]] && continue
         group_xml="$XML_DIR/${refid}.xml"
-        [ -f "$group_xml" ] || continue
+        [[ -f "$group_xml" ]] || continue
         while IFS= read -r inner; do
-            [ -z "$inner" ] && continue
+            [[ -z "$inner" ]] && continue
             nested_set["$inner"]=1
         done < <(echo "$LIST_INNERGROUPS_XSL" | xsltproc - "$group_xml")
     done <<< "$GROUP_REFIDS"
@@ -318,17 +318,17 @@ SETTINGS_XSL
     # Get group titles from each XML
     declare -A group_titles
     while IFS= read -r refid; do
-        [ -z "$refid" ] && continue
+        [[ -z "$refid" ]] && continue
         group_xml="$XML_DIR/${refid}.xml"
-        [ -f "$group_xml" ] || continue
+        [[ -f "$group_xml" ]] || continue
         title=$(echo "$GET_TITLE_XSL" | xsltproc - "$group_xml" | head -1)
         group_titles["$refid"]="$title"
     done <<< "$GROUP_REFIDS"
 
     # Print top-level groups sorted by title
     while IFS= read -r refid; do
-        [ -z "$refid" ] && continue
-        [ "${nested_set[$refid]+_}" ] && continue   # skip nested groups
+        [[ -z "$refid" ]] && continue
+        [[ "${nested_set[$refid]+_}" ]] && continue   # skip nested groups
         title="${group_titles[$refid]}"
         filename=$(echo "$refid" \
             | sed 's/^group__//' \
@@ -368,12 +368,12 @@ SETTINGS_XSL
         printf "|------|-------------|\n"
 
         while IFS= read -r refid; do
-            [ -z "$refid" ] && continue
+            [[ -z "$refid" ]] && continue
             group_xml="$XML_DIR/${refid}.xml"
-            [ -f "$group_xml" ] || continue
+            [[ -f "$group_xml" ]] || continue
 
             while IFS=$'\t' read -r member_name member_brief _member_id; do
-                [ -z "$member_name" ] && continue
+                [[ -z "$member_name" ]] && continue
                 # Compute the filename from the refid
                 filename=$(echo "$refid" \
                     | sed 's/^group__//' \
@@ -406,22 +406,22 @@ fi
 # <fluidsettings.xml>  optional: path to fluidsettings.xml; when provided, per-setting
 #                      \setting{} cross-references are added to the refmap.
 # ---------------------------------------------------------------------------
-if [ "$MODE" = "pages" ]; then
+if [[ "$MODE" = "pages" ]]; then
     XML_DIR="$INPUT"
     XSL_FILE="${4:-$XSL_DEFAULT_DOXY}"
     API_PREFIX="${5:-../api/}"
     PAGE_FILTER="${6:-}"      # optional: restrict to a single page ID
     # CMake strips empty-string arguments from COMMAND lists; treat the
     # sentinel "_nofilter_" as equivalent to an empty filter (process all pages).
-    [ "$PAGE_FILTER" = "_nofilter_" ] && PAGE_FILTER=""
+    [[ "$PAGE_FILTER" = "_nofilter_" ]] && PAGE_FILTER=""
     FLUIDSETTINGS_XML="${7:-}"  # optional: path to fluidsettings.xml
     INDEX_XML="$XML_DIR/index.xml"
 
-    if [ ! -f "$INDEX_XML" ]; then
+    if [[ ! -f "$INDEX_XML" ]]; then
         echo "ERROR: Doxygen index.xml not found: $INDEX_XML" >&2
         exit 1
     fi
-    if [ ! -f "$XSL_FILE" ]; then
+    if [[ ! -f "$XSL_FILE" ]]; then
         echo "ERROR: XSL stylesheet not found: $XSL_FILE" >&2
         exit 1
     fi
@@ -509,9 +509,9 @@ if [ "$MODE" = "pages" ]; then
     GROUP_REFIDS_PAGES=$(echo "$LIST_GROUPS_XSL" | xsltproc - "$INDEX_XML")
 
     while IFS= read -r refid; do
-        [ -z "$refid" ] && continue
+        [[ -z "$refid" ]] && continue
         group_xml="$XML_DIR/${refid}.xml"
-        [ -f "$group_xml" ] || continue
+        [[ -f "$group_xml" ]] || continue
 
         grp_filename=$(echo "$refid" \
             | sed 's/^group__//' \
@@ -523,7 +523,7 @@ if [ "$MODE" = "pages" ]; then
 
         # Extract member pairs and append "member_id|${API_PREFIX}filename#name"
         while IFS=$'\t' read -r member_id member_name; do
-            [ -z "$member_id" ] && continue
+            [[ -z "$member_id" ]] && continue
             printf '%s|%s#%s\n' "$member_id" "$grp_link" "$member_name" >> "$REFMAP_FILE"
         done < <(echo "$LIST_MEMBERS_XSL" | xsltproc - "$group_xml")
     done <<< "$GROUP_REFIDS_PAGES"
@@ -551,10 +551,10 @@ if [ "$MODE" = "pages" ]; then
 
     # Add individual \setting{} cross-references from fluidsettings.xml if provided.
     # See the doxy mode block above for a full explanation of the refid format.
-    if [ -n "$FLUIDSETTINGS_XML" ] && [ -f "$FLUIDSETTINGS_XML" ]; then
+    if [[ -n "$FLUIDSETTINGS_XML" ]] && [[ -f "$FLUIDSETTINGS_XML" ]]; then
         echo "  Adding settings cross-references from fluidsettings.xml ..."
         while IFS=$'\t' read -r grp raw_name; do
-            [ -z "$grp" ] && continue
+            [[ -z "$grp" ]] && continue
             translated="$(echo "$raw_name" | tr '.' '_')"
             section_id="settings_${grp}_${translated}"
             doxy_refid="settings_${grp}_1${section_id}"
@@ -576,7 +576,7 @@ SETTINGS_XSL
         )
         # Add page-level entries for \ref settings_GROUP references
         while IFS= read -r grp; do
-            [ -z "$grp" ] && continue
+            [[ -z "$grp" ]] && continue
             printf 'settings_%s|%s%s.md\n' "$grp" "$SETTINGS_PREFIX" "$grp" >> "$REFMAP_FILE"
         done < <(echo "$FLUIDSETTINGS_GROUPS_XSL" | xsltproc - "$FLUIDSETTINGS_XML")
     fi
@@ -595,7 +595,7 @@ SETTINGS_XSL
         local page_id="$1"
         local out_filename="$2"
         local page_xml="$XML_DIR/${page_id}.xml"
-        if [ ! -f "$page_xml" ]; then
+        if [[ ! -f "$page_xml" ]]; then
             echo "    WARNING: page XML not found for ${page_id}: ${page_xml}" >&2
             return 0
         fi
@@ -606,11 +606,11 @@ SETTINGS_XSL
         echo "    ${page_id} → ${out_filename}"
     }
 
-    if [ -n "$PAGE_FILTER" ]; then
+    if [[ -n "$PAGE_FILTER" ]]; then
         # Filter: look up the page ID in both maps
-        if [ -n "${PAGE_FILE_MAP[$PAGE_FILTER]+_}" ]; then
+        if [[ -n "${PAGE_FILE_MAP[$PAGE_FILTER]+_}" ]]; then
             _convert_page "$PAGE_FILTER" "${PAGE_FILE_MAP[$PAGE_FILTER]}"
-        elif [ -n "${EXTRA_PAGE_FILE_MAP[$PAGE_FILTER]+_}" ]; then
+        elif [[ -n "${EXTRA_PAGE_FILE_MAP[$PAGE_FILTER]+_}" ]]; then
             _convert_page "$PAGE_FILTER" "${EXTRA_PAGE_FILE_MAP[$PAGE_FILTER]}"
         else
             echo "    WARNING: page ID '$PAGE_FILTER' not found in page maps" >&2
@@ -629,11 +629,11 @@ fi
 # ---------------------------------------------------------------------------
 # MODE: examples  (doc/examples/ → api/examples.md + api/examples/<name>.md)
 # ---------------------------------------------------------------------------
-if [ "$MODE" = "examples" ]; then
+if [[ "$MODE" = "examples" ]]; then
     EXAMPLES_SRC="$INPUT"
     API_DIR="$OUTPUT_DIR"
 
-    if [ ! -d "$EXAMPLES_SRC" ]; then
+    if [[ ! -d "$EXAMPLES_SRC" ]]; then
         echo "ERROR: examples directory not found: $EXAMPLES_SRC" >&2
         exit 1
     fi
@@ -646,12 +646,12 @@ if [ "$MODE" = "examples" ]; then
         printf "The following self-contained example programs demonstrate how to use the FluidSynth API.\n\n"
 
         for src in "$EXAMPLES_SRC"/*.c "$EXAMPLES_SRC"/*.cxx; do
-            [ -f "$src" ] || continue
+            [[ -f "$src" ]] || continue
             base=$(basename "$src")
             name="${base%.*}"
             # Extract brief description from first comment line starting with capital letter
             desc=$(grep -m1 '^ \* [A-Z]' "$src" | sed 's/^ \* //' || true)
-            if [ -n "$desc" ]; then
+            if [[ -n "$desc" ]]; then
                 printf -- "- [**%s**](%s.md) \xe2\x80\x93 %s\n" "$name" "$name" "$desc"
             else
                 printf -- "- [**%s**](%s.md)\n" "$name" "$name"
@@ -661,17 +661,17 @@ if [ "$MODE" = "examples" ]; then
 
     # --- Write one page per example file ------------------------------------
     for src in "$EXAMPLES_SRC"/*.c "$EXAMPLES_SRC"/*.cxx; do
-        [ -f "$src" ] || continue
+        [[ -f "$src" ]] || continue
         base=$(basename "$src")
         ext="${base##*.}"
         name="${base%.*}"
         lang="c"
-        [ "$ext" = "cxx" ] && lang="cpp"
+        [[ "$ext" = "cxx" ]] && lang="cpp"
         desc=$(grep -m1 '^ \* [A-Z]' "$src" | sed 's/^ \* //' || true)
 
         {
             printf "# %s\n\n" "$name"
-            if [ -n "$desc" ]; then
+            if [[ -n "$desc" ]]; then
                 printf "%s\n\n" "$desc"
             fi
             printf '```%s\n' "$lang"
