@@ -16,4 +16,12 @@ RUN zypper refresh && zypper install --no-recommends -y doxygen astyle gdb sox f
 
 RUN zypper refresh && zypper install --no-recommends -y glib2-devel ninja
 
+# Documentation build dependencies:
+#   python3 + pipx     -- for zensical
+#   libxslt-tools      -- provides xsltproc for the XSLT pipeline
+RUN zypper refresh && zypper install --no-recommends -y python3 python3-pipx libxslt-tools
+RUN pipx install zensical && pipx ensurepath
+
+ENV PATH="/root/.local/bin:${PATH}"
+
 ENTRYPOINT ["/bin/bash"]

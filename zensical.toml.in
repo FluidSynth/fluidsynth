@@ -59,34 +59,63 @@ nav = [
         "MadeWithFluidSynth.md",
         "LicensingFAQ.md"
     ]},
+    "ChangeLog.md",
     {"📚 Documentation" = [
-        "Documentation.md",
-        {"🙋 For users" = [
+        {"🧑 For Users" = [
             "GettingStarted.md",
             "ExampleCommandLines.md",
             "Audio-Drivers.md",
             "UserManual.md",
-            "FluidSettings.md",
+            {"⚙️ Fluid Settings" = [
+                "settings/index.md",
+                "settings/audio.md",
+                "settings/midi.md",
+                "settings/player.md",
+                "settings/shell.md",
+                "settings/synth.md",
+            ]},
             "FluidFeatures.md",
             "LowLatency.md",
-            "FluidSynth-configuration-files.md"
-        ]},
-        {"🤓 For Developers" = [
-            "ChangeLog.md",
-            "BuildingWithCMake.md",
-            {"🤖 Build for Android" = [
-                "BuildingForAndroid.md",
-                "Using-prebuilt-libraries-on-Android.md",
-            ]},
-            {"🔗 FluidSynth 2.0 API" = "https://www.fluidsynth.org/api/"},
-            {"🔗 FluidSynth legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
+            "FluidSynth-configuration-files.md",
+            "reverbators.md",
             "ladspa.md",
             "SoundFont3Format.md",
-            "NotesForPackagers.md",
-            "ReleaseCheckList.md",
-            "Future.md"
-        ]}
+        ]},
+        {"🤓 For Developers" = [
+            {"🛠️ Compiling Fluidsynth" = [
+                "BuildingWithCMake.md",
+                "BuildingForAndroid.md",
+                "Using-prebuilt-libraries-on-Android.md",
+                "NotesForPackagers.md",
+            ]},
+            {"📖 Developer Guide" = [
+                "usage/index.md",
+                "usage/creating-settings.md",
+                "usage/creating-synth.md",
+                "usage/loading-soundfonts.md",
+                "usage/audio-driver.md",
+                "usage/using-synth.md",
+                "usage/sending-midi.md",
+                "usage/realtime-midi.md",
+                "usage/midi-player.md",
+                "usage/file-renderer.md",
+                "usage/midi-player-mem.md",
+                "usage/midi-router.md",
+                "usage/sequencer.md",
+                "usage/shell.md",
+                "usage/multi-channel.md",
+                "usage/synth-context.md",
+                "usage/advanced.md",
+            ]},
+            {"🔍 API Reference" = [
+@API_NAV_ENTRIES@            ]},
+            {"📄 Code Examples" = [
+@EXA_NAV_ENTRIES@            ]},
+            {"🔗 Legacy 1.x API" = "https://www.fluidsynth.org/api-1.x/"},
+            "ReleaseCheckList.md"
+        ]},
     ]},
+    {"🔍 API" = "/wiki/api"},
     {"🪲 Bug Tracker" = "https://github.com/FluidSynth/fluidsynth/issues"}
 ]
 
@@ -210,7 +239,7 @@ features = [
     # Turn on this feature to expand all collapsible sections in the
     # navigation sidebar by default.
     # https://zensical.org/docs/setup/navigation/#navigation-expansion
-    "navigation.expand",
+    #"navigation.expand",
 
     # This feature turns on navigation elements in the footer that allow the
     # user to navigate to a next or previous page.
@@ -245,8 +274,10 @@ features = [
 
     # When pruning is enabled, only the visible navigation items are included
     # in the rendered HTML, reducing the size of the built site by 33% or more.
+    # NOTE: keep disabled so that dynamically-generated API pages (not listed
+    # individually in nav) still render with a visible sidebar.
     # https://zensical.org/docs/setup/navigation/#navigation-pruning
-    "navigation.prune",
+    #"navigation.prune",
 
     # When sections are enabled, top-level sections are rendered as groups in
     # the sidebar for viewports above 1220px, but remain as-is on mobile.
@@ -363,6 +394,7 @@ icon = "lucide/globe"
 link = "https://www.fluidsynth.org/"
 
 
+[project.markdown_extensions.attr_list]
 [project.markdown_extensions.admonition]
 [project.markdown_extensions.pymdownx.details]
 [project.markdown_extensions.pymdownx.magiclink]

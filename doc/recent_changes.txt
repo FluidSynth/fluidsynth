@@ -22,10 +22,10 @@
 - In order to use the sdl3 audio driver, the downstream application is responsible for calling <code>SDL_Init()</code> and <code>SDL_Quit()</code>, just like it was practice for the sdl2 audio driver. Fluidsynth may raise a warning if this isn't done, see \ref CreatingAudioDriver
 
 \section NewIn2_4_3 What's new in 2.4.3?
-- synth.note-cut has been introduced
+- \setting{synth_note-cut} has been introduced
 
 \section NewIn2_4_0 What's new in 2.4.0?
-- synth.device-id now has a default value of 16
+- \setting{synth_device-id} now has a default value of 16
 - Default values of reverb and chorus settings have been tuned
 - fluid_mod_get_transform() and fluid_mod_set_transform() for SoundFont 2.04 compliant modulators
 
@@ -137,7 +137,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
 - rename \c fluid_mod_new() and \c fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
 - rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
-- fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
+- fluid_synth_remove_sfont() returns #FLUID_OK or #FLUID_FAILED
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
 - fluid_get_userconf() has been implemented for Windows
 

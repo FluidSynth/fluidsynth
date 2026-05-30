@@ -1,4 +1,4 @@
-# 🤖 Build for Android
+# 🤖 Building for Android
 
 This page demonstrates how to cross-compile the upstream version of fluidsynth for Android, along with **all the dependencies** that fluidsynth requires. Other users have taken shortcuts by custom modifications to fluidsynth's code base that we do not officially support.
 
