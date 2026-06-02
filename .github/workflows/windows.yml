@@ -563,7 +563,11 @@ jobs:
     - msvc-build
     - msys2-build
     - mingw-build
-    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:  # https://github.com/actions/runner-images#available-images
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
     name: 🧪 Acceptance Test
     steps:
     - name: Download all artifacts
