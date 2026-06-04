@@ -1,6 +1,10 @@
 # 🌀 Reverb Overview
 
-The following page gives an overview of different reverbator engines. It concentrates on objective criteria, although a quality assesment is attempted below. Sound examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! Here are the dry versions. The reverb settings of all examples below share those settings: `-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7`
+The following page gives an overview of different reverbator engines provided by fluidsynth. It concentrates on objective criteria, although a quality assesment is attempted below. Sound examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! The reverb settings of all examples below share those settings:
+
+`-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7`
+
+We start with the dry versions of the provided sound examples (the MIDIs may be found [here](https://github.com/FluidSynth/testdata/tree/master/reverb)):
 
 Example 1 - Piano:
 
@@ -266,11 +270,11 @@ Example 3 - Water drops + Triangle:
 | **Stereo output** | 🟡 Separate L/R comb banks | 🟡 ±1 gain vector providing functional stereo, but not deeply decorrelated | 🟢 Cross-coupled stereo by design | 🟡 14-tap decorrelated output | 🟢 Full stereo by design |
 | **Spectral character** | Colored (comb resonances) | Neutral | Flat | Rich, colorful (plate character) | Neutral, flexible |
 | **Best for** | Legacy / compatibility | General synthesizer use | CPU-constrained use, nostalgic video game sound | Smooth long reverbs, strings | Rich creative reverb, acoustic realism |
-| **Worst for** | High-frequent solo instruments, long decay | Broadband transients (snaps, clicks) | ? | ? | ? |
+| **Worst for** | High-frequent solo instruments, long decay | Broadband transients (snaps, clicks) | ? | ? | Real-time and live-performances |
 | **Overall** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 
-*[Tail smoothness]: Exponential decay free of artefacts (no flutter, no pumping)
+*[Tail smoothness]: Exponential decay of the "wet" reverb sound, free of any artefacts (no flutter, no pumping)
 *[Ringing]: Audible resonant peaks ("metallic" sound), especially on transients and silence decay
 *[Transient broadband handling]: Handling of high-amplitude and short-lived burst sound (=transient), whose energy is spread across a wide range of frequencies (broadband), e.g. like the "snap" percussion sound sample.
 *[Echo density]: Density of reverb reflections
