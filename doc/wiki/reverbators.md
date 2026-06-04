@@ -1,6 +1,6 @@
 # 🌀 Reverb Overview
 
-The following page gives an overview of different reverbator engines. It concentrates on objective criteria rather than trying to elaborate on the "quality" of the reverb engines. Sound examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! Here are the dry versions. The reverb settings of all examples below share those settings: `-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7`
+The following page gives an overview of different reverbator engines. It concentrates on objective criteria, although a quality assesment is attempted below. Sound examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! Here are the dry versions. The reverb settings of all examples below share those settings: `-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7`
 
 Example 1 - Piano:
 
@@ -236,3 +236,44 @@ Example 3 - Water drops + Triangle:
   Try opening the file directly:
   <a href="/audio/reverb_water_triangle_test_l0.7_s0.7_w1.0_d0.0_dat.oga">download/play</a>.
 </audio>
+
+
+## Comparison
+
+### Architecture & Design
+
+|  | Freeverb | FDN | Lexverb | Dattorro | Signalsmith |
+|---|---|---|---|---|---|
+| **Algorithm family** | Schroeder-Moorer | Jot FDN | Lexicon-inspired allpass network | Plate reverb | Diffused FDN |
+| **Core structure** | 8 parallel combs + 4 series allpass, separate L/R banks, [Flowchart](https://ccrma.stanford.edu/~jos/pasp/Freeverb.html) | 8 modulated delay lines + feedback matrix , [Flowchart](https://github.com/FluidSynth/fluidsynth/blob/a481306665d7d789ef7eb5a63ba4f88f3a6f568b/src/rvoice/fluid_rev_fdn.cpp#L32-L49) | 10 allpass filters (5/side) + 2 L↔R cross-delay lines, [Flowchart](https://github.com/FluidSynth/fluidsynth/blob/a481306665d7d789ef7eb5a63ba4f88f3a6f568b/src/rvoice/fluid_rev_lexverb.h#L16-L37) | Predelay + 4 input allpass diffusers + 2 tank loops + 14 output taps, [Flowchart](https://github.com/FluidSynth/fluidsynth/blob/a481306665d7d789ef7eb5a63ba4f88f3a6f568b/src/rvoice/fluid_rev_dattorro.h#L22-L58) | 8-ch FDN + 4 Hadamard diffusion stages + early reflections stage |
+| **Feedback/mixing matrix** | None (parallel combs) | `A = P − (2/N)·uuᵀ` (Jot/Householder) | Implicit via cross-feedback delays | Fixed plate tank topology | Householder (feedback) + Hadamard (diffusion) |
+| **Diffusion** | 4 allpass per side (Freeverb approximation) | Input tone corrector only; matrix provides diffusion | 5-stage allpass cascade per L/R side (Schroeder) | 4-stage input diffuser + 2 decay diffusions per tank | Explicit pre-diffusion and post-diffusion |
+| **Modulation** | None | All 8 lines, sinusoidal LFO, 1st-order allpass interpolation | None | None | 3 of 8 channels, sinusoidal LFO, 7th-order Lagrange interpolation |
+| **Damping filter** | 1-pole LPF inside each comb | 1-pole LPF per line | 1-pole LPF on AP4, AP9 and both cross-delays | 1-pole LPF on input (bandwidth) + per-tank LPF | Biquad low-shelf + high-shelf per FDN channel; separate LP/HP output cut |
+| **Early reflections** | No | No | No | No | Yes |
+| **Stereo input cabable** | 🔴 Mono-in by design | 🔴 Mono-in by design | 🟢 Stereo capable (⚠️ fluidsynth feeds mono currently) | 🔴 Mono-in by design | 🟢 True stereo in/out (⚠️ fluidsynth feeds mono currently) |
+| **Denormalisation** | DC offset injection | DC offset injection | Not handled | Not handled | Not handled |
+| **CPU cost** | More than FDN | Less than Freeverb | Cheapest | Expensive | Most expensive |
+
+### Quality Assessment
+
+|  | Freeverb | FDN | Lexverb | Dattorro | Signalsmith |
+|---|---|---|---|---|---|
+| **Tail smoothness** | 🔴 Poor | 🟡 Fair, but modulated | 🟢 Clean | 🟢 Clean | 🟢 Excellent |
+| **Ringing** | 🔴 High (comb resonances) | 🟡 Low | 🟢 Minimal | 🟡 Low | 🟢 Minimal |
+| **Transient broadband handling** | 🟡 Fair | 🔴 Distorted | 🟢 Good | 🟢 Good | 🟢 Excellent |
+| **Echo density** | 🔴 Poor | 🟡 Fair, no pre-diffusion | 🟡 Sparse, no pre-diffusion | 🟢 Good (4-stage input diffuser) | 🟢 Excellent (multi-stage) |
+| **Stereo output** | 🟡 Separate L/R comb banks | 🟡 ±1 gain vector providing functional stereo, but not deeply decorrelated | 🟢 Cross-coupled stereo by design | 🟡 14-tap decorrelated output | 🟢 Full stereo by design |
+| **Spectral character** | Colored (comb resonances) | Neutral | Flat | Rich, colorful (plate character) | Neutral, flexible |
+| **Best for** | Legacy / compatibility | General synthesizer use | CPU-constrained use, nostalgic video game sound | Smooth long reverbs, strings | Rich creative reverb, acoustic realism |
+| **Worst for** | High-frequent solo instruments, long decay | Broadband transients (snaps, clicks) | ? | ? | ? |
+| **Overall** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+
+
+*[Tail smoothness]: Exponential decay free of artefacts (no flutter, no pumping)
+*[Ringing]: Audible resonant peaks ("metallic" sound), especially on transients and silence decay
+*[Transient broadband handling]: Handling of high-amplitude and short-lived burst sound (=transient), whose energy is spread across a wide range of frequencies (broadband), e.g. like the "snap" percussion sound sample.
+*[Echo density]: Density of reverb reflections
+*[Spectral character]: Whether the reverb tail sounds tonally neutral or noticeably colored
+*[tap]: A point in a filter or delay line processing chain, where audio samples are picked-off from.
+*[FDN]: Feedback Delay Network, i.e. several delay lines interconnected with each other
