@@ -394,7 +394,9 @@ icon = "lucide/globe"
 link = "https://www.fluidsynth.org/"
 
 
+[project.markdown_extensions.abbr]
 [project.markdown_extensions.attr_list]
+[project.markdown_extensions.pymdownx.snippets]
 [project.markdown_extensions.admonition]
 [project.markdown_extensions.pymdownx.details]
 [project.markdown_extensions.pymdownx.magiclink]

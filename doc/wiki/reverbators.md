@@ -41,9 +41,11 @@ Example 3 - Water drops + Triangle:
 
 ---
 
-# 1. Freeverb
+## 1. Freeverb
 
 Freeverb was the reverb engine fluidsynth had used up to including version 2.0.9 and was based on: https://ccrma.stanford.edu/~jos/pasp/Freeverb.html
+
+It was added back to fluidsynth in version 2.6.0 as comparison baseline for the other reverbators.
 
 The reverbator receives a monophonic input signal, which then passes 8 parallel comb filters and finally 4 allpass filters.
 
@@ -91,7 +93,7 @@ Example 3 - Water drops + Triangle:
 
 ---
 
-# 2. FDN
+## 2. FDN
 
 Due to its ringing nature, Freeverb was replaced by "Feedback Delay Networks"-reverbator in version 2.1.0. It's based on: https://ccrma.stanford.edu/~jos/pasp/FDN_Reverberation.html
 
@@ -141,9 +143,9 @@ Example 3 - Water drops + Triangle:
 
 ---
 
-# 3. Lexverb
+## 3. Lexverb
 
-This reverb engine is inspired by Lexicon reverbators. It's the first reverb engine capable of processing a stereo input signal (though due to limitations by fluidsynth, it still only receives a monophonic input signal).
+This reverb engine is inspired by Lexicon reverbators and is available since fluidsynth 2.6.0. It's the first reverb engine capable of processing a stereo input signal (though due to limitations by fluidsynth, it still only receives a monophonic input signal).
 
 There are 10 allpass filters involved: Lexverb routes the left input channel through 5 allpass filter, and the right input channel through another 5 allpass filters. Delay lines between these filter chains feed a part of the left-wet signal back to the right filter chain and vice versa.
 
@@ -191,11 +193,11 @@ Example 3 - Water drops + Triangle:
 
 ---
 
-# 4. Dattorro
+## 4. Dattorro
 
 This "plate-class" reverb engine is named after Jon Dattorro and based on this paper: https://ccrma.stanford.edu/~dattorro/EffectDesignPart1.pdf
 
-A monophonic input signal is fed into a sophisticated network of delay lines and allpass filters to create a rich and colorful reverb sound.
+It is available since fluidsynth 2.6.0. A monophonic input signal is fed into a sophisticated network of delay lines and allpass filters to create a rich and colorful reverb sound.
 
 Dattorro is most CPU-expensive.
 
