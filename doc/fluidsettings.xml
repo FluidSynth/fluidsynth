@@ -165,7 +165,7 @@ Developers:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. <note>FluidSynth has to be compiled with limiter support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</note></desc>
+                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. <note>The limiter requires FluidSynth to be compiled with Signalsmith Audio Basics support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</note></desc>
         </setting>
         <setting>
             <name>limiter.attack</name>
@@ -414,7 +414,7 @@ Developers:
             <vals>fdn, free, lex, dat, smith</vals>
             <desc>
                 Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
-                <note>The <code>smith</code> engine (Signalsmith FDN reverb) requires FluidSynth to be compiled with Signalsmith Audio Basics support.</note>
+                <note>The <code>smith</code> engine requires FluidSynth to be compiled with Signalsmith Audio Basics support.</note>
             </desc>
         </setting>
         <setting>
