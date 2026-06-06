@@ -811,17 +811,24 @@ if ( enable-libinstpatch )
     endif ()
 endif ( enable-libinstpatch )
 
+unset ( SIGNALSMITH_REVERB_SUPPORT CACHE )
+find_path ( SIGNALSMITH_AUDIO_BASICS
+            NAMES "include/signalsmith-basics/reverb.h" "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
+            PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
+            HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE )
+if ( SIGNALSMITH_AUDIO_BASICS )
+  add_subdirectory(signalsmith-audio-basics)
+  set ( SIGNALSMITH_REVERB_SUPPORT 1 )
+else ( SIGNALSMITH_AUDIO_BASICS )
+  message ( STATUS "Could NOT find Signalsmith Audio Basics. Signalsmith reverb engine and limiter disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository (containing all the submodules it requires!)." )
+endif ( SIGNALSMITH_AUDIO_BASICS )
+
 unset ( LIMITER_SUPPORT CACHE )
 if ( enable-limiter )
-  find_path ( SIGNALSMITH_AUDIO_BASICS
-              NAMES "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
-              PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
-              HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE )
   if ( SIGNALSMITH_AUDIO_BASICS )
-    add_subdirectory(signalsmith-audio-basics)
     set ( LIMITER_SUPPORT 1 )
   else ( SIGNALSMITH_AUDIO_BASICS )
-    message ( STATUS "Could NOT find Signalsmith Audio Basic. Limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository." )
+    message ( STATUS "Could NOT find Signalsmith Audio Basics. Limiter support disabled." )
   endif ( SIGNALSMITH_AUDIO_BASICS )
 endif ( enable-limiter )
 

@@ -174,6 +174,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rev_dattorro.cpp
     rvoice/fluid_rev_dattorro.h
     rvoice/fluid_rev_filters.h
+    rvoice/fluid_rev_signalsmith.h
     synth/fluid_chan.c
     synth/fluid_chan.h
     synth/fluid_event.c
@@ -226,6 +227,23 @@ if ( LIMITER_SUPPORT )
   )
   target_link_libraries(fluid_limiter_impl-OBJ PRIVATE signalsmith-basics)
 endif ( LIMITER_SUPPORT )
+
+if ( SIGNALSMITH_REVERB_SUPPORT )
+  add_library(fluid_rev_signalsmith-OBJ OBJECT
+    rvoice/fluid_rev_signalsmith.cpp
+    rvoice/fluid_rev_signalsmith.h
+  )
+  target_include_directories(fluid_rev_signalsmith-OBJ PRIVATE
+    ${FluidSynth_BINARY_DIR}
+    ${FluidSynth_BINARY_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/src
+    ${FluidSynth_SOURCE_DIR}/src/rvoice
+    ${FluidSynth_SOURCE_DIR}/src/synth
+    ${FluidSynth_SOURCE_DIR}/src/utils
+  )
+  target_link_libraries(fluid_rev_signalsmith-OBJ PRIVATE signalsmith-basics)
+endif ( SIGNALSMITH_REVERB_SUPPORT )
 
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
 if ( osal STREQUAL "cpp11" )
@@ -351,6 +369,7 @@ endif ( MACOSX_FRAMEWORK )
 add_library ( libfluidsynth
     $<TARGET_OBJECTS:libfluidsynth-OBJ>
     $<$<BOOL:${LIMITER_SUPPORT}>:$<TARGET_OBJECTS:fluid_limiter_impl-OBJ>>
+    $<$<BOOL:${SIGNALSMITH_REVERB_SUPPORT}>:$<TARGET_OBJECTS:fluid_rev_signalsmith-OBJ>>
     ${public_main_HEADER}
     ${public_HEADERS}
     ${MACOSX_FRAMEWORK_SOURCE_HACK}

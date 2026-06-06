@@ -44,10 +44,11 @@ extern "C" {
  */
 enum fluid_reverb_type
 {
-    FLUID_REVERB_TYPE_FDN,       /**< FDN reverb engine */
-    FLUID_REVERB_TYPE_FREEVERB,  /**< Freeverb engine */
-    FLUID_REVERB_TYPE_LEXVERB,   /**< Lexicon LEXverb engine */
-    FLUID_REVERB_TYPE_DATTORRO   /**< Dattorro reverb engine */
+    FLUID_REVERB_TYPE_FDN,          /**< FDN reverb engine */
+    FLUID_REVERB_TYPE_FREEVERB,     /**< Freeverb engine */
+    FLUID_REVERB_TYPE_LEXVERB,      /**< Lexicon LEXverb engine */
+    FLUID_REVERB_TYPE_DATTORRO,     /**< Dattorro reverb engine */
+    FLUID_REVERB_TYPE_SIGNALSMITH   /**< Signalsmith FDN reverb engine */
 };
 
 /* enum describing each reverb parameter */

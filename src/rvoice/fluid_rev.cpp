@@ -25,6 +25,9 @@
 #include "fluid_rev_freeverb.h"
 #include "fluid_rev_lexverb.h"
 #include "fluid_rev_dattorro.h"
+#ifdef SIGNALSMITH_REVERB_SUPPORT
+#include "fluid_rev_signalsmith.h"
+#endif
 
 #include <exception>
 #include <new>
@@ -48,6 +51,12 @@ new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate, int r
         {
             rev = new fluid_revmodel_dattorro(sample_rate);
         }
+#ifdef SIGNALSMITH_REVERB_SUPPORT
+        else if(reverb_type == FLUID_REVERB_TYPE_SIGNALSMITH)
+        {
+            rev = new fluid_revmodel_signalsmith(sample_rate);
+        }
+#endif
         else
         {
             rev = new fluid_revmodel_fdn(sample_rate_max, sample_rate);
@@ -57,7 +66,7 @@ new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate, int r
     }
     catch(const std::bad_alloc &)
     {
-        FLUID_LOG(FLUID_ERR, "Reverb initialization failed: out of memory");
+        FLUID_LOG(FLUID_PANIC, "Reverb initialization failed: out of memory");
     }
     catch(const std::exception &exc)
     {

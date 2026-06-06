@@ -140,6 +140,9 @@
 /* Include the LIMITER */
 #cmakedefine LIMITER_SUPPORT @LIMITER_SUPPORT@
 
+/* Include the Signalsmith reverb engine */
+#cmakedefine SIGNALSMITH_REVERB_SUPPORT @SIGNALSMITH_REVERB_SUPPORT@
+
 /* Define to enable IPV6 support */
 #cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
 
