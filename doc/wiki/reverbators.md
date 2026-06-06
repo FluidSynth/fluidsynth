@@ -57,7 +57,7 @@ The design of the reverbator is not capable of processing a stereo input signal.
 
 Due to its design and the usage of comb filters in particular, the reverb introduces a resonance tone on mid- to high-frequency tones. This is often referred to as "ringing" and perceived unpleasant.
 
-Freeverb is slightly more CPU-expensive than FDN.
+Freeverb is slightly more CPU-expensive than [FDN](#2-fdn).
 
 Example 1 - Piano:
 
@@ -99,7 +99,7 @@ Example 3 - Water drops + Triangle:
 
 ## 2. FDN
 
-Due to its ringing nature, Freeverb was replaced by "Feedback Delay Networks"-reverbator in version 2.1.0. It's based on: https://ccrma.stanford.edu/~jos/pasp/FDN_Reverberation.html
+Due to its ringing nature, [Freeverb](#1-freeverb) was replaced by "Feedback Delay Networks"-reverbator in version 2.1.0. It's based on: https://ccrma.stanford.edu/~jos/pasp/FDN_Reverberation.html
 
 FDN receives a monophonic input signal and - as the name suggests - routes it through several delay lines. Fluidsynth's default implementation makes use of 8 delay lines, although there is a compile-time switch to allow using 12 delay lines, that slightly increases the reverb's quality by an increased frequency density. However, it also increases CPU usage beyond what the previous Freeverb would have required, so it was decided to use only 8 delay lines.
 
@@ -107,7 +107,7 @@ To fight ringing and high-frequency reverb "reflections", the delay lines are mo
 
 FDN tends to add unnaturally sounding distortions for samples that have a wide frequency range. Take a listen to the "Snap" example 2.
 
-FDN is less CPU-expensive than Freeverb and is not capable of receiving a stereo input signal. The reverb settings (room-size, width, damp, level) were tuned and scaled to match up well with the behavior of the original Freeverb.
+FDN is less CPU-expensive than [Freeverb](#1-freeverb) and is not capable of receiving a stereo input signal. The reverb settings (room-size, width, damp, level) were tuned and scaled to match up well with the behavior of the original Freeverb.
 
 Example 1 - Piano:
 
@@ -157,7 +157,7 @@ Due to the use of only allpass filters, the gain of the individual frequencies i
 
 Lexverb currently suffers from the fact that it receives a monophonic input signal, causing the wet-reverb sound to be effectively panned to the center, instead of bouncing left and right.
 
-Lexverb is CPU-cheaper than FDN.
+Lexverb is CPU-cheaper than [FDN](#2-fdn).
 
 Example 1 - Piano:
 
@@ -203,7 +203,7 @@ This "plate-class" reverb engine is named after Jon Dattorro and based on this p
 
 It is available since fluidsynth 2.6.0. A monophonic input signal is fed into a sophisticated network of delay lines and allpass filters to create a rich and colorful reverb sound.
 
-Dattorro is most CPU-expensive.
+Dattorro is a bit more CPU-expensive than [Freeverb](#1-freeverb).
 
 Example 1 - Piano:
 
@@ -242,6 +242,53 @@ Example 3 - Water drops + Triangle:
 </audio>
 
 
+## 5. Signalsmith
+
+This is a FDN based reverb engine, similar to [Fluidsynth's original FDN reverb](#2-fdn), but more sophisticated and better engineered.
+
+It is available since fluidsynth 2.6.0, but only available when fluidsynth was compiled with Signalsmith Audio Basics support - the same library that also provides the limiter implementation. Signalsmith reverb receives a stereo input signal (though due to limitations by fluidsynth, it still only receives a monophonic input signal) and creates a rich and colorful reverb sound similar to [Dattorro](#4-dattorro).
+
+It performs better on transient and high-frequent sounds.
+
+Signalsmith is significantly more CPU-expensive than [Dattorro](#4-dattorro). Furthermore, its runtime varies by a factor of 10 and might therefore not be suited for real-time performances.
+
+Example 1 - Piano:
+
+<audio controls preload="metadata">
+  <source
+    src="/audio/1455_smith.oga"
+    type="audio/ogg"
+  />
+  Your browser does not support the HTML5 audio element.
+  Try opening the file directly:
+  <a href="/audio/1455_smith.oga">download/play</a>.
+</audio>
+
+Example 2 - Snap:
+
+<audio controls preload="metadata">
+  <source
+    src="/audio/1496_smith.oga"
+    type="audio/ogg"
+  />
+  Your browser does not support the HTML5 audio element.
+  Try opening the file directly:
+  <a href="/audio/1496_smith.oga">download/play</a>.
+</audio>
+
+Example 3 - Water drops + Triangle:
+
+<audio controls preload="metadata">
+  <source
+    src="/audio/reverb_water_triangle_test_l0.7_s0.7_w1.0_d0.0_smith.oga"
+    type="audio/ogg"
+  />
+  Your browser does not support the HTML5 audio element.
+  Try opening the file directly:
+  <a href="/audio/reverb_water_triangle_test_l0.7_s0.7_w1.0_d0.0_smith.oga">download/play</a>.
+</audio>
+
+
 ## Comparison
 
 ### Architecture & Design
@@ -257,7 +304,7 @@ Example 3 - Water drops + Triangle:
 | **Early reflections** | No | No | No | No | Yes |
 | **Stereo input cabable** | 🔴 Mono-in by design | 🔴 Mono-in by design | 🟢 Stereo capable (⚠️ fluidsynth feeds mono currently) | 🔴 Mono-in by design | 🟢 True stereo in/out (⚠️ fluidsynth feeds mono currently) |
 | **Denormalisation** | DC offset injection | DC offset injection | Not handled | Not handled | Not handled |
-| **CPU cost** | More than FDN | Less than Freeverb | Cheapest | Expensive | Most expensive |
+| **CPU cost** | More than FDN | Less than Freeverb | Cheapest | Slightly more expensive than Freeverb | Most expensive |
 
 ### Quality Assessment
 
@@ -267,9 +314,9 @@ Example 3 - Water drops + Triangle:
 | **Ringing** | 🔴 High (comb resonances) | 🟡 Low | 🟢 Minimal | 🟡 Low | 🟢 Minimal |
 | **Transient broadband handling** | 🟡 Fair | 🔴 Distorted | 🟢 Good | 🟢 Good | 🟢 Excellent |
 | **Echo density** | 🔴 Poor | 🟡 Fair, no pre-diffusion | 🟡 Sparse, no pre-diffusion | 🟢 Good (4-stage input diffuser) | 🟢 Excellent (multi-stage) |
-| **Stereo output** | 🟡 Separate L/R comb banks | 🟡 ±1 gain vector providing functional stereo, but not deeply decorrelated | 🟢 Cross-coupled stereo by design | 🟡 14-tap decorrelated output | 🟢 Full stereo by design |
-| **Spectral character** | Colored (comb resonances) | Neutral | Flat | Rich, colorful (plate character) | Neutral, flexible |
-| **Best for** | Legacy / compatibility | General synthesizer use | CPU-constrained use, nostalgic video game sound | Smooth long reverbs, strings | Rich creative reverb, acoustic realism |
+| **Stereo output** | 🟡 Separate L/R comb banks | 🟡 ±1 gain vector providing functional stereo, but not deeply decorrelated | 🟢 Cross-coupled stereo by design | 🟡 14-tap decorrelated L/R output | 🟢 Full stereo by design |
+| **Spectral character** | Colored (comb resonances) | Neutral | Flat | Rich, colorful (plate character) | Rich, colorful |
+| **Best for** | Legacy / compatibility | ? | CPU-constrained use, nostalgic video game sound | Smooth long reverbs | Rich creative reverb, acoustic realism |
 | **Worst for** | High-frequent solo instruments, long decay | Broadband transients (snaps, clicks) | ? | ? | Real-time and live-performances |
 | **Overall** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
