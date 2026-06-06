@@ -216,7 +216,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "synth.reverb.engine", "free");
     fluid_settings_add_option(settings, "synth.reverb.engine", "lex");
     fluid_settings_add_option(settings, "synth.reverb.engine", "dat");
-#ifdef SIGNALSMITH_REVERB_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     fluid_settings_add_option(settings, "synth.reverb.engine", "sig");
 #endif
 
@@ -235,7 +235,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_str(settings, "midi.portname", "", 0);
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     fluid_settings_register_int(settings, "synth.limiter.active", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_num(settings, "synth.limiter.output-limit", FLUID_LIMITER_DEFAULT_OUTPUT_LIMIT, fluid_cb2amp(240), 1.0f, 0);
     fluid_settings_register_num(settings, "synth.limiter.attack", FLUID_LIMITER_DEFAULT_ATTACK_MS, 1.0f, 250.0f, 0);
@@ -727,7 +727,7 @@ new_fluid_synth(fluid_settings_t *settings)
     int with_ladspa = 0;
     int with_limiter = 0;
     double sample_rate_min, sample_rate_max;
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     fluid_limiter_settings_t limiter_settings;
     double limiter_value;
 #endif
@@ -780,7 +780,7 @@ new_fluid_synth(fluid_settings_t *settings)
     {
         synth->reverb_type = FLUID_REVERB_TYPE_DATTORRO;
     }
-#ifdef SIGNALSMITH_REVERB_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     else if(fluid_settings_str_equal(settings, "synth.reverb.engine", "sig"))
     {
         synth->reverb_type = FLUID_REVERB_TYPE_SIGNALSMITH;
@@ -1040,7 +1040,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
     if(with_limiter)
     {
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
         limiter_settings.input_gain = 1.0;
         if(fluid_settings_getnum(settings, "synth.limiter.output-limit", &limiter_value) == FLUID_OK) {
             limiter_settings.output_limit = limiter_value;
@@ -1063,9 +1063,9 @@ new_fluid_synth(fluid_settings_t *settings)
             FLUID_LOG(FLUID_ERR, "Out of memory");
             goto error_recovery;
         }
-#else /* LIMITER_SUPPORT */
+#else /* SIGNALSMITH_SUPPORT */
         FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with limiter support");
-#endif /* LIMITER_SUPPORT */
+#endif /* SIGNALSMITH_SUPPORT */
     }
 
 

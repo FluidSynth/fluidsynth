@@ -20,8 +20,10 @@
 
 #pragma once
 
-#include "fluid_sys.h"
+#include "fluidsynth_priv.h"
 #include "fluid_rev.h"
+
+#ifdef SIGNALSMITH_SUPPORT
 
 #include <memory>
 
@@ -77,3 +79,5 @@ private:
 };
 
 typedef struct fluid_revmodel_signalsmith fluid_revmodel_signalsmith_t;
+
+#endif

@@ -25,7 +25,7 @@
 #include "fluid_rev_freeverb.h"
 #include "fluid_rev_lexverb.h"
 #include "fluid_rev_dattorro.h"
-#ifdef SIGNALSMITH_REVERB_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
 #include "fluid_rev_signalsmith.h"
 #endif
 
@@ -51,7 +51,7 @@ new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate, int r
         {
             rev = new fluid_revmodel_dattorro(sample_rate);
         }
-#ifdef SIGNALSMITH_REVERB_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
         else if(reverb_type == FLUID_REVERB_TYPE_SIGNALSMITH)
         {
             rev = new fluid_revmodel_signalsmith(sample_rate);

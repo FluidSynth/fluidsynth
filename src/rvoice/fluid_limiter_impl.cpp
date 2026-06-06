@@ -25,7 +25,7 @@ using fluid_real_t = float;
 using fluid_real_t = double;
 #endif
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
 
 #include "fluidsynth.h"
 #include "fluid_limiter.h"
@@ -83,4 +83,4 @@ extern "C" void fluid_limiter_impl_process_buffers(
     ((Limiter*)lim)->process(bufs, block_size);
 }
 
-#endif /* LIMITER_SUPPORT */
+#endif /* SIGNALSMITH_SUPPORT */

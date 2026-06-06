@@ -24,6 +24,8 @@
 #include "fluid_conv_tables.h"
 #include "fluid_conv.h"
 
+#ifdef SIGNALSMITH_SUPPORT
+
 #include "signalsmith-basics/reverb.h"
 
 #include <cmath>
@@ -231,3 +233,5 @@ void fluid_revmodel_signalsmith::process(const fluid_real_t *in,
         }
     }
 }
+
+#endif
