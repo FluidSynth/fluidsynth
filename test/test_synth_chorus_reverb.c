@@ -218,7 +218,7 @@ int main(void)
 #ifdef SIGNALSMITH_SUPPORT
     settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
-    TEST_SUCCESS(fluid_settings_setstr(settings, "synth.reverb.engine", "sig"));
+    TEST_SUCCESS(fluid_settings_setstr(settings, "synth.reverb.engine", "smith"));
     synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
     TEST_ASSERT(synth->reverb_type == FLUID_REVERB_TYPE_SIGNALSMITH);

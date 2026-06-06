@@ -217,7 +217,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "synth.reverb.engine", "lex");
     fluid_settings_add_option(settings, "synth.reverb.engine", "dat");
 #ifdef SIGNALSMITH_SUPPORT
-    fluid_settings_add_option(settings, "synth.reverb.engine", "sig");
+    fluid_settings_add_option(settings, "synth.reverb.engine", "smith");
 #endif
 
     fluid_settings_register_num(settings, "synth.reverb.room-size", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0, 1.0, 0);
@@ -781,7 +781,7 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->reverb_type = FLUID_REVERB_TYPE_DATTORRO;
     }
 #ifdef SIGNALSMITH_SUPPORT
-    else if(fluid_settings_str_equal(settings, "synth.reverb.engine", "sig"))
+    else if(fluid_settings_str_equal(settings, "synth.reverb.engine", "smith"))
     {
         synth->reverb_type = FLUID_REVERB_TYPE_SIGNALSMITH;
     }

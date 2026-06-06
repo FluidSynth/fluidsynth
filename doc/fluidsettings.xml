@@ -411,10 +411,10 @@ Developers:
             <name>reverb.engine</name>
             <type>str</type>
             <def>fdn</def>
-            <vals>fdn, free, lex, dat, sig</vals>
+            <vals>fdn, free, lex, dat, smith</vals>
             <desc>
                 Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
-                The <code>sig</code> engine (Signalsmith FDN reverb) requires FluidSynth to be compiled with Signalsmith Audio Basics support.
+                <note>The <code>smith</code> engine (Signalsmith FDN reverb) requires FluidSynth to be compiled with Signalsmith Audio Basics support.</note>
             </desc>
         </setting>
         <setting>

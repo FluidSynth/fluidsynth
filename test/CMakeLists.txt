@@ -572,7 +572,7 @@ set(_reverb_type
   "free"
   "lex"
   "dat"
-  "sig"
+  "smith"
 )
 
 set(_reverb_width
