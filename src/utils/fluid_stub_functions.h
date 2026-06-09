@@ -30,18 +30,24 @@
 #include "fluidsynth_priv.h"
 
 
+#ifdef NDEBUG
+#define STUB_FUNCTION_LOG_LEVEL FLUID_DBG
+#else
+#define STUB_FUNCTION_LOG_LEVEL FLUID_ERR
+#endif
+
 #define STUB_FUNCTION_VOID(function, args) \
     static FLUID_INLINE void \
     function args \
     { \
-        FLUID_LOG(FLUID_ERR, "function " # function " is a stub"); \
+        FLUID_LOG(STUB_FUNCTION_LOG_LEVEL, "function " # function " is a stub"); \
     }
 
 #define STUB_FUNCTION(function, type, result, args) \
     static FLUID_INLINE type \
     function args \
     { \
-        FLUID_LOG(FLUID_ERR, "function " # function " is a stub, always returning " # result); \
+        FLUID_LOG(STUB_FUNCTION_LOG_LEVEL, "function " # function " is a stub, always returning " # result); \
         return result; \
     }
 
