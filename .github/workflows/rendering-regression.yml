@@ -17,7 +17,6 @@ on:
       - '.github/workflows/ios.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/windows.yml'
-      - '.cirrus.yml'
       - 'README.md'
 
 permissions:

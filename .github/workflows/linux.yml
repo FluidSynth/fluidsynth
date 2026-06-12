@@ -12,7 +12,6 @@ on:
       - '.github/workflows/windows.yml'
       - '.github/workflows/ios.yml'
       - '.github/workflows/rendering-regression.yml'
-      - '.cirrus.yml'
       - 'README.md'
 
 env:

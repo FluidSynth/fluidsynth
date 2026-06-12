@@ -13,7 +13,6 @@ on:
       - '.github/workflows/linux.yml'
       - '.github/workflows/ios.yml'
       - '.github/workflows/rendering-regression.yml'
-      - '.cirrus.yml'
       - 'README.md'
     tags:
       - 'v*'

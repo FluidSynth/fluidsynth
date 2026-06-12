@@ -12,7 +12,6 @@ on:
       - '.github/workflows/rendering-regression.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/windows.yml'
-      - '.cirrus.yml'
       - 'README.md'
 
 env:
