@@ -1,5 +1,10 @@
 # 📝 Release Notes
 
+## FluidSynth 2.5.5
+
+* Fix a build issue on BigEndian architectures (#1783, thanks to @thesamesam)
+* Adjust the log level for unimplemented OSAL functions in release builds (#1795, thanks to @white-axe)
+
 ## FluidSynth 2.5.4
 
 * The TCP port, fluidsynth's shell server may listen to, is now auto-selected by default (#1763)
