@@ -315,8 +315,8 @@ Example 3 - Water drops + Triangle:
 | **Transient broadband handling** | 🟡 Fair | 🔴 Distorted | 🟢 Good | 🟢 Good | 🟢 Excellent |
 | **Echo density** | 🔴 Poor | 🟡 Fair, no pre-diffusion | 🟡 Sparse, no pre-diffusion | 🟢 Good (4-stage input diffuser) | 🟢 Excellent (multi-stage) |
 | **Stereo output** | 🟡 Separate L/R comb banks | 🟡 ±1 gain vector providing functional stereo, but not deeply decorrelated | 🟢 Cross-coupled stereo by design | 🟡 14-tap decorrelated L/R output | 🟢 Full stereo by design |
-| **Spectral character** | Colored (comb resonances) | Neutral | Flat | Rich, colorful (plate character) | Rich, colorful |
-| **Best for** | Legacy / compatibility | ? | CPU-constrained use, nostalgic video game sound | Smooth long reverbs | Rich creative reverb, acoustic realism |
+| **Spectral character** | Colored (comb resonances) | Colored, sometimes overloaded or synthetic | Flat & simple | Rich, colorful (plate character) | Rich, colorful |
+| **Best for** | Legacy / compatibility | ? | CPU-constrained use, nostalgic video game sound | Smooth long reverbs | Rich creative "real-room" reverb, acoustic realism |
 | **Worst for** | High-frequent solo instruments, long decay | Broadband transients (snaps, clicks) | ? | ? | Real-time and live-performances |
 | **Overall** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
