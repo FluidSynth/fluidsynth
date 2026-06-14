@@ -583,6 +583,7 @@ set(_reverb_width
 
 set(_reverb_damp
   "0.0"
+  "0.2"
   "0.3"
   "0.7"
   "1"
@@ -595,6 +596,7 @@ set(_reverb_level
 
 set(_reverb_size
   "0.3"
+  "0.5"
   "0.7"
   "1"
 )
@@ -639,6 +641,10 @@ foreach(_t IN LISTS _reverb_type)
     add_render_job(renderReverbOverview
         "${REVERB_RENDER_DIR}/reverb_water_triangle_test_l${_l}_s${_s}_w${_w}_d${_d}_t${_t}.oga"
          -R ${_t} -C 0 -g 1.9 -o synth.reverb.room-size=${_s} -o synth.reverb.width=${_w} -o synth.reverb.damp=${_d} -o synth.reverb.level=${_l} reverb_water_triangle_test.mid ${DK64SF2}
+    )
+    add_render_job(renderReverbOverview
+        "${REVERB_RENDER_DIR}/DK64_sparse04_l${_l}_s${_s}_w${_w}_d${_d}_t${_t}.oga"
+        -R ${_t} -C 0 -g 0.5 -o synth.reverb.room-size=${_s} -o synth.reverb.width=${_w} -o synth.reverb.damp=${_d} -o synth.reverb.level=${_l} DK64_sparse04.mid ${DK64SF2}
     )
 endforeach()
 endforeach()
