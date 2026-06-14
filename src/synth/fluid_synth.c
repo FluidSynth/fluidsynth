@@ -211,7 +211,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1, FLUID_HINT_TOGGLED);
 
     fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1, FLUID_HINT_TOGGLED);
-    fluid_settings_register_str(settings, "synth.reverb.engine", "fdn", 0);
+    fluid_settings_register_str(settings, "synth.reverb.engine", "dat", 0);
     fluid_settings_add_option(settings, "synth.reverb.engine", "fdn");
     fluid_settings_add_option(settings, "synth.reverb.engine", "free");
     fluid_settings_add_option(settings, "synth.reverb.engine", "lex");

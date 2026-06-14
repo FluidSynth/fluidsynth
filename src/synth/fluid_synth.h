@@ -46,7 +46,7 @@
 
 #define FLUID_UNSET_PROGRAM 128  /* Program number used to unset a preset */
 
-#define FLUID_REVERB_DEFAULT_DAMP 0.0f      /**< Default reverb damping */
+#define FLUID_REVERB_DEFAULT_DAMP 0.2f      /**< Default reverb damping */
 #define FLUID_REVERB_DEFAULT_LEVEL 0.7f     /**< Default reverb level */
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.5f  /**< Default reverb room size */
 #define FLUID_REVERB_DEFAULT_WIDTH 0.8f     /**< Default reverb width */

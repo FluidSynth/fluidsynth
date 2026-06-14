@@ -410,7 +410,7 @@ Developers:
         <setting>
             <name>reverb.engine</name>
             <type>str</type>
-            <def>fdn</def>
+            <def>dat</def>
             <vals>fdn, free, lex, dat, smith</vals>
             <desc>
                 Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
@@ -420,7 +420,7 @@ Developers:
         <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0.3 (since version 2.4.0),<br />0.0 (2.3.x and older)</def>
+            <def>0.2 (since version 2.6.0), 0.3 (from versions 2.4.0 to 2.5.x),<br />0.0 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -445,7 +445,7 @@ Developers:
             <max>1.0</max>
             <realtime/>
             <desc>
-                Sets the room size (i.e. amount and duration of wet) reverb.</desc>
+                Sets the room size (i.e. decay duration of wet) reverb. <attention>Depending on the reverb engine, higher values may cause audio feedback, similar to hanging notes or accumulating output amplitudes!</attention></desc>
         </setting>
         <setting>
             <name>reverb.width</name>
