@@ -1,6 +1,6 @@
 # 🌀 Reverb Overview
 
-The following page gives an overview of different reverbator engines provided by fluidsynth. It concentrates on objective criteria, although a quality assesment is attempted below. Sound examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! The reverb settings of all examples below share those settings:
+The following page gives an overview of different reverbator engines provided by fluidsynth. It concentrates on objective criteria, although a quality assessment is attempted below. Sound examples are provided so you can make up your own opinion. Listening with headphones is strongly recommended! The reverb settings of all examples below share those settings:
 
 `-o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7`
 
