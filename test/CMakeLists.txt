@@ -695,7 +695,8 @@ add_dependencies(check_rendering renderGeneralUserDemo)
 add_dependencies(check_rendering renderBankSelect)
 add_dependencies(check_rendering renderDMOD)
 add_dependencies(check_rendering renderRPN)
-add_dependencies(check_rendering renderReverbOverview)
+# The check_rendering target is used by the rendering regression tests, rendering the reverbOverview would make the regression tests take way too long!
+#add_dependencies(check_rendering renderReverbOverview)
 add_dependencies(check_rendering renderMtsTests)
 # Temporarily disable limiter tests, because those tests will fail with reference fluidsynth 2.5.x, as it is lacking the limiter
 add_dependencies(check_rendering renderLimiterTests)
