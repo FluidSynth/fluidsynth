@@ -302,7 +302,7 @@ Example 3 - Water drops + Triangle:
 | **Modulation** | None | All 8 lines, sinusoidal LFO, 1st-order allpass interpolation | None | None | 3 of 8 channels, sinusoidal LFO, 7th-order Lagrange interpolation |
 | **Damping filter** | 1-pole LPF inside each comb | 1-pole LPF per line | 1-pole LPF on AP4, AP9 and both cross-delays | 1-pole LPF on input (bandwidth) + per-tank LPF | Biquad low-shelf + high-shelf per FDN channel; separate LP/HP output cut |
 | **Early reflections** | No | No | No | No | Yes |
-| **Stereo input cabable** | 🔴 Mono-in by design | 🔴 Mono-in by design | 🟢 Stereo capable (⚠️ fluidsynth feeds mono currently) | 🔴 Mono-in by design | 🟢 True stereo in/out (⚠️ fluidsynth feeds mono currently) |
+| **Stereo input capable** | 🔴 Mono-in by design | 🔴 Mono-in by design | 🟢 Stereo capable (⚠️ fluidsynth feeds mono currently) | 🔴 Mono-in by design | 🟢 True stereo in/out (⚠️ fluidsynth feeds mono currently) |
 | **Denormalisation** | DC offset injection | DC offset injection | Not handled | Not handled | Not handled |
 | **CPU cost** | More than FDN | Less than Freeverb | Cheapest | Slightly more expensive than Freeverb | Most expensive |
 
