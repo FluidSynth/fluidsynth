@@ -20,8 +20,14 @@
 
 #pragma once
 
-#include "fluidsynth_priv.h"
+#include "config.h"
 #include "fluid_rev.h"
+
+#if defined(WITH_FLOAT)
+using fluid_real_t = float;
+#else
+using fluid_real_t = double;
+#endif
 
 #ifdef SIGNALSMITH_SUPPORT
 

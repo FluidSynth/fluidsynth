@@ -21,6 +21,8 @@
 #ifndef _FLUID_LIMITER_H
 #define _FLUID_LIMITER_H
 
+#include "config.h"
+
 #ifdef SIGNALSMITH_SUPPORT
 
 // how many channel buffers to process at once

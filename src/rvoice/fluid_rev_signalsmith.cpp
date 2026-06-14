@@ -18,8 +18,6 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
-#include "fluid_sys.h"
 #include "fluid_rev_signalsmith.h"
 #include "fluid_conv_tables.h"
 #include "fluid_conv.h"
