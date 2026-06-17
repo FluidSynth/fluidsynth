@@ -748,6 +748,11 @@ fluid_handle_pitch_bend_range(void *data, int ac, char **av, fluid_ostream_t out
 
     channum = atoi(av[0]);
     value = atoi(av[1]);
+    if(channum < 0 || channum >= fluid_synth_count_midi_channels(handler->synth))
+    {
+        fluid_ostream_printf(out, "pitch_bend_range: invalid channel number\n");
+        return FLUID_FAILED;
+    }
     fluid_channel_set_pitch_wheel_sensitivity(handler->synth->channel[channum], value);
     return FLUID_OK;
 }
