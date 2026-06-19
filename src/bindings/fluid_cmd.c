@@ -748,8 +748,7 @@ fluid_handle_pitch_bend_range(void *data, int ac, char **av, fluid_ostream_t out
 
     channum = atoi(av[0]);
     value = atoi(av[1]);
-    fluid_channel_set_pitch_wheel_sensitivity(handler->synth->channel[channum], value);
-    return FLUID_OK;
+    return fluid_synth_pitch_wheel_sens(handler->synth, channum, value);
 }
 
 int
