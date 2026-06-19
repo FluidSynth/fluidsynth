@@ -21,7 +21,7 @@
 
 #include "fluidsynth_priv.h"
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
 
 #include "fluid_limiter.h"
 #include "fluid_limiter_impl.h"
@@ -114,4 +114,4 @@ fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r
     }
 }
 
-#endif /* LIMITER_SUPPORT */
+#endif /* SIGNALSMITH_SUPPORT */

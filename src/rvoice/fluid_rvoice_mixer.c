@@ -103,7 +103,7 @@ struct _fluid_rvoice_mixer_t
     int with_chorus;        /**< Should the synth use the built-in chorus unit? */
     int mix_fx_to_out;      /**< Should the effects be mixed in with the primary output? */
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     fluid_limiter_t *limiter;
 #endif
 
@@ -269,7 +269,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
         }
     }
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     if(mixer->limiter)
     {
         fluid_real_t* buf_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
@@ -802,7 +802,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
         }
     }
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     if(mixer->limiter != NULL)
     {
         fluid_limiter_samplerate_change(mixer->limiter, samplerate);
@@ -834,6 +834,7 @@ fluid_rvoice_mixer_t *
 new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
                        fluid_real_t sample_rate_max,
                        fluid_real_t sample_rate,
+                       int reverb_type,
                        fluid_rvoice_eventhandler_t *evthandler,
                        int extra_threads, int prio)
 {
@@ -866,7 +867,8 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
     for(i = 0; i < fx_units; i++)
     {
         /* create reverb and chorus units */
-        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate);
+        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate,
+                                                 reverb_type);
         mixer->fx[i].chorus = new_fluid_chorus(sample_rate);
 
         if(mixer->fx[i].reverb == NULL || mixer->fx[i].chorus == NULL)
@@ -952,7 +954,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 #endif
     fluid_mixer_buffers_free(&mixer->buffers);
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
     if(mixer->limiter)
     {
         delete_fluid_limiter(mixer->limiter);
@@ -1020,14 +1022,14 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
 }
 #endif
 
-#ifdef LIMITER_SUPPORT
+#ifdef SIGNALSMITH_SUPPORT
 int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
 {
     mixer->limiter = new_fluid_limiter(sample_rate, settings);
 
     return mixer->limiter != NULL;
 }
-#endif /* LIMITER_SUPPORT */
+#endif /* SIGNALSMITH_SUPPORT */
 
 /**
  * set one or more reverb shadow parameters for one fx group.

@@ -1119,7 +1119,7 @@ fluid_settings_dupstr(fluid_settings_t *settings, const char *name, char **str)
 
                 if(!*str)
                 {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
                 }
             }
 
@@ -1138,7 +1138,7 @@ fluid_settings_dupstr(fluid_settings_t *settings, const char *name, char **str)
 
                 if(!*str)
                 {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
                 }
 
                 if(!setting->value || *str)

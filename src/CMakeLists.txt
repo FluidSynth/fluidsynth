@@ -163,8 +163,17 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice_mixer.h
     rvoice/fluid_rvoice_mixer.c
     rvoice/fluid_phase.h
-    rvoice/fluid_rev.c
+    rvoice/fluid_rev.cpp
     rvoice/fluid_rev.h
+    rvoice/fluid_rev_fdn.cpp
+    rvoice/fluid_rev_fdn.h
+    rvoice/fluid_rev_freeverb.cpp
+    rvoice/fluid_rev_freeverb.h
+    rvoice/fluid_rev_lexverb.cpp
+    rvoice/fluid_rev_lexverb.h
+    rvoice/fluid_rev_dattorro.cpp
+    rvoice/fluid_rev_dattorro.h
+    rvoice/fluid_rev_filters.h
     synth/fluid_chan.c
     synth/fluid_chan.h
     synth/fluid_event.c
@@ -201,22 +210,35 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.h
 )
 
-if ( LIMITER_SUPPORT )
+if ( SIGNALSMITH_SUPPORT )
   set ( fulid_limiter_SOURCES
       rvoice/fluid_limiter.c
       rvoice/fluid_limiter.h
       rvoice/fluid_limiter_impl.h
+      rvoice/fluid_rev_signalsmith.h
   )
+  # The signalsmith stuff must be an extra target due to:
+  # CMake Error in src/CMakeLists.txt:
+  #   install(EXPORT "FluidSynthTargets" ...) includes target "libfluidsynth-OBJ"
+  #   which requires target "signalsmith-basics" that is not in any export set.
+  # CMake Error in CMakeLists.txt:
+  #   export called with target "libfluidsynth-OBJ" which requires target
+  #   "signalsmith-basics" that is not in any export set.
   add_library(fluid_limiter_impl-OBJ OBJECT
     rvoice/fluid_limiter_impl.cpp
+    rvoice/fluid_rev_signalsmith.cpp
   )
   target_include_directories(fluid_limiter_impl-OBJ PRIVATE
     ${FluidSynth_BINARY_DIR}
     ${FluidSynth_BINARY_DIR}/include
     ${FluidSynth_SOURCE_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/src
+    ${FluidSynth_SOURCE_DIR}/src/rvoice
+    ${FluidSynth_SOURCE_DIR}/src/synth
+    ${FluidSynth_SOURCE_DIR}/src/utils
   )
   target_link_libraries(fluid_limiter_impl-OBJ PRIVATE signalsmith-basics)
-endif ( LIMITER_SUPPORT )
+endif ( SIGNALSMITH_SUPPORT )
 
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
 if ( osal STREQUAL "cpp11" )
@@ -341,7 +363,7 @@ endif ( MACOSX_FRAMEWORK )
 # them correctly in case of MACOSX_FRAMEWORK
 add_library ( libfluidsynth
     $<TARGET_OBJECTS:libfluidsynth-OBJ>
-    $<$<BOOL:${LIMITER_SUPPORT}>:$<TARGET_OBJECTS:fluid_limiter_impl-OBJ>>
+    $<$<BOOL:${SIGNALSMITH_SUPPORT}>:$<TARGET_OBJECTS:fluid_limiter_impl-OBJ>>
     ${public_main_HEADER}
     ${public_HEADERS}
     ${MACOSX_FRAMEWORK_SOURCE_HACK}

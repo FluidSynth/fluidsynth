@@ -53,7 +53,8 @@ struct _fluid_rvoice_eventhandler_t
 
 fluid_rvoice_eventhandler_t *new_fluid_rvoice_eventhandler(
     int queuesize, int finished_voices_size, int bufs,
-    int fx_bufs, int fx_units, fluid_real_t sample_rate_max, fluid_real_t sample_rate, int, int);
+    int fx_bufs, int fx_units, fluid_real_t sample_rate_max, fluid_real_t sample_rate,
+    int reverb_type, int, int);
 
 void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t *);
 

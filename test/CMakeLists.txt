@@ -72,8 +72,6 @@ if(NOT DEFINED GENERAL_USER_GS2)
     set ( GENERAL_USER_GS2 "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2/GeneralUser-GS/GeneralUser-GS.sf2" )
 endif()
 
-
-set(RENDERING_OUTPUT_DIR "" CACHE FILEPATH "Directory to store rendered audio files of manual regression tests")
 if (NOT RENDERING_OUTPUT_DIR)
     set(RENDERING_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/manual")
 endif()
@@ -569,6 +567,93 @@ else ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
 endif (LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
 
 
+set(_reverb_type
+  "fdn"
+  "free"
+  "lex"
+  "dat"
+  "smith"
+)
+
+set(_reverb_width
+  "0.0"
+  "1.0"
+  "10"
+)
+
+set(_reverb_damp
+  "0.0"
+  "0.2"
+  "0.3"
+  "0.7"
+  "1"
+)
+
+set(_reverb_level
+  "0.7"
+  "1"
+)
+
+set(_reverb_size
+  "0.3"
+  "0.5"
+  "0.7"
+  "1"
+)
+
+add_custom_target(renderReverbOverview
+  COMMENT "Reverb overview study"
+  DEPENDS fluidsynth create_out_dir
+)
+set_target_properties(renderReverbOverview PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/"
+)
+
+add_render_job(renderReverbOverview
+    "${REVERB_RENDER_DIR}/reverb_water_triangle_test_dry.oga"
+    -R 0 -C 0 -g 1.9 reverb_water_triangle_test.mid ${DK64SF2}
+)
+add_render_job(renderReverbOverview
+    "${REVERB_RENDER_DIR}/1496_dry.oga"
+    -R 0 -C 0 -g 0.4 mrbumpys_rev_width_test.mid 1496.sf2
+)
+add_render_job(renderReverbOverview
+    "${REVERB_RENDER_DIR}/1455_dry.oga"
+    -R 0 -C 0 -g 0.7 mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+)
+
+foreach(_t IN LISTS _reverb_type)
+    add_render_job(renderReverbOverview
+        "${REVERB_RENDER_DIR}/1496_t${_t}.oga"
+        -R ${_t} -C 0 -g 0.4 -o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7 mrbumpys_rev_width_test.mid 1496.sf2
+    )
+    add_render_job(renderReverbOverview
+        "${REVERB_RENDER_DIR}/1455_t${_t}.oga"
+        -R ${_t} -C 0 -g 0.7 -o synth.reverb.room-size=0.7 -o synth.reverb.width=1 -o synth.reverb.damp=0 -o synth.reverb.level=0.7 mrbumpys_rev_width_test.mid ${GENERAL_USER_GS2}
+    )
+endforeach()
+
+foreach(_l IN LISTS _reverb_level)
+foreach(_s IN LISTS _reverb_size)
+foreach(_w IN LISTS _reverb_width)
+foreach(_d IN LISTS _reverb_damp)
+foreach(_t IN LISTS _reverb_type)
+    add_render_job(renderReverbOverview
+        "${REVERB_RENDER_DIR}/reverb_water_triangle_test_l${_l}_s${_s}_w${_w}_d${_d}_t${_t}.oga"
+         -R ${_t} -C 0 -g 1.9 -o synth.reverb.room-size=${_s} -o synth.reverb.width=${_w} -o synth.reverb.damp=${_d} -o synth.reverb.level=${_l} reverb_water_triangle_test.mid ${DK64SF2}
+    )
+    add_render_job(renderReverbOverview
+        "${REVERB_RENDER_DIR}/DK64_sparse04_l${_l}_s${_s}_w${_w}_d${_d}_t${_t}.oga"
+        -R ${_t} -C 0 -g 0.5 -o synth.reverb.room-size=${_s} -o synth.reverb.width=${_w} -o synth.reverb.damp=${_d} -o synth.reverb.level=${_l} DK64_sparse04.mid ${DK64SF2}
+    )
+endforeach()
+endforeach()
+endforeach()
+endforeach()
+endforeach()
+
+
+
 add_custom_target(renderMtsTests
     COMMENT "Rendering Midi Tuning Standard Tests"
     DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
@@ -610,6 +695,8 @@ add_dependencies(check_rendering renderGeneralUserDemo)
 add_dependencies(check_rendering renderBankSelect)
 add_dependencies(check_rendering renderDMOD)
 add_dependencies(check_rendering renderRPN)
+# The check_rendering target is used by the rendering regression tests, rendering the reverbOverview would make the regression tests take way too long!
+#add_dependencies(check_rendering renderReverbOverview)
 add_dependencies(check_rendering renderMtsTests)
 # Temporarily disable limiter tests, because those tests will fail with reference fluidsynth 2.5.x, as it is lacking the limiter
 add_dependencies(check_rendering renderLimiterTests)

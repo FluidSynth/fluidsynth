@@ -21,7 +21,9 @@
 #ifndef _FLUID_LIMITER_H
 #define _FLUID_LIMITER_H
 
-#ifdef LIMITER_SUPPORT
+#include "config.h"
+
+#ifdef SIGNALSMITH_SUPPORT
 
 // how many channel buffers to process at once
 // maybe if we want to parallelize, we might set this to 1
@@ -49,6 +51,6 @@ int fluid_limiter_samplerate_change(fluid_limiter_t* lim, fluid_real_t sample_ra
 
 void fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r, int block_count);
 
-#endif /* LIMITER_SUPPORT */
+#endif /* SIGNALSMITH_SUPPORT */
 
 #endif /* _FLUID_LIMITER_H */

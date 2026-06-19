@@ -165,7 +165,7 @@ Developers:
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. <note>FluidSynth has to be compiled with limiter support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</note></desc>
+                When set to 1 (TRUE) a look-ahead limiter is added at the end of fluidsynth's audio processing chain. This limiter helps to prevent clipping and distortion by limiting the gain of the output signal. <note>The limiter requires FluidSynth to be compiled with Signalsmith Audio Basics support, otherwise any of the limiter related settings will return FLUID_FAILED when attempting to set or get them.</note></desc>
         </setting>
         <setting>
             <name>limiter.attack</name>
@@ -400,7 +400,7 @@ Developers:
         </setting>
         <setting>
             <name>reverb.active</name>
-            <type>bool</type>
+            <type>int</type>
             <def>1 (TRUE)</def>
             <realtime/>
             <desc>
@@ -408,9 +408,19 @@ Developers:
             </desc>
         </setting>
         <setting>
+            <name>reverb.engine</name>
+            <type>str</type>
+            <def>dat</def>
+            <vals>fdn, free, lex, dat, smith</vals>
+            <desc>
+                Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
+                <note>The <code>smith</code> engine requires FluidSynth to be compiled with Signalsmith Audio Basics support.</note>
+            </desc>
+        </setting>
+        <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0.3 (since version 2.4.0),<br />0.0 (2.3.x and older)</def>
+            <def>0.2 (since version 2.6.0), 0.3 (from versions 2.4.0 to 2.5.x),<br />0.0 (2.3.x and older)</def>
             <min>0.0</min>
             <max>1.0</max>
             <realtime/>
@@ -435,7 +445,7 @@ Developers:
             <max>1.0</max>
             <realtime/>
             <desc>
-                Sets the room size (i.e. amount of wet) reverb.</desc>
+                Sets the room size (i.e. decay duration of wet) reverb. <attention>Depending on the reverb engine, higher values may cause audio feedback, similar to hanging notes or accumulating output amplitudes!</attention></desc>
         </setting>
         <setting>
             <name>reverb.width</name>
@@ -445,7 +455,7 @@ Developers:
             <max>100.0</max>
             <realtime/>
             <desc>
-                Sets the stereo spread of the reverb signal. A value of 0 indicates no stereo-separation causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum separation between the uncorrelated left and right channels (note that reverb is still a monophonic effect). This subrange <code>[0;1]</code> is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. <attention>Under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</attention></desc>
+                Sets the stereo spread of the reverb signal, i.e. how much the wet-left signal contributes to the wet-right signal and vice versa. A value of 0 indicates no stereo-spread causing the reverb to sound like a monophonic signal. A value of 1 indicates maximum spread between the uncorrelated left and right channels. This subrange <code>[0;1]</code> is recommended for general usage. Values bigger than 1 increase (or exaggerate) the perception of the uncorrelated left and right signals. Otherwise, this setting should be considered as dimensionless quantity, with its maximum value existing for historical reasons. <attention>Under some circumstances, values bigger than 1 may induce a feedback into the signal which can be perceived as unpleasant.</attention></desc>
         </setting>
         <setting>
             <name>sample-rate</name>
