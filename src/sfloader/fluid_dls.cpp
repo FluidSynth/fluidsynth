@@ -1704,9 +1704,10 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             std::runtime_error{ "Exception thrown while allocating fluid_sample_t" });
     }
 
+    bool invalid_loops_were_sanitized = false;
     for(auto &sample : samples)
     {
-        auto &fluid = samples_fluid.emplace_back();
+        fluid_sample_t fluid;
         fluid.start = sample.start;
         fluid.end = sample.end - 1;
         fluid.samplerate = sample.samplerate;
@@ -1720,6 +1721,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             fluid.loopend = sample.start + wsmp.loop_start + wsmp.loop_length;
             fluid.origpitch = wsmp.unity_note;
             fluid.pitchadj = wsmp.fine_tune;
+            invalid_loops_were_sanitized |= fluid_sample_sanitize_loop(&fluid, sampledata.size() * sizeof(decltype(sampledata)::value_type));
         }
         else
         {
@@ -1732,6 +1734,18 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         fluid.data = sampledata.data();
         fluid.sampletype = FLUID_SAMPLETYPE_MONO;
         fluid.default_modulators = this->sfont->default_mod_list;
+
+        if(fluid_sample_validate(&fluid, sampledata.size() * sizeof(decltype(sampledata)::value_type)) == FLUID_OK)
+        {
+            samples_fluid.push_back(std::move(fluid));
+        }
+    }
+
+    if(invalid_loops_were_sanitized)
+    {
+        FLUID_LOG(FLUID_WARN,
+                  "Some invalid DLS sample loops were sanitized! If you experience audible glitches, "
+                  "start fluidsynth in verbose mode for detailed information.");
     }
 
     // put info in dls_sample into region
