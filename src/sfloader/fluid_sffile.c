@@ -758,12 +758,11 @@ static int process_info(SFData *sf, int size)
              */
             SFMod *dmod;
             unsigned int count;
-            if (chunk.size % SF_MOD_SIZE != 0 || size == 0)
+            if (chunk.size < SF_MOD_SIZE || chunk.size % SF_MOD_SIZE != 0 || size == 0)
             {
                 FLUID_LOG(FLUID_ERR, "DMOD chunk has invalid size (%d bytes)", chunk.size);
                 return FALSE;
             }
-
 
             // read the modulators sequentially
             count = chunk.size / SF_MOD_SIZE - 1; // minus the terminal record
