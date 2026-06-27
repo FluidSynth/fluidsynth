@@ -1567,6 +1567,13 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                 uint32_t cues; // sample count
                 READ32(this, cues);
 
+                // subchunk.size is uint32 and can be at max 0xFFFF'FFFF, therefore the max value of cues will be 0x3FFF'FFFF, as bigger
+                // values would require an uint64 chunksize, contrary to the RIFF spec. Catch possible overflow here.
+                if(cues > (std::numeric_limits<uint32_t>::max() - cbsize) / 4)
+                {
+                    throw std::runtime_error{ "Too many poolcue records are contained in the ptbl chunk." };
+                }
+
                 if(cues * 4 + cbsize != subchunk.size)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
