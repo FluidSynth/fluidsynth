@@ -1569,7 +1569,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
                 // subchunk.size is uint32 and can be at max 0xFFFF'FFFF, therefore the max value of cues will be 0x3FFF'FFFF, as bigger
                 // values would require an uint64 chunksize, contrary to the RIFF spec. Catch possible overflow here.
-                if(cues > (std::numeric_limits<uint32_t>::max() - cbsize) / 4)
+                if(cues > (std::numeric_limits<uint32_t>::max() - cbsize) / 4u)
                 {
                     throw std::runtime_error{ "Too many poolcue records are contained in the ptbl chunk." };
                 }
@@ -2530,7 +2530,12 @@ inline void fluid_dls_font::parse_art(fluid_long_long_t offset, fluid_dls_articu
     uint32_t connblocks;
     READ32(this, connblocks);
 
-    if(cbsize + connblocks * 12 != chunk.size)
+    if(connblocks > (std::numeric_limits<uint32_t>::max() - cbsize) / 12u)
+    {
+        throw std::runtime_error{ "Too many ConnectionBlocks are contained in the articulator chunk." };
+    }
+
+    if(cbsize + connblocks * 12u != chunk.size)
     {
         throw std::runtime_error{ "art chunk has corrupted size" };
     }
