@@ -69,7 +69,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
 
@@ -233,7 +233,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
         
@@ -339,7 +339,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
 
@@ -506,7 +506,7 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -595,7 +595,7 @@ jobs:
     runs-on: ubuntu-latest
     name: 🚀 Publish Release Artifacts
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -631,7 +631,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: 📢 Announce Release
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

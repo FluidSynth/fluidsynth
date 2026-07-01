@@ -37,7 +37,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.artifact_name.outputs.name }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
     - name: Build
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     name: 🚀 Publish Release Artifacts
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
