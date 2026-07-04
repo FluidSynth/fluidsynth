@@ -40,25 +40,11 @@ jobs:
         include:
           - platform: Win32
             platformAlt: x86
-            osal: "glib"
-            CFLAGS: ""
-            CXXFLAGS: ""
-            CMAKEFLAGS: ""
-            dep_arch: "x86"
-          - platform: Win32
-            platformAlt: x86
             osal: "cpp11"
             CFLAGS: "/arch:IA32"
             CXXFLAGS: "/arch:IA32"
             CMAKEFLAGS: ""
             dep_arch: "x86"
-          - platform: x64
-            platformAlt: x64
-            osal: "glib"
-            CFLAGS: ""
-            CXXFLAGS: ""
-            CMAKEFLAGS: ""
-            dep_arch: "x64"
           - platform: x64
             platformAlt: x64
             osal: "cpp11"
@@ -168,13 +154,6 @@ jobs:
         dir
         COPY SDL3.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
         COPY sndfile.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-        if "${{ matrix.osal }}"=="glib" (
-          COPY libglib-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY libgobject-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY libgthread-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY intl.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY libintl-8.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-        )
         exit 0
 
     - name: Validate library
@@ -494,10 +473,6 @@ jobs:
         fail-fast: false
         matrix:
           include:
-            - { icon: '⬛', sys: mingw32, osal: glib }
-            - { icon: '🟦', sys: mingw64, osal: glib }
-            - { icon: '🟨', sys: ucrt64, osal: glib }
-            - { icon: '🟧', sys: clang64, osal: glib }
             - { icon: '⬛', sys: mingw32, osal: cpp11 }
             - { icon: '🟦', sys: mingw64, osal: cpp11 }
             - { icon: '🟨', sys: ucrt64, osal: cpp11 }
@@ -524,7 +499,6 @@ jobs:
           toolchain:p
           cmake:p
           ninja:p
-          glib2:p
           libsndfile:p
 
     - name: '${{ matrix.icon }} Configure CMake'

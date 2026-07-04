@@ -48,7 +48,6 @@ jobs:
             cmake \
             ninja-build \
             pkg-config \
-            libglib2.0-dev \
             libsndfile1-dev \
             sox \
             libsox-fmt-all

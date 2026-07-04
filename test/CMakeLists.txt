@@ -44,11 +44,6 @@ ADD_FLUID_TEST(test_sample_pitch_calculation)
 ADD_FLUID_TEST(test_mts_cc_tuning)
 ADD_FLUID_TEST(test_voice_callback)
 
-if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
-    # Earlier versions of GLib had broken comment handling and should not be compared to
-    ADD_FLUID_TEST(test_shell_parse_argv_internal)
-endif ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
-
 if ( NOT OSAL STREQUAL "embedded" )
     ADD_FLUID_TEST(test_threading)
 endif ( NOT OSAL STREQUAL "embedded" )

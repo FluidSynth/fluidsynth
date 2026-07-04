@@ -70,7 +70,6 @@ jobs:
           ladspa-sdk \
           libasound2-dev \
           libdbus-1-dev \
-          libglib2.0-dev \
           libjack-dev \
           libpulse-dev \
           libreadline-dev \

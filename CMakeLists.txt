@@ -102,7 +102,7 @@ option ( enable-openmp "enable OpenMP support (parallelization of soundfont deco
 option ( enable-unicode "enable UNICODE build for Windows" on )
 option ( enable-native-dls "compile native DLS support (requires C++17)" on )
 
-set ( osal "glib" CACHE STRING "OS abstraction to use, provided by src/utils/fluid_sys_${osal}.*" )
+set ( osal "cpp11" CACHE STRING "OS abstraction to use, provided by src/utils/fluid_sys_${osal}.*" )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -559,18 +559,6 @@ if ( CMAKE_VERSION VERSION_GREATER_EQUAL 3.15 AND VCPKG_TOOLCHAIN )
   set ( CMAKE_FIND_PACKAGE_PREFER_CONFIG ON )
 endif ()
 
-unset ( GLIB_SUPPORT CACHE )
-if ( osal STREQUAL "glib" )
-    # Mandatory libraries: glib and gthread
-    find_package ( GLib2 ${GLIB2_MINIMUM_VERSION} REQUIRED )
-    list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
-    set ( GLIB_SUPPORT 1 )
-
-    if ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
-        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
-    endif ( GLib2_VERSION AND GLib2_VERSION VERSION_LESS "2.26.0" )
-endif ( osal STREQUAL "glib" )
-
 unset ( HAVE_CXX_FILESYSTEM CACHE )
 if ( osal STREQUAL "cpp11" )
     # Will silently fall back to a lower standard version if not available
@@ -687,6 +675,11 @@ unset ( LADSPA_SUPPORT CACHE )
 if ( enable-ladspa )
     check_include_file ( ladspa.h HAVE_LADSPA_H )
     if ( HAVE_LADSPA_H )
+        unset ( GLIB_SUPPORT CACHE )
+        # Mandatory libraries: glib and gthread
+        find_package ( GLib2 ${GLIB2_MINIMUM_VERSION} REQUIRED )
+        list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gmodule-2.0")
+
         if ( NOT TARGET GLib2::gmodule-2 )
             message ( STATUS "LADSPA support was requested but gmodule-2 was not found." )
         else ( NOT TARGET GLib2::gmodule-2 )
