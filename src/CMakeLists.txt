@@ -101,10 +101,6 @@ if ( ENABLE_NATIVE_DLS )
   set ( fluid_dls_SOURCES sfloader/fluid_dls.cpp sfloader/fluid_dls.h )
 endif ( ENABLE_NATIVE_DLS )
 
-if ( LIBINSTPATCH_SUPPORT )
-  set ( fluid_libinstpatch_SOURCES sfloader/fluid_instpatch.c sfloader/fluid_instpatch.h )
-endif ( LIBINSTPATCH_SUPPORT )
-
 if ( OPENSLES_SUPPORT )
   set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
 endif ( OPENSLES_SUPPORT )
@@ -319,7 +315,6 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_winmidi_SOURCES}
     ${fluid_sdl3_SOURCES}
     ${fluid_dls_SOURCES}
-    ${fluid_libinstpatch_SOURCES}
     ${fluid_osal_SOURCES}
     ${fluid_file_SOURCES}
     ${libfluidsynth_SOURCES}
@@ -478,10 +473,6 @@ endif()
 
 if ( TARGET GLib2::gmodule-2 AND LADSPA_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::gmodule-2 )
-endif()
-
-if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
 endif()
 
 if ( SDL3_SUPPORT )

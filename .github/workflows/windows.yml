@@ -123,7 +123,7 @@ jobs:
         cmake -Werror=dev -A ${{ matrix.platform }} -T v143 ^
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
           -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl3=0 ^
-          -Dosal=${{ matrix.osal }} -Denable-libinstpatch=0 -Denable-dls=1 ^
+          -Dosal=${{ matrix.osal }} -Denable-dls=1 ^
           ${{ matrix.CMAKEFLAGS }} -DCMAKE_BUILD_TYPE=Release ^
           -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
           -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
@@ -273,7 +273,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=1 ${{ matrix.CMAKE_FLAGS }} ^
           -DNO_GUI=1 -Dwindows-version=0x0A00 -Denable-jack=0 ^
           -Denable-pulseaudio=0 -Denable-ladspa=0 -Denable-dbus=0 ^
-          -Denable-readline=0 -Denable-sdl3=0 -Denable-libinstpatch=0 .. || exit /b 1
+          -Denable-readline=0 -Denable-sdl3=0 .. || exit /b 1
 
     - name: Build
       shell: cmd

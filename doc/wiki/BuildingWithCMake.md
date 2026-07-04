@@ -43,7 +43,6 @@ A minimal build of fluidsynth has the following requirements:
   * C++17 compliant compiler and standard library
   * [glib and gthread](http://www.gtk.org) libraries.
   * [libsndfile](http://www.mega-nerd.com/libsndfile/) - Allows for rendering MIDI to numerous audio file formats. Otherwise, only rendering to RAW PCM files is supported.
-  * [libinstpatch](https://github.com/swami/libinstpatch) - Enables loading of Downloadable Sounds (DLS) files as alternative Soundfont format
   * [JACK](http://jackaudio.org) - Jack Audio Connection Kit, inter-application audio routing found on Linux and Mac OS X
   * [ALSA](http://www.alsa-project.org) - Modern audio system found on Linux. FluidSynth supports audio output and the ALSA MIDI sequencer.
   * [OSS](http://www.opensound.com) - Open Sound System (the older Unix sound system)

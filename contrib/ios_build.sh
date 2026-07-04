@@ -18,7 +18,6 @@ CMAKE_COMMON_FLAGS=(
     -G Xcode
     -Dosal=cpp11
     -Denable-framework=ON
-    -Denable-libinstpatch=0
     -Denable-aufile=OFF
     -Denable-dbus=OFF
     -Denable-ladspa=OFF

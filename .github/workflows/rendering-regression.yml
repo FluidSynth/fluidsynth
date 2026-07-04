@@ -49,7 +49,6 @@ jobs:
             ninja-build \
             pkg-config \
             libglib2.0-dev \
-            libinstpatch-dev \
             libsndfile1-dev \
             sox \
             libsox-fmt-all

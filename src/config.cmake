@@ -149,9 +149,6 @@
 /* Defined when fluidsynth is build in an automated environment, where no MSVC++ Runtime Debug Assertion dialogs should pop up */
 #cmakedefine NO_GUI @NO_GUI@
 
-/* libinstpatch for DLS and GIG */
-#cmakedefine LIBINSTPATCH_SUPPORT @LIBINSTPATCH_SUPPORT@
-
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@
 
