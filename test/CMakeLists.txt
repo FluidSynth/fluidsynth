@@ -1,4 +1,4 @@
-
+﻿
 ENABLE_TESTING()
 include ( FluidUnitTest )
 
@@ -40,6 +40,7 @@ ADD_FLUID_TEST(test_round_clip)
 ADD_FLUID_TEST(test_ABI)
 ADD_FLUID_TEST(test_file_seek_tell)
 ADD_FLUID_TEST(test_shell_server_auto_port)
+ADD_FLUID_TEST(test_shell_parse_argv_internal)
 ADD_FLUID_TEST(test_sample_pitch_calculation)
 ADD_FLUID_TEST(test_mts_cc_tuning)
 ADD_FLUID_TEST(test_voice_callback)

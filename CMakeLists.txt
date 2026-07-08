@@ -1,4 +1,4 @@
-# FluidSynth - A Software Synthesizer
+﻿# FluidSynth - A Software Synthesizer
 #
 # Copyright (C) 2003-2026 Peter Hanappe and others.
 #
@@ -796,7 +796,6 @@ set(TEST_SOUNDFONT_UTF8_2 "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvè
 set(TEST_SOUNDFONT_SF3 "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid")
 set(TEST_WAV_UTF8 "${FluidSynth_BINARY_DIR}/test/ⓉⒺⓈⓉ.wav")
-set(TEST_COMMAND_LINES "${FluidSynth_SOURCE_DIR}/test/command-lines.txt")
 
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
