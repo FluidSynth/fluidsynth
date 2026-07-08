@@ -1,4 +1,4 @@
-/* FluidSynth - A Software Synthesizer
+﻿/* FluidSynth - A Software Synthesizer
  *
  * Copyright (C) 2003  Peter Hanappe and others.
  *
@@ -37,9 +37,6 @@
 #define FALSE (0)
 #define TRUE (!FALSE)
 
-#ifdef LADSPA
-#error "LADSPA is not yet supported with the C++11 OS abstraction"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

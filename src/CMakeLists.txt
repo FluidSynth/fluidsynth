@@ -1,4 +1,4 @@
-# FluidSynth - A Software Synthesizer
+﻿# FluidSynth - A Software Synthesizer
 #
 # Copyright (C) 2003-2026 Peter Hanappe and others.
 #
@@ -248,6 +248,13 @@ set ( fluid_file_SOURCES
     utils/fluid_file.cpp
 )
 
+if ( LADSPA_SUPPORT )
+    set ( fluid_mod_SOURCES
+        utils/fluid_module.h
+        utils/fluid_module.cpp
+    )
+endif ( LADSPA_SUPPORT )
+
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set_source_files_properties(rvoice/fluid_iir_filter_impl.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
 elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
@@ -317,6 +324,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_dls_SOURCES}
     ${fluid_osal_SOURCES}
     ${fluid_file_SOURCES}
+    ${fluid_module_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -494,6 +502,15 @@ endif ( MIDISHARE_SUPPORT )
 if ( OPENSLES_SUPPORT )
     target_link_libraries( libfluidsynth-OBJ PUBLIC OpenSLES::OpenSLES )
 endif ( OPENSLES_SUPPORT )
+
+if ( LADSPA_SUPPORT AND NOT WIN32 )
+    # dlopen/dlclose/dlsym are in libdl on Linux and some BSDs,
+    # but built into libc on macOS and FreeBSD.
+    find_library ( DL_LIBRARY NAMES dl )
+    if ( DL_LIBRARY )
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC ${DL_LIBRARY} )
+    endif ( DL_LIBRARY )
+endif ( LADSPA_SUPPORT AND NOT WIN32 )
 
 # This doesn't install any object file at all!
 # it is only a trick for exporting targets
