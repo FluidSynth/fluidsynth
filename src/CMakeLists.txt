@@ -249,7 +249,7 @@ set ( fluid_file_SOURCES
 )
 
 if ( LADSPA_SUPPORT )
-    set ( fluid_mod_SOURCES
+    set ( fluid_module_SOURCES
         utils/fluid_module.h
         utils/fluid_module.cpp
     )
