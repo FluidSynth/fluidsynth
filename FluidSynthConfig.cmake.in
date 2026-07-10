@@ -84,10 +84,6 @@ if(NOT FLUIDSYNTH_IS_SHARED)
     find_dependency(Jack)
   endif()
 
-  if(FLUIDSYNTH_SUPPORT_LADSPA AND NOT TARGET GLib2::gmodule-2)
-    message(WARN "LADSPA support was built in but gmodule could not be found.")
-  endif()
-
   if(FLUIDSYNTH_SUPPORT_LIBSNDFILE_LEGACY AND NOT TARGET SndFile::sndfile)
     find_dependency(SndFileLegacy @LIBSNDFILE_MINIMUM_VERSION@)
   elseif(FLUIDSYNTH_SUPPORT_LIBSNDFILE AND NOT TARGET SndFile::sndfile)
