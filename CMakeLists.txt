@@ -569,6 +569,20 @@ if ( osal STREQUAL "cpp11" )
     if ( NOT HAVE_CXX_FILESYSTEM )
         message ( WARNING "C++ filesystem support not found, some file operations will be stubs" )
     endif ( NOT HAVE_CXX_FILESYSTEM )
+    check_cxx_source_compiles( "#include <condition_variable>
+    #include <mutex>
+    #include <thread>
+    int main() {
+        std::mutex m;
+        std::condition_variable cv;
+        std::thread t([]{});
+        t.join();
+    }" HAVE_CXX_THREAD_PRIMITIVES )
+    if ( NOT HAVE_CXX_THREAD_PRIMITIVES )
+        message ( FATAL_ERROR "Your compiler does not support C++11 threading primitives "
+                              "(<mutex>, <condition_variable>, <thread>). "
+                              "This is required when building with osal=cpp11. " )
+    endif ( NOT HAVE_CXX_THREAD_PRIMITIVES )
 endif ( osal STREQUAL "cpp11" )
 
 # Optional features
