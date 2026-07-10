@@ -41,12 +41,8 @@
 extern "C" {
 #endif
 
-#if OSAL_cpp11
-
 #define FLUID_FILE_TEST_EXISTS      1
 #define FLUID_FILE_TEST_IS_REGULAR  2
-
-#endif
 
 #if OSAL_cpp11
 bool fluid_file_test(const char *path, int flags);
