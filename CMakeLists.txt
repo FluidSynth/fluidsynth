@@ -335,7 +335,7 @@ if ( WIN32 OR CYGWIN )
   endif ()
 
   if ( enable-wasapi AND HAVE_WASAPI_HEADERS AND HAVE_OBJBASE_H)
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ole32" )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ole32;ksuser" ) # ksuser because of KSDATAFORMAT_SUBTYPE_PCM
     set ( WASAPI_SUPPORT 1 )
   endif ()
 endif ( WIN32 OR CYGWIN )
