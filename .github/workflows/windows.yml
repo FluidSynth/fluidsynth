@@ -99,7 +99,7 @@ jobs:
         cmake -Werror=dev -A ${{ matrix.platform }} -T v143 ^
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
           -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl3=0 ^
-          -Dosal=${{ matrix.osal }} -Denable-dls=1 ^
+          -Dosal=${{ matrix.osal }} ^
           ${{ matrix.CMAKEFLAGS }} -DCMAKE_BUILD_TYPE=Release ^
           -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
           -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
@@ -193,10 +193,13 @@ jobs:
           - CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
             CMAKE_CONFIG: Release
             name: "static_lib"
-          - CMAKE_FLAGS: "-Dosal=cpp11"
+          - CMAKE_FLAGS: "-Dosal=embedded"
             CMAKE_CONFIG: Release
-            name: "osal_cpp11"
-          - CMAKE_FLAGS: "-Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-libsndfile=0 -Denable-floats=1"
+            name: "osal_embedded"
+          - CMAKE_FLAGS: "-Denable-native-dls=0 -Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-wasapi=1 -Denable-libsndfile=0 -Denable-floats=1"
+            CMAKE_CONFIG: Release
+            name: "minimal+WASAPI" # led to a linkage error in the past, that's why we keep it
+          - CMAKE_FLAGS: "-Denable-native-dls=0 -Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-wasapi=0 -Denable-libsndfile=0 -Denable-floats=1"
             CMAKE_CONFIG: Release
             name: "minimal"
     
