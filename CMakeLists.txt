@@ -579,6 +579,21 @@ if ( osal STREQUAL "cpp11" )
     # Will silently fall back to a lower standard version if not available
     set( CMAKE_CXX_STANDARD 17 )
     include( CheckCXXSourceCompiles )
+    check_cxx_source_compiles( "#include <condition_variable>
+        #include <mutex>
+        #include <thread>
+        int main() {
+            std::mutex m;
+            std::condition_variable cv;
+            std::thread t([]{});
+            t.join();
+        }" HAVE_CXX_THREAD_PRIMITIVES )
+    if ( NOT HAVE_CXX_THREAD_PRIMITIVES )
+        message ( FATAL_ERROR "Your compiler does not support C++11 threading primitives "
+                              "(<mutex>, <condition_variable>, <thread>). "
+                              "This is required when building with osal=cpp11. "
+                              "Please use a newer compiler or build with osal=glib instead." )
+    endif ( NOT HAVE_CXX_THREAD_PRIMITIVES )
     check_cxx_source_compiles( "#include <filesystem>
         int main() { static_assert(__cpp_lib_filesystem == 201703L); std::filesystem::path p = std::filesystem::current_path(); }" HAVE_CXX_FILESYSTEM )
     if ( NOT HAVE_CXX_FILESYSTEM )
