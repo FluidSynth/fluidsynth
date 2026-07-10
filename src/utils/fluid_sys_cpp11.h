@@ -1,4 +1,4 @@
-﻿/* FluidSynth - A Software Synthesizer
+/* FluidSynth - A Software Synthesizer
  *
  * Copyright (C) 2003  Peter Hanappe and others.
  *
