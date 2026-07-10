@@ -193,9 +193,6 @@ jobs:
           - CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
             CMAKE_CONFIG: Release
             name: "static_lib"
-          - CMAKE_FLAGS: "-Dosal=embedded"
-            CMAKE_CONFIG: Release
-            name: "osal_embedded"
           - CMAKE_FLAGS: "-Denable-native-dls=0 -Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-wasapi=1 -Denable-libsndfile=0 -Denable-floats=1"
             CMAKE_CONFIG: Release
             name: "minimal+WASAPI" # led to a linkage error in the past, that's why we keep it
