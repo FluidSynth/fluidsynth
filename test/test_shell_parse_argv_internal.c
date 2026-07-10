@@ -173,8 +173,8 @@ static void test_command_lines(void)
      * merging everything into one token.  Inside double quotes: \' (not special)
      * keeps both chars; \" (special) drops the backslash, leaving just ". */
     {
-        static const char *e[] = {"embed double quotes and \\'single quotes\\' and \" \\'nested\\'", NULL};
-        check("\"embed \"double quotes\" and \\'single quotes\\' and \\\" \\'nested\\'\"", 1, 1, e);
+        static const char *e[] = {"embed double", "quotes and \\'single quotes\\' and \" \\'nested\\'", NULL};
+        check("\"embed \"double quotes\" and \\'single quotes\\' and \\\" \\'nested\\'\"", 1, 2, e);
     }
 
     /* trailing escape \  ->  error: backslash at end of input */
