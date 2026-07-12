@@ -101,6 +101,7 @@ option ( enable-threads "enable multi-threading support (such as parallel voice 
 option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
 option ( enable-unicode "enable UNICODE build for Windows" on )
 option ( enable-native-dls "compile native DLS support (requires C++17)" on )
+option ( enable-signalsmith "compile Limiter and reverb engine support (requires signalsmith-audio)" on )
 
 set ( osal "cpp11" CACHE STRING "OS abstraction to use, provided by src/utils/fluid_sys_${osal}.*" )
 
@@ -790,6 +791,20 @@ if (enable-native-dls)
     set ( CMAKE_CXX_STANDARD_REQUIRED ON )
   endif()
 endif()
+
+unset ( SIGNALSMITH_SUPPORT CACHE )
+find_path ( SIGNALSMITH_AUDIO_BASICS
+            NAMES "include/signalsmith-basics/reverb.h" "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
+            PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
+            HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE )
+if ( enable-signalsmith )
+  if ( SIGNALSMITH_AUDIO_BASICS )
+    add_subdirectory(signalsmith-audio-basics)
+    set ( SIGNALSMITH_SUPPORT 1 )
+  else ( SIGNALSMITH_AUDIO_BASICS )
+    message ( STATUS "Could NOT find Signalsmith Audio Basics. Signalsmith reverb engine and limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository (containing all the submodules it requires!)." )
+  endif ( SIGNALSMITH_AUDIO_BASICS )
+endif ( enable-signalsmith )
 
 # manipulate some variables to setup a proper test env
 set(TEST_SOUNDFONT "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
