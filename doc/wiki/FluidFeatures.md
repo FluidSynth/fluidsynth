@@ -36,7 +36,7 @@ Note that unless otherwise documented, CCs are interpreted individually, i.e. as
 
 | MIDI CC                                          | Implementation Status                                                                                                                                      |
 |--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| (000) Bank Select                                | ✔️ Interpretation of MSB and LSB depends on [`synth.midi-bank-select`](http://www.fluidsynth.org/api/fluidsettings.xml#synth.midi-bank-select)             |
+| (000) Bank Select                                | ✔️ Interpretation of MSB and LSB depends on [`synth.midi-bank-select`](/wiki/settings/synth/#settings_synth_midi-bank-select)             |
 | (001) Modulation Wheel                           | ✔️ SF2 default modulator                                                                                                                                   |
 | (002) Breath Controller                          | ⚠️ Usable in _breathmode_, see [PolyMono documentation](https://github.com/FluidSynth/fluidsynth/raw/master/doc/polymono/FluidPolyMono-0004.pdf)           |
 | (004) Foot Controller                            | ❌                                                                                                                                                          |

@@ -413,8 +413,10 @@ Developers:
             <def>dat</def>
             <vals>fdn, free, lex, dat, smith</vals>
             <desc>
-                Selects the reverb engine to use. Note that engine selection applies at synth creation only and cannot be changed during runtime. An overview of supported reverb engines is available in the <a href="https://www.fluidsynth.org/api/ReverbOverview.html">API documentation.</a>
-                <note>The <code>smith</code> engine requires FluidSynth to be compiled with Signalsmith Audio Basics support.</note>
+                Introduced in version 2.6.0, this setting selects the reverb engine to use. The engine selection applies at synth creation only and cannot be changed during the lifetime of a synth. An overview of those reverb engines is available in the <a href="https://www.fluidsynth.org/wiki/reverbators/">wiki.</a>
+                <note>
+                Not all reverb engines may be present in all versions of fluidsynth. E.g. the <code>smith</code> engine requires FluidSynth to be compiled with Signalsmith Audio Basics support. Therefore, implementations are advised to query this setting for available options using <code>fluid_settings_foreach_option()</code>.
+                </note>
             </desc>
         </setting>
         <setting>
@@ -600,7 +602,7 @@ Developers:
                 to CoreAudio device output channels. Each position in the list represents the output channel
                 of the CoreAudio device.
                 The value of each position indicates the zero-based index of the fluidsynth
-                output mono-channel to route there (i.e. the buffer index used for fluid_synth_process()).
+                output mono-channel to route there (i.e. the buffer index used for <code>fluid_synth_process()</code>).
                 Additionally, the special value of -1 will turn off an output.
                 <br /><br />
                 For example, the default map for a single stereo output is "0,1". A value of "0,0" will
@@ -1000,7 +1002,7 @@ Developers:
             <def>0</def>
             <min>0</min>
             <max>65535</max>
-            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses. Since fluidsynth 2.5.4, a value of 0 enables auto mode and selects the first free port, probing from 9800 upwards. Older versions used 9800 as default port. <note>When set to 0, fluidsynth will update the setting during server creation (new_fluid_server2()) with the actual port number used.</note></desc>
+            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses. Since fluidsynth 2.5.4, a value of 0 enables auto mode and selects the first free port, probing from 9800 upwards. Older versions used 9800 as default port. <note>When set to 0, fluidsynth will update the setting during server creation (<code>new_fluid_server2()</code>) with the actual port number used.</note></desc>
         </setting>
     </shell>
 </fluidsettings>

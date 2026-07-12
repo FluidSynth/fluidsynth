@@ -43,7 +43,7 @@ For information on how to build FluidSynth from source, please [refer to our wik
 
 - FluidSynth's wiki, https://www.fluidsynth.org/wiki
 
-- FluidSynth's API documentation, https://www.fluidsynth.org/api/
+- FluidSynth's API documentation, https://www.fluidsynth.org/wiki/api/
 
 ---
 

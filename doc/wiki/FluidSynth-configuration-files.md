@@ -5,9 +5,9 @@ These are the defined names and locations of the configuration file which is aut
 For application developers willing to implement this feature in their own clients, please see:
 
 * `char * fluid_get_userconf (char *buf, int len)`  
-  https://www.fluidsynth.org/api/group__command__interface.html#ga331346c938f00a657325f3a0b66f793f
+  https://www.fluidsynth.org/wiki/api/command-interface/?h=fluid_get_userconf#fluid_get_userconf
 * `char * fluid_get_sysconf (char *buf, int len)`  
-  https://www.fluidsynth.org/api/group__command__interface.html#ga6e8489153a1c2041e526a3b27644c36d
+  https://www.fluidsynth.org/wiki/api/command-interface/?h=fluid_get_userconf#fluid_get_sysconf
 
 As those two functions suggest, fluidsynth knows about a system-wide and a user-specific config file, see below.
 

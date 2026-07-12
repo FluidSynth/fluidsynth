@@ -11,7 +11,7 @@ Checklist used by FluidSynth's current maintainer.
   * Also update the library versions in CMakeLists.txt as per the embedded documentation (i.e., if there is any new C API and what not) (`LIB_VERSION_AGE` and `LIB_VERSION_REVISION`).
   * If there are any new API features or settings, they should be documented in the developers reference document.
   * Update the android build scripts to use the new version
-  * Make sure changelog of [API doc](http://www.fluidsynth.org/api) is up-to-date
+  * Make sure changelog of [API doc](http://www.fluidsynth.org/wiki/api) is up-to-date
   * Make sure version of API doc is correct
   * Update man page with any new command line or settings options
   * `git merge 2.1.x` (into master)

@@ -17,7 +17,7 @@ Then, cd to the repository root directory and run Zensical in a container to pre
 $ docker run --user $(id -u):$(id -g) --rm -it -p 8000:8000 -v ${PWD}:/docs zensical/zensical serve -f zensical_runtime.toml --dev-addr=0.0.0.0:8000
 
 The latest generated API HTML docs can also be found at:
-https://www.fluidsynth.org/api/
+https://www.fluidsynth.org/wiki/api/
 
 Even more documentation references are provided on our wiki page:
 https://www.fluidsynth.org/wiki/

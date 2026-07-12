@@ -25,7 +25,7 @@ fluidsynth -ni soundfont.sf2 midifile1.mid midifile2.mid
 
 Run FluidSynth with the `--help` option to check for changes in the list of options. 
 
-For some scenarios, it might be useful to execute certain shell commands right upon starting FluidSynth, e.g. to do some custom default initialization of the synth, change the default audio driver in use, etc. This can be achieved with a configuration file as described below. If no such file is provided via the `-f` command-line argument, FluidSynth tries to load a user-specific configuration file (as given by [fluid_get_userconf()](https://www.fluidsynth.org/api/group__command__interface.html)). If that fails, it tries to load a system-wide configuration file (as given by [fluid_get_sysconf()](https://www.fluidsynth.org/api/group__command__interface.html)).
+For some scenarios, it might be useful to execute certain shell commands right upon starting FluidSynth, e.g. to do some custom default initialization of the synth, change the default audio driver in use, etc. This can be achieved with a configuration file as described below. If no such file is provided via the `-f` command-line argument, FluidSynth tries to load a user-specific configuration file (as given by [fluid_get_userconf()](https://www.fluidsynth.org/wiki/api/command-interface/?h=fluid_get_userconf#fluid_get_userconf)). If that fails, it tries to load a system-wide configuration file (as given by [fluid_get_sysconf()](https://www.fluidsynth.org/wiki/api/command-interface/?h=fluid_get_userconf#fluid_get_sysconf)).
 
 ## OPTIONS
 

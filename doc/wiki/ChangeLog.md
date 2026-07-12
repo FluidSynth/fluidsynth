@@ -1,5 +1,14 @@
 # 📝 Release Notes
 
+## FluidSynth 2.5.6
+
+* Fix CVE-2026-58264 - a heap-based buffer overrun in command handler (GHSA-mqmq-w63q-cj94)
+* Fix CVE-2026-61714 - a heap-based buffer overflow in MIDI player (GHSA-976m-35rw-h3m6)
+* Fix CVE-2026-61721 - a heap-based buffer overrun for DLS samples (GHSA-59ph-rx8r-8p4j)
+* Fix CVE-2026-61723 - a DLS `ptbl` chunk integer overflow (GHSA-r4mc-v3p8-pv47)
+* Fix CVE-2026-61722 - a DLS articulation chunk integer overflow (GHSA-hp72-35pr-6h6r)
+* Fix CVE-2026-61720 - a SF2 DMOD chunk integer underflow (GHSA-rmc4-c8hw-455w)
+
 ## FluidSynth 2.5.5
 
 * Fix a build issue on BigEndian architectures (#1783, thanks to @thesamesam)
@@ -66,7 +75,7 @@ Starting with 2.5.0, a C++11-compliant compiler and standard library will be req
 
 * It was discovered that fluidsynth was mapping some modulators slightly inaccurately into their normalized range (#1651, thanks to @baskanov)
 * Some Roland GS NPRN Params are now mapped to CC numbers (#1519, refer to [wiki](FluidFeatures.md#roland-nrpns) for details)
-* FluidSynth now auto-detects whether Portamento Time is 7bit or 14bit wide - this fixes the infamous Descent Game08 tune (#705, #1232, #1311, #1456, #1495, #1517, see [`synth.portamento-time`](https://www.fluidsynth.org/api/fluidsettings.xml#synth.portamento-time) for details)
+* FluidSynth now auto-detects whether Portamento Time is 7bit or 14bit wide - this fixes the infamous Descent Game08 tune (#705, #1232, #1311, #1456, #1495, #1517, see [`synth.portamento-time`](/wiki/settings/synth/#settings_synth_portamento-time) for details)
 * Previously, fluidsynth's default behavior was to use portamento only for those notes, that were played in a successive / legato manner; to further improve the portamento experience, this was changed and fluidsynth now plays portamento for all notes by default (#1656)
 
 ### Other Changes
@@ -78,7 +87,7 @@ Starting with 2.5.0, a C++11-compliant compiler and standard library will be req
 * Fix installing static and shared libs cmake targets on the same prefix (#1648, thanks to @pedrolcl)
 * The auto-generated lookup tables - that vcpkg and cross-compiling users have learned to love so much - are gone! (#1620)
 
-For changes related to the public API, pls. [consult the API docs](https://www.fluidsynth.org/api/RecentChanges.html).
+For changes related to the public API, pls. [consult the API docs](https://www.fluidsynth.org/wiki/api/recent-changes/).
 
 
 ## FluidSynth 2.4.8
@@ -138,7 +147,7 @@ Note about cross-compilation: The CMake variable `FLUID_HOST_COMPILER` has been 
 
 * It was discovered, that exclusive class note terminations were too slow (#1467, thanks to @mrbumpy409)
 * Fix a regression introduced in 2.4.0 that allowed the amplitude of a voice playing in delay phase to rise infinitely (#1451)
-* MSGS drum-style note-cut has been converted to an opt-in setting [`synth.note-cut`](https://www.fluidsynth.org/api/fluidsettings.xml#synth.note-cut) (#1466)
+* MSGS drum-style note-cut has been converted to an opt-in setting [`synth.note-cut`](/wiki/settings/synth/#settings_synth_note-cut) (#1466)
 * Support for SDL2 has been disabled by default* (#1472)
 * Fix a regression introduced in 2.4.1 that could have caused infinite audio gain output for some MIDI files under certain configurations (#1464)
 * Silence a warning issued by Systemd v254+ (#1474, thanks to @andrew-sayers)
@@ -345,7 +354,7 @@ _Pls. note that fluidsynth 2.3.0 will require CMake >= 3.13_
 * The Soundfont loader code has been refactored, illegal generators will now be skipped more consequently (#823, thanks to @mawe42)
 
 ## FluidSynth 2.2.0
-**This release breaks ABI compatibility!** Refer to the [API docs](https://www.fluidsynth.org/api/RecentChanges.html#NewIn2_2_0) for details.
+**This release breaks ABI compatibility!** Refer to the [API docs](/wiki/api/recent-changes/#whats-new-in-220) for details.
 
 A C++98 compliant compiler is now required to build fluidsynth ([mailing list thread](https://lists.nongnu.org/archive/html/fluid-dev/2020-01/msg00010.html))
 
@@ -573,7 +582,7 @@ _Note that this version mistakenly reports as `2.0.8`._
 * a minimal build of fluidsynth without requiring pkg-config is supported
 * remove deprecated LADCCA support
 * use unique device names for the `audio.portaudio.device` setting (#284, thanks to @jjceresa)
-* documentation of the settings moved to http://www.fluidsynth.org/api/fluidsettings.xml
+* documentation of the settings moved to https://www.fluidsynth.org/wiki/settings/
 * adjust MIDI Pan and Balance calculations as outlined by MIDI Recommended Practice (RP-036) (#317, thanks to @mawe42)
 * make network support compile-time optional (#307, thanks to @carlo-bramini)
 * speed up calculation of chorus modulation waveforms for devices without FPU (#321, thanks to @carlo-bramini)
