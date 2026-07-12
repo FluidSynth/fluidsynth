@@ -6,9 +6,12 @@ on:
       ref:
         description: "Baseline FluidSynth git ref/tag/sha to compare against"
         required: true
-        default: "30380a25c99994fa81d7263506cd2ba0ffbd216a"
+        default: ""
   pull_request:
   push:
+    branches:
+      - 'master'
+      - 'release/**'
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
@@ -24,7 +27,7 @@ permissions:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || '30380a25c99994fa81d7263506cd2ba0ffbd216a' }}
+  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event_name == 'pull_request' && github.event.pull_request.base.sha || '30380a25c99994fa81d7263506cd2ba0ffbd216a' }}
   SNR_MIN: '60'
   RMS_MAX: '0.0001'
   ABS_MAX: '0.01'
