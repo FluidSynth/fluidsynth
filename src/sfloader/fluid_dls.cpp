@@ -1707,7 +1707,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     bool invalid_loops_were_sanitized = false;
     for(auto &sample : samples)
     {
-        fluid_sample_t fluid{};
+        auto& fluid = samples_fluid.emplace_back();
         fluid.start = sample.start;
         fluid.end = sample.end - 1;
         fluid.samplerate = sample.samplerate;
@@ -1735,9 +1735,10 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         fluid.sampletype = FLUID_SAMPLETYPE_MONO;
         fluid.default_modulators = this->sfont->default_mod_list;
 
-        if(fluid_sample_validate(&fluid, sampledata.size() * sizeof(decltype(sampledata)::value_type)) == FLUID_OK)
+        if(fluid_sample_validate(&fluid, sampledata.size() * sizeof(decltype(sampledata)::value_type)) != FLUID_OK)
         {
-            samples_fluid.push_back(std::move(fluid));
+            FLUID_LOG(FLUID_WARN, "Sample '%s' is invalid, purging", sample.name.c_str());
+            fluid = {};
         }
     }
 
