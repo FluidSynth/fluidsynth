@@ -1509,17 +1509,32 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     if(chunk.id != DLS_FCC)
     {
-        throw std::runtime_error{ "Not a DLS file" };
+        auto* p = (unsigned char *)&chunk.id;
+        throw std::runtime_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
     }
 
     if(chunk.size + 8LL > filesize)
     {
-        throw std::runtime_error{ "DLS file early EOF" };
+        uint8_t from[4] = {
+            static_cast<uint8_t>(chunk.size >>  0),
+            static_cast<uint8_t>(chunk.size >>  8),
+            static_cast<uint8_t>(chunk.size >> 16),
+            static_cast<uint8_t>(chunk.size >> 24),
+        };
+        auto maxSize = filesize - 8LL;
+        uint8_t to[4] = {
+            static_cast<uint8_t>(maxSize >>  0),
+            static_cast<uint8_t>(maxSize >>  8),
+            static_cast<uint8_t>(maxSize >> 16),
+            static_cast<uint8_t>(maxSize >> 24),
+        };
+        auto Hint = string_format(" (Hint: Try changing the hexadecimal little-endian size of the RIFF chunk from %02X%02X%02X%02X to %02X%02X%02X%02X using a hex editor.)", from[0], from[1], from[2], from[3], to[0], to[1], to[2], to[3]);
+        throw std::runtime_error{ string_format("DLS file is too short! Outermost RIFF chunk reports a payload size of %u bytes, but there are only %lld bytes left in the file.%s", chunk.size, maxSize, chunk.size == filesize ? Hint.c_str() : "") };
     }
 
     if(chunk.size + 8LL < filesize)
     {
-        FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk");
+        FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk, ignoring.");
     }
 
     // we don't care about real file size after this point
@@ -1564,7 +1579,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                 uint32_t cbsize;
                 READ32(this, cbsize);
 
-                if(cbsize < 8)
+                if(cbsize < 8u)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
                 }
@@ -1579,7 +1594,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                     throw std::runtime_error{ "Too many poolcue records are contained in the ptbl chunk." };
                 }
 
-                if(cues * 4 + cbsize != subchunk.size)
+                if(cues * 4u + cbsize != subchunk.size)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
                 }
