@@ -1487,6 +1487,11 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         throw std::runtime_error{ "Rewind to start of file failed" };
     }
 
+    if(filesize < 12)
+    {
+        throw std::runtime_error{ "File too short! (< 12 bytes)" };
+    }
+
     // Parse DLS
     // chunk: RIFF[DLS ]
     // subchunk: ...
@@ -1507,18 +1512,18 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         throw std::runtime_error{ "Not a DLS file" };
     }
 
-    if(chunk.size + 8 > filesize)
+    if(chunk.size + 8LL > filesize)
     {
         throw std::runtime_error{ "DLS file early EOF" };
     }
 
-    if(chunk.size + 8 < filesize)
+    if(chunk.size + 8LL < filesize)
     {
         FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk");
     }
 
     // we don't care about real file size after this point
-    filesize = chunk.size + 8;
+    filesize = chunk.size + 8LL;
 
     // iterate over chunks in the RIFF form
     try
@@ -2802,7 +2807,7 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
         for(auto &instrument : instruments)
         {
             if(instrument.banklsb == (bank & 0x7F) && instrument.bankmsb == ((bank >> 7) & 0x7F) &&
-                    instrument.pcnum == pc)
+                    instrument.pcnum == pc && !instrument.is_drums)
             {
                 instrument.aliases.push_back(fluid_dls_instrument::fluid_dls_instrument_alias
                 {
@@ -3251,14 +3256,21 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
 
     // key with subtonal tuning and key number generator applied
     int tuned_key = static_cast<int>(std::round(tuned_key_f));
-
-    if(dlspreset->drum_note_aliasing != nullptr && synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
-    {
-        tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
-    }
-
     // key with only key number generator applied
-    const int adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
+    int adjusted_key;
+    if (synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
+    {
+        if(dlspreset->drum_note_aliasing != nullptr)
+        {
+            tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
+        }
+        // drum channel has no subtonal tuning, so adjusted_key == tuned_Key
+        adjusted_key = tuned_key;
+    }
+    else
+    {
+        adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
+    }
 
     for(auto &region : dlspreset->regions)
     {
