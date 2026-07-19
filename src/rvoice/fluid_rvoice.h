@@ -111,7 +111,7 @@ struct _fluid_rvoice_dsp_t
 
     fluid_real_t pitch;              /* the pitch in midicents */
     fluid_real_t root_pitch_hz;      /* the base note of the note in hz */
-    fluid_real_t output_rate;
+    fluid_real_t max_filter_fres_ct; /* the maximum IIR filter cutoff frequency in absolute cents (= fluid_hz2ct(0.45 * output_rate)) */
 
     /* Stuff needed for amplitude calculations */
 

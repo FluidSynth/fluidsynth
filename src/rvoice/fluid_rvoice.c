@@ -441,11 +441,11 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     // Applying the filter after applying the gain from the volEnv might cause audible clicks for when turning off
     // voices that are filtered by a high Q, see https://github.com/FluidSynth/fluidsynth/issues/1427
     //
-    // Note that at this point we are using voice->dsp.output_rate which is set to the synth's output rate, because
+    // Note that at this point we are using voice->dsp.max_filter_fres_ct which is precomputed from the synth's output rate, because
     // the filter will receive the interpolated waveform.
 
     fmod = fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc + modenv_val * voice->envlfo.modenv_to_fc;
-    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate, fmod);
+    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.max_filter_fres_ct, fmod);
 
     fluid_check_fpe("voice_write IIR coefficients");
 
@@ -453,7 +453,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     fmod = voice->resonant_custom_filter.flags & FLUID_IIR_BEANLAND
          ? (voice->dsp.pitch + voice->dsp.pitchoffset) - (voice->dsp.sample->origpitch * 100 + voice->dsp.sample->pitchadj)
          : 0;
-    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, fmod);
+    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.max_filter_fres_ct, fmod);
 
     fluid_check_fpe("voice_write IIR (custom) coefficients");
 
@@ -770,7 +770,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_output_rate)
     fluid_rvoice_t *voice = obj;
     fluid_real_t value = param[0].real;
 
-    voice->dsp.output_rate = value;
+    voice->dsp.max_filter_fres_ct = fluid_hz2ct(0.45f * value);
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_interp_method)
