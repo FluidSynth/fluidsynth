@@ -362,22 +362,63 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             dsp_phase_index = fluid_phase_index(dsp_phase);
         }
 
-        /* interpolate the sequence of sample points */
-        for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
+        /* Interpolate the sequence of sample points.
+         *
+         * This is the bulk of the work, so it is split into two passes to allow
+         * the compiler to auto-vectorize the arithmetic (without resorting to
+         * platform specific SIMD intrinsics):
+         *
+         * 1. A scalar "prep" pass advances the playback phase - a loop-carried
+         *    dependency that is inherently sequential - and records the per
+         *    output-sample source index and the four interpolation coefficients
+         *    into plain stack arrays.
+         * 2. A dependency-free "compute" pass evaluates the cubic interpolation
+         *    for every output sample. As it no longer touches the phase and only
+         *    performs a unit-stride store into the restrict-qualified dsp_buf,
+         *    the compiler is free to vectorize it. */
         {
-            fluid_real_t sample;
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
+            unsigned int bulk_index[FLUID_BUFSIZE];
+            fluid_real_t bulk_c0[FLUID_BUFSIZE];
+            fluid_real_t bulk_c1[FLUID_BUFSIZE];
+            fluid_real_t bulk_c2[FLUID_BUFSIZE];
+            fluid_real_t bulk_c3[FLUID_BUFSIZE];
+            unsigned short bulk_start = dsp_i;
 
-            sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 1)
-                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
-                     + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
-                     + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2));
+            /* Pass 1: sequential phase walk, gather indices and coefficients. */
+            for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
+            {
+                coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
 
-            dsp_buf[dsp_i] = sample;
+                bulk_index[dsp_i] = dsp_phase_index;
+                bulk_c0[dsp_i] = coeffs[0];
+                bulk_c1[dsp_i] = coeffs[1];
+                bulk_c2[dsp_i] = coeffs[2];
+                bulk_c3[dsp_i] = coeffs[3];
 
-            /* increment phase and amplitude */
-            fluid_phase_incr(dsp_phase, dsp_phase_incr);
-            dsp_phase_index = fluid_phase_index(dsp_phase);
+                /* increment phase */
+                fluid_phase_incr(dsp_phase, dsp_phase_incr);
+                dsp_phase_index = fluid_phase_index(dsp_phase);
+            }
+
+            /* Pass 2: dependency-free arithmetic, safe to vectorize. */
+#if defined(_OPENMP)
+            #pragma omp simd
+#elif defined(__clang__)
+            #pragma clang loop vectorize(enable)
+#elif defined(__GNUC__)
+            #pragma GCC ivdep
+#elif defined(_MSC_VER)
+            #pragma loop(ivdep)
+#endif
+            for(unsigned short i = bulk_start; i < dsp_i; i++)
+            {
+                unsigned int idx = bulk_index[i];
+
+                dsp_buf[i] = bulk_c0[i] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx - 1)
+                           + bulk_c1[i] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx)
+                           + bulk_c2[i] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx + 1)
+                           + bulk_c3[i] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx + 2);
+            }
         }
 
         /* break out if buffer filled */
