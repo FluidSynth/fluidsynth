@@ -27,6 +27,7 @@
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
+#include <time.h>
 
 #if PIPEWIRE_SUPPORT
 
@@ -55,6 +56,7 @@ typedef struct
 
 } fluid_pipewire_audio_driver_t;
 
+// #define PROFILE_PIPEWIRE 1
 
 /* Fast-path rendering routine with no user processing callbacks */
 static void fluid_pipewire_event_process(void *data)
@@ -63,7 +65,21 @@ static void fluid_pipewire_event_process(void *data)
     struct pw_buffer *pwb;
     struct spa_buffer *buf;
     float *dest;
+#ifdef PROFILE_PIPEWIRE
+    struct timespec ts_now, ts_write_start, ts_write_end;
+    static struct timespec ts_last_call = {0, 0};
 
+    clock_gettime(CLOCK_MONOTONIC, &ts_now);
+
+    if(ts_last_call.tv_sec != 0 || ts_last_call.tv_nsec != 0)
+    {
+        double interval_ms = (ts_now.tv_sec - ts_last_call.tv_sec) * 1000.0
+                             + (ts_now.tv_nsec - ts_last_call.tv_nsec) / 1.0e6;
+        FLUID_LOG(FLUID_INFO, "pipewire process: interval since last call: %.3f ms", interval_ms);
+    }
+
+    ts_last_call = ts_now;
+#endif
     pwb = pw_stream_dequeue_buffer(drv->pw_stream);
 
     if(!pwb)
@@ -80,7 +96,19 @@ static void fluid_pipewire_event_process(void *data)
         return;
     }
 
+#ifdef PROFILE_PIPEWIRE
+    clock_gettime(CLOCK_MONOTONIC, &ts_write_start);
+#endif
     fluid_synth_write_float(drv->data, drv->buffer_period, dest, 0, 2, dest, 1, 2);
+#ifdef PROFILE_PIPEWIRE
+    clock_gettime(CLOCK_MONOTONIC, &ts_write_end);
+    {
+        double write_ms = (ts_write_end.tv_sec - ts_write_start.tv_sec) * 1000.0
+                          + (ts_write_end.tv_nsec - ts_write_start.tv_nsec) / 1.0e6;
+        FLUID_LOG(FLUID_INFO, "pipewire process: fluid_synth_write_float took: %.3f ms", write_ms);
+    }
+#endif
+
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = drv->buffer_period * stride;
