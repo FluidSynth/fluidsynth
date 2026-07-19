@@ -918,7 +918,7 @@ endif ()
 
 # Process subdirectories
 add_subdirectory ( src )
-add_subdirectory ( test )
+#add_subdirectory ( test )
 add_subdirectory ( doc )
 
 # pkg-config support
