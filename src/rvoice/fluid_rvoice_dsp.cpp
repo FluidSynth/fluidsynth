@@ -338,29 +338,6 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_point2 = end_point1;
     }
 
-    /* Lambda to get interpolation sample with boundary handling */
-    auto get_sample = [&](unsigned int dsp_phase_index, unsigned int offset) -> fluid_real_t
-        {
-            int idx = static_cast<int>(dsp_phase_index) + offset;
-
-            if (idx < static_cast<int>(start_index))
-            {
-                return start_point;  /* Before start: use wrapped/duplicated point */
-            }
-            else if (idx == static_cast<int>(end_index) + 1)
-            {
-                return end_point1;   /* One past end */
-            }
-            else if (idx >= static_cast<int>(end_index) + 2)
-            {
-                return end_point2;   /* Two+ past end */
-            }
-            else
-            {
-                return fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
-            }
-        };
-
     while(1)
     {
         /* Single unified interpolation loop */
@@ -374,13 +351,33 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 break;
             }
 
+            /* Clamped indices - always valid memory access */
+            const unsigned int idx_m1 = (phase_index_local > start_index) ? (phase_index_local - 1) : start_index;
+            const unsigned int idx_p1 = (phase_index_local < end_index) ? (phase_index_local + 1) : end_index;
+            const unsigned int idx_p2 = (phase_index_local < end_index - 1) ? (phase_index_local + 2) : end_index;
+
+            /* Fetch samples from clamped indices */
+            const fluid_real_t sam_m1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_m1);
+            const fluid_real_t sam_0 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, phase_index_local);
+            const fluid_real_t sam_p1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_p1);
+            const fluid_real_t sam_p2 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_p2);
+
+            /* Pick the correct sample: clamped sample fetch vs boundary sample point */
+            const bool need_start = (phase_index_local <= start_index); // if true: s0 needs start_point
+            const bool at_end = (phase_index_local >= end_index); // if true: s2 needs end_point1, s3 needs end_point2
+            const bool near_end = (phase_index_local >= end_index - 1); // if true: only s3 needs end_point1
+            const fluid_real_t& s0 = need_start ? start_point : sam_m1;
+            const fluid_real_t& s1 = sam_0;
+            const fluid_real_t& s2 = at_end ? end_point1 : sam_p1;
+            const fluid_real_t& s3 = at_end ? end_point2 : (near_end ? end_point1 : sam_p2);
+
             coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(phase_index_local) * CUBIC_INTERP_ORDER];
 
             fluid_real_t sample = 
-                  coeffs[0] * get_sample(phase_index_local, -1)
-                + coeffs[1] * get_sample(phase_index_local, +0)
-                + coeffs[2] * get_sample(phase_index_local, +1)
-                + coeffs[3] * get_sample(phase_index_local, +2);
+                  coeffs[0] * s0
+                + coeffs[1] * s1
+                + coeffs[2] * s2
+                + coeffs[3] * s3;
 
             dsp_buf[dsp_i] = sample;
         }
