@@ -371,9 +371,20 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             const fluid_real_t& s2 = at_end ? end_point1 : sam_p1;
             const fluid_real_t& s3 = at_end ? end_point2 : (near_end ? end_point1 : sam_p2);
 
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(phase_index_local) * CUBIC_INTERP_ORDER];
+            /* Compute Catmull-Rom spline coefficients, aka cubic interpolation */
+            const fluid_real_t x = fluid_phase_fract(phase_local) * FLUID_FRACT_SCALE;
+            const fluid_real_t x2 = x * x;
+            const fluid_real_t x3 = x2 * x;
 
-            fluid_real_t sample = 
+            const fluid_real_t coeffs[CUBIC_INTERP_ORDER] =
+            {
+                -0.5f * x + x2 - 0.5f * x3,       // x*(-0.5 + x*(1 - 0.5*x))
+                1.0f - 2.5f * x2 + 1.5f * x3,     // 1 + x²*(1.5*x - 2.5)
+                0.5f * x + 2.0f * x2 - 1.5f * x3, // x*(0.5 + x*(2 - 1.5*x))
+                -0.5f * x2 + 0.5f * x3            // 0.5*x²*(x - 1)
+            };
+
+            const fluid_real_t sample = 
                   coeffs[0] * s0
                 + coeffs[1] * s1
                 + coeffs[2] * s2

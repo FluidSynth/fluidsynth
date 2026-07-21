@@ -34,7 +34,7 @@ extern "C" {
 
 
 #define FLUID_FRACT_MAX (1ULL << 32ULL) // 4294967296.0
-#define FLUID_FRACT_SCALE ((fluid_realt_t)(1.0 / (double)FLUID_FRACT_MAX))
+#define FLUID_FRACT_SCALE ((fluid_real_t)(1.0 / (double)FLUID_FRACT_MAX))
 
 /* fluid_phase_t
 * Purpose:
