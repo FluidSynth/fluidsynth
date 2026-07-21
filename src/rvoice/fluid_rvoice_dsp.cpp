@@ -363,22 +363,28 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         }
 
         /* interpolate the sequence of sample points */
-        for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
+        for(; dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             fluid_real_t sample;
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
+            const fluid_phase_t dsp_phase_local = dsp_phase + dsp_phase_incr * dsp_i;
+			const unsigned int dsp_phase_index_local = fluid_phase_index(dsp_phase_local);
+            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase_local) * CUBIC_INTERP_ORDER];
 
-            sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 1)
-                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
-                     + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
-                     + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2));
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local - 1)
+                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local)
+                     + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local + 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local + 2));
 
-            dsp_buf[dsp_i] = sample;
-
-            /* increment phase and amplitude */
-            fluid_phase_incr(dsp_phase, dsp_phase_incr);
-            dsp_phase_index = fluid_phase_index(dsp_phase);
+            if (dsp_phase_index_local <= end_index)
+            {
+                dsp_buf[dsp_i] = sample;
+            }
+            else
+            {
+                break;
+            }
         }
+		dsp_phase += dsp_phase_incr * dsp_i;
 
         /* break out if buffer filled */
         if(dsp_i >= FLUID_BUFSIZE)
