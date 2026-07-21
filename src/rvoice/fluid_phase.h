@@ -33,7 +33,8 @@ extern "C" {
 #define FLUID_INTERP_BITS_SHIFT  24
 
 
-#define FLUID_FRACT_MAX ((double)4294967296.0)
+#define FLUID_FRACT_MAX (1ULL << 32ULL) // 4294967296.0
+#define FLUID_FRACT_SCALE ((fluid_realt_t)(1.0 / (double)FLUID_FRACT_MAX))
 
 /* fluid_phase_t
 * Purpose:
@@ -42,7 +43,7 @@ extern "C" {
 * When a sample is played back at a different pitch, the playing pointer in the
 * source sample will not advance exactly one sample per output sample.
 * This playing pointer is implemented using fluid_phase_t.
-* It is a 64 bit number. The higher 32 bits contain the 'index' (number of
+* It is a 32.32 bit fixed-point number. The higher 32 bits contain the 'index' (number of
 * the current sample), the lower 32 bits the fractional part.
 */
 typedef uint64_t fluid_phase_t;
@@ -91,7 +92,7 @@ typedef uint64_t fluid_phase_t;
   ((unsigned int)(fluid_phase_fract(_x) & FLUID_INTERP_BITS_MASK) >> FLUID_INTERP_BITS_SHIFT)
 
 #define fluid_phase_double(_x) \
-  ((double)(fluid_phase_index(_x)) + ((double)fluid_phase_fract(_x) / FLUID_FRACT_MAX))
+  ((double)(fluid_phase_index(_x)) + ((double)fluid_phase_fract(_x) / (double)FLUID_FRACT_MAX))
 
 /* Purpose:
  * Advance a by a step of b (both are fluid_phase_t).
