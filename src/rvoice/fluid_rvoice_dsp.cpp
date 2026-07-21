@@ -314,8 +314,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
 
-    /* last index before 4th interpolation point must be specially handled */
-    end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 2;
+    end_index = (LOOPING ? voice->loopend - 1 : voice->end);
 
     if(voice->has_looped)	/* set start_index and start point if looped or not */
     {
@@ -340,129 +339,77 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_point2 = end_point1;
     }
 
-    while(1)
-    {
-        dsp_phase_index = fluid_phase_index(dsp_phase);
-
-        /* interpolate first sample point (start or loop start) if needed */
-        for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
+    /* Lambda to get interpolation sample with boundary handling */
+    auto get_sample = [&](int offset) -> fluid_real_t
         {
-            fluid_real_t sample;
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
+            int idx = static_cast<int>(dsp_phase_index) + offset;
 
-            sample =  (coeffs[0] * start_point
-                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
-                     + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
-                     + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 2));
-                        
-            dsp_buf[dsp_i] = sample;
-
-            /* increment phase and amplitude */
-            fluid_phase_incr(dsp_phase, dsp_phase_incr);
-            dsp_phase_index = fluid_phase_index(dsp_phase);
-        }
-
-        /* interpolate the sequence of sample points */
-        for(; dsp_i < FLUID_BUFSIZE; dsp_i++)
-        {
-            fluid_real_t sample;
-            const fluid_phase_t dsp_phase_local = dsp_phase + dsp_phase_incr * dsp_i;
-			const unsigned int dsp_phase_index_local = fluid_phase_index(dsp_phase_local);
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase_local) * CUBIC_INTERP_ORDER];
-
-            sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local - 1)
-                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local)
-                     + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local + 1)
-                     + coeffs[3] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index_local + 2));
-
-            if (dsp_phase_index_local <= end_index)
+            if (idx < static_cast<int>(start_index))
             {
-                dsp_buf[dsp_i] = sample;
+                return start_point;  /* Before start: use wrapped/duplicated point */
+            }
+            else if (idx == static_cast<int>(end_index) + 1)
+            {
+                return end_point1;   /* One past end */
+            }
+            else if (idx >= static_cast<int>(end_index) + 2)
+            {
+                return end_point2;   /* Two+ past end */
             }
             else
             {
+                return fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
+            }
+        };
+
+    while(1)
+    {
+        /* Single unified interpolation loop */
+        for (; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
+        {
+            dsp_phase_index = fluid_phase_index(dsp_phase);
+
+            if (dsp_phase_index > end_index)
+            {
                 break;
             }
-        }
-		dsp_phase += dsp_phase_incr * dsp_i;
 
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
+            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
+
+            fluid_real_t sample = 
+                  coeffs[0] * get_sample(-1)
+                + coeffs[1] * get_sample(0)
+                + coeffs[2] * get_sample(1)
+                + coeffs[3] * get_sample(2);
+
+            dsp_buf[dsp_i] = sample;
+
+            fluid_phase_incr(dsp_phase, dsp_phase_incr);
+        }
+
+        dsp_phase_index = fluid_phase_index(dsp_phase);
+
+        if (!LOOPING || dsp_i >= FLUID_BUFSIZE)
         {
             break;
         }
 
-        end_index++;	/* we're now interpolating the 2nd to last point */
-
-        /* interpolate within 2nd to last point */
-        for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
-        {
-            fluid_real_t sample;
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
-
-            sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 1)
-                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
-                     + coeffs[2] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index + 1)
-                     + coeffs[3] * end_point1);
-
-            dsp_buf[dsp_i] = sample;
-
-            /* increment phase and amplitude */
-            fluid_phase_incr(dsp_phase, dsp_phase_incr);
-            dsp_phase_index = fluid_phase_index(dsp_phase);
-        }
-
-        end_index++;	/* we're now interpolating the last point */
-
-        /* interpolate within the last point */
-        for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
-        {
-            fluid_real_t sample;
-            coeffs = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase) * CUBIC_INTERP_ORDER];
-
-            
-            sample =  (coeffs[0] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index - 1)
-                     + coeffs[1] * fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, dsp_phase_index)
-                     + coeffs[2] * end_point1
-                     + coeffs[3] * end_point2);
-
-            dsp_buf[dsp_i] = sample;
-
-            /* increment phase and amplitude */
-            fluid_phase_incr(dsp_phase, dsp_phase_incr);
-            dsp_phase_index = fluid_phase_index(dsp_phase);
-        }
-
-        if(!LOOPING)
-        {
-            break;    /* break out if not looping (end of sample) */
-        }
-
-        /* go back to loop start */
-        if(dsp_phase_index > end_index)
+        /* Loop wrap */
+        if (dsp_phase_index > end_index)
         {
             fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
 
-            if(!voice->has_looped)
+            if (!voice->has_looped)
             {
                 voice->has_looped = 1;
                 start_index = voice->loopstart;
                 start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);
             }
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
-        end_index -= 2;	/* set end back to third to last sample point */
     }
 
     voice->phase = dsp_phase;
-
-    return (dsp_i);
+    return dsp_i;
 }
 
 /* 7th order interpolation.
