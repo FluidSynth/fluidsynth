@@ -207,6 +207,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     int res;
     int pw_flags;
     int realtime_prio = 0;
+    int async = 0;
     double sample_rate;
     char *media_role = NULL;
     char *media_type = NULL;
@@ -228,6 +229,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     fluid_settings_getint(settings, "audio.period-size", &period_size);
     fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.realtime-prio", &realtime_prio);
+    fluid_settings_getint(settings, "audio.pipewire.async", &async);
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_dupstr(settings, "audio.pipewire.media-role", &media_role);
     fluid_settings_dupstr(settings, "audio.pipewire.media-type", &media_type);
@@ -265,6 +267,11 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", period_size, (int) sample_rate);
     pw_properties_setf(props, PW_KEY_NODE_MAX_LATENCY, "%d/%d", max_latency_frames, (int) sample_rate);
     pw_properties_setf(props, PW_KEY_NODE_RATE, "1/%d", (int) sample_rate);
+
+    if(async)
+    {
+        pw_properties_set(props, PW_KEY_NODE_ASYNC, "true");
+    }
 
     drv->pw_stream = pw_stream_new_simple(
                          pw_thread_loop_get_loop(drv->pw_loop),
@@ -395,6 +402,7 @@ void fluid_pipewire_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.pipewire.media-role", "Music", 0);
     fluid_settings_register_str(settings, "audio.pipewire.media-type", "Audio", 0);
     fluid_settings_register_str(settings, "audio.pipewire.media-category", "Playback", 0);
+    fluid_settings_register_int(settings, "audio.pipewire.async", 1, 0, 1, 0);
 }
 
 #endif
