@@ -365,7 +365,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     while(1)
     {
         /* Single unified interpolation loop */
-        for (; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
+        for (; dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
             dsp_phase_index = fluid_phase_index(dsp_phase);
 
