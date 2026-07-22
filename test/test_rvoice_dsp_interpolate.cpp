@@ -93,9 +93,10 @@ static void setup_rvoice(fluid_rvoice_t  *rvoice,
 	rvoice->dsp.phase_incr = (fluid_real_t)phase_incr;
 }
 
-static fluid_real_t absf(fluid_real_t x)
+static void test_float_eq(fluid_real_t actual, fluid_real_t expected, fluid_real_t esp)
 {
-	return x < (fluid_real_t)0.0 ? -x : x;
+	actual *= (1.0 / (1u << 8u));
+	TEST_ASSERT(std::abs(actual - expected) <= esp);
 }
 
 /* =========================================================================
@@ -138,7 +139,8 @@ static void test_A_integer_phase_passthrough(void)
 		for(int i = 0; i < count; i++)
 		{
 			fluid_real_t expected = (fluid_real_t)data[i];
-			TEST_ASSERT(absf(buf[i] - expected) <= TOL_POLY);
+			fluid_real_t actual = buf[i];
+			test_float_eq(actual, expected, TOL_POLY);
 		}
 	}
 }
@@ -190,7 +192,7 @@ static void test_B_fractional_linear_ramp(void)
 			int nearest = (int)((5.0 + i * 0.5) + 0.5);   /* standard round */
 			if(nearest >= SAMPLE_SIZE) nearest = SAMPLE_SIZE - 1;
 			fluid_real_t expected = (fluid_real_t)data[nearest];
-			TEST_ASSERT(absf(buf[i] - expected) <= TOL_POLY);
+			test_float_eq(buf[i], expected, TOL_POLY);
 		}
 	}
 
@@ -219,7 +221,7 @@ static void test_B_fractional_linear_ramp(void)
 			for(int i = 0; i < count; i++)
 			{
 				fluid_real_t expected = (fluid_real_t)((5.0 + i * 0.5) * 1000.0);
-				TEST_ASSERT(absf(buf[i] - expected) <= TOL_POLY);
+				test_float_eq(buf[i], expected, TOL_POLY);
 			}
 		}
 	}
@@ -268,7 +270,7 @@ static void test_C_constant_sample(void)
 
 		fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_SINC : TOL_POLY;
 		for(int i = 0; i < count; i++)
-			TEST_ASSERT(absf(buf[i] - (fluid_real_t)CONST_VAL) <= tol);
+			test_float_eq(buf[i], (fluid_real_t)CONST_VAL, tol);
 	}
 
 	/* C2: fractional phase, start well into the interior so all modes
@@ -292,7 +294,7 @@ static void test_C_constant_sample(void)
 
 		fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_SINC : TOL_POLY;
 		for(int i = 0; i < count; i++)
-			TEST_ASSERT(absf(buf[i] - (fluid_real_t)CONST_VAL) <= tol);
+			test_float_eq(buf[i], (fluid_real_t)CONST_VAL, tol);
 	}
 }
 
@@ -353,7 +355,7 @@ static void test_D_loop_boundary_constant_sample(void)
 
 			fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
 			for(int i = 0; i < count; i++)
-				TEST_ASSERT(absf(buf[i] - (fluid_real_t)CONST_VAL) <= tol);
+				test_float_eq(buf[i], (fluid_real_t)CONST_VAL, tol);
 
 			/* After a looping run, has_looped must be set. */
 			TEST_ASSERT(rvoice.dsp.has_looped == 1);
@@ -430,7 +432,7 @@ static void test_E_loop_boundary_linear_wrap(void)
 		fluid_real_t s1 = (fluid_real_t)data[next_idx];
 		fluid_real_t expected = s0 + (fluid_real_t)frac * (s1 - s0);
 
-		TEST_ASSERT(absf(buf[i] - expected) <= TOL_POLY);
+		test_float_eq(buf[i], expected, TOL_POLY);
 
 		phase_d += phase_incr;
 	}
