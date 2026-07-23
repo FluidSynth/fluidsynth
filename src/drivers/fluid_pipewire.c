@@ -52,12 +52,29 @@ typedef struct
     struct spa_pod_builder *builder;
 
     struct pw_thread_loop *pw_loop;
+    struct pw_context *pw_context;
+    struct pw_core *pw_core;
     struct pw_stream *pw_stream;
     struct pw_stream_events *events;
+    struct spa_hook stream_listener;
+    struct spa_hook core_listener;
 
 } fluid_pipewire_audio_driver_t;
 
 // #define PROFILE_PIPEWIRE 1
+
+static void on_core_error(void *data, uint32_t id, int seq, int res, const char *message)
+{
+    FLUID_LOG(FLUID_ERR, "PipeWire error: id=%u seq=%d res=%d (%s): %s",
+              id, seq, res, strerror(res), message ? message : "(null)");
+
+    (void)data;
+}
+
+static const struct pw_core_events core_events = {
+    .version = PW_VERSION_CORE_EVENTS,
+    .error = on_core_error,
+};
 
 /* Fast-path rendering routine with no user processing callbacks */
 static void fluid_pipewire_event_process(void *data)
@@ -66,7 +83,6 @@ static void fluid_pipewire_event_process(void *data)
     struct pw_buffer *pwb;
     struct spa_buffer *buf;
     float *dest;
-    uint32_t n_frames;
 #ifdef PROFILE_PIPEWIRE
     struct timespec ts_now, ts_write_start, ts_write_end;
     static struct timespec ts_last_call = {0, 0};
@@ -98,35 +114,23 @@ static void fluid_pipewire_event_process(void *data)
         return;
     }
 
-    n_frames = (uint32_t)pwb->requested; // since PW 0.3.50
-
-    if(n_frames == 0)
-    {
-        n_frames = buf->datas[0].maxsize / (uint32_t)stride;
-    }
-
-    if(n_frames == 0)
-    {
-        n_frames = (uint32_t)drv->buffer_period;
-    }
-
 #ifdef PROFILE_PIPEWIRE
     clock_gettime(CLOCK_MONOTONIC, &ts_write_start);
 #endif
-    fluid_synth_write_float(drv->data, (int)n_frames, dest, 0, 2, dest, 1, 2);
+    fluid_synth_write_float(drv->data, drv->buffer_period, dest, 0, 2, dest, 1, 2);
 #ifdef PROFILE_PIPEWIRE
     clock_gettime(CLOCK_MONOTONIC, &ts_write_end);
     {
         double write_ms = (ts_write_end.tv_sec - ts_write_start.tv_sec) * 1000.0
                           + (ts_write_end.tv_nsec - ts_write_start.tv_nsec) / 1.0e6;
-        FLUID_LOG(FLUID_INFO, "pipewire process: fluid_synth_write_float took: %.3f ms", write_ms);
+        FLUID_LOG(FLUID_INFO, "pipewire process: fluid_synth_write_float took: %.3f ms for %d frames", write_ms, drv->buffer_period);
     }
 #endif
 
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
-    buf->datas[0].chunk->size = n_frames * stride;
-    pwb->size = n_frames;
+    buf->datas[0].chunk->size = drv->buffer_period * stride;
+    pwb->size = drv->buffer_period;
 
     pw_stream_queue_buffer(drv->pw_stream, pwb);
 }
@@ -139,7 +143,6 @@ static void fluid_pipewire_event_process2(void *data)
     struct spa_buffer *buf;
     float *dest;
     float *channels[NUM_CHANNELS] = { drv->lbuf, drv->rbuf };
-    uint32_t n_frames;
     int i;
 
     pwb = pw_stream_dequeue_buffer(drv->pw_stream);
@@ -158,26 +161,13 @@ static void fluid_pipewire_event_process2(void *data)
         return;
     }
 
-    /* Determine how many frames to render (same logic as fast path) */
-    n_frames = (uint32_t)pwb->requested;
+    FLUID_MEMSET(drv->lbuf, 0, drv->buffer_period * sizeof(float));
+    FLUID_MEMSET(drv->rbuf, 0, drv->buffer_period * sizeof(float));
 
-    if(n_frames == 0)
-    {
-        n_frames = buf->datas[0].maxsize / (uint32_t)stride;
-    }
-
-    if(n_frames == 0)
-    {
-        n_frames = (uint32_t)drv->buffer_period;
-    }
-
-    FLUID_MEMSET(drv->lbuf, 0, n_frames * sizeof(float));
-    FLUID_MEMSET(drv->rbuf, 0, n_frames * sizeof(float));
-
-    (*drv->user_callback)(drv->data, (int)n_frames, 0, NULL, NUM_CHANNELS, channels);
+    (*drv->user_callback)(drv->data, drv->buffer_period, 0, NULL, NUM_CHANNELS, channels);
 
     /* Interleave the floating point data */
-    for(i = 0; i < (int)n_frames; i++)
+    for(i = 0; i < drv->buffer_period; i++)
     {
         dest[i * 2] = drv->lbuf[i];
         dest[i * 2 + 1] = drv->rbuf[i];
@@ -185,8 +175,8 @@ static void fluid_pipewire_event_process2(void *data)
 
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
-    buf->datas[0].chunk->size = n_frames * stride;
-    pwb->size = n_frames;
+    buf->datas[0].chunk->size = drv->buffer_period * stride;
+    pwb->size = drv->buffer_period;
 
     pw_stream_queue_buffer(drv->pw_stream, pwb);
 }
@@ -262,29 +252,46 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
         goto driver_cleanup;
     }
 
+    drv->pw_context = pw_context_new(pw_thread_loop_get_loop(drv->pw_loop),
+                                         NULL, 0);
+
+    if(!drv->pw_context)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire context");
+        goto driver_cleanup;
+    }
+
+    drv->pw_core = pw_context_connect(drv->pw_context, NULL, 0);
+
+    if(!drv->pw_core)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to connect to PipeWire");
+        goto driver_cleanup;
+    }
+    
+    spa_zero(drv->core_listener);
+    pw_core_add_listener(drv->pw_core, &drv->core_listener,
+                            &core_events, NULL);
+
     props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL);
-
-    pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", period_size, (int) sample_rate);
-    pw_properties_setf(props, PW_KEY_NODE_MAX_LATENCY, "%d/%d", max_latency_frames, (int) sample_rate);
+    pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", max_latency_frames, (int) sample_rate);
     pw_properties_setf(props, PW_KEY_NODE_RATE, "1/%d", (int) sample_rate);
-
     if(async)
     {
         pw_properties_set(props, PW_KEY_NODE_ASYNC, "true");
     }
 
-    drv->pw_stream = pw_stream_new_simple(
-                         pw_thread_loop_get_loop(drv->pw_loop),
-                         "FluidSynth",
-                         props,
-                         drv->events,
-                         drv);
+    drv->pw_stream = pw_stream_new(drv->pw_core, "FluidSynth", props);
 
     if(!drv->pw_stream)
     {
         FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire stream");
         goto driver_cleanup;
     }
+
+    spa_zero(drv->stream_listener);
+    pw_stream_add_listener(drv->pw_stream, &drv->stream_listener,
+                            drv->events, drv);
 
     buffer = FLUID_ARRAY(float, NUM_CHANNELS * period_size);
 
@@ -310,8 +317,8 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
 
     if(func)
     {
-        drv->lbuf = FLUID_ARRAY(float, max_latency_frames);
-        drv->rbuf = FLUID_ARRAY(float, max_latency_frames);
+        drv->lbuf = FLUID_ARRAY(float, period_size);
+        drv->rbuf = FLUID_ARRAY(float, period_size);
 
         if(!drv->lbuf || !drv->rbuf)
         {
@@ -374,6 +381,16 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
     if(drv->pw_stream)
     {
         pw_stream_destroy(drv->pw_stream);
+    }
+
+    if(drv->pw_core)
+    {
+        pw_core_disconnect(drv->pw_core);
+    }
+
+    if(drv->pw_context)
+    {
+        pw_context_destroy(drv->pw_context);
     }
 
     if(drv->pw_loop)
