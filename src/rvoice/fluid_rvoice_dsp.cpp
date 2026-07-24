@@ -332,9 +332,12 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     while(dsp_i < FLUID_BUFSIZE)
     {
         constexpr auto VECTORIZATION_WIDTH_BYTES = 32u;
-		constexpr auto VECTORIZATION_WIDTH_SAMPLES = VECTORIZATION_WIDTH_BYTES / sizeof(fluid_real_t);
+        constexpr unsigned VECTORIZATION_WIDTH_SAMPLES = VECTORIZATION_WIDTH_BYTES / sizeof(fluid_real_t);
         constexpr auto N_SAMPLES = std::min(VECTORIZATION_WIDTH_SAMPLES, (unsigned)FLUID_BUFSIZE);
-        alignas(64) fluid_real_t local_samples[N_SAMPLES];
+        alignas(64) fluid_real_t local_samples_m1[N_SAMPLES];
+        alignas(64) fluid_real_t local_samples_0[N_SAMPLES];
+        alignas(64) fluid_real_t local_samples_p1[N_SAMPLES];
+        alignas(64) fluid_real_t local_samples_p2[N_SAMPLES];
 
         /* Lambda to get interpolation sample with boundary handling */
         auto get_sample = [&](unsigned int dsp_phase_index, unsigned int offset) -> fluid_real_t
@@ -359,7 +362,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 }
             };
 
-		int i = 0;
+		unsigned int i = 0;
         // This loop preloads N_SAMPLES into our vector register. If we're processing an unlooped sample which ends before N_SAMPLES, we leave the loop early.
 		for (; i < N_SAMPLES; ++i)
 		{
@@ -386,7 +389,10 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 }
             }
 
-			local_samples[i] = get_sample(phase_index_local, i);
+			local_samples_m1[i] = get_sample(phase_index_local, i-1);
+			local_samples_0[i] = get_sample(phase_index_local, i);
+			local_samples_p1[i] = get_sample(phase_index_local, i+1);
+			local_samples_p2[i] = get_sample(phase_index_local, i+2);
 		}
         if (i < CUBIC_INTERP_ORDER)
         {
@@ -395,8 +401,8 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         }
 
         // vectorizable interpolation loop
-        #pragma omp simd aligned(local_samples: 64)
-        for (int j = 1; j < N_SAMPLES - (CUBIC_INTERP_ORDER - 1); j++)
+        #pragma omp simd aligned(local_samples_m1, local_samples_0, local_samples_p1, local_samples_p2: 64)
+        for (unsigned int j = 0; j < N_SAMPLES; j++)
         {
             const fluid_phase_t phase_local = dsp_phase + (dsp_i + j) * dsp_phase_incr;
 
@@ -414,18 +420,18 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             };
 
             const fluid_real_t sample =
-                  coeffs[0] * local_samples[j - 1]
-                + coeffs[1] * local_samples[j - 0]
-                + coeffs[2] * local_samples[j + 1]
-                + coeffs[3] * local_samples[j + 2];
+                  coeffs[0] * local_samples_m1[j]
+                + coeffs[1] * local_samples_0[j]
+                + coeffs[2] * local_samples_p1[j]
+                + coeffs[3] * local_samples_p2[j];
 
             dsp_buf[dsp_i + j] = sample;
         }
 
-        dsp_i += i - CUBIC_INTERP_ORDER;
+        dsp_i += i;
     }
 
-    voice->phase = dsp_phase;
+    voice->phase = dsp_phase + dsp_i * dsp_phase_incr;
     return dsp_i;
 }
 
