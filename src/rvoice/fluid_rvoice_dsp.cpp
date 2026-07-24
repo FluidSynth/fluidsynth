@@ -305,28 +305,26 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     fluid_phase_t dsp_phase_incr;
     const short int *FLUID_RESTRICT dsp_data = voice->sample->data;
     const char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
-    unsigned short dsp_i = 0;
-    unsigned int start_index, end_index;
+    unsigned int dsp_i = 0;
+    unsigned int start_index, loop_end_index;
     fluid_real_t start_point, end_point1, end_point2;
-    const fluid_real_t *FLUID_RESTRICT coeffs;
 
-    /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
 
-    end_index = (LOOPING ? voice->loopend - 1 : voice->end);
+    /* Loop region is [loopstart, loopend-1] for LOOPING, [start, end] otherwise */
+    loop_end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
-    if(voice->has_looped)	/* set start_index and start point if looped or not */
+    if(voice->has_looped)
     {
         start_index = voice->loopstart;
-        start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);	/* last point in loop (wrap around) */
+        start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);
     }
     else
     {
         start_index = voice->start;
-        start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->start);	/* just duplicate the point */
+        start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->start);
     }
 
-    /* get points off the end (loop start if looping, duplicate point if end) */
     if(LOOPING)
     {
         end_point1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart);
@@ -338,83 +336,229 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_point2 = end_point1;
     }
 
-    while(1)
+    /* Fixed-point fraction to float conversion */
+    constexpr fluid_real_t FRACT_SCALE = 1.0f / 4294967296.0f;  /* 1 / 2^32 */
+    
+    /* Loop length in fixed-point (32.32 format) */
+    const fluid_phase_t loop_length = LOOPING 
+        ? static_cast<fluid_phase_t>(voice->loopend - voice->loopstart) << 32 
+        : 0;
+
+    /* Helper lambda for phase-to-index with loop wrap */
+    auto wrap_phase = [&](fluid_phase_t phase) -> fluid_phase_t {
+        if(LOOPING && voice->has_looped)
+        {
+            const fluid_phase_t loop_start_phase = static_cast<fluid_phase_t>(voice->loopstart) << 32;
+            const fluid_phase_t loop_end_phase = static_cast<fluid_phase_t>(voice->loopend) << 32;
+            
+            while(phase >= loop_end_phase)
+            {
+                phase -= loop_length;
+            }
+            /* Safety: ensure we're not below loop start after wrapping */
+            while(phase < loop_start_phase && loop_length > 0)
+            {
+                phase += loop_length;
+            }
+        }
+        return phase;
+    };
+
+    /* Process single sample with full boundary handling */
+    auto process_single_sample = [&](fluid_phase_t phase) -> fluid_real_t {
+        const unsigned int idx = static_cast<unsigned int>(phase >> 32);
+        const fluid_real_t f = static_cast<fluid_real_t>(phase & 0xFFFFFFFF) * FRACT_SCALE;
+
+        /* Clamped indices for safe memory access */
+        const unsigned int idx_m1 = (idx > start_index) ? (idx - 1) : start_index;
+        const unsigned int idx_p1 = (idx < loop_end_index) ? (idx + 1) : loop_end_index;
+        const unsigned int idx_p2 = (idx + 1 < loop_end_index) ? (idx + 2) : loop_end_index;
+
+        const fluid_real_t raw_m1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_m1);
+        const fluid_real_t raw_0  = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
+        const fluid_real_t raw_p1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_p1);
+        const fluid_real_t raw_p2 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_p2);
+
+        const bool at_start = (idx == start_index);
+        const bool at_end   = (idx >= loop_end_index);
+        const bool near_end = (idx + 1 >= loop_end_index);
+
+        const fluid_real_t s0 = at_start ? start_point : raw_m1;
+        const fluid_real_t s1 = raw_0;
+        const fluid_real_t s2 = at_end ? end_point1 : raw_p1;
+        const fluid_real_t s3 = at_end ? end_point2 : (near_end ? end_point1 : raw_p2);
+
+        const fluid_real_t f2 = f * f;
+        const fluid_real_t f3 = f2 * f;
+
+        return (-0.5f * f3 + f2 - 0.5f * f) * s0
+             + (1.5f * f3 - 2.5f * f2 + 1.0f) * s1
+             + (-1.5f * f3 + 2.0f * f2 + 0.5f * f) * s2
+             + (0.5f * f3 - 0.5f * f2) * s3;
+    };
+
+    /* Calculate samples until phase index reaches target (exclusive) */
+    auto samples_until_index = [&](fluid_phase_t phase, unsigned int target_index) -> unsigned int {
+        const fluid_phase_t target_phase = static_cast<fluid_phase_t>(target_index) << 32;
+        if(phase >= target_phase)
+            return 0;
+        return static_cast<unsigned int>((target_phase - phase) / dsp_phase_incr);
+    };
+
+    /* Calculate samples while phase index stays <= target */
+    auto samples_while_at_or_below = [&](fluid_phase_t phase, unsigned int target_index) -> unsigned int {
+        const fluid_phase_t limit_phase = static_cast<fluid_phase_t>(target_index + 1) << 32;
+        if(phase >= limit_phase)
+            return 0;
+        return static_cast<unsigned int>((limit_phase - phase) / dsp_phase_incr);
+    };
+
+    while(dsp_i < FLUID_BUFSIZE)
     {
-        /* Single unified interpolation loop */
-        for (; dsp_i < FLUID_BUFSIZE; dsp_i++)
-        {
-            const fluid_phase_t phase_local = dsp_phase + dsp_i * dsp_phase_incr;
-			const unsigned int phase_index_local = fluid_phase_index(phase_local);
+        /* Apply any pending loop wrap */
+        dsp_phase = wrap_phase(dsp_phase);
+        
+        const unsigned int current_index = static_cast<unsigned int>(dsp_phase >> 32);
 
-            if (phase_index_local > end_index)
-            {
+        /* Check if we've gone past the end (non-looping case) */
+        if(current_index > loop_end_index)
+        {
+            if(!LOOPING)
                 break;
-            }
-
-            /* Clamped indices - always valid memory access */
-            const unsigned int idx_m1 = (phase_index_local > start_index) ? (phase_index_local - 1) : start_index;
-            const unsigned int idx_p1 = (phase_index_local < end_index) ? (phase_index_local + 1) : end_index;
-            const unsigned int idx_p2 = (phase_index_local < end_index - 1) ? (phase_index_local + 2) : end_index;
-
-            /* Fetch samples from clamped indices */
-            const fluid_real_t sam_m1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_m1);
-            const fluid_real_t sam_0 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, phase_index_local);
-            const fluid_real_t sam_p1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_p1);
-            const fluid_real_t sam_p2 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx_p2);
-
-            /* Pick the correct sample: clamped sample fetch vs boundary sample point */
-            const bool need_start = (phase_index_local <= start_index); // if true: s0 needs start_point
-            const bool at_end = (phase_index_local >= end_index); // if true: s2 needs end_point1, s3 needs end_point2
-            const bool near_end = (phase_index_local >= end_index - 1); // if true: only s3 needs end_point1
-            const fluid_real_t& s0 = need_start ? start_point : sam_m1;
-            const fluid_real_t& s1 = sam_0;
-            const fluid_real_t& s2 = at_end ? end_point1 : sam_p1;
-            const fluid_real_t& s3 = at_end ? end_point2 : (near_end ? end_point1 : sam_p2);
-
-            /* Compute Catmull-Rom spline coefficients, aka cubic interpolation */
-            const fluid_real_t x = fluid_phase_fract(phase_local) * FLUID_FRACT_SCALE;
-            const fluid_real_t x2 = x * x;
-            const fluid_real_t x3 = x2 * x;
-
-            const fluid_real_t coeffs[CUBIC_INTERP_ORDER] =
-            {
-                -0.5f * x + x2 - 0.5f * x3,       // x*(-0.5 + x*(1 - 0.5*x))
-                1.0f - 2.5f * x2 + 1.5f * x3,     // 1 + x²*(1.5*x - 2.5)
-                0.5f * x + 2.0f * x2 - 1.5f * x3, // x*(0.5 + x*(2 - 1.5*x))
-                -0.5f * x2 + 0.5f * x3            // 0.5*x²*(x - 1)
-            };
-
-            const fluid_real_t sample = 
-                  coeffs[0] * s0
-                + coeffs[1] * s1
-                + coeffs[2] * s2
-                + coeffs[3] * s3;
-
-            dsp_buf[dsp_i] = sample;
-        }
-        fluid_phase_incr(dsp_phase, dsp_i * dsp_phase_incr);
-
-        if (!LOOPING || dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
+            
+            /* This shouldn't happen after wrap_phase, but safety first */
+            dsp_phase = wrap_phase(dsp_phase);
+            continue;
         }
 
-        /* Loop wrap */
-        if (fluid_phase_index(dsp_phase) > end_index)
+        /* Update loop state if we've just entered the loop region */
+        if(LOOPING && !voice->has_looped && current_index >= voice->loopstart)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            voice->has_looped = 1;
+            start_index = voice->loopstart;
+            start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);
+        }
 
-            if (!voice->has_looped)
+        /* Safe region boundaries: [safe_start, safe_end]
+         * Within this range, all four taps (idx-1, idx, idx+1, idx+2) are valid */
+        const unsigned int safe_start = start_index + 1;
+        const unsigned int safe_end = (loop_end_index >= 2) ? loop_end_index - 2 : 0;
+
+        /* Determine which region we're in and how many samples to process */
+        unsigned int region_count = 0;
+        enum { REGION_BEFORE_SAFE, REGION_SAFE, REGION_AFTER_SAFE } region;
+
+        if(current_index < safe_start)
+        {
+            region = REGION_BEFORE_SAFE;
+            region_count = samples_until_index(dsp_phase, safe_start);
+            region_count = std::min(region_count, FLUID_BUFSIZE - dsp_i);
+            
+            /* Ensure at least 1 sample if we're still before safe region */
+            if(region_count == 0)
+                region_count = 1;
+        }
+        else if(current_index <= safe_end)
+        {
+            region = REGION_SAFE;
+            region_count = samples_while_at_or_below(dsp_phase, safe_end);
+            region_count = std::min(region_count, FLUID_BUFSIZE - dsp_i);
+        }
+        else
+        {
+            region = REGION_AFTER_SAFE;
+            region_count = samples_while_at_or_below(dsp_phase, loop_end_index);
+            region_count = std::min(region_count, FLUID_BUFSIZE - dsp_i);
+            
+            /* Ensure at least 1 sample if we're in the boundary region */
+            if(region_count == 0)
+                region_count = 1;
+        }
+
+        if(region == REGION_SAFE && region_count > 0)
+        {
+            /*
+             * VECTORIZABLE LOOP - Middle region
+             * 
+             * - No loop-carried dependencies
+             * - Fixed iteration count known at loop entry  
+             * - No branches inside loop
+             * - All memory accesses guaranteed valid
+             */
+            const fluid_phase_t phase_base = dsp_phase;
+            const unsigned int loop_end = dsp_i + region_count;
+
+#if defined(__clang__)
+            #pragma clang loop vectorize(enable) interleave(enable)
+#elif defined(__GNUC__)
+            #pragma GCC ivdep
+#elif defined(_OPENMP)
+            #pragma omp simd
+#endif
+            for(unsigned int i = dsp_i; i < loop_end; i++)
             {
-                voice->has_looped = 1;
-                start_index = voice->loopstart;
-                start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);
+                /* Phase computed entirely from loop index */
+                const fluid_phase_t phase = phase_base + static_cast<fluid_phase_t>(i - dsp_i) * dsp_phase_incr;
+                const unsigned int idx = static_cast<unsigned int>(phase >> 32);
+                const fluid_real_t f = static_cast<fluid_real_t>(phase & 0xFFFFFFFF) * FRACT_SCALE;
+
+                /* Direct sample access - all guaranteed in bounds */
+                const fluid_real_t s0 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx - 1);
+                const fluid_real_t s1 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
+                const fluid_real_t s2 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx + 1);
+                const fluid_real_t s3 = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx + 2);
+
+                /* Catmull-Rom interpolation */
+                const fluid_real_t f2 = f * f;
+                const fluid_real_t f3 = f2 * f;
+
+                dsp_buf[i] = (-0.5f * f3 + f2 - 0.5f * f) * s0
+                           + (1.5f * f3 - 2.5f * f2 + 1.0f) * s1
+                           + (-1.5f * f3 + 2.0f * f2 + 0.5f * f) * s2
+                           + (0.5f * f3 - 0.5f * f2) * s3;
             }
+
+            dsp_phase = phase_base + static_cast<fluid_phase_t>(region_count) * dsp_phase_incr;
+            dsp_i = loop_end;
+        }
+        else
+        {
+            /*
+             * SCALAR LOOP - Boundary regions (before safe_start or after safe_end)
+             * 
+             * Uses full boundary handling with conditional sample selection
+             */
+            const unsigned int loop_end = dsp_i + region_count;
+
+            for(unsigned int i = dsp_i; i < loop_end; i++)
+            {
+                /* Handle loop wrap for each sample in boundary region */
+                dsp_phase = wrap_phase(dsp_phase);
+                
+                const unsigned int idx = static_cast<unsigned int>(dsp_phase >> 32);
+                
+                /* Stop if we've gone past the end in non-looping mode */
+                if(idx > loop_end_index)
+                {
+                    if(!LOOPING)
+                    {
+                        dsp_i = i;
+                        goto done;
+                    }
+                    continue;
+                }
+
+                dsp_buf[i] = process_single_sample(dsp_phase);
+                dsp_phase += dsp_phase_incr;
+            }
+
+            dsp_i = loop_end;
         }
     }
 
+done:
     voice->phase = dsp_phase;
-    return dsp_i;
+    return static_cast<int>(dsp_i);
 }
 
 /* 7th order interpolation.
