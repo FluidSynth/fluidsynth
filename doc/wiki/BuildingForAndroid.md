@@ -7,11 +7,11 @@ You may find more information about FluidSynth on Android [in the /doc folder](h
 ## Preface
 
 So, you want to compile fluidsynth for Android? Are you aware of the fact that fluidsynth is written in C? That means you cannot benefit from nicely portable bytecode, i.e. compile once and deploy for all smartphone architectures and Android versions out there. The code being compiled will be **native** to the device and Android NDK you are targeting. 
-Thus, you will need to deploy fat binaries to your users. Even worse: fluidsynth depends on glib that we use as OSAL library. In order to build the official upstream version of fluidsynth you will have to cross compile glib and it's dependencies first. And again: you'll have to do this for all architectures and Android versions you want to support!
+Thus, you will need to deploy fat binaries to your users. You'll have to do this for all architectures and Android versions you want to support!
 
 fluidsynth is licensed under **LGPL-2.1**; [make sure you understand what that means](LicensingFAQ) when using it in your app!
 
-Note that glib and many of its dependencies are licensed under the LGPL, too. If you **statically link** any of them into your proprietary, closed-source app, you violate the LGPL and end up with a serious license infringement!
+Note that many of fluidsynth's dependencies are licensed under the LGPL, too. If you **statically link** any of them into your proprietary, closed-source app, you violate the LGPL and end up with a serious license infringement!
 Further note that fluidsynth can be optionally compiled with dependencies that are GPL licensed. In this case **fluidsynth and your app become GPL licensed**! If you don't respect those terms and understand its consequences, you are a potential subject to legal prosecution.
 
 When using the methods and scripts explained here, there is no guarantee of any kind that they work as expected, esp. not in a commercial product. **NO warranty is provided; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE**.

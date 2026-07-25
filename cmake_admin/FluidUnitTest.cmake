@@ -22,7 +22,7 @@ macro ( ADD_FLUID_TEST _test )
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> # include auto generated headers
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> # include "normal" public (sub-)headers
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src> # include private headers
-    $<TARGET_PROPERTY:libfluidsynth-OBJ,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
+    $<TARGET_PROPERTY:libfluidsynth-OBJ,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth
     )
 
     # add the test to ctest
@@ -55,7 +55,7 @@ macro ( ADD_FLUID_TEST_UTIL _util )
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> # include auto generated headers
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> # include "normal" public (sub-)headers
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src> # include private headers
-    $<TARGET_PROPERTY:libfluidsynth-OBJ,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
+    $<TARGET_PROPERTY:libfluidsynth-OBJ,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth
     )
 
     # append the current unit test to check-target as dependency
@@ -111,7 +111,7 @@ macro ( ADD_FLUID_DEMO _demo )
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> # include auto generated headers
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> # include "normal" public (sub-)headers
-        $<TARGET_PROPERTY:libfluidsynth,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
+        $<TARGET_PROPERTY:libfluidsynth,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth
     )
 
     # append the current unit test to check-target as dependency

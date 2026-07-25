@@ -114,9 +114,7 @@
 #endif
 
 
-#if OSAL_glib
-#include "fluid_sys_glib.h"
-#elif OSAL_embedded
+#if OSAL_embedded
 #include "fluid_sys_embedded.h"
 #elif OSAL_cpp11
 #include "fluid_sys_cpp11.h"

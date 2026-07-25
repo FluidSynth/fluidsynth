@@ -3,7 +3,7 @@ Priority: optional
 Section: sound
 Maintainer: Rui Nuno Capela <rncbc@rncbc.org>
 Build-Depends: debhelper (>= 5.0.0), cmake, pkg-config, libdb-dev, libjack-dev, libasound2-dev,
-  libsndfile-dev, libglib2.0-dev
+  libsndfile-dev
 Standards-Version: 3.7.2
 
 Package: libfluidsynth3

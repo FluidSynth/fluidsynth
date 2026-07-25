@@ -41,9 +41,7 @@ A minimal build of fluidsynth has the following requirements:
 <details><summary>Some other libraries can be <strong>optionally</strong> included at build time, providing additional functionality. Click here to view them.</summary><br />
 
   * C++17 compliant compiler and standard library
-  * [glib and gthread](http://www.gtk.org) libraries.
   * [libsndfile](http://www.mega-nerd.com/libsndfile/) - Allows for rendering MIDI to numerous audio file formats. Otherwise, only rendering to RAW PCM files is supported.
-  * [libinstpatch](https://github.com/swami/libinstpatch) - Enables loading of Downloadable Sounds (DLS) files as alternative Soundfont format
   * [JACK](http://jackaudio.org) - Jack Audio Connection Kit, inter-application audio routing found on Linux and Mac OS X
   * [ALSA](http://www.alsa-project.org) - Modern audio system found on Linux. FluidSynth supports audio output and the ALSA MIDI sequencer.
   * [OSS](http://www.opensound.com) - Open Sound System (the older Unix sound system)
@@ -168,7 +166,7 @@ This is probably the easiest and most straightforward method.
 5. Once done, install all the dependencies needed by FluidSynth by running:
 
 ```Batchfile
-pacman -S make mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake glib2-devel mingw-w64-x86_64-glib2 mingw-w64-x86_64-libsndfile
+pacman -S make mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-libsndfile
 ```
 
 **This is just an example for 64-bit systems. If you are running the 32 bit version, replace `x86_64` by `i686`.**
@@ -194,7 +192,6 @@ Install [Cygwin](https://www.cygwin.com/) following the setup, and selecting _at
 
 * gcc
 * cmake
-* glib
 
 ### Building
 1. Grab FluidSynths latest release tarball, as described [here](Download.md#source-archives).
@@ -204,21 +201,13 @@ Install [Cygwin](https://www.cygwin.com/) following the setup, and selecting _at
 4. You're set. Run `make` to build.
 
 ## Building with MinGW on Windows
-If you want to use MinGW you need to set up a build environment containing the glib binaries and its dependencies. For simplicity, you can download prebuilt binaries from [gtk.org](http://ftp.gnome.org/pub/gnome/binaries/):
+If you want to use MinGW you need to set up a build environment containing fluidsynth's dependencies.
 
 64-bit Windows:
-  * [glib-2.26](http://ftp.gnome.org/pub/gnome/binaries/win64/glib/2.26/glib_2.26.1-1_win64.zip)
-  * [glib-dev-2.26](http://ftp.gnome.org/pub/gnome/binaries/win64/glib/2.26/glib-dev_2.26.1-1_win64.zip)
   * [pkg-config-0.23](http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/pkg-config_0.23-2_win64.zip)
-  * [proxy-libintl](http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/proxy-libintl-dev_20100902_win64.zip)
-  * [gettext-runtime-0.18](http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/gettext-runtime_0.18.1.1-2_win64.zip)
 
 32-bit Windows:
-  * [glib-2.28](http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip)
-  * [glib-dev-2.28](http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib-dev_2.28.8-1_win32.zip)
   * [pkg-config-0.26](http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip)
-  * [proxy-libintl](http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/proxy-libintl-dev_20100902_win32.zip)
-  * [gettext-runtime-0.18](http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip)
 
 Unpack all required ZIPs (see above) to the same directory, a name without spaces, for instance **C:\\freesw**. Add **C:\\freesw\\bin** to the system PATH by executing `set PATH=C:\freesw\bin;%PATH%`. To verify: Start button -&gt; Command Prompt 
 
@@ -293,9 +282,9 @@ This approach requires to use Visual Studio 2015 Update 3 or later versions. In 
 
 You can get Visual Studio Express Community 2017, from [Microsoft](https://www.visualstudio.com/de/vs/visual-studio-express/). _Note: the Community 2017 edition supports many languages, but only C/C++ is needed. You don't need special options, just the defaults._
 
-Prepare your build environment with all prerequisites as described in [Building with MinGW](#building-with-mingw-on-windows). Alternatively you can install glib using the [vcpkg](https://docs.microsoft.com/en-us/cpp/vcpkg) tool:
+Prepare your build environment with all prerequisites as described in [Building with MinGW](#building-with-mingw-on-windows). Alternatively you can install dependencies using the [vcpkg](https://docs.microsoft.com/en-us/cpp/vcpkg) tool:
 ```Batchfile
-vcpkg install glib
+vcpkg install libsndfile
 ```
 
 Run CMake, opening the desktop icon shortcut. 
@@ -320,7 +309,7 @@ Get all requirements with [Homebrew](http://mxcl.github.com/homebrew/):
     
     brew install fluidsynth pkg-config
     
-Alternatively install libgnugetopt, readline5, libflac8-dev, libsndfile1-dev, glib2-dev, dbus1.3-dev and cmake manually.
+Alternatively install libgnugetopt, readline5, libflac8-dev, libsndfile1-dev, dbus1.3-dev and cmake manually.
 
 Install XCode, "DevSDK.pkg" and "CoreAudioSDK.pkg" packages from your OS X install media. 
 
@@ -365,7 +354,7 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 ```
 
-Furthermore, fluidsynth's cmake build system heavily relies on using pkg-config. In order to make sure the `pkg-config` executable of the host system finds the correct libraries for the target platform, set the `PKG_CONFIG_LIBDIR` environment variable to the path that contains the `.pc` files for all relevant libraries (i.e. glib, gthread and possibly other dependencies you want to build against).
+Furthermore, fluidsynth's cmake build system heavily relies on using pkg-config. In order to make sure the `pkg-config` executable of the host system finds the correct libraries for the target platform, set the `PKG_CONFIG_LIBDIR` environment variable to the path that contains the `.pc` files for all relevant libraries (and possibly other dependencies you want to build against).
 
 As usual create a build subdir within fluidsynth's source tree. Invoke cmake and provide the toolchain file by specifying the `-DCMAKE_TOOLCHAIN_FILE` flag. Additionally consider manually disabling any optional build dependencies that you cannot provide for the target platform.
 
@@ -376,7 +365,7 @@ export PKG_CONFIG_LIBDIR=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig
 cmake -DCMAKE_TOOLCHAIN_FILE=my-fluid-toolchain.cmake -Denable-libsndfile=0 -Denable-dbus=0 -Denable-pulseaudio=0 -Denable-jack=0 ..
 ```
 
-If your environment is set up correctly cmake should find the compiler and the glib libraries for the target platform and exit successfully.
+If your environment is set up correctly cmake should find the compiler and the C++11 libraries for the target platform and exit successfully.
 
 ## Installation
 

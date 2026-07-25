@@ -40,14 +40,10 @@ ADD_FLUID_TEST(test_round_clip)
 ADD_FLUID_TEST(test_ABI)
 ADD_FLUID_TEST(test_file_seek_tell)
 ADD_FLUID_TEST(test_shell_server_auto_port)
+ADD_FLUID_TEST(test_shell_parse_argv_internal)
 ADD_FLUID_TEST(test_sample_pitch_calculation)
 ADD_FLUID_TEST(test_mts_cc_tuning)
 ADD_FLUID_TEST(test_voice_callback)
-
-if ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
-    # Earlier versions of GLib had broken comment handling and should not be compared to
-    ADD_FLUID_TEST(test_shell_parse_argv_internal)
-endif ( GLIB_SUPPORT AND GLib2_VERSION VERSION_GREATER_EQUAL 2.33.12 )
 
 if ( NOT OSAL STREQUAL "embedded" )
     ADD_FLUID_TEST(test_threading)
@@ -551,7 +547,7 @@ add_render_job(renderLimiterTests
     -o synth.limiter.active=1 -o synth.limiter.output-limit=0.6 -o synth.limiter.hold=0 -R 1 -C 0 -g 0.7 -f fluidsynth.cfg ../../sf2/synthgs-sf2_04-compat.sf2 -b 1 Uplift.sf2 Uplift-fixed.mid
 )
 
-if ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
+if ( ENABLE_NATIVE_DLS )
     add_custom_target(renderStreetwise
         COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${STACKEDSF_RENDER_DIR}/Streetwise.${FEXT}" "Streetwise.mid" ${GENERAL_USER_GS2} "Streetwise.dls"
         COMMENT "Rendering testcase for stacked soundfonts"
@@ -559,12 +555,12 @@ if ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/stacked_sf2/Streetwise/
         VERBATIM
     )
-else ( LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
+else ( ENABLE_NATIVE_DLS )
     add_custom_target(renderStreetwise
         COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --red "Cannot render Streetwise, no DLS support!"
         COMMENT "Rendering testcase for stacked soundfonts"
     )
-endif (LIBINSTPATCH_SUPPORT OR ENABLE_NATIVE_DLS )
+endif (ENABLE_NATIVE_DLS )
 
 
 set(_reverb_type
