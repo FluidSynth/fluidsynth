@@ -776,7 +776,7 @@ if ( enable-threads )
 endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
-find_package ( OpenMP COMPONENTS C )
+find_package ( OpenMP COMPONENTS C CXX )
 if (enable-openmp AND ENABLE_UBSAN)
     message(WARNING "OpenMP is not supported when UBSan is enabled. Disabling OpenMP.")
 elseif (enable-openmp AND OpenMP_C_FOUND )

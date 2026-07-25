@@ -331,13 +331,14 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
 
     while(dsp_i < FLUID_BUFSIZE)
     {
-        constexpr auto VECTORIZATION_WIDTH_BYTES = 32u;
+        constexpr auto VECTORIZATION_WIDTH_BYTES = 256u / 8u;
         constexpr unsigned VECTORIZATION_WIDTH_SAMPLES = VECTORIZATION_WIDTH_BYTES / sizeof(fluid_real_t);
         constexpr auto N_SAMPLES = std::min(VECTORIZATION_WIDTH_SAMPLES, (unsigned)FLUID_BUFSIZE);
-        alignas(64) fluid_real_t local_samples_m1[N_SAMPLES];
-        alignas(64) fluid_real_t local_samples_0[N_SAMPLES];
-        alignas(64) fluid_real_t local_samples_p1[N_SAMPLES];
-        alignas(64) fluid_real_t local_samples_p2[N_SAMPLES];
+        alignas(VECTORIZATION_WIDTH_BYTES) fluid_real_t local_samples_m1[N_SAMPLES];
+        alignas(VECTORIZATION_WIDTH_BYTES) fluid_real_t local_samples_0[N_SAMPLES];
+        alignas(VECTORIZATION_WIDTH_BYTES) fluid_real_t local_samples_p1[N_SAMPLES];
+        alignas(VECTORIZATION_WIDTH_BYTES) fluid_real_t local_samples_p2[N_SAMPLES];
+        alignas(VECTORIZATION_WIDTH_BYTES) fluid_real_t local_phase_idx[N_SAMPLES];
 
         /* Lambda to get interpolation sample with boundary handling */
         auto get_sample = [&](unsigned int dsp_phase_index, unsigned int offset) -> fluid_real_t
@@ -389,10 +390,11 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 }
             }
 
-			local_samples_m1[i] = get_sample(phase_index_local, i-1);
-			local_samples_0[i] = get_sample(phase_index_local, i);
-			local_samples_p1[i] = get_sample(phase_index_local, i+1);
-			local_samples_p2[i] = get_sample(phase_index_local, i+2);
+			local_samples_m1[i] = get_sample(phase_index_local, -1);
+			local_samples_0[i] = get_sample(phase_index_local,  +0);
+			local_samples_p1[i] = get_sample(phase_index_local, +1);
+			local_samples_p2[i] = get_sample(phase_index_local, +2);
+            local_phase_idx[i] = static_cast<fluid_real_t>(fluid_phase_fract(phase_local));
 		}
         if (i < CUBIC_INTERP_ORDER)
         {
@@ -401,29 +403,20 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         }
 
         // vectorizable interpolation loop
-        #pragma omp simd aligned(local_samples_m1, local_samples_0, local_samples_p1, local_samples_p2: 64)
+        #pragma omp simd aligned(local_samples_m1, local_samples_0, local_samples_p1, local_samples_p2: VECTORIZATION_WIDTH_BYTES) aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
         for (unsigned int j = 0; j < N_SAMPLES; j++)
         {
-            const fluid_phase_t phase_local = dsp_phase + (dsp_i + j) * dsp_phase_incr;
-
             /* Compute Catmull-Rom spline coefficients, aka cubic interpolation */
-            const fluid_real_t x = fluid_phase_fract(phase_local) * FLUID_FRACT_SCALE;
+            const fluid_real_t x = local_phase_idx[j] * FLUID_FRACT_SCALE;
             const fluid_real_t x2 = x * x;
             const fluid_real_t x3 = x2 * x;
-
-            const fluid_real_t coeffs[CUBIC_INTERP_ORDER] =
-            {
-                -0.5f * x + x2 - 0.5f * x3,       // x*(-0.5 + x*(1 - 0.5*x))
-                1.0f - 2.5f * x2 + 1.5f * x3,     // 1 + x²*(1.5*x - 2.5)
-                0.5f * x + 2.0f * x2 - 1.5f * x3, // x*(0.5 + x*(2 - 1.5*x))
-                -0.5f * x2 + 0.5f * x3            // 0.5*x²*(x - 1)
-            };
+            const fluid_real_t halfx = 0.5f * x;
 
             const fluid_real_t sample =
-                  coeffs[0] * local_samples_m1[j]
-                + coeffs[1] * local_samples_0[j]
-                + coeffs[2] * local_samples_p1[j]
-                + coeffs[3] * local_samples_p2[j];
+             (-halfx       + x2            - 0.5f * x3) * local_samples_m1[j]
+            + (1.0f         - 2.5f * x2     + 1.5f * x3) * local_samples_0[j]
+            + (halfx        + 2.0f * x2     - 1.5f * x3) * local_samples_p1[j]
+            + (             - 0.5f * x2     + 0.5f * x3) * local_samples_p2[j];
 
             dsp_buf[dsp_i + j] = sample;
         }
