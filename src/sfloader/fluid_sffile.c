@@ -29,10 +29,6 @@
 #include <sndfile.h>
 #endif
 
-#if LIBINSTPATCH_SUPPORT
-#include <libinstpatch/libinstpatch.h>
-#endif
-
 /*=================================sfload.c========================
   Borrowed from Smurf SoundFont Editor by Josh Green
   =================================================================*/
@@ -318,23 +314,6 @@ int fluid_is_soundfont(const char *filename)
         {
             break;  // seems to be DLS, stop here
         }
-#endif
-
-#ifdef LIBINSTPATCH_SUPPORT
-        {
-            IpatchFileHandle *fhandle = ipatch_file_identify_open(filename, NULL);
-
-            if(fhandle != NULL)
-            {
-                retcode = (ipatch_file_identify(fhandle->file, NULL) == IPATCH_TYPE_DLS_FILE);
-                ipatch_file_close(fhandle);
-            }
-            if(retcode)
-            {
-                break;
-            }
-        }
-
 #endif
     }
     while(0);

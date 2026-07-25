@@ -30,12 +30,6 @@ find_package(OpenMP REQUIRED)
 	target_link_libraries(fluidsynth INTERFACE
 		libFLAC
 		libfluidsynth-assetloader
-		libgio-2.0
-		libglib-2.0
-		libgmodule-2.0
-		libgobject-2.0
-		libgthread-2.0
-		libinstpatch-1.0
 		liboboe
 		libogg
 		libopus

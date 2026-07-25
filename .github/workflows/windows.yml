@@ -22,12 +22,8 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   INSTALL_LOCATION: fluidsynth_install
-  GTK_BUNDLE_X86: 'http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip'
-  GTK_BUNDLE_X64: 'http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip'
   LIBSNDFILE_URL_X86: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win32.zip'
   LIBSNDFILE_URL_X64: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win64.zip'
-  MINGW_URL_X64: 'https://sourceforge.net/projects/mingw-w64/files/Toolchains%%20targetting%%20Win64/Personal%%20Builds/mingw-builds/8.1.0/threads-win32/sjlj/x86_64-8.1.0-release-win32-sjlj-rt_v6-rev0.7z'
-  MINGW_URL_X86: 'https://sourceforge.net/projects/mingw-w64/files/Toolchains%%20targetting%%20Win32/Personal%%20Builds/mingw-builds/8.1.0/threads-win32/sjlj/i686-8.1.0-release-win32-sjlj-rt_v6-rev0.7z'
   SDL3_URL: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-VC.zip'
 
 jobs:
@@ -40,25 +36,11 @@ jobs:
         include:
           - platform: Win32
             platformAlt: x86
-            osal: "glib"
-            CFLAGS: ""
-            CXXFLAGS: ""
-            CMAKEFLAGS: ""
-            dep_arch: "x86"
-          - platform: Win32
-            platformAlt: x86
             osal: "cpp11"
             CFLAGS: "/arch:IA32"
             CXXFLAGS: "/arch:IA32"
             CMAKEFLAGS: ""
             dep_arch: "x86"
-          - platform: x64
-            platformAlt: x64
-            osal: "glib"
-            CFLAGS: ""
-            CXXFLAGS: ""
-            CMAKEFLAGS: ""
-            dep_arch: "x64"
           - platform: x64
             platformAlt: x64
             osal: "cpp11"
@@ -82,15 +64,9 @@ jobs:
         mkdir d:\deps || exit /b 1
         cd d:\deps || exit /b 1
         if "${{ matrix.dep_arch }}"=="x86" (
-          set GTK_URL=${{ env.GTK_BUNDLE_X86 }}
           set LIBSNDFILE_URL=${{ env.LIBSNDFILE_URL_X86 }}
         ) else (
-          set GTK_URL=${{ env.GTK_BUNDLE_X64 }}
           set LIBSNDFILE_URL=${{ env.LIBSNDFILE_URL_X64 }}
-        )
-        if not "%GTK_URL%"=="" (
-          curl -LfsS -o gtk-bundle-dev.zip "%GTK_URL%" || exit /b 1
-          7z x -aos -- gtk-bundle-dev.zip > NUL || exit /b 1
         )
         if not "%LIBSNDFILE_URL%"=="" (
           curl -LfsS -o libsndfile-dev.zip "%LIBSNDFILE_URL%" || exit /b 1
@@ -123,7 +99,7 @@ jobs:
         cmake -Werror=dev -A ${{ matrix.platform }} -T v143 ^
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
           -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl3=0 ^
-          -Dosal=${{ matrix.osal }} -Denable-libinstpatch=0 -Denable-dls=1 ^
+          -Dosal=${{ matrix.osal }} ^
           ${{ matrix.CMAKEFLAGS }} -DCMAKE_BUILD_TYPE=Release ^
           -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
           -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
@@ -168,13 +144,6 @@ jobs:
         dir
         COPY SDL3.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
         COPY sndfile.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-        if "${{ matrix.osal }}"=="glib" (
-          COPY libglib-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY libgobject-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY libgthread-2.0-0.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY intl.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-          COPY libintl-8.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\
-        )
         exit 0
 
     - name: Validate library
@@ -224,10 +193,10 @@ jobs:
           - CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=0"
             CMAKE_CONFIG: Release
             name: "static_lib"
-          - CMAKE_FLAGS: "-Dosal=cpp11"
+          - CMAKE_FLAGS: "-Denable-native-dls=0 -Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-wasapi=1 -Denable-libsndfile=0 -Denable-floats=1"
             CMAKE_CONFIG: Release
-            name: "osal_cpp11"
-          - CMAKE_FLAGS: "-Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-libsndfile=0 -Denable-floats=1"
+            name: "minimal+WASAPI" # led to a linkage error in the past, that's why we keep it
+          - CMAKE_FLAGS: "-Denable-native-dls=0 -Denable-ipv6=0 -Denable-network=0 -Denable-aufile=0 -Denable-threads=0 -Denable-winmidi=0 -Denable-waveout=0 -Denable-dsound=0 -Denable-wasapi=0 -Denable-libsndfile=0 -Denable-floats=1"
             CMAKE_CONFIG: Release
             name: "minimal"
     
@@ -245,10 +214,6 @@ jobs:
         @ECHO ON
         mkdir d:\deps || exit /b 1
         cd d:\deps || exit /b 1
-        if not "${{ env.GTK_BUNDLE_X64 }}"=="" (
-          curl -LfsS -o gtk-bundle-dev.zip "${{ env.GTK_BUNDLE_X64 }}" || exit /b 1
-          7z x -aos -- gtk-bundle-dev.zip > NUL || exit /b 1
-        )
         if not "${{ env.LIBSNDFILE_URL_X64 }}"=="" (
           curl -LfsS -o libsndfile-dev.zip "${{ env.LIBSNDFILE_URL_X64 }}" || exit /b 1
           7z x -aos -- libsndfile-dev.zip > NUL || exit /b 1
@@ -273,7 +238,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=1 ${{ matrix.CMAKE_FLAGS }} ^
           -DNO_GUI=1 -Dwindows-version=0x0A00 -Denable-jack=0 ^
           -Denable-pulseaudio=0 -Denable-ladspa=0 -Denable-dbus=0 ^
-          -Denable-readline=0 -Denable-sdl3=0 -Denable-libinstpatch=0 .. || exit /b 1
+          -Denable-readline=0 -Denable-sdl3=0 .. || exit /b 1
 
     - name: Build
       shell: cmd
@@ -299,205 +264,12 @@ jobs:
         cd build || exit /b 1
         cmake --build . --config ${{ matrix.CMAKE_CONFIG }} --target demo || exit /b 1
 
-  # MinGW builds migrated from Azure Pipeline WindowsMinGW job 
-  mingw-build:
-    runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0'
-            artifactPrefix: "fluidsynth-mingw1"
-            platform: x86
-            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
-            sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0 -DCMAKE_C_FLAGS="-mfpmath=387" -DCMAKE_CXX_FLAGS="-mfpmath=387"'
-            artifactPrefix: "fluidsynth-mingw2"
-            platform: x86
-            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
-            sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0 -DCMAKE_RC_FLAGS="-F pe-i386" -DCMAKE_C_FLAGS="-m32 -mfpmath=387" -DCMAKE_CXX_FLAGS="-m32 -mfpmath=387"'
-            artifactPrefix: "fluidsynth-mingw"
-            platform: x86
-            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
-            sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: '-Denable-sdl3=0 -Denable-openmp=0 -Denable-libsndfile=0 -DCMAKE_RC_FLAGS="-F pe-i386" -DCMAKE_C_FLAGS="-m32 -mfpmath=387 -ffloat-store" -DCMAKE_CXX_FLAGS="-m32 -mfpmath=387 -ffloat-store"'
-            artifactPrefix: "fluidsynth-mingw-ffloat-store"
-            platform: x86
-            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
-            sdl3-subdir: 'i686-w64-mingw32'
-          - CMAKE_FLAGS: "-Denable-openmp=0"
-            artifactPrefix: "fluidsynth-mingw"
-            platform: x64
-            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
-            sdl3-subdir: 'x86_64-w64-mingw32'
-          - CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=0 -Denable-openmp=0'
-            artifactPrefix: "fluidsynth-mingw-static"
-            platform: x64
-            sdl3-url: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-mingw.tar.gz'
-            sdl3-subdir: 'x86_64-w64-mingw32'
-    
-    name: 🔧 MinGW ${{ matrix.artifactPrefix }} ${{ matrix.platform }}
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-      with:
-        submodules: true
-
-    - name: Setup dependencies
-      shell: cmd
-      run: |
-        @ECHO ON
-        mkdir d:\deps || exit /b 1
-        cd d:\deps || exit /b 1
-        if "${{ matrix.platform }}"=="x86" (
-          set GTK_URL=${{ env.GTK_BUNDLE_X86 }}
-          set LIBSNDFILE_URL=${{ env.LIBSNDFILE_URL_X86 }}
-          set MINGW_URL=${{ env.MINGW_URL_X86 }}
-        ) else (
-          set GTK_URL=${{ env.GTK_BUNDLE_X64 }}
-          set LIBSNDFILE_URL=${{ env.LIBSNDFILE_URL_X64 }}
-          set MINGW_URL=${{ env.MINGW_URL_X64 }}
-        )
-        if not "%GTK_URL%"=="" (
-          curl -LfsS -o gtk-bundle-dev.zip "%GTK_URL%" || exit /b 1
-          7z x -aos -- gtk-bundle-dev.zip > NUL || exit /b 1
-        )
-        if not "%LIBSNDFILE_URL%"=="" (
-          curl -LfsS -o libsndfile-dev.zip "%LIBSNDFILE_URL%" || exit /b 1
-          7z x -aos -- libsndfile-dev.zip > NUL || exit /b 1
-        )
-        if not "%MINGW_URL%"=="" (
-          curl -LfsS -o mingw.zip "%MINGW_URL%" || exit /b 1
-          7z x -aos -- mingw.zip > NUL || exit /b 1
-        )
-        curl -LfsS -o sdl3.tar.gz "${{ matrix.sdl3-url }}" || exit /b 1
-        tar xzf sdl3.tar.gz > NUL || exit /b 1
-        del *.zip *.tar.gz 2>nul
-        if exist SDL3-* (
-          cd SDL3-*
-          xcopy /E /I /Y * ..
-          cd ..
-          rmdir /S /Q SDL3-*
-        )
-        if exist libsndfile-* (
-          cd libsndfile-*
-          xcopy /E /I /Y * ..
-          cd ..
-          rmdir /S /Q libsndfile-*
-        )
-        if exist mingw* (
-          cd mingw*
-          xcopy /E /I /Y * ..
-          cd ..
-          rmdir /S /Q mingw*
-        )
-        DEL /F C:\Strawberry\perl\bin\pkg-config.bat
-
-    - name: Configure CMake
-      shell: cmd
-      run: |
-        @ECHO ON
-        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
-        REM remove Git paths to avoid sh.exe conflicts
-        set PATH=%PATH:C:\Program Files\Git\bin;=%
-        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-        pkg-config --list-all || echo pkg-config failed
-        mkdir build && cd build || exit /b 1
-        cmake -Werror=dev -G "MinGW Makefiles" ^
-          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
-          ${{ matrix.CMAKE_FLAGS }} -Denable-readline=0 -Denable-floats=1 ^
-          -Denable-jack=0 -Denable-pulseaudio=0 -Denable-ladspa=0 ^
-          -Denable-dbus=0 -DCMAKE_BUILD_TYPE=Release ^
-          -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
-
-    - name: Build
-      shell: cmd
-      run: |
-        @ECHO ON
-        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
-        set PATH=%PATH:C:\Program Files\Git\bin;=%
-        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-        cd build || exit /b 1
-        mingw32-make.exe -j3 all || exit /b 1
-
-    - name: Test
-      shell: cmd
-      run: |
-        @ECHO ON
-        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
-        set PATH=%PATH:C:\Program Files\Git\bin;=%
-        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-        cd build || exit /b 1
-        mingw32-make.exe -j4 check || exit /b 1
-
-    - name: Demo
-      shell: cmd
-      run: |
-        @ECHO ON
-        SET "PATH=d:\deps\bin;d:\deps\${{ matrix.sdl3-subdir }}\bin;%PATH%"
-        set PATH=%PATH:C:\Program Files\Git\bin;=%
-        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-        cd build || exit /b 1
-        mingw32-make.exe -j4 demo || exit /b 1
-
-    - name: Install
-      shell: cmd
-      run: |
-        @ECHO ON
-        cd build
-        mingw32-make.exe install || exit /b 1
-        xcopy d:\deps\bin\libgcc_s_sjlj-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
-        xcopy d:\deps\bin\libgcc_s_seh-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
-        xcopy d:\deps\bin\libgomp-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
-        xcopy d:\deps\bin\libstdc++-6.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
-        xcopy d:\deps\bin\libwinpthread-1.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
-        xcopy d:\deps\${{ matrix.sdl3-subdir }}\bin\SDL3.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" /Y 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll" 2>nul
-        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll" 2>nul
-
-    - name: Validate library (shared)
-      if: ${{ !contains(matrix.artifactPrefix, 'static') }}
-      shell: bash
-      working-directory: ${{ env.INSTALL_LOCATION }}
-      run: |
-        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.dll.a" ]; then
-          echo "Fluidsynth library has unexpected filename!"
-          ls -la . bin lib
-          exit 1
-        fi
-
-    - name: Validate library (static)
-      if: ${{ contains(matrix.artifactPrefix, 'static') }}
-      shell: bash
-      working-directory: ${{ env.INSTALL_LOCATION }}
-      run: |
-        if [ ! -f "lib/libfluidsynth-3.a" ]; then
-          echo "Fluidsynth static library has unexpected filename!"
-          ls -la . bin lib
-          exit 1
-        fi
-
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v7
-      with:
-        name: CI-${{ github.run_id }}-mingw-${{ matrix.artifactPrefix }}-${{ matrix.platform }}
-        path: ${{ env.INSTALL_LOCATION }}
-        retention-days: 14
-        overwrite: true
-
   msys2-build:
     runs-on: windows-2022
     strategy:
         fail-fast: false
         matrix:
           include:
-            - { icon: '⬛', sys: mingw32, osal: glib }
-            - { icon: '🟦', sys: mingw64, osal: glib }
-            - { icon: '🟨', sys: ucrt64, osal: glib }
-            - { icon: '🟧', sys: clang64, osal: glib }
             - { icon: '⬛', sys: mingw32, osal: cpp11 }
             - { icon: '🟦', sys: mingw64, osal: cpp11 }
             - { icon: '🟨', sys: ucrt64, osal: cpp11 }
@@ -524,7 +296,6 @@ jobs:
           toolchain:p
           cmake:p
           ninja:p
-          glib2:p
           libsndfile:p
 
     - name: '${{ matrix.icon }} Configure CMake'
@@ -563,7 +334,6 @@ jobs:
     needs:
     - msvc-build
     - msys2-build
-    - mingw-build
     strategy:
       fail-fast: false
       matrix:  # https://github.com/actions/runner-images#available-images

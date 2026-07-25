@@ -22,11 +22,6 @@
 
 #include "config.h"
 
-// Hack to prevent inclusion of glib here
-#ifdef OSAL_glib
-#undef OSAL_glib
-#endif
-
 #include "fluid_rev.h"
 
 #if defined(WITH_FLOAT)

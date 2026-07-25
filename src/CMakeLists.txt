@@ -101,10 +101,6 @@ if ( ENABLE_NATIVE_DLS )
   set ( fluid_dls_SOURCES sfloader/fluid_dls.cpp sfloader/fluid_dls.h )
 endif ( ENABLE_NATIVE_DLS )
 
-if ( LIBINSTPATCH_SUPPORT )
-  set ( fluid_libinstpatch_SOURCES sfloader/fluid_instpatch.c sfloader/fluid_instpatch.h )
-endif ( LIBINSTPATCH_SUPPORT )
-
 if ( OPENSLES_SUPPORT )
   set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
 endif ( OPENSLES_SUPPORT )
@@ -252,6 +248,13 @@ set ( fluid_file_SOURCES
     utils/fluid_file.cpp
 )
 
+if ( LADSPA_SUPPORT )
+    set ( fluid_module_SOURCES
+        utils/fluid_module.h
+        utils/fluid_module.cpp
+    )
+endif ( LADSPA_SUPPORT )
+
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set_source_files_properties(rvoice/fluid_iir_filter_impl.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
 elseif ( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
@@ -319,9 +322,9 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_winmidi_SOURCES}
     ${fluid_sdl3_SOURCES}
     ${fluid_dls_SOURCES}
-    ${fluid_libinstpatch_SOURCES}
     ${fluid_osal_SOURCES}
     ${fluid_file_SOURCES}
+    ${fluid_module_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -442,10 +445,6 @@ if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
 endif()
 
-if ( TARGET GLib2::glib-2 )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::glib-2 GLib2::gthread-2 )
-endif()
-
 if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SndFile::sndfile )
 endif()
@@ -476,14 +475,6 @@ if ( TARGET dbus-1 AND DBUS_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC dbus-1 )
 endif()
 
-if ( TARGET GLib2::gmodule-2 AND LADSPA_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::gmodule-2 )
-endif()
-
-if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
-endif()
-
 if ( SDL3_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
 endif()
@@ -511,6 +502,15 @@ endif ( MIDISHARE_SUPPORT )
 if ( OPENSLES_SUPPORT )
     target_link_libraries( libfluidsynth-OBJ PUBLIC OpenSLES::OpenSLES )
 endif ( OPENSLES_SUPPORT )
+
+if ( LADSPA_SUPPORT AND NOT WIN32 )
+    # dlopen/dlclose/dlsym are in libdl on Linux and some BSDs,
+    # but built into libc on macOS and FreeBSD.
+    find_library ( DL_LIBRARY NAMES dl )
+    if ( DL_LIBRARY )
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC ${DL_LIBRARY} )
+    endif ( DL_LIBRARY )
+endif ( LADSPA_SUPPORT AND NOT WIN32 )
 
 # This doesn't install any object file at all!
 # it is only a trick for exporting targets
@@ -590,10 +590,6 @@ endif()
 
 if ( TARGET Systemd::libsystemd AND SYSTEMD_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE Systemd::libsystemd )
-endif()
-
-if ( TARGET GLib2::glib-2 ) # because g_file_test()
-    target_link_libraries ( fluidsynth PRIVATE GLib2::glib-2 )
 endif()
 
 if ( SDL3_SUPPORT )

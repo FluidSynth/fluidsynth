@@ -23,12 +23,10 @@
 #include <filesystem>
 #endif
 
-#if OSAL_glib || OSAL_cpp11
+#if OSAL_cpp11
 bool fluid_file_test(const char *path, int flags)
 {
-#if OSAL_glib
-    return g_file_test(path, static_cast<GFileTest>(flags));
-#elif OSAL_cpp11 && HAVE_CXX_FILESYSTEM
+#if OSAL_cpp11 && HAVE_CXX_FILESYSTEM
     try
     {
         std::filesystem::path _path = std::filesystem::u8path(path);

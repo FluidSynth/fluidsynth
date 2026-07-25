@@ -26,7 +26,6 @@
 #include "fluid_sfont.h"
 #include "fluid_defsfont.h"
 #include "fluid_dls.h"
-#include "fluid_instpatch.h"
 #include "fluid_audio_convert.h"
 #include "fluid_rev.h"
 
@@ -543,14 +542,6 @@ fluid_synth_init(void)
     // pitch wheel --(rpn 0)-> pitch 12800 cents
     fluid_mod_clone(&DLS_default_pitch_bend_mod, &default_pitch_bend_mod);
     fluid_mod_set_amount(&DLS_default_pitch_bend_mod, 12800);
-
-#if defined(LIBINSTPATCH_SUPPORT)
-    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
-    if(!fluid_instpatch_supports_multi_init())
-    {
-        fluid_instpatch_init();
-    }
-#endif
 }
 
 unsigned int fluid_synth_get_ticks(fluid_synth_t *synth)
@@ -748,13 +739,6 @@ new_fluid_synth(fluid_settings_t *settings)
     }
 
     FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
-
-#if defined(LIBINSTPATCH_SUPPORT)
-    if(fluid_instpatch_supports_multi_init())
-    {
-        fluid_instpatch_init();
-    }
-#endif
 
     fluid_rec_mutex_init(synth->mutex);
     fluid_settings_getint(settings, "synth.threadsafe-api", &synth->use_mutex);
@@ -1067,21 +1051,6 @@ new_fluid_synth(fluid_settings_t *settings)
         FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with limiter support");
 #endif /* SIGNALSMITH_SUPPORT */
     }
-
-
-    /* allocate and add the dls sfont loader */
-#ifdef LIBINSTPATCH_SUPPORT
-    loader = new_fluid_instpatch_loader(settings);
-
-    if(loader == NULL)
-    {
-        FLUID_LOG(FLUID_WARN, "Failed to create the instpatch SoundFont loader");
-    }
-    else
-    {
-        fluid_synth_add_sfloader(synth, loader);
-    }
-#endif
 
 #ifdef ENABLE_NATIVE_DLS
     loader = new_fluid_dls_loader(synth, settings);
@@ -1431,13 +1400,6 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_rec_mutex_destroy(synth->mutex);
 
     FLUID_FREE(synth);
-
-#if defined(LIBINSTPATCH_SUPPORT)
-    if(fluid_instpatch_supports_multi_init())
-    {
-        fluid_instpatch_deinit();
-    }
-#endif
 }
 
 /**
@@ -5327,7 +5289,6 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth)
 
     for(i = 0; i < synth->polyphony; i++)
     {
-
         voice = synth->voice[i];
 
         /* safeguard against an available voice. */
@@ -5349,11 +5310,12 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth)
 
     if(best_voice_index < 0)
     {
+        FLUID_LOG(FLUID_DBG, "Polyphony exceeded, failed to find a suitable voice to kill");
         return NULL;
     }
 
     voice = synth->voice[best_voice_index];
-    FLUID_LOG(FLUID_DBG, "Killing voice %d, index %d, chan %d, key %d ",
+    FLUID_LOG(FLUID_DBG, "Polyphony exceeded, killing voice %d, index %d, chan %d, key %d ",
               fluid_voice_get_id(voice), best_voice_index, fluid_voice_get_channel(voice), fluid_voice_get_key(voice));
     fluid_voice_off(voice);
 
@@ -5398,22 +5360,8 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
     fluid_channel_t *channel = NULL;
     unsigned int ticks;
 
-    /* check if there's an available synthesis process */
-    for(i = 0; i < synth->polyphony; i++)
-    {
-        if(_AVAILABLE(synth->voice[i]))
-        {
-            voice = synth->voice[i];
-            break;
-        }
-    }
-
-    /* No success yet? Then stop a running voice. */
-    if(voice == NULL)
-    {
-        FLUID_LOG(FLUID_DBG, "Polyphony exceeded, trying to kill a voice");
-        voice = fluid_synth_free_voice_by_kill_LOCAL(synth);
-    }
+    /* check if there's an available voice or kill one */
+    voice = fluid_synth_free_voice_by_kill_LOCAL(synth);
 
     if(voice == NULL)
     {

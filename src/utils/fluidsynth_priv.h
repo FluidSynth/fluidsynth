@@ -30,10 +30,6 @@
 
 #include "config.h"
 
-#if OSAL_glib
-#include <glib.h>
-#endif
-
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
 #endif
@@ -70,9 +66,6 @@ typedef double fluid_real_t;
 #if defined(SUPPORTS_VLA)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
-#elif OSAL_glib
-#  define FLUID_DECLARE_VLA(_type, _name, _len) \
-     _type* _name = g_newa(_type, (_len))
 #else
 #  ifdef _WIN32
 #    define alloca _alloca
@@ -246,10 +239,6 @@ do { strncpy(_dst,_src,_n-1); \
  * null-terminate the buffer when the formatted string does not fit into the
  * buffer.
  */
-#if OSAL_glib
-#define FLUID_VSNPRINTF        g_vsnprintf
-#else
-
 #include <stdarg.h>
 
 #define FLUID_VSNPRINTF        _fluid_vsnprintf
@@ -265,16 +254,12 @@ _fluid_vsnprintf(char *buffer, size_t count, const char *format, va_list args)
         buffer[count - 1] = 0;
     return length;
 }
-#endif
 
 #else
 #define FLUID_VSNPRINTF          vsnprintf
 #endif
 
 #if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1900) || defined(MINGW32)
-#if OSAL_glib
-#define FLUID_SNPRINTF         g_snprintf
-#else
 #define FLUID_SNPRINTF         _fluid_snprintf
 
 static inline int
@@ -287,7 +272,6 @@ _fluid_snprintf(char *buffer, size_t count, const char *format, ...)
     va_end(args);
     return length;
 }
-#endif
 
 #else
 #define FLUID_SNPRINTF           snprintf
@@ -334,13 +318,8 @@ _fluid_snprintf(char *buffer, size_t count, const char *format, ...)
 #define FLUID_ASSERT(a)
 #endif
 
-#if OSAL_glib
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
-#else
 #define FLUID_LIKELY(x) (x)
 #define FLUID_UNLIKELY(x) (x)
-#endif
 
 /* Misc */
 #define FLUID_INLINE inline
