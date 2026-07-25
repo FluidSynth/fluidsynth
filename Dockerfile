@@ -9,10 +9,10 @@ RUN zypper refresh && zypper install --no-recommends -y sudo shadow util-linux
 
 # fluidsynths core dependencies + sox and awk for regression tests
 RUN zypper refresh && zypper --non-interactive install --no-recommends \
-  git bash findutils gawk ladspa-devel readline-devel \
-  cmake pkg-config make gcc-c++ clang alsa-devel libjack-devel pipewire-devel readline-devel libsndfile-devel SDL3-devel libasan8 \
-  doxygen astyle gdb sox ninja \
-  glib2-devel # allowing builds of legacy fluidsynth versions
+  git bash findutils gawk cmake pkg-config make ninja gcc-c++ clang libasan8 libgomp1 \
+  alsa-devel libjack-devel pipewire-devel ladspa-devel readline-devel libsndfile-devel SDL3-devel portaudio-devel libpulse-devel dbus-1-devel \
+  doxygen astyle gdb sox gcovr \
+  glib2-devel libinstpatch-devel # allowing builds of legacy fluidsynth versions for regression testing, git bisecting, etc.
 
 # Documentation build dependencies:
 #   python3 + pipx     -- for zensical
