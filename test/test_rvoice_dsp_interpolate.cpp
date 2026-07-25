@@ -19,6 +19,7 @@
 
 #include "test.h"
 #include "rvoice/fluid_rvoice.h"
+#include "rvoice/fluid_rvoice_dsp_tables.h"
 #include "sfloader/fluid_sfont.h"
 
 #include <cstring>
@@ -45,7 +46,7 @@ static const fluid_real_t DSP_SCALE = (fluid_real_t)256.0;
 
 /* Polynomial interpolators (NONE, LINEAR, 4TH ORDER) are exact for their
  * respective polynomial degrees. Tolerance covers table quantization. */
-static const fluid_real_t TOL_POLY = (fluid_real_t)1.0;
+static const fluid_real_t TOL_POLY = (fluid_real_t)0.01;
 
 /* 7th-order sinc has energy smearing at fractional positions.
  * At integer positions it's more accurate, but fractional positions
@@ -451,6 +452,7 @@ static void test_D_loop_boundary_constant_sample(void)
  *
  * Verify that wrap-around samples come from the correct loop positions.
  * ========================================================================= */
+extern "C" const fluid_real_t* const sinc_table7;
 static void test_E_loop_boundary_ramp_wrap(void)
 {
     printf("Test E: Loop boundary wrap (periodic ramp)\n");
@@ -468,41 +470,110 @@ static void test_E_loop_boundary_ramp_wrap(void)
     const double phase_start = (double)(LOOP_END - 2);
     const double phase_incr = 0.25;
 
-    fluid_rvoice_t  rvoice;
-    fluid_sample_t  samp;
-    fluid_real_t    buf[FLUID_BUFSIZE];
-    memset(buf, 0, sizeof(buf));
+    const fluid_interp modes[] = { FLUID_INTERP_LINEAR,
+                                   FLUID_INTERP_4THORDER,FLUID_INTERP_NONE,
+                                   /*FLUID_INTERP_7THORDER*/ };
 
-    setup_rvoice_16bit(&rvoice, &samp, data,
-        phase_start, phase_incr,
-        LOOP_START, LOOP_END,
-        1, FLUID_INTERP_LINEAR);
-
-    int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
-    TEST_ASSERT(count == FLUID_BUFSIZE);
-
-    double phase_d = phase_start;
-    for (int i = 0; i < count; i++)
+    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
     {
-        int idx = (int)phase_d;
-        double frac = phase_d - idx;
+        fluid_rvoice_t  rvoice;
+        fluid_sample_t  samp;
+        fluid_real_t    buf[FLUID_BUFSIZE];
+        memset(buf, 0, sizeof(buf));
 
-        while (idx >= LOOP_END)  idx -= loop_len;
-        while (idx < LOOP_START) idx += loop_len;
+        setup_rvoice_16bit(&rvoice, &samp, data,
+            phase_start, phase_incr,
+            LOOP_START, LOOP_END,
+            1, modes[m]);
 
-        int next_idx = idx + 1;
-        if (next_idx >= LOOP_END) next_idx = LOOP_START;
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+        TEST_ASSERT(count == FLUID_BUFSIZE);
 
-        fluid_real_t s0 = (fluid_real_t)data[idx];
-        fluid_real_t s1 = (fluid_real_t)data[next_idx];
-        fluid_real_t expected = s0 + (fluid_real_t)frac * (s1 - s0);
+		fluid_real_t sample_ring_buffer[FLUID_INTERP_HIGHEST + 1];
+		fluid_real_t* s = &sample_ring_buffer[FLUID_N_ELEMENTS(sample_ring_buffer) / 2];
+        double phase_d = phase_start;
+        for (int i = 0; i < count; i++)
+        {
+            int idx = (int)phase_d;
+            double frac = phase_d - idx;
 
-        test_sample_eq(buf[i], expected, TOL_POLY, i);
+            while (idx >= LOOP_END)  idx -= loop_len;
+            while (idx < LOOP_START) idx += loop_len;
+            s[0] = (fluid_real_t)data[idx];
+            
+            int prev_idx = idx;
+            --prev_idx;
+            if (prev_idx < LOOP_START) prev_idx += loop_len;
+            s[-1] = (fluid_real_t)data[prev_idx];
 
-        phase_d += phase_incr;
-        while (phase_d >= (double)LOOP_END) phase_d -= loop_len;
+            --prev_idx;
+            if (prev_idx < LOOP_START) prev_idx += loop_len;
+            s[-2] = (fluid_real_t)data[prev_idx];
+
+            --prev_idx;
+            if (prev_idx < LOOP_START) prev_idx += loop_len;
+            s[-3] = (fluid_real_t)data[prev_idx];
+
+            int next_idx = idx + 1;
+            if (next_idx >= LOOP_END) next_idx = LOOP_START;
+            s[1] = (fluid_real_t)data[next_idx];
+
+            ++next_idx;
+            if (next_idx >= LOOP_END) next_idx = LOOP_START;
+            s[2] = (fluid_real_t)data[next_idx];
+
+            ++next_idx;
+            if (next_idx >= LOOP_END) next_idx = LOOP_START;
+            s[3] = (fluid_real_t)data[next_idx];
+
+            fluid_real_t expected;
+            switch (modes[m])
+            {
+            case FLUID_INTERP_NONE:
+				expected = (frac < 0.5) ? s[0] : s[1];
+				break;
+            case FLUID_INTERP_LINEAR:
+                expected = s[0] + (fluid_real_t)frac * (s[1] - s[0]);
+                break;
+            case FLUID_INTERP_4THORDER:
+                {
+                    /* Compute Catmull-Rom spline coefficients, aka cubic interpolation */
+                    const fluid_real_t x = frac;
+                    const fluid_real_t x2 = x * x;
+                    const fluid_real_t x3 = x2 * x;
+                    const fluid_real_t halfx = 0.5f * x;
+
+                    expected =
+                          (-halfx + x2 - 0.5f * x3) * s[-1]
+                        + (1.0f - 2.5f * x2 + 1.5f * x3) * s[0]
+                        + (halfx + 2.0f * x2 - 1.5f * x3) * s[1]
+                        + (-0.5f * x2 + 0.5f * x3) * s[2];
+                }
+                break;
+			case FLUID_INTERP_7THORDER:
+			{
+				/* Use precomputed sinc table for 7th-order interpolation */
+				//const int table_row = frac * FLUID_INTERP_MAX;
+				//const fluid_real_t* coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
+				//expected =
+				//	coeffs[0] * s[-3] +
+				//	coeffs[1] * s[-2] +
+				//	coeffs[2] * s[-1] +
+				//	coeffs[3] * s[0] +
+				//	coeffs[4] * s[1] +
+				//	coeffs[5] * s[2] +
+				//	coeffs[6] * s[3];
+			}
+			break;
+            }
+
+            test_sample_eq(buf[i], expected, TOL_POLY, i);
+
+            phase_d += phase_incr;
+            while (phase_d >= (double)LOOP_END) phase_d -= loop_len;
+        }
+        printf("  %s: PASS (%d samples)\n", interp_name(modes[m]), count);
     }
-    printf("  LINEAR: PASS\n");
 }
 
 /* =========================================================================
