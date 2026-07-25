@@ -65,22 +65,17 @@ enum fluid_voice_status
  */
 struct _fluid_voice_t
 {
-    unsigned int id;                /* the id is incremented for every new noteon.
-					   it's used for noteoff's  */
     unsigned char status;
+    unsigned char can_access_rvoice; /* False if rvoice is being rendered in separate thread */
+    unsigned char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
     unsigned char chan;             /* the channel number, quick access for channel messages */
     unsigned char key;              /* the key of the noteon event, quick access for noteoff */
     unsigned char vel;              /* the velocity of the noteon event */
-    fluid_channel_t *channel;
-    fluid_rvoice_eventhandler_t *eventhandler;
-    fluid_zone_range_t *zone_range;  /* instrument zone range*/
-    fluid_sample_t *sample;          /* Pointer to sample (dupe in rvoice) */
-    fluid_sample_t *overflow_sample; /* Pointer to sample (dupe in overflow_rvoice) */
-
+    unsigned char has_noteoff; /* Flag set when noteoff has been sent */
+    unsigned int id;                /* the id is incremented for every new noteon.
+					   it's used for noteoff's  */
     unsigned int start_time;
-    int mod_count;
-    fluid_mod_t mod[FLUID_NUM_MOD];
-    fluid_gen_t gen[GEN_LAST];
+    fluid_channel_t *channel;
 
     /* basic parameters */
     fluid_real_t output_rate;        /* the sample rate of the synthesizer (dupe in rvoice) */
@@ -108,9 +103,15 @@ struct _fluid_voice_t
     /* rvoice control */
     fluid_rvoice_t *rvoice;
     fluid_rvoice_t *overflow_rvoice; /* Used temporarily and only in overflow situations */
-    char can_access_rvoice; /* False if rvoice is being rendered in separate thread */
-    char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
-    char has_noteoff; /* Flag set when noteoff has been sent */
+
+    fluid_rvoice_eventhandler_t *eventhandler;
+    fluid_zone_range_t *zone_range;  /* instrument zone range*/
+    fluid_sample_t *sample;          /* Pointer to sample (dupe in rvoice) */
+    fluid_sample_t *overflow_sample; /* Pointer to sample (dupe in overflow_rvoice) */
+
+    int mod_count;
+    fluid_mod_t mod[FLUID_NUM_MOD];
+    fluid_gen_t gen[GEN_LAST];
 
     /* user callback */
     fluid_voice_callback_t callback;
@@ -192,8 +193,7 @@ fluid_voice_unlock_rvoice(fluid_voice_t *voice)
     voice->can_access_rvoice = 1;
 }
 
-#define _AVAILABLE(voice)  ((voice)->can_access_rvoice && \
- (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
+#define _AVAILABLE(voice)  ((((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)) && (voice)->can_access_rvoice)
 //#define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 

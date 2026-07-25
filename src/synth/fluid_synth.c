@@ -5327,7 +5327,6 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth)
 
     for(i = 0; i < synth->polyphony; i++)
     {
-
         voice = synth->voice[i];
 
         /* safeguard against an available voice. */
@@ -5349,11 +5348,12 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth)
 
     if(best_voice_index < 0)
     {
+        FLUID_LOG(FLUID_DBG, "Polyphony exceeded, failed to find a suitable voice to kill");
         return NULL;
     }
 
     voice = synth->voice[best_voice_index];
-    FLUID_LOG(FLUID_DBG, "Killing voice %d, index %d, chan %d, key %d ",
+    FLUID_LOG(FLUID_DBG, "Polyphony exceeded, killing voice %d, index %d, chan %d, key %d ",
               fluid_voice_get_id(voice), best_voice_index, fluid_voice_get_channel(voice), fluid_voice_get_key(voice));
     fluid_voice_off(voice);
 
@@ -5398,22 +5398,8 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
     fluid_channel_t *channel = NULL;
     unsigned int ticks;
 
-    /* check if there's an available synthesis process */
-    for(i = 0; i < synth->polyphony; i++)
-    {
-        if(_AVAILABLE(synth->voice[i]))
-        {
-            voice = synth->voice[i];
-            break;
-        }
-    }
-
-    /* No success yet? Then stop a running voice. */
-    if(voice == NULL)
-    {
-        FLUID_LOG(FLUID_DBG, "Polyphony exceeded, trying to kill a voice");
-        voice = fluid_synth_free_voice_by_kill_LOCAL(synth);
-    }
+    /* check if there's an available voice or kill one */
+    voice = fluid_synth_free_voice_by_kill_LOCAL(synth);
 
     if(voice == NULL)
     {

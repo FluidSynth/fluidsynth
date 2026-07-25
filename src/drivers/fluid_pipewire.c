@@ -27,6 +27,7 @@
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
+#include <time.h>
 
 #if PIPEWIRE_SUPPORT
 
@@ -47,14 +48,33 @@ typedef struct
     float *lbuf, *rbuf;
 
     int buffer_period;
+    int audio_periods;
     struct spa_pod_builder *builder;
 
     struct pw_thread_loop *pw_loop;
+    struct pw_context *pw_context;
+    struct pw_core *pw_core;
     struct pw_stream *pw_stream;
     struct pw_stream_events *events;
+    struct spa_hook stream_listener;
+    struct spa_hook core_listener;
 
 } fluid_pipewire_audio_driver_t;
 
+// #define PROFILE_PIPEWIRE 1
+
+static void on_core_error(void *data, uint32_t id, int seq, int res, const char *message)
+{
+    FLUID_LOG(FLUID_ERR, "PipeWire error: id=%u seq=%d res=%d (%s): %s",
+              id, seq, res, strerror(res), message ? message : "(null)");
+
+    (void)data;
+}
+
+static const struct pw_core_events core_events = {
+    .version = PW_VERSION_CORE_EVENTS,
+    .error = on_core_error,
+};
 
 /* Fast-path rendering routine with no user processing callbacks */
 static void fluid_pipewire_event_process(void *data)
@@ -63,7 +83,21 @@ static void fluid_pipewire_event_process(void *data)
     struct pw_buffer *pwb;
     struct spa_buffer *buf;
     float *dest;
+#ifdef PROFILE_PIPEWIRE
+    struct timespec ts_now, ts_write_start, ts_write_end;
+    static struct timespec ts_last_call = {0, 0};
 
+    clock_gettime(CLOCK_MONOTONIC, &ts_now);
+
+    if(ts_last_call.tv_sec != 0 || ts_last_call.tv_nsec != 0)
+    {
+        double interval_ms = (ts_now.tv_sec - ts_last_call.tv_sec) * 1000.0
+                             + (ts_now.tv_nsec - ts_last_call.tv_nsec) / 1.0e6;
+        FLUID_LOG(FLUID_INFO, "pipewire process: interval since last call: %.3f ms", interval_ms);
+    }
+
+    ts_last_call = ts_now;
+#endif
     pwb = pw_stream_dequeue_buffer(drv->pw_stream);
 
     if(!pwb)
@@ -80,10 +114,23 @@ static void fluid_pipewire_event_process(void *data)
         return;
     }
 
+#ifdef PROFILE_PIPEWIRE
+    clock_gettime(CLOCK_MONOTONIC, &ts_write_start);
+#endif
     fluid_synth_write_float(drv->data, drv->buffer_period, dest, 0, 2, dest, 1, 2);
+#ifdef PROFILE_PIPEWIRE
+    clock_gettime(CLOCK_MONOTONIC, &ts_write_end);
+    {
+        double write_ms = (ts_write_end.tv_sec - ts_write_start.tv_sec) * 1000.0
+                          + (ts_write_end.tv_nsec - ts_write_start.tv_nsec) / 1.0e6;
+        FLUID_LOG(FLUID_INFO, "pipewire process: fluid_synth_write_float took: %.3f ms for %d frames", write_ms, drv->buffer_period);
+    }
+#endif
+
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = drv->buffer_period * stride;
+    pwb->size = drv->buffer_period;
 
     pw_stream_queue_buffer(drv->pw_stream, pwb);
 }
@@ -129,6 +176,7 @@ static void fluid_pipewire_event_process2(void *data)
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = drv->buffer_period * stride;
+    pwb->size = drv->buffer_period;
 
     pw_stream_queue_buffer(drv->pw_stream, pwb);
 }
@@ -143,10 +191,13 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
 {
     fluid_pipewire_audio_driver_t *drv;
     int period_size;
+    int periods;
+    int max_latency_frames;
     int buffer_length;
     int res;
     int pw_flags;
     int realtime_prio = 0;
+    int async = 0;
     double sample_rate;
     char *media_role = NULL;
     char *media_type = NULL;
@@ -166,15 +217,20 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     FLUID_MEMSET(drv, 0, sizeof(*drv));
 
     fluid_settings_getint(settings, "audio.period-size", &period_size);
+    fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.realtime-prio", &realtime_prio);
+    fluid_settings_getint(settings, "audio.pipewire.async", &async);
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_dupstr(settings, "audio.pipewire.media-role", &media_role);
     fluid_settings_dupstr(settings, "audio.pipewire.media-type", &media_type);
     fluid_settings_dupstr(settings, "audio.pipewire.media-category", &media_category);
 
+    max_latency_frames = period_size * periods;
+
     drv->data = data;
     drv->user_callback = func;
     drv->buffer_period = period_size;
+    drv->audio_periods = periods;
 
     drv->events = FLUID_NEW(struct pw_stream_events);
 
@@ -196,23 +252,46 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
         goto driver_cleanup;
     }
 
+    drv->pw_context = pw_context_new(pw_thread_loop_get_loop(drv->pw_loop),
+                                         NULL, 0);
+
+    if(!drv->pw_context)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire context");
+        goto driver_cleanup;
+    }
+
+    drv->pw_core = pw_context_connect(drv->pw_context, NULL, 0);
+
+    if(!drv->pw_core)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to connect to PipeWire");
+        goto driver_cleanup;
+    }
+    
+    spa_zero(drv->core_listener);
+    pw_core_add_listener(drv->pw_core, &drv->core_listener,
+                            &core_events, NULL);
+
     props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL);
-
-    pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", period_size, (int) sample_rate);
+    pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", max_latency_frames, (int) sample_rate);
     pw_properties_setf(props, PW_KEY_NODE_RATE, "1/%d", (int) sample_rate);
+    if(async)
+    {
+        pw_properties_set(props, PW_KEY_NODE_ASYNC, "true");
+    }
 
-    drv->pw_stream = pw_stream_new_simple(
-                         pw_thread_loop_get_loop(drv->pw_loop),
-                         "FluidSynth",
-                         props,
-                         drv->events,
-                         drv);
+    drv->pw_stream = pw_stream_new(drv->pw_core, "FluidSynth", props);
 
     if(!drv->pw_stream)
     {
         FLUID_LOG(FLUID_ERR, "Failed to allocate PipeWire stream");
         goto driver_cleanup;
     }
+
+    spa_zero(drv->stream_listener);
+    pw_stream_add_listener(drv->pw_stream, &drv->stream_listener,
+                            drv->events, drv);
 
     buffer = FLUID_ARRAY(float, NUM_CHANNELS * period_size);
 
@@ -304,6 +383,16 @@ void delete_fluid_pipewire_audio_driver(fluid_audio_driver_t *p)
         pw_stream_destroy(drv->pw_stream);
     }
 
+    if(drv->pw_core)
+    {
+        pw_core_disconnect(drv->pw_core);
+    }
+
+    if(drv->pw_context)
+    {
+        pw_context_destroy(drv->pw_context);
+    }
+
     if(drv->pw_loop)
     {
         pw_thread_loop_unlock(drv->pw_loop);
@@ -330,6 +419,7 @@ void fluid_pipewire_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.pipewire.media-role", "Music", 0);
     fluid_settings_register_str(settings, "audio.pipewire.media-type", "Audio", 0);
     fluid_settings_register_str(settings, "audio.pipewire.media-category", "Playback", 0);
+    fluid_settings_register_int(settings, "audio.pipewire.async", 1, 0, 1, 0);
 }
 
 #endif

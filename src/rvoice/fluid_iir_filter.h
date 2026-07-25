@@ -105,7 +105,7 @@ void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t 
 void fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter);
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
-                           fluid_real_t output_rate, fluid_real_t fres_mod);
+                           fluid_real_t max_fres_ct, fluid_real_t fres_mod);
 
 void fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                             fluid_iir_filter_t *custom_filter,
