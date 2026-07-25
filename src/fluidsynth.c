@@ -931,7 +931,11 @@ int main(int argc, char **argv)
                 i = fluid_synth_sfload(synth, u8_path, 1);
                 if(i == FLUID_FAILED)
                 {
-                    fprintf(stderr, "Failed to load the SoundFont %s\n", u8_path);
+                    fprintf(stderr, "Fatal: Failed to load the SoundFont %s\n", u8_path);
+                    // New in 2.6.0: if a soundfont fails to load, treat it as fatal error.
+                    // Otherwise, fluidsynth might attempt to load the default-soundfont, which hides the error and
+                    // might be highly confusing to the user.
+                    goto cleanup;
                 }
                 else
                 {
@@ -969,7 +973,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                if(verbose)
+                if(!quiet)
                 {
                     fprintf(stdout, "No SoundFont specified, loading default SoundFont '%s'\n", s);
                 }

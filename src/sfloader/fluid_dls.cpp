@@ -1487,6 +1487,11 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         throw std::runtime_error{ "Rewind to start of file failed" };
     }
 
+    if(filesize < 12)
+    {
+        throw std::runtime_error{ "File too short! (< 12 bytes)" };
+    }
+
     // Parse DLS
     // chunk: RIFF[DLS ]
     // subchunk: ...
@@ -1504,21 +1509,36 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     if(chunk.id != DLS_FCC)
     {
-        throw std::runtime_error{ "Not a DLS file" };
+        auto* p = (unsigned char *)&chunk.id;
+        throw std::runtime_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
     }
 
-    if(chunk.size + 8 > filesize)
+    if(chunk.size + 8LL > filesize)
     {
-        throw std::runtime_error{ "DLS file early EOF" };
+        uint8_t from[4] = {
+            static_cast<uint8_t>(chunk.size >>  0),
+            static_cast<uint8_t>(chunk.size >>  8),
+            static_cast<uint8_t>(chunk.size >> 16),
+            static_cast<uint8_t>(chunk.size >> 24),
+        };
+        auto maxSize = filesize - 8LL;
+        uint8_t to[4] = {
+            static_cast<uint8_t>(maxSize >>  0),
+            static_cast<uint8_t>(maxSize >>  8),
+            static_cast<uint8_t>(maxSize >> 16),
+            static_cast<uint8_t>(maxSize >> 24),
+        };
+        auto Hint = string_format(" (Hint: Try changing the hexadecimal little-endian size of the RIFF chunk from %02X%02X%02X%02X to %02X%02X%02X%02X using a hex editor.)", from[0], from[1], from[2], from[3], to[0], to[1], to[2], to[3]);
+        throw std::runtime_error{ string_format("DLS file is too short! Outermost RIFF chunk reports a payload size of %u bytes, but there are only %lld bytes left in the file.%s", chunk.size, maxSize, chunk.size == filesize ? Hint.c_str() : "") };
     }
 
-    if(chunk.size + 8 < filesize)
+    if(chunk.size + 8LL < filesize)
     {
-        FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk");
+        FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk, ignoring.");
     }
 
     // we don't care about real file size after this point
-    filesize = chunk.size + 8;
+    filesize = chunk.size + 8LL;
 
     // iterate over chunks in the RIFF form
     try
@@ -1559,7 +1579,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                 uint32_t cbsize;
                 READ32(this, cbsize);
 
-                if(cbsize < 8)
+                if(cbsize < 8u)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has invalid cbSize" };
                 }
@@ -1574,7 +1594,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
                     throw std::runtime_error{ "Too many poolcue records are contained in the ptbl chunk." };
                 }
 
-                if(cues * 4 + cbsize != subchunk.size)
+                if(cues * 4u + cbsize != subchunk.size)
                 {
                     throw std::runtime_error{ "DLS ptbl chunk has corrupted size" };
                 }
@@ -1707,7 +1727,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     bool invalid_loops_were_sanitized = false;
     for(auto &sample : samples)
     {
-        fluid_sample_t fluid{};
+        auto& fluid = samples_fluid.emplace_back();
         fluid.start = sample.start;
         fluid.end = sample.end - 1;
         fluid.samplerate = sample.samplerate;
@@ -1735,9 +1755,9 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         fluid.sampletype = FLUID_SAMPLETYPE_MONO;
         fluid.default_modulators = this->sfont->default_mod_list;
 
-        if(fluid_sample_validate(&fluid, sampledata.size() * sizeof(decltype(sampledata)::value_type)) == FLUID_OK)
+        if(fluid_sample_validate(&fluid, sampledata.size() * sizeof(decltype(sampledata)::value_type)) != FLUID_OK)
         {
-            samples_fluid.push_back(std::move(fluid));
+            fluid = {};
         }
     }
 
@@ -2802,7 +2822,7 @@ inline void fluid_dls_font::parse_pgal(fluid_long_long_t offset, int size)
         for(auto &instrument : instruments)
         {
             if(instrument.banklsb == (bank & 0x7F) && instrument.bankmsb == ((bank >> 7) & 0x7F) &&
-                    instrument.pcnum == pc)
+                    instrument.pcnum == pc && !instrument.is_drums)
             {
                 instrument.aliases.push_back(fluid_dls_instrument::fluid_dls_instrument_alias
                 {
@@ -3251,24 +3271,33 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
 
     // key with subtonal tuning and key number generator applied
     int tuned_key = static_cast<int>(std::round(tuned_key_f));
-
-    if(dlspreset->drum_note_aliasing != nullptr && synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
-    {
-        tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
-    }
-
     // key with only key number generator applied
-    const int adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
+    int adjusted_key;
+    if (synth->channel[chan]->channel_type == CHANNEL_TYPE_DRUM)
+    {
+        if(dlspreset->drum_note_aliasing != nullptr)
+        {
+            tuned_key = dlspreset->drum_note_aliasing[std::clamp(tuned_key, 0, 127)];
+        }
+        // drum channel has no subtonal tuning, so adjusted_key == tuned_Key
+        adjusted_key = tuned_key;
+    }
+    else
+    {
+        adjusted_key = static_cast<int>(std::round(key * dlspreset->keynum_scale));
+    }
 
     for(auto &region : dlspreset->regions)
     {
-        if(!fluid_zone_inside_range(&region.range, tuned_key, vel))
+        auto *sample = dlspreset->samples_fluid + region.sampleindex;
+        // Check for zero-length samples, typically caused by samples that failed fluid_sample_validate()
+        if(!fluid_zone_inside_range(&region.range, tuned_key, vel) || sample->start == sample->end)
         {
             continue;
         }
 
         auto *voice = fluid_synth_alloc_voice_LOCAL(
-                          synth, dlspreset->samples_fluid + region.sampleindex, chan, adjusted_key, vel, &region.range);
+                          synth, sample, chan, adjusted_key, vel, &region.range);
 
         if(voice == nullptr)
         {
