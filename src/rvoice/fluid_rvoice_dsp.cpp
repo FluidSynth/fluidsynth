@@ -24,6 +24,7 @@
 #include "fluid_rvoice_dsp_tables.h"
 
 #include <algorithm>
+#include <array>
 
 /* Purpose:
  *
@@ -271,7 +272,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
         end_index++;	/* we're now interpolating the last point */
 
         /* interpolate within last point */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_linear(
@@ -389,7 +390,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         }
 
         /* interpolate the sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_cubic(
@@ -414,7 +415,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index++;	/* we're now interpolating the 2nd to last point */
 
         /* interpolate within 2nd to last point */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_cubic(
@@ -433,7 +434,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index++;	/* we're now interpolating the last point */
 
         /* interpolate within the last point */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_cubic(
@@ -539,7 +540,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     }
 
     /* Lambda for cubic interpolation with parameterized samples */
-    auto interp_sinc = [&](fluid_real_t s[FLUID_INTERP_7THORDER])
+    auto interp_sinc = [&](std::array<fluid_real_t, FLUID_INTERP_7THORDER> s)
     {
         const fluid_real_t* FLUID_RESTRICT coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
 
@@ -579,7 +580,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         start_index++;
 
         /* interpolate 2nd to first sample point (start or loop start) if needed */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, start_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, start_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_sinc({
@@ -601,7 +602,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         start_index++;
 
         /* interpolate 3rd to first sample point (start or loop start) if needed */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, start_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, start_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_sinc({
@@ -623,7 +624,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         start_index -= 2;	/* set back to original start index */
 
         /* interpolate the sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_sinc({
@@ -651,7 +652,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index++;	/* we're now interpolating the 3rd to last point */
 
         /* interpolate within 3rd to last point */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_sinc({
@@ -673,7 +674,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index++;	/* we're now interpolating the 2nd to last point */
 
         /* interpolate within 2nd to last point */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_sinc({
@@ -695,7 +696,7 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index++;	/* we're now interpolating the last point */
 
         /* interpolate within last point */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
         for (; safe_count--; dsp_i++)
         {
             fluid_real_t sample = interp_sinc({
