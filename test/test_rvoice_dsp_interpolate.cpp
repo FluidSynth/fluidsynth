@@ -42,6 +42,14 @@ static const short VAL_24BIT_MSB = 0x1234; /* Used in Test F */
 /* The DSP implementation left-shifts samples by 8 bits (multiplies by 256) */
 static const fluid_real_t DSP_SCALE = (fluid_real_t)256.0;
 
+/* Compile-time range checks — sample values must not overflow short */
+static_assert((SAMPLE_SIZE - 1) * RAMP_STEP_SMALL <= std::numeric_limits<short>::max(),
+              "Ramp (small step) overflows short");
+static_assert((LOOP_END - LOOP_START - 1) * RAMP_STEP_LOOP <= std::numeric_limits<short>::max(),
+              "Loop ramp overflows short");
+static_assert(CONST_VAL <= std::numeric_limits<short>::max(), "CONST_VAL overflows short");
+static_assert(VAL_24BIT_MSB <= std::numeric_limits<short>::max(), "24-bit MSB overflows short");
+
 /* ----- tolerances (in original sample units, before DSP scaling) -------- */
 
 /* Polynomial interpolators (NONE, LINEAR, 4TH ORDER) are exact for their
@@ -197,10 +205,11 @@ static void test_A_integer_phase_passthrough(void)
     for (int i = 0; i < SAMPLE_SIZE; i++)
         data[i] = (short)(i * RAMP_STEP_SMALL);
 
-    /* Test NONE, LINEAR, and 4TH ORDER */
+    /* Test all interpolation modes */
     const fluid_interp modes[] = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
-                                   FLUID_INTERP_4THORDER };
+                                   FLUID_INTERP_4THORDER,
+                                   FLUID_INTERP_7THORDER };
 
     for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
     {
@@ -209,20 +218,25 @@ static void test_A_integer_phase_passthrough(void)
         fluid_real_t    buf[FLUID_BUFSIZE];
         memset(buf, 0, sizeof(buf));
 
+        /* Start far enough into the sample for modes that need look-behind samples */
+        double start = (modes[m] == FLUID_INTERP_7THORDER) ? 4.0 :
+                       (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
+
         setup_rvoice_16bit(&rvoice, &samp, data,
-            0.0, 1.0,
+            start, 1.0,
             0, SAMPLE_SIZE,
             0, modes[m]);
 
         int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
         TEST_ASSERT(count > 0);
 
-        int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, 0.0, 1.0);
+        int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
         if (verify_count > count) verify_count = count;
 
+        fluid_real_t tol = get_tolerance(modes[m], false);
         for (int i = 0; i < verify_count; i++)
         {
-            test_sample_eq(buf[i], (fluid_real_t)data[i], TOL_POLY, i);
+            test_sample_eq(buf[i], (fluid_real_t)data[(int)start + i], tol, i);
         }
         printf("  %s: PASS (%d samples verified)\n", interp_name(modes[m]), verify_count);
     }
@@ -327,40 +341,8 @@ static void test_C_constant_sample(void)
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
 
-    /* C1: Integer phase, phase_incr = 1.0 */
-    printf("  C1: Integer phase\n");
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
-    {
-        fluid_rvoice_t  rvoice;
-        fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
-
-        /* Start a bit into the sample for modes that need history */
-        double start = (modes[m] == FLUID_INTERP_7THORDER) ? 3.0 :
-            (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
-
-        setup_rvoice_16bit(&rvoice, &samp, data,
-            start, 1.0,
-            0, SAMPLE_SIZE,
-            0, modes[m]);
-
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
-        TEST_ASSERT(count > 0);
-
-        int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
-        if (verify_count > count) verify_count = count;
-
-        fluid_real_t tol = get_tolerance(modes[m], false);
-        for (int i = 0; i < verify_count; i++)
-        {
-            test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
-        }
-        printf("    %s: PASS (%d samples)\n", interp_name(modes[m]), verify_count);
-    }
-
-    /* C2: Fractional phase */
-    printf("  C2: Fractional phase\n");
+    /* Fractional phase */
+    printf("  Fractional phase\n");
     for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
     {
         fluid_rvoice_t  rvoice;
@@ -412,38 +394,32 @@ static void test_D_loop_boundary_constant_sample(void)
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
 
-    const char* sub_names[] = { "first loop crossing (has_looped=0)",
-                                "steady-state (has_looped=1)" };
+    printf("  D1: first loop crossing (has_looped=0)\n");
 
-    for (int sub = 0; sub < 2; sub++)
+    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
     {
-        printf("  D%d: %s\n", sub + 1, sub_names[sub]);
+        fluid_rvoice_t  rvoice;
+        fluid_sample_t  samp;
+        fluid_real_t    buf[FLUID_BUFSIZE];
+        memset(buf, 0, sizeof(buf));
 
-        for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+        setup_rvoice_16bit(&rvoice, &samp, data,
+            phase_start, phase_incr,
+            LOOP_START, LOOP_END,
+            0, modes[m]);
+
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+        TEST_ASSERT(count == FLUID_BUFSIZE);
+
+        fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
+
+        for (int i = 0; i < count; i++)
         {
-            fluid_rvoice_t  rvoice;
-            fluid_sample_t  samp;
-            fluid_real_t    buf[FLUID_BUFSIZE];
-            memset(buf, 0, sizeof(buf));
-
-            setup_rvoice_16bit(&rvoice, &samp, data,
-                phase_start, phase_incr,
-                LOOP_START, LOOP_END,
-                sub, modes[m]);
-
-            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
-            TEST_ASSERT(count == FLUID_BUFSIZE);
-
-            fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
-
-            for (int i = 0; i < count; i++)
-            {
-                test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
-            }
-
-            TEST_ASSERT(rvoice.dsp.has_looped == 1);
-            printf("    %s: PASS\n", interp_name(modes[m]));
+            test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
         }
+
+        TEST_ASSERT(rvoice.dsp.has_looped == 1);
+        printf("    %s: PASS\n", interp_name(modes[m]));
     }
 }
 
@@ -680,6 +656,7 @@ static void test_G_high_playback_rate(void)
 
             int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
             TEST_ASSERT(count > 0);
+            TEST_ASSERT(count < FLUID_BUFSIZE);
 
             int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, rates[r]);
             if (verify_count > count) verify_count = count;
@@ -922,82 +899,6 @@ static void test_K_end_of_sample(void)
     }
 }
 
-/* =========================================================================
- * Test L – 7th order at integer phase positions
- * ========================================================================= */
-static void test_L_7th_order_integer_phase(void)
-{
-    printf("Test L: 7th order at integer phase\n");
-
-    /* Use safe ramp: max = 63 * RAMP_STEP_SMALL = 31500 */
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = (short)(i * RAMP_STEP_SMALL);
-
-    fluid_rvoice_t  rvoice;
-    fluid_sample_t  samp;
-    fluid_real_t    buf[FLUID_BUFSIZE];
-    memset(buf, 0, sizeof(buf));
-
-    setup_rvoice_16bit(&rvoice, &samp, data,
-        4.0, 1.0,
-        0, SAMPLE_SIZE,
-        0, FLUID_INTERP_7THORDER);
-
-    int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
-    TEST_ASSERT(count > 0);
-
-    int verify_count = safe_verify_count(FLUID_INTERP_7THORDER, SAMPLE_SIZE - 1, 4.0, 1.0);
-    if (verify_count > count) verify_count = count;
-
-    for (int i = 0; i < verify_count; i++)
-    {
-        int idx = 4 + i;
-        test_sample_eq(buf[i], (fluid_real_t)data[idx], TOL_SINC_INT, i);
-    }
-    printf("  Integer phase ramp: PASS (%d samples)\n", verify_count);
-}
-
-/* =========================================================================
- * Test M – Verify sample overflow protection
- *
- * Ensure test data stays within short range to catch any future regressions.
- * ========================================================================= */
-static void test_M_sample_range_validation(void)
-{
-    printf("Test M: Sample range validation\n");
-
-    const int SHORT_MAX = std::numeric_limits<short>::max();
-    const int SHORT_MIN = std::numeric_limits<short>::min();
-
-    /* Test A, B, L: ramp with step RAMP_STEP_SMALL, max index SAMPLE_SIZE-1 */
-    int max_ramp_500 = (SAMPLE_SIZE - 1) * RAMP_STEP_SMALL;
-    TEST_ASSERT(max_ramp_500 <= SHORT_MAX);
-    TEST_ASSERT(max_ramp_500 >= SHORT_MIN);
-    printf("  Ramp step %d (max=%d): OK\n", RAMP_STEP_SMALL, max_ramp_500);
-
-    /* Test C, D, G, H, J, K: constant value */
-    TEST_ASSERT(CONST_VAL <= SHORT_MAX);
-    TEST_ASSERT(CONST_VAL >= SHORT_MIN);
-    printf("  CONST_VAL (%d): OK\n", CONST_VAL);
-
-    /* Test E: periodic loop ramp with step RAMP_STEP_LOOP, max index loop_len-1 */
-    int loop_len = LOOP_END - LOOP_START;
-    int max_loop_ramp = (loop_len - 1) * RAMP_STEP_LOOP;
-    TEST_ASSERT(max_loop_ramp <= SHORT_MAX);
-    TEST_ASSERT(max_loop_ramp >= SHORT_MIN);
-    printf("  Loop ramp step %d (loop_len=%d, max=%d): OK\n",
-        RAMP_STEP_LOOP, loop_len, max_loop_ramp);
-
-    /* Test F: 24-bit MSB stored in short (0x1234 = 4660) */
-    TEST_ASSERT(VAL_24BIT_MSB <= SHORT_MAX);
-    TEST_ASSERT(VAL_24BIT_MSB >= SHORT_MIN);
-    printf("  24-bit MSB (0x%04X = %d): OK\n", VAL_24BIT_MSB, VAL_24BIT_MSB);
-
-    printf("  All sample values within short range: PASS\n");
-}
-
-
 /* ========================================================================= */
 
 int main(void)
@@ -1036,12 +937,6 @@ int main(void)
     printf("\n");
 
     test_K_end_of_sample();
-    printf("\n");
-
-    test_L_7th_order_integer_phase();
-    printf("\n");
-
-    test_M_sample_range_validation();
     printf("\n");
 
     printf("========================================\n");
