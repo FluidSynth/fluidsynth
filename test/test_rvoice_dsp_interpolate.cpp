@@ -472,7 +472,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
 
     const fluid_interp modes[] = { FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,FLUID_INTERP_NONE,
-                                   /*FLUID_INTERP_7THORDER*/ };
+                                   FLUID_INTERP_7THORDER };
 
     for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
     {
@@ -552,17 +552,34 @@ static void test_E_loop_boundary_ramp_wrap(void)
                 break;
 			case FLUID_INTERP_7THORDER:
 			{
-				/* Use precomputed sinc table for 7th-order interpolation */
-				//const int table_row = frac * FLUID_INTERP_MAX;
-				//const fluid_real_t* coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
-				//expected =
-				//	coeffs[0] * s[-3] +
-				//	coeffs[1] * s[-2] +
-				//	coeffs[2] * s[-1] +
-				//	coeffs[3] * s[0] +
-				//	coeffs[4] * s[1] +
-				//	coeffs[5] * s[2] +
-				//	coeffs[6] * s[3];
+				/* The 7th-order DSP adds 0.5 to the phase before computing the
+				 * index and fractional part (to center the filter on the 4th tap).
+				 * Mirror that here so we use the same index, samples, and table row. */
+				double eff_phase = phase_d + 0.5;
+				int eff_idx = (int)eff_phase;
+				double eff_frac = eff_phase - eff_idx;
+
+				/* Wrap eff_idx into the loop */
+				while (eff_idx >= LOOP_END)  eff_idx -= loop_len;
+				while (eff_idx < LOOP_START) eff_idx += loop_len;
+
+				/* Helper: get a sample at position k, loop-wrapped */
+				auto get_s7 = [&](int k) -> fluid_real_t {
+					while (k >= LOOP_END)  k -= loop_len;
+					while (k < LOOP_START) k += loop_len;
+					return (fluid_real_t)data[k];
+				};
+
+				const int table_row = (int)(eff_frac * FLUID_INTERP_MAX);
+				const fluid_real_t* coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
+				expected =
+					coeffs[0] * get_s7(eff_idx - 3) +
+					coeffs[1] * get_s7(eff_idx - 2) +
+					coeffs[2] * get_s7(eff_idx - 1) +
+					coeffs[3] * get_s7(eff_idx) +
+					coeffs[4] * get_s7(eff_idx + 1) +
+					coeffs[5] * get_s7(eff_idx + 2) +
+					coeffs[6] * get_s7(eff_idx + 3);
 			}
 			break;
             }
