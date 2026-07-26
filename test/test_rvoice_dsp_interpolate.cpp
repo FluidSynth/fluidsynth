@@ -657,9 +657,11 @@ static void test_G_high_playback_rate(void)
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
 
+    /* G1: Non-looping */
+    printf("  G1: Non-looping\n");
     for (size_t r = 0; r < sizeof(rates) / sizeof(rates[0]); r++)
     {
-        printf("  Rate %.1fx:\n", rates[r]);
+        printf("    Rate %.1fx:\n", rates[r]);
 
         for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
         {
@@ -687,7 +689,39 @@ static void test_G_high_playback_rate(void)
             {
                 test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
             }
-            printf("    %s: PASS (%d samples)\n", interp_name(modes[m]), count);
+            printf("      %s: PASS (%d samples)\n", interp_name(modes[m]), count);
+        }
+    }
+
+    /* G2: Looping – same rates, but with a loop region (steady-state, has_looped=1).
+     * All data is CONST_VAL so the output must be CONST_VAL regardless of how many
+     * times the phase wraps around the loop per output sample. */
+    printf("  G2: Looping\n");
+    for (size_t r = 0; r < sizeof(rates) / sizeof(rates[0]); r++)
+    {
+        printf("    Rate %.1fx:\n", rates[r]);
+
+        for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+        {
+            fluid_rvoice_t  rvoice;
+            fluid_sample_t  samp;
+            fluid_real_t    buf[FLUID_BUFSIZE];
+            memset(buf, 0, sizeof(buf));
+
+            setup_rvoice_16bit(&rvoice, &samp, data,
+                (double)LOOP_START, rates[r],
+                LOOP_START, LOOP_END,
+                1, modes[m]);
+
+            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+            TEST_ASSERT(count == FLUID_BUFSIZE);
+
+            fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
+            for (int i = 0; i < count; i++)
+            {
+                test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
+            }
+            printf("      %s: PASS (%d samples)\n", interp_name(modes[m]), count);
         }
     }
 }
