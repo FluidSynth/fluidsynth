@@ -650,7 +650,7 @@ static void test_G_high_playback_rate(void)
     for (int i = 0; i < SAMPLE_SIZE; i++)
         data[i] = CONST_VAL;
 
-    const double rates[] = { 2.0, 3.0, 4.0 };
+    const double rates[] = { 2.0, 3.0, 4.0, 16.0, 128.0, 8192.0 };
 
     const fluid_interp modes[] = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
