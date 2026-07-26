@@ -176,18 +176,19 @@ static int get_boundary_samples(fluid_interp mode)
 }
 
 /**
- * Calculate how many output samples can be safely verified for non-looping playback.
+ * Calculate how many output samples can be safely interpolated by a single interpolation call for non-looping samples.
  */
 static int safe_verify_count(fluid_interp mode, int sample_end, double phase_start, double phase_incr)
 {
     int boundary = get_boundary_samples(mode);
-    double max_safe_phase = (double)(sample_end - boundary);
 
-    if (phase_start > max_safe_phase)
+    if (phase_start > sample_end)
 		throw std::runtime_error("Phase start exceeds safe limit for verification");
 
-    int count = (int)((max_safe_phase - phase_start) / phase_incr) + 1;
-    return count > 0 ? count : 0;
+    int count = (int)((sample_end - phase_start) / phase_incr) + 1;
+    fluid_clip(count, 0, FLUID_BUFSIZE);
+    return count;
+
 }
 
 /* =========================================================================
@@ -231,7 +232,7 @@ static void test_A_integer_phase_passthrough(void)
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
-        if (verify_count > count) verify_count = count;
+        TEST_ASSERT(count == verify_count);
 
         fluid_real_t tol = get_tolerance(modes[m], false);
         for (int i = 0; i < verify_count; i++)
@@ -280,7 +281,7 @@ static void test_B_fractional_linear_ramp(void)
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(FLUID_INTERP_NONE, SAMPLE_SIZE - 1, phase_start, phase_incr);
-        if (verify_count > count) verify_count = count;
+        TEST_ASSERT(count == verify_count);
 
         for (int i = 0; i < verify_count; i++)
         {
@@ -311,7 +312,7 @@ static void test_B_fractional_linear_ramp(void)
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(poly_modes[m], SAMPLE_SIZE - 1, phase_start, phase_incr);
-        if (verify_count > count) verify_count = count;
+        TEST_ASSERT(count == verify_count);
 
         for (int i = 0; i < verify_count; i++)
         {
@@ -360,14 +361,14 @@ static void test_C_constant_sample(void)
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, 10.0, 0.7);
-        if (verify_count > count) verify_count = count;
+        TEST_ASSERT(count == verify_count);
 
         fluid_real_t tol = get_tolerance(modes[m], true);
         for (int i = 0; i < verify_count; i++)
         {
             test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
         }
-        printf("    %s: PASS (%d samples)\n", interp_name(modes[m]), verify_count);
+        printf("    %s: PASS (%d samples verified)\n", interp_name(modes[m]), verify_count);
     }
 }
 
@@ -598,7 +599,7 @@ static void test_F_24bit_samples(void)
             (fluid_real_t)5000.0 : (fluid_real_t)1.0;
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
-        if (verify_count > count) verify_count = count;
+        TEST_ASSERT(count == verify_count);
 
         for (int i = 0; i < verify_count; i++)
         {
@@ -611,7 +612,7 @@ static void test_F_24bit_samples(void)
                 TEST_ASSERT(0);
             }
         }
-        printf("  %s: PASS (%d samples)\n", interp_name(modes[m]), verify_count);
+        printf("  %s: PASS (%d samples verified)\n", interp_name(modes[m]), verify_count);
     }
 }
 
@@ -659,14 +660,14 @@ static void test_G_high_playback_rate(void)
             TEST_ASSERT(count < FLUID_BUFSIZE);
 
             int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, rates[r]);
-            if (verify_count > count) verify_count = count;
+            TEST_ASSERT(count == verify_count);
 
             fluid_real_t tol = get_tolerance(modes[m], false);
             for (int i = 0; i < verify_count; i++)
             {
                 test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
             }
-            printf("      %s: PASS (%d samples)\n", interp_name(modes[m]), count);
+            printf("      %s: PASS (%d samples verified)\n", interp_name(modes[m]), count);
         }
     }
 
@@ -698,7 +699,7 @@ static void test_G_high_playback_rate(void)
             {
                 test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
             }
-            printf("      %s: PASS (%d samples)\n", interp_name(modes[m]), count);
+            printf("      %s: PASS (%d samples verified)\n", interp_name(modes[m]), count);
         }
     }
 }
@@ -780,13 +781,13 @@ static void test_I_silence_rendering(void)
             0, FLUID_INTERP_NONE);
 
         int count = fluid_rvoice_dsp_silence(&rvoice, buf, /*looping=*/0);
-        TEST_ASSERT(count > 0);
+        TEST_ASSERT(count == SAMPLE_SIZE);
 
         for (int i = 0; i < count; i++)
         {
             TEST_ASSERT(buf[i] == 0.0f);
         }
-        printf("  Non-looping: PASS (%d samples)\n", count);
+        printf("  Non-looping: PASS (%d samples verified)\n", count);
     }
 
     /* I2: Looping */
@@ -812,7 +813,7 @@ static void test_I_silence_rendering(void)
         }
 
         TEST_ASSERT(rvoice.dsp.has_looped == 1);
-        printf("  Looping: PASS\n");
+        printf("  Looping: PASS (%d samples verified)\n", count);
     }
 }
 
