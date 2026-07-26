@@ -54,16 +54,13 @@ static_assert(VAL_24BIT_MSB <= std::numeric_limits<short>::max(), "24-bit MSB ov
 
 /* Polynomial interpolators (NONE, LINEAR, 4TH ORDER) are exact for their
  * respective polynomial degrees. Tolerance covers table quantization. */
-static const fluid_real_t TOL_POLY = (fluid_real_t)0.01;
+static const fluid_real_t TOL_POLY = (fluid_real_t)0.001;
 
 /* 7th-order sinc has energy smearing at fractional positions.
  * At integer positions it's more accurate, but fractional positions
- * can deviate by ~0.15% of sample value. */
-static const fluid_real_t TOL_SINC_INT = (fluid_real_t)5.0;    /* integer phase */
-static const fluid_real_t TOL_SINC_FRAC = (fluid_real_t)15.0;  /* fractional phase */
-
-/* Loop boundary tolerance - larger to account for boundary handling. */
-static const fluid_real_t TOL_LOOP = (fluid_real_t)50.0;
+ * can deviate. */
+static const fluid_real_t TOL_SINC_INT = (fluid_real_t)2.5;    /* integer phase */
+static const fluid_real_t TOL_SINC_FRAC = (fluid_real_t)13.0;  /* fractional phase */
 
 /* ----- helpers ---------------------------------------------------------- */
 
@@ -412,7 +409,7 @@ static void test_D_loop_boundary_constant_sample(void)
         int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
-        fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
+        fluid_real_t tol = get_tolerance(modes[m], true);
 
         for (int i = 0; i < count; i++)
         {
@@ -694,7 +691,7 @@ static void test_G_high_playback_rate(void)
             int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
             TEST_ASSERT(count == FLUID_BUFSIZE);
 
-            fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
+            fluid_real_t tol = get_tolerance(modes[m], false);
             for (int i = 0; i < count; i++)
             {
                 test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
@@ -743,7 +740,7 @@ static void test_H_short_loops(void)
         int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
-        fluid_real_t tol = (tests[t].mode == FLUID_INTERP_7THORDER) ? TOL_LOOP : TOL_POLY;
+        fluid_real_t tol = get_tolerance(tests[t].mode, true);
 
         for (int i = 0; i < count; i++)
         {
