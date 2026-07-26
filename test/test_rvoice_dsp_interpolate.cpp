@@ -492,6 +492,14 @@ static void test_E_loop_boundary_ramp_wrap(void)
 		fluid_real_t sample_ring_buffer[FLUID_INTERP_HIGHEST + 1];
 		fluid_real_t* s = &sample_ring_buffer[FLUID_N_ELEMENTS(sample_ring_buffer) / 2];
         double phase_d = phase_start;
+        if(modes[m] == FLUID_INTERP_7THORDER)
+        {
+            /* The 7th-order DSP adds 0.5 to the phase before computing the
+             * index and fractional part (to center the filter on the 4th tap).
+             * See: fluid_phase_incr(dsp_phase, 0x80000000)
+             * Mirror that here so we use the same index, samples, and table row. */
+            phase_d += 0.5f;
+        }
         for (int i = 0; i < count; i++)
         {
             int idx = (int)phase_d;
@@ -499,41 +507,23 @@ static void test_E_loop_boundary_ramp_wrap(void)
 
             while (idx >= LOOP_END)  idx -= loop_len;
             while (idx < LOOP_START) idx += loop_len;
-            s[0] = (fluid_real_t)data[idx];
-            
-            int prev_idx = idx;
-            --prev_idx;
-            if (prev_idx < LOOP_START) prev_idx += loop_len;
-            s[-1] = (fluid_real_t)data[prev_idx];
 
-            --prev_idx;
-            if (prev_idx < LOOP_START) prev_idx += loop_len;
-            s[-2] = (fluid_real_t)data[prev_idx];
-
-            --prev_idx;
-            if (prev_idx < LOOP_START) prev_idx += loop_len;
-            s[-3] = (fluid_real_t)data[prev_idx];
-
-            int next_idx = idx + 1;
-            if (next_idx >= LOOP_END) next_idx = LOOP_START;
-            s[1] = (fluid_real_t)data[next_idx];
-
-            ++next_idx;
-            if (next_idx >= LOOP_END) next_idx = LOOP_START;
-            s[2] = (fluid_real_t)data[next_idx];
-
-            ++next_idx;
-            if (next_idx >= LOOP_END) next_idx = LOOP_START;
-            s[3] = (fluid_real_t)data[next_idx];
+            /* Helper: get a sample at position idx + k, loop-wrapped */
+            auto s = [&](int k) -> fluid_real_t {
+                    k += idx;
+                    while (k >= LOOP_END)  k -= loop_len;
+                    while (k < LOOP_START) k += loop_len;
+                    return (fluid_real_t)data[k];
+            };
 
             fluid_real_t expected;
             switch (modes[m])
             {
             case FLUID_INTERP_NONE:
-				expected = (frac < 0.5) ? s[0] : s[1];
+				expected = (frac < 0.5) ? s(0) : s(1);
 				break;
             case FLUID_INTERP_LINEAR:
-                expected = s[0] + (fluid_real_t)frac * (s[1] - s[0]);
+                expected = s(0) + (fluid_real_t)frac * (s(1) - s(0));
                 break;
             case FLUID_INTERP_4THORDER:
                 {
@@ -544,42 +534,25 @@ static void test_E_loop_boundary_ramp_wrap(void)
                     const fluid_real_t halfx = 0.5f * x;
 
                     expected =
-                          (-halfx + x2 - 0.5f * x3) * s[-1]
-                        + (1.0f - 2.5f * x2 + 1.5f * x3) * s[0]
-                        + (halfx + 2.0f * x2 - 1.5f * x3) * s[1]
-                        + (-0.5f * x2 + 0.5f * x3) * s[2];
+                          (-halfx + x2 - 0.5f * x3) * s(-1)
+                        + (1.0f - 2.5f * x2 + 1.5f * x3) * s(0)
+                        + (halfx + 2.0f * x2 - 1.5f * x3) * s(1)
+                        + (-0.5f * x2 + 0.5f * x3) * s(2);
                 }
                 break;
 			case FLUID_INTERP_7THORDER:
 			{
-				/* The 7th-order DSP adds 0.5 to the phase before computing the
-				 * index and fractional part (to center the filter on the 4th tap).
-				 * Mirror that here so we use the same index, samples, and table row. */
-				double eff_phase = phase_d + 0.5;
-				int eff_idx = (int)eff_phase;
-				double eff_frac = eff_phase - eff_idx;
-
-				/* Wrap eff_idx into the loop */
-				while (eff_idx >= LOOP_END)  eff_idx -= loop_len;
-				while (eff_idx < LOOP_START) eff_idx += loop_len;
-
-				/* Helper: get a sample at position k, loop-wrapped */
-				auto get_s7 = [&](int k) -> fluid_real_t {
-					while (k >= LOOP_END)  k -= loop_len;
-					while (k < LOOP_START) k += loop_len;
-					return (fluid_real_t)data[k];
-				};
-
-				const int table_row = (int)(eff_frac * FLUID_INTERP_MAX);
+				/* Use precomputed sinc table for 7th-order interpolation */
+				const int table_row = (int)(frac * FLUID_INTERP_MAX);
 				const fluid_real_t* coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
 				expected =
-					coeffs[0] * get_s7(eff_idx - 3) +
-					coeffs[1] * get_s7(eff_idx - 2) +
-					coeffs[2] * get_s7(eff_idx - 1) +
-					coeffs[3] * get_s7(eff_idx) +
-					coeffs[4] * get_s7(eff_idx + 1) +
-					coeffs[5] * get_s7(eff_idx + 2) +
-					coeffs[6] * get_s7(eff_idx + 3);
+					coeffs[0] * s(-3) +
+					coeffs[1] * s(-2) +
+					coeffs[2] * s(-1) +
+					coeffs[3] * s(0) +
+					coeffs[4] * s(1) +
+					coeffs[5] * s(2) +
+					coeffs[6] * s(3);
 			}
 			break;
             }
