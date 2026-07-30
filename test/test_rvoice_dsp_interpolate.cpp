@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <limits>
+#include <array>
 
  /* ----- constants -------------------------------------------------------- */
 
@@ -157,28 +158,10 @@ static fluid_real_t get_tolerance(fluid_interp mode, bool fractional_phase = fal
 }
 
 /**
- * Get the number of boundary samples needed by each interpolator.
- * These are samples needed AFTER the current index for interpolation.
- */
-static int get_boundary_samples(fluid_interp mode)
-{
-    switch (mode)
-    {
-    case FLUID_INTERP_NONE:     return 0;
-    case FLUID_INTERP_LINEAR:   return 1;
-    case FLUID_INTERP_4THORDER: return 2;
-    case FLUID_INTERP_7THORDER: return 3;
-    default: throw std::logic_error("Unknown interpolation mode");
-    }
-}
-
-/**
  * Calculate how many output samples can be safely interpolated by a single interpolation call for non-looping samples.
  */
 static int safe_verify_count(fluid_interp mode, int sample_end, double phase_start, double phase_incr)
 {
-    int boundary = get_boundary_samples(mode);
-
     if (phase_start > sample_end)
 		throw std::runtime_error("Phase start exceeds safe limit for verification");
 
@@ -199,12 +182,12 @@ static void test_A_integer_phase_passthrough(void)
     printf("Test A: Integer-phase passthrough\n");
 
     /* Use small values to avoid overflow: max value = 63 * RAMP_STEP_SMALL = 31500 */
-    short data[SAMPLE_SIZE];
+    std::array<short, SAMPLE_SIZE> data;
     for (int i = 0; i < SAMPLE_SIZE; i++)
         data[i] = (short)(i * RAMP_STEP_SMALL);
 
     /* Test all interpolation modes */
-    const fluid_interp modes[] = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
@@ -213,26 +196,26 @@ static void test_A_integer_phase_passthrough(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
         /* Start far enough into the sample for modes that need look-behind samples */
         double start = (modes[m] == FLUID_INTERP_7THORDER) ? 4.0 :
                        (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             start, 1.0,
             0, SAMPLE_SIZE,
             0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
         TEST_ASSERT(count == verify_count);
 
         fluid_real_t tol = get_tolerance(modes[m], false);
-        for (int i = 0; i < verify_count; i++)
+        for (int i = 0; i < verify_count; i++)  
         {
             test_sample_eq(buf[i], (fluid_real_t)data[(int)start + i], tol, i);
         }
@@ -255,7 +238,7 @@ static void test_B_fractional_linear_ramp(void)
 
     /* Use step of RAMP_STEP_SMALL to stay well within short range: max = 63 * RAMP_STEP_SMALL = 31500 */
     const int ramp_step = RAMP_STEP_SMALL;
-    short data[SAMPLE_SIZE];
+    std::array<short, SAMPLE_SIZE> data;
     for (int i = 0; i < SAMPLE_SIZE; i++)
         data[i] = (short)(i * ramp_step);
 
@@ -266,15 +249,15 @@ static void test_B_fractional_linear_ramp(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             phase_start, phase_incr,
             0, SAMPLE_SIZE,
             0, FLUID_INTERP_NONE);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(FLUID_INTERP_NONE, SAMPLE_SIZE - 1, phase_start, phase_incr);
@@ -297,15 +280,15 @@ static void test_B_fractional_linear_ramp(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             phase_start, phase_incr,
             0, SAMPLE_SIZE,
             0, poly_modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(poly_modes[m], SAMPLE_SIZE - 1, phase_start, phase_incr);
@@ -330,11 +313,10 @@ static void test_C_constant_sample(void)
 {
     printf("Test C: Constant sample (DC gain = 1)\n");
 
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = CONST_VAL;
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
 
-    const fluid_interp modes[] = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
@@ -345,16 +327,16 @@ static void test_C_constant_sample(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
         /* Start well into interior for all modes */
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             10.0, 0.7,
             0, SAMPLE_SIZE,
             0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, 10.0, 0.7);
@@ -380,14 +362,13 @@ static void test_D_loop_boundary_constant_sample(void)
 {
     printf("Test D: Loop boundary (constant sample)\n");
 
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = CONST_VAL;
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
 
     const double phase_start = (double)(LOOP_END - 4);
     const double phase_incr = 0.6;
 
-    const fluid_interp modes[] = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
@@ -398,15 +379,15 @@ static void test_D_loop_boundary_constant_sample(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             phase_start, phase_incr,
             LOOP_START, LOOP_END,
             0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         fluid_real_t tol = get_tolerance(modes[m], true);
@@ -434,7 +415,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
     const int loop_len = LOOP_END - LOOP_START;
     const int ramp_step = RAMP_STEP_LOOP;  /* Safe: max = 15 * RAMP_STEP_LOOP = 30000 < 32767 */
 
-    short data[SAMPLE_SIZE];
+    std::array<short, SAMPLE_SIZE> data;
     for (int i = 0; i < SAMPLE_SIZE; i++)
     {
         int rel = ((i - LOOP_START) % loop_len + loop_len) % loop_len;
@@ -444,7 +425,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
     const double phase_start = (double)(LOOP_END - 2);
     const double phase_incr = 0.25;
 
-    const fluid_interp modes[] = { FLUID_INTERP_LINEAR,
+    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,FLUID_INTERP_NONE,
                                    FLUID_INTERP_7THORDER };
 
@@ -452,15 +433,15 @@ static void test_E_loop_boundary_ramp_wrap(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             phase_start, phase_incr,
             LOOP_START, LOOP_END,
             1, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
 		fluid_real_t sample_ring_buffer[FLUID_INTERP_HIGHEST + 1];
@@ -550,23 +531,20 @@ static void test_F_24bit_samples(void)
 {
     printf("Test F: 24-bit sample path\n");
 
-    short data16[SAMPLE_SIZE];
-    char  data24[SAMPLE_SIZE];
+    std::array<short, SAMPLE_SIZE> data16;
+    std::array<char, SAMPLE_SIZE>  data24;
 
     /* Create 24-bit constant sample: (data16 << 8) | (data24 & 0xFF)
      * Use value 0x123456 = 1193046
      * After left-shift by 8 in get_sample24: 0x12345600 = 305419776 */
     const int32_t val24_input = 0x1234;  /* Use smaller value to avoid overflow issues */
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-    {
-        data16[i] = (short)val24_input;
-        data24[i] = (char)0x56;
-    }
+    data16.fill((short)val24_input);
+    data24.fill((char)0x56);
 
     /* The 24-bit value assembled is: (0x1234 << 8) | 0x56 = 0x123456 */
     const fluid_real_t expected_24bit = (fluid_real_t)0x123456;
 
-    const fluid_interp modes[] = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
@@ -575,19 +553,19 @@ static void test_F_24bit_samples(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
         double start = (modes[m] == FLUID_INTERP_7THORDER) ? 5.0 :
             (modes[m] == FLUID_INTERP_4THORDER) ? 2.0 : 1.0;
 
-        setup_rvoice(&rvoice, &samp, data16, data24,
+        setup_rvoice(&rvoice, &samp, data16.data(), data24.data(),
             start, 1.0,
             0, SAMPLE_SIZE - 1,
             0, SAMPLE_SIZE,
             0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
         TEST_ASSERT(count > 0);
 
         /* For 24-bit, the output is the assembled 24-bit value (no additional scaling
@@ -620,13 +598,12 @@ static void test_G_high_playback_rate(void)
 {
     printf("Test G: High playback rate (pitch up)\n");
 
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = CONST_VAL;
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
 
-    const double rates[] = { 2.0, 3.0, 4.0, 16.0, 128.0, 8192.0 };
+    constexpr const std::array<double,6> rates = { 2.0, 3.0, 4.0, 16.0, 128.0, 8192.0 };
 
-    const fluid_interp modes[] = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
@@ -641,18 +618,18 @@ static void test_G_high_playback_rate(void)
         {
             fluid_rvoice_t  rvoice;
             fluid_sample_t  samp;
-            fluid_real_t    buf[FLUID_BUFSIZE];
-            memset(buf, 0, sizeof(buf));
+            std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+            buf.fill(0);
 
             double start = (modes[m] == FLUID_INTERP_7THORDER) ? 3.0 :
                 (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
 
-            setup_rvoice_16bit(&rvoice, &samp, data,
+            setup_rvoice_16bit(&rvoice, &samp, data.data(),
                 start, rates[r],
                 0, SAMPLE_SIZE,
                 0, modes[m]);
 
-            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, 0);
+            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
             TEST_ASSERT(count > 0);
             TEST_ASSERT(count < FLUID_BUFSIZE);
 
@@ -680,15 +657,15 @@ static void test_G_high_playback_rate(void)
         {
             fluid_rvoice_t  rvoice;
             fluid_sample_t  samp;
-            fluid_real_t    buf[FLUID_BUFSIZE];
-            memset(buf, 0, sizeof(buf));
+            std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+            buf.fill(0);
 
-            setup_rvoice_16bit(&rvoice, &samp, data,
+            setup_rvoice_16bit(&rvoice, &samp, data.data(),
                 (double)LOOP_START, rates[r],
                 LOOP_START, LOOP_END,
                 1, modes[m]);
 
-            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
             TEST_ASSERT(count == FLUID_BUFSIZE);
 
             fluid_real_t tol = get_tolerance(modes[m], false);
@@ -708,9 +685,8 @@ static void test_H_short_loops(void)
 {
     printf("Test H: Short loops\n");
 
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = CONST_VAL;
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
 
     struct {
         fluid_interp mode;
@@ -729,15 +705,15 @@ static void test_H_short_loops(void)
 
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             (double)loop_start, 0.5,
             loop_start, loop_end,
             1, tests[t].mode);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         fluid_real_t tol = get_tolerance(tests[t].mode, true);
@@ -759,7 +735,7 @@ static void test_I_silence_rendering(void)
 {
     printf("Test I: Silence rendering\n");
 
-    short data[SAMPLE_SIZE];
+    std::array<short, SAMPLE_SIZE> data;
     for (int i = 0; i < SAMPLE_SIZE; i++)
         data[i] = (short)(i * RAMP_STEP_SMALL);
 
@@ -767,17 +743,15 @@ static void test_I_silence_rendering(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(12345.0f);
 
-        for (int i = 0; i < FLUID_BUFSIZE; i++)
-            buf[i] = 12345.0f;
-
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             0.0, 1.0,
             0, SAMPLE_SIZE,
             0, FLUID_INTERP_NONE);
 
-        int count = fluid_rvoice_dsp_silence(&rvoice, buf, /*looping=*/0);
+        int count = fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/0);
         TEST_ASSERT(count == SAMPLE_SIZE);
 
         for (int i = 0; i < count; i++)
@@ -791,17 +765,15 @@ static void test_I_silence_rendering(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(12345.0f);
 
-        for (int i = 0; i < FLUID_BUFSIZE; i++)
-            buf[i] = 12345.0f;
-
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             (double)(LOOP_END - 2), 0.5,
             LOOP_START, LOOP_END,
             0, FLUID_INTERP_NONE);
 
-        int count = fluid_rvoice_dsp_silence(&rvoice, buf, /*looping=*/1);
+        int count = fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         for (int i = 0; i < count; i++)
@@ -821,26 +793,25 @@ static void test_J_phase_accumulation(void)
 {
     printf("Test J: Phase accumulation\n");
 
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = CONST_VAL;
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
 
     const double phase_incr = 0.123456789;
 
     fluid_rvoice_t  rvoice;
     fluid_sample_t  samp;
 
-    setup_rvoice_16bit(&rvoice, &samp, data,
+    setup_rvoice_16bit(&rvoice, &samp, data.data(),
         (double)LOOP_START, phase_incr,
         LOOP_START, LOOP_END,
         1, FLUID_INTERP_LINEAR);
 
     for (int iter = 0; iter < 100; iter++)
     {
-        fluid_real_t buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         for (int i = 0; i < count; i++)
@@ -863,9 +834,8 @@ static void test_K_end_of_sample(void)
 {
     printf("Test K: End-of-sample behavior\n");
 
-    short data[SAMPLE_SIZE];
-    for (int i = 0; i < SAMPLE_SIZE; i++)
-        data[i] = CONST_VAL;
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
 
     const fluid_interp modes[] = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
@@ -876,17 +846,17 @@ static void test_K_end_of_sample(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
-        fluid_real_t    buf[FLUID_BUFSIZE];
-        memset(buf, 0, sizeof(buf));
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+        buf.fill(0);
 
         double start = SAMPLE_SIZE - 10.0;
 
-        setup_rvoice_16bit(&rvoice, &samp, data,
+        setup_rvoice_16bit(&rvoice, &samp, data.data(),
             start, 1.0,
             0, SAMPLE_SIZE,
             0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf, /*looping=*/0);
+        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/0);
 
         TEST_ASSERT(count > 0);
         TEST_ASSERT(count < FLUID_BUFSIZE);
