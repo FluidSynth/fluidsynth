@@ -107,7 +107,7 @@ static void setup_rvoice_16bit(fluid_rvoice_t* rvoice,
     int              has_looped,
     fluid_interp     interp_method)
 {
-    setup_rvoice(rvoice, sample, data, NULL,
+    setup_rvoice(rvoice, sample, data, nullptr,
         phase_float, phase_incr,
         0, SAMPLE_SIZE - 1,
         loop_start, loop_end,
@@ -274,7 +274,7 @@ static void test_B_fractional_linear_ramp(void)
     }
 
     /* B2: LINEAR and 4TH ORDER - exact linear reproduction */
-    const fluid_interp poly_modes[] = { FLUID_INTERP_LINEAR, FLUID_INTERP_4THORDER };
+    constexpr const std::array<fluid_interp, 2> poly_modes = { FLUID_INTERP_LINEAR, FLUID_INTERP_4THORDER };
 
     for (size_t m = 0; m < FLUID_N_ELEMENTS(poly_modes); m++)
     {
@@ -297,7 +297,7 @@ static void test_B_fractional_linear_ramp(void)
         for (int i = 0; i < verify_count; i++)
         {
             double phase = phase_start + i * phase_incr;
-            fluid_real_t expected = (fluid_real_t)(phase * ramp_step);
+            auto expected = (fluid_real_t)(phase * ramp_step);
             test_sample_eq(buf[i], expected, TOL_POLY, i);
         }
         printf("  %s: PASS (%d samples verified)\n", interp_name(poly_modes[m]), verify_count);
@@ -445,7 +445,6 @@ static void test_E_loop_boundary_ramp_wrap(void)
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
 		fluid_real_t sample_ring_buffer[FLUID_INTERP_HIGHEST + 1];
-		fluid_real_t* s = &sample_ring_buffer[FLUID_N_ELEMENTS(sample_ring_buffer) / 2];
         double phase_d = phase_start;
         if(modes[m] == FLUID_INTERP_7THORDER)
         {
@@ -498,7 +497,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
 			case FLUID_INTERP_7THORDER:
 			{
 				/* Use precomputed sinc table for 7th-order interpolation */
-				const int table_row = (int)(frac * FLUID_INTERP_MAX);
+				const auto table_row = (int)(frac * FLUID_INTERP_MAX);
 				const fluid_real_t* coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
 				expected =
 					coeffs[0] * s(-3) +
@@ -542,7 +541,7 @@ static void test_F_24bit_samples(void)
     data24.fill((char)0x56);
 
     /* The 24-bit value assembled is: (0x1234 << 8) | 0x56 = 0x123456 */
-    const fluid_real_t expected_24bit = (fluid_real_t)0x123456;
+    constexpr const auto expected_24bit = (fluid_real_t)0x123456;
 
     constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
