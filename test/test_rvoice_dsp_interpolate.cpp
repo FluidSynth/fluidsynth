@@ -209,7 +209,7 @@ static void test_A_integer_phase_passthrough(void)
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
 
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
@@ -293,7 +293,7 @@ static void test_B_fractional_linear_ramp(void)
     /* B2: LINEAR and 4TH ORDER - exact linear reproduction */
     const fluid_interp poly_modes[] = { FLUID_INTERP_LINEAR, FLUID_INTERP_4THORDER };
 
-    for (size_t m = 0; m < sizeof(poly_modes) / sizeof(poly_modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(poly_modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
@@ -341,7 +341,7 @@ static void test_C_constant_sample(void)
 
     /* Fractional phase */
     printf("  Fractional phase\n");
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
@@ -394,7 +394,7 @@ static void test_D_loop_boundary_constant_sample(void)
 
     printf("  D1: first loop crossing (has_looped=0)\n");
 
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
@@ -448,7 +448,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
                                    FLUID_INTERP_4THORDER,FLUID_INTERP_NONE,
                                    FLUID_INTERP_7THORDER };
 
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
@@ -571,7 +571,7 @@ static void test_F_24bit_samples(void)
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
 
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
@@ -633,11 +633,11 @@ static void test_G_high_playback_rate(void)
 
     /* G1: Non-looping */
     printf("  G1: Non-looping\n");
-    for (size_t r = 0; r < sizeof(rates) / sizeof(rates[0]); r++)
+    for (size_t r = 0; r < FLUID_N_ELEMENTS(rates); r++)
     {
         printf("    Rate %.1fx:\n", rates[r]);
 
-        for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+        for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
         {
             fluid_rvoice_t  rvoice;
             fluid_sample_t  samp;
@@ -672,11 +672,11 @@ static void test_G_high_playback_rate(void)
      * All data is CONST_VAL so the output must be CONST_VAL regardless of how many
      * times the phase wraps around the loop per output sample. */
     printf("  G2: Looping\n");
-    for (size_t r = 0; r < sizeof(rates) / sizeof(rates[0]); r++)
+    for (size_t r = 0; r < FLUID_N_ELEMENTS(rates); r++)
     {
         printf("    Rate %.1fx:\n", rates[r]);
 
-        for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+        for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
         {
             fluid_rvoice_t  rvoice;
             fluid_sample_t  samp;
@@ -722,7 +722,7 @@ static void test_H_short_loops(void)
         { FLUID_INTERP_7THORDER, 8 },
     };
 
-    for (size_t t = 0; t < sizeof(tests) / sizeof(tests[0]); t++)
+    for (size_t t = 0; t < FLUID_N_ELEMENTS(tests); t++)
     {
         int loop_start = 10;
         int loop_end = loop_start + tests[t].min_loop_len;
@@ -872,7 +872,7 @@ static void test_K_end_of_sample(void)
                                    FLUID_INTERP_4THORDER,
                                    FLUID_INTERP_7THORDER };
 
-    for (size_t m = 0; m < sizeof(modes) / sizeof(modes[0]); m++)
+    for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
