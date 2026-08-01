@@ -241,12 +241,13 @@ Developers:
             <name>midi-bank-select</name>
             <type>str</type>
             <def>gs</def>
-            <vals>gs, gm, xg, mma</vals>
+            <vals>gs, gm, gm2, xg, mma</vals>
             <desc>
                 This setting defines how the synthesizer interprets Bank Select messages.
                 <ul>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
                     <li>gm: ignores CC0 and CC32 messages.</li>
+                    <li>gm2: CC0 value 121 selects melodic mode and CC32 becomes the bank number. CC0 value 120 selects drum mode and bank 128. Other CC0 values are ignored.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
                     <li>xg: If CC0 is equal to 120, 126, or 127 then channel is set to drum mode and the bank number is set to 128. CC32 is ignored in this case. If CC0 has a different value, the channel is set to melodic and CC32 becomes the bank number. Before fluidsynth 2.3.5 the logic for CC0 was broken.</li>
                 </ul>
