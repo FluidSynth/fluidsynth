@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 /* Purpose:
  *
@@ -542,7 +543,28 @@ fluid_rvoice_dsp_interpolate_7th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     /* Lambda for cubic interpolation with parameterized samples */
     auto interp_sinc = [&](std::array<fluid_real_t, FLUID_INTERP_7THORDER> s)
     {
-        const fluid_real_t* FLUID_RESTRICT coeffs = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
+        const fluid_real_t* FLUID_RESTRICT coeffs_ = &sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase) * SINC_INTERP_ORDER];
+
+        auto x = fluid_phase_fract(dsp_phase) * (fluid_real_t)(1.0 / FLUID_FRACT_MAX);
+        std::array<fluid_real_t, SINC_INTERP_ORDER> coeffs;
+        for (int i = 0; i < SINC_INTERP_ORDER; i++)
+        {
+            double v, i_shifted = (double)i - (double)(SINC_INTERP_ORDER / 2.0) + (1 - x);
+
+            if (std::fabs(i_shifted) > 1e-6f)
+            {
+                auto arg = FLUID_M_PI * i_shifted;
+                v = std::sin(arg) / arg;
+                /* Hanning window */
+                v *= 0.5 * (1.0 + std::cos(2.0 * arg / (double)SINC_INTERP_ORDER));
+            }
+            else
+            {
+                v = 1.0;
+            }
+
+            coeffs[i] = v;
+        }
 
         return
               coeffs[0] * s[0]
