@@ -14,6 +14,7 @@ on:
       - '.github/workflows/solaris.yml'
       - '.github/workflows/linux.yml'
       - '.github/workflows/ios.yml'
+      - '.github/workflows/os2.yml'
       - '.github/workflows/rendering-regression.yml'
       - 'README.md'
     tags:

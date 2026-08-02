@@ -9,6 +9,7 @@ on:
       - '.azure/**'
       - '.circleci/**'
       - '.github/workflows/api_doc_build.yml'
+      - '.github/workflows/os2.yml'
       - '.github/workflows/linux.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
