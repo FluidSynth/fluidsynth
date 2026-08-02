@@ -277,6 +277,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 
     fluid_settings_register_str(settings, "synth.midi-bank-select", "gs", 0);
     fluid_settings_add_option(settings, "synth.midi-bank-select", "gm");
+    fluid_settings_add_option(settings, "synth.midi-bank-select", "gm2");
     fluid_settings_add_option(settings, "synth.midi-bank-select", "gs");
     fluid_settings_add_option(settings, "synth.midi-bank-select", "xg");
     fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
@@ -1166,6 +1167,10 @@ new_fluid_synth(fluid_settings_t *settings)
     if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm"))
     {
         synth->bank_select = FLUID_BANK_STYLE_GM;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm2"))
+    {
+        synth->bank_select = FLUID_BANK_STYLE_GM2;
     }
     else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gs"))
     {
@@ -2325,12 +2330,16 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                 || data[3] == MIDI_SYSEX_GM2_ON))
         {
             int result;
+            int is_gm2 = data[3] == MIDI_SYSEX_GM2_ON;
             fluid_synth_api_enter(synth);
-            synth->bank_select = FLUID_BANK_STYLE_GM;
+            synth->bank_select = is_gm2 ? FLUID_BANK_STYLE_GM2 : FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
             if(synth->verbose)
             {
-                FLUID_LOG(FLUID_INFO, "Processing SysEX GM / GM2 System ON message, bank selection mode is now gm.");
+                FLUID_LOG(FLUID_INFO,
+                          "Processing SysEX %s System ON message, bank selection mode is now %s.",
+                          is_gm2 ? "GM2" : "GM",
+                          is_gm2 ? "gm2" : "gm");
             }
             FLUID_API_RETURN(result);
         }

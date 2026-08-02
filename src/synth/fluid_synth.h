@@ -82,6 +82,7 @@ enum fluid_midi_bank_select
 {
     FLUID_BANK_STYLE_GM,  /**< GM style, bank = 0 always (CC0/MSB and CC32/LSB ignored) */
     FLUID_BANK_STYLE_GS,  /**< GS style, bank = CC0/MSB (CC32/LSB ignored) */
+    FLUID_BANK_STYLE_GM2,
     FLUID_BANK_STYLE_XG,  /**< XG style, bank = CC32/LSB (CC0/MSB ignored) */
     FLUID_BANK_STYLE_MMA  /**< MMA style bank = 128*MSB+LSB */
 };

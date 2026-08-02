@@ -303,7 +303,7 @@ fluid_channel_set_bank_lsb(fluid_channel_t *chan, int banklsb)
 
     oldval = chan->sfont_bank_prog;
 
-    if(style == FLUID_BANK_STYLE_XG)
+    if(style == FLUID_BANK_STYLE_XG || style == FLUID_BANK_STYLE_GM2)
     {
         if(chan->channel_type == CHANNEL_TYPE_DRUM)
         {
@@ -328,7 +328,24 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
     style = chan->synth->bank_select;
     oldval = chan->sfont_bank_prog;
 
-    if(style == FLUID_BANK_STYLE_XG)
+    if(style == FLUID_BANK_STYLE_GM2)
+    {
+        if(bankmsb == 120)
+        {
+            chan->channel_type = CHANNEL_TYPE_DRUM;
+            newval = (oldval & ~BANK_MASKVAL) | (DRUM_INST_BANK << BANK_SHIFTVAL);
+        }
+        else if(bankmsb == 121)
+        {
+            chan->channel_type = CHANNEL_TYPE_MELODIC;
+            newval = oldval & ~BANKMSB_MASKVAL;
+        }
+        else
+        {
+            return;
+        }
+    }
+    else if(style == FLUID_BANK_STYLE_XG)
     {
         /* XG bank, do drum-channel auto-switch */
         /* The number "120" was based on several keyboards having drums at 120 - 127,
