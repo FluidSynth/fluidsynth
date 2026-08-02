@@ -945,6 +945,7 @@ int main(int argc, char **argv)
             else
             {
                 fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", u8_path);
+                goto cleanup;
             }
             ++optind;
             break;

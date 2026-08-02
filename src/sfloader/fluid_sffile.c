@@ -315,6 +315,16 @@ int fluid_is_soundfont(const char *filename)
             break;  // seems to be DLS, stop here
         }
 #endif
+        FLUID_LOG(FLUID_ERR,
+            "fluid_is_soundfont(): expected '0x%04X' ('sfbk') "
+#ifdef ENABLE_NATIVE_DLS
+            "or '0x%04X' ('DLS ') "
+#endif
+            "chunk id but got '0x%04X'.", (unsigned int)SFBK_FCC,
+#ifdef ENABLE_NATIVE_DLS
+            (unsigned int)DLS_FCC,
+#endif
+            (unsigned int)fcc);
     }
     while(0);
 
