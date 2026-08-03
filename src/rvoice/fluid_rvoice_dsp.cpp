@@ -570,7 +570,9 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
                 auto arg = FLUID_M_PI * i_shifted;
                 v = std::sin(arg) / arg;
                 /* Hanning window */
-                v *= 0.5f * (1.0f + std::cos(arg * (2.0f / (fluid_real_t)SINC_ORDER)));
+                // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER)));
+                auto wnd = std::cos(arg / SINC_ORDER);
+                v *= wnd * wnd;
             }
             else
             {
