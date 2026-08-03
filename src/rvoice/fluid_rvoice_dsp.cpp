@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include "fluid_rvoice_dsp_sinc.hpp"
 
 /* Purpose:
  *
@@ -555,41 +556,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     auto interp_sinc = [&](std::array<fluid_real_t, SINC_ORDER> s)
     {
         const auto x = fluid_phase_fract(dsp_phase) * (fluid_real_t)(1.0 / FLUID_FRACT_MAX);
-        const auto center = (SINC_ORDER % 2 == 0)
-        ? (fluid_real_t)(half - 1) + x // == half + (x - 1)
-        : (fluid_real_t)half - 0.5f + x; // == half + (x - 0.5f)
-
-        std::array<fluid_real_t, SINC_ORDER> coeffs;
-        fluid_real_t sum = 0;
-        for(int i = 0; i < SINC_ORDER; i++)
-        {
-            fluid_real_t v, i_shifted = (fluid_real_t)i - center;
-
-            if(std::fabs(i_shifted) > 1e-6f)
-            {
-                auto arg = FLUID_M_PI * i_shifted;
-                v = std::sin(arg) / arg;
-                /* Hanning window */
-                // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER)));
-                auto wnd = std::cos(arg / SINC_ORDER);
-                v *= wnd * wnd;
-            }
-            else
-            {
-                v = 1.0;
-            }
-
-            coeffs[i] = v;
-            sum += v;
-        }
-
-        /* Normalize, so coefficients always sum to 1.0, preventing amplitude
-         * modulation artifacts (harmonic distortion) as fractional phase varies */
-        for(int i = 0; i < SINC_ORDER; i++) coeffs[i] /= sum;
-
-        fluid_real_t result = 0;
-        for(int i = 0; i < SINC_ORDER; i++) result += coeffs[i] * s[i];
-        return result;
+        return fluid_interp_sinc_kernel<SINC_ORDER>(s, x);
     };
 
     while(1)

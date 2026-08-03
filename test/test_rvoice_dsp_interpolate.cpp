@@ -20,6 +20,7 @@
 #include "test.h"
 #include "rvoice/fluid_rvoice.h"
 #include "rvoice/fluid_rvoice_dsp_tables.h"
+#include "rvoice/fluid_rvoice_dsp_sinc.hpp"
 #include "sfloader/fluid_sfont.h"
 
 #include <cstring>
@@ -866,6 +867,142 @@ static void test_K_end_of_sample(void)
     }
 }
 
+/* =========================================================================
+ * Test L – Sinc kernel centering
+ *
+ * Directly exercises fluid_interp_sinc_kernel<N>() to verify that the center
+ * position is computed correctly for both odd and even SINC_ORDERs.
+ *
+ * Core property exploited:
+ *   After the +0.5 phase advance in the DSP loop, x = fract(phase) = 0.5
+ *   means the true playback position falls exactly on s[half].  For a unit
+ *   impulse at s[half] the kernel must therefore return exactly 1.0:
+ *     sinc(0) = 1,  sinc(n*pi) = 0  for all non-zero integers n.
+ *
+ *   Any systematic half-sample shift in the center formula places the kernel
+ *   peak between e.g. s[half-1] and s[half], breaks this property.
+ *
+ * Sub-tests per order:
+ *   L1 – Unit impulse at s[half], x=0.5  →  result == 1.0
+ *   L2 – Unit impulse, x=0.0              →  result < 1.0  (sanity: non-trivial)
+ *   L3 – Constant (DC) input              →  result == DC for any x  (unity gain)
+ *   L4 – Impulse at s[half], sweep x      →  peak is at x=0.5, not elsewhere
+ * ========================================================================= */
+template<int N>
+static void test_L_order()
+{
+    constexpr int half = N / 2;
+
+    /* L1: unit impulse at s[half], x=0.5 must give 1.0 */
+    {
+        std::array<fluid_real_t, N> s;
+        s.fill(0.0f);
+        s[half] = 1.0f;
+        fluid_real_t result = fluid_interp_sinc_kernel<N>(s, 0.5f);
+        fluid_real_t diff = std::fabs(result - 1.0f);
+        if(diff > (fluid_real_t)1e-5)
+        {
+            fprintf(stderr, "FAIL L1 (order=%d): impulse@s[%d] x=0.5 -> %.8f (expected 1.0, diff=%.2e)\n",
+                    N, half, (double)result, (double)diff);
+            TEST_ASSERT(0);
+        }
+        printf("    L1 (order=%d) impulse@s[half] x=0.5: PASS (result=%.8f)\n", N, (double)result);
+    }
+
+    /* L2: same impulse at x=0.0 must give something < 1.0 (non-trivial kernel) */
+    if(N > 1)
+    {
+        std::array<fluid_real_t, N> s;
+        s.fill(0.0f);
+        s[half] = 1.0f;
+        fluid_real_t result = fluid_interp_sinc_kernel<N>(s, 0.0f);
+        if(result >= 1.0f - (fluid_real_t)1e-5)
+        {
+            fprintf(stderr, "FAIL L2 (order=%d): kernel appears trivial at x=0.0 (result=%.8f)\n",
+                    N, (double)result);
+            TEST_ASSERT(0);
+        }
+        printf("    L2 (order=%d) impulse@s[half] x=0.0: PASS (result=%.8f, confirms non-trivial)\n",
+               N, (double)result);
+    }
+
+    /* L3: constant (DC) input must reproduce the constant for all x */
+    {
+        const fluid_real_t DC = 12345.0f;
+        std::array<fluid_real_t, N> s;
+        s.fill(DC);
+        const float x_vals[] = { 0.0f, 0.1f, 0.25f, 0.5f, 0.75f, 0.9f, 0.999f };
+        for(float xv : x_vals)
+        {
+            fluid_real_t result = fluid_interp_sinc_kernel<N>(s, (fluid_real_t)xv);
+            fluid_real_t diff = std::fabs(result - DC);
+            if(diff > (fluid_real_t)1e-2 * DC)
+            {
+                fprintf(stderr, "FAIL L3 (order=%d): DC x=%.3f -> %.1f (expected %.1f, diff=%.2e)\n",
+                        N, (double)xv, (double)result, (double)DC, (double)diff);
+                TEST_ASSERT(0);
+            }
+        }
+        printf("    L3 (order=%d) DC gain: PASS\n", N);
+    }
+
+    /* L4: sweep x in [0, 1) — the peak response to an impulse at s[half]
+     * must occur at x=0.5, not at any other tabulated position. */
+    {
+        std::array<fluid_real_t, N> s;
+        s.fill(0.0f);
+        s[half] = 1.0f;
+
+        const fluid_real_t peak = fluid_interp_sinc_kernel<N>(s, 0.5f);
+        bool found_higher = false;
+        for(int step = 0; step <= 100; step++)
+        {
+            float xv = step / 100.0f;
+            if(xv >= 1.0f) xv = 0.999f;
+            fluid_real_t v = fluid_interp_sinc_kernel<N>(s, (fluid_real_t)xv);
+            if(v > peak + (fluid_real_t)1e-5)
+            {
+                fprintf(stderr, "FAIL L4 (order=%d): peak not at x=0.5 "
+                        "(x=%.3f gives %.8f > peak %.8f)\n",
+                        N, (double)xv, (double)v, (double)peak);
+                found_higher = true;
+            }
+        }
+        TEST_ASSERT(!found_higher);
+        printf("    L4 (order=%d) peak at x=0.5: PASS\n", N);
+    }
+}
+
+static void test_L_sinc_kernel_centering(void)
+{
+    printf("Test L: Sinc kernel centering\n");
+    printf("  Odd orders:\n");
+    test_L_order<1>();
+    test_L_order<3>();
+    test_L_order<5>();
+    test_L_order<7>();
+    test_L_order<9>();
+    test_L_order<11>();
+    test_L_order<13>();
+    test_L_order<15>();
+    test_L_order<17>();
+    test_L_order<19>();
+    printf("  Even orders:\n");
+    /* N=2 is omitted: with only 2 taps the windowed-sinc degenerates into a
+     * near-linear extrapolator whose normalized coefficients overshoot for
+     * x > 0.5.  This is a property of the kernel shape (not a centering
+     * bug) and N=2 is not a realistic interpolation order. */
+    test_L_order<4>();
+    test_L_order<6>();
+    test_L_order<8>();
+    test_L_order<10>();
+    test_L_order<12>();
+    test_L_order<14>();
+    test_L_order<16>();
+    test_L_order<18>();
+    test_L_order<20>();
+}
+
 /* ========================================================================= */
 
 int main(void)
@@ -904,6 +1041,9 @@ int main(void)
     printf("\n");
 
     test_K_end_of_sample();
+    printf("\n");
+
+    test_L_sinc_kernel_centering();
     printf("\n");
 
     printf("========================================\n");
