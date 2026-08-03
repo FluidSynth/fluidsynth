@@ -369,7 +369,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
     endforeach()
 
     add_custom_target(renderdspInterp
-        COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -F "${DSPINTERP_RENDER_DIR}/sample interpolation test.${FEXT}" "sample interpolation test.mid" "sample interpolation test.sf2"
+        COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o audio.file.format=s24 -o audio.file.type=flac -r 48000 -F "${DSPINTERP_RENDER_DIR}/sample interpolation test.flac" "sample interpolation test.mid" "sample interpolation test.sf2"
         COMMENT "Rendering Interpolation examples"
         DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manual/dsp_interp/
