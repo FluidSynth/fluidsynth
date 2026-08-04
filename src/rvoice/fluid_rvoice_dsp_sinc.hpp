@@ -55,9 +55,10 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
 
     constexpr int half = SINC_ORDER / 2;
 
-    /* The +0.5-sample phase advance means the true position within s[] is
-     * half + (x - 0.5) = half - 0.5 + x for all orders (odd and even). */
-    const auto center = (fluid_real_t)(half - 0.5f) + x; // == half + (x - 0.5f)
+    const auto center = (SINC_ORDER % 2 == 0)
+        ? (fluid_real_t)(half - 1) + x // == half + (x - 1)
+        : (fluid_real_t)half - 0.5f + x; // == half + (x - 0.5f)
+
 
     std::array<fluid_real_t, SINC_ORDER> coeffs;
     fluid_real_t sum = 0.0f;
