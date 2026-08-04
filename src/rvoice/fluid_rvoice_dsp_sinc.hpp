@@ -49,15 +49,26 @@
  * reason to shift the center by an additional -0.5 tap.
  */
 template<int SINC_ORDER>
-static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_t, SINC_ORDER>& s, fluid_real_t x)
+static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_t, SINC_ORDER>& s, uint32_t phase_fract)
 {
     static_assert(SINC_ORDER >= 1 && SINC_ORDER != 2, "SINC_ORDER must be at least 1 and not equal to 2");
 
     constexpr int half = SINC_ORDER / 2;
 
     /* The +0.5-sample phase advance means the true position within s[] is
-     * half + (x - 0.5) = half - 0.5 + x for all orders (odd and even). */
-    const auto center = (fluid_real_t)(half - 0.5f) + x; // == half + (x - 0.5f)
+     * half + (x - 0.5) = half - 0.5 + x for all orders (odd and even).
+     * The subtraction (phase_fract - 0x80000000) is intentionally done as a
+     * SIGNED 32-bit difference and then sign-extended to 64-bit: when
+     * phase_fract < 0x80000000 (original frac >= 0.5) the
+     * result is negative, which lowers center's integer part by 1 and places
+     * the kernel correctly between the tap *before* dsp_phase_index and
+     * dsp_phase_index itself.  Using plain uint32 subtraction would wrap to a
+     * large positive value and shift the center 1 sample too far right.
+     * Note that the sign extension i.e. from uint32 difference to int32
+     * technically invokes implementation defined behavior - only since C++20
+     * it's well defined to be performed in twos-complement.
+     */
+    const auto center = fluid_phase_from_index_fract(half, (int64_t)(int32_t)(phase_fract - (uint32_t)0x80000000u)); // == half + (x - 0.5f)
 
     std::array<fluid_real_t, SINC_ORDER> coeffs;
     fluid_real_t sum = 0.0f;
@@ -65,11 +76,16 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
     for(int i = 0; i < SINC_ORDER; i++)
     {
         fluid_real_t v;
-        const fluid_real_t i_shifted = (fluid_real_t)i - center;
+        fluid_phase_t i_shifted;
+        fluid_phase_set_int(i_shifted, i);
 
-        if(std::fabs(i_shifted) > 1e-6f)
+        // if i_shifted < center, the result will be negative
+        fluid_phase_decr(i_shifted, center);
+        // sacrifize the upper 2^31 values (we will never get there even close) by interpreting i_shifted as signed integer to correctly account for negative values
+        fluid_real_t i_shifted_f = (int64_t)i_shifted * (fluid_real_t)(1.0 / FLUID_FRACT_MAX);
+        if(std::fabs(i_shifted_f) > 1e-6f)
         {
-            const fluid_real_t arg = FLUID_M_PI * i_shifted;
+            const fluid_real_t arg = FLUID_M_PI * i_shifted_f;
             v = std::sin(arg) / arg;
             /* Hanning window: */
             // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER))) == cos²(arg / SINC_ORDER)
@@ -92,4 +108,13 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
     fluid_real_t result = 0.0f;
     for(int i = 0; i < SINC_ORDER; i++) result += coeffs[i] * s[i];
     return result;
+}
+
+
+template<int SINC_ORDER>
+static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_t, SINC_ORDER>& s, fluid_real_t x)
+{
+    fluid_phase_t dsp_phase;
+    fluid_phase_set_float(dsp_phase, x);
+    return fluid_interp_sinc_kernel(s, fluid_phase_fract(dsp_phase));
 }
