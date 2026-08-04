@@ -18,6 +18,7 @@
 #define NOMINMAX
 
 #include "test.h"
+#include "Wave_Sine_093.h"
 #include "rvoice/fluid_rvoice.h"
 #include "rvoice/fluid_rvoice_dsp_tables.h"
 #include "rvoice/fluid_rvoice_dsp_sinc.hpp"
@@ -1003,6 +1004,192 @@ static void test_L_sinc_kernel_centering(void)
     test_L_order<20>();
 }
 
+/**
+ * Fit  y(p) = A * sin(2π·p/loop_len + φ)  to samples[loop_start .. loop_start+loop_len-1].
+ *
+ * Uses the DFT identity for a single frequency:
+ *   B = (2/N) Σ y[p] sin(ω·p),  C = (2/N) Σ y[p] cos(ω·p)
+ *   A = √(B²+C²),  φ = atan2(C, B)
+ *
+ * This is an exact LSQ fit when the data contains exactly one period.
+ */
+static void sine_fit_loop(const short* samples, int loop_start, int loop_len,
+                          double* out_A, double* out_phi)
+{
+    const double omega = 2.0 * M_PI / loop_len;
+    double B = 0.0, C = 0.0;
+    for (int p = 0; p < loop_len; p++)
+    {
+        double s = (double)samples[loop_start + p];
+        B += s * std::sin(omega * p);
+        C += s * std::cos(omega * p);
+    }
+    B *= 2.0 / loop_len;
+    C *= 2.0 / loop_len;
+    *out_A   = std::sqrt(B * B + C * C);
+    *out_phi = std::atan2(C, B);
+}
+
+/* =========================================================================
+ * Test M – Sine wave interpolation (Wave_Sine_093.h)
+ *
+ * The sample data is a real 44 kHz, 16-bit sine wave with a forward loop
+ * spanning samples 38–62 inclusive (25 samples = one period).
+ *
+ * M1: Constant phase_incr = 1.0 (1:1 playback) across 3 buffer calls.
+ *     At every integer phase position the DSP output must equal the stored
+ *     sample value, exercising loop wrap-around across all four modes.
+ *
+ * M2: Phase ramp (pitch sweep) — phase_incr steps from 1.0 to 2.0 in 11
+ *     calls of 0.1 each, simulating a one-octave upward glide.  Each output
+ *     sample is compared against a procedurally computed sine whose
+ *     amplitude and phase are determined by a least-squares fit to the loop
+ *     region.
+ * ========================================================================= */
+static void test_M_sine_wave_interpolation(void)
+{
+    printf("Test M: Sine wave interpolation (Wave_Sine_093)\n");
+
+    /* Audio data from Wave_Sine_093.h (wave_sine_093[71]).
+     * Copy to a short[] buffer accepted by the DSP helpers. */
+    constexpr int SINE_N        = 71;
+    constexpr int SINE_LS       = (int)AUDIO_SAMPLES_LOOP0_START;      /* 38, inclusive */
+    constexpr int SINE_LE       = (int)AUDIO_SAMPLES_LOOP0_END + 1;    /* 63, exclusive */
+    constexpr int SINE_LOOP_LEN = SINE_LE - SINE_LS;                   /* 25            */
+
+    std::array<short, SINE_N> data;
+    for (int i = 0; i < SINE_N; i++)
+        data[i] = (short)wave_sine_093[i];
+
+    /* Least-squares sine fit to the loop region (used by M2). */
+    double sine_A, sine_phi;
+    sine_fit_loop(wave_sine_093, SINE_LS, SINE_LOOP_LEN, &sine_A, &sine_phi);
+    const double sine_omega = 2.0 * M_PI / SINE_LOOP_LEN;
+    printf("  Fitted sine: A=%.1f  phi=%.4f rad\n", sine_A, sine_phi);
+
+    /* ---- M1: Constant phase_incr = 1.0 --------------------------------- */
+    printf("  M1: Constant phase_incr=1.0, 3 buffer iterations (all modes)\n");
+    {
+        constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+                                       FLUID_INTERP_LINEAR,
+                                       FLUID_INTERP_4THORDER,
+                                       FLUID_INTERP_7THORDER };
+
+        for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
+        {
+            fluid_rvoice_t rvoice;
+            fluid_sample_t samp;
+
+            /* Loop starts at index 38.  The widest stencil (7th-order) needs
+             * data[n-3] .. data[n+4].  At n=38 that is data[35..42], all
+             * within the 71-element array, so we can start all modes at
+             * loop_start without any additional offset. */
+            const double start = (double)SINE_LS;
+
+            setup_rvoice(&rvoice, &samp, data.data(), /*data24=*/nullptr,
+                start, /*phase_incr=*/1.0,
+                /*start=*/0, /*end=*/SINE_N - 1,
+                SINE_LS, SINE_LE,
+                /*has_looped=*/1, modes[m]);
+
+            /* At integer-only positions the tolerance for 7th-order is the
+             * tighter "integer phase" value; other modes use TOL_POLY. */
+            const fluid_real_t tol = get_tolerance(modes[m], /*fractional=*/false);
+
+            double shadow = start;   /* mirrors the DSP phase (integer positions only) */
+            int total = 0;
+
+            for (int iter = 0; iter < 3; iter++)
+            {
+                std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+                buf.fill(0);
+
+                int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*is_looping=*/1);
+                TEST_ASSERT(count == FLUID_BUFSIZE);
+
+                for (int i = 0; i < count; i++)
+                {
+                    /* shadow is always an integer value; map it into the loop. */
+                    int idx = (int)shadow;
+                    while (idx >= SINE_LE) idx -= SINE_LOOP_LEN;
+
+                    test_sample_eq(buf[i], (fluid_real_t)data[idx], tol, total + i);
+
+                    shadow += 1.0;
+                    if (shadow >= SINE_LE) shadow -= SINE_LOOP_LEN;
+                }
+                total += count;
+            }
+            printf("    %s: PASS (%d samples verified)\n", interp_name(modes[m]), total);
+        }
+    }
+
+    /* ---- M2: Phase ramp — pitch sweep 1.0x -> 2.0x --------------------- */
+    printf("  M2: Phase ramp (phase_incr 1.0 -> 2.0 in 11 buffer calls)\n");
+    {
+        /* Tolerance budget (in original sample units, before DSP scaling):
+         *
+         *   Fit residuals    (data != perfect sine) : ≈  100 counts
+         *   LINEAR error     A·(1-cos(ω/2))        : ≈  244 counts  → total 400
+         *   4TH ORDER error  (very small)           : <   10 counts  → total 200
+         *   7TH ORDER error  (incl. table quant.)   : <   20 counts  → total 200
+         *
+         * All modes get a little extra headroom to keep the test robust. */
+        struct { fluid_interp mode; fluid_real_t tol; } tests[] = {
+            { FLUID_INTERP_LINEAR,    (fluid_real_t)400.0 },
+            { FLUID_INTERP_4THORDER,  (fluid_real_t)200.0 },
+            { FLUID_INTERP_7THORDER,  (fluid_real_t)200.0 },
+        };
+
+        for (size_t m = 0; m < FLUID_N_ELEMENTS(tests); m++)
+        {
+            fluid_rvoice_t rvoice;
+            fluid_sample_t samp;
+
+            const double start = (double)SINE_LS;
+
+            setup_rvoice(&rvoice, &samp, data.data(), /*data24=*/nullptr,
+                start, /*phase_incr=*/1.0,
+                /*start=*/0, /*end=*/SINE_N - 1,
+                SINE_LS, SINE_LE,
+                /*has_looped=*/1, tests[m].mode);
+
+            /* shadow tracks the exact fractional loop position consumed by
+             * each output sample, mirroring the DSP phase accumulator. */
+            double shadow = start;
+            int total = 0;
+
+            for (int step = 0; step <= 10; step++)
+            {
+                const double incr = 1.0 + step * 0.1;
+                rvoice.dsp.phase_incr = (fluid_real_t)incr;
+
+                std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+                buf.fill(0);
+
+                int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*is_looping=*/1);
+                TEST_ASSERT(count == FLUID_BUFSIZE);
+
+                for (int i = 0; i < count; i++)
+                {
+                    /* Fractional position within the loop (0-based). */
+                    const double loop_pos = shadow - SINE_LS;
+                    const double expected = sine_A * std::sin(sine_omega * loop_pos + sine_phi);
+
+                    test_sample_eq(buf[i], (fluid_real_t)expected, tests[m].tol, total + i);
+
+                    /* Advance and wrap shadow to match DSP behaviour. */
+                    shadow += incr;
+                    if (shadow >= SINE_LE) shadow -= SINE_LOOP_LEN;
+                }
+                total += count;
+            }
+            printf("    %s: PASS (%d samples verified)\n",
+                   interp_name(tests[m].mode), total);
+        }
+    }
+}
+
 /* ========================================================================= */
 
 int main(void)
@@ -1044,6 +1231,9 @@ int main(void)
     printf("\n");
 
     test_L_sinc_kernel_centering();
+    printf("\n");
+
+    test_M_sine_wave_interpolation();
     printf("\n");
 
     printf("========================================\n");
