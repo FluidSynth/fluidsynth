@@ -555,7 +555,8 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
      * The center tap is at position half in the array (s[half] == sample at dsp_phase_index). */
     auto interp_sinc = [&](std::array<fluid_real_t, SINC_ORDER> s)
     {
-        return fluid_interp_sinc_kernel<SINC_ORDER>(s, fluid_phase_fract(dsp_phase));
+        const auto x = fluid_phase_fract(dsp_phase) * (fluid_real_t)(1.0 / FLUID_FRACT_MAX);
+        return fluid_interp_sinc_kernel<SINC_ORDER>(s, x);
     };
 
     while(1)
