@@ -82,10 +82,10 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
         // if i_shifted < center, the result will be negative
         fluid_phase_decr(i_shifted, center);
         // sacrifize the upper 2^31 values (we will never get there even close) by interpreting i_shifted as signed integer to correctly account for negative values
-        fluid_real_t i_shifted_f = (int64_t)i_shifted * (fluid_real_t)(1.0 / FLUID_FRACT_MAX);
-        if(std::fabs(i_shifted_f) > 1e-6f)
+        const fluid_real_t i_shifted_f = (int64_t)i_shifted * (fluid_real_t)(1.0 / FLUID_FRACT_MAX);
+        const fluid_real_t arg = FLUID_M_PI * i_shifted_f;
+        if(std::fabs(arg) > 1e-6f)
         {
-            const fluid_real_t arg = FLUID_M_PI * i_shifted_f;
             v = std::sin(arg) / arg;
             /* Hanning window: */
             // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER))) == cos²(arg / SINC_ORDER)
