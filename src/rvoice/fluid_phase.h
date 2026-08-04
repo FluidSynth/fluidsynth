@@ -110,7 +110,7 @@ typedef uint64_t fluid_phase_t;
 
 /* Purpose:
  * Creates the expression a.index++. */
-#define fluid_phase_index_plusplus(a)  (((a) += 0x100000000LL)
+#define fluid_phase_index_plusplus(a)  ((a) += 0x100000000LL)
 
 #ifdef __cplusplus
 }
