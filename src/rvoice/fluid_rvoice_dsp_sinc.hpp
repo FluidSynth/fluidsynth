@@ -31,22 +31,16 @@
  *   half == SINC_ORDER / 2
  *
  * @param s  Input sample array of length SINC_ORDER.
- * @param x  Fractional phase in [0, 1).  This is the raw fractional part of
+ * @param x  Fractional phase in [0, 1].  This is the raw fractional part of
  *           dsp_phase *after* the +0.5-sample advance applied by
  *           fluid_rvoice_dsp_interpolate_sinc_local().  The true playback
  *           position within s[] is therefore:
  *
  *               center = half + (x - 0.5)  =  half - 0.5 + x
  *
- *           When x == 0.5 the center falls exactly on s[half], so
+ *           When x == 0.5 the center falls exactly on s[half] (for odd orders only), so
  *           fluid_interp_sinc_kernel returns s[half] unmodified (sinc(0) = 1,
  *           sinc(n*pi) = 0 for all non-zero integers n).
- *
- * This formula is correct for both odd and even SINC_ORDER.  For odd order
- * (e.g. N=7, half=3) the center moves across the half-open range [half-0.5,
- * half+0.5), i.e. it is always within 0.5 taps of s[half].  For even order
- * (e.g. N=8, half=4) exactly the same arithmetic applies — there is no
- * reason to shift the center by an additional -0.5 tap.
  */
 template<int SINC_ORDER>
 static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_t, SINC_ORDER>& s, fluid_real_t x)
