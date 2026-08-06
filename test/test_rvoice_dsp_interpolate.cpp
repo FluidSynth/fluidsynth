@@ -1165,18 +1165,12 @@ static void test_M_sine_wave_interpolation(void)
     /* ---- M2: Phase ramp — pitch sweep 1.0x -> 2.0x --------------------- */
     printf("  M2: Phase ramp (phase_incr 1.0 -> 2.0 in 11 buffer calls)\n");
     {
-        /* Tolerance budget (in original sample units, before DSP scaling):
-         *
-         *   Fit residuals    (data != perfect sine) : ≈  100 counts
-         *   LINEAR error     A·(1-cos(ω/2))        : ≈  244 counts  → total 400
-         *   4TH ORDER error  (very small)           : <   10 counts  → total 200
-         *   7TH ORDER error  (incl. table quant.)   : <   20 counts  → total 200
-         *
+        /* Tolerance budget (in original sample units, before DSP scaling).
          * All modes get a little extra headroom to keep the test robust. */
         struct { fluid_interp mode; fluid_real_t tol; } tests[] = {
-            { FLUID_INTERP_LINEAR,    (fluid_real_t)400.0 },
-            { FLUID_INTERP_4THORDER,  (fluid_real_t)200.0 },
-            { FLUID_INTERP_7THORDER,  (fluid_real_t)200.0 },
+            { FLUID_INTERP_LINEAR,    (fluid_real_t)300.0 },
+            { FLUID_INTERP_4THORDER,  (fluid_real_t)50.0 },
+            { FLUID_INTERP_7THORDER,  (fluid_real_t)100.0 },
         };
 
         for (size_t m = 0; m < FLUID_N_ELEMENTS(tests); m++)
