@@ -24,6 +24,9 @@
 #include <array>
 #include <cmath>
 
+#define USE_KAISER_WINDOW 0
+
+#if USE_KAISER_WINDOW
 // Code borrowed from sfizz: https://github.com/sfztools/sfizz/blob/f5c6e29f23b8057867c08e88f5f6ac6738baa30b/src/sfizz/Interpolators.hpp#L146-L157
 constexpr fluid_real_t get_beta(int sinc_order)
 {
@@ -66,6 +69,7 @@ static inline fluid_real_t kaiser(fluid_real_t i_shifted)
 
     return w;
 }
+#endif // USE_KAISER_WINDOW
 
 /**
  * Normalized windowed-sinc interpolation kernel of order SINC_ORDER.
@@ -109,12 +113,15 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
         if(std::fabs(arg) > 1e-6f)
         {
             v = std::sin(arg) / arg;
+#if USE_KAISER_WINDOW
+            const fluid_real_t k = kaiser<SINC_ORDER>(i_shifted);
+            v *= k;
+#else
             /* Hanning window: */
             // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER))) == cos²(arg / SINC_ORDER)
             const fluid_real_t hann = std::cos(arg / SINC_ORDER);
-            //v *= hann * hann;
-            const fluid_real_t k = kaiser<SINC_ORDER>(i_shifted);
-            v *= k;
+            v *= hann * hann;
+#endif
         }
         else
         {
