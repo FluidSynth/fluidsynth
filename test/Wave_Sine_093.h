@@ -8,10 +8,13 @@
 
 #include <stdint.h>
 
-#define AUDIO_SAMPLES_LOOP0_START       38U
-#define AUDIO_SAMPLES_LOOP0_END         62U // inclusive!
-#define AUDIO_SAMPLES_LOOP0_TYPE        0U  /* forward */
-#define AUDIO_SAMPLES_LOOP0_PLAY_COUNT  0U  /* 0 = infinite */
+enum
+{
+    AUDIO_SAMPLES_LOOP0_START       = 38U,
+    AUDIO_SAMPLES_LOOP0_END         = 62U, // inclusive!
+    AUDIO_SAMPLES_LOOP0_TYPE        = 0U,  /* forward */
+    AUDIO_SAMPLES_LOOP0_PLAY_COUNT  = 0U   /* 0 = infinite */
+};
 
 const int16_t wave_sine_093[71] = {
       12427,  19085,  24533,  28457,  30572,  30783,  29056,  25488,  20352,  13893,   6605,  -1131,
