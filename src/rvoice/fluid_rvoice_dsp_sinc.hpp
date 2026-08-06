@@ -64,8 +64,8 @@ static inline fluid_real_t kaiser(fluid_real_t i_shifted)
     fluid_real_t ratio = i_shifted / halfD;
     fluid_real_t rad = (fluid_real_t)1.0 - ratio * ratio;
     fluid_real_t w = (rad > 0.0)
-        ? std::cyl_bessel_i(0.f, beta * std::sqrt(rad)) * inv_i0_beta
-        : (fluid_real_t)0.0;
+                     ? std::cyl_bessel_i(0.f, beta * std::sqrt(rad)) * inv_i0_beta
+                     : (fluid_real_t)0.0;
 
     return w;
 }
@@ -91,15 +91,15 @@ static inline fluid_real_t kaiser(fluid_real_t i_shifted)
  *           sinc(n*pi) = 0 for all non-zero integers n).
  */
 template<int SINC_ORDER>
-static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_t, SINC_ORDER>& s, fluid_real_t x)
+static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_t, SINC_ORDER> &s, fluid_real_t x)
 {
     static_assert(SINC_ORDER >= 1 && SINC_ORDER != 2, "SINC_ORDER must be at least 1 and not equal to 2");
 
     constexpr int half = SINC_ORDER / 2;
 
     const auto center = (SINC_ORDER % 2 == 0)
-        ? (fluid_real_t)(half - 1) + x // == half + (x - 1)
-        : (fluid_real_t)half - 0.5f + x; // == half + (x - 0.5f)
+                        ? (fluid_real_t)(half - 1) + x // == half + (x - 1)
+                        : (fluid_real_t)half - 0.5f + x; // == half + (x - 0.5f)
 
 
     std::array<fluid_real_t, SINC_ORDER> coeffs;
@@ -110,6 +110,7 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
         fluid_real_t v;
         const fluid_real_t i_shifted = (fluid_real_t)i - center;
         const fluid_real_t arg = FLUID_M_PI * i_shifted;
+
         if(std::fabs(arg) > 1e-6f)
         {
             v = std::sin(arg) / arg;
@@ -132,11 +133,13 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
     }
 
     fluid_real_t result = 0.0f;
+
     for(int i = 0; i < SINC_ORDER; i++)
     {
         result += coeffs[i] * s[i];
         sum += coeffs[i];
     }
+
     /* Normalize so coefficients always sum to 1.0, preventing amplitude
      * modulation artifacts (harmonic distortion) as fractional phase varies. */
     return result / sum;
