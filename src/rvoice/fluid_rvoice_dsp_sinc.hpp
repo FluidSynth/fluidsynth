@@ -19,28 +19,10 @@
 
 #pragma once
 
+#define __STDCPP_WANT_MATH_SPEC_FUNCS__
 #include "fluid_sys.h"
 #include <array>
 #include <cmath>
-
-/* Kaiser window helper: zeroth-order modified Bessel function I0(x). */
-constexpr inline fluid_real_t fluid_bessel_i0(fluid_real_t x)
-{
-    /* Series expansion: I0(x) = sum_{k>=0} ((x/2)^k / k!)^2
-     * Converges quickly for the arguments we use (|x| well under ~20). */
-    fluid_real_t sum = 1.0;
-    fluid_real_t term = 1.0;
-    fluid_real_t half_x = x * (fluid_real_t)0.5;
-    for (int k = 1; k < 32; k++)
-    {
-        term *= (half_x / (fluid_real_t)k);   /* term now = (x/2)^k / k!            */
-        fluid_real_t t2 = term * term;        /* squared, per the I0 series         */
-        sum += t2;
-        //if (t2 < sum * (fluid_real_t)1e-12)     /* early out once contribution is tiny */
-        //    break;
-    }
-    return sum;
-}
 
 // Code borrowed from sfizz: https://github.com/sfztools/sfizz/blob/f5c6e29f23b8057867c08e88f5f6ac6738baa30b/src/sfizz/Interpolators.hpp#L146-L157
 constexpr inline fluid_real_t get_beta(int sinc_order)
@@ -66,7 +48,7 @@ static inline fluid_real_t kaiser(fluid_real_t i_shifted)
     constexpr fluid_real_t beta = get_beta(SINC_ORDER);
 
     /* Precompute 1 / I0(beta) once per call (normalizes the Kaiser window peak to 1). */
-    constexpr fluid_real_t inv_i0_beta = (fluid_real_t)1.0 / fluid_bessel_i0(beta);
+    static const fluid_real_t inv_i0_beta = (fluid_real_t)1.0 / std::cyl_bessel_i(0.f, beta);
 
     /* Half-width of the window in "tap" units. The kernel spans SINC_ORDER taps,
      * so the window runs from -N/2 .. +N/2 around the reconstruction point. */
@@ -80,7 +62,7 @@ static inline fluid_real_t kaiser(fluid_real_t i_shifted)
     fluid_real_t ratio = i_shifted / halfD;
     fluid_real_t rad = (fluid_real_t)1.0 - ratio * ratio;
     fluid_real_t w = (rad > 0.0)
-        ? fluid_bessel_i0(beta * std::sqrt(rad)) * inv_i0_beta
+        ? std::cyl_bessel_i(0.f, beta * std::sqrt(rad)) * inv_i0_beta
         : (fluid_real_t)0.0;
 
     return w;
@@ -132,13 +114,13 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
             // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER))) == cos²(arg / SINC_ORDER)
             const fluid_real_t hann = std::cos(arg / SINC_ORDER);
             //v *= hann * hann;
+            const fluid_real_t k = kaiser<SINC_ORDER>(i_shifted);
+            v *= k;
         }
         else
         {
             v = 1.0f;
         }
-        const fluid_real_t k = kaiser<SINC_ORDER>(i_shifted);
-        v *= k;
 
         coeffs[i] = v;
     }
