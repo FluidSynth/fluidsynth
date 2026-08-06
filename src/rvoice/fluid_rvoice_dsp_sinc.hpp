@@ -25,7 +25,7 @@
 #include <cmath>
 
 // Code borrowed from sfizz: https://github.com/sfztools/sfizz/blob/f5c6e29f23b8057867c08e88f5f6ac6738baa30b/src/sfizz/Interpolators.hpp#L146-L157
-constexpr inline fluid_real_t get_beta(int sinc_order)
+constexpr fluid_real_t get_beta(int sinc_order)
 {
     constexpr size_t PointsMin = 7;
     constexpr size_t PointsMax = 72;
@@ -38,8 +38,7 @@ constexpr inline fluid_real_t get_beta(int sinc_order)
 
     sinc_order = sinc_order < PointsMin ? PointsMin : sinc_order;
 
-    return BetaMin + (BetaMax - BetaMin) *
-            (double(sinc_order - PointsMin) / double(PointsMax - PointsMin));
+    return BetaMin + (BetaMax - BetaMin) * (double(sinc_order - PointsMin) / double(PointsMax - PointsMin));
 }
 
 template<int SINC_ORDER>
