@@ -141,14 +141,15 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
         v *= k;
 
         coeffs[i] = v;
-        sum += v;
     }
 
+    fluid_real_t result = 0.0f;
+    for(int i = 0; i < SINC_ORDER; i++)
+    {
+        result += coeffs[i] * s[i];
+        sum += coeffs[i];
+    }
     /* Normalize so coefficients always sum to 1.0, preventing amplitude
      * modulation artifacts (harmonic distortion) as fractional phase varies. */
-    for(int i = 0; i < SINC_ORDER; i++) coeffs[i] /= sum;
-
-    fluid_real_t result = 0.0f;
-    for(int i = 0; i < SINC_ORDER; i++) result += coeffs[i] * s[i];
-    return result;
+    return result / sum;
 }
