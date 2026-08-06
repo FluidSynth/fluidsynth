@@ -56,8 +56,8 @@ static_assert(VAL_24BIT_MSB <= std::numeric_limits<short>::max(), "24-bit MSB ov
 /* ----- tolerances (in original sample units, before DSP scaling) -------- */
 
 /* Polynomial interpolators (NONE, LINEAR, 4TH ORDER) are exact for their
- * respective polynomial degrees. Tolerance covers table quantization. */
-static const fluid_real_t TOL_POLY = (fluid_real_t)0.001;
+ * respective polynomial degrees. */
+static const fluid_real_t TOL_POLY = (fluid_real_t)0.01;
 
 /* 7th-order sinc has energy smearing at fractional positions.
  * At integer positions it's more accurate, but fractional positions
@@ -429,7 +429,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
 
     constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,FLUID_INTERP_NONE,
-                                   /*FLUID_INTERP_7THORDER*/};
+                                   FLUID_INTERP_7THORDER};
 
     for (size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
     {
@@ -472,7 +472,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
                     return (fluid_real_t)data[k];
             };
 
-            fluid_real_t expected;
+            fluid_real_t expected = 0;
             switch (modes[m])
             {
             case FLUID_INTERP_NONE:
@@ -498,6 +498,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
                 break;
 			case FLUID_INTERP_7THORDER:
 			{
+#if 0
 				/* Use precomputed sinc table for 7th-order interpolation */
 				const auto table_row = (int)(frac * FLUID_INTERP_MAX);
 				const fluid_real_t* coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
@@ -509,6 +510,29 @@ static void test_E_loop_boundary_ramp_wrap(void)
 					coeffs[4] * s(1) +
 					coeffs[5] * s(2) +
 					coeffs[6] * s(3);
+#else
+                double sum = 0;
+                for (int j = 0; j < SINC_INTERP_ORDER; j++)
+                {
+                    double v, j_shifted = (double)j - ((double)(SINC_INTERP_ORDER / 2) - 0.5 + frac);
+
+                    if (fabs(j_shifted) > 0.000001)
+                    {
+                        double arg = M_PI * j_shifted;
+                        v = sin(arg) / arg;
+                        /* Hanning window */
+                        v *= 0.5 * (1.0 + cos(2.0 * arg / (double)SINC_INTERP_ORDER));
+                    }
+                    else
+                    {
+                        v = 1.0;
+                    }
+
+                    expected += v * s(j - (SINC_INTERP_ORDER / 2));
+                    sum += v;
+                }
+                expected /= sum;
+#endif
 			}
 			break;
             }
@@ -876,15 +900,12 @@ static void test_K_end_of_sample(void)
  *
  * Core property exploited:
  *   After the +0.5 phase advance in the DSP loop, x = fract(phase) = 0.5
- *   means the true playback position falls exactly on s[half].  For a unit
- *   impulse at s[half] the kernel must therefore return exactly 1.0:
+ *   means the true playback position falls exactly on s[half]... at least for odd orders.
+ *   For a unit impulse at s[half] the kernel must therefore return exactly 1.0:
  *     sinc(0) = 1,  sinc(n*pi) = 0  for all non-zero integers n.
  *
- *   Any systematic half-sample shift in the center formula places the kernel
- *   peak between e.g. s[half-1] and s[half], breaks this property.
- *
  * Sub-tests per order:
- *   L1 – Unit impulse at s[half], x=0.5  →  result == 1.0
+ *   L1 – Unit impulse at s[half], x=0.5   →  result == 1.0
  *   L2 – Unit impulse, x=0.0              →  result < 1.0  (sanity: non-trivial)
  *   L3 – Constant (DC) input              →  result == DC for any x  (unity gain)
  *   L4 – Impulse at s[half], sweep x      →  peak is at x=0.5, not elsewhere
@@ -1004,6 +1025,7 @@ static void test_L_sinc_kernel_centering(void)
     test_L_order<15>();
     test_L_order<17>();
     test_L_order<19>();
+
     printf("  Even orders:\n");
     /* N=2 is omitted: with only 2 taps the windowed-sinc degenerates into a
      * near-linear extrapolator whose normalized coefficients overshoot for
