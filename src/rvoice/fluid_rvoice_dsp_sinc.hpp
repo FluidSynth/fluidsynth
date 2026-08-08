@@ -30,8 +30,8 @@
 // Code borrowed from sfizz: https://github.com/sfztools/sfizz/blob/f5c6e29f23b8057867c08e88f5f6ac6738baa30b/src/sfizz/Interpolators.hpp#L146-L157
 constexpr fluid_real_t get_beta(int sinc_order)
 {
-    constexpr size_t PointsMin = 7;
-    constexpr size_t PointsMax = 72;
+    constexpr size_t PointsMin = 6;
+    constexpr size_t PointsMax = 32;
 
     /* Kaiser shape parameter. beta ~5.658 targets ~60 dB stopband attenuation,
      * a good compromise for short kernels: deeper stopbands can't be realized
