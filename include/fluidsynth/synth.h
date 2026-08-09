@@ -271,7 +271,23 @@ enum fluid_interp
     FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, best quality, the default */
 
     /**
-     * Seventh-point sinc interpolation
+     * Sinc interpolation with a better quality than #FLUID_INTERP_4THORDER (currently 11th order sinc)
+     */
+    FLUID_INTERP_MID = 5,
+
+    /**
+     * Sinc interpolation with an even higher-level quality (25 points)
+     */
+    FLUID_INTERP_HIGH = 6,
+
+    /**
+     * Highest interpolation method available. Typically a very high order sinc. Utterly slow and pretty much unusable for real-time rendering.
+     */
+    FLUID_INTERP_HIGHEST = 7,
+
+    /**
+     * Before fluidsynth 2.6.0, this indicated seventh-point sinc interpolation.
+     * @deprecated As of fluidsynth 2.6.0 this enum value is deprecated as its naming no longer reflects its implementation.
      * @note This interpolation method was believed to provide highest quality. However, in Feb. 2025 it was discovered
      * that for certain samples it does introduce ringing artifacts, which
      * are not present in the 4th order interpolation. This is not a bug, it's rather a limitation of only using 7 points for the sinc interpolation.
@@ -279,7 +295,6 @@ enum fluid_interp
     FLUID_INTERP_7THORDER = 7,
 
     FLUID_INTERP_DEFAULT = FLUID_INTERP_4THORDER, /**< Default interpolation method */
-    FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
 };
 
 /**

@@ -464,28 +464,18 @@ endif ( enable-floats )
 unset ( WITH_PROFILING CACHE )
 if ( enable-profiling )
     set ( WITH_PROFILING 1 )
-    if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
+    if ( CMAKE_C_COMPILER_ID MATCHES "Clang" )
       set ( OPT_FLAGS "-Rpass=loop-vectorize -Rpass-analysis=loop-vectorize" )
-      find_program( CLANG_TIDY
-                    NAMES "clang-tidy"
-                    DOC "Path to clang-tidy executable" )
-
-      if ( CLANG_TIDY )
-        message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
-        execute_process ( COMMAND ${CLANG_TIDY} "--version" )
-        set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
-      endif ( CLANG_TIDY )
-    elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
+    elseif ( CMAKE_C_COMPILER_ID MATCHES "Intel" )
       set ( OPT_FLAGS "-qopt-report=3" )
-    elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
+    elseif ( CMAKE_C_COMPILER_ID MATCHES "GNU" )
       set ( OPT_FLAGS "-fopt-info -fopt-info-vec-missed" )
-	elseif ( CMAKE_C_COMPILER_ID STREQUAL "MSVC" )
+    elseif ( CMAKE_C_COMPILER_ID MATCHES "MSVC" )
 	  set ( OPT_FLAGS "/Qvec-report:2" )
     endif ( )
 
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPT_FLAGS}" )
-
 endif ( enable-profiling )
 
 unset ( ENABLE_TRAPONFPE CACHE )
