@@ -1,13 +1,44 @@
 # 📝 Release Notes
 
+# FluidSynth 2.6.0
+
+### New Features
+
+* Add automatic Gain Control / Output Limiter on final rendering stage, refer to related [FluidSettings](https://www.fluidsynth.org/wiki/settings/synth/#settings_synth_limiter_active) (#1302, thanks to @neoharp-dev)
+* The `synth` gained support for signed 32-bit & 24-bit linear PCM, and WASAPI is the first audio driver being able to use 24-bit audio (#1737, thanks to @jimhen3ry)
+* Add support for MIDI RPN 5 - Modulation Depth Range (#1355)
+* Add new reverb engines to fix flaws of fluidsynth's previous FDN reverb, refer to wiki for [an overview](https://www.fluidsynth.org/wiki/reverbators/) (#1760)
+* Implement GM2 bank select mode (#1323, thanks to @Guflly)
+
+### Musically Breaking Changes
+
+* Fix a bug introduced 17 years ago in 1.1.0  that caused sample fine-tune to be applied incorrectly for some Soundfont instruments (#1773)
+* Implement MIDI RP-020 to fix MIDI files that use MTS being played back incorrectly (#102, thanks to @mawe42)
+* Fluidsynth's default reverb engine was changed to Dattorro - a plate-style reverbator (#1760)
+* Fluidsynth now uses a higher order sinc interpolation, the previous 7th order sinc was dropped due to quality issues (#1483)
+
+### Other changes
+
+* Make the Pipewire driver more resilient against xruns (#1813, thanks to @rsp4jack)
+* Fluidsynth's [Wiki was migrated to Zensical](https://www.fluidsynth.org/wiki) and its markdown source is now hosted in this repository (#1777, thanks to @spessasus)
+* Fluidsynth's [API documentation is now hosted alongside the wiki](https://www.fluidsynth.org/wiki/api) (#1792)
+* Fluidsynth now exits with an error whenever it is unable to load Soundfonts passed as command line argument (#1807)
+* Remove GLib and libInstPatch (#1799)
+
+## FluidSynth 2.5.7
+
+* Fix a bug where DLS files that contain a PGAL chunk may sound incorrectly (#1804, thanks to @rsp4jack)
+* Fix a build issue with MSVC (#1810, thanks to @madebr)
+* Fix DLS sample invalidation logic to avoid possible use of uninitialized memory (#1809, thanks to @rsp4jack)
+
 ## FluidSynth 2.5.6
 
-* Fix CVE-2026-58264 - a heap-based buffer overrun in command handler (GHSA-mqmq-w63q-cj94)
-* Fix CVE-2026-61714 - a heap-based buffer overflow in MIDI player (GHSA-976m-35rw-h3m6)
-* Fix CVE-2026-61721 - a heap-based buffer overrun for DLS samples (GHSA-59ph-rx8r-8p4j)
-* Fix CVE-2026-61723 - a DLS `ptbl` chunk integer overflow (GHSA-r4mc-v3p8-pv47)
-* Fix CVE-2026-61722 - a DLS articulation chunk integer overflow (GHSA-hp72-35pr-6h6r)
-* Fix CVE-2026-61720 - a SF2 DMOD chunk integer underflow (GHSA-rmc4-c8hw-455w)
+* Fix CVE-2026-58264 - a heap-based buffer overrun in command handler ([GHSA-mqmq-w63q-cj94](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-mqmq-w63q-cj94))
+* Fix CVE-2026-61714 - a heap-based buffer overflow in MIDI player ([GHSA-976m-35rw-h3m6](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-976m-35rw-h3m6))
+* Fix CVE-2026-61721 - a heap-based buffer overrun for DLS samples ([GHSA-59ph-rx8r-8p4j](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-59ph-rx8r-8p4j))
+* Fix CVE-2026-61723 - a DLS `ptbl` chunk integer overflow ([GHSA-r4mc-v3p8-pv47](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-r4mc-v3p8-pv47))
+* Fix CVE-2026-61722 - a DLS articulation chunk integer overflow ([GHSA-hp72-35pr-6h6r](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-hp72-35pr-6h6r))
+* Fix CVE-2026-61720 - a SF2 DMOD chunk integer underflow ([GHSA-rmc4-c8hw-455w](https://github.com/FluidSynth/fluidsynth/security/advisories/GHSA-rmc4-c8hw-455w))
 
 ## FluidSynth 2.5.5
 
