@@ -28,7 +28,7 @@ permissions:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event_name == 'pull_request' && github.event.pull_request.base.sha || '30380a25c99994fa81d7263506cd2ba0ffbd216a' }}
+  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event_name == 'pull_request' && github.event.pull_request.base.sha || '33f6aef93cf00aebe272808d96d20ad699849638' }}
   SNR_MIN: '60'
   RMS_MAX: '0.0001'
   ABS_MAX: '0.01'
