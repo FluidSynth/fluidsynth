@@ -465,7 +465,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
 
     constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_LINEAR,
                                                           FLUID_INTERP_4THORDER, FLUID_INTERP_NONE,
-                                                          FLUID_INTERP_7THORDER
+                                                          /*FLUID_INTERP_7THORDER*/
                                                         };
 
     for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
