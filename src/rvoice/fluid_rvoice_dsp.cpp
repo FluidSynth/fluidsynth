@@ -743,12 +743,13 @@ struct Interpolate4thOrder
     }
 };
 
-struct Interpolate7thOrder
+template<int SINC_ORDER>
+struct InterpolateSinc
 {
     template<bool IS_24BIT, bool LOOPING>
     int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
     {
-        return fluid_rvoice_dsp_interpolate_sinc_local<IS_24BIT, LOOPING, 7>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_interpolate_sinc_local<IS_24BIT, LOOPING, SINC_ORDER>(rvoice, dsp_buf);
     }
 };
 
@@ -804,7 +805,11 @@ fluid_rvoice_dsp_interpolate(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRIC
     default:
         return dsp_invoker<Interpolate4thOrder>(rvoice, dsp_buf, looping);
 
-    case FLUID_INTERP_7THORDER:
-        return dsp_invoker<Interpolate7thOrder>(rvoice, dsp_buf, looping);
+    case FLUID_INTERP_MID:
+        return dsp_invoker<InterpolateSinc<11>>(rvoice, dsp_buf, looping);
+
+    case FLUID_INTERP_HIGH:
+    case FLUID_INTERP_HIGHEST:
+        return dsp_invoker<InterpolateSinc<25>>(rvoice, dsp_buf, looping);
     }
 }
