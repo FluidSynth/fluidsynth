@@ -516,6 +516,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     fluid_phase_t dsp_phase_incr;
     const short int *FLUID_RESTRICT dsp_data = voice->sample->data;
     const char *FLUID_RESTRICT dsp_data24 = voice->sample->data24;
+    const unsigned int loop_len = voice->loopend - voice->loopstart;
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int start_index, end_index;
@@ -539,16 +540,16 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     if(voice->has_looped)   /* set start_index and start points if looped or not */
     {
         start_index = voice->loopstart;
-
         for(int j = 0; j < half; j++)
         {
-            start_points[j] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1 - j);
+            /* wrap index into the loop in case half >= loop_len */
+            unsigned int idx = voice->loopend - 1 - (j % loop_len);
+            start_points[j] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
         }
     }
     else
     {
         start_index = voice->start;
-
         /* duplicate the start point for all left guard positions */
         for(int j = 0; j < half; j++)
         {
@@ -561,7 +562,9 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     {
         for(int j = 0; j < right_guard; j++)
         {
-            end_points[j] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopstart + j);
+            /* wrap index into the loop in case right_guard >= loop_len */
+            unsigned int idx = voice->loopstart + (j % loop_len);
+            end_points[j] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
         }
     }
     else
@@ -677,16 +680,17 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index + right_guard)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            fluid_phase_sub_int(dsp_phase, loop_len);
 
             if(!voice->has_looped)
             {
                 voice->has_looped = 1;
                 start_index = voice->loopstart;
-
-                for(int j = 0; j < half; j++)
+                for (int j = 0; j < half; j++)
                 {
-                    start_points[j] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1 - j);
+                    /* wrap index into the loop in case half >= loop_len */
+                    unsigned int idx = voice->loopend - 1 - (j % loop_len);
+                    start_points[j] = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, idx);
                 }
             }
         }
