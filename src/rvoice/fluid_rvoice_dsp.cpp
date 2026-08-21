@@ -813,6 +813,8 @@ fluid_rvoice_dsp_interpolate(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRIC
         return dsp_invoker<InterpolateSinc<11>>(rvoice, dsp_buf, looping);
 
     case FLUID_INTERP_HIGH:
+        return dsp_invoker<InterpolateSinc<17>>(rvoice, dsp_buf, looping);
+
     case FLUID_INTERP_HIGHEST:
         return dsp_invoker<InterpolateSinc<25>>(rvoice, dsp_buf, looping);
     }
