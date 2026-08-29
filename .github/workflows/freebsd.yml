@@ -42,6 +42,7 @@ jobs:
                 pkg install -y \
                   cmake \
                   pkgconf \
+                  git \
                   ninja \
                   gcem \
                   libsndfile \
