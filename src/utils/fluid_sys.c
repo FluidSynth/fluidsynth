@@ -1433,7 +1433,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
     {
 #ifdef _POSIX_C_SOURCE
         /* On POSIX, use poll() to wait on either an incoming connection or a
-         * wakeup from the wake pipe.  Relying on shutdown()/close() to
+         * wakeup from the wake pipe. Relying on shutdown()/close() to
          * interrupt a concurrent accept() is unreliable on macOS/BSD where
          * shutdown() is a no-op on a listening socket. */
         {
@@ -1686,7 +1686,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
     }
 #else
     /* On POSIX, writing to the wake pipe unblocks the server thread's poll()
-     * call.  Using shutdown/close to interrupt accept() is unreliable on some
+     * call. Using shutdown/close to interrupt accept() is unreliable on some
      * platforms (e.g. macOS/BSD) where shutdown() on a listening socket is a
      * no-op and close() may not wake a concurrent accept(). */
     {
