@@ -40,18 +40,12 @@ jobs:
             release: "15"
             prepare: |
                 pkg install -y \
-                  cmake \
+                  compiler:c++17-lang \
+                  pkgconfig \
                   ninja \
-                  pkgconf \
                   gcem \
                   libsndfile \
                   readline
-                pwd
-                gcc --version
-                g++ --version
-                cmake --version
-                ld --version
-                exit 0
 
             run: |
                 set -ex
