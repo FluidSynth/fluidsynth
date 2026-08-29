@@ -786,7 +786,8 @@ unset ( SIGNALSMITH_SUPPORT CACHE )
 find_path ( SIGNALSMITH_AUDIO_BASICS
             NAMES "include/signalsmith-basics/reverb.h" "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
             PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
-            HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE )
+            HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE
+            NO_CMAKE_FIND_ROOT_PATH )
 if ( enable-signalsmith )
   if ( SIGNALSMITH_AUDIO_BASICS )
     add_subdirectory(signalsmith-audio-basics)
