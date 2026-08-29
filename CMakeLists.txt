@@ -554,6 +554,11 @@ if ( osal STREQUAL "cpp11" )
     # Will silently fall back to a lower standard version if not available
     set( CMAKE_CXX_STANDARD 17 )
     include( CheckCXXSourceCompiles )
+    # Some OS - ie. FreeBSD - require explicitly linking pthread
+    set ( CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES} )
+    if ( TARGET Threads::Threads )
+        list( APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads )
+    endif ()
     check_cxx_source_compiles( "#include <condition_variable>
     #include <mutex>
     #include <thread>
@@ -563,6 +568,7 @@ if ( osal STREQUAL "cpp11" )
         std::thread t([]{});
         t.join();
     }" HAVE_CXX_THREAD_PRIMITIVES )
+    set( CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE} )
     if ( NOT HAVE_CXX_THREAD_PRIMITIVES )
         message ( FATAL_ERROR "Your compiler does not support C++11 threading primitives "
                               "(<mutex>, <condition_variable>, <thread>). "
