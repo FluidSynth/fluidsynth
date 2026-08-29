@@ -46,7 +46,6 @@ jobs:
                   gcem \
                   libsndfile \
                   readline
-
                 pwd
                 gcc --version
                 g++ --version
