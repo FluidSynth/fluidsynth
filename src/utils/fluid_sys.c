@@ -19,7 +19,7 @@
 
 #include "fluid_sys.h"
 
-#ifndef _WIN32
+#ifdef _POSIX_C_SOURCE
 #include <poll.h>
 #endif
 
@@ -78,7 +78,7 @@ struct _fluid_server_socket_t
     int cont;
     fluid_server_func_t func;
     void *data;
-#ifndef _WIN32
+#ifdef _POSIX_C_SOURCE
     int wake_fds[2]; /* pipe fds used to interrupt accept(): [0]=read end, [1]=write end */
 #endif
 };
@@ -1431,7 +1431,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
 
     while(server_socket->cont)
     {
-#ifndef _WIN32
+#ifdef _POSIX_C_SOURCE
         /* On POSIX, use poll() to wait on either an incoming connection or a
          * wakeup from the wake pipe.  Relying on shutdown()/close() to
          * interrupt a concurrent accept() is unreliable on macOS/BSD where
@@ -1643,7 +1643,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     server_socket->data = data;
     server_socket->cont = 1;
 
-#ifndef _WIN32
+#ifdef _POSIX_C_SOURCE
     if(pipe(server_socket->wake_fds) == -1)
     {
         FLUID_LOG(FLUID_ERR, "Got error %d while creating wakeup pipe for server socket", errno);
@@ -1659,7 +1659,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(server_socket->thread == NULL)
     {
-#ifndef _WIN32
+#ifdef _POSIX_C_SOURCE
         close(server_socket->wake_fds[0]);
         close(server_socket->wake_fds[1]);
 #endif
@@ -1678,7 +1678,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 
     server_socket->cont = 0;
 
-#ifdef _WIN32
+#ifndef _POSIX_C_SOURCE
     /* On Windows, closing the socket reliably interrupts a blocking accept(). */
     if(server_socket->socket != INVALID_SOCKET)
     {
@@ -1701,7 +1701,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
         delete_fluid_thread(server_socket->thread);
     }
 
-#ifndef _WIN32
+#ifdef _POSIX_C_SOURCE
     if(server_socket->socket != INVALID_SOCKET)
     {
         fluid_socket_close(server_socket->socket);
