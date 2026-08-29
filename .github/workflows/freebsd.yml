@@ -40,6 +40,7 @@ jobs:
             release: "15"
             prepare: |
                 pkg install -y \
+                  cmake \
                   pkgconf \
                   ninja \
                   gcem \
