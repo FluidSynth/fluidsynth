@@ -1,0 +1,69 @@
+name: FluidSynth FreeBSD
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/api_doc_build.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/os2.yml'
+      - '.github/workflows/rendering-regression.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/windows.yml'
+      - 'README.md'
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+    freebsd:
+        name: FreeBSD
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v7
+          with:
+            submodules: true
+
+        - name: Build & test
+          uses: vmactions/freebsd-vm@v1
+          with:
+            release: "15"
+            prepare: |
+                pkg install -y \
+                  cmake \
+                  ninja \
+                  pkgconf \
+                  gcem \
+                  libsndfile \
+                  readline
+
+                pwd
+                gcc --version
+                g++ --version
+                cmake --version
+                ld --version
+                exit 0
+
+            run: |
+                set -ex
+                cmake -S . -G Ninja \
+                  -B build \
+                  -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+                  -DCMAKE_VERBOSE_MAKEFILE=1 \
+                  -Denable-readline=1 \
+                  -Denable-libsndfile=1 \
+                  -Werror=dev
+                cmake --build build
+                cmake --build build --target check
+                cmake --build build --target demo
+
