@@ -40,8 +40,7 @@ jobs:
             release: "15"
             prepare: |
                 pkg install -y \
-                  compiler:c++17-lang \
-                  pkgconfig \
+                  pkgconf \
                   ninja \
                   gcem \
                   libsndfile \
