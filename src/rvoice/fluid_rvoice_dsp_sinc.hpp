@@ -24,9 +24,18 @@
 #include <array>
 #include <cmath>
 
+/* 0 = Hann window (default)
+ * 1 = Custom Kaiser window (sfizz-derived, uses std::cyl_bessel_i)
+ * 2 = Signalsmith Kaiser window (requires signalsmith-dsp headers)
+ *
+ * In case of 2 adding
+    target_include_directories ( libfluidsynth-OBJ PRIVATE
+        $<TARGET_PROPERTY:signalsmith-dsp,INTERFACE_INCLUDE_DIRECTORIES> )
+ * to src/CMakeLists.txt will be required
+ */
 #define USE_KAISER_WINDOW 0
 
-#if USE_KAISER_WINDOW
+#if USE_KAISER_WINDOW == 1
 // Code borrowed from sfizz: https://github.com/sfztools/sfizz/blob/f5c6e29f23b8057867c08e88f5f6ac6738baa30b/src/sfizz/Interpolators.hpp#L146-L157
 constexpr fluid_real_t get_beta(int sinc_order)
 {
@@ -69,7 +78,31 @@ static inline fluid_real_t kaiser(fluid_real_t i_shifted)
 
     return w;
 }
-#endif // USE_KAISER_WINDOW
+#endif // USE_KAISER_WINDOW == 1
+
+#if USE_KAISER_WINDOW == 2
+#include "signalsmith-dsp/windows.h"
+
+template<int SINC_ORDER>
+static inline fluid_real_t kaiser_signalsmith(fluid_real_t i_shifted)
+{
+    /* Bandwidth scaled to SINC_ORDER, targeting the expected range [8, 72].
+     * bw = 4.0 at order 8  → beta ≈ 5.4  (matches sfizz BetaMin ≈ 5.66)
+     * bw = 7.0 at order 72 → beta ≈ 9.3  (approaches sfizz BetaMax = 10.0)
+     * heuristicOptimal=true further tunes beta for minimal sidelobe energy. */
+    constexpr double bw_t = SINC_ORDER <= 8 ? 0.0 : SINC_ORDER >= 72 ? 1.0 : (SINC_ORDER - 8.0) / 64.0;
+    constexpr double bw = 4.0 + 3.0 * bw_t;
+    static signalsmith::windows::Kaiser w = signalsmith::windows::Kaiser::withBandwidth(bw, /*heuristicOptimal=*/true);
+
+    /* Map tap offset i_shifted ∈ [-halfD, +halfD] to unit ∈ [0, 1].
+     * signalsmith Kaiser uses unit = 0.5 for center (window peak),
+     * unit = 0 or 1 for the edges. Clamp for the outermost fractional taps. */
+    constexpr fluid_real_t halfD = (fluid_real_t)(SINC_ORDER / 2.0);
+    const double unit = (double)(i_shifted / halfD) * 0.5 + 0.5;
+    const double clamped = unit < 0.0 ? 0.0 : unit > 1.0 ? 1.0 : unit;
+    return (fluid_real_t)w(clamped);
+}
+#endif // USE_KAISER_WINDOW == 2
 
 /**
  * Normalized windowed-sinc interpolation kernel of order SINC_ORDER.
@@ -114,8 +147,11 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
         if(std::fabs(arg) > 1e-6f)
         {
             v = std::sin(arg) / arg;
-#if USE_KAISER_WINDOW
+#if USE_KAISER_WINDOW == 1
             const fluid_real_t k = kaiser<SINC_ORDER>(i_shifted);
+            v *= k;
+#elif USE_KAISER_WINDOW == 2
+            const fluid_real_t k = kaiser_signalsmith<SINC_ORDER>(i_shifted);
             v *= k;
 #else
             /* Hanning window: */
