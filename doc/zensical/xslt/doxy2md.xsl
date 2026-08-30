@@ -515,8 +515,20 @@
     </xsl:choose>
   </xsl:template>
 
-  <!-- Inline simplesect (used inside table cells) -->
+  <!-- Inline simplesect (used inside table cells): include a bold label prefix -->
   <xsl:template match="simplesect" mode="inline">
+    <xsl:variable name="kind" select="@kind"/>
+    <xsl:choose>
+      <xsl:when test="$kind='note'"><xsl:text> **Note:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='warning'"><xsl:text> **Warning:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='important'"><xsl:text> **Important:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='attention'"><xsl:text> **Attention:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='see'"><xsl:text> **See also:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='since'"><xsl:text> **Since:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='deprecated'"><xsl:text> **Deprecated:** </xsl:text></xsl:when>
+      <xsl:when test="$kind='return'"><xsl:text> **Returns:** </xsl:text></xsl:when>
+      <xsl:otherwise><xsl:text> </xsl:text></xsl:otherwise>
+    </xsl:choose>
     <xsl:apply-templates mode="inline"/>
   </xsl:template>
 
@@ -541,6 +553,9 @@
     <xsl:value-of select="@url"/>
     <xsl:text>)</xsl:text>
   </xsl:template>
+
+  <!-- Suppress whitespace-only text nodes in inline mode to prevent newlines breaking table rows -->
+  <xsl:template match="text()[normalize-space(.) = '']" mode="inline"/>
 
   <!-- Inline text nodes: escape [ and ] to prevent spurious Markdown link references -->
   <xsl:template match="text()" mode="inline">
@@ -837,6 +852,14 @@
   <!-- Suppress the xreftitle (already consumed by xrefsect template above) -->
   <xsl:template match="xreftitle"/>
   <xsl:template match="xreftitle" mode="inline"/>
+
+  <!-- xrefsect in inline mode (e.g. inside enum-value table cells): render as bold label + content -->
+  <xsl:template match="xrefsect" mode="inline">
+    <xsl:text> **</xsl:text>
+    <xsl:value-of select="normalize-space(xreftitle)"/>
+    <xsl:text>:** </xsl:text>
+    <xsl:apply-templates select="xrefdescription" mode="inline"/>
+  </xsl:template>
 
   <!-- xrefdescription: block container inside xrefsect -->
   <xsl:template match="xrefdescription">
