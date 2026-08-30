@@ -1391,6 +1391,7 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock)
 
 void fluid_socket_close(fluid_socket_t sock)
 {
+    int ret;
     if(sock != INVALID_SOCKET)
     {
         /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
@@ -1399,8 +1400,24 @@ void fluid_socket_close(fluid_socket_t sock)
         closesocket(sock);
 
 #else
-        shutdown(sock, SHUT_RDWR);
-        close(sock);
+        ret = shutdown(sock, SHUT_RDWR);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during shutdown(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "shutdown() succeeded");
+        }
+        ret = close(sock);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during close(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "close() succeeded");
+        }
 #endif
     }
 }
@@ -1467,6 +1484,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
         }
 #endif
 
+        FLUID_LOG(FLUID_DBG, "Server Thread calling accept()...");
         client_socket = accept(server_socket->socket, (struct sockaddr *)&addr, &addrlen);
 
         FLUID_LOG(FLUID_DBG, "New client connection");
@@ -1477,12 +1495,17 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
             {
                 FLUID_LOG(FLUID_ERR, "Got error %d while trying to accept connection", fluid_socket_get_error());
             }
+            else
+            {
+                FLUID_LOG(FLUID_DBG, "Got error %d while trying to accept connection, abort was requested", fluid_socket_get_error());
+            }
 
             server_socket->cont = 0;
             return FLUID_THREAD_RETURN_VALUE;
         }
         else
         {
+            FLUID_LOG(FLUID_DBG, "Server thread got a client socket.");
 #ifdef HAVE_INETNTOP
 
 #ifdef IPV6_SUPPORT
@@ -1676,6 +1699,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
     fluid_return_if_fail(server_socket != NULL);
 
+    FLUID_LOG(FLUID_DBG, "Signaling server thread to exit...");
     server_socket->cont = 0;
 
 #ifndef _POSIX_C_SOURCE
@@ -1697,6 +1721,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 
     if(server_socket->thread)
     {
+        FLUID_LOG(FLUID_DBG, "Joining server thread...");
         fluid_thread_join(server_socket->thread);
         delete_fluid_thread(server_socket->thread);
     }

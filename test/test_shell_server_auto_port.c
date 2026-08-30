@@ -27,6 +27,10 @@ int main(void)
 #ifdef NETWORK_SUPPORT
     fluid_settings_t *settings1, *settings2;
     fluid_server_t *server1, *server2;
+    const char *audio_driver_register = { NULL };
+
+    fluid_audio_driver_register(&audio_driver_register);
+    fluid_set_log_function(FLUID_DBG, fluid_default_log_function, NULL);
 
     settings1 = new_fluid_settings();
     settings2 = new_fluid_settings();
