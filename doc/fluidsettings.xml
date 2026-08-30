@@ -800,8 +800,7 @@ Developers:
             <def>1 (TRUE)</def>
             <desc>
                 If TRUE, creates an asynchronous PipeWire stream. This isolates synthesizer from PipeWire's synchronous processing graph, preventing system-wide audio dropouts (xruns) during heavy workload (such as high polyphones).
-                Requires PipeWire &gt;= 0.3.73.
-                <note>Enabling this automatically doubles the actual latency.</note>
+                <note>Requires PipeWire &gt;= 1.1.81. Enabling this automatically doubles the actual latency.</note>
             </desc>
         </setting>
         <setting>
