@@ -14,6 +14,7 @@ on:
       - '.github/workflows/os2.yml'
       - '.github/workflows/rendering-regression.yml'
       - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
       - 'README.md'
 
@@ -28,6 +29,16 @@ jobs:
     freebsd:
         name: FreeBSD
         runs-on: ubuntu-latest
+        strategy:
+          fail-fast: false
+          matrix:
+            include:
+              - release: "15"
+                arch: "x86_64"
+              - release: "14"
+                arch: "x86_64"
+              - release: "13"
+                arch: "x86_64"
         steps:
         - name: Checkout
           uses: actions/checkout@v7
@@ -37,7 +48,8 @@ jobs:
         - name: Build & test
           uses: vmactions/freebsd-vm@v1
           with:
-            release: "15"
+            release: ${{ matrix.release }}
+            arch: ${{ matrix.arch }}
             prepare: |
                 pkg install -y \
                   cmake \

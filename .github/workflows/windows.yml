@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
+      - '.github/workflows/freebsd.yml'
       - '.github/workflows/api_doc_build.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/solaris.yml'

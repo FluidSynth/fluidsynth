@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
+      - '.github/workflows/freebsd.yml'
       - '.github/workflows/rendering-regression.yml'
       - '.github/workflows/linux.yml'
       - '.github/workflows/ios.yml'
