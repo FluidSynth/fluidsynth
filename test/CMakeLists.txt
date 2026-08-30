@@ -707,6 +707,7 @@ endif (ENABLE_NATIVE_DLS )
     add_dependencies(check_rendering renderBankSelect)
     add_dependencies(check_rendering renderDMOD)
     add_dependencies(check_rendering renderRPN)
+    add_dependencies(check_rendering renderSf2NRPN)
     # The check_rendering target is used by the rendering regression tests, rendering the reverbOverview would make the regression tests take way too long!
     #add_dependencies(check_rendering renderReverbOverview)
     add_dependencies(check_rendering renderMtsTests)
