@@ -38,7 +38,7 @@ jobs:
                 arch: "aarch64"
               - release: "15"
                 arch: "riscv64"
-              - release: "12"
+              - release: "13"
                 arch: "x86_64"
         steps:
         - name: Checkout
