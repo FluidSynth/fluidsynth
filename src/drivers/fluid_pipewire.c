@@ -281,7 +281,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
 #if PW_CHECK_VERSION(1,1,81)
         pw_properties_set(props, PW_KEY_NODE_ASYNC, "true");
 #else
-        FLUID_LOG(FLUID_WARNING, "Fluidsynth must be compiled against Pipewire 1.1.81 or newer to support asynchronous scheduling. Falling back to synchronous scheduling.");
+        FLUID_LOG(FLUID_WARN, "Fluidsynth must be compiled against Pipewire 1.1.81 or newer to support asynchronous scheduling. Falling back to synchronous scheduling.");
         FLUID_LOG(FLUID_INFO, "Hint: Set audio.pipewire.async=0 to hide this warning.");
 #endif
     }
