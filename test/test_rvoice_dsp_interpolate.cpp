@@ -227,8 +227,7 @@ static void test_A_integer_phase_passthrough(void)
         buf.fill(0);
 
         /* Start far enough into the sample for modes that need look-behind samples */
-        double start = (modes[m] > FLUID_INTERP_4THORDER)  ? 4.0 :
-                       (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
+        double start = 0.0;
 
         setup_rvoice_16bit(&rvoice, &samp, data.data(),
                            start, 1.0,
@@ -614,8 +613,7 @@ static void test_F_24bit_samples(void)
         std::array<fluid_real_t, FLUID_BUFSIZE> buf;
         buf.fill(0);
 
-        double start = (modes[m] > FLUID_INTERP_4THORDER) ? 5.0 :
-                       (modes[m] == FLUID_INTERP_4THORDER) ? 2.0 : 1.0;
+        double start = 1.0;
 
         setup_rvoice(&rvoice, &samp, data16.data(), data24.data(),
                      start, 1.0,
@@ -685,8 +683,7 @@ static void test_G_high_playback_rate(void)
             std::array<fluid_real_t, FLUID_BUFSIZE> buf;
             buf.fill(0);
 
-            double start = (modes[m] > FLUID_INTERP_4THORDER) ? 3.0 :
-                           (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
+            double start = 0.0;
 
             setup_rvoice_16bit(&rvoice, &samp, data.data(),
                                start, rates[r],
