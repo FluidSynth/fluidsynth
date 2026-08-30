@@ -19,7 +19,7 @@
 
 #include "fluid_sys.h"
 
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
 #include <poll.h>
 #endif
 
@@ -78,7 +78,7 @@ struct _fluid_server_socket_t
     int cont;
     fluid_server_func_t func;
     void *data;
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
     int wake_fds[2]; /* pipe fds used to interrupt accept(): [0]=read end, [1]=write end */
 #endif
 };
@@ -1448,7 +1448,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
 
     while(server_socket->cont)
     {
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
         /* On POSIX, use poll() to wait on either an incoming connection or a
          * wakeup from the wake pipe. Relying on shutdown()/close() to
          * interrupt a concurrent accept() is unreliable on macOS/BSD where
@@ -1667,7 +1667,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     server_socket->data = data;
     server_socket->cont = 1;
 
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
     if(pipe(server_socket->wake_fds) == -1)
     {
         FLUID_LOG(FLUID_ERR, "Got error %d while creating wakeup pipe for server socket", errno);
@@ -1683,7 +1683,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(server_socket->thread == NULL)
     {
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
         close(server_socket->wake_fds[0]);
         close(server_socket->wake_fds[1]);
 #endif
@@ -1703,7 +1703,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
     FLUID_LOG(FLUID_DBG, "Signaling server thread to exit...");
     server_socket->cont = 0;
 
-#ifndef _POSIX_VERSION
+#if !defined(_POSIX_VERSION) || defined(__OS2__)
     /* On Windows, closing the socket reliably interrupts a blocking accept(). */
     if(server_socket->socket != INVALID_SOCKET)
     {
@@ -1728,7 +1728,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
         FLUID_LOG(FLUID_DBG, "Server thread joined and deleted.");
     }
 
-#ifdef _POSIX_VERSION
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
     if(server_socket->socket != INVALID_SOCKET)
     {
         fluid_socket_close(server_socket->socket);
