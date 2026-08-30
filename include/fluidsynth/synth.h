@@ -276,12 +276,12 @@ enum fluid_interp
     FLUID_INTERP_MID = 5,
 
     /**
-     * Sinc interpolation with an even higher-level quality (25 points)
+     * Sinc interpolation with an even higher-level quality (17th order sinc)
      */
     FLUID_INTERP_HIGH = 6,
 
     /**
-     * Highest interpolation method available. Typically a very high order sinc. Utterly slow and pretty much unusable for real-time rendering.
+     * Highest interpolation method available. Typically a very high order sinc (currently 25th order). Utterly slow and pretty much unusable for real-time rendering.
      */
     FLUID_INTERP_HIGHEST = 7,
 
