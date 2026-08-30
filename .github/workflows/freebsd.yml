@@ -28,6 +28,17 @@ jobs:
     freebsd:
         name: FreeBSD
         runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            include:
+              - release: "15"
+                arch: "x86_64"
+              - release: "15"
+                arch: "aarch64"
+              - release: "15"
+                arch: "riscv64"
+              - release: "12"
+                arch: "x86_64"
         steps:
         - name: Checkout
           uses: actions/checkout@v7
@@ -37,7 +48,8 @@ jobs:
         - name: Build & test
           uses: vmactions/freebsd-vm@v1
           with:
-            release: "15"
+            release: ${{ matrix.release }}
+            arch: ${{ matrix.arch }}
             prepare: |
                 pkg install -y \
                   cmake \
