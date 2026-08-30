@@ -468,8 +468,12 @@ static void test_E_loop_boundary_ramp_wrap(void)
     const double phase_start = (double)(LOOP_END - 2);
     const double phase_incr = 0.25;
 
+    // We're skipping the sinc interpolation modes here, as a proper implementation would require either calling
+    // fluid_interp_sinc_kernel() directly (causing the test to reuse logic that it should actually validate against)
+    // or to duplicate the logic fluid_interp_sinc_kernel() here, which would be an overkill for this test.
     constexpr const std::array<fluid_interp, 3> modes = { FLUID_INTERP_LINEAR,
-                                                          FLUID_INTERP_4THORDER, FLUID_INTERP_NONE
+                                                          FLUID_INTERP_4THORDER,
+                                                          FLUID_INTERP_NONE,
                                                         };
 
     for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
@@ -488,7 +492,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         double phase_d = phase_start;
-
+#if 0
         if(modes[m] == FLUID_INTERP_7THORDER)
         {
             /* The 7th-order DSP adds 0.5 to the phase before computing the
@@ -497,7 +501,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
              * Mirror that here so we use the same index, samples, and table row. */
             phase_d += 0.5f;
         }
-
+#endif
         for(int i = 0; i < count; i++)
         {
             int idx = (int)phase_d;
@@ -559,6 +563,8 @@ static void test_E_loop_boundary_ramp_wrap(void)
             }
             break;
 
+            default:
+                throw std::logic_error("interpolation mode not implemented");
             }
 
             test_sample_eq(buf[i], expected, TOL_POLY, i);
