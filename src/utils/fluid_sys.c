@@ -1444,7 +1444,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
     int r;
     FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
-    FLUID_LOG(FLUID_DBG, "Server ready for connections");
+    FLUID_LOG(FLUID_DBG, "Server ready and listening for connections");
 
     while(server_socket->cont)
     {
