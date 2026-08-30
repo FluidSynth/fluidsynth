@@ -632,8 +632,7 @@ static void test_F_24bit_samples(void)
 
         /* For 24-bit, the output is the assembled 24-bit value (no additional scaling
          * beyond what's already in get_sample24 which just assembles the bits) */
-        fluid_real_t tol = (modes[m] == FLUID_INTERP_HIGHEST) ?
-                           (fluid_real_t)5000.0 : (fluid_real_t)1.0;
+        fluid_real_t tol = 1.0;
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
         TEST_ASSERT(count == verify_count);
