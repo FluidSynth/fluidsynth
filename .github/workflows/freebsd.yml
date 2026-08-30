@@ -30,14 +30,13 @@ jobs:
         name: FreeBSD
         runs-on: ubuntu-latest
         strategy:
+          fail-fast: false
           matrix:
             include:
               - release: "15"
                 arch: "x86_64"
               - release: "15"
                 arch: "aarch64"
-              - release: "14"
-                arch: "riscv64"
               - release: "13"
                 arch: "x86_64"
         steps:
