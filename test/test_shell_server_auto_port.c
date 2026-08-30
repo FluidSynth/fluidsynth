@@ -18,6 +18,9 @@ void test_server_creation(fluid_settings_t* settings1, fluid_settings_t* setting
     TEST_ASSERT(port2 >= FLUID_SHELL_AUTO_PORT_START && port2 <= FLUID_TCP_PORT_MAX);
     TEST_ASSERT(port1 != port2);
 
+    // Suspend the main thread to allow the server thread to start and call accept()
+    fluid_msleep(2000);
+
     delete_fluid_server(server2);
     delete_fluid_server(server1);
 }
