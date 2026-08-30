@@ -1399,10 +1399,18 @@ void fluid_socket_close(fluid_socket_t sock)
         {
             FLUID_LOG(FLUID_DBG, "Got error %d during shutdown(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
         }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "shutdown() succeeded");
+        }
         ret = close(sock);
         if(ret != 0)
         {
             FLUID_LOG(FLUID_DBG, "Got error %d during close(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "close() succeeded");
         }
 #endif
     }
@@ -1434,6 +1442,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
 
     while(server_socket->cont)
     {
+        FLUID_LOG(FLUID_DBG, "Server Thread calling accept()...");
         client_socket = accept(server_socket->socket, (struct sockaddr *)&addr, &addrlen);
 
         FLUID_LOG(FLUID_DBG, "New client connection");
@@ -1444,12 +1453,17 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
             {
                 FLUID_LOG(FLUID_ERR, "Got error %d while trying to accept connection", fluid_socket_get_error());
             }
+            else
+            {
+                FLUID_LOG(FLUID_DBG, "Got error %d while trying to accept connection, abort was requested", fluid_socket_get_error());
+            }
 
             server_socket->cont = 0;
             return FLUID_THREAD_RETURN_VALUE;
         }
         else
         {
+            FLUID_LOG(FLUID_DBG, "Server thread got a client socket.");
 #ifdef HAVE_INETNTOP
 
 #ifdef IPV6_SUPPORT
