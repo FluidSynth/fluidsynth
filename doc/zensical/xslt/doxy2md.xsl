@@ -234,20 +234,18 @@
 
     <xsl:apply-templates select="briefdescription"/>
 
-    <!-- Enum value table -->
-    <xsl:if test="enumvalue">
-      <xsl:text>| Value | Description |&#xa;</xsl:text>
-      <xsl:text>|-------|-------------|&#xa;</xsl:text>
-      <xsl:for-each select="enumvalue">
-        <xsl:text>| `</xsl:text>
-        <xsl:value-of select="name"/>
-        <xsl:text>` | </xsl:text>
-        <xsl:apply-templates select="briefdescription" mode="inline"/>
-        <xsl:apply-templates select="detaileddescription" mode="inline"/>
-        <xsl:text> |&#xa;</xsl:text>
-      </xsl:for-each>
-      <xsl:text>&#xa;</xsl:text>
-    </xsl:if>
+    <!-- Enum value definitions -->
+    <xsl:for-each select="enumvalue">
+      <xsl:text>#### `</xsl:text>
+      <xsl:value-of select="name"/>
+      <xsl:text> </xsl:text>
+      <xsl:value-of select="initializer"/>
+      <xsl:text>` {#</xsl:text>
+      <xsl:value-of select="name"/>
+      <xsl:text>}&#xa;&#xa;</xsl:text>
+      <xsl:apply-templates select="briefdescription"/>
+      <xsl:apply-templates select="detaileddescription"/>
+    </xsl:for-each>
 
     <xsl:apply-templates select="detaileddescription"/>
   </xsl:template>
