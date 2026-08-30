@@ -1385,6 +1385,7 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock)
 
 void fluid_socket_close(fluid_socket_t sock)
 {
+    int ret;
     if(sock != INVALID_SOCKET)
     {
         /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
@@ -1393,8 +1394,16 @@ void fluid_socket_close(fluid_socket_t sock)
         closesocket(sock);
 
 #else
-        shutdown(sock, SHUT_RDWR);
-        close(sock);
+        ret = shutdown(sock, SHUT_RDWR);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during shutdown(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        ret = close(sock);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during close(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
 #endif
     }
 }
@@ -1619,6 +1628,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
     fluid_return_if_fail(server_socket != NULL);
 
+    FLUID_LOG(FLUID_DBG, "Signaling server thread to exit...");
     server_socket->cont = 0;
 
     if(server_socket->socket != INVALID_SOCKET)
@@ -1628,6 +1638,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 
     if(server_socket->thread)
     {
+        FLUID_LOG(FLUID_DBG, "Joining server thread...");
         fluid_thread_join(server_socket->thread);
         delete_fluid_thread(server_socket->thread);
     }
