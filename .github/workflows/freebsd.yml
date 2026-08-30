@@ -36,7 +36,7 @@ jobs:
                 arch: "x86_64"
               - release: "15"
                 arch: "aarch64"
-              - release: "15"
+              - release: "14"
                 arch: "riscv64"
               - release: "13"
                 arch: "x86_64"
