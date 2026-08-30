@@ -19,6 +19,9 @@
 
 #include "fluid_sys.h"
 
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+#include <poll.h>
+#endif
 
 #if READLINE_SUPPORT
 #include <readline/readline.h>
@@ -75,6 +78,9 @@ struct _fluid_server_socket_t
     int cont;
     fluid_server_func_t func;
     void *data;
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    int wake_fds[2]; /* pipe fds used to interrupt accept(): [0]=read end, [1]=write end */
+#endif
 };
 
 
@@ -1385,6 +1391,7 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock)
 
 void fluid_socket_close(fluid_socket_t sock)
 {
+    int ret;
     if(sock != INVALID_SOCKET)
     {
         /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
@@ -1393,8 +1400,24 @@ void fluid_socket_close(fluid_socket_t sock)
         closesocket(sock);
 
 #else
-        shutdown(sock, SHUT_RDWR);
-        close(sock);
+        ret = shutdown(sock, SHUT_RDWR);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during shutdown(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "shutdown() succeeded");
+        }
+        ret = close(sock);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during close(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "close() succeeded");
+        }
 #endif
     }
 }
@@ -1421,10 +1444,48 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
     int r;
     FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
-    FLUID_LOG(FLUID_DBG, "Server listening for connections");
+    FLUID_LOG(FLUID_DBG, "Server ready and listening for connections");
 
     while(server_socket->cont)
     {
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+        /* On POSIX, use poll() to wait on either an incoming connection or a
+         * wakeup from the wake pipe. Relying on shutdown()/close() to
+         * interrupt a concurrent accept() is unreliable on macOS/BSD where
+         * shutdown() is a no-op on a listening socket. */
+        {
+            struct pollfd fds[2];
+            fds[0].fd = server_socket->socket;
+            fds[0].events = POLLIN;
+            fds[1].fd = server_socket->wake_fds[0];
+            fds[1].events = POLLIN;
+
+            FLUID_LOG(FLUID_DBG, "Server Thread polling for events...");
+            if(poll(fds, 2, -1) < 0)
+            {
+                if(server_socket->cont)
+                {
+                    FLUID_LOG(FLUID_ERR, "Got error %d while polling server socket", fluid_socket_get_error());
+                }
+
+                server_socket->cont = 0;
+                return FLUID_THREAD_RETURN_VALUE;
+            }
+
+            if(fds[1].revents & POLLIN)
+            {
+                FLUID_LOG(FLUID_DBG, "Wakeup was requested by delete_fluid_server_socket().");
+                break;
+            }
+
+            if(!(fds[0].revents & POLLIN))
+            {
+                continue;
+            }
+        }
+#endif
+
+        FLUID_LOG(FLUID_DBG, "Server Thread calling accept()...");
         client_socket = accept(server_socket->socket, (struct sockaddr *)&addr, &addrlen);
 
         FLUID_LOG(FLUID_DBG, "New client connection");
@@ -1435,12 +1496,17 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
             {
                 FLUID_LOG(FLUID_ERR, "Got error %d while trying to accept connection", fluid_socket_get_error());
             }
+            else
+            {
+                FLUID_LOG(FLUID_DBG, "Got error %d while trying to accept connection, abort was requested", fluid_socket_get_error());
+            }
 
             server_socket->cont = 0;
             return FLUID_THREAD_RETURN_VALUE;
         }
         else
         {
+            FLUID_LOG(FLUID_DBG, "Server thread got a client socket.");
 #ifdef HAVE_INETNTOP
 
 #ifdef IPV6_SUPPORT
@@ -1601,11 +1667,26 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     server_socket->data = data;
     server_socket->cont = 1;
 
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    if(pipe(server_socket->wake_fds) == -1)
+    {
+        FLUID_LOG(FLUID_ERR, "Got error %d while creating wakeup pipe for server socket", errno);
+        FLUID_FREE(server_socket);
+        fluid_socket_close(sock);
+        fluid_socket_cleanup();
+        return NULL;
+    }
+#endif
+
     server_socket->thread = new_fluid_thread("server", fluid_server_socket_run, server_socket,
                             0, FALSE);
 
     if(server_socket->thread == NULL)
     {
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+        close(server_socket->wake_fds[0]);
+        close(server_socket->wake_fds[1]);
+#endif
         FLUID_FREE(server_socket);
         fluid_socket_close(sock);
         fluid_socket_cleanup();
@@ -1619,18 +1700,42 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
     fluid_return_if_fail(server_socket != NULL);
 
+    FLUID_LOG(FLUID_DBG, "Signaling server thread to exit...");
     server_socket->cont = 0;
 
+#if !defined(_POSIX_VERSION) || defined(__OS2__)
+    /* On Windows, closing the socket reliably interrupts a blocking accept(). */
     if(server_socket->socket != INVALID_SOCKET)
     {
         fluid_socket_close(server_socket->socket);
     }
+#else
+    /* On POSIX, writing to the wake pipe unblocks the server thread's poll()
+     * call. Using shutdown/close to interrupt accept() is unreliable on some
+     * platforms (e.g. macOS/BSD) where shutdown() on a listening socket is a
+     * no-op and close() may not wake a concurrent accept(). */
+    {
+        char dummy = 0;
+        (void)write(server_socket->wake_fds[1], &dummy, 1);
+    }
+#endif
 
     if(server_socket->thread)
     {
+        FLUID_LOG(FLUID_DBG, "Joining server thread...");
         fluid_thread_join(server_socket->thread);
         delete_fluid_thread(server_socket->thread);
+        FLUID_LOG(FLUID_DBG, "Server thread joined and deleted.");
     }
+
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    if(server_socket->socket != INVALID_SOCKET)
+    {
+        fluid_socket_close(server_socket->socket);
+    }
+    close(server_socket->wake_fds[0]);
+    close(server_socket->wake_fds[1]);
+#endif
 
     FLUID_FREE(server_socket);
 
