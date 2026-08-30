@@ -1444,7 +1444,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
     int r;
     FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
-    FLUID_LOG(FLUID_DBG, "Server listening for connections");
+    FLUID_LOG(FLUID_DBG, "Server ready for connections");
 
     while(server_socket->cont)
     {
@@ -1460,6 +1460,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
             fds[1].fd = server_socket->wake_fds[0];
             fds[1].events = POLLIN;
 
+            FLUID_LOG(FLUID_DBG, "Server Thread polling for events...");
             if(poll(fds, 2, -1) < 0)
             {
                 if(server_socket->cont)
@@ -1473,7 +1474,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
 
             if(fds[1].revents & POLLIN)
             {
-                /* Wakeup was requested by delete_fluid_server_socket(). */
+                FLUID_LOG(FLUID_DBG, "Wakeup was requested by delete_fluid_server_socket().");
                 break;
             }
 
@@ -1724,6 +1725,7 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
         FLUID_LOG(FLUID_DBG, "Joining server thread...");
         fluid_thread_join(server_socket->thread);
         delete_fluid_thread(server_socket->thread);
+        FLUID_LOG(FLUID_DBG, "Server thread joined and deleted.");
     }
 
 #ifdef _POSIX_C_SOURCE
