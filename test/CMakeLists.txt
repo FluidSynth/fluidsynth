@@ -77,6 +77,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
 
     set(IIR_FILTER_RENDER_DIR "${RENDERING_OUTPUT_DIR}/iir_filter")
     set(AWE32_NRPN_RENDER_DIR "${RENDERING_OUTPUT_DIR}/awe32_nrpn")
+    set(SF2_NRPN_RENDER_DIR "${RENDERING_OUTPUT_DIR}/sf2_nrpn")
     set(SFSPEC_RENDER_DIR "${RENDERING_OUTPUT_DIR}/SoundFont-Spec-Test")
     set(GUGDEMO_RENDER_DIR "${RENDERING_OUTPUT_DIR}/sf2/GeneralUser-GS")
     set(PORTAMENTO_RENDER_DIR "${RENDERING_OUTPUT_DIR}/portamento")
@@ -602,7 +603,7 @@ endif (ENABLE_NATIVE_DLS )
 
     add_custom_target(renderReverbOverview
       COMMENT "Reverb overview study"
-      DEPENDS fluidsynth create_out_dir
+      DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
     )
     set_target_properties(renderReverbOverview PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/reverb/"
@@ -667,6 +668,18 @@ endif (ENABLE_NATIVE_DLS )
     add_render_job(renderMtsTests
         "${MTS_RENDER_DIR}/issue102_marcus.${FEXT}"
         -R 0 -C 0 -g 3  ${GENERAL_USER_GS2} issue102_marcus/mts_marcus.mid
+    )
+
+    add_custom_target(renderSf2NRPN
+        COMMENT "Rendering SF2 NRPN examples"
+        DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+    )
+    set_target_properties(renderSf2NRPN PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2_nrpn"
+    )
+    add_render_job(renderSf2NRPN
+        "${SF2_NRPN_RENDER_DIR}/issue1833.${FEXT}"
+        -R 0 -C 0 -g 1 ${GENERAL_USER_GS2} issue1833/out.mid
     )
 
     # Add a dependency so that rendering targets depends on check_rendering
