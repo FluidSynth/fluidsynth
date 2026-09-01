@@ -202,6 +202,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     char *media_role = NULL;
     char *media_type = NULL;
     char *media_category = NULL;
+    char *node_name = NULL;
     float *buffer = NULL;
     const struct spa_pod *params[1];
     struct pw_properties *props;
@@ -224,6 +225,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     fluid_settings_dupstr(settings, "audio.pipewire.media-role", &media_role);
     fluid_settings_dupstr(settings, "audio.pipewire.media-type", &media_type);
     fluid_settings_dupstr(settings, "audio.pipewire.media-category", &media_category);
+    fluid_settings_dupstr(settings, "audio.pipewire.node-name", &node_name);
 
     max_latency_frames = period_size * periods;
 
@@ -273,17 +275,12 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     pw_core_add_listener(drv->pw_core, &drv->core_listener,
                             &core_events, NULL);
 
-    props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, NULL);
+    props = pw_properties_new(PW_KEY_MEDIA_TYPE, media_type, PW_KEY_MEDIA_CATEGORY, media_category, PW_KEY_MEDIA_ROLE, media_role, PW_KEY_NODE_NAME, node_name, NULL);
     pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%d/%d", max_latency_frames, (int) sample_rate);
     pw_properties_setf(props, PW_KEY_NODE_RATE, "1/%d", (int) sample_rate);
     if(async)
     {
-#if PW_CHECK_VERSION(1,1,81)
         pw_properties_set(props, PW_KEY_NODE_ASYNC, "true");
-#else
-        FLUID_LOG(FLUID_WARN, "Fluidsynth must be compiled against Pipewire 1.1.81 or newer to support asynchronous scheduling. Falling back to synchronous scheduling.");
-        FLUID_LOG(FLUID_INFO, "Hint: Set audio.pipewire.async=0 to hide this warning.");
-#endif
     }
 
     drv->pw_stream = pw_stream_new(drv->pw_core, "FluidSynth", props);
@@ -424,6 +421,7 @@ void fluid_pipewire_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.pipewire.media-role", "Music", 0);
     fluid_settings_register_str(settings, "audio.pipewire.media-type", "Audio", 0);
     fluid_settings_register_str(settings, "audio.pipewire.media-category", "Playback", 0);
+    fluid_settings_register_str(settings, "audio.pipewire.node-name", "fluidsynth", 0);
     fluid_settings_register_int(settings, "audio.pipewire.async", 1, 0, 1, 0);
 }
 
