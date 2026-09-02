@@ -363,6 +363,7 @@ new_fluid_pipewire_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t 
     FLUID_FREE(media_role);
     FLUID_FREE(media_type);
     FLUID_FREE(media_category);
+    FLUID_FREE(client_name);
 
     return (fluid_audio_driver_t *)drv;
 
@@ -370,6 +371,7 @@ driver_cleanup:
     FLUID_FREE(media_role);
     FLUID_FREE(media_type);
     FLUID_FREE(media_category);
+    FLUID_FREE(client_name);
 
     delete_fluid_pipewire_audio_driver((fluid_audio_driver_t *)drv);
     return NULL;
