@@ -771,6 +771,14 @@ Developers:
             </desc>
         </setting>
         <setting>
+            <name>pipewire.id</name>
+            <type>str</type>
+            <def>fluidsynth</def>
+            <desc>
+                Unique identifier used when creating PipeWire client connection.
+            </desc>
+        </setting>
+        <setting>
             <name>pipewire.media-category</name>
             <type>str</type>
             <def>Playback</def>
