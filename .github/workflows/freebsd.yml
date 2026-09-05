@@ -37,8 +37,6 @@ jobs:
                 arch: "x86_64"
               - release: "14"
                 arch: "x86_64"
-              - release: "13"
-                arch: "x86_64"
         steps:
         - name: Checkout
           uses: actions/checkout@v7
