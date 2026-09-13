@@ -52,9 +52,9 @@ jobs:
             arch: ${{ matrix.arch }}
             prepare: |
                 pkg install -y \
-                  cmake \
+                  cmake-core \
                   pkgconf \
-                  git \
+                  git-lite \
                   ninja \
                   gcem \
                   libsndfile \
