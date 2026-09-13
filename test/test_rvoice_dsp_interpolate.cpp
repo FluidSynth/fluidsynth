@@ -2,12 +2,6 @@
  *
  * Unit test for fluid_rvoice_dsp_interpolate()
  *
- * Covers all four interpolation modes:
- *   FLUID_INTERP_NONE      - nearest-neighbour
- *   FLUID_INTERP_LINEAR    - linear (2-point)
- *   FLUID_INTERP_4THORDER  - cubic (4-point Catmull-Rom)
- *   FLUID_INTERP_7THORDER  - 7-point windowed sinc
- *
  * Key implementation details:
  *   - Sample values are left-shifted by 8 bits (both 16-bit and 24-bit)
  *   - Output is therefore scaled by 256 relative to input sample values
@@ -158,8 +152,14 @@ static const char *interp_name(fluid_interp mode)
     case FLUID_INTERP_4THORDER:
         return "4TH_ORDER";
 
-    case FLUID_INTERP_7THORDER:
-        return "7TH_ORDER";
+    case FLUID_INTERP_MID:
+        return "SINC_MID";
+
+    case FLUID_INTERP_HIGH:
+        return "SINC_HIGH";
+
+    case FLUID_INTERP_HIGHEST:
+        return "SINC_HIGHEST";
 
     default:
         throw std::logic_error("Unknown interpolation mode");
@@ -168,7 +168,7 @@ static const char *interp_name(fluid_interp mode)
 
 static fluid_real_t get_tolerance(fluid_interp mode, bool fractional_phase = false)
 {
-    if(mode == FLUID_INTERP_7THORDER)
+    if(mode > FLUID_INTERP_4THORDER)
     {
         return fractional_phase ? TOL_SINC_FRAC : TOL_SINC_INT;
     }
@@ -211,10 +211,12 @@ static void test_A_integer_phase_passthrough(void)
     }
 
     /* Test all interpolation modes */
-    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,
                                                           FLUID_INTERP_4THORDER,
-                                                          FLUID_INTERP_7THORDER
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
                                                         };
 
     for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
@@ -225,8 +227,7 @@ static void test_A_integer_phase_passthrough(void)
         buf.fill(0);
 
         /* Start far enough into the sample for modes that need look-behind samples */
-        double start = (modes[m] == FLUID_INTERP_7THORDER) ? 4.0 :
-                       (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
+        double start = 0.0;
 
         setup_rvoice_16bit(&rvoice, &samp, data.data(),
                            start, 1.0,
@@ -348,10 +349,12 @@ static void test_C_constant_sample(void)
     std::array<short, SAMPLE_SIZE> data;
     data.fill(CONST_VAL);
 
-    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,
                                                           FLUID_INTERP_4THORDER,
-                                                          FLUID_INTERP_7THORDER
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
                                                         };
 
     /* Fractional phase */
@@ -404,10 +407,12 @@ static void test_D_loop_boundary_constant_sample(void)
     const double phase_start = (double)(LOOP_END - 4);
     const double phase_incr = 0.6;
 
-    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,
                                                           FLUID_INTERP_4THORDER,
-                                                          FLUID_INTERP_7THORDER
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
                                                         };
 
     printf("  D1: first loop crossing (has_looped=0)\n");
@@ -463,9 +468,12 @@ static void test_E_loop_boundary_ramp_wrap(void)
     const double phase_start = (double)(LOOP_END - 2);
     const double phase_incr = 0.25;
 
-    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_LINEAR,
-                                                          FLUID_INTERP_4THORDER, FLUID_INTERP_NONE,
-                                                          /*FLUID_INTERP_7THORDER*/
+    // We're skipping the sinc interpolation modes here, as a proper implementation would require either calling
+    // fluid_interp_sinc_kernel() directly (causing the test to reuse logic that it should actually validate against)
+    // or to duplicate the logic fluid_interp_sinc_kernel() here, which would be an overkill for this test.
+    constexpr const std::array<fluid_interp, 3> modes = { FLUID_INTERP_LINEAR,
+                                                          FLUID_INTERP_4THORDER,
+                                                          FLUID_INTERP_NONE,
                                                         };
 
     for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
@@ -483,9 +491,8 @@ static void test_E_loop_boundary_ramp_wrap(void)
         int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
-        fluid_real_t sample_ring_buffer[FLUID_INTERP_HIGHEST + 1];
         double phase_d = phase_start;
-
+#if 0
         if(modes[m] == FLUID_INTERP_7THORDER)
         {
             /* The 7th-order DSP adds 0.5 to the phase before computing the
@@ -494,7 +501,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
              * Mirror that here so we use the same index, samples, and table row. */
             phase_d += 0.5f;
         }
-
+#endif
         for(int i = 0; i < count; i++)
         {
             int idx = (int)phase_d;
@@ -556,47 +563,8 @@ static void test_E_loop_boundary_ramp_wrap(void)
             }
             break;
 
-            case FLUID_INTERP_7THORDER:
-            {
-#if 0
-                /* Use precomputed sinc table for 7th-order interpolation */
-                const auto table_row = (int)(frac * FLUID_INTERP_MAX);
-                const fluid_real_t *coeffs = &sinc_table7[table_row * SINC_INTERP_ORDER];
-                expected =
-                    coeffs[0] * s(-3) +
-                    coeffs[1] * s(-2) +
-                    coeffs[2] * s(-1) +
-                    coeffs[3] * s(0) +
-                    coeffs[4] * s(1) +
-                    coeffs[5] * s(2) +
-                    coeffs[6] * s(3);
-#else
-                double sum = 0;
-
-                for(int j = 0; j < SINC_INTERP_ORDER; j++)
-                {
-                    double v, j_shifted = (double)j - ((double)(SINC_INTERP_ORDER / 2) - 0.5 + frac);
-
-                    if(fabs(j_shifted) > 0.000001)
-                    {
-                        double arg = M_PI * j_shifted;
-                        v = sin(arg) / arg;
-                        /* Hanning window */
-                        v *= 0.5 * (1.0 + cos(2.0 * arg / (double)SINC_INTERP_ORDER));
-                    }
-                    else
-                    {
-                        v = 1.0;
-                    }
-
-                    expected += v * s(j - (SINC_INTERP_ORDER / 2));
-                    sum += v;
-                }
-
-                expected /= sum;
-#endif
-            }
-            break;
+            default:
+                throw std::logic_error("interpolation mode not implemented");
             }
 
             test_sample_eq(buf[i], expected, TOL_POLY, i);
@@ -636,10 +604,12 @@ static void test_F_24bit_samples(void)
     /* The 24-bit value assembled is: (0x1234 << 8) | 0x56 = 0x123456 */
     constexpr const auto expected_24bit = (fluid_real_t)0x123456;
 
-    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,
                                                           FLUID_INTERP_4THORDER,
-                                                          FLUID_INTERP_7THORDER
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
                                                         };
 
     for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
@@ -649,8 +619,7 @@ static void test_F_24bit_samples(void)
         std::array<fluid_real_t, FLUID_BUFSIZE> buf;
         buf.fill(0);
 
-        double start = (modes[m] == FLUID_INTERP_7THORDER) ? 5.0 :
-                       (modes[m] == FLUID_INTERP_4THORDER) ? 2.0 : 1.0;
+        double start = 1.0;
 
         setup_rvoice(&rvoice, &samp, data16.data(), data24.data(),
                      start, 1.0,
@@ -663,8 +632,7 @@ static void test_F_24bit_samples(void)
 
         /* For 24-bit, the output is the assembled 24-bit value (no additional scaling
          * beyond what's already in get_sample24 which just assembles the bits) */
-        fluid_real_t tol = (modes[m] == FLUID_INTERP_7THORDER) ?
-                           (fluid_real_t)5000.0 : (fluid_real_t)1.0;
+        fluid_real_t tol = 1.0;
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
         TEST_ASSERT(count == verify_count);
@@ -698,10 +666,12 @@ static void test_G_high_playback_rate(void)
 
     constexpr const std::array<double, 6> rates = { 2.0, 3.0, 4.0, 16.0, 128.0, 8192.0 };
 
-    constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,
                                                           FLUID_INTERP_4THORDER,
-                                                          FLUID_INTERP_7THORDER
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
                                                         };
 
     /* G1: Non-looping */
@@ -718,8 +688,7 @@ static void test_G_high_playback_rate(void)
             std::array<fluid_real_t, FLUID_BUFSIZE> buf;
             buf.fill(0);
 
-            double start = (modes[m] == FLUID_INTERP_7THORDER) ? 3.0 :
-                           (modes[m] == FLUID_INTERP_4THORDER) ? 1.0 : 0.0;
+            double start = 0.0;
 
             setup_rvoice_16bit(&rvoice, &samp, data.data(),
                                start, rates[r],
@@ -799,7 +768,9 @@ static void test_H_short_loops(void)
         { FLUID_INTERP_NONE,     2 },
         { FLUID_INTERP_LINEAR,   3 },
         { FLUID_INTERP_4THORDER, 5 },
-        { FLUID_INTERP_7THORDER, 8 },
+        { FLUID_INTERP_MID,      11},
+        { FLUID_INTERP_HIGH,     17},
+        { FLUID_INTERP_HIGHEST,  25},
     };
 
     for(size_t t = 0; t < FLUID_N_ELEMENTS(tests); t++)
@@ -948,7 +919,9 @@ static void test_K_end_of_sample(void)
     const fluid_interp modes[] = { FLUID_INTERP_NONE,
                                    FLUID_INTERP_LINEAR,
                                    FLUID_INTERP_4THORDER,
-                                   FLUID_INTERP_7THORDER
+                                   FLUID_INTERP_MID,
+                                   FLUID_INTERP_HIGH,
+                                   FLUID_INTERP_HIGHEST
                                  };
 
     for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
@@ -1213,10 +1186,12 @@ static void test_M_sine_wave_interpolation(void)
     /* ---- M1: Constant phase_incr = 1.0 --------------------------------- */
     printf("  M1: Constant phase_incr=1.0, 3 buffer iterations (all modes)\n");
     {
-        constexpr const std::array<fluid_interp, 4> modes = { FLUID_INTERP_NONE,
+        constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                               FLUID_INTERP_LINEAR,
                                                               FLUID_INTERP_4THORDER,
-                                                              FLUID_INTERP_7THORDER
+                                                              FLUID_INTERP_MID,
+                                                              FLUID_INTERP_HIGH,
+                                                              FLUID_INTERP_HIGHEST
                                                             };
 
         for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
@@ -1291,7 +1266,9 @@ static void test_M_sine_wave_interpolation(void)
         {
             { FLUID_INTERP_LINEAR, (fluid_real_t)300.0 },
             { FLUID_INTERP_4THORDER, (fluid_real_t)50.0 },
-            { FLUID_INTERP_7THORDER, (fluid_real_t)100.0 },
+            { FLUID_INTERP_MID,     (fluid_real_t)50.0 },
+            { FLUID_INTERP_HIGH,    (fluid_real_t)50.0 },
+            { FLUID_INTERP_HIGHEST, (fluid_real_t)50.0 },
         };
 
         for(size_t m = 0; m < FLUID_N_ELEMENTS(tests); m++)

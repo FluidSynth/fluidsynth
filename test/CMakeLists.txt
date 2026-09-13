@@ -371,12 +371,27 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
     endforeach()
 
     add_custom_target(renderdspInterp
-        COMMAND ${MANUAL_TEST_FLUIDSYNTH} -R 0 -C 0 -g 0.6 -o audio.file.format=s24 -o audio.file.type=flac -r 48000 -F "${DSPINTERP_RENDER_DIR}/sample interpolation test.flac" "sample interpolation test.mid" "sample interpolation test.sf2"
         COMMENT "Rendering Interpolation examples"
         DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/sample interpolation test/"
-        VERBATIM
     )
+    set_target_properties(renderdspInterp PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/SoundFont-Spec-Test/sample interpolation test/"
+    )
+
+    set(_interp
+        "interp0"
+        "interp1"
+        "interp4"
+        "interp5"
+        "interp6"
+        "interp7"
+    )
+    foreach(_i IN LISTS _interp)
+        add_render_job(renderdspInterp
+            "${DSPINTERP_RENDER_DIR}/sample_interpolation_test_${_i}.flac"
+            -f "../../config/${_i}.cfg" -R 0 -C 0 -g 0.6 -o audio.file.format=s24 -o audio.file.type=flac -r 48000 "sample interpolation test.mid" "sample interpolation test.sf2"
+        )
+    endforeach()
 
     add_custom_target(render1484
         COMMENT "Rendering dynamic sample loading test"
