@@ -3314,6 +3314,12 @@ static int fluid_dls_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth,
                 {
                     fluid_voice_gen_set(voice, i, art.gens[i].value());
                 }
+                fluid_real_t awe_val;
+                /* ...unless the default value has been overridden by an AWE32 NRPN */
+                if (FLUID_UNLIKELY(fluid_channel_get_override_gen_default(synth->channel[chan], i, &awe_val)))
+                {
+                    fluid_voice_gen_set(voice, i, awe_val);
+                }
             }
 
             // this should be the count of default mods to be probably overwritten
