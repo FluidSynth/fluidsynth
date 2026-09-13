@@ -18,8 +18,10 @@ RUN zypper refresh && zypper --non-interactive install --no-recommends \
 #   python3 + pipx     -- for zensical
 #   libxslt-tools      -- provides xsltproc for the XSLT pipeline
 RUN zypper refresh && zypper install --no-recommends -y python3 python311-pipx libxslt-tools xsltproc
-RUN pipx install zensical && pipx ensurepath
 
-ENV PATH="/root/.local/bin:${PATH}"
+# Make zensical accessible to all users in Docker
+ENV PIPX_HOME=/opt/pipx
+ENV PIPX_BIN_DIR=/usr/local/bin
+RUN pipx install zensical && pipx ensurepath
 
 ENTRYPOINT ["/bin/bash"]
