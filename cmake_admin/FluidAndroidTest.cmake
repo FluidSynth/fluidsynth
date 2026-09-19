@@ -25,7 +25,7 @@ macro ( ADD_FLUID_ANDROID_TEST _test )
         endif ( FLUID_CPPFLAGS )
         
         # Link against the object library and its dependencies
-        target_link_libraries( ${_test}_android libfluidsynth-OBJ )
+        target_link_libraries( ${_test}_android libfluidsynth-OBJ $<$<BOOL:${SIGNALSMITH_SUPPORT}>:fluid_limiter_impl-OBJ> )
 
         # Add system libraries that may be needed on Android
         target_link_libraries(${_test}_android 
