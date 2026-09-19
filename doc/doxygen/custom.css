@@ -83,6 +83,11 @@ span.permalink a {
     background: #ddd;
 }
 
+#toc,
+div.toc,
+#page-nav,
+#pagenav,
+#nav-path,
 #nav-sync {
     display: none;
 }

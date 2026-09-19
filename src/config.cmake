@@ -9,6 +9,7 @@
 
 /* whether or not we are supporting CoreAudio */
 #cmakedefine COREAUDIO_SUPPORT @COREAUDIO_SUPPORT@
+#cmakedefine COREAUDIO_SUPPORT_HAL @COREAUDIO_SUPPORT_HAL@
 
 /* whether or not we are supporting CoreMIDI */
 #cmakedefine COREMIDI_SUPPORT @COREMIDI_SUPPORT@
@@ -136,6 +137,9 @@
 /* Include the LADSPA Fx unit */
 #cmakedefine LADSPA @LADSPA_SUPPORT@
 
+/* Include the Signalsmith reverb engine + Limiter */
+#cmakedefine SIGNALSMITH_SUPPORT @SIGNALSMITH_SUPPORT@
+
 /* Define to enable IPV6 support */
 #cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
 
@@ -144,9 +148,6 @@
 
 /* Defined when fluidsynth is build in an automated environment, where no MSVC++ Runtime Debug Assertion dialogs should pop up */
 #cmakedefine NO_GUI @NO_GUI@
-
-/* libinstpatch for DLS and GIG */
-#cmakedefine LIBINSTPATCH_SUPPORT @LIBINSTPATCH_SUPPORT@
 
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@
@@ -214,6 +215,9 @@
 /* Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT "@TEST_SOUNDFONT@"
 
+/* DLS to load for unit testing */
+#cmakedefine TEST_DLS "@TEST_DLS@"
+
 /* Soundfont to load for UTF-8 unit testing */
 #cmakedefine TEST_SOUNDFONT_UTF8_1 "@TEST_SOUNDFONT_UTF8_1@"
 #cmakedefine TEST_SOUNDFONT_UTF8_2 "@TEST_SOUNDFONT_UTF8_2@"
@@ -222,9 +226,6 @@
 
 /* SF3 Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT_SF3 "@TEST_SOUNDFONT_SF3@"
-
-/* Command lines to use for shell parse unit testing */
-#cmakedefine TEST_COMMAND_LINES "@TEST_COMMAND_LINES@"
 
 /* Define to enable SIGFPE assertions */
 #cmakedefine TRAP_ON_FPE @TRAP_ON_FPE@
@@ -277,5 +278,8 @@
 
 /* Define to 1 if you have C++ filesystem support */
 #cmakedefine HAVE_CXX_FILESYSTEM @HAVE_CXX_FILESYSTEM@
+
+/* Define to 1 if native DLS support is enabled */
+#cmakedefine ENABLE_NATIVE_DLS @ENABLE_NATIVE_DLS@
 
 #endif /* CONFIG_H */

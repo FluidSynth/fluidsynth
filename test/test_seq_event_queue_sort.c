@@ -10,8 +10,8 @@ static short order = 0;
 void callback_stable_sort(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data)
 {
     static const int expected_type_order[] =
-    { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING
-      /* technically, FLUID_SEQ_NOTEOFF and FLUID_SEQ_NOTEON are to follow, but we've already unregistered */  };
+    { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING
+      /* technically, FLUID_SEQ_NOTEON is to follow, but we've already unregistered */  };
 
     TEST_ASSERT(fluid_event_get_type(event) == expected_type_order[order++]);
 }
@@ -26,13 +26,16 @@ void test_order_same_tick(fluid_sequencer_t *seq, fluid_event_t *evt)
     fluid_event_set_source(evt, -1);
     fluid_event_set_dest(evt, seqid);
 
-    for(i = 1; i <= 2; i++)
-    {
-        fluid_event_noteoff(evt, 0, 64);
-        TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 1));
-        fluid_event_noteon(evt, 0, 64, 127);
-        TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 1));
-    }
+    fluid_event_noteon(evt, 0, 64, 127);
+    TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 1, 1));
+    fluid_event_noteoff(evt, 0, 64);
+    TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 1, 1));
+
+    fluid_event_noteoff(evt, 0, 64);
+    TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 1, 1));
+
+    fluid_event_noteon(evt, 0, 64, 127);
+    TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 2, 1));
 
     fluid_event_system_reset(evt);
     TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 2, 1));
@@ -40,10 +43,10 @@ void test_order_same_tick(fluid_sequencer_t *seq, fluid_event_t *evt)
     TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 2, 1));
 
     fluid_sequencer_process(seq, 1);
-    TEST_ASSERT(order == 2);
+    TEST_ASSERT(order == 3);
 
     fluid_sequencer_process(seq, 2);
-    TEST_ASSERT(order == 4);
+    TEST_ASSERT(order == 5);
 
     fluid_sequencer_unregister_client(seq, seqid);
     TEST_ASSERT(fluid_sequencer_count_clients(seq) == 0);

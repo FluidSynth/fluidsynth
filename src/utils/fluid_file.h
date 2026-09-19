@@ -21,7 +21,7 @@
  * fluid_file is a separate C++ module that contains a single function: fluid_file_test
  *
  * This function is required by libfluidsynth as well as by fluidsynth's executable.
- * When compiling with glib as OSAL, this function was defined as macro. When compiling with C++11 as OSAL,
+ * When compiling with C++11 as OSAL,
  * we cannot define this function in fluid_sys* because it would not have linker visibility within libfluidsynth.
  * We could export this function by declaring it FLUIDSYNTH_API, however this resulted in the same linker error
  * for MinGW and Clang on Windows, presumably because __declspec(dllimport) was missing in the function's
@@ -41,19 +41,10 @@
 extern "C" {
 #endif
 
-#if OSAL_glib
-
-#define FLUID_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
-#define FLUID_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
-
-#else
-
 #define FLUID_FILE_TEST_EXISTS      1
 #define FLUID_FILE_TEST_IS_REGULAR  2
 
-#endif
-
-#if OSAL_glib || OSAL_cpp11
+#if OSAL_cpp11
 bool fluid_file_test(const char *path, int flags);
 #endif
 

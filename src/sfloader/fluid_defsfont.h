@@ -30,6 +30,7 @@
 #include "fluid_list.h"
 #include "fluid_mod.h"
 #include "fluid_gen.h"
+#include "fluid_sfont.h"
 
 
 
@@ -42,6 +43,10 @@
 #define SF_MAX_SAMPLERATE	50000
 
 #define SF_MIN_SAMPLE_LENGTH	32
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /***************************************************************
  *
@@ -101,7 +106,7 @@ int fluid_zone_inside_range(fluid_zone_range_t *zone_range, int key, int vel);
  */
 struct _fluid_defsfont_t
 {
-    const fluid_file_callbacks_t *fcbs; /* the file callbacks used to load this Soundfont */
+    fluid_file_callbacks_t fcbs; /* the file callbacks used to load this Soundfont */
     char *filename;           /* the filename of this soundfont */
     unsigned int samplepos;   /* the position in the file at which the sample data starts */
     unsigned int samplesize;  /* the size of the sample data in bytes */
@@ -115,7 +120,6 @@ struct _fluid_defsfont_t
     fluid_list_t *sample;           /* the samples in this soundfont */
     fluid_list_t *preset;           /* the presets of this soundfont */
     fluid_list_t *inst;             /* the instruments of this soundfont */
-    fluid_mod_t *default_mod_list;  /* the default modulator list of this soundfont */
     int mlock;                      /* Should we try memlock (avoid swapping)? */
     int dynamic_samples;            /* Enables dynamic sample loading if set */
 
@@ -179,7 +183,6 @@ struct _fluid_preset_zone_t
 };
 
 fluid_preset_zone_t *new_fluid_preset_zone(char *name);
-void delete_fluid_list_mod(fluid_mod_t *mod);
 void delete_fluid_preset_zone(fluid_preset_zone_t *zone);
 fluid_preset_zone_t *fluid_preset_zone_next(fluid_preset_zone_t *zone);
 int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, fluid_preset_zone_t *global_zone, SFZone *sfzone, fluid_defsfont_t *defssfont, SFData *sfdata);
@@ -228,5 +231,8 @@ fluid_sample_t *fluid_inst_zone_get_sample(fluid_inst_zone_t *zone);
 int fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defsfont_t *defsfont);
 int fluid_sample_in_rom(fluid_sample_t *sample);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _FLUID_SFONT_H */

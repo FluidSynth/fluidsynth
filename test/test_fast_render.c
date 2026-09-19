@@ -12,6 +12,7 @@ int main(void)
     fluid_synth_t *synth;
     fluid_player_t *player;
     fluid_file_renderer_t *renderer;
+    FILE *file;
 
     settings = new_fluid_settings();
     synth = new_fluid_synth(settings);
@@ -51,7 +52,6 @@ int main(void)
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
     
-    FILE *file;
     file = FLUID_FOPEN(TEST_WAV_UTF8, "rb");
     TEST_ASSERT(file != NULL);
     TEST_ASSERT(FLUID_FCLOSE(file) == 0);

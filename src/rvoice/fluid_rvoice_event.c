@@ -102,8 +102,17 @@ fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *e
 {
     fluid_rvoice_t **vptr = fluid_ringbuffer_get_inptr(eventhandler->finished_voices, 0);
 
+    /* Fire user-registered finished callback from the render thread,
+     * before the voice is pushed to the finished_voices ringbuffer. */
+    if(rvoice->finished_cb != NULL)
+    {
+        rvoice->finished_cb(rvoice->finished_cb_voice, FLUID_VOICE_CALLBACK_FINISHED, rvoice->finished_cb_data);
+        rvoice->finished_cb = NULL;
+    }
+
     if(vptr == NULL)
     {
+        FLUID_LOG(FLUID_PANIC, "THIS SHOULD NEVER HAPPEN: eventhandler->finished_voices ringbuffer full!");
         return;    // Buffer full
     }
 
@@ -115,7 +124,7 @@ fluid_rvoice_eventhandler_t *
 new_fluid_rvoice_eventhandler(int queuesize,
                               int finished_voices_size, int bufs, int fx_bufs, int fx_units,
                               fluid_real_t sample_rate_max, fluid_real_t sample_rate,
-                              int extra_threads, int prio)
+                              int reverb_type, int extra_threads, int prio)
 {
     fluid_rvoice_eventhandler_t *eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
 
@@ -147,7 +156,8 @@ new_fluid_rvoice_eventhandler(int queuesize,
     }
 
     eventhandler->mixer = new_fluid_rvoice_mixer(bufs, fx_bufs, fx_units,
-                          sample_rate_max, sample_rate, eventhandler, extra_threads, prio);
+                          sample_rate_max, sample_rate, reverb_type,
+                          eventhandler, extra_threads, prio);
 
     if(eventhandler->mixer == NULL)
     {

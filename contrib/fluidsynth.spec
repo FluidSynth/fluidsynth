@@ -24,7 +24,7 @@
 %endif
 
 Name:           fluidsynth
-Version:        2.2.2
+Version:        2.5.1
 Release:        0
 Summary:        A Real-Time Software Synthesizer That Uses Soundfont(tm)
 License:        LGPL-2.1-or-later
@@ -42,7 +42,6 @@ BuildRequires:  readline-devel
 BuildRequires:  pkgconfig(alsa)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(jack)
-BuildRequires:  pkgconfig(libinstpatch-1.0) >= 1.1.0
 BuildRequires:  pkgconfig(libpulse)
 BuildRequires:  pkgconfig(sndfile)
 %if 0%{?suse_version}
@@ -98,7 +97,6 @@ This package contains the shared library for Fluidsynth.
 # manually install systemd files
 install -Dm 644 build/fluidsynth.conf %{buildroot}%{_fillupdir}/sysconfig.%{name}
 install -Dm 644 build/fluidsynth.service %{buildroot}%{_unitdir}/%{name}.service
-install -Dm 644 build/fluidsynth.tmpfiles %{buildroot}%{_tmpfilesdir}/%{name}.conf
 install -d %{buildroot}%{_sbindir}
 ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
@@ -122,7 +120,7 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files
 %license LICENSE
-%doc AUTHORS ChangeLog README.md THANKS TODO
+%doc AUTHORS ChangeLog.old README.md THANKS TODO
 %{_mandir}/man?/*
 %{_bindir}/*
 %if 0%{?suse_version}

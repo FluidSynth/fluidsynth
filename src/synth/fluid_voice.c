@@ -322,6 +322,8 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     voice->mod_count = 0;
     voice->start_time = start_time;
     voice->has_noteoff = 0;
+    voice->callback = NULL;
+    voice->callback_data = NULL;
     UPDATE_RVOICE0(fluid_rvoice_reset);
 
     /*
@@ -463,6 +465,7 @@ void fluid_voice_start(fluid_voice_t *voice)
 /**
  * Calculate the amplitude of a voice.
  *
+ * @param voice the voice
  * @param gain The gain value in the range [0.0 ; 1.0]
  * @return An amplitude used by rvoice_mixer's buffers
  */
@@ -476,7 +479,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 }
 
 /* Useful to return the nominal pitch of a key */
-/* The nominal pitch is dependent of voice->root_pitch,tuning, and
+/* The nominal pitch is dependent of voice->root_key,tuning, and
    GEN_SCALETUNE generator.
    This is useful to set the value of GEN_PITCH generator on noteOn.
    This is useful to get the beginning/ending pitch for portamento.
@@ -484,7 +487,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t *voice, fluid_real_t ga
 fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
 {
     fluid_tuning_t *tuning;
-    fluid_real_t x, pitch;
+    fluid_real_t tuned_root_pitch, tuned_key, pitch;
 
     /* Now the nominal pitch of the key is returned.
      * Note about SCALETUNE: SF2.01 8.1.3 says, that this generator is a
@@ -494,15 +497,19 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t *voice, int key)
      */
     if(fluid_channel_has_tuning(voice->channel))
     {
+        fluid_real_t root_key = voice->root_key * (1 / 100.0f);
+        int root_key_int = (int)(root_key + 0.5f);
+
         tuning = fluid_channel_get_tuning(voice->channel);
-        x = fluid_tuning_get_pitch(tuning, (int)(voice->root_pitch / 100.0f));
+        tuned_root_pitch = fluid_tuning_get_pitch(tuning, root_key_int);
+        tuned_key = fluid_tuning_get_pitch(tuning, key);
         pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
-                (fluid_tuning_get_pitch(tuning, key) - x) + x;
+                (tuned_key - tuned_root_pitch) + tuned_root_pitch;
     }
     else
     {
         pitch = voice->gen[GEN_SCALETUNE].val
-                * (key - voice->root_pitch / 100.0f) + voice->root_pitch;
+                * (key - voice->root_key / 100.0f) + voice->root_key;
     }
 
     return pitch;
@@ -738,7 +745,7 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
  * fluid_voice_update_param can be called during the setup of the
  * voice (to calculate the initial value for a voice parameter), or
  * during its operation (a generator has been changed due to
- * real-time parameter modifications like pitch-bend).
+ * realtime parameter modifications like pitch-bend).
  *
  * Note: The generator holds three values: The base value .val, an
  * offset caused by modulators .mod, and an offset caused by the
@@ -818,45 +825,27 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_OVERRIDEROOTKEY:
-
         /* This is a non-realtime parameter. Therefore the .mod part of the generator
          * can be neglected.
          * NOTE: origpitch sets MIDI root note while pitchadj is a fine tuning amount
-         * which offsets the original rate.  This means that the fine tuning is
+         * which offsets / corrects the original rate.  This means that the fine tuning is
          * inverted with respect to the root note (so subtract it, not add).
          */
-        if(voice->sample != NULL)
+        z = voice->sample != NULL ? voice->sample->samplerate : voice->output_rate;
+        if(voice->gen[GEN_OVERRIDEROOTKEY].val > -1)
         {
-            if(voice->gen[GEN_OVERRIDEROOTKEY].val > -1)    //FIXME: use flag instead of -1
-            {
-                voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f
-                                    - voice->sample->pitchadj;
-            }
-            else
-            {
-                voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
-            }
-
-            x = (fluid_ct2hz_real(voice->root_pitch) * ((fluid_real_t) voice->output_rate / voice->sample->samplerate));
+            voice->root_key = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f;
         }
         else
         {
-            if(voice->gen[GEN_OVERRIDEROOTKEY].val > -1)     //FIXME: use flag instead of -1
-            {
-                voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f;
-            }
-            else
-            {
-                voice->root_pitch = 0;
-            }
-
-            x = fluid_ct2hz_real(voice->root_pitch);
+            voice->root_key = voice->sample->origpitch * 100.0f;
         }
 
-        /* voice->pitch depends on voice->root_pitch, so calculate voice->pitch now */
-        fluid_voice_calculate_gen_pitch(voice);
-        UPDATE_RVOICE_R1(fluid_rvoice_set_root_pitch_hz, x);
+        x = (fluid_ct2hz_real(voice->root_key - voice->sample->pitchadj) * ((fluid_real_t) voice->output_rate / z));
 
+        /* voice->pitch depends on voice->root_key, so calculate voice->pitch now */
+        fluid_voice_calculate_gen_pitch(voice);
+            UPDATE_RVOICE_R1(fluid_rvoice_set_root_pitch_hz, x);
         break;
 
     case GEN_FILTERFC:
@@ -1277,13 +1266,15 @@ void fluid_voice_update_portamento(fluid_voice_t *voice, int fromkey, int tokey)
     fluid_real_t PitchBeg = fluid_voice_calculate_pitch(voice, fromkey);
     fluid_real_t PitchEnd = fluid_voice_calculate_pitch(voice, tokey);
     fluid_real_t pitchoffset = PitchBeg - PitchEnd;
+    unsigned int countinc;
+    enum fluid_portamento_time_mode tm = channel->synth->portamento_time_mode;
 
     /* Calculates increment countinc */
     /* Increment is function of PortamentoTime (ms)*/
-    unsigned int countinc = (unsigned int)(((fluid_real_t)voice->output_rate *
-                                            0.001f *
-                                            (fluid_real_t)fluid_channel_portamentotime(channel))  /
-                                           (fluid_real_t)FLUID_BUFSIZE  + 0.5f);
+    fluid_real_t ms = fluid_channel_portamentotime_with_mode(channel, tm, channel->synth->portamento_time_has_seen_lsb, fromkey, tokey);
+
+    countinc = (unsigned int)(((fluid_real_t)voice->output_rate * 0.001f * ms) /
+                                            (fluid_real_t)FLUID_BUFSIZE + 0.5f);
 
     /* Send portamento parameters to the voice dsp */
     UPDATE_RVOICE_GENERIC_IR(fluid_rvoice_set_portamento, voice->rvoice, countinc, pitchoffset);
@@ -1337,6 +1328,11 @@ fluid_voice_release(fluid_voice_t *voice)
     unsigned int at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
     UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
     voice->has_noteoff = 1; // voice is marked as noteoff occurred
+
+    if(voice->callback != NULL)
+    {
+        voice->callback(voice, FLUID_VOICE_CALLBACK_NOTEOFF, voice->callback_data);
+    }
 }
 
 /*
@@ -1493,7 +1489,9 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 /**
  * Adds a modulator to the voice.
  * local version of fluid_voice_add_mod function. Called at noteon time.
- * @param voice, mod, mode, same as for fluid_voice_add_mod() (see above).
+ * @param voice the voice
+ * @param mod the modulator to add
+ * @param mode the mode (see fluid_voice_add_mod)
  * @param check_limit_count is the modulator number limit to handle with existing
  *   identical modulator(i.e mode FLUID_VOICE_OVERWRITE, FLUID_VOICE_ADD).
  *   - When FLUID_NUM_MOD, all the voices modulators (since the previous call)
@@ -1564,7 +1562,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
  * @return Note on unique ID
  *
  * A SoundFont loader may store pointers to voices it has created for
- * real-time control during the operation of a voice (for example: parameter
+ * realtime control during the operation of a voice (for example: parameter
  * changes in SoundFont editor). The synth uses a pool of voices internally which are
  * 'recycled' and never deallocated.
  *
@@ -1640,6 +1638,46 @@ int fluid_voice_is_sustained(const fluid_voice_t *voice)
 int fluid_voice_is_sostenuto(const fluid_voice_t *voice)
 {
     return (voice->status == FLUID_VOICE_HELD_BY_SOSTENUTO);
+}
+
+/**
+ * Set a callback function for a voice to be notified about voice state changes.
+ *
+ * Only one callback function can be registered per voice. Setting a new callback
+ * replaces the previous one. Passing NULL as the callback removes any previously
+ * registered callback.
+ *
+ * The callback is automatically cleared when the voice is re-initialized for a
+ * new note.
+ *
+ * @param voice Voice instance
+ * @param callback Callback function to register, or NULL to unregister.
+ * @param data User-defined data pointer passed to the callback.
+ *
+ * @note This function should be called after fluid_synth_alloc_voice() and before
+ *       fluid_synth_start_voice() to be guaranteed to receive the callback.
+ *
+ * @since 2.6.0
+ */
+void fluid_voice_set_callback(fluid_voice_t *voice, fluid_voice_callback_t callback, void *data)
+{
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+
+    fluid_return_if_fail(voice != NULL);
+
+    voice->callback = callback;
+    voice->callback_data = data;
+
+    /* Propagate to the rvoice so the finished callback fires from the
+     * render thread immediately when the voice finishes, rather than
+     * being deferred to the next API call.
+     */
+    param[0].ptr = (void *)callback;
+    param[1].ptr = voice;
+    param[2].ptr = data;
+    fluid_rvoice_eventhandler_push(voice->eventhandler,
+                                   fluid_rvoice_set_finished_callback,
+                                   voice->rvoice, param);
 }
 
 /**

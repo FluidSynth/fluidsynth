@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(consuming_test LANGUAGES C)
+project(consuming_test LANGUAGES C CXX)
 
 find_package(FluidSynth CONFIG REQUIRED)
 

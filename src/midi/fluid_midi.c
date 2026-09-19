@@ -165,7 +165,7 @@ fluid_file_read_full(fluid_file fp, size_t *length)
     size_t n;
 
     /* Work out the length of the file in advance */
-    if(FLUID_FSEEK(fp, 0, SEEK_END) != 0)
+    if(fluid_file_seek(fp, 0, SEEK_END) != 0)
     {
         FLUID_LOG(FLUID_ERR, "File load: Could not seek within file");
         return NULL;
@@ -173,7 +173,7 @@ fluid_file_read_full(fluid_file fp, size_t *length)
 
     buflen = ftell(fp);
 
-    if(FLUID_FSEEK(fp, 0, SEEK_SET) != 0)
+    if(fluid_file_seek(fp, 0, SEEK_SET) != 0)
     {
         FLUID_LOG(FLUID_ERR, "File load: Could not seek within file");
         return NULL;
@@ -1619,10 +1619,11 @@ fluid_track_send_events(fluid_track_t *track,
         {
             if(player->playback_callback)
             {
+                int *chan_is_playing = &player->channel_isplaying[event->channel % MAX_NUMBER_OF_CHANNELS];
                 player->playback_callback(player->playback_userdata, event);
-                if(event->type == NOTE_ON && event->param2 != 0 && !player->channel_isplaying[event->channel])
+                if(event->type == NOTE_ON && event->param2 != 0 && !*chan_is_playing)
                 {
-                    player->channel_isplaying[event->channel] = TRUE;
+                    *chan_is_playing = TRUE;
                 }
             }
         }
@@ -2140,7 +2141,7 @@ fluid_player_callback(void *data, unsigned int msec)
     {
         if(fluid_atomic_int_get(&player->stopping))
         {
-            for(i = 0; i < synth->midi_channels; i++)
+            for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
             {
                 if(player->channel_isplaying[i])
                 {
@@ -2188,7 +2189,7 @@ fluid_player_callback(void *data, unsigned int msec)
         seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
         if(seek_ticks >= 0)
         {
-            for(i = 0; i < synth->midi_channels; i++)
+            for(i = 0; i < MAX_NUMBER_OF_CHANNELS; i++)
             {
                 if(player->channel_isplaying[i])
                 {
@@ -2574,7 +2575,7 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
         return FLUID_FAILED; /* to avoid a division by 0 */
     }
 
-    return fluid_player_set_midi_tempo(player, 60000000L / bpm);
+    return fluid_player_set_tempo(player, FLUID_PLAYER_TEMPO_EXTERNAL_BPM, (double)bpm);
 }
 
 /**

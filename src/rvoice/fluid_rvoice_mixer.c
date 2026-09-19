@@ -22,6 +22,7 @@
 #include "fluid_sys.h"
 #include "fluid_rev.h"
 #include "fluid_chorus.h"
+#include "fluid_limiter.h"
 #include "fluid_ladspa.h"
 #include "fluid_synth.h"
 
@@ -101,6 +102,10 @@ struct _fluid_rvoice_mixer_t
     int with_reverb;        /**< Should the synth use the built-in reverb unit? */
     int with_chorus;        /**< Should the synth use the built-in chorus unit? */
     int mix_fx_to_out;      /**< Should the effects be mixed in with the primary output? */
+
+#ifdef SIGNALSMITH_SUPPORT
+    fluid_limiter_t *limiter;
+#endif
 
 #ifdef LADSPA
     fluid_ladspa_fx_t *ladspa_fx; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
@@ -263,6 +268,17 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             }
         }
     }
+
+#ifdef SIGNALSMITH_SUPPORT
+    if(mixer->limiter)
+    {
+        fluid_real_t* buf_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t* buf_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_limiter_run(mixer->limiter, buf_l, buf_r, current_blockcount);
+        fluid_check_fpe("LIMITER");
+    }
+#endif
+
 }
 
 /**
@@ -613,7 +629,7 @@ fluid_mixer_buffers_update_polyphony(fluid_mixer_buffers_t *buffers, int value)
 }
 
 /**
- * Update polyphony - max number of voices (NOTE: not hard real-time capable)
+ * Update polyphony - max number of voices (NOTE: not hard realtime capable)
  * @return FLUID_OK or FLUID_FAILED
  */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
@@ -757,7 +773,7 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice_mixer_t *m
 }
 
 /**
- * Note: Not hard real-time capable (calls malloc)
+ * Note: Not hard realtime capable (calls malloc)
  */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 {
@@ -786,6 +802,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
         }
     }
 
+#ifdef SIGNALSMITH_SUPPORT
+    if(mixer->limiter != NULL)
+    {
+        fluid_limiter_samplerate_change(mixer->limiter, samplerate);
+    }
+#endif
+
 #if LADSPA
 
     if(mixer->ladspa_fx != NULL)
@@ -800,11 +823,18 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 /**
  * @param buf_count number of primary stereo buffers
  * @param fx_buf_count number of stereo effect buffers
+ * @param fx_units number of effects units
+ * @param sample_rate_max maximum sample rate
+ * @param sample_rate audio sample rate
+ * @param evthandler event handler for voice events
+ * @param extra_threads number of extra threads to use for rendering
+ * @param prio thread priority level
  */
 fluid_rvoice_mixer_t *
 new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
                        fluid_real_t sample_rate_max,
                        fluid_real_t sample_rate,
+                       int reverb_type,
                        fluid_rvoice_eventhandler_t *evthandler,
                        int extra_threads, int prio)
 {
@@ -837,7 +867,8 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
     for(i = 0; i < fx_units; i++)
     {
         /* create reverb and chorus units */
-        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate);
+        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate,
+                                                 reverb_type);
         mixer->fx[i].chorus = new_fluid_chorus(sample_rate);
 
         if(mixer->fx[i].reverb == NULL || mixer->fx[i].chorus == NULL)
@@ -923,6 +954,12 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 #endif
     fluid_mixer_buffers_free(&mixer->buffers);
 
+#ifdef SIGNALSMITH_SUPPORT
+    if(mixer->limiter)
+    {
+        delete_fluid_limiter(mixer->limiter);
+    }
+#endif
 
     for(i = 0; i < mixer->fx_units; i++)
     {
@@ -985,6 +1022,15 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
 }
 #endif
 
+#ifdef SIGNALSMITH_SUPPORT
+int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
+{
+    mixer->limiter = new_fluid_limiter(sample_rate, settings);
+
+    return mixer->limiter != NULL;
+}
+#endif /* SIGNALSMITH_SUPPORT */
+
 /**
  * set one or more reverb shadow parameters for one fx group.
  * These parameters will be returned if queried.
@@ -994,7 +1040,7 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
  * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
- * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
+ * @param set Flags indicating which parameters should be set (fluid_revmodel_set_t)
  * @param values table of parameters values.
  */
 void
@@ -1034,7 +1080,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
  * @param mixer that contains all fx group units.
  * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param enum indicating the parameter to get.
+ * @param param indicating the parameter to get.
  *  FLUID_REVERB_ROOMSIZE, reverb room size value.
  *  FLUID_REVERB_DAMP, reverb damping value.
  *  FLUID_REVERB_WIDTH, reverb width value.
@@ -1058,7 +1104,7 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
  *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
- * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
+ * @param set Flags indicating which parameters to set (fluid_chorus_set_t)
  * @param values table of pararameters.
  */
 void
@@ -1098,7 +1144,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
  * @param mixer that contains all fx groups units.
  * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param get Flags indicating which parameter to get (#fluid_chorus_set_t)
+ * @param param Flags indicating which parameter to get
  * @return the parameter value (0.0 is returned if error)
  */
 double
@@ -1629,7 +1675,7 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
 /**
  * Update amount of extra mixer threads.
  * @param thread_count Number of extra mixer threads for multi-core rendering
- * @param prio_level real-time prio level for the extra mixer threads
+ * @param prio_level realtime prio level for the extra mixer threads
  */
 static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int thread_count, int prio_level)
 {
@@ -1685,6 +1731,7 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
 
 /**
  * Synthesize audio into buffers
+ * @param mixer the mixer to render
  * @param blockcount number of blocks to render, each having FLUID_BUFSIZE samples
  * @return number of blocks rendered
  */

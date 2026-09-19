@@ -33,7 +33,7 @@ There is [an example source code](https://github.com/atsushieno/fluidsynth-midi-
 
 ## Building
 
-In this directory the Cerbero build system is (ab)used for cross-compiling Fluidsynth's dependencies for Android. The entrypoint is `Makefile.android`. If you are looking for a step by step introduction guide for cross-compiling Fluidsynth, [you'll find it in the wiki](https://github.com/FluidSynth/fluidsynth/wiki/BuildingForAndroid).
+In this directory the Cerbero build system is (ab)used for cross-compiling Fluidsynth's dependencies for Android. The entrypoint is `Makefile.android`. If you are looking for a step by step introduction guide for cross-compiling Fluidsynth, [you'll find it in the wiki](https://www.fluidsynth.org/wiki/BuildingForAndroid).
 
 By default, you are supposed to provide `PKG_CONFIG_PATH` to glib etc. as well as oboe. There is nothing special.
 

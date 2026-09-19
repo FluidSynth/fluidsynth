@@ -1,6 +1,6 @@
 # FluidSynth - A Software Synthesizer
 #
-# Copyright (C) 2003-2025 Peter Hanappe and others.
+# Copyright (C) 2003-2026 Peter Hanappe and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -31,6 +31,10 @@ endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
   set ( fluid_coreaudio_SOURCES drivers/fluid_coreaudio.c )
+  if ( NOT COREAUDIO_SUPPORT_HAL )
+    enable_language( OBJC )
+    set ( fluid_coreaudio_SOURCES ${fluid_coreaudio_SOURCES} drivers/fluid_coreaudio_avaudiosession.m )
+  endif ( NOT COREAUDIO_SUPPORT_HAL )
 endif ( COREAUDIO_SUPPORT )
 
 if ( COREMIDI_SUPPORT )
@@ -93,9 +97,9 @@ if ( AUFILE_SUPPORT )
   set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
 endif ( AUFILE_SUPPORT )
 
-if ( LIBINSTPATCH_SUPPORT )
-  set ( fluid_libinstpatch_SOURCES sfloader/fluid_instpatch.c sfloader/fluid_instpatch.h )
-endif ( LIBINSTPATCH_SUPPORT )
+if ( ENABLE_NATIVE_DLS )
+  set ( fluid_dls_SOURCES sfloader/fluid_dls.cpp sfloader/fluid_dls.h )
+endif ( ENABLE_NATIVE_DLS )
 
 if ( OPENSLES_SUPPORT )
   set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
@@ -155,8 +159,17 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice_mixer.h
     rvoice/fluid_rvoice_mixer.c
     rvoice/fluid_phase.h
-    rvoice/fluid_rev.c
+    rvoice/fluid_rev.cpp
     rvoice/fluid_rev.h
+    rvoice/fluid_rev_fdn.cpp
+    rvoice/fluid_rev_fdn.h
+    rvoice/fluid_rev_freeverb.cpp
+    rvoice/fluid_rev_freeverb.h
+    rvoice/fluid_rev_lexverb.cpp
+    rvoice/fluid_rev_lexverb.h
+    rvoice/fluid_rev_dattorro.cpp
+    rvoice/fluid_rev_dattorro.h
+    rvoice/fluid_rev_filters.h
     synth/fluid_chan.c
     synth/fluid_chan.h
     synth/fluid_event.c
@@ -168,6 +181,7 @@ set ( libfluidsynth_SOURCES
     synth/fluid_synth.c
     synth/fluid_synth.h
     synth/fluid_synth_monopoly.c
+    synth/fluid_synth_write_int.cpp
     synth/fluid_tuning.c
     synth/fluid_tuning.h
     synth/fluid_voice.c
@@ -184,12 +198,43 @@ set ( libfluidsynth_SOURCES
     drivers/fluid_adriver.h
     drivers/fluid_mdriver.c
     drivers/fluid_mdriver.h
+    drivers/fluid_audio_convert.cpp
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
     bindings/fluid_ladspa.c
     bindings/fluid_ladspa.h
 )
+
+if ( SIGNALSMITH_SUPPORT )
+  set ( fulid_limiter_SOURCES
+      rvoice/fluid_limiter.c
+      rvoice/fluid_limiter.h
+      rvoice/fluid_limiter_impl.h
+      rvoice/fluid_rev_signalsmith.h
+  )
+  # The signalsmith stuff must be an extra target due to:
+  # CMake Error in src/CMakeLists.txt:
+  #   install(EXPORT "FluidSynthTargets" ...) includes target "libfluidsynth-OBJ"
+  #   which requires target "signalsmith-basics" that is not in any export set.
+  # CMake Error in CMakeLists.txt:
+  #   export called with target "libfluidsynth-OBJ" which requires target
+  #   "signalsmith-basics" that is not in any export set.
+  add_library(fluid_limiter_impl-OBJ OBJECT
+    rvoice/fluid_limiter_impl.cpp
+    rvoice/fluid_rev_signalsmith.cpp
+  )
+  target_include_directories(fluid_limiter_impl-OBJ PRIVATE
+    ${FluidSynth_BINARY_DIR}
+    ${FluidSynth_BINARY_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/include
+    ${FluidSynth_SOURCE_DIR}/src
+    ${FluidSynth_SOURCE_DIR}/src/rvoice
+    ${FluidSynth_SOURCE_DIR}/src/synth
+    ${FluidSynth_SOURCE_DIR}/src/utils
+  )
+  target_link_libraries(fluid_limiter_impl-OBJ PRIVATE signalsmith-basics)
+endif ( SIGNALSMITH_SUPPORT )
 
 set ( fluid_osal_SOURCES utils/fluid_sys_${osal}.h )
 if ( osal STREQUAL "cpp11" )
@@ -202,6 +247,13 @@ set ( fluid_file_SOURCES
     utils/fluid_file.h
     utils/fluid_file.cpp
 )
+
+if ( LADSPA_SUPPORT )
+    set ( fluid_module_SOURCES
+        utils/fluid_module.h
+        utils/fluid_module.cpp
+    )
+endif ( LADSPA_SUPPORT )
 
 if ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
   set_source_files_properties(rvoice/fluid_iir_filter_impl.cpp PROPERTIES COMPILE_FLAGS "-fno-math-errno -ffast-math")
@@ -269,13 +321,15 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
     ${fluid_sdl3_SOURCES}
-    ${fluid_libinstpatch_SOURCES}
+    ${fluid_dls_SOURCES}
     ${fluid_osal_SOURCES}
     ${fluid_file_SOURCES}
+    ${fluid_module_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
+    ${fulid_limiter_SOURCES}
 )
 
 target_include_directories ( libfluidsynth-OBJ PRIVATE
@@ -290,7 +344,7 @@ target_include_directories ( libfluidsynth-OBJ PRIVATE
     ${FluidSynth_SOURCE_DIR}/src/sfloader
     ${FluidSynth_SOURCE_DIR}/src/bindings
     ${FluidSynth_SOURCE_DIR}/include
-    ${FluidSynth_SOURCE_DIR}/gcem/include
+    ${GCEM_INCLUDE_DIR}
 )
 
 if ( LIBFLUID_CPPFLAGS )
@@ -312,6 +366,7 @@ endif ( MACOSX_FRAMEWORK )
 # them correctly in case of MACOSX_FRAMEWORK
 add_library ( libfluidsynth
     $<TARGET_OBJECTS:libfluidsynth-OBJ>
+    $<$<BOOL:${SIGNALSMITH_SUPPORT}>:$<TARGET_OBJECTS:fluid_limiter_impl-OBJ>>
     ${public_main_HEADER}
     ${public_HEADERS}
     ${MACOSX_FRAMEWORK_SOURCE_HACK}
@@ -327,6 +382,9 @@ if ( MACOSX_FRAMEWORK )
         FRAMEWORK TRUE
         PUBLIC_HEADER "${public_main_HEADER}"
         FRAMEWORK_VERSION "${LIB_VERSION_CURRENT}"
+        MACOSX_FRAMEWORK_BUNDLE_VERSION "${VERSION}"
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING "${VERSION}"
+        MACOSX_FRAMEWORK_IDENTIFIER "org.fluidsynth.FluidSynth"
         INSTALL_NAME_DIR ""
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
@@ -387,10 +445,6 @@ if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
 endif()
 
-if ( TARGET GLib2::glib-2 )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::glib-2 GLib2::gthread-2 )
-endif()
-
 if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SndFile::sndfile )
 endif()
@@ -421,14 +475,6 @@ if ( TARGET dbus-1 AND DBUS_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC dbus-1 )
 endif()
 
-if ( TARGET GLib2::gmodule-2 AND LADSPA_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC GLib2::gmodule-2 )
-endif()
-
-if ( TARGET InstPatch::libinstpatch AND LIBINSTPATCH_SUPPORT )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC InstPatch::libinstpatch )
-endif()
-
 if ( SDL3_SUPPORT )
     target_link_libraries ( libfluidsynth-OBJ PUBLIC SDL3::SDL3 )
 endif()
@@ -456,6 +502,15 @@ endif ( MIDISHARE_SUPPORT )
 if ( OPENSLES_SUPPORT )
     target_link_libraries( libfluidsynth-OBJ PUBLIC OpenSLES::OpenSLES )
 endif ( OPENSLES_SUPPORT )
+
+if ( LADSPA_SUPPORT AND NOT WIN32 )
+    # dlopen/dlclose/dlsym are in libdl on Linux and some BSDs,
+    # but built into libc on macOS and FreeBSD.
+    find_library ( DL_LIBRARY NAMES dl )
+    if ( DL_LIBRARY )
+        target_link_libraries ( libfluidsynth-OBJ PUBLIC ${DL_LIBRARY} )
+    endif ( DL_LIBRARY )
+endif ( LADSPA_SUPPORT AND NOT WIN32 )
 
 # This doesn't install any object file at all!
 # it is only a trick for exporting targets
@@ -537,10 +592,6 @@ if ( TARGET Systemd::libsystemd AND SYSTEMD_SUPPORT )
     target_link_libraries ( fluidsynth PRIVATE Systemd::libsystemd )
 endif()
 
-if ( TARGET GLib2::glib-2 ) # because g_file_test()
-    target_link_libraries ( fluidsynth PRIVATE GLib2::glib-2 )
-endif()
-
 if ( SDL3_SUPPORT )
     target_link_libraries ( fluidsynth PUBLIC SDL3::SDL3 )
 endif ( SDL3_SUPPORT )
@@ -556,19 +607,24 @@ endif()
 if ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     EXPORT FluidSynthTargets
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FRAMEWORK DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}"
-    ARCHIVE DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}"
-)
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PACKAGE}_program
+    FRAMEWORK DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}" COMPONENT ${PACKAGE}_runtime
+    ARCHIVE DESTINATION "${FRAMEWORK_INSTALL_PREFIX}/${FRAMEWORK_INSTALL_DIR}" COMPONENT ${PACKAGE}_development
+  )
 else ( MACOSX_FRAMEWORK )
-  install ( TARGETS fluidsynth libfluidsynth
+  install ( TARGETS fluidsynth
     EXPORT FluidSynthTargets
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fluidsynth
-)
-   install ( FILES ${public_main_HEADER} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PACKAGE}_program
+  )
+  install ( TARGETS libfluidsynth
+    EXPORT FluidSynthTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PACKAGE}_runtime
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${PACKAGE}_runtime
+                                                NAMELINK_COMPONENT ${PACKAGE}_development
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT ${PACKAGE}_development
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fluidsynth COMPONENT ${PACKAGE}_development
+  )
+  install ( FILES ${public_main_HEADER} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT ${PACKAGE}_development )
 endif ( MACOSX_FRAMEWORK )
 
 # Exported targets.
@@ -582,7 +638,8 @@ target_include_directories(libfluidsynth PUBLIC
 
 # installation of the exported targets
 install(EXPORT FluidSynthTargets
-        FILE FluidSynthTargets.cmake
+        FILE FluidSynth-${target-type}-targets.cmake
         NAMESPACE FluidSynth::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth
+        COMPONENT ${PACKAGE}_development
 )

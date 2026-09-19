@@ -3,13 +3,19 @@ name: FluidSynth Linux
 on:
   pull_request:
   push:
+    branches:
+      - '**'
     paths-ignore:
       - '.azure/**'
       - '.circleci/**'
+      - '.github/workflows/freebsd.yml'
+      - '.github/workflows/api_doc_build.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
-      - '.cirrus.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/os2.yml'
+      - '.github/workflows/rendering-regression.yml'
       - 'README.md'
 
 env:
@@ -34,7 +40,7 @@ jobs:
       matrix:
         CC: [""]
         CXX: [""]
-        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold", "-Dosal=cpp11 -Denable-libinstpatch=0 -Denable-ladspa=0"]
+        CMAKE_FLAGS: ["-Denable-profiling=1","-Denable-floats=1 -Denable-profiling=1","-Denable-floats=1","-Denable-trap-on-fpe=1","-Denable-fpe-check=1","-Denable-ipv6=0","-Denable-network=0","-Denable-aufile=0","-DBUILD_SHARED_LIBS=0", "-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold", "-Dosal=cpp11 -Denable-ladspa=0"]
         include:
           - CC: "clang-15"
             CXX: "clang++-15"
@@ -46,7 +52,7 @@ jobs:
 # clang11 is covered by openSUSE Leap 15.3
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -66,8 +72,6 @@ jobs:
           ladspa-sdk \
           libasound2-dev \
           libdbus-1-dev \
-          libglib2.0-dev \
-          libinstpatch-dev \
           libjack-dev \
           libpulse-dev \
           libreadline-dev \
@@ -117,7 +121,7 @@ jobs:
         EOF
         export PKG_CONFIG_PATH=$INSTALL_LOCATION/lib/pkgconfig
         set -x
-        gcc -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
+        g++ -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
         ./static-link-test
         echo $?
 
@@ -169,7 +173,7 @@ jobs:
           cmake-data \
           ninja-build
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -190,7 +194,6 @@ jobs:
           -Werror=dev \
           -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
           -Dosal=embedded \
-          -Denable-libinstpatch=0 \
           -DNO_GUI=1
 
     - name: Build

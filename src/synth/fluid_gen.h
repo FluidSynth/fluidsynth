@@ -23,6 +23,10 @@
 
 #include "fluidsynth_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fluid_gen_info_t
 {
     char num;		/* Generator number */
@@ -62,5 +66,8 @@ fluid_real_t fluid_gen_scale_nrpn(int gen, int nrpn);
 void fluid_gen_init(fluid_gen_t *gen, fluid_channel_t *channel);
 const char *fluid_gen_name(int gen);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_GEN_H */

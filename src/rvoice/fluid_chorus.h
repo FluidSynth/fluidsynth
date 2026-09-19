@@ -23,6 +23,9 @@
 
 #include "fluidsynth_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _fluid_chorus_t fluid_chorus_t;
 
@@ -74,6 +77,8 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
 void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
                                  fluid_real_t *left_out, fluid_real_t *right_out);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_CHORUS_H */

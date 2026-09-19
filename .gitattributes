@@ -1,0 +1,7 @@
+# Ensure binary files are not modified by line ending conversion
+*.sf2 binary
+*.sf3 binary
+*.dls binary
+*.mid binary
+*.midi binary
+*.wav binary

@@ -25,7 +25,7 @@
 #include <cmath>
 
 
-// Calculating the sine and cosine coefficients for every possible cutoff frequency is too CPU expensive and can harm real-time playback.
+// Calculating the sine and cosine coefficients for every possible cutoff frequency is too CPU expensive and can harm realtime playback.
 // Therefore, we precalculate the coefficients with a precision of CENTS_STEP and store them in a table.
 extern "C" void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t sample_rate)
 {
@@ -156,7 +156,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  */
 template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *dsp_buf, unsigned int count)
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, unsigned int count)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -307,7 +307,7 @@ extern "C" void fluid_iir_filter_apply(fluid_iir_filter_t *resonant_filter,
 }
 
 void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
-                           fluid_real_t output_rate,
+                           fluid_real_t max_fres_ct,
                            fluid_real_t fres_mod)
 {
     bool calc_coeff_flag = false;
@@ -318,10 +318,11 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         return;
     }
 
-    /* calculate the frequency of the resonant filter in Hz */
-    fres = fluid_ct2hz(iir_filter->fres + fres_mod);
-
-    /* I removed the optimization of turning the filter off when the
+    /* Calculate the filter cutoff in absolute cents and clip it.
+     * The upper bound (max_fres_ct) was precomputed as fluid_hz2ct(0.45 * output_rate)
+     * so that the expensive hz<->cents round-trip for clipping fres is avoided on every voice render call.
+     *
+     * I removed the optimization of turning the filter off when the
      * resonance frequency is above the maximum frequency. Instead, the
      * filter frequency is set to a maximum of 0.45 times the sampling
      * rate. For a 44100 kHz sampling rate, this amounts to 19845
@@ -331,18 +332,18 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
      * clipping the maximum filter frequency at 0.45*srate, the filter
      * is used as an anti-aliasing filter. */
 
-    if(fres > 0.45f * output_rate)
+    static const fluid_real_t min_fres_ct = fluid_hz2ct(5.f);
+    fres = iir_filter->fres + fres_mod;
+    if(fres > max_fres_ct)
     {
-        fres = 0.45f * output_rate;
+        fres = max_fres_ct;
     }
-    else if(fres < 5.f)
+    else if(fres < min_fres_ct)
     {
-        fres = 5.f;
+        fres = min_fres_ct;
     }
 
-    LOG_FILTER("%f + %f = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->last_q);
-    
-    fres = fluid_hz2ct(fres);
+    LOG_FILTER("%f + %f = %f cents | Q: %f", iir_filter->fres, fres_mod, fres, iir_filter->last_q);
     
     /* if filter enabled and there is a significant frequency change.. */
     fres_diff = fres - iir_filter->last_fres;
@@ -376,9 +377,13 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     }
     else
     {
+        fluid_real_t last_fres = iir_filter->last_fres;
         // difference in fres is small, so set it directly
-        iir_filter->fres_incr_count = 0;
         iir_filter->last_fres = fres;
+        // disable fres interpolation
+        iir_filter->fres_incr_count = 0;
+        // Filter cutoff has changed, so don't forget to recalculate the coefficients! #1679
+        calc_coeff_flag = last_fres != fres;
         // We do not account for any change of Q here - if it was changed q_incro_count will be non-zero and recalculating the coeffs
         // will be taken care of in fluid_iir_filter_apply().
     }

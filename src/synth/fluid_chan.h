@@ -38,6 +38,10 @@
 */
 #define FLUID_CHANNEL_SIZE_MONOLIST  10
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 
             The monophonic list
@@ -106,6 +110,7 @@ struct _fluid_channel_t
 
     unsigned char channel_pressure;                 /**< MIDI channel pressure from [0;127] */
     float pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
+    float modulation_depth_range;          /**< Modulation depth range in cents (RPN 0x05) */
     short pitch_bend;                      /**< Current pitch bend value */
     /* Sostenuto order id gives the order of SostenutoOn event.
      * This value is useful to known when the sostenuto pedal is depressed
@@ -172,6 +177,10 @@ fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key);
   ((chan)->pitch_wheel_sensitivity)
 #define fluid_channel_set_pitch_wheel_sensitivity(chan, val) \
   ((chan)->pitch_wheel_sensitivity = (val))
+#define fluid_channel_get_modulation_depth_range(chan) \
+  ((chan)->modulation_depth_range)
+#define fluid_channel_set_modulation_depth_range(chan, val) \
+  ((chan)->modulation_depth_range = (val))
 #define fluid_channel_get_num(chan)             ((chan)->channum)
 #define fluid_channel_set_interp_method(chan, new_method) \
   ((chan)->interp_method = (new_method))
@@ -188,8 +197,6 @@ fluid_real_t fluid_channel_get_key_pitch(fluid_channel_t *chan, int key);
   ((chan)->tuning_prog)
 #define fluid_channel_set_tuning_prog(chan, prog) \
   ((chan)->tuning_prog = (prog))
-#define fluid_channel_portamentotime(_c) \
-    ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
 #define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
 #define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
 #define fluid_channel_clear_portamento(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
@@ -282,4 +289,10 @@ void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value);
 int fluid_channel_get_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t *val);
 void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t val);
 
+/* Portamento time calculation with mode support */
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen, int, int);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* _FLUID_CHAN_H */

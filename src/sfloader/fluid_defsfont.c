@@ -22,7 +22,6 @@
 
 
 #include "fluid_defsfont.h"
-#include "fluid_sfont.h"
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_samplecache.h"
@@ -273,8 +272,6 @@ int delete_fluid_defsfont(fluid_defsfont_t *defsfont)
         delete_fluid_sample(sample);
     }
 
-    delete_fluid_list_mod(defsfont->default_mod_list);
-
     if(defsfont->sample)
     {
         delete_fluid_list(defsfont->sample);
@@ -470,10 +467,10 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         return FLUID_FAILED;
     }
 
-    defsfont->fcbs = fcbs;
+    defsfont->fcbs = *fcbs;
 
     /* The actual loading is done in the sfont and sffile files */
-    sfdata = fluid_sffile_open(file, fcbs);
+    sfdata = fluid_sffile_open(file, &defsfont->fcbs);
 
     if(sfdata == NULL)
     {
@@ -491,7 +488,7 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
     if (dmod_data != NULL)
     {
         /* Load the default modulators*/
-        if (fluid_mod_import_sfont(&defsfont->default_mod_list, dmod_data) != FLUID_OK)
+        if (fluid_mod_import_sfont(&defsfont->sfont->default_mod_list, dmod_data) != FLUID_OK)
         {
             FLUID_LOG(FLUID_ERR, "Unable to load the default modulators");
             goto err_exit;
@@ -1226,21 +1223,6 @@ new_fluid_preset_zone(char *name)
 }
 
 /*
- * delete list of modulators.
- */
-void delete_fluid_list_mod(fluid_mod_t *mod)
-{
-    fluid_mod_t *tmp;
-
-    while(mod)	/* delete the modulators */
-    {
-        tmp = mod;
-        mod = mod->next;
-        delete_fluid_mod(tmp);
-    }
-}
-
-/*
  * delete_fluid_preset_zone
  */
 void
@@ -1317,8 +1299,8 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t *preset_zone
 /**
  * Checks if modulator mod is identical to another modulator in the list
  * (specs SF 2.0X  7.4, 7.8).
- * @param mod, modulator list.
- * @param name, if not NULL, pointer on a string displayed as warning.
+ * @param mod modulator list.
+ * @param name if not NULL, pointer on a string displayed as warning.
  * @return TRUE if mod is identical to another modulator, FALSE otherwise.
  */
 static int
@@ -1350,8 +1332,8 @@ fluid_zone_is_mod_identical(fluid_mod_t *mod, char *name)
  * This is appropriate to internal synthesizer modulators tables
  * which have a fixed size (FLUID_NUM_MOD).
  *
- * @param zone_name, zone name
- * @param list_mod, address of pointer on modulator list.
+ * @param zone_name zone name
+ * @param list_mod address of pointer on modulator list.
  */
 static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
 {
@@ -1389,8 +1371,8 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identical modulators in the list (specs SF 2.01  7.4, 7.8).
- * @param zone_name, zone name.
- * @param list_mod, address of pointer on modulators list.
+ * @param zone_name zone name.
+ * @param list_mod address of pointer on modulators list.
  */
 static void
 fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
@@ -2115,7 +2097,7 @@ fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defs
     sample->origpitch = sfsample->origpitch;
     sample->pitchadj = sfsample->pitchadj;
     sample->sampletype = sfsample->sampletype;
-    sample->default_modulators = defsfont->default_mod_list;
+    sample->default_modulators = defsfont->sfont->default_mod_list;
 
     if(defsfont->dynamic_samples)
     {
@@ -2263,7 +2245,7 @@ static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *prese
                      * for a preset */
                     if(sffile == NULL)
                     {
-                        sffile = fluid_sffile_open(defsfont->filename, defsfont->fcbs);
+                        sffile = fluid_sffile_open(defsfont->filename, &defsfont->fcbs);
 
                         if(sffile == NULL)
                         {

@@ -55,6 +55,12 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
 void
 fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
 {
+    if ((flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
+    {
+        FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead. Disabling source.");
+        src = FLUID_MOD_NONE;
+    }
+
     mod->src1 = src;
     mod->flags1 = flags;
 }
@@ -71,6 +77,12 @@ fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
 void
 fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags)
 {
+    if ((flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
+    {
+        FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead. Disabling source.");
+        src = FLUID_MOD_NONE;
+    }
+
     mod->src2 = src;
     mod->flags2 = flags;
 }
@@ -105,6 +117,7 @@ fluid_mod_set_amount(fluid_mod_t *mod, double amount)
  * @param mod The modulator instance
  * @param mapping_function Pointer to the mapping function to assign
  * @param data User defined data pointer that will be passed into the mapping function, or NULL if not needed
+ * @since 2.5.0
  */
 void
 fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function, void* data)
@@ -218,14 +231,15 @@ fluid_mod_get_transform(const fluid_mod_t *mod)
 /*
  * retrieves the initial value from the given source of the modulator
  */
-static fluid_real_t
+fluid_real_t
 fluid_mod_get_source_value(const unsigned char mod_src,
                            const unsigned char mod_flags,
                            fluid_real_t *range,
                            const fluid_voice_t *voice
                           )
 {
-    const fluid_channel_t *chan = voice->channel;
+    // voice might be NULL in case of unit testing
+    const fluid_channel_t *chan = voice != NULL ? voice->channel : NULL;
     fluid_real_t val;
 
     if(mod_flags & FLUID_MOD_CC)
@@ -287,17 +301,28 @@ fluid_mod_get_source_value(const unsigned char mod_src,
  * transforms the initial value retrieved by \c fluid_mod_get_source_value into [0.0;1.0]
  */
 fluid_real_t
-fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned char mod_flags, const fluid_real_t range, int is_src1)
+fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid_real_t range, int is_src1, fluid_voice_t *voice)
 {
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
+    /* inverted value used for negative mapping functions */
+    const fluid_real_t inv_norm = 1.0f - 1.0f / range - val_norm;
 
     /* we could also only switch case the lower nibble of mod_flags, however
      * this would keep us from adding further mod types in the future
      *
      * instead just remove the flag(s) we already took care of
      */
+    unsigned char mod_src = is_src1 ? mod->src1 : mod->src2;
+    unsigned char mod_flags = is_src1 ? mod->flags1 : mod->flags2;
+    unsigned char applyModulationDepth = is_src1 && (mod_flags & FLUID_MOD_CC) && (mod_src == MODULATION_MSB) && ((mod->dest == GEN_VIBLFOTOPITCH) || (mod->dest == GEN_MODLFOTOPITCH));
     mod_flags &= ~FLUID_MOD_CC;
+
+    if(mod_src == FLUID_MOD_NONE)
+    {
+        // early opt out if no source has been set
+        return 1.0f;
+    }
 
     if(FLUID_UNLIKELY((mod_flags & FLUID_MOD_CUSTOM) != 0))
     {
@@ -312,112 +337,78 @@ fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, unsigned ch
         }
         else
         {
-            val = mod->mapping_func(mod, val_norm, is_src1, mod->data);
+            val = mod->mapping_func(mod, (int)(val+0.5f), (int)(range+0.5f), is_src1, mod->data);
         }
     }
     else
     {
-        switch(mod_flags/* & 0x0f*/)
+        if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_UNIPOLAR)
         {
-            case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =0 */
+            if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)
+            {
+                val = inv_norm;
+            }
+            else
+            {
                 val = val_norm;
-                break;
+            }
 
-            case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =1 */
-                val = 1.0f - val_norm;
-                break;
-
-            case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =2 */
-                val = -1.0f + 2.0f * val_norm;
-                break;
-
-            case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =3 */
-                val = 1.0f - 2.0f * val_norm;
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =4 */
-                val = fluid_concave(127 * (val_norm));
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =5 */
-                val = fluid_concave(127 * (1.0f - val_norm));
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =6 */
-                val = (val_norm > 0.5f) ?  fluid_concave(127 * 2 * (val_norm - 0.5f))
-                        : -fluid_concave(127 * 2 * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =7 */
-                val = (val_norm > 0.5f) ? -fluid_concave(127 * 2 * (val_norm - 0.5f))
-                        :  fluid_concave(127 * 2 * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =8 */
-                val = fluid_convex(127 * (val_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =9 */
-                val = fluid_convex(127 * (1.0f - val_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =10 */
-                val = (val_norm > 0.5f) ?  fluid_convex(127 * 2 * (val_norm - 0.5f))
-                        : -fluid_convex(127 * 2 * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =11 */
-                val = (val_norm > 0.5f) ? -fluid_convex(127 * 2 * (val_norm - 0.5f))
-                        :  fluid_convex(127 * 2 * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =12 */
-                val = (val_norm >= 0.5f) ? 1.0f : 0.0f;
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =13 */
-                val = (val_norm >= 0.5f) ? 0.0f : 1.0f;
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =14 */
-                val = (val_norm >= 0.5f) ? 1.0f : -1.0f;
-                break;
-
-            case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =15 */
-                val = (val_norm >= 0.5f) ? -1.0f : 1.0f;
-                break;
-
-            /*
-                * MIDI CCs only have a resolution of 7 bits. The closer val_norm gets to 1,
-                * the less will be the resulting change of the sinus. When using this sin()
-                * for scaling the cutoff frequency, there will be no audible difference between
-                * MIDI CCs 118 to 127. To avoid this waste of CCs multiply with 0.87
-                * (at least for unipolar) which makes sin() never get to 1.0 but to 0.98 which
-                * is close enough.
-                */
-            case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* custom sin(x) */
-                val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * val_norm);
-                break;
-
-            case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-                val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * (1.0f - val_norm));
-                break;
-
-            case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
-                val = (val_norm > 0.5f) ?  FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
-                        : -FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
-                break;
-
-            case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-                val = (val_norm > 0.5f) ? -FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
-                        :  FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
-                break;
-
-            default:
-                FLUID_LOG(FLUID_ERR, "Unknown modulator type '%d', disabling modulator.", mod_flags);
-                val = 0.0f;
-                break;
+            if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH)
+            {
+                val = (val >= 0.5f) ? 1.0f : 0.0f;
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONCAVE)
+            {
+                // The maximum mapped value should not be 1.0! According to sections 8.4.1 and 8.4.7 it must be 127/128 yet again.
+                // Same is assumed for convex below, though this is not explicitly said by the spec.
+                val = fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
+            {
+                val = fmin(fluid_convex(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+            }
+            else
+            {
+                // FLUID_MOD_LINEAR, just keep it as is
+            }
         }
+        else if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_BIPOLAR)
+        {
+            if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)
+            {
+                val = (inv_norm == (range - 1) / range) ? inv_norm : -1.0f + 2.0f * inv_norm;
+            }
+            else
+            {
+                val = (val_norm == (range - 1) / range) ? val_norm : -1.0f + 2.0f * val_norm;
+            }
+
+            if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH)
+            {
+                val = (val >= 0.0f) ? 1.0f : -1.0f;
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONCAVE)
+            {
+                // The maximum mapped value should not be 1.0! According to sections 8.4.1 and 8.4.7 it must be 127/128 yet again.
+                // Same is assumed for convex below, though this is not explicitly said by the spec.
+                val = (val >= 0.0f) ? fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range-1)/range) :
+                                      -fluid_concave(FLUID_VEL_CB_SIZE * -val);
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
+            {
+                val = (val >= 0.0f) ? fmin(fluid_convex(FLUID_VEL_CB_SIZE * val), (range-1)/range) :
+                                      -fluid_convex(FLUID_VEL_CB_SIZE * -val);
+            }
+            else
+            {
+                // FLUID_MOD_LINEAR
+            }
+        }
+    }
+
+    if(applyModulationDepth && voice != NULL && voice->channel != NULL)
+    {
+        val *= fluid_channel_get_modulation_depth_range(voice->channel) / 50.0f;
     }
 
     return val;
@@ -498,13 +489,13 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
     /* transform the input value */
-    v1 = fluid_mod_transform_source_value(mod, v1, mod->flags1, range1, TRUE);
+    v1 = fluid_mod_transform_source_value(mod, v1, range1, TRUE, voice);
 
     /* get the second input source */
     v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
     /* transform the second input value */
-    v2 = fluid_mod_transform_source_value(mod, v2, mod->flags2, range2, FALSE);
+    v2 = fluid_mod_transform_source_value(mod, v2, range2, FALSE, voice);
 
     /* it indeed is as simple as that: */
     final_value = (fluid_real_t) mod->amount * v1 * v2;
@@ -548,6 +539,21 @@ delete_fluid_mod(fluid_mod_t *mod)
     FLUID_FREE(mod);
 }
 
+/*
+ * delete list of modulators.
+ */
+void delete_fluid_list_mod(fluid_mod_t *mod)
+{
+    fluid_mod_t *tmp;
+
+    while (mod) /* delete the modulators */
+    {
+        tmp = mod;
+        mod = mod->next;
+        delete_fluid_mod(tmp);
+    }
+}
+
 /**
  * Returns the size of the fluid_mod_t structure.
  *
@@ -563,7 +569,7 @@ size_t fluid_mod_sizeof(void)
 /**
  * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE.
  *
- * @param mod, modulator.
+ * @param mod modulator.
  * @return TRUE if modulator source 1 other than cc is FLUID_MOD_NONE, FALSE otherwise.
  */
 static int
@@ -575,8 +581,8 @@ fluid_mod_is_src1_none(const fluid_mod_t *mod)
 /**
  * Checks if modulators source other than CC source is invalid.
  *
- * @param mod, modulator.
- * @param src1_select, source input selection to check.
+ * @param mod modulator.
+ * @param src1_select source input selection to check.
  *   1 to check src1 source.
  *   0 to check src2 source.
  * @return FALSE if selected modulator source other than cc is invalid, TRUE otherwise.
@@ -614,8 +620,8 @@ fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 /**
  * Checks if modulator CC source is invalid (specs SF 2.01  7.4, 7.8, 8.2.1).
  *
- * @param mod, modulator.
- * @src1_select, source input selection:
+ * @param mod modulator.
+ * @param src1_select source input selection:
  *   1 to check src1 source or
  *   0 to check src2 source.
  * @return FALSE if selected modulator's source CC is invalid, TRUE otherwise.
@@ -658,8 +664,8 @@ fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 /**
  * Checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1)
  *
- * @param mod, modulator.
- * @param name,if not NULL, pointer on a string displayed as a warning.
+ * @param mod modulator.
+ * @param name if not NULL, pointer on a string displayed as a warning.
  * @return TRUE if modulator sources src1, src2 are valid, FALSE otherwise.
  */
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)

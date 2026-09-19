@@ -24,6 +24,11 @@
 #include "fluidsynth_priv.h"
 #include "fluid_rvoice.h"
 #include "fluid_ladspa.h"
+#include "fluid_limiter.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
@@ -38,7 +43,7 @@ int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer);
 #endif
 fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
         fluid_real_t sample_rate_max, fluid_real_t sample_rate,
-        fluid_rvoice_eventhandler_t *, int, int);
+        int reverb_type, fluid_rvoice_eventhandler_t *, int, int);
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);
 
@@ -82,6 +87,12 @@ void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t *mixer, int on);
 void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
                                    fluid_ladspa_fx_t *ladspa_fx, int audio_groups);
 #endif
-
+#ifdef SIGNALSMITH_SUPPORT
+int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sample_rate, fluid_limiter_settings_t* settings);
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif

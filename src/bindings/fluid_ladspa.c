@@ -31,6 +31,7 @@
 
 #include <math.h>
 #include <ladspa.h>
+#include "fluid_module.h"
 
 
 typedef enum _fluid_ladspa_state_t

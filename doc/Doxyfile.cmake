@@ -24,7 +24,7 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS = YES
 SEPARATE_MEMBER_PAGES = NO
 TAB_SIZE = 8
-ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1\_linebr@{"
+ALIASES += startlifecycle{1}="\name Lifecycle Functions for \1^^@{"
 ALIASES += endlifecycle="@}"
 ALIASES += setting{1}="\ref settings_\1"
 OPTIMIZE_OUTPUT_FOR_C = YES
@@ -88,13 +88,12 @@ INPUT = \
 @CMAKE_SOURCE_DIR@/doc/recent_changes.txt \
 @CMAKE_SOURCE_DIR@/doc/usage \
 @CMAKE_SOURCE_DIR@/include \
-@CMAKE_SOURCE_DIR@/include/fluidsynth \
 @CMAKE_SOURCE_DIR@/src \
 @CMAKE_BINARY_DIR@/include/fluidsynth \
 @CMAKE_BINARY_DIR@/doc/fluidsettings.txt
 
 INPUT_ENCODING = UTF-8
-FILE_PATTERNS = *.c *.h *.txt
+FILE_PATTERNS = *.c *.h *.txt *.md
 RECURSIVE = YES
 EXCLUDE = 
 EXCLUDE_SYMLINKS = NO
@@ -122,7 +121,6 @@ VERBATIM_HEADERS = NO
 # configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------
 ALPHABETICAL_INDEX = YES
-COLS_IN_ALPHA_INDEX = 5
 IGNORE_PREFIX = 
 #---------------------------------------------------------------------------
 # configuration options related to the HTML output
@@ -168,7 +166,7 @@ LATEX_OUTPUT = latex
 LATEX_CMD_NAME = latex
 MAKEINDEX_CMD_NAME = makeindex
 COMPACT_LATEX = NO
-PAPER_TYPE = a4wide
+PAPER_TYPE = a4
 EXTRA_PACKAGES = 
 LATEX_HEADER = 
 PDF_HYPERLINKS = YES
@@ -194,7 +192,7 @@ MAN_LINKS = NO
 #---------------------------------------------------------------------------
 # configuration options related to the XML output
 #---------------------------------------------------------------------------
-GENERATE_XML = NO
+GENERATE_XML = YES
 XML_OUTPUT = xml
 XML_PROGRAMLISTING = YES
 #---------------------------------------------------------------------------
@@ -229,15 +227,11 @@ TAGFILES =
 GENERATE_TAGFILE = 
 ALLEXTERNALS = NO
 EXTERNAL_GROUPS = YES
-PERL_PATH = /usr/bin/perl
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool   
 #---------------------------------------------------------------------------
-CLASS_DIAGRAMS = YES
-MSCGEN_PATH = 
 HIDE_UNDOC_RELATIONS = YES
 HAVE_DOT = NO
-DOT_FONTNAME =
 DOT_FONTPATH = 
 CLASS_GRAPH = YES
 COLLABORATION_GRAPH = YES
@@ -255,8 +249,6 @@ DOT_PATH =
 DOTFILE_DIRS = 
 DOT_GRAPH_MAX_NODES = 50
 MAX_DOT_GRAPH_DEPTH = 1000
-DOT_TRANSPARENT = YES
-DOT_MULTI_TARGETS = NO
 GENERATE_LEGEND = YES
 DOT_CLEANUP = YES
 #---------------------------------------------------------------------------

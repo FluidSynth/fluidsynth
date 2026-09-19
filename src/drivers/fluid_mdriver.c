@@ -158,6 +158,18 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
 
             if(driver)
             {
+                double srate, midi_event_latency;
+                int period_size;
+
+                fluid_settings_getint(settings, "audio.period-size", &period_size);
+                fluid_settings_getnum(settings, "synth.sample-rate", &srate);
+
+                midi_event_latency = period_size / srate;
+                if(midi_event_latency >= 0.05)
+                {
+                    FLUID_LOG(FLUID_WARN, "You have chosen 'audio.period-size' to be %d samples. Given a sample rate of %.1f this results in a latency of %.1f ms, which will cause MIDI events received by the MIDI driver to be poorly quantized (=untimed) in the synthesized audio (also known as the 'drunken-drummer' syndrome). To avoid that, you're strongly advised to increase 'audio.periods' instead, while keeping 'audio.period-size' small enough to make this warning disappear.", period_size, srate, midi_event_latency*1000.0);
+                }
+
                 driver->define = def;
             }
 

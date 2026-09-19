@@ -24,6 +24,7 @@
  */
 
 #include "fluid_synth.h"
+#include "fluid_audio_convert.h"
 #include "fluid_midi.h"
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"

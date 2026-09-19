@@ -114,9 +114,7 @@
 #endif
 
 
-#if OSAL_glib
-#include "fluid_sys_glib.h"
-#elif OSAL_embedded
+#if OSAL_embedded
 #include "fluid_sys_embedded.h"
 #elif OSAL_cpp11
 #include "fluid_sys_cpp11.h"
@@ -285,6 +283,9 @@ int fluid_thread_join(fluid_thread_t *thread);
 
 /* Sockets and I/O */
 
+#define FLUID_SHELL_AUTO_PORT_START             9800
+#define FLUID_TCP_PORT_MAX                      65535
+
 int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt, char *buf, int len);
 int fluid_ostream_printf(fluid_ostream_t out, const char *format, ...);
 
@@ -302,6 +303,7 @@ typedef int (*fluid_server_func_t)(void *data, fluid_socket_t client_socket, cha
 fluid_server_socket_t *new_fluid_server_socket(int port, fluid_server_func_t func, void *data);
 void delete_fluid_server_socket(fluid_server_socket_t *sock);
 int fluid_server_socket_join(fluid_server_socket_t *sock);
+int fluid_server_socket_get_port(fluid_server_socket_t *sock);
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
@@ -309,6 +311,8 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 /* File access */
 FILE* fluid_file_open(const char* filename, const char** errMsg);
 fluid_long_long_t fluid_file_tell(FILE* f);
+int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd);
+int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence);
 
 
 /* Profiling */

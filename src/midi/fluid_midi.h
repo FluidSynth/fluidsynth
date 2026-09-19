@@ -24,6 +24,10 @@
 #include "fluid_sys.h"
 #include "fluid_list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fluid_midi_parser_t fluid_midi_parser_t;
 
 fluid_midi_parser_t *new_fluid_midi_parser(void);
@@ -58,7 +62,7 @@ enum fluid_midi_event_type
     MIDI_SONG_SELECT = 0xf3,
     MIDI_TUNE_REQUEST = 0xf6,
     MIDI_EOX = 0xf7,
-    /* system real-time - never in midi files */
+    /* system realtime - never in midi files */
     MIDI_SYNC = 0xf8,
     MIDI_TICK = 0xf9,
     MIDI_START = 0xfa,
@@ -379,5 +383,8 @@ struct _fluid_midi_parser_t
     fluid_midi_event_t event;        /* The event, that is returned to the MIDI driver. */
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_MIDI_H */

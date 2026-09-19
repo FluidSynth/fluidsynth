@@ -33,6 +33,10 @@
 
 #include "fluidsynth_priv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _fluid_tuning_t
 {
     char *name;
@@ -62,7 +66,8 @@ void fluid_tuning_set_octave(fluid_tuning_t *tuning, const double *pitch_deriv);
 void fluid_tuning_set_all(fluid_tuning_t *tuning, const double *pitch);
 #define fluid_tuning_get_all(_t) (&(_t)->pitch[0])
 
-
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_TUNING_H */

@@ -19,6 +19,9 @@
 
 #include "fluid_sys.h"
 
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+#include <poll.h>
+#endif
 
 #if READLINE_SUPPORT
 #include <readline/readline.h>
@@ -70,10 +73,14 @@ struct _fluid_timer_t
 struct _fluid_server_socket_t
 {
     fluid_socket_t socket;
+    int port;
     fluid_thread_t *thread;
     int cont;
     fluid_server_func_t func;
     void *data;
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    int wake_fds[2]; /* pipe fds used to interrupt accept(): [0]=read end, [1]=write end */
+#endif
 };
 
 
@@ -312,7 +319,7 @@ error_recovery:
  * @note Only use this function when the API documentation explicitly says so. Otherwise use
  * adequate \c delete_fluid_* functions.
  *
- * @warning Calling ::free() on memory that is advised to be freed with fluid_free() results in undefined behaviour!
+ * @warning Calling C-std lib <code>free()</code> on memory that is advised to be freed with fluid_free() results in undefined behaviour!
  * (cf.: "Potential Errors Passing CRT Objects Across DLL Boundaries" found in MS Docs)
  *
  * @since 2.0.7
@@ -1333,6 +1340,12 @@ int fluid_server_socket_join(fluid_server_socket_t *server_socket)
     return fluid_thread_join(server_socket->thread);
 }
 
+int fluid_server_socket_get_port(fluid_server_socket_t *server_socket)
+{
+    fluid_return_val_if_fail(server_socket != NULL, FLUID_FAILED);
+    return server_socket->port;
+}
+
 static int fluid_socket_init(void)
 {
 #ifdef _WIN32
@@ -1378,13 +1391,33 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock)
 
 void fluid_socket_close(fluid_socket_t sock)
 {
+    int ret;
     if(sock != INVALID_SOCKET)
     {
+        /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
 #ifdef _WIN32
+        shutdown(sock, SD_BOTH);
         closesocket(sock);
 
 #else
-        close(sock);
+        ret = shutdown(sock, SHUT_RDWR);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during shutdown(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "shutdown() succeeded");
+        }
+        ret = close(sock);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during close(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "close() succeeded");
+        }
 #endif
     }
 }
@@ -1411,10 +1444,48 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
     int r;
     FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
-    FLUID_LOG(FLUID_DBG, "Server listening for connections");
+    FLUID_LOG(FLUID_DBG, "Server ready and listening for connections");
 
     while(server_socket->cont)
     {
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+        /* On POSIX, use poll() to wait on either an incoming connection or a
+         * wakeup from the wake pipe. Relying on shutdown()/close() to
+         * interrupt a concurrent accept() is unreliable on macOS/BSD where
+         * shutdown() is a no-op on a listening socket. */
+        {
+            struct pollfd fds[2];
+            fds[0].fd = server_socket->socket;
+            fds[0].events = POLLIN;
+            fds[1].fd = server_socket->wake_fds[0];
+            fds[1].events = POLLIN;
+
+            FLUID_LOG(FLUID_DBG, "Server Thread polling for events...");
+            if(poll(fds, 2, -1) < 0)
+            {
+                if(server_socket->cont)
+                {
+                    FLUID_LOG(FLUID_ERR, "Got error %d while polling server socket", fluid_socket_get_error());
+                }
+
+                server_socket->cont = 0;
+                return FLUID_THREAD_RETURN_VALUE;
+            }
+
+            if(fds[1].revents & POLLIN)
+            {
+                FLUID_LOG(FLUID_DBG, "Wakeup was requested by delete_fluid_server_socket().");
+                break;
+            }
+
+            if(!(fds[0].revents & POLLIN))
+            {
+                continue;
+            }
+        }
+#endif
+
+        FLUID_LOG(FLUID_DBG, "Server Thread calling accept()...");
         client_socket = accept(server_socket->socket, (struct sockaddr *)&addr, &addrlen);
 
         FLUID_LOG(FLUID_DBG, "New client connection");
@@ -1425,12 +1496,17 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
             {
                 FLUID_LOG(FLUID_ERR, "Got error %d while trying to accept connection", fluid_socket_get_error());
             }
+            else
+            {
+                FLUID_LOG(FLUID_DBG, "Got error %d while trying to accept connection, abort was requested", fluid_socket_get_error());
+            }
 
             server_socket->cont = 0;
             return FLUID_THREAD_RETURN_VALUE;
         }
         else
         {
+            FLUID_LOG(FLUID_DBG, "Server thread got a client socket.");
 #ifdef HAVE_INETNTOP
 
 #ifdef IPV6_SUPPORT
@@ -1469,6 +1545,9 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     const struct sockaddr *addr;
     size_t addr_size;
     fluid_socket_t sock;
+    int current_port = port;
+    int auto_port = (port == 0);
+    int bind_error;
 
     fluid_return_val_if_fail(func != NULL, NULL);
 
@@ -1479,15 +1558,18 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     FLUID_MEMSET(&addr4, 0, sizeof(addr4));
     addr4.sin_family = AF_INET;
-    addr4.sin_port = htons((uint16_t)port);
     addr4.sin_addr.s_addr = htonl(INADDR_ANY);
 
 #ifdef IPV6_SUPPORT
     FLUID_MEMSET(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
-    addr6.sin6_port = htons((uint16_t)port);
     addr6.sin6_addr = in6addr_any;
 #endif
+
+    if(auto_port)
+    {
+        current_port = FLUID_SHELL_AUTO_PORT_START;
+    }
 
 #ifdef IPV6_SUPPORT
     sock = socket(AF_INET6, SOCK_STREAM, 0);
@@ -1516,12 +1598,49 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         return NULL;
     }
     
-    if(bind(sock, addr, (int) addr_size) == SOCKET_ERROR)
+    while(1)
     {
-        FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", fluid_socket_get_error());
-        fluid_socket_close(sock);
-        fluid_socket_cleanup();
-        return NULL;
+        addr4.sin_port = htons((uint16_t) current_port);
+#ifdef IPV6_SUPPORT
+        addr6.sin6_port = htons((uint16_t) current_port);
+#endif
+        if(bind(sock, addr, (int) addr_size) == 0)
+        {
+            break;
+        }
+
+        bind_error = fluid_socket_get_error();
+
+        if(!auto_port)
+        {
+            FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", bind_error);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+#if defined(_WIN32)
+        if(bind_error != WSAEADDRINUSE)
+#else
+        if(bind_error != EADDRINUSE)
+#endif
+        {
+            FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", bind_error);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+        if(current_port == FLUID_TCP_PORT_MAX)
+        {
+            FLUID_LOG(FLUID_ERR, "No free TCP port available for shell server auto mode (starting at %d)",
+                      FLUID_SHELL_AUTO_PORT_START);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+        current_port++;
     }
 
     if(listen(sock, SOMAXCONN) == SOCKET_ERROR)
@@ -1543,15 +1662,31 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     }
 
     server_socket->socket = sock;
+    server_socket->port = current_port;
     server_socket->func = func;
     server_socket->data = data;
     server_socket->cont = 1;
+
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    if(pipe(server_socket->wake_fds) == -1)
+    {
+        FLUID_LOG(FLUID_ERR, "Got error %d while creating wakeup pipe for server socket", errno);
+        FLUID_FREE(server_socket);
+        fluid_socket_close(sock);
+        fluid_socket_cleanup();
+        return NULL;
+    }
+#endif
 
     server_socket->thread = new_fluid_thread("server", fluid_server_socket_run, server_socket,
                             0, FALSE);
 
     if(server_socket->thread == NULL)
     {
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+        close(server_socket->wake_fds[0]);
+        close(server_socket->wake_fds[1]);
+#endif
         FLUID_FREE(server_socket);
         fluid_socket_close(sock);
         fluid_socket_cleanup();
@@ -1565,18 +1700,42 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
     fluid_return_if_fail(server_socket != NULL);
 
+    FLUID_LOG(FLUID_DBG, "Signaling server thread to exit...");
     server_socket->cont = 0;
 
+#if !defined(_POSIX_VERSION) || defined(__OS2__)
+    /* On Windows, closing the socket reliably interrupts a blocking accept(). */
     if(server_socket->socket != INVALID_SOCKET)
     {
         fluid_socket_close(server_socket->socket);
     }
+#else
+    /* On POSIX, writing to the wake pipe unblocks the server thread's poll()
+     * call. Using shutdown/close to interrupt accept() is unreliable on some
+     * platforms (e.g. macOS/BSD) where shutdown() on a listening socket is a
+     * no-op and close() may not wake a concurrent accept(). */
+    {
+        char dummy = 0;
+        (void)write(server_socket->wake_fds[1], &dummy, 1);
+    }
+#endif
 
     if(server_socket->thread)
     {
+        FLUID_LOG(FLUID_DBG, "Joining server thread...");
         fluid_thread_join(server_socket->thread);
         delete_fluid_thread(server_socket->thread);
+        FLUID_LOG(FLUID_DBG, "Server thread joined and deleted.");
     }
+
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    if(server_socket->socket != INVALID_SOCKET)
+    {
+        fluid_socket_close(server_socket->socket);
+    }
+    close(server_socket->wake_fds[0]);
+    close(server_socket->wake_fds[1]);
+#endif
 
     FLUID_FREE(server_socket);
 
@@ -1640,6 +1799,64 @@ fluid_long_long_t fluid_file_tell(FILE* f)
     return ftell(f);
 #endif
 }
+
+#ifdef _WIN32
+#define FLUID_PRIi64 "I64d"
+#else
+#define FLUID_PRIi64 "lld"
+#endif
+
+int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd)
+{
+    if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
+    {
+        if(feof((FILE *)fd))
+        {
+            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %" FLUID_PRIi64 " bytes", count);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "File read failed");
+        }
+
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence)
+{
+#if defined(__MINGW32__) && defined(__i386__)
+    // Some older versions of MinGW i686 report incorrect values for _ftelli64(). This is problematic,
+    // because _fseeki64() below would use these incorrect values when seeking with SEEK_CUR,
+    // resulting in incorrect file positions. So we need to work around this by doing the SEEK_CUR
+    // calculation ourselves.
+    // See https://sourceforge.net/p/mingw-w64/bugs/864/ for more details.
+    if(whence == SEEK_CUR)
+    {
+        whence = SEEK_SET;
+        ofs += fluid_file_tell((FILE *)fd);
+    }
+#endif
+
+#ifdef _WIN32
+#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
+#else
+#define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
+#endif
+
+    if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
+    {
+        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %" FLUID_PRIi64 " and whence = %d", ofs, whence);
+        return FLUID_FAILED;
+    }
+#undef FLUID_FSEEK
+
+    return FLUID_OK;
+}
+
+#undef FLUID_PRIi64
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!

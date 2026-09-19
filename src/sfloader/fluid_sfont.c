@@ -19,6 +19,7 @@
 
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
+#include "fluid_mod.h"
 
 
 void *default_fopen(const char *path)
@@ -44,43 +45,15 @@ fluid_long_long_t default_ftell(void *handle)
     return FLUID_FTELL((FILE *)handle);
 }
 
-#ifdef _WIN32
-#define FLUID_PRIi64 "I64d"
-#else
-#define FLUID_PRIi64 "lld"
-#endif
-
-int safe_fread(void *buf, fluid_long_long_t count, void *fd)
+int safe_fread(void *buf, fluid_long_long_t count, void *handle)
 {
-    if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
-    {
-        if(feof((FILE *)fd))
-        {
-            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %" FLUID_PRIi64 " bytes", count);
-        }
-        else
-        {
-            FLUID_LOG(FLUID_ERR, "File read failed");
-        }
-
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
+    return fluid_file_read(buf, count, handle);
 }
 
-int safe_fseek(void *fd, fluid_long_long_t ofs, int whence)
+int safe_fseek(void *handle, fluid_long_long_t ofs, int whence)
 {
-    if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
-    {
-        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %" FLUID_PRIi64 " and whence = %d", ofs, whence);
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
+    return fluid_file_seek(handle, ofs, whence);
 }
-
-#undef FLUID_PRIi64
 
 /**
  * Creates a new SoundFont loader.
@@ -198,7 +171,6 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t *loader,
     cb->ftell = tell;
     cb->fclose = close;
 
-    // NOTE: if we ever make the instpatch loader public, this may return FLUID_FAILED
     return FLUID_OK;
 }
 
@@ -218,13 +190,20 @@ fluid_sfont_t *new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                fluid_sfont_iteration_next_t iter_next,
                                fluid_sfont_free_t free)
 {
-    fluid_sfont_t *sfont;
-
     fluid_return_val_if_fail(get_name != NULL, NULL);
     fluid_return_val_if_fail(get_preset != NULL, NULL);
     fluid_return_val_if_fail(free != NULL, NULL);
 
-    sfont = FLUID_NEW(fluid_sfont_t);
+    return new_fluid_sfont_local(get_name, get_preset, iter_start, iter_next, free);
+}
+
+fluid_sfont_t *new_fluid_sfont_local(fluid_sfont_get_name_t get_name,
+                               fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_iteration_start_t iter_start,
+                               fluid_sfont_iteration_next_t iter_next,
+                               fluid_sfont_free_t free)
+{
+    fluid_sfont_t *sfont = FLUID_NEW(fluid_sfont_t);
 
     if(sfont == NULL)
     {
@@ -306,6 +285,94 @@ fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenu
     return sfont->get_preset(sfont, bank, prenum);
 }
 
+/**
+ * Retrieve a deep copy of all default modulators attached to the provided @p sfont instance.
+ *
+ * If a SoundFont has any default modulators set, the synth's default modulators (see fluid_synth_add_default_mod()) will be ignored.
+ * A SF2 will have default modulators attached when the file contained a DMOD chunk.
+ * For a DLS file, fluidsynth will always add (custom) default modulators to allow the file being synthesized as accurately as possible.
+ *
+ * @param sfont The SoundFont instance.
+ * @param mod_out A reference to a fluid_mod_t array. The provided pointer variable will be populated by fluidsynth to point to an array. The caller is responsible for freeing the array with fluid_free().
+ * @return #FLUID_FAILED on error (e.g. out of memory). Otherwise it contains the number of modulators saved into the buffer. The caller must always free the buffer, even if the return value is zero!
+ * @since 2.5.0
+ * @note This function involves memory allocation and is therefore not realtime safe!
+ * @warning This function is not thread-safe. So only call this function when no synthesis thread is concurrently using this @p sfont instance!
+ */
+int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out)
+{
+    fluid_return_val_if_fail(sfont != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(mod_out != NULL, FLUID_FAILED);
+    {
+        unsigned int i = 0;
+        fluid_mod_t *res = NULL, *mod = sfont->default_mod_list;
+        while (mod != NULL)
+        {
+            ++i;
+            mod = mod->next;
+        }
+        res = FLUID_ARRAY(fluid_mod_t, i);
+        if (res == NULL)
+        {
+            *mod_out = NULL;
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
+            return FLUID_FAILED;
+        }
+
+        for (i = 0, mod = sfont->default_mod_list; mod != NULL; i++)
+        {
+            fluid_mod_clone(&res[i], mod);
+            mod = mod->next;
+        }
+        *mod_out = res;
+        return i;
+    }
+}
+
+/**
+ * Sets the default modulators of a SoundFont instance.
+ *
+ * @param sfont The SoundFont instance.
+ * @param mods Pointer to an array of default modulators. A deep copy will be performed.
+ * @param nmods Number of modulators in the provided array.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ *
+ * @note If @p mods is a zero-length array or @p mods is NULL, the default modulators attached to this
+ * SoundFont will be unset, causing the synth's default modulators to be added to voices again.
+ * The behavior is undefined if the array @p mods contains multiple identical modulators
+ * (i.e. fluid_mod_test_identity() evaluates to true).
+ * Further note that this function involves memory allocation and is therefore not realtime safe!
+ *
+ * @warning This function is not thread-safe. So only call this function when no synthesis thread is concurrently using this @p sfont instance!
+ * @since 2.5.0
+ */
+int fluid_sfont_set_default_mod(fluid_sfont_t *sfont, const fluid_mod_t *mods, int nmods)
+{
+    int i;
+    fluid_mod_t *list = NULL;
+
+    fluid_return_val_if_fail(sfont != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(nmods >= 0, FLUID_FAILED);
+
+    delete_fluid_list_mod(sfont->default_mod_list);
+
+    if (mods == NULL || nmods == 0)
+    {
+        sfont->default_mod_list = NULL;
+        return FLUID_OK;
+    }
+
+    for (i = nmods - 1; i >= 0; i--) // To preserve input order
+    {
+        fluid_mod_t *r = new_fluid_mod();
+        fluid_mod_clone(r, &mods[i]);
+        r->next = list;
+        list = r;
+    }
+
+    sfont->default_mod_list = list;
+    return FLUID_OK;
+}
 
 /**
  * Starts / re-starts virtual preset iteration in a SoundFont.
@@ -349,6 +416,7 @@ int delete_fluid_sfont(fluid_sfont_t *sfont)
 {
     fluid_return_val_if_fail(sfont != NULL, 0);
 
+    delete_fluid_list_mod(sfont->default_mod_list);
     FLUID_FREE(sfont);
     return 0;
 }

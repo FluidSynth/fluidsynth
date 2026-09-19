@@ -30,10 +30,6 @@
 
 #include "config.h"
 
-#if OSAL_glib
-#include <glib.h>
-#endif
-
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
 #endif
@@ -70,9 +66,6 @@ typedef double fluid_real_t;
 #if defined(SUPPORTS_VLA)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
-#elif OSAL_glib
-#  define FLUID_DECLARE_VLA(_type, _name, _len) \
-     _type* _name = g_newa(_type, (_len))
 #else
 #  ifdef _WIN32
 #    define alloca _alloca
@@ -127,7 +120,7 @@ typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t pa
 
 #define FLUID_BUFSIZE                64         /**< FluidSynth internal buffer size (in samples) */
 #define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) /**< Number of buffers that can be processed in one rendering run */
-#define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per #FLUID_BUFSIZE */
+#define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per FLUID_BUFSIZE */
 #define FLUID_MAX_RETURN_EVENTS      1024       /**< Maximum queued synthesis thread return events */
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
@@ -210,12 +203,6 @@ void* fluid_alloc(size_t len);
 
 FILE *fluid_fopen(const char *filename, const char *mode);
 
-#ifdef _WIN32
-#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
-#else
-#define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
-#endif
-
 #define FLUID_FTELL(_f)              fluid_file_tell(_f)
 
 /* Memory functions */
@@ -252,10 +239,6 @@ do { strncpy(_dst,_src,_n-1); \
  * null-terminate the buffer when the formatted string does not fit into the
  * buffer.
  */
-#if OSAL_glib
-#define FLUID_VSNPRINTF        g_vsnprintf
-#else
-
 #include <stdarg.h>
 
 #define FLUID_VSNPRINTF        _fluid_vsnprintf
@@ -271,16 +254,12 @@ _fluid_vsnprintf(char *buffer, size_t count, const char *format, va_list args)
         buffer[count - 1] = 0;
     return length;
 }
-#endif
 
 #else
 #define FLUID_VSNPRINTF          vsnprintf
 #endif
 
 #if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1900) || defined(MINGW32)
-#if OSAL_glib
-#define FLUID_SNPRINTF         g_snprintf
-#else
 #define FLUID_SNPRINTF         _fluid_snprintf
 
 static inline int
@@ -293,7 +272,6 @@ _fluid_snprintf(char *buffer, size_t count, const char *format, ...)
     va_end(args);
     return length;
 }
-#endif
 
 #else
 #define FLUID_SNPRINTF           snprintf
@@ -340,13 +318,8 @@ _fluid_snprintf(char *buffer, size_t count, const char *format, ...)
 #define FLUID_ASSERT(a)
 #endif
 
-#if OSAL_glib
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
-#else
 #define FLUID_LIKELY(x) (x)
 #define FLUID_UNLIKELY(x) (x)
-#endif
 
 /* Misc */
 #define FLUID_INLINE inline

@@ -9,7 +9,11 @@ else ( ALSA_SUPPORT )
 endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
-    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             yes\n" )
+    if ( COREAUDIO_SUPPORT_HAL )
+        set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             yes (MacOSX)\n" )
+    else ( COREAUDIO_SUPPORT_HAL )
+        set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             yes\n" )
+    endif ( COREAUDIO_SUPPORT_HAL )
 else ( COREAUDIO_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             no\n" )
 endif ( COREAUDIO_SUPPORT )
@@ -124,12 +128,11 @@ endif ( LIBSNDFILE_HASVORBIS )
 
 
 set ( INPUTS_REPORT "${INPUTS_REPORT}Support for DLS files:   " )
-if ( LIBINSTPATCH_SUPPORT )
+if ( ENABLE_NATIVE_DLS )
     set ( INPUTS_REPORT "${INPUTS_REPORT}yes\n" )
-else ( LIBINSTPATCH_SUPPORT )
-    set ( INPUTS_REPORT "${INPUTS_REPORT}no (libinstpatch not found)\n" )
-endif ( LIBINSTPATCH_SUPPORT )
-
+else()
+    set ( INPUTS_REPORT "${INPUTS_REPORT}no\n" )
+endif()
 
 set ( RENDERING_REPORT "\n" )
 
@@ -147,6 +150,16 @@ endif ( LIBSNDFILE_SUPPORT )
 
 
 set ( MISC_REPORT "\nMiscellaneous support:\n" )
+
+if    ( SIGNALSMITH_SUPPORT )
+    set ( MISC_REPORT "${MISC_REPORT}  Limiter:               yes\n" )
+else  ( SIGNALSMITH_SUPPORT )
+  if    ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+        set ( MISC_REPORT "${MISC_REPORT}  Limiter:               no (signalsmith-audio/basics not found)\n" )
+  else  ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+        set ( MISC_REPORT "${MISC_REPORT}  Limiter:               no\n" )
+  endif ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+endif ( SIGNALSMITH_SUPPORT )
 
 if ( DBUS_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  D-Bus:                 yes\n" )

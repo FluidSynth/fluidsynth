@@ -4,17 +4,18 @@
 |---|---|
 | <img src="https://www.kernel.org/theme/images/logos/tux.png" height="30" alt=""> **Linux** (CI) | [![FluidSynth Linux](https://github.com/FluidSynth/fluidsynth/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/linux.yml) |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Obs-logo.png" height=30 alt=""> **Linux** (Packaging) | [![build result](https://build.opensuse.org/projects/home:derselbst:anmp/packages/fluidsynth/badge.svg?type=default)](https://build.opensuse.org/package/show/home:derselbst:anmp/fluidsynth)
-| <img src="https://raw.githubusercontent.com/docker-library/docs/781049d54b1bd9b26d7e8ad384a92f7e0dcb0894/alpine/logo.png" height="25" alt=""> **Alpine** (musl) | [![Fluidsynth Alpine](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status%2FFluidSynth.fluidsynth.alpine?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=12&branchName=alpine) |
-| <img src="https://www.freebsd.org/gifs/daemon_hammer.jpg" height="30" alt=""> **FreeBSD** | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Windows_logo_-_2012.svg/88px-Windows_logo_-_2012.svg.png" height="25" alt=""> **Windows 10** | [![Fluidsynth Windows](https://github.com/FluidSynth/fluidsynth/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/windows.yml) |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Windows_Logo_%281992-2001%29.svg/960px-Windows_Logo_%281992-2001%29.svg.png" height="25" alt=""> **Windows 7** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.Win?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) |
+| <img src="https://raw.githubusercontent.com/docker-library/docs/781049d54b1bd9b26d7e8ad384a92f7e0dcb0894/alpine/logo.png" height="25" alt=""> **Alpine** (musl) | [![Fluidsynth Alpine](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status%2FFluidSynth.fluidsynth.alpine?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=12&branchName=master) |
+| <img src="https://www.freebsd.org/gifs/daemon_hammer.jpg" height="30" alt=""> **FreeBSD** | [![FluidSynth FreeBSD](https://github.com/FluidSynth/fluidsynth/actions/workflows/freebsd.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/freebsd.yml) |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Windows_Logo_%281992-2001%29.svg/960px-Windows_Logo_%281992-2001%29.svg.png" height="25" alt=""> **Windows 10** | [![Fluidsynth Windows](https://github.com/FluidSynth/fluidsynth/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/windows.yml) |
 | <img src="https://www.apple.com/favicon.ico" height="30" alt=""> **MacOSX** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.macOS?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=5&branchName=master) |
 | <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.Android?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=4&branchName=master) |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Solaris_OS_logo.svg/320px-Solaris_OS_logo.svg.png" height="30" alt=""> **Solaris** | [![FluidSynth Solaris](https://github.com/FluidSynth/fluidsynth/actions/workflows/solaris.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/solaris.yml) |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/IOS_logo.svg/60px-IOS_logo.svg.png" height="30" alt=""> **iOS** | [![FluidSynth iOS](https://github.com/FluidSynth/fluidsynth/actions/workflows/ios.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/ios.yml) |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Solaris_OS_logo.svg/60px-Solaris_OS_logo.svg.png" height="30" alt=""> **Solaris** | [![FluidSynth Solaris](https://github.com/FluidSynth/fluidsynth/actions/workflows/solaris.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/solaris.yml) |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Os2logo.svg/60px-Os2logo.svg.png" height="30" alt=""> **OS/2** | [![FluidSynth OS/2](https://github.com/FluidSynth/fluidsynth/actions/workflows/os2.yml/badge.svg?branch=master)](https://github.com/FluidSynth/fluidsynth/actions/workflows/os2.yml) |
 
 #### FluidSynth is a cross-platform, real-time software synthesizer based on the Soundfont 2 specification.
 
-FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play MIDI files.
+FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://www.fluidsynth.org/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play MIDI files.
 
 [![SonarQube Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FluidSynth_fluidsynth&metric=alert_status)](https://sonarcloud.io/dashboard?id=FluidSynth_fluidsynth) [![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
 
@@ -23,7 +24,7 @@ FluidSynth generates audio by reading and handling MIDI events from MIDI input d
 
 The central place for documentation and further links is our **wiki** here at GitHub:
 
-#### https://github.com/FluidSynth/fluidsynth/wiki
+#### https://www.fluidsynth.org/wiki
 
 If you are missing parts of the documentation, let us know by writing to our mailing list.
 Of course, you are welcome to edit and improve the wiki yourself. All you need is an account at GitHub. Alternatively, you may send an EMail to our mailing list along with your suggested changes. Further information about the mailing list is available in the wiki as well.
@@ -32,19 +33,19 @@ Latest information about FluidSynth is also available on the web site at https:/
 
 ## License
 
-The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the conditions how FluidSynth can be used in e.g. commercial or closed-source projects, please refer to the [LicensingFAQ in our wiki](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ).
+The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the conditions how FluidSynth can be used in e.g. commercial or closed-source projects, please refer to the [LicensingFAQ in our wiki](https://www.fluidsynth.org/wiki/LicensingFAQ).
 
 ## Building from source
 
-For information on how to build FluidSynth from source, please [refer to our wiki](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+For information on how to build FluidSynth from source, please [refer to our wiki](https://www.fluidsynth.org/wiki/BuildingWithCMake).
 
 ## Links
 
 - FluidSynth's Home Page, https://www.fluidsynth.org
 
-- FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
+- FluidSynth's wiki, https://www.fluidsynth.org/wiki
 
-- FluidSynth's API documentation, https://www.fluidsynth.org/api/
+- FluidSynth's API documentation, https://www.fluidsynth.org/wiki/api/
 
 ---
 

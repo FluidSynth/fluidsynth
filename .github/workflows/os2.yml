@@ -1,0 +1,111 @@
+name: FluidSynth OS/2
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/freebsd.yml'
+      - '.github/workflows/api_doc_build.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/solaris.yml'
+      - '.github/workflows/windows.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/rendering-regression.yml'
+      - 'README.md'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: RelWithDebInfo
+  INSTALL_LOCATION: "/@unixroot/usr"
+  DESTDIR: ${{ github.workspace }}/fluidsynth
+
+# Use a bash shell so we can use the same syntax for environment variable
+# access regardless of the host operating system
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        CMAKE_FLAGS: ["-DBUILD_SHARED_LIBS=1", "-DBUILD_SHARED_LIBS=0"]
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: Setup cross-os2emx
+      uses: komh/setup-cross-os2emx@v1
+      with:
+        zip-deps: |
+          https://github.com/komh/kai/releases/download/kai-2.2.1/libkai-2.2.1.zip
+
+    - name: Configure CMake
+      run: |
+        cmake -S . \
+          -B build \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_VERBOSE_MAKEFILE=1 \
+          -Werror=dev \
+          -DCMAKE_INSTALL_PREFIX=$INSTALL_LOCATION \
+          -Dosal=cpp11 \
+          -Denable-dart=1 \
+          -Denable-kai=1 \
+          -DCMAKE_TOOLCHAIN_FILE=$OS2EMX_CMAKE_TOOLCHAIN_FILE \
+          ${{ matrix.CMAKE_FLAGS }}
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Install
+      run: cmake --install build && ls -la $DESTDIR$INSTALL_LOCATION
+
+    - name: Consume from pkg-config
+      if: ${{ contains(matrix.CMAKE_FLAGS, 'BUILD_SHARED_LIBS=0') }}
+      run: |
+        set -e
+        cat << EOF > static-link-test.c
+        #include <fluidsynth.h>
+        int main() { fluid_synth_process(0,0,0,0,0,0); return 0; }
+        EOF
+        export PKG_CONFIG_PATH="$DESTDIR$INSTALL_LOCATION/lib/pkgconfig"
+        set -x
+        i686-pc-os2-emx-g++ -fPIE -o static-link-test static-link-test.c $(pkg-config --cflags --static fluidsynth) $(pkg-config --libs --static fluidsynth)
+        #./static-link-test
+        echo $?
+
+    - name: Consume from build
+      run: |
+        set -e
+        cmake -S test/cmake \
+          -B consume-build \
+          -G Ninja \
+          -DFluidSynth_DIR="${{github.workspace}}/build" \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_TOOLCHAIN_FILE=$OS2EMX_CMAKE_TOOLCHAIN_FILE
+        cmake --build consume-build
+
+    - name: Consume from install
+      run: |
+        set -e
+        cmake -S test/cmake -B consume-install \
+          -G Ninja \
+          -DFluidSynth_DIR="$DESTDIR$INSTALL_LOCATION/lib/cmake/fluidsynth" \
+          -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+          -DCMAKE_TOOLCHAIN_FILE=$OS2EMX_CMAKE_TOOLCHAIN_FILE
+        cmake --build consume-install

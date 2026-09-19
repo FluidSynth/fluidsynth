@@ -626,7 +626,7 @@ static int new_mod_delay_line(fluid_chorus_t *chorus, int delay_length)
  * fluid_chorus_set() must be called at least one time after calling
  * new_fluid_chorus().
  *
- * @param sample_rate, audio sample rate in Hz.
+ * @param sample_rate audio sample rate in Hz.
  * @return pointer on chorus unit.
  */
 fluid_chorus_t *
@@ -706,7 +706,7 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
  * Set one or more chorus parameters.
  *
  * @param chorus Chorus instance.
- * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t).
+ * @param set Flags indicating which chorus parameters to set (fluid_chorus_set_t).
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value).
  * @param level Chorus level (0.0-10.0).
@@ -927,9 +927,9 @@ fluid_chorus_samplerate_change(fluid_chorus_t *chorus, fluid_real_t sample_rate)
 /**
  * Process chorus by mixing the result in output buffer.
  * @param chorus pointer on chorus unit returned by new_fluid_chorus().
- * @param in, pointer on monophonic input buffer of FLUID_BUFSIZE samples.
- * @param left_out, right_out, pointers on stereo output buffers of
- *  FLUID_BUFSIZE samples.
+ * @param in pointer on monophonic input buffer of FLUID_BUFSIZE samples.
+ * @param left_out pointer on stereo output buffer (left channel) of FLUID_BUFSIZE samples.
+ * @param right_out pointer on stereo output buffer (right channel) of FLUID_BUFSIZE samples.
  */
 void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
                              fluid_real_t *left_out, fluid_real_t *right_out)
@@ -1002,9 +1002,9 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
 /**
  * Process chorus by putting the result in output buffer (no mixing).
  * @param chorus pointer on chorus unit returned by new_fluid_chorus().
- * @param in, pointer on monophonic input buffer of FLUID_BUFSIZE samples.
- * @param left_out, right_out, pointers on stereo output buffers of
- *  FLUID_BUFSIZE samples.
+ * @param in pointer on monophonic input buffer of FLUID_BUFSIZE samples.
+ * @param left_out pointer on stereo output buffer (left channel) of FLUID_BUFSIZE samples.
+ * @param right_out pointer on stereo output buffer (right channel) of FLUID_BUFSIZE samples.
  */
 /* Duplication of code ... (replaces sample data instead of mixing) */
 void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,

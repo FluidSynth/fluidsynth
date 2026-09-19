@@ -158,6 +158,7 @@ FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_i
  *
  * @{
  */
+
 FLUID_DEPRECATED FLUIDSYNTH_API void fluid_synth_set_reverb_on(fluid_synth_t *synth, int on);
 FLUIDSYNTH_API int fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on);
 
@@ -270,7 +271,23 @@ enum fluid_interp
     FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, best quality, the default */
 
     /**
-     * Seventh-point sinc interpolation
+     * Sinc interpolation with a better quality than #FLUID_INTERP_4THORDER (currently 11th order sinc)
+     */
+    FLUID_INTERP_MID = 5,
+
+    /**
+     * Sinc interpolation with an even higher-level quality (17th order sinc)
+     */
+    FLUID_INTERP_HIGH = 6,
+
+    /**
+     * Highest interpolation method available. Typically a very high order sinc (currently 25th order). Utterly slow and pretty much unusable for real-time rendering.
+     */
+    FLUID_INTERP_HIGHEST = 7,
+
+    /**
+     * Before fluidsynth 2.6.0, this indicated seventh-point sinc interpolation.
+     * @deprecated As of fluidsynth 2.6.0 this enum value is deprecated as its naming no longer reflects its implementation.
      * @note This interpolation method was believed to provide highest quality. However, in Feb. 2025 it was discovered
      * that for certain samples it does introduce ringing artifacts, which
      * are not present in the 4th order interpolation. This is not a bug, it's rather a limitation of only using 7 points for the sinc interpolation.
@@ -278,7 +295,6 @@ enum fluid_interp
     FLUID_INTERP_7THORDER = 7,
 
     FLUID_INTERP_DEFAULT = FLUID_INTERP_4THORDER, /**< Default interpolation method */
-    FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
 };
 
 /**
@@ -334,7 +350,7 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
  * but can also be used manually for custom processing of the rendered audio.
  *
  * @note Please note that all following functions block during rendering. If your goal is to
- * render real-time audio, ensure that you call these functions from a high-priority
+ * render realtime audio, ensure that you call these functions from a high-priority
  * thread with little to no other duties other than calling the rendering functions.
  *
  * @warning
@@ -344,7 +360,7 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
  * synth with every call (cf. fluid_synth_get_internal_bufsize()), it will become evident when requesting larger sample chunks:
  * With larger sample chunks it will get harder for the synth to react on those spontaneously occurring events in time
  * (like events received from a MIDI driver, or directly made synth API calls).
- * In those real-time scenarios, prefer requesting smaller
+ * In those realtime scenarios, prefer requesting smaller
  * sample chunks from the synth with each call, to avoid poor quantization of your events in the synthesized audio.
  * This issue is not applicable when using the MIDI player or sequencer for event dispatching. Also
  * refer to the documentation of \setting{audio_period-size}.
@@ -353,6 +369,12 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int p
  */
 FLUIDSYNTH_API int fluid_synth_write_s16(fluid_synth_t *synth, int len,
         void *lout, int loff, int lincr,
+        void *rout, int roff, int rincr);
+FLUIDSYNTH_API int fluid_synth_write_s24(fluid_synth_t *synth, int len, 
+        void *lout, int loff, int lincr, 
+        void *rout, int roff, int rincr);
+FLUIDSYNTH_API int fluid_synth_write_s32(fluid_synth_t *synth, int len, 
+        void *lout, int loff, int lincr, 
         void *rout, int roff, int rincr);
 FLUIDSYNTH_API int fluid_synth_write_float(fluid_synth_t *synth, int len,
         void *lout, int loff, int lincr,
@@ -461,10 +483,10 @@ enum fluid_channel_mode_flags
 enum fluid_basic_channel_modes
 {
     FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags, usually only used internally */
-    FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 0 */
-    FLUID_CHANNEL_MODE_OMNION_MONO = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 1 */
-    FLUID_CHANNEL_MODE_OMNIOFF_POLY = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 2 */
-    FLUID_CHANNEL_MODE_OMNIOFF_MONO = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 3 */
+    FLUID_CHANNEL_MODE_OMNION_POLY = (int)FLUID_CHANNEL_MODE_MASK & (int)(~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 0 */
+    FLUID_CHANNEL_MODE_OMNION_MONO = (int)FLUID_CHANNEL_MODE_MASK & (int)(~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 1 */
+    FLUID_CHANNEL_MODE_OMNIOFF_POLY = (int)FLUID_CHANNEL_MODE_MASK & (int)(FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 2 */
+    FLUID_CHANNEL_MODE_OMNIOFF_MONO = (int)FLUID_CHANNEL_MODE_MASK & (int)(FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 3 */
     FLUID_CHANNEL_MODE_LAST /**< @internal Value defines the count of basic channel modes (#fluid_basic_channel_modes) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
@@ -538,6 +560,27 @@ FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t *synth,
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
         int chan, int  *breathmode);
 /** @} Breath Mode */
+
+/** @name Portamento Time Mode
+ * @{
+ */
+
+/**
+ * Indicates the portamento time mode the synthesizer is set to
+ */
+enum fluid_portamento_time_mode
+{
+    FLUID_PORTAMENTO_TIME_MODE_AUTO,     /**< Auto mode - Start with 7-bit MSB, switch to 14-bit when LSB seen */
+    FLUID_PORTAMENTO_TIME_MODE_XG_GS,    /**< XG/GS mode - Always use 7-bit MSB only */
+    FLUID_PORTAMENTO_TIME_MODE_LINEAR,   /**< Linear mode - Always use 14-bit MSB+LSB */
+    FLUID_PORTAMENTO_TIME_MODE_LAST      /**< @internal Value defines the count of portamento time modes
+                                           @warning This symbol is not part of the public API and ABI
+                                           stability guarantee and may change at any time! */
+};
+
+FLUIDSYNTH_API int fluid_synth_set_portamento_time_mode(fluid_synth_t *synth, int mode);
+FLUIDSYNTH_API int fluid_synth_get_portamento_time_mode(fluid_synth_t *synth, int *mode);
+/** @} Portamento Time Mode */
 /** @} MIDI Channel Setup */
 
 

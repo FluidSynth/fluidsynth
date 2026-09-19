@@ -25,6 +25,32 @@
 
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
+#ifdef __cplusplus
+struct _fluid_revmodel_t
+{
+    virtual ~_fluid_revmodel_t() {}
+    virtual void processmix(const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out) = 0;
+    virtual void processreplace(const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out) = 0;
+    virtual void reset() = 0;
+    virtual void set(int set, fluid_real_t roomsize, fluid_real_t damping, fluid_real_t width, fluid_real_t level) = 0;
+    virtual int samplerate_change(fluid_real_t sample_rate) = 0;
+};
+
+extern "C" {
+#endif
+
+/**
+ * Reverb engine type selection.
+ */
+enum fluid_reverb_type
+{
+    FLUID_REVERB_TYPE_FDN,          /**< FDN reverb engine */
+    FLUID_REVERB_TYPE_FREEVERB,     /**< Freeverb engine */
+    FLUID_REVERB_TYPE_LEXVERB,      /**< Lexicon LEXverb engine */
+    FLUID_REVERB_TYPE_DATTORRO,     /**< Dattorro reverb engine */
+    FLUID_REVERB_TYPE_SIGNALSMITH   /**< Signalsmith FDN reverb engine */
+};
+
 /* enum describing each reverb parameter */
 enum fluid_reverb_param
 {
@@ -70,7 +96,8 @@ typedef struct _fluid_revmodel_presets_t
  * reverb
  */
 fluid_revmodel_t *
-new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate);
+new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate,
+                   int reverb_type);
 
 void delete_fluid_revmodel(fluid_revmodel_t *rev);
 
@@ -86,5 +113,9 @@ void fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
                         fluid_real_t damping, fluid_real_t width, fluid_real_t level);
 
 int fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_REV_H */

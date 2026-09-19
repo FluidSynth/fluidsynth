@@ -1,0 +1,61 @@
+name: Audio Rendering Regression Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Baseline FluidSynth git ref/tag/sha to compare against"
+        required: true
+        default: ""
+  pull_request:
+  push:
+    branches:
+      - 'master'
+      - 'release/**'
+    paths-ignore:
+      - '.azure/**'
+      - '.circleci/**'
+      - '.github/workflows/freebsd.yml'
+      - '.github/workflows/api_doc_build.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/ios.yml'
+      - '.github/workflows/os2.yml'
+      - '.github/workflows/sonarcloud.yml'
+      - '.github/workflows/windows.yml'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+  REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event_name == 'pull_request' && github.event.pull_request.base.sha || '33f6aef93cf00aebe272808d96d20ad699849638' }}
+  SNR_MIN: '60'
+  RMS_MAX: '0.0001'
+  ABS_MAX: '0.01'
+  REGRESSION_CMAKE_FLAGS: "-DNO_GUI=1 -Denable-network=0 -DBUILD_SHARED_LIBS=0"
+  ALLOW_MISSING: "1"
+
+jobs:
+  audio-regression:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libsndfile1-dev \
+            sox \
+            libsox-fmt-all
+
+      - name: Run audio regression comparison
+        run: test/run-manual-regression.sh

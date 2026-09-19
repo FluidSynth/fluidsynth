@@ -1,0 +1,8 @@
+# Python dependencies for building the FluidSynth Zensical documentation site.
+# Install with:  pip install -r requirements.txt
+#
+# Generate the lock file with:
+# uv -n pip compile doc/zensical/requirements.txt -o doc/zensical/requirements.lock --generate-hash
+
+zensical>=0.0.40
+pymdown-extensions>=10.0

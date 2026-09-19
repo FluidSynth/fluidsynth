@@ -22,6 +22,10 @@
 
 #include "fluid_sys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Lockless event queue instance.
  */
@@ -128,5 +132,9 @@ fluid_ringbuffer_next_outptr(fluid_ringbuffer_t *queue)
         queue->out = 0;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_ringbuffer_H */
