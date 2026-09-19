@@ -82,7 +82,7 @@ adb shell "mkdir -p ${TEST_DIR}" || true
 # Find all test executables
 TEST_EXECUTABLES=$(find "${BUILD_DIR}/test/android" -name "*_android" -type f 2>/dev/null || true)
 
-if [ -z "$TEST_EXECUTABLES" ]; then
+if [[ -z "$TEST_EXECUTABLES" ]]; then
     print_error "No Android test executables found in ${BUILD_DIR}/test/android"
     print_error "Make sure to build the tests first with: make check-android"
     print_error "Available files in build dir:"
@@ -112,9 +112,9 @@ LIB_DIR="${PREFIX}/lib"
 # It does NOT live in ${PREFIX}/lib (it's part of the NDK, not a fluidsynth dependency), so the
 # loop below never picks it up. Without it, every test aborts with:
 #   CANNOT LINK EXECUTABLE "...": library "libc++_shared.so" not found
-if [ -n "$NDK" ]; then
+if [[ -n "$NDK" ]]; then
     LIBCXX_SHARED="${NDK_TOOLCHAIN}/sysroot/usr/lib/${ARCH}-linux-android${ANDROID_TARGET_ABI}/libc++_shared.so"
-    if [ -f "$LIBCXX_SHARED" ]; then
+    if [[ -f "$LIBCXX_SHARED" ]]; then
         adb shell "mkdir -p ${TEST_DIR}/lib" || true
         print_status "  Pushing libc++_shared.so"
         adb push "$LIBCXX_SHARED" "${TEST_DIR}/lib/" || print_warning "Failed to push libc++_shared.so"
@@ -125,7 +125,7 @@ else
     print_warning "NDK environment variable not set; cannot locate libc++_shared.so"
 fi
 
-if [ -d "$LIB_DIR" ]; then
+if [[ -d "$LIB_DIR" ]]; then
     print_status "Pushing shared libraries to device..."
     # Create lib directory on device
     adb shell "mkdir -p ${TEST_DIR}/lib" || true
@@ -140,7 +140,7 @@ if [ -d "$LIB_DIR" ]; then
         libsndfile.so \
         liboboe.so \
         libfluidsynth.so; do
-        if [ -f "${LIB_DIR}/${lib}" ]; then
+        if [[ -f "${LIB_DIR}/${lib}" ]]; then
             print_status "  Pushing $lib"
             adb push "${LIB_DIR}/${lib}" "${TEST_DIR}/lib/" || print_warning "Failed to push $lib"
         fi
@@ -210,13 +210,13 @@ echo "Passed: $passed_tests"
 echo "Failed: $failed_tests"
 
 # Display results file if available
-if [ -f "./android_test_results.txt" ]; then
+if [[ -f "./android_test_results.txt" ]]; then
     echo ""
     print_status "Detailed results:"
     cat "./android_test_results.txt"
 fi
 
-if [ $failed_tests -eq 0 ]; then
+if [[ $failed_tests -eq 0 ]]; then
     print_status "All tests passed! ✓"
     exit 0
 else
