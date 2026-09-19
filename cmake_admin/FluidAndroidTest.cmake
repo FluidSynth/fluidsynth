@@ -4,7 +4,13 @@
 
 macro ( ADD_FLUID_ANDROID_TEST _test )
     if(ANDROID)
-        add_executable( ${_test}_android ${_test}.c )
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test}.c")
+            add_executable(${_test}_android ${_test}.c)
+        elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test}.cpp")
+            add_executable(${_test}_android ${_test}.cpp)
+        else()
+            message(FATAL_ERROR "Neither ${_test}.c nor ${_test}.cpp found in ${CMAKE_CURRENT_SOURCE_DIR}")
+        endif()
 
         # only build this unit test when explicitly requested by "make check-android"
         set_target_properties(${_test}_android PROPERTIES EXCLUDE_FROM_ALL TRUE)
