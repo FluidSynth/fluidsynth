@@ -106,6 +106,25 @@ done
 
 # Also need to push required shared libraries if they exist
 LIB_DIR="${PREFIX}/lib"
+
+# Push libc++_shared.so from the NDK toolchain sysroot. The test executables are built with
+# ANDROID_STL=c++_shared (see cmake-android.yml), so they dynamically link against this runtime.
+# It does NOT live in ${PREFIX}/lib (it's part of the NDK, not a fluidsynth dependency), so the
+# loop below never picks it up. Without it, every test aborts with:
+#   CANNOT LINK EXECUTABLE "...": library "libc++_shared.so" not found
+if [ -n "$NDK" ]; then
+    LIBCXX_SHARED="${NDK_TOOLCHAIN}/sysroot/usr/lib/${ARCH}-linux-android${ANDROID_TARGET_ABI}/libc++_shared.so"
+    if [ -f "$LIBCXX_SHARED" ]; then
+        adb shell "mkdir -p ${TEST_DIR}/lib" || true
+        print_status "  Pushing libc++_shared.so"
+        adb push "$LIBCXX_SHARED" "${TEST_DIR}/lib/" || print_warning "Failed to push libc++_shared.so"
+    else
+        print_warning "libc++_shared.so not found (looked in ${LIBCXX_SHARED}); tests will likely fail to link"
+    fi
+else
+    print_warning "NDK environment variable not set; cannot locate libc++_shared.so"
+fi
+
 if [ -d "$LIB_DIR" ]; then
     print_status "Pushing shared libraries to device..."
     # Create lib directory on device
@@ -114,18 +133,11 @@ if [ -d "$LIB_DIR" ]; then
     # Push essential libraries (only the ones that exist)
     # Order matters for dependencies
     for lib in \
-        libpcre.so \
-        libglib-2.0.so \
-        libgobject-2.0.so \
-        libgio-2.0.so \
-        libgmodule-2.0.so \
-        libgthread-2.0.so \
         libogg.so \
         libvorbis.so \
         libvorbisenc.so \
         libFLAC.so \
         libsndfile.so \
-        libinstpatch-1.0.so \
         liboboe.so \
         libfluidsynth.so; do
         if [ -f "${LIB_DIR}/${lib}" ]; then
