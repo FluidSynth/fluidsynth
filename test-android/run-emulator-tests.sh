@@ -80,13 +80,13 @@ print_status "Creating test directory on device: ${TEST_DIR}"
 adb shell "mkdir -p ${TEST_DIR}" || true
 
 # Find all test executables
-TEST_EXECUTABLES=$(find "${BUILD_DIR}/test" -name "*" -type f 2>/dev/null || true)
+TEST_EXECUTABLES=$(find "${BUILD_DIR}/test" -maxdepth 1 -name "test_*" -type f -executable 2>/dev/null || true)
 
 if [[ -z "$TEST_EXECUTABLES" ]]; then
     print_error "No Android test executables found in ${BUILD_DIR}/test"
     print_error "Make sure to build the tests first with: make check"
     print_error "Available files in build dir:"
-    find "${BUILD_DIR}" -name "*test*" -type f 2>/dev/null | head -10 || true
+    ls -la "${BUILD_DIR}" | head -10 || true
     exit 1
 fi
 
