@@ -16,6 +16,7 @@ on:
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/solaris.yml'
       - '.github/workflows/windows.yml'
+      - 'test/run-android-tests.sh'
       - 'README.md'
 
 env:

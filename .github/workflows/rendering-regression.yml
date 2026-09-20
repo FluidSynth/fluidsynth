@@ -22,6 +22,7 @@ on:
       - '.github/workflows/os2.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/windows.yml'
+      - 'test/run-android-tests.sh'
       - 'README.md'
 
 permissions:
