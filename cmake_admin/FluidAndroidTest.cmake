@@ -27,12 +27,6 @@ macro ( ADD_FLUID_ANDROID_TEST _test )
         # Link against the object library and its dependencies
         target_link_libraries( ${_test}_android libfluidsynth-OBJ $<$<BOOL:${SIGNALSMITH_SUPPORT}>:fluid_limiter_impl-OBJ> )
 
-        # Add system libraries that may be needed on Android
-        target_link_libraries(${_test}_android 
-            ${LIBFLUID_LIBS}  # Standard fluid libs (math, pthread, etc.)
-            log               # Android logging
-        )
-
         # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
         target_include_directories(${_test}_android
         PUBLIC
