@@ -3,7 +3,12 @@ ENABLE_TESTING()
 include ( FluidUnitTest )
 
 # first define the test target, used by the macros below
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on-failure)
+if( NOT ANDROID )
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on-failure)
+else()
+    # skip ctest on android, execution must be done via android emulator
+    add_custom_target(check)
+endif()
 
 
 ## add unit tests here ##
