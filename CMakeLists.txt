@@ -804,13 +804,46 @@ if ( enable-signalsmith )
 endif ( enable-signalsmith )
 
 # manipulate some variables to setup a proper test env
-set(TEST_SOUNDFONT "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
-set(TEST_DLS "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.dls")
-set(TEST_SOUNDFONT_UTF8_1 "${FluidSynth_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
-set(TEST_SOUNDFONT_UTF8_2 "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2")
-set(TEST_SOUNDFONT_SF3 "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
-set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid")
-set(TEST_WAV_UTF8 "${FluidSynth_BINARY_DIR}/test/ⓉⒺⓈⓉ.wav")
+#
+# The unit tests resolve their test data relative to the current working
+# directory (the test build dir on the host via ctest, the adb-pushed
+# ${TEST_DIR} in the Android emulator), therefore TEST_* are plain relative
+# paths. The actual files are staged into ${TEST_DATA_STAGE} mirroring their
+# location relative to the source root (see TEST_DATA_FILES below), and on
+# the Android emulator test/run-android-tests.sh pushes that staged tree to
+# the device.
+set(TEST_DATA_STAGE "${CMAKE_BINARY_DIR}/test")
+set(TEST_DATA_FILES
+    "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.dls"
+    "${FluidSynth_SOURCE_DIR}/sf2/■VintageDreamsWaves-v2■.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3"
+    "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid"
+)
+set(TEST_DATA_OUTPUTS "")
+foreach(src IN LISTS TEST_DATA_FILES)
+    file(RELATIVE_PATH rel "${FluidSynth_SOURCE_DIR}" "${src}")
+    set(dst "${TEST_DATA_STAGE}/${rel}")
+    get_filename_component(dst_dir "${dst}" DIRECTORY)
+    add_custom_command(
+        OUTPUT "${dst}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${dst_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${src}" "${dst}"
+        DEPENDS "${src}"
+        VERBATIM
+    )
+    list(APPEND TEST_DATA_OUTPUTS "${dst}")
+endforeach()
+add_custom_target(test_data DEPENDS ${TEST_DATA_OUTPUTS})
+
+set(TEST_SOUNDFONT "sf2/VintageDreamsWaves-v2.sf2")
+set(TEST_DLS "sf2/VintageDreamsWaves-v2.dls")
+set(TEST_SOUNDFONT_UTF8_1 "sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
+set(TEST_SOUNDFONT_UTF8_2 "sf2/VìntàgèDrèàmsWàvès-v2.sf2")
+set(TEST_SOUNDFONT_SF3 "sf2/VintageDreamsWaves-v2.sf3")
+set(TEST_MIDI_UTF8 "test/ⓉⒺⓈⓉ.mid")
+set(TEST_WAV_UTF8 "test/ⓉⒺⓈⓉ.wav")
 
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )

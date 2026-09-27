@@ -16,6 +16,7 @@ on:
       - '.github/workflows/windows.yml'
       - '.github/workflows/sonarcloud.yml'
       - '.github/workflows/rendering-regression.yml'
+      - 'test/run-android-tests.sh'
       - 'README.md'
     tags:
       - 'v*'

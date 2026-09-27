@@ -26,7 +26,9 @@ macro ( ADD_FLUID_TEST _test )
     )
 
     # add the test to ctest
-    ADD_TEST(NAME ${_test} COMMAND ${_test})
+    if( NOT ANDROID )
+        ADD_TEST(NAME ${_test} COMMAND ${_test})
+    endif()
 
     # append the current unit test to check-target as dependency
     add_dependencies(check ${_test})
