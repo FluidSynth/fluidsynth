@@ -816,7 +816,7 @@ set(TEST_DATA_STAGE "${CMAKE_BINARY_DIR}/test")
 set(TEST_DATA_FILES
     "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2"
     "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.dls"
-    "${FluidSynth_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/■VintageDreamsWaves-v2■.sf2"
     "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2"
     "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3"
     "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid"
