@@ -159,17 +159,19 @@ fi
 # relative to their current working directory, which is ${TEST_DIR} on the
 # device, so the pushed tree must keep exactly that layout.
 TEST_DATA_STAGE="${BUILD_DIR}/test"
+ls -la "$TEST_DATA_STAGE" "$TEST_DATA_STAGE/sf2" "$TEST_DATA_STAGE/test" || true
+
 if [[ -d "$TEST_DATA_STAGE" ]]; then
     print_status "Pushing staged test data from ${TEST_DATA_STAGE} to ${TEST_DIR} ..."
     for sub in sf2 test; do
         if [[ -d "${TEST_DATA_STAGE}/${sub}" ]]; then
-            adb shell "mkdir -p ${TEST_DIR}/${sub}" || true
-            if ! adb push "${TEST_DATA_STAGE}/${sub}" "${TEST_DIR}/${sub}"; then
+            #adb shell "mkdir -p ${TEST_DIR}/${sub}" || true
+            if ! adb push "${TEST_DATA_STAGE}/${sub}" "${TEST_DIR}"; then
                 print_warning "Failed to push test data directory ${sub}"
             fi
         fi
+        adb shell "ls -la ${TEST_DIR}/${sub}" | head -10 || true
     done
-    adb shell "ls -la ${TEST_DIR}/sf2 ${TEST_DIR}/test" 2>/dev/null | head -10 || true
 else
     print_warning "Staged test data not found in ${TEST_DATA_STAGE} - tests that need soundfont/DLS/MIDI files will fail."
     print_warning "Make sure the build was completed first (it builds the 'test_data' target via the 'check' target)."
