@@ -34,7 +34,7 @@ print_error() {
 
 # Function to cleanup on exit
 cleanup() {
-    if [ ! -z "$emulator_pid" ] && ps -p "$emulator_pid" > /dev/null 2>&1; then
+    if [[ -n "$emulator_pid" ]] && ps -p "$emulator_pid" > /dev/null 2>&1; then
         print_status "Cleaning up emulator process..."
         kill -9 "$emulator_pid" 2>/dev/null || true
     fi
@@ -71,7 +71,7 @@ DEVICE_ABI=$(adb shell "getprop ro.product.cpu.abi" 2>/dev/null | tr -d '\r\n' |
 print_status "Device ABI: $DEVICE_ABI"
 
 # Warn if ABI mismatch
-if [ "$DEVICE_ABI" != "$ANDROID_ABI_CMAKE" ] && [ "$DEVICE_ABI" != "unknown" ]; then
+if [[ "$DEVICE_ABI" != "$ANDROID_ABI_CMAKE" ]] && [[ "$DEVICE_ABI" != "unknown" ]]; then
     print_warning "ABI mismatch: building for $ANDROID_ABI_CMAKE but device is $DEVICE_ABI"
 fi
 
@@ -162,11 +162,8 @@ TEST_DATA_STAGE="${BUILD_DIR}/test"
 if [[ -d "$TEST_DATA_STAGE" ]]; then
     print_status "Pushing staged test data from ${TEST_DATA_STAGE} to ${TEST_DIR} ..."
     for sub in sf2 test; do
-        if [[ -d "${TEST_DATA_STAGE}/${sub}" ]]; then
-            #adb shell "mkdir -p ${TEST_DIR}/${sub}" || true
-            if ! adb push "${TEST_DATA_STAGE}/${sub}" "${TEST_DIR}"; then
-                print_warning "Failed to push test data directory ${sub}"
-            fi
+        if ! adb push "${TEST_DATA_STAGE}/${sub}" "${TEST_DIR}"; then
+            print_warning "Failed to push test data directory ${sub}"
         fi
         adb shell "ls -la ${TEST_DIR}/${sub}" | head -10 || true
     done
