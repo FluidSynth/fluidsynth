@@ -10,6 +10,12 @@ else()
     add_custom_target(check)
 endif()
 
+# stage the unit test data files (see TEST_DATA_FILES in the top-level
+# CMakeLists.txt) into ${CMAKE_BINARY_DIR}/test so the tests can access them
+# via relative paths; this also keeps the Android emulator build dir
+# self-contained (test/run-android-tests.sh pushes these files to the device)
+add_dependencies(check test_data)
+
 
 ## add unit tests here ##
 ADD_FLUID_TEST(test_synth_reset_cc)

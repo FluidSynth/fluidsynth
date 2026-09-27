@@ -152,6 +152,29 @@ else
     print_warning "Library directory ${LIB_DIR} not found - tests may fail if they need shared libraries"
 fi
 
+# Push the staged test data. CMake stages the unit test data files into
+# ${CMAKE_BINARY_DIR}/test (see TEST_DATA_FILES in the top-level CMakeLists.txt),
+# mirroring their location relative to the source root (sf2/, test/).
+# The unit tests resolve the TEST_* macros (soundfont, DLS, MIDI, WAV paths)
+# relative to their current working directory, which is ${TEST_DIR} on the
+# device, so the pushed tree must keep exactly that layout.
+TEST_DATA_STAGE="${BUILD_DIR}/test"
+if [[ -d "$TEST_DATA_STAGE" ]]; then
+    print_status "Pushing staged test data from ${TEST_DATA_STAGE} to ${TEST_DIR} ..."
+    for sub in sf2 test; do
+        if [[ -d "${TEST_DATA_STAGE}/${sub}" ]]; then
+            adb shell "mkdir -p ${TEST_DIR}/${sub}" || true
+            if ! adb push "${TEST_DATA_STAGE}/${sub}" "${TEST_DIR}/${sub}"; then
+                print_warning "Failed to push test data directory ${sub}"
+            fi
+        fi
+    done
+    adb shell "ls -la ${TEST_DIR}/sf2 ${TEST_DIR}/test" 2>/dev/null | head -10 || true
+else
+    print_warning "Staged test data not found in ${TEST_DATA_STAGE} - tests that need soundfont/DLS/MIDI files will fail."
+    print_warning "Make sure the build was completed first (it builds the 'test_data' target via the 'check' target)."
+fi
+
 # Initialize results
 adb shell "echo 'FluidSynth Test Results' > ${RESULTS_FILE}"
 adb shell "echo '======================' >> ${RESULTS_FILE}"
