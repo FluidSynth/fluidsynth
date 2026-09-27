@@ -159,8 +159,6 @@ fi
 # relative to their current working directory, which is ${TEST_DIR} on the
 # device, so the pushed tree must keep exactly that layout.
 TEST_DATA_STAGE="${BUILD_DIR}/test"
-ls -la "$TEST_DATA_STAGE" "$TEST_DATA_STAGE/sf2" "$TEST_DATA_STAGE/test" || true
-
 if [[ -d "$TEST_DATA_STAGE" ]]; then
     print_status "Pushing staged test data from ${TEST_DATA_STAGE} to ${TEST_DIR} ..."
     for sub in sf2 test; do
