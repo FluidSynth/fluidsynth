@@ -12,8 +12,7 @@ endif()
 
 # stage the unit test data files (see TEST_DATA_FILES in the top-level
 # CMakeLists.txt) into ${CMAKE_BINARY_DIR}/test so the tests can access them
-# via relative paths; this also keeps the Android emulator build dir
-# self-contained (test/run-android-tests.sh pushes these files to the device)
+# via relative paths
 add_dependencies(check test_data)
 
 
