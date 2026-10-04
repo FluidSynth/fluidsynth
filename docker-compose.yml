@@ -13,3 +13,4 @@ services:
       - .:/fluidsynth
       - $HOME:/home:ro
       - /usr:/host/usr
+      - /opt/:/host/opt:ro

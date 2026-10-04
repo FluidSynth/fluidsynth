@@ -234,7 +234,7 @@ static void test_A_integer_phase_passthrough(void)
                            0, SAMPLE_SIZE,
                            0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), 0, rvoice.dsp.interp_method);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, start, 1.0);
@@ -288,7 +288,7 @@ static void test_B_fractional_linear_ramp(void)
                            0, SAMPLE_SIZE,
                            0, FLUID_INTERP_NONE);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), 0, rvoice.dsp.interp_method);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(FLUID_INTERP_NONE, SAMPLE_SIZE - 1, phase_start, phase_incr);
@@ -320,7 +320,7 @@ static void test_B_fractional_linear_ramp(void)
                            0, SAMPLE_SIZE,
                            0, poly_modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), 0, rvoice.dsp.interp_method);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(poly_modes[m], SAMPLE_SIZE - 1, phase_start, phase_incr);
@@ -373,7 +373,7 @@ static void test_C_constant_sample(void)
                            0, SAMPLE_SIZE,
                            0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), 0, rvoice.dsp.interp_method);
         TEST_ASSERT(count > 0);
 
         int verify_count = safe_verify_count(modes[m], SAMPLE_SIZE - 1, 10.0, 0.7);
@@ -429,7 +429,7 @@ static void test_D_loop_boundary_constant_sample(void)
                            LOOP_START, LOOP_END,
                            0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/1, rvoice.dsp.interp_method);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         fluid_real_t tol = get_tolerance(modes[m], true);
@@ -488,7 +488,7 @@ static void test_E_loop_boundary_ramp_wrap(void)
                            LOOP_START, LOOP_END,
                            1, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/1, rvoice.dsp.interp_method);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         double phase_d = phase_start;
@@ -627,7 +627,7 @@ static void test_F_24bit_samples(void)
                      0, SAMPLE_SIZE,
                      0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), 0, rvoice.dsp.interp_method);
         TEST_ASSERT(count > 0);
 
         /* For 24-bit, the output is the assembled 24-bit value (no additional scaling
@@ -695,7 +695,7 @@ static void test_G_high_playback_rate(void)
                                0, SAMPLE_SIZE,
                                0, modes[m]);
 
-            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), 0);
+            int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), 0, rvoice.dsp.interp_method);
             TEST_ASSERT(count > 0);
             TEST_ASSERT(count < FLUID_BUFSIZE);
 
@@ -734,7 +734,7 @@ static void test_G_high_playback_rate(void)
                                LOOP_START, LOOP_END,
                                1, modes[m]);
 
-            int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+            int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/1, rvoice.dsp.interp_method);
             TEST_ASSERT(count == FLUID_BUFSIZE);
 
             fluid_real_t tol = get_tolerance(modes[m], false);
@@ -788,7 +788,7 @@ static void test_H_short_loops(void)
                            loop_start, loop_end,
                            1, tests[t].mode);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/1, rvoice.dsp.interp_method);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         fluid_real_t tol = get_tolerance(tests[t].mode, true);
@@ -890,7 +890,7 @@ static void test_J_phase_accumulation(void)
         std::array<fluid_real_t, FLUID_BUFSIZE> buf;
         buf.fill(0);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/1, rvoice.dsp.interp_method);
         TEST_ASSERT(count == FLUID_BUFSIZE);
 
         for(int i = 0; i < count; i++)
@@ -938,7 +938,7 @@ static void test_K_end_of_sample(void)
                            0, SAMPLE_SIZE,
                            0, modes[m]);
 
-        int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/0);
+        int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/0, rvoice.dsp.interp_method);
 
         TEST_ASSERT(count > 0);
         TEST_ASSERT(count < FLUID_BUFSIZE);
@@ -1223,7 +1223,7 @@ static void test_M_sine_wave_interpolation(void)
                 std::array<fluid_real_t, FLUID_BUFSIZE> buf;
                 buf.fill(0);
 
-                int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*is_looping=*/1);
+                int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*is_looping=*/1, rvoice.dsp.interp_method);
                 TEST_ASSERT(count == FLUID_BUFSIZE);
 
                 for(int i = 0; i < count; i++)
@@ -1297,7 +1297,7 @@ static void test_M_sine_wave_interpolation(void)
                 std::array<fluid_real_t, FLUID_BUFSIZE> buf;
                 buf.fill(0);
 
-                int count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*is_looping=*/1);
+                int count = fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*is_looping=*/1, rvoice.dsp.interp_method);
                 TEST_ASSERT(count == FLUID_BUFSIZE);
 
                 for(int i = 0; i < count; i++)

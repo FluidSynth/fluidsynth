@@ -797,7 +797,25 @@ fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT ds
 extern "C" int
 fluid_rvoice_dsp_interpolate(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
-    switch(rvoice->dsp.interp_method)
+    auto interp_mode = rvoice->dsp.interp_method;
+    if(fluid_phase_fract(rvoice->dsp.phase) == 0 && (rvoice->dsp.phase_incr - (int)rvoice->dsp.phase_incr) == 0)
+    {
+        interp_mode = FLUID_INTERP_NONE;
+#if 0
+        FLUID_LOG(FLUID_INFO, "Hit integer phase! %u + %f, %s", fluid_phase_index(rvoice->dsp.phase), rvoice->dsp.phase_incr, rvoice->dsp.sample->name);
+    }
+    else
+    {
+        FLUID_LOG(FLUID_INFO, "Non integer phase! %u.%u + %f, %s", fluid_phase_index(rvoice->dsp.phase), fluid_phase_fract(rvoice->dsp.phase), rvoice->dsp.phase_incr, rvoice->dsp.sample->name);
+#endif
+    }
+    return fluid_rvoice_dsp_interpolate_force_mode(rvoice, dsp_buf, looping, interp_mode);
+}
+
+extern "C" int
+fluid_rvoice_dsp_interpolate_force_mode(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping, enum fluid_interp interp_mode)
+{
+    switch(interp_mode)
     {
     case FLUID_INTERP_NONE:
         return dsp_invoker<InterpolateNone>(rvoice, dsp_buf, looping);
