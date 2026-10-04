@@ -831,6 +831,8 @@ static void test_I_silence_rendering(void)
 
         int count = fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/0);
         TEST_ASSERT(count == SAMPLE_SIZE);
+        TEST_ASSERT(fluid_phase_index(rvoice.dsp.phase) == SAMPLE_SIZE);
+        TEST_ASSERT(fluid_phase_fract(rvoice.dsp.phase) == 0);
 
         for(int i = 0; i < count; i++)
         {
@@ -844,16 +846,19 @@ static void test_I_silence_rendering(void)
     {
         fluid_rvoice_t  rvoice;
         fluid_sample_t  samp;
+        constexpr double phase_incr = 0.5;
         std::array<fluid_real_t, FLUID_BUFSIZE> buf;
         buf.fill(12345.0f);
 
         setup_rvoice_16bit(&rvoice, &samp, data.data(),
-                           (double)(LOOP_END - 2), 0.5,
+                           (double)(LOOP_END - 2), phase_incr,
                            LOOP_START, LOOP_END,
                            0, FLUID_INTERP_NONE);
 
         int count = fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/1);
         TEST_ASSERT(count == FLUID_BUFSIZE);
+        TEST_ASSERT(fluid_phase_index(rvoice.dsp.phase) == 22 /*phase start*/ + ((unsigned)(FLUID_BUFSIZE*phase_incr) % (LOOP_END-LOOP_START)));
+        TEST_ASSERT(fluid_phase_fract(rvoice.dsp.phase) == 0);
 
         for(int i = 0; i < count; i++)
         {
