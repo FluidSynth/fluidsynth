@@ -138,6 +138,11 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
     std::array<fluid_real_t, SINC_ORDER> coeffs;
     fluid_real_t sum = 0.0f;
 
+    // inside the loop, we need to compute sinc(arg) = sin(arg) / arg
+    // we can precompute the expensive sin here, by using the following trigonometric identity, which
+    // holds true as long as i is an int:
+    // sin(pi*(i - center)) = (-1)^i * sin(-pi*center)
+    fluid_real_t sin_arg = std::sin(-FLUID_M_PI * center);
     for(int i = 0; i < SINC_ORDER; i++)
     {
         fluid_real_t v;
@@ -146,7 +151,7 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
 
         if(std::fabs(arg) > 1e-6f)
         {
-            v = std::sin(arg) / arg;
+            v = sin_arg / arg;
 #if USE_KAISER_WINDOW == 1
             const fluid_real_t k = kaiser<SINC_ORDER>(i_shifted);
             v *= k;
@@ -166,6 +171,8 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
         }
 
         coeffs[i] = v;
+        // flip the sign for the next iteration
+        sin_arg *= -1.f;
     }
 
     fluid_real_t result = 0.0f;
