@@ -56,6 +56,7 @@ ADD_FLUID_TEST(test_sample_pitch_calculation)
 ADD_FLUID_TEST(test_mts_cc_tuning)
 ADD_FLUID_TEST(test_voice_callback)
 ADD_FLUID_TEST(test_rvoice_dsp_interpolate)
+ADD_FLUID_TEST(test_hann_window)
 
 if ( NOT OSAL STREQUAL "embedded" )
     ADD_FLUID_TEST(test_threading)
