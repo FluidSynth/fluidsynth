@@ -76,8 +76,10 @@ static void hann_tab(fluid_real_t center, fluid_real_t* out)
 {
     const fluid_real_t cc = FLUID_COS(FLUID_M_PI * center / N);
     const fluid_real_t sc = FLUID_SIN(FLUID_M_PI * center / N);
+    // Tables are 2*N long. The upper half is sign flipped, which doesn't matter, as we square the result below.
+    // This way we only need to process half of the table.
     for (int i = 0; i < N; i++) {
-        fluid_real_t v = C_tab[i] * cc + S_tab[i] * sc;   /* i < N < 2N: no mod needed */
+        fluid_real_t v = C_tab[i] * cc + S_tab[i] * sc;
         out[i] = v * v;
     }
 }
