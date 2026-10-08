@@ -10,10 +10,10 @@
 #include "fluidsynth_priv.h"
 #include "test.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
 
 #ifndef SINC_ORDER
 #define SINC_ORDER 11
@@ -166,7 +166,7 @@ int main(void)
         for (int m = 0; m < NM; m++) {
             methods[m].fn(center, out);
             for (int i = 0; i < N; i++) {
-                double e = FLUID_FABS((double)((long double)out[i] - ref[i]));
+                double e = std::fabs((double)((long double)out[i] - ref[i]));
                 if (e > max_e[m]) max_e[m] = e;
                 sum_e[m] += e;
             }
