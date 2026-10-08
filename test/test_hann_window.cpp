@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
+#include <complex>
 
 #ifndef SINC_ORDER
 #define SINC_ORDER 11
@@ -22,13 +23,15 @@
 
 /* Tables, filled once */
 static fluid_real_t C_tab[2 * N], S_tab[2 * N];
+// same table content as above, but stored as array of struct
+static std::complex<fluid_real_t> AoS_tab[2 * N];
 static fluid_real_t C2_tab[N], S2_tab[N];
 
 static void init_tables(void)
 {
     for (int i = 0; i < 2 * N; i++) {
-        C_tab[i] = FLUID_COS(FLUID_M_PI * i / N);
-        S_tab[i] = FLUID_SIN(FLUID_M_PI * i / N);
+        AoS_tab[i].real(C_tab[i] = FLUID_COS(FLUID_M_PI * i / N));
+        AoS_tab[i].imag(S_tab[i] = FLUID_SIN(FLUID_M_PI * i / N));
     }
     for (int i = 0; i < N; i++) {
         C2_tab[i] = FLUID_COS(2.0 * FLUID_M_PI * i / N);
@@ -90,6 +93,19 @@ static void hann_tab(fluid_real_t center, fluid_real_t* out)
     }
 }
 
+/* 3.2: tables period 2N, then square, but this time using array of struct */
+static void hann_tab_aos(fluid_real_t center, fluid_real_t* out)
+{
+    const fluid_real_t cc = FLUID_COS(FLUID_M_PI * center / N);
+    const fluid_real_t sc = FLUID_SIN(FLUID_M_PI * center / N);
+    // Tables are 2*N long. The upper half is sign flipped, which doesn't matter, as we square the result below.
+    // This way we only need to process half of the table.
+    for (int i = 0; i < N; i++) {
+        fluid_real_t v = AoS_tab[i].real() * cc + AoS_tab[i].imag() * sc;
+        out[i] = v * v;
+    }
+}
+
 /* 4: half-angle tables, no square */
 static void hann_tab2(fluid_real_t center, fluid_real_t* out)
 {
@@ -116,6 +132,7 @@ static const struct { const char* name; hann_fn fn; } methods[] = {
     { "rotation recurrence",   hann_rot  },
     { "Chebyshev recurrence",  hann_cheb },
     { "table 2N + square",     hann_tab  },
+    { "table 2N + square, AoS",hann_tab_aos},
     { "table half-angle",      hann_tab2 },
 };
 #define NM (int)(sizeof methods / sizeof methods[0])
@@ -146,8 +163,8 @@ int main(void)
     fluid_real_t out[N];
     long double ref[N];
     double max_e[NM] = { 0 }, sum_e[NM] = { 0 };
-    [[maybe_unused]] constexpr double expected_max_e_d[NM] = { 8e-16, 4e-16, 9e-16, 4e-16, 4e-16 };
-    [[maybe_unused]] constexpr float expected_max_e_f[NM] = { 4e-7, 2e-7, 4e-7, 4e-7, 3e-7 };
+    [[maybe_unused]] constexpr double expected_max_e_d[NM] = { 8e-16, 4e-16, 9e-16, 4e-16, 4e-16, 4e-16 };
+    [[maybe_unused]] constexpr float expected_max_e_f[NM] = { 4e-7, 2e-7, 4e-7, 4e-7, 4e-7, 3e-7 };
     const fluid_real_t(&expected_max_error)[NM] =
 #if defined(WITH_FLOAT)
         expected_max_e_f
