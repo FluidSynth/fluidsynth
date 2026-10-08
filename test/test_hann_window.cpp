@@ -1,6 +1,12 @@
 
 #define _POSIX_C_SOURCE 199309L
 
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h> // GetSystemTimeAsFileTime()
+#endif
+
 #include "fluidsynth_priv.h"
 #include "test.h"
 
@@ -190,7 +196,7 @@ int main(void)
 
     for (int m = 0; m < NM; m++)
     {
-        const fluid_real_t (&expected_max_error)[] = 
+        const fluid_real_t (&expected_max_error)[NM] =
 #if defined(WITH_FLOAT)
         expected_max_e_f
 #else
