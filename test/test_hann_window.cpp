@@ -148,6 +148,13 @@ int main(void)
     double max_e[NM] = { 0 }, sum_e[NM] = { 0 };
     [[maybe_unused]] constexpr double expected_max_e_d[NM] = { 8e-16, 4e-16, 9e-16, 4e-16, 4e-16 };
     [[maybe_unused]] constexpr float expected_max_e_f[NM] = { 4e-7, 2e-7, 4e-7, 4e-7, 3e-7 };
+    const fluid_real_t(&expected_max_error)[NM] =
+#if defined(WITH_FLOAT)
+        expected_max_e_f
+#else
+        expected_max_e_d
+#endif
+        ;
     long cnt = 0;
 
     init_tables();
@@ -187,22 +194,15 @@ int main(void)
     }
 
     printf("N=%d, %d centers, accuracy vs long double reference\n\n", N, NCENTERS);
-    printf("%-22s %12s %12s %12s %10s\n",
-        "method", "max err", "mean err", "ns/window", "speedup");
+    printf("%-22s %-16s %12s %12s %12s %10s\n",
+        "method", "expected max err", "max err", "mean err", "ns/window", "speedup");
     for (int m = 0; m < NM; m++)
-        printf("%-22s %12.3e %12.3e %12.1f %9.2fx\n",
-            methods[m].name, max_e[m], sum_e[m] / cnt,
+        printf("%-22s %16.1e %12.3e %12.3e %12.1f %9.2fx\n",
+            methods[m].name, expected_max_error[m], max_e[m], sum_e[m] / cnt,
             ns_per_call[m], ns_per_call[0] / ns_per_call[m]);
 
     for (int m = 0; m < NM; m++)
     {
-        const fluid_real_t (&expected_max_error)[NM] =
-#if defined(WITH_FLOAT)
-        expected_max_e_f
-#else
-        expected_max_e_d
-#endif
-;
         TEST_ASSERT(max_e[m] <= expected_max_error[m]);
         printf("Successfully asserted max error method '%s'\n", methods[m].name);
         
