@@ -23,6 +23,7 @@
 #include "fluid_sys.h"
 #include <array>
 #include <cmath>
+#include "gcem.hpp"
 
 /* 0 = Hann window (default)
  * 1 = Custom Kaiser window (sfizz-derived, uses std::cyl_bessel_i)
@@ -104,6 +105,27 @@ static inline fluid_real_t kaiser_signalsmith(fluid_real_t i_shifted)
 }
 #endif // USE_KAISER_WINDOW == 2
 
+#include "gentables/ConstExprArr.hpp"
+#include "gcem.hpp"
+
+template<int SINC_ORDER>
+struct HannCosFunctor
+{
+    static constexpr fluid_real_t calc(int i)
+    {
+        return gcem::cos((FLUID_M_PI / SINC_ORDER) * i);
+    }
+};
+
+template<int SINC_ORDER>
+struct HannSinFunctor
+{
+    static constexpr fluid_real_t calc(int i)
+    {
+        return gcem::sin((FLUID_M_PI / SINC_ORDER) * i);
+    }
+};
+
 /**
  * Normalized windowed-sinc interpolation kernel of order SINC_ORDER.
  *
@@ -128,12 +150,13 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
 {
     static_assert(SINC_ORDER >= 1 && SINC_ORDER != 2, "SINC_ORDER must be at least 1 and not equal to 2");
 
+    constexpr auto hann_cos_tab = ConstExprArr<HannCosFunctor<SINC_ORDER>, SINC_ORDER>::value;
+    constexpr auto hann_sin_tab = ConstExprArr<HannSinFunctor<SINC_ORDER>, SINC_ORDER>::value;
     constexpr int half = SINC_ORDER / 2;
 
     const auto center = (SINC_ORDER % 2 == 0)
                         ? (fluid_real_t)(half - 1) + x // == half + (x - 1)
                         : (fluid_real_t)half - 0.5f + x; // == half + (x - 0.5f)
-
 
     std::array<fluid_real_t, SINC_ORDER> coeffs;
     fluid_real_t sum = 0.0f;
@@ -143,6 +166,9 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
     // holds true as long as i is an int:
     // sin(pi*(i - center)) = (-1)^i * sin(-pi*center)
     fluid_real_t sin_arg = std::sin(-FLUID_M_PI * center);
+
+    const fluid_real_t cc = std::cos((FLUID_M_PI / SINC_ORDER) * center);
+    const fluid_real_t sc = std::sin((FLUID_M_PI / SINC_ORDER) * center);
     for(int i = 0; i < SINC_ORDER; i++)
     {
         fluid_real_t v;
@@ -161,7 +187,9 @@ static inline fluid_real_t fluid_interp_sinc_kernel(const std::array<fluid_real_
 #else
             /* Hanning window: */
             // 0.5f * (1.0f + std::cos(arg * (fluid_real_t)(2.0 / SINC_ORDER))) == cos²(arg / SINC_ORDER)
-            const fluid_real_t hann = std::cos(arg / SINC_ORDER);
+            // Applying the cosine angle addition formula, we can factor the expensive call to cos() out of this loop:
+            // cos(arg / SINC_ORDER) = cos(pi * (i - center) / SINC_ORDER) = cos(pi * i / SINC_ORDER) * cos(pi / SINC_ORDER * center) + sin(pi * i / SINC_ORDER) * sin(pi / SINC_ORDER * center)
+            const fluid_real_t hann = hann_cos_tab[i] * cc + hann_sin_tab[i] * sc;
             v *= hann * hann;
 #endif
         }
