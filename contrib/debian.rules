@@ -26,7 +26,7 @@ config.status: CMakeLists.txt
 	dh_testdir
 
 	# Add here commands to configure the package.
-	cmake -DCMAKE_INSTALL_PREFIX=/usr -DLIB_INSTALL_DIR=/usr/lib .
+	cmake -DCMAKE_INSTALL_PREFIX=/usr .
 
 build: build-stamp
 build-stamp:  config.status

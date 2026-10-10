@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_SFONT_H
@@ -153,6 +152,8 @@ typedef int (* fluid_sfloader_callback_read_t)(void *buf, fluid_long_long_t coun
 /**
  * Same purpose and behaviour as fseek.
  *
+ * @param handle file handle returned by the open callback
+ * @param offset offset in bytes relative to \p origin to seek
  * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
  * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise
  */
@@ -248,6 +249,9 @@ FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t *sfont);
 FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t *sfont, void *data);
 FLUIDSYNTH_API void *fluid_sfont_get_data(fluid_sfont_t *sfont);
 
+FLUIDSYNTH_API int fluid_sfont_get_default_mod(fluid_sfont_t *sfont, fluid_mod_t **mod_out);
+FLUIDSYNTH_API int fluid_sfont_set_default_mod(fluid_sfont_t *sfont, const fluid_mod_t *mods, int nmods);
+
 FLUIDSYNTH_API int fluid_sfont_get_id(fluid_sfont_t *sfont);
 FLUIDSYNTH_API const char *fluid_sfont_get_name(fluid_sfont_t *sfont);
 FLUIDSYNTH_API fluid_preset_t *fluid_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenum);
@@ -268,7 +272,7 @@ typedef const char *(*fluid_preset_get_name_t)(fluid_preset_t *preset);
  * Method to get a virtual SoundFont preset MIDI bank number.
  *
  * @param preset Virtual SoundFont preset
- * @param return The bank number of the preset
+ * @return The bank number of the preset
  */
 typedef int (*fluid_preset_get_banknum_t)(fluid_preset_t *preset);
 
@@ -276,7 +280,7 @@ typedef int (*fluid_preset_get_banknum_t)(fluid_preset_t *preset);
  * Method to get a virtual SoundFont preset MIDI program number.
  *
  * @param preset Virtual SoundFont preset
- * @param return The program number of the preset
+ * @return The program number of the preset
  */
 typedef int (*fluid_preset_get_num_t)(fluid_preset_t *preset);
 
@@ -353,7 +357,7 @@ FLUIDSYNTH_API int fluid_sample_set_sound_data(fluid_sample_t *sample,
 FLUIDSYNTH_API int fluid_sample_set_loop(fluid_sample_t *sample, unsigned int loop_start, unsigned int loop_end);
 FLUIDSYNTH_API int fluid_sample_set_pitch(fluid_sample_t *sample, int root_key, int fine_tune);
 
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

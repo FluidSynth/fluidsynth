@@ -1,6 +1,6 @@
 # How to know the state of one or more MIDI channels ?
 # -----------------------------------------------------
-# Use the command channelsmode  [chan1 chan2 ….]
+# Use the command channelsmode  [chan1 chan2 ...]
 channelsmode
 
 # To display the state of MIDI channels 2,5, 10, 13 only

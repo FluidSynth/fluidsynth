@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_sys.h"
@@ -905,11 +904,11 @@ fluid_settings_get_hints(fluid_settings_t *settings, const char *name, int *hint
 }
 
 /**
- * Ask whether the setting is changeable in real-time.
+ * Ask whether the setting is changeable in realtime.
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return TRUE if the setting is changeable in real-time, FALSE otherwise
+ * @return TRUE if the setting is changeable in realtime, FALSE otherwise
  *
  * @note Before using this function, make sure the @p settings object has already been used to create
  * a synthesizer, a MIDI driver, an audio driver, a MIDI player, or a command handler (depending on
@@ -1120,7 +1119,7 @@ fluid_settings_dupstr(fluid_settings_t *settings, const char *name, char **str)
 
                 if(!*str)
                 {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
                 }
             }
 
@@ -1139,7 +1138,7 @@ fluid_settings_dupstr(fluid_settings_t *settings, const char *name, char **str)
 
                 if(!*str)
                 {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
                 }
 
                 if(!setting->value || *str)

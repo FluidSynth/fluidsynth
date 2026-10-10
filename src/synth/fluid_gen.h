@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -23,6 +22,10 @@
 #define _FLUID_GEN_H
 
 #include "fluidsynth_priv.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _fluid_gen_info_t
 {
@@ -63,5 +66,8 @@ fluid_real_t fluid_gen_scale_nrpn(int gen, int nrpn);
 void fluid_gen_init(fluid_gen_t *gen, fluid_channel_t *channel);
 const char *fluid_gen_name(int gen);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_GEN_H */

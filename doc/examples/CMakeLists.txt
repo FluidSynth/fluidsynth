@@ -27,4 +27,5 @@ ADD_FLUID_DEMO ( fluidsynth_arpeggio )
 ADD_FLUID_DEMO ( fluidsynth_fx )
 ADD_FLUID_DEMO ( fluidsynth_metronome )
 ADD_FLUID_DEMO ( fluidsynth_simple )
-
+ADD_FLUID_DEMO ( fluidsynth_instruments )
+ADD_FLUID_DEMO ( fluidsynth_enumsettings CXX )

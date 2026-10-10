@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* This module: 3/2002
@@ -32,6 +31,7 @@
 
 #include <math.h>
 #include <ladspa.h>
+#include "fluid_module.h"
 
 
 typedef enum _fluid_ladspa_state_t
@@ -509,8 +509,8 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * @param block_count number of blocks to render
  * @param block_size number of samples in a block
  *
- * FluidSynth calls this function during main output mixing, just after
- * the internal reverb and chorus effects have been processed.
+ * FluidSynth calls this function during main output mixing,
+ * just before processing the internal reverb and chorus effects.
  *
  * It copies audio data from the supplied buffers, runs all effects and copies the
  * resulting audio back into the same buffers.

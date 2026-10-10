@@ -1,3 +1,4 @@
+include( SCMRevision )
 
 set ( AUDIO_MIDI_REPORT "\n" )
 
@@ -8,7 +9,11 @@ else ( ALSA_SUPPORT )
 endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
-    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             yes\n" )
+    if ( COREAUDIO_SUPPORT_HAL )
+        set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             yes (MacOSX)\n" )
+    else ( COREAUDIO_SUPPORT_HAL )
+        set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             yes\n" )
+    endif ( COREAUDIO_SUPPORT_HAL )
 else ( COREAUDIO_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  CoreAudio:             no\n" )
 endif ( COREAUDIO_SUPPORT )
@@ -55,11 +60,23 @@ else ( DART_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OS/2 DART:             no\n" )
 endif ( DART_SUPPORT )
 
+if ( KAI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OS/2 KAI:              yes\n" )
+else ( KAI_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OS/2 KAI:              no\n" )
+endif ( KAI_SUPPORT )
+
 if ( OSS_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OSS:                   yes\n" )
 else ( OSS_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  OSS:                   no\n" )
 endif ( OSS_SUPPORT )
+
+if ( PIPEWIRE_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PipeWire:              yes\n" )
+else ( PIPEWIRE_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PipeWire:              no\n" )
+endif ( PIPEWIRE_SUPPORT )
 
 if ( PORTAUDIO_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PortAudio:             yes\n" )
@@ -73,11 +90,11 @@ else ( PULSE_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  PulseAudio:            no\n" )
 endif ( PULSE_SUPPORT )
 
-if ( SDL2_SUPPORT )
-    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  yes\n" )
-else ( SDL2_SUPPORT )
-    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL2:                  no\n" )
-endif ( SDL2_SUPPORT )
+if ( SDL3_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL3:                  yes\n" )
+else ( SDL3_SUPPORT )
+    set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  SDL3:                  no\n" )
+endif ( SDL3_SUPPORT )
 
 if ( WASAPI_SUPPORT )
     set ( AUDIO_MIDI_REPORT "${AUDIO_MIDI_REPORT}  WASAPI:                yes\n" )
@@ -111,12 +128,11 @@ endif ( LIBSNDFILE_HASVORBIS )
 
 
 set ( INPUTS_REPORT "${INPUTS_REPORT}Support for DLS files:   " )
-if ( LIBINSTPATCH_SUPPORT )
+if ( ENABLE_NATIVE_DLS )
     set ( INPUTS_REPORT "${INPUTS_REPORT}yes\n" )
-else ( LIBINSTPATCH_SUPPORT )
-    set ( INPUTS_REPORT "${INPUTS_REPORT}no (libinstpatch not found)\n" )
-endif ( LIBINSTPATCH_SUPPORT )
-
+else()
+    set ( INPUTS_REPORT "${INPUTS_REPORT}no\n" )
+endif()
 
 set ( RENDERING_REPORT "\n" )
 
@@ -135,6 +151,16 @@ endif ( LIBSNDFILE_SUPPORT )
 
 set ( MISC_REPORT "\nMiscellaneous support:\n" )
 
+if    ( SIGNALSMITH_SUPPORT )
+    set ( MISC_REPORT "${MISC_REPORT}  Limiter:               yes\n" )
+else  ( SIGNALSMITH_SUPPORT )
+  if    ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+        set ( MISC_REPORT "${MISC_REPORT}  Limiter:               no (signalsmith-audio/basics not found)\n" )
+  else  ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+        set ( MISC_REPORT "${MISC_REPORT}  Limiter:               no\n" )
+  endif ( SIGNALSMITH_AUDIO_BASICS STREQUAL SIGNALSMITH_AUDIO_BASICS-NOTFOUND )
+endif ( SIGNALSMITH_SUPPORT )
+
 if ( DBUS_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  D-Bus:                 yes\n" )
 else ( DBUS_SUPPORT )
@@ -146,12 +172,6 @@ if ( LADSPA_SUPPORT )
 else ( LADSPA_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  LADSPA support:        no\n" )
 endif ( LADSPA_SUPPORT )
-
-if ( LASH_SUPPORT )
-  set ( MISC_REPORT "${MISC_REPORT}  LASH support:          yes (NOTE: GPL library)\n" )
-else ( LASH_SUPPORT )
-  set ( MISC_REPORT "${MISC_REPORT}  LASH support:          no\n" )
-endif ( LASH_SUPPORT )
 
 if ( NETWORK_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  NETWORK Support:       yes\n" )
@@ -165,11 +185,11 @@ else ( IPV6_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}    IPV6 Support:        no\n" )
 endif ( IPV6_SUPPORT )
 
-if ( WITH_READLINE )
+if ( READLINE_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  Readline:              yes (NOTE: GPL library)\n" )
-else ( WITH_READLINE )
+else ( READLINE_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  Readline:              no\n" )
-endif ( WITH_READLINE )
+endif ( READLINE_SUPPORT )
 
 if ( SYSTEMD_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  systemd:               yes\n" )
@@ -183,8 +203,23 @@ else ( HAVE_GETOPT_H )
   set ( MISC_REPORT "${MISC_REPORT}  getopt:                no\n" )
 endif ( HAVE_GETOPT_H )
 
+if ( WIN32 OR CYGWIN )
+    set ( WINDOWS_REPORT "\nWindows specific info:\n" )
+    if ( windows-version )
+        set ( WINDOWS_REPORT "${WINDOWS_REPORT}  target version:        ${windows-version}\n" )
+    endif ( windows-version )
+    if ( enable-unicode )
+      set ( WINDOWS_REPORT "${WINDOWS_REPORT}  unicode support:       yes\n" )
+    else ( enable-unicode )
+      set ( WINDOWS_REPORT "${WINDOWS_REPORT}  unicode support:       no\n" )
+    endif ( enable-unicode )
+else ( WIN32 OR CYGWIN )
+    set ( WINDOWS_REPORT "")
+endif ( WIN32 OR CYGWIN )
 
 set ( DEVEL_REPORT "\nDeveloper nerds info:\n" )
+
+set ( DEVEL_REPORT "${DEVEL_REPORT}  OS abstraction:        ${osal}\n" )
 
 if ( WITH_FLOAT )
   set ( DEVEL_REPORT "${DEVEL_REPORT}  Samples type:          float\n" )
@@ -243,6 +278,9 @@ endif ( ENABLE_COVERAGE )
 message( STATUS 
         "\n**************************************************************\n"
         "Build Summary:\n"
+        "FluidSynth Version:    " ${FLUIDSYNTH_VERSION} "\n"
+        "Library version:       " ${LIB_VERSION_INFO} "\n"
+        "Git revision:          " ${FluidSynth_WC_REVISION} "\n"
         "Build type:            " ${CMAKE_BUILD_TYPE} "\n"
         "Install Prefix:        " ${CMAKE_INSTALL_PREFIX} "\n"
         "\n"
@@ -251,6 +289,7 @@ message( STATUS
         ${INPUTS_REPORT}
         ${RENDERING_REPORT}
         ${MISC_REPORT}
+        ${WINDOWS_REPORT}
         ${DEVEL_REPORT}
          )
 

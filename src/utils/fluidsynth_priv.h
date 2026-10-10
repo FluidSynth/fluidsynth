@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /*
@@ -28,8 +27,6 @@
 
 #ifndef _FLUIDSYNTH_PRIV_H
 #define _FLUIDSYNTH_PRIV_H
-
-#include <glib.h>
 
 #include "config.h"
 
@@ -45,9 +42,15 @@
 #include <string.h>
 #endif
 
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #include "fluidsynth.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /***************************************************************
  *
@@ -64,8 +67,11 @@ typedef double fluid_real_t;
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
 #else
+#  ifdef _WIN32
+#    define alloca _alloca
+#  endif
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
-     _type* _name = g_newa(_type, (_len))
+     _type *_name = (_type *)alloca(_len * sizeof(_type))
 #endif
 
 
@@ -83,7 +89,7 @@ typedef struct _fluid_env_data_t fluid_env_data_t;
 typedef struct _fluid_adriver_definition_t fluid_adriver_definition_t;
 typedef struct _fluid_channel_t fluid_channel_t;
 typedef struct _fluid_tuning_t fluid_tuning_t;
-typedef struct _fluid_hashtable_t  fluid_hashtable_t;
+typedef struct _fluid_hashtable_t fluid_hashtable_t;
 typedef struct _fluid_client_t fluid_client_t;
 typedef struct _fluid_server_socket_t fluid_server_socket_t;
 typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
@@ -114,7 +120,7 @@ typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t pa
 
 #define FLUID_BUFSIZE                64         /**< FluidSynth internal buffer size (in samples) */
 #define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) /**< Number of buffers that can be processed in one rendering run */
-#define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per #FLUID_BUFSIZE */
+#define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per FLUID_BUFSIZE */
 #define FLUID_MAX_RETURN_EVENTS      1024       /**< Maximum queued synthesis thread return events */
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
@@ -197,12 +203,6 @@ void* fluid_alloc(size_t len);
 
 FILE *fluid_fopen(const char *filename, const char *mode);
 
-#ifdef WIN32
-#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
-#else
-#define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
-#endif
-
 #define FLUID_FTELL(_f)              fluid_file_tell(_f)
 
 /* Memory functions */
@@ -233,29 +233,57 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_SPRINTF                sprintf
 #define FLUID_FPRINTF                fprintf
 
-#if (defined(WIN32) && _MSC_VER < 1900) || defined(MINGW32)
-/* need to make sure we use a C99 compliant implementation of (v)snprintf(),
- * i.e. not microsofts non compliant extension _snprintf() as it doesn't
- * reliably null-terminate the buffer
+#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1500) || defined(MINGW32)
+/* Need to make sure we use a C99 compliant implementation of [v]snprintf(),
+ * i.e. not Microsofts non conformant extension _[v]snprintf() as it doesn't
+ * null-terminate the buffer when the formatted string does not fit into the
+ * buffer.
  */
-#define FLUID_SNPRINTF           g_snprintf
-#else
-#define FLUID_SNPRINTF           snprintf
-#endif
+#include <stdarg.h>
 
-#if (defined(WIN32) && _MSC_VER < 1500) || defined(MINGW32)
-#define FLUID_VSNPRINTF          g_vsnprintf
+#define FLUID_VSNPRINTF        _fluid_vsnprintf
+
+static inline int
+_fluid_vsnprintf(char *buffer, size_t count, const char *format, va_list args)
+{
+    /* This implementation ensures proper termination when a buffer was supplied
+     * and therefore makes it conformant.
+     */
+    int length = _vsnprintf(buffer, count, format, args);
+    if (count > 0)
+        buffer[count - 1] = 0;
+    return length;
+}
+
 #else
 #define FLUID_VSNPRINTF          vsnprintf
 #endif
 
-#if defined(WIN32) && !defined(MINGW32)
+#if (defined(_WIN32) && defined(_MSC_VER) && _MSC_VER < 1900) || defined(MINGW32)
+#define FLUID_SNPRINTF         _fluid_snprintf
+
+static inline int
+_fluid_snprintf(char *buffer, size_t count, const char *format, ...)
+{
+    int length;
+    va_list args;
+    va_start(args, format);
+    length = FLUID_VSNPRINTF(buffer, count, format, args);
+    va_end(args);
+    return length;
+}
+
+#else
+#define FLUID_SNPRINTF           snprintf
+#endif
+
+#if defined(_WIN32) && !defined(MINGW32)
 #define FLUID_STRCASECMP         _stricmp
 #else
 #define FLUID_STRCASECMP         strcasecmp
 #endif
 
-#if defined(WIN32) && !defined(MINGW32)
+#if defined(_WIN32) && !defined(MINGW32)
 #define FLUID_STRNCASECMP         _strnicmp
 #else
 #define FLUID_STRNCASECMP         strncasecmp
@@ -285,15 +313,17 @@ do { strncpy(_dst,_src,_n-1); \
 #endif
 
 #if defined(DEBUG) && !defined(NDEBUG)
-#define FLUID_ASSERT(a) g_assert(a)
+#define FLUID_ASSERT(a) fluid_assert(a)
 #else
 #define FLUID_ASSERT(a)
 #endif
 
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
+#define FLUID_LIKELY(x) (x)
+#define FLUID_UNLIKELY(x) (x)
 
 /* Misc */
+#define FLUID_INLINE inline
+
 #if defined(__INTEL_COMPILER)
 #define FLUID_RESTRICT restrict
 #elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
@@ -318,5 +348,8 @@ else \
 #define fluid_return_val_if_fail(cond, val) \
  fluid_return_if_fail(cond) (val)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUIDSYNTH_PRIV_H */

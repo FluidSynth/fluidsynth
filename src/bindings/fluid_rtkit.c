@@ -25,6 +25,11 @@
   SOFTWARE.
 ***/
 
+#ifndef _GNU_SOURCE
+// required for syscall()
+#define _GNU_SOURCE
+#endif
+
 #include "fluid_sys.h"
 
 #ifdef DBUS_SUPPORT
@@ -33,11 +38,6 @@
 
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-
-#endif
 
 #include <sys/syscall.h>
 #include <sys/resource.h>

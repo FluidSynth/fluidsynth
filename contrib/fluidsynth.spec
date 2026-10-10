@@ -24,7 +24,7 @@
 %endif
 
 Name:           fluidsynth
-Version:        2.2.2
+Version:        2.5.1
 Release:        0
 Summary:        A Real-Time Software Synthesizer That Uses Soundfont(tm)
 License:        LGPL-2.1-or-later
@@ -32,7 +32,7 @@ Group:          Productivity/Multimedia/Sound/Midi
 Url:            http://www.fluidsynth.org/
 Source:         https://github.com/FluidSynth/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 Source1000:     baselibs.conf
-BuildRequires:  cmake >= 3.1.0
+BuildRequires:  cmake >= 3.13.0
 BuildRequires:  gcc-c++
 %if 0%{?is_opensuse}
 BuildRequires:  ladspa-devel
@@ -42,7 +42,6 @@ BuildRequires:  readline-devel
 BuildRequires:  pkgconfig(alsa)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(jack)
-BuildRequires:  pkgconfig(libinstpatch-1.0) >= 1.1.0
 BuildRequires:  pkgconfig(libpulse)
 BuildRequires:  pkgconfig(sndfile)
 %if 0%{?suse_version}
@@ -79,8 +78,7 @@ This package contains the shared library for Fluidsynth.
 
 %build
 %cmake \
-    -DFLUID_DAEMON_ENV_FILE=%{_fillupdir}/sysconfig.%{name} \
-    -Denable-lash=0
+    -DFLUID_DAEMON_ENV_FILE=%{_fillupdir}/sysconfig.%{name}
 %cmake_build
 
 %check
@@ -96,7 +94,7 @@ This package contains the shared library for Fluidsynth.
 
 %if 0%{?suse_version}
 
-# manually install systemd service files
+# manually install systemd files
 install -Dm 644 build/fluidsynth.conf %{buildroot}%{_fillupdir}/sysconfig.%{name}
 install -Dm 644 build/fluidsynth.service %{buildroot}%{_unitdir}/%{name}.service
 install -d %{buildroot}%{_sbindir}
@@ -122,7 +120,7 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files
 %license LICENSE
-%doc AUTHORS ChangeLog README.md THANKS TODO
+%doc AUTHORS ChangeLog.old README.md THANKS TODO
 %{_mandir}/man?/*
 %{_bindir}/*
 %if 0%{?suse_version}
@@ -133,8 +131,10 @@ ln -s %{_sbindir}/service %{buildroot}%{_sbindir}/rc%{name}
 
 %files devel
 %{_libdir}/lib*.so
-%{_includedir}/*
+%dir %{_libdir}/cmake/%{name}
+%{_libdir}/cmake/%{name}/*.cmake
 %{_libdir}/pkgconfig/*.pc
+%{_includedir}/*
 
 %files -n libfluidsynth3
 %{_libdir}/lib*.so.*

@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_MOD_H
@@ -23,6 +22,10 @@
 
 #include "fluidsynth_priv.h"
 #include "fluid_conv.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
@@ -34,7 +37,10 @@ struct _fluid_mod_t
     unsigned char flags1;         /**< Source controller 1 flags */
     unsigned char src2;           /**< Source controller 2 */
     unsigned char flags2;         /**< Source controller 2 flags */
+    unsigned char trans;          /**< Output transform flag */
     double amount;                /**< Multiplier amount */
+    fluid_mod_mapping_t mapping_func; /**< Custom mapping function, might be NULL */
+    void *data;                       /**< Custom data pointer for mapping function */
     /* The 'next' field allows to link modulators into a list.  It is
      * not used in fluid_voice.c, there each voice allocates memory for a
      * fixed number of modulators.  Since there may be a huge number of
@@ -43,12 +49,26 @@ struct _fluid_mod_t
     fluid_mod_t *next;
 };
 
+enum
+{
+    FLUID_MOD_POLAR_MASK = FLUID_MOD_BIPOLAR | FLUID_MOD_UNIPOLAR,
+    FLUID_MOD_MAP_MASK = FLUID_MOD_LINEAR | FLUID_MOD_CONCAVE | FLUID_MOD_CONVEX | FLUID_MOD_SWITCH | FLUID_MOD_SIN,
+    FLUID_MOD_SIGN_MASK = FLUID_MOD_POSITIVE | FLUID_MOD_NEGATIVE,
+};
+
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
+
+fluid_real_t fluid_mod_get_source_value(const unsigned char mod_src, const unsigned char mod_flags, fluid_real_t *range, const fluid_voice_t *voice);
+fluid_real_t fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid_real_t range, int is_src1, fluid_voice_t *voice);
+
+void delete_fluid_list_mod(fluid_mod_t *mod);
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);
 #endif
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* _FLUID_MOD_H */

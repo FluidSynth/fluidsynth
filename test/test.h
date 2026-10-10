@@ -17,13 +17,13 @@
  */
 #if defined(NO_GUI) && defined(MINGW32)
 #define TEST_ABORT exit(EXIT_FAILURE);
-#elif defined(NO_GUI) && defined(WIN32)
+#elif defined(NO_GUI) && defined(_WIN32)
 #define TEST_ABORT _set_abort_behavior(0, _WRITE_ABORT_MSG); abort()
 #else
 #define TEST_ABORT abort()
 #endif
 
-#define TEST_ASSERT(COND) do { if (!(COND)) { fprintf(stderr, __FILE__ ":%d assertion (%s) failed\n", __LINE__, #COND); TEST_ABORT; } } while (0)
+#define TEST_ASSERT(COND) do { if (!(COND)) { fflush(stdout); fprintf(stderr, __FILE__ ":%d assertion (%s) failed\n", __LINE__, #COND); fflush(stderr); TEST_ABORT; } } while (0)
 
 /* macro to test whether a fluidsynth function succeeded or not */
 #define TEST_SUCCESS(FLUID_FUNCT) TEST_ASSERT((FLUID_FUNCT) != FLUID_FAILED)

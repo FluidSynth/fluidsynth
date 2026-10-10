@@ -285,6 +285,61 @@ static void bad_test_issue_808(int (*load_func)(SFData *sf, int size), SFData *s
     UNSET_BUF;
 }
 
+
+// This test-case is derived from #1250
+static void default_key_range_test_issue_1250(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1, SFZone *zone2)
+{
+    const SFGen *gen;
+    static const unsigned char buf[] =
+    {
+        // zone 1
+        GEN_KEYRANGE, 0, 105, 114,
+        GEN_OVERRIDEROOTKEY, 0, 110, 0,
+        // zone 2
+        GEN_PAN, 0, 50, 0,
+        GEN_SAMPLEMODE, 0, 1, 0,
+        GEN_SAMPLEID, 0, 0, 0,
+    };
+
+    SET_BUF(buf);
+    TEST_ASSERT(load_func(sf, FLUID_N_ELEMENTS(buf)));
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == GEN_KEYRANGE);
+    TEST_ASSERT(gen->amount.range.lo == 105);
+    TEST_ASSERT(gen->amount.range.hi == 114);
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 1));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == GEN_OVERRIDEROOTKEY);
+    TEST_ASSERT(gen->amount.uword == 110);
+
+    gen = fluid_list_get(fluid_list_nth(zone1->gen, 2));
+    TEST_ASSERT(gen == NULL);
+
+    gen = fluid_list_get(fluid_list_nth(zone2->gen, 0));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == GEN_PAN);
+    TEST_ASSERT(gen->amount.uword == 50);
+
+    gen = fluid_list_get(fluid_list_nth(zone2->gen, 1));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == GEN_SAMPLEMODE);
+    TEST_ASSERT(gen->amount.uword == 1);
+
+    gen = fluid_list_get(fluid_list_nth(zone2->gen, 2));
+    TEST_ASSERT(gen != NULL);
+    TEST_ASSERT(gen->id == GEN_SAMPLEID);
+    TEST_ASSERT(gen->amount.uword == 0);
+
+    gen = fluid_list_get(fluid_list_nth(zone2->gen, 3));
+    TEST_ASSERT(gen == NULL);
+
+    TEST_ASSERT(file_buf == buf + sizeof(buf));
+    UNSET_BUF;
+}
+
 // This test-case has a single zone which has additional generators after the final generator, while some of them are incomplete and others still have an extra (maybe incomplete) terminal gen.
 static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf, int size), SFData *sf, SFZone *zone1)
 {
@@ -402,7 +457,7 @@ int main(void)
 {
     // prepare a soundfont that has one preset and one instrument, with up to 2 zones
 
-    SFZone *zone1;
+    SFZone *zone1, *zone2;
     SFData *sf = FLUID_NEW(SFData);
     SFPreset *preset = FLUID_NEW(SFPreset);
     SFInst *inst = FLUID_NEW(SFInst);
@@ -465,6 +520,21 @@ int main(void)
     // zone2 already deleted
     delete_fluid_list(inst->zone);
     inst->zone = NULL;
+
+
+    zone1 = new_test_zone(&inst->zone, 2);
+    zone2 = new_test_zone(&inst->zone, 3);
+    
+    TEST_ASSERT(inst->zone->next != NULL);
+    default_key_range_test_issue_1250(&load_igen, sf, zone1, zone2);
+    
+    TEST_ASSERT(inst->zone->data == zone1);
+    TEST_ASSERT(inst->zone->next->data == zone2);
+    delete_zone(zone2);
+    delete_zone(zone1);
+    delete_fluid_list(inst->zone);
+    inst->zone = NULL;
+
 
     delete_inst(inst);
     delete_preset(preset);

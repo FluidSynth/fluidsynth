@@ -15,9 +15,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -31,6 +30,7 @@
 #include "fluid_list.h"
 #include "fluid_mod.h"
 #include "fluid_gen.h"
+#include "fluid_sfont.h"
 
 
 
@@ -43,6 +43,10 @@
 #define SF_MAX_SAMPLERATE	50000
 
 #define SF_MIN_SAMPLE_LENGTH	32
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /***************************************************************
  *
@@ -66,7 +70,7 @@ struct _fluid_zone_range_t
 };
 
 /* Stored on a preset zone to keep track of the inst zones that could start a voice
- * and their combined preset zone/instument zone ranges */
+ * and their combined preset zone/instrument zone ranges */
 struct _fluid_voice_zone_t
 {
     fluid_inst_zone_t *inst_zone;
@@ -102,22 +106,22 @@ int fluid_zone_inside_range(fluid_zone_range_t *zone_range, int key, int vel);
  */
 struct _fluid_defsfont_t
 {
-    const fluid_file_callbacks_t *fcbs; /* the file callbacks used to load this Soundfont */
+    fluid_file_callbacks_t fcbs; /* the file callbacks used to load this Soundfont */
     char *filename;           /* the filename of this soundfont */
     unsigned int samplepos;   /* the position in the file at which the sample data starts */
     unsigned int samplesize;  /* the size of the sample data in bytes */
     short *sampledata;        /* the sample data, loaded in ram */
 
-    unsigned int sample24pos;		/* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
-    unsigned int sample24size;		/* length within sffd of the sm24 chunk */
+    unsigned int sample24pos;       /* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
+    unsigned int sample24size;      /* length within sffd of the sm24 chunk */
     char *sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
 
-    fluid_sfont_t *sfont;      /* pointer to parent sfont */
-    fluid_list_t *sample;      /* the samples in this soundfont */
-    fluid_list_t *preset;      /* the presets of this soundfont */
-    fluid_list_t *inst;        /* the instruments of this soundfont */
-    int mlock;                 /* Should we try memlock (avoid swapping)? */
-    int dynamic_samples;       /* Enables dynamic sample loading if set */
+    fluid_sfont_t *sfont;           /* pointer to parent sfont */
+    fluid_list_t *sample;           /* the samples in this soundfont */
+    fluid_list_t *preset;           /* the presets of this soundfont */
+    fluid_list_t *inst;             /* the instruments of this soundfont */
+    int mlock;                      /* Should we try memlock (avoid swapping)? */
+    int dynamic_samples;            /* Enables dynamic sample loading if set */
 
     fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 };
@@ -179,10 +183,9 @@ struct _fluid_preset_zone_t
 };
 
 fluid_preset_zone_t *new_fluid_preset_zone(char *name);
-void delete_fluid_list_mod(fluid_mod_t *mod);
 void delete_fluid_preset_zone(fluid_preset_zone_t *zone);
 fluid_preset_zone_t *fluid_preset_zone_next(fluid_preset_zone_t *zone);
-int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_defsfont_t *defssfont, SFData *sfdata);
+int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, fluid_preset_zone_t *global_zone, SFZone *sfzone, fluid_defsfont_t *defssfont, SFData *sfdata);
 fluid_inst_t *fluid_preset_zone_get_inst(fluid_preset_zone_t *zone);
 
 /*
@@ -221,12 +224,15 @@ struct _fluid_inst_zone_t
 fluid_inst_zone_t *new_fluid_inst_zone(char *name);
 void delete_fluid_inst_zone(fluid_inst_zone_t *zone);
 fluid_inst_zone_t *fluid_inst_zone_next(fluid_inst_zone_t *zone);
-int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata);
+int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, fluid_inst_zone_t *global_inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata);
 fluid_sample_t *fluid_inst_zone_get_sample(fluid_inst_zone_t *zone);
 
 
 int fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defsfont_t *defsfont);
 int fluid_sample_in_rom(fluid_sample_t *sample);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _FLUID_SFONT_H */

@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_SHELL_H
@@ -39,7 +38,7 @@ extern "C" {
  * For a full list of available commands, type \c help in the
  * \ref command_shell or send the same command via a command handler.
  * Further documentation can be found at
- * https://github.com/FluidSynth/fluidsynth/wiki/UserManual#shell-commands
+ * https://www.fluidsynth.org/wiki/UserManual#shell-commands
  *
  * @{
  */
@@ -47,7 +46,7 @@ FLUIDSYNTH_API fluid_istream_t fluid_get_stdin(void);
 FLUIDSYNTH_API fluid_ostream_t fluid_get_stdout(void);
 FLUIDSYNTH_API char *fluid_get_userconf(char *buf, int len);
 FLUIDSYNTH_API char *fluid_get_sysconf(char *buf, int len);
-/* @} */
+/** @} */
 
 
 /**
@@ -78,7 +77,7 @@ int fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t
 
 FLUIDSYNTH_API
 int fluid_source(fluid_cmd_handler_t *handler, const char *filename);
-/* @} */
+/** @} */
 
 
 /**
@@ -106,7 +105,7 @@ void fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler);
 FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t *shell);
 /** @endlifecycle */
 
-/* @} */
+/** @} */
 
 
 /**
@@ -115,9 +114,10 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t *shell);
  *
  * TCP socket server for a command handler.
  *
- * The socket server will open the TCP port set by \ref settings_shell_port 
- * (default 9800) and starts a new thread and \ref command_handler for each 
- * incoming connection.
+ * The socket server will open the TCP port set by \ref settings_shell_port
+ * (default 9800). If the setting is 0, the first free port is selected
+ * automatically, probing from 9800 upwards. The server starts a new thread and
+ * \ref command_handler for each incoming connection.
  *
  * @note The server is only available if libfluidsynth has been compiled
  * with network support (enable-network). Without network support, all related
@@ -141,7 +141,7 @@ FLUIDSYNTH_API void delete_fluid_server(fluid_server_t *server);
 FLUIDSYNTH_API int fluid_server_join(fluid_server_t *server);
 /** @endlifecycle */
 
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

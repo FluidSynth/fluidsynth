@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -86,6 +85,17 @@ new_fluid_midishare_midi_driver(fluid_settings_t *settings,
 {
     fluid_midishare_midi_driver_t *dev;
     int i;
+
+    FLUID_LOG(FLUID_WARN,
+              "\n\n"
+              "================ MidiShare MIDI driver has been deprecated! =================\n"
+              "You're using the MidiShare driver. This driver is old, unmaintained and believed\n"
+              "to be unused. If you still need it, pls. let us know by posting to our\n"
+              "mailing list at fluid-dev@nongnu.org - otherwise this driver might be removed\n"
+              "in a future release of FluidSynth!\n"
+              "================ MidiShare MIDI driver has been deprecated! =================\n"
+              "\n"
+    );
 
     /* not much use doing anything */
     if(handler == NULL)

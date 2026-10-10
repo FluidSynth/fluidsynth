@@ -15,9 +15,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -31,6 +30,9 @@
 #include "fluidsynth.h"
 #include "fluid_sys.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Sound Font structure defines */
 
@@ -158,6 +160,7 @@ struct _SFData
     fluid_list_t *preset; /* linked list of preset info */
     fluid_list_t *inst; /* linked list of instrument info */
     fluid_list_t *sample; /* linked list of sample info */
+    fluid_list_t *default_mod_list; /* default modulator list */
 };
 
 /* functions */
@@ -190,5 +193,9 @@ int load_pgen(SFData *sf, int size);
 void delete_preset(SFPreset *preset);
 void delete_inst(SFInst *inst);
 void delete_zone(SFZone *zone);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_SFFILE_H */

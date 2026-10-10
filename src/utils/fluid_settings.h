@@ -13,14 +13,17 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
 #ifndef _FLUID_SETTINGS_H
 #define _FLUID_SETTINGS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int fluid_settings_add_option(fluid_settings_t *settings, const char *name, const char *s);
 int fluid_settings_remove_option(fluid_settings_t *settings, const char *name, const char *s);
@@ -53,5 +56,9 @@ int fluid_settings_callback_int(fluid_settings_t *settings, const char *name,
 int fluid_settings_split_csv(const char *str, int *buf, int buf_len);
 
 void* fluid_settings_get_user_data(fluid_settings_t * settings, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_SETTINGS_H */

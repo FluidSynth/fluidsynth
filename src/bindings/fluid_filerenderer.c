@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /*
@@ -199,6 +198,7 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     double samplerate;
     int retval;
 #endif
+    int audio_channels;
     char *filename = NULL;
     fluid_file_renderer_t *dev;
 
@@ -233,6 +233,7 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     }
 
     fluid_settings_dupstr(synth->settings, "audio.file.name", &filename);
+    fluid_settings_getint(synth->settings, "synth.audio-channels", &audio_channels);
 
     if(filename == NULL)
     {
@@ -286,9 +287,43 @@ new_fluid_file_renderer(fluid_synth_t *synth)
         FLUID_LOG(FLUID_ERR, "Invalid or unsupported audio file format settings");
         goto error_recovery;
     }
-
+    
+#if defined( _WIN32 ) && defined( _UNICODE )
+    if (0 == FLUID_STRCMP("-", filename))
+    {
+        dev->sndfile = sf_open(filename, SFM_WRITE, &info);
+    }
+    else
+    {
+        int u16_count;
+        LPWSTR wc_filename;
+        dev->sndfile = NULL;
+        
+               // utf-8 filename to utf-16 wc_filename
+        if (1 > (u16_count = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, NULL, 0)))
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to convert UTF8 string to wide char string");
+        }
+        else if (NULL == (wc_filename = (LPWSTR)FLUID_ARRAY(WCHAR, u16_count)))
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+        }
+        else
+        {
+            if (u16_count != MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, filename, -1, wc_filename, u16_count))
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to convert UTF8 string to wide char string");
+            }
+            else
+            {
+                dev->sndfile = sf_wchar_open(wc_filename, SFM_WRITE, &info);
+            }
+            FLUID_FREE(wc_filename);
+        }
+    }
+#else
     dev->sndfile = sf_open(filename, SFM_WRITE, &info);
-
+#endif
     if(!dev->sndfile)
     {
         FLUID_LOG(FLUID_ERR, "Failed to open audio file '%s' for writing", filename);
@@ -309,6 +344,11 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     }
 
 #endif
+
+    if(audio_channels != 1)
+    {
+        FLUID_LOG(FLUID_WARN, "The file-renderer currently only supports a single stereo channel. You have provided %d stereo channels. Audio may sound strange or incomplete.", audio_channels);
+    }
 
     FLUID_FREE(filename);
     return dev;

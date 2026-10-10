@@ -6,6 +6,7 @@ includedir=@includedir@
 Name: FluidSynth
 Description: Software SoundFont synth
 Version: @VERSION@
-Libs: -L${libdir} -lfluidsynth
+Requires.private: @PC_REQUIRES_PRIV_JOINED@
+Libs: -L${libdir} -l@implibname@
 Libs.private: @LIBS_PRIVATE_JOINED@ @LIBS_PRIVATE_WITH_PATH_JOINED@
 Cflags: -I${includedir}

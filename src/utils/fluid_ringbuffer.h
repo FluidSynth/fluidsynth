@@ -13,15 +13,18 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_RINGBUFFER_H
 #define _FLUID_RINGBUFFER_H
 
 #include "fluid_sys.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Lockless event queue instance.
@@ -129,5 +132,9 @@ fluid_ringbuffer_next_outptr(fluid_ringbuffer_t *queue)
         queue->out = 0;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_ringbuffer_H */

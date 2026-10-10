@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /*
@@ -169,10 +168,11 @@
 /* modulator */
 typedef struct
 {
-    fluid_real_t   a1;          /* Coefficient: a1 = 2 * cos(w) */
-    fluid_real_t   buffer1;     /* buffer1 */
-    fluid_real_t   buffer2;     /* buffer2 */
-    fluid_real_t   reset_buffer2;/* reset value of buffer2 */
+    // for sufficient precision members MUST be double! See https://github.com/FluidSynth/fluidsynth/issues/1331
+    double   a1;           /* Coefficient: a1 = 2 * cos(w) */
+    double   buffer1;      /* buffer1 */
+    double   buffer2;      /* buffer2 */
+    double   reset_buffer2;/* reset value of buffer2 */
 } sinus_modulator;
 
 /*-----------------------------------------------------------------------------
@@ -236,6 +236,10 @@ struct _fluid_chorus_t
 /*-----------------------------------------------------------------------------
  Sets the frequency of sinus oscillator.
 
+ For sufficient precision use double precision in set_sinus_frequency() computation !.
+ Never use: fluid_real_t , cosf(), sinf(), FLUID_COS(), FLUID_SIN(), FLUID_M_PI.
+ See https://github.com/FluidSynth/fluidsynth/issues/1331
+
  @param mod pointer on modulator structure.
  @param freq frequency of the oscillator in Hz.
  @param sample_rate sample rate on audio output in Hz.
@@ -244,16 +248,17 @@ struct _fluid_chorus_t
 static void set_sinus_frequency(sinus_modulator *mod,
                                 float freq, float sample_rate, float phase)
 {
-    fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* initial angle */
-    fluid_real_t a;
+    double w = (2.0 * M_PI) * freq / sample_rate;  /* step phase between each sinus wave sample (in radian) */
+    double a; /* initial phase at which the sinus wave must begin (in radian) */
 
-    mod->a1 = 2 * FLUID_COS(w);
+    // DO NOT use potentially single precision cosf or FLUID_COS here! See https://github.com/FluidSynth/fluidsynth/issues/1331
+    mod->a1 = 2 * cos(w);
 
-    a = (2 * FLUID_M_PI / 360) * phase;
+    a = (2.0 * M_PI / 360.0) * phase;
 
-    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-intial angle) */
-    mod->buffer1 = FLUID_SIN(a); /* y(n) = sin(initial phase) */
-    mod->reset_buffer2 = FLUID_SIN(FLUID_M_PI / 2 - w); /* reset value for PI/2 */
+    mod->buffer2 = sin(a - w); /* y(n-1) = sin(-initial angle) */
+    mod->buffer1 = sin(a); /* y(n) = sin(initial phase) */
+    mod->reset_buffer2 = sin((M_PI / 2.0) - w); /* reset value for PI/2 */
 }
 
 /*-----------------------------------------------------------------------------
@@ -264,21 +269,21 @@ static void set_sinus_frequency(sinus_modulator *mod,
  @param mod pointer on modulator structure.
  @return current value of the modulator sine wave.
 -----------------------------------------------------------------------------*/
-static FLUID_INLINE fluid_real_t get_mod_sinus(sinus_modulator *mod)
+static FLUID_INLINE double get_mod_sinus(sinus_modulator *mod)
 {
-    fluid_real_t out;
+    double out;
     out = mod->a1 * mod->buffer1 - mod->buffer2;
     mod->buffer2 = mod->buffer1;
 
-    if(out >= 1.0f) /* reset in case of instability near PI/2 */
+    if(out >= 1.0) /* reset in case of instability near PI/2 */
     {
-        out = 1.0f; /* forces output to the right value */
+        out = 1.0; /* forces output to the right value */
         mod->buffer2 = mod->reset_buffer2;
     }
 
-    if(out <= -1.0f) /* reset in case of instability near -PI/2 */
+    if(out <= -1.0) /* reset in case of instability near -PI/2 */
     {
-        out = -1.0f; /* forces output to the right value */
+        out = -1.0; /* forces output to the right value */
         mod->buffer2 = - mod->reset_buffer2;
     }
 
@@ -621,7 +626,7 @@ static int new_mod_delay_line(fluid_chorus_t *chorus, int delay_length)
  * fluid_chorus_set() must be called at least one time after calling
  * new_fluid_chorus().
  *
- * @param sample_rate, audio sample rate in Hz.
+ * @param sample_rate audio sample rate in Hz.
  * @return pointer on chorus unit.
  */
 fluid_chorus_t *
@@ -701,7 +706,7 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
  * Set one or more chorus parameters.
  *
  * @param chorus Chorus instance.
- * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t).
+ * @param set Flags indicating which chorus parameters to set (fluid_chorus_set_t).
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value).
  * @param level Chorus level (0.0-10.0).
@@ -922,9 +927,9 @@ fluid_chorus_samplerate_change(fluid_chorus_t *chorus, fluid_real_t sample_rate)
 /**
  * Process chorus by mixing the result in output buffer.
  * @param chorus pointer on chorus unit returned by new_fluid_chorus().
- * @param in, pointer on monophonic input buffer of FLUID_BUFSIZE samples.
- * @param left_out, right_out, pointers on stereo output buffers of
- *  FLUID_BUFSIZE samples.
+ * @param in pointer on monophonic input buffer of FLUID_BUFSIZE samples.
+ * @param left_out pointer on stereo output buffer (left channel) of FLUID_BUFSIZE samples.
+ * @param right_out pointer on stereo output buffer (right channel) of FLUID_BUFSIZE samples.
  */
 void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
                              fluid_real_t *left_out, fluid_real_t *right_out)
@@ -997,9 +1002,9 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
 /**
  * Process chorus by putting the result in output buffer (no mixing).
  * @param chorus pointer on chorus unit returned by new_fluid_chorus().
- * @param in, pointer on monophonic input buffer of FLUID_BUFSIZE samples.
- * @param left_out, right_out, pointers on stereo output buffers of
- *  FLUID_BUFSIZE samples.
+ * @param in pointer on monophonic input buffer of FLUID_BUFSIZE samples.
+ * @param left_out pointer on stereo output buffer (left channel) of FLUID_BUFSIZE samples.
+ * @param right_out pointer on stereo output buffer (right channel) of FLUID_BUFSIZE samples.
  */
 /* Duplication of code ... (replaces sample data instead of mixing) */
 void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,

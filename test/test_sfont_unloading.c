@@ -29,16 +29,16 @@ void wait_and_free(fluid_synth_t* synth, int id, const char* calling_func)
     delete_fluid_list(list_orig);
 }
 
-static void test_without_rendering(fluid_settings_t* settings)
+static void test_without_rendering(fluid_settings_t* settings, const char* sfont_file)
 {
     int id;
     fluid_synth_t *synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
 
-    TEST_ASSERT(fluid_is_soundfont(TEST_SOUNDFONT) == TRUE);
+    TEST_ASSERT(fluid_is_soundfont(sfont_file) == TRUE);
 
     // load a sfont to synth
-    TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
+    TEST_SUCCESS(id = fluid_synth_sfload(synth, sfont_file, 1));
     // one sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
     
@@ -55,16 +55,16 @@ static void test_without_rendering(fluid_settings_t* settings)
 }
 
 // this should work fine after applying JJCs fix a4ac56502fec5f0c20a60187d965c94ba1dc81c2
-static void test_after_polyphony_exceeded(fluid_settings_t* settings)
+static void test_after_polyphony_exceeded(fluid_settings_t *settings, const char *sfont_file)
 {
     int id;
     fluid_synth_t *synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
 
-    TEST_ASSERT(fluid_is_soundfont(TEST_SOUNDFONT) == TRUE);
+    TEST_ASSERT(fluid_is_soundfont(sfont_file) == TRUE);
 
     // load a sfont to synth
-    TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
+    TEST_SUCCESS(id = fluid_synth_sfload(synth, sfont_file, 1));
     // one sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
     
@@ -103,7 +103,7 @@ static void test_after_polyphony_exceeded(fluid_settings_t* settings)
     wait_and_free(synth, id, __func__);
 }
 
-static void test_default_polyphony(fluid_settings_t* settings, int with_rendering)
+static void test_default_polyphony(fluid_settings_t *settings, int with_rendering, const char *sfont_file)
 {
     enum { BUFSIZE = 128 };
     fluid_voice_t* buf[BUFSIZE];
@@ -112,10 +112,10 @@ static void test_default_polyphony(fluid_settings_t* settings, int with_renderin
     fluid_synth_t *synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
 
-    TEST_ASSERT(fluid_is_soundfont(TEST_SOUNDFONT) == TRUE);
+    TEST_ASSERT(fluid_is_soundfont(sfont_file) == TRUE);
 
     // load a sfont to synth
-    TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
+    TEST_SUCCESS(id = fluid_synth_sfload(synth, sfont_file, 1));
     // one sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
     
@@ -208,21 +208,33 @@ int main(void)
     TEST_ASSERT(settings != NULL);
     
     FLUID_LOG(FLUID_INFO, "Begin test_default_polyphony() with rendering");
-    test_default_polyphony(settings, TRUE);
+    test_default_polyphony(settings, TRUE, TEST_SOUNDFONT);
+#ifdef ENABLE_NATIVE_DLS
+    test_default_polyphony(settings, TRUE, TEST_DLS);
+#endif
     FLUID_LOG(FLUID_INFO, "End test_default_polyphony()\n");
     
     FLUID_LOG(FLUID_INFO, "Begin test_default_polyphony() without rendering");
-    test_default_polyphony(settings, FALSE);
+    test_default_polyphony(settings, FALSE, TEST_SOUNDFONT);
+#ifdef ENABLE_NATIVE_DLS
+    test_default_polyphony(settings, FALSE, TEST_DLS);
+#endif
     FLUID_LOG(FLUID_INFO, "End test_default_polyphony()\n");
     
     fluid_settings_setint(settings, "synth.polyphony", 2);
     
     FLUID_LOG(FLUID_INFO, "Begin test_after_polyphony_exceeded()");
-    test_after_polyphony_exceeded(settings);
+    test_after_polyphony_exceeded(settings, TEST_SOUNDFONT);
+#ifdef ENABLE_NATIVE_DLS
+    test_after_polyphony_exceeded(settings, TEST_DLS);
+#endif
     FLUID_LOG(FLUID_INFO, "End test_after_polyphony_exceeded()\n");
 
     FLUID_LOG(FLUID_INFO, "Begin test_without_rendering()");
-    test_without_rendering(settings);
+    test_without_rendering(settings, TEST_SOUNDFONT);
+#ifdef ENABLE_NATIVE_DLS
+    test_without_rendering(settings, TEST_DLS);
+#endif
     FLUID_LOG(FLUID_INFO, "End test_without_rendering()");
     
     delete_fluid_settings(settings);

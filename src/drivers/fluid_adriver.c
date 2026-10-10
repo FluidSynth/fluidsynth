@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_adriver.h"
@@ -67,6 +66,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_pulse_audio_driver2,
         delete_fluid_pulse_audio_driver,
         fluid_pulse_audio_driver_settings
+    },
+#endif
+
+#if PIPEWIRE_SUPPORT
+    {
+        "pipewire",
+        new_fluid_pipewire_audio_driver,
+        new_fluid_pipewire_audio_driver2,
+        delete_fluid_pipewire_audio_driver,
+        fluid_pipewire_audio_driver_settings
     },
 #endif
 
@@ -160,6 +169,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if KAI_SUPPORT
+    {
+        "kai",
+        new_fluid_kai_audio_driver,
+        NULL,
+        delete_fluid_kai_audio_driver,
+        fluid_kai_audio_driver_settings
+    },
+#endif
+
 #if DART_SUPPORT
     {
         "dart",
@@ -170,13 +189,13 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
-#if SDL2_SUPPORT
+#if SDL3_SUPPORT
     {
-        "sdl2",
-        new_fluid_sdl2_audio_driver,
+        "sdl3",
+        new_fluid_sdl3_audio_driver,
         NULL,
-        delete_fluid_sdl2_audio_driver,
-        fluid_sdl2_audio_driver_settings
+        delete_fluid_sdl3_audio_driver,
+        fluid_sdl3_audio_driver_settings
     },
 #endif
 
@@ -208,9 +227,11 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 
     fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
     fluid_settings_add_option(settings, "audio.sample-format", "16bits");
+    fluid_settings_add_option(settings, "audio.sample-format", "24bits");
+    fluid_settings_add_option(settings, "audio.sample-format", "32bits");
     fluid_settings_add_option(settings, "audio.sample-format", "float");
 
-#if defined(WIN32)
+#if defined(_WIN32)
     fluid_settings_register_int(settings, "audio.period-size", 512, 64, 8192, 0);
     fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0);
 #elif defined(MACOS9)
@@ -310,10 +331,13 @@ find_fluid_audio_driver(fluid_settings_t *settings)
  * Otherwise the behaviour is undefined.
  *
  * @note As soon as an audio driver is created, the \p synth starts rendering audio.
- * This means that all necessary sound-setup should be completed after this point,
- * thus of all object types in use (synth, midi player, sequencer, etc.) the audio
+ * This means that all necessary initialization and sound-setup should have been
+ * completed before calling this function.
+ * Thus, of all object types in use (synth, midi player, sequencer, etc.) the audio
  * driver should always be the last one to be created and the first one to be deleted!
- * Also refer to the order of object creation in the code examples.
+ * Also refer to the order of object creation in the code examples. Deleting and re-creating
+ * the audio driver is supported. However, only settings marked as realtime can reconfigure
+ * an already created \p synth.
  */
 fluid_audio_driver_t *
 new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
@@ -422,7 +446,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
  *
  * @warning This function may only be called if no thread is residing in fluidsynth's API and no instances of any kind
  * are alive (e.g. as it would be the case right after fluidsynth's initial creation). Else the behaviour is undefined.
- * Furtermore any attempt of using audio drivers that have not been registered is undefined behaviour!
+ * Furthermore any attempt of using audio drivers that have not been registered is undefined behaviour!
  *
  * @note This function is not thread safe and will never be!
  *

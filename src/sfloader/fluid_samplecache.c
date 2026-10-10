@@ -16,9 +16,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* CACHED SAMPLE DATA LOADER
@@ -48,9 +47,9 @@ struct _fluid_samplecache_entry_t
     int sample_type;
     /*  End of cache key members */
 
+    int sample_count;
     short *sample_data;
     char *sample_data24;
-    int sample_count;
 
     int num_references;
     int mlocked;

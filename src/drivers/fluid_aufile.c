@@ -13,14 +13,13 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* fluid_aufile.c
  *
- * Audio driver, outputs the audio to a file (non real-time)
+ * Audio driver, outputs the audio to a file (non realtime)
  *
  */
 
@@ -39,7 +38,6 @@
 typedef struct
 {
     fluid_audio_driver_t driver;
-    fluid_audio_func_t callback;
     void *data;
     fluid_file_renderer_t *renderer;
     int period_size;
@@ -49,7 +47,7 @@ typedef struct
 } fluid_file_audio_driver_t;
 
 
-static int fluid_file_audio_run_s16(void *d, unsigned int msec);
+static int fluid_file_audio_run(void *d, unsigned int msec);
 
 /**************************************************************
  *
@@ -78,7 +76,6 @@ new_fluid_file_audio_driver(fluid_settings_t *settings,
     fluid_settings_getnum(settings, "synth.sample-rate", &dev->sample_rate);
 
     dev->data = synth;
-    dev->callback = (fluid_audio_func_t) fluid_synth_process;
     dev->samples = 0;
 
     dev->renderer = new_fluid_file_renderer(synth);
@@ -89,7 +86,7 @@ new_fluid_file_audio_driver(fluid_settings_t *settings,
     }
 
     msec = (int)(0.5 + dev->period_size / dev->sample_rate * 1000.0);
-    dev->timer = new_fluid_timer(msec, fluid_file_audio_run_s16, (void *) dev, TRUE, FALSE, TRUE);
+    dev->timer = new_fluid_timer(msec, fluid_file_audio_run, (void *) dev, TRUE, FALSE, TRUE);
 
     if(dev->timer == NULL)
     {
@@ -115,7 +112,7 @@ void delete_fluid_file_audio_driver(fluid_audio_driver_t *p)
     FLUID_FREE(dev);
 }
 
-static int fluid_file_audio_run_s16(void *d, unsigned int clock_time)
+static int fluid_file_audio_run(void *d, unsigned int clock_time)
 {
     fluid_file_audio_driver_t *dev = (fluid_file_audio_driver_t *) d;
     unsigned int sample_time;

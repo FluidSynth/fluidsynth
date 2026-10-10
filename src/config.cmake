@@ -9,6 +9,7 @@
 
 /* whether or not we are supporting CoreAudio */
 #cmakedefine COREAUDIO_SUPPORT @COREAUDIO_SUPPORT@
+#cmakedefine COREAUDIO_SUPPORT_HAL @COREAUDIO_SUPPORT_HAL@
 
 /* whether or not we are supporting CoreMIDI */
 #cmakedefine COREMIDI_SUPPORT @COREMIDI_SUPPORT@
@@ -42,9 +43,6 @@
 
 /* Define to 1 if you have the <io.h> header file. */
 #cmakedefine HAVE_IO_H @HAVE_IO_H@
-
-/* whether or not we are supporting lash */
-#cmakedefine HAVE_LASH @HAVE_LASH@
 
 /* Define if systemd support is enabled */
 #cmakedefine SYSTEMD_SUPPORT @SYSTEMD_SUPPORT@
@@ -130,8 +128,17 @@
 /* Define to enable JACK driver */
 #cmakedefine JACK_SUPPORT @JACK_SUPPORT@
 
+/* Define to enable KAI driver */
+#cmakedefine KAI_SUPPORT @KAI_SUPPORT@
+
+/* Define to enable PipeWire driver */
+#cmakedefine PIPEWIRE_SUPPORT @PIPEWIRE_SUPPORT@
+
 /* Include the LADSPA Fx unit */
 #cmakedefine LADSPA @LADSPA_SUPPORT@
+
+/* Include the Signalsmith reverb engine + Limiter */
+#cmakedefine SIGNALSMITH_SUPPORT @SIGNALSMITH_SUPPORT@
 
 /* Define to enable IPV6 support */
 #cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
@@ -141,9 +148,6 @@
 
 /* Defined when fluidsynth is build in an automated environment, where no MSVC++ Runtime Debug Assertion dialogs should pop up */
 #cmakedefine NO_GUI @NO_GUI@
-
-/* libinstpatch for DLS and GIG */
-#cmakedefine LIBINSTPATCH_SUPPORT @LIBINSTPATCH_SUPPORT@
 
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@
@@ -202,8 +206,8 @@
 /* Define to enable Windows MIDI driver */
 #cmakedefine WINMIDI_SUPPORT @WINMIDI_SUPPORT@
 
-/* Define to enable SDL2 audio driver */
-#cmakedefine SDL2_SUPPORT @SDL2_SUPPORT@
+/* Define to enable SDL3 audio driver */
+#cmakedefine SDL3_SUPPORT @SDL3_SUPPORT@
 
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS @STDC_HEADERS@
@@ -211,10 +215,14 @@
 /* Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT "@TEST_SOUNDFONT@"
 
+/* DLS to load for unit testing */
+#cmakedefine TEST_DLS "@TEST_DLS@"
+
 /* Soundfont to load for UTF-8 unit testing */
 #cmakedefine TEST_SOUNDFONT_UTF8_1 "@TEST_SOUNDFONT_UTF8_1@"
 #cmakedefine TEST_SOUNDFONT_UTF8_2 "@TEST_SOUNDFONT_UTF8_2@"
 #cmakedefine TEST_MIDI_UTF8 "@TEST_MIDI_UTF8@"
+#cmakedefine TEST_WAV_UTF8 "@TEST_WAV_UTF8@"
 
 /* SF3 Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT_SF3 "@TEST_SOUNDFONT_SF3@"
@@ -229,10 +237,10 @@
 #cmakedefine WITH_PROFILING @WITH_PROFILING@
 
 /* Define to use the readline library for line editing */
-#cmakedefine WITH_READLINE @WITH_READLINE@
+#cmakedefine READLINE_SUPPORT @READLINE_SUPPORT@
 
-/* Define if the compiler supports VLA */ 
-#cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@ 
+/* Define if the compiler supports VLA */
+#cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -264,5 +272,14 @@
 
 /* Define to 1 if you have the socklen_t type. */
 #cmakedefine HAVE_SOCKLEN_T @HAVE_SOCKLEN_T@
+
+/* OS abstraction to use. */
+#define OSAL_@osal@ 1
+
+/* Define to 1 if you have C++ filesystem support */
+#cmakedefine HAVE_CXX_FILESYSTEM @HAVE_CXX_FILESYSTEM@
+
+/* Define to 1 if native DLS support is enabled */
+#cmakedefine ENABLE_NATIVE_DLS @ENABLE_NATIVE_DLS@
 
 #endif /* CONFIG_H */

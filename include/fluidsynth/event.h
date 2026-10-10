@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_EVENT_H
@@ -117,6 +116,7 @@ FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t *evt);
 FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t *evt);
 
 FLUIDSYNTH_API void fluid_event_scale(fluid_event_t *evt, double new_scale);
+FLUIDSYNTH_API int fluid_event_from_midi_event(fluid_event_t *, const fluid_midi_event_t *);
 
 /* Accessing event data */
 FLUIDSYNTH_API int fluid_event_get_type(fluid_event_t *evt);
@@ -134,7 +134,7 @@ FLUIDSYNTH_API short fluid_event_get_bank(fluid_event_t *evt);
 FLUIDSYNTH_API int fluid_event_get_pitch(fluid_event_t *evt);
 FLUIDSYNTH_API double fluid_event_get_scale(fluid_event_t *evt);
 FLUIDSYNTH_API unsigned int fluid_event_get_sfont_id(fluid_event_t *evt);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

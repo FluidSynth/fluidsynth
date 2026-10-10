@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_SEQ_H
@@ -83,7 +82,7 @@ void fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source
 FLUIDSYNTH_API unsigned int fluid_sequencer_get_tick(fluid_sequencer_t *seq);
 FLUIDSYNTH_API void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale);
 FLUIDSYNTH_API double fluid_sequencer_get_time_scale(fluid_sequencer_t *seq);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }

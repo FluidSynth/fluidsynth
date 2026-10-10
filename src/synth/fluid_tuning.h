@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 
@@ -33,6 +32,10 @@
 #define _FLUID_TUNING_H
 
 #include "fluidsynth_priv.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct _fluid_tuning_t
 {
@@ -63,7 +66,8 @@ void fluid_tuning_set_octave(fluid_tuning_t *tuning, const double *pitch_deriv);
 void fluid_tuning_set_all(fluid_tuning_t *tuning, const double *pitch);
 #define fluid_tuning_get_all(_t) (&(_t)->pitch[0])
 
-
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_TUNING_H */

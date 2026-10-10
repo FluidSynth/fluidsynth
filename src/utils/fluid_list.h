@@ -2,25 +2,28 @@
  * Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
  *
  * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02110-1301, USA.
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_LIST_H
 #define _FLUID_LIST_H
 
 #include "fluidsynth_priv.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  *
@@ -59,5 +62,9 @@ int fluid_list_size(fluid_list_t *list);
 #define fluid_list_get(slist)	((slist) ? ((slist)->data) : NULL)
 
 int fluid_list_str_compare_func(const void *a, const void *b);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _FLUID_LIST_H */

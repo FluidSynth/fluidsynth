@@ -1,6 +1,6 @@
 # FluidSynth - A Software Synthesizer
 #
-# Copyright (C) 2003-2021 Peter Hanappe and others.
+# Copyright (C) 2003-2026 Peter Hanappe and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -19,28 +19,37 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
+cmake_minimum_required ( VERSION 3.13 )
+# 3.1 because of CMAKE_C_STANDARD
+# 3.11 because COMPATIBILITY SameMinorVersion in CMakePackageConfigHelpers
+# 3.13.5 because it is the latest supported in Windows XP
 
-if(POLICY CMP0075)
+if(POLICY CMP0075) # CMake version 3.13.5 warns when the policy is not set or value is OLD
   cmake_policy(SET CMP0075 NEW)
 endif()
 
-if(POLICY CMP0091)
+if(POLICY CMP0091) # new in CMake 3.15, defaults to OLD
   cmake_policy(SET CMP0091 NEW)
 endif()
 
+if(POLICY CMP0099) # new in CMake 3.17, defaults to OLD
+  cmake_policy(SET CMP0099 NEW)
+elseif(NOT BUILD_SHARED_LIBS)
+  message(WARNING "Your version of CMake is very old. This may cause linking issues if your dependencies are not in your compiler's default search paths.")
+endif()
+
 project ( FluidSynth C CXX )
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
+list( APPEND CMAKE_MODULE_PATH ${FluidSynth_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
 
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
-set ( FLUIDSYNTH_VERSION_MINOR 2 )
-set ( FLUIDSYNTH_VERSION_MICRO 2 )
+set ( FLUIDSYNTH_VERSION_MINOR 6 )
+set ( FLUIDSYNTH_VERSION_MICRO 1 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
-set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
+set ( FLUIDSYNTH_VERSION ${VERSION} )
 
 # libfluidsynth - Library version
 # *** NOTICE ***
@@ -52,14 +61,13 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 3 )
-set ( LIB_VERSION_AGE 0 )
-set ( LIB_VERSION_REVISION 2 )
+set ( LIB_VERSION_AGE 6 )
+set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
 # Options disabled by default
 option ( enable-coverage "enable gcov code coverage" off )
-option ( enable-debug "enable debugging (default=no)" off )
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
 option ( enable-portaudio "compile PortAudio support" off )
@@ -68,13 +76,13 @@ option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" of
 option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
 
 # Options enabled by default
+option ( enable-alsa "compile ALSA support (if it is available)" on )
 option ( enable-aufile "compile support for sound file output" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
-option ( enable-ipv6  "enable ipv6 support" on )
+option ( enable-ipv6  "enable IPv6 support" on )
 option ( enable-jack "compile JACK support (if it is available)" on )
 option ( enable-ladspa "enable LADSPA effect units" on )
-option ( enable-libinstpatch "use libinstpatch (if available) to load DLS and GIG files" on )
 option ( enable-libsndfile "compile libsndfile support (if it is available)" on )
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-opensles "compile OpenSLES support (if it is available)" off )
@@ -85,54 +93,46 @@ option ( enable-dsound "compile DirectSound support (if it is available)" on )
 option ( enable-wasapi "compile Windows WASAPI support (if it is available)" on )
 option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
 option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
-option ( enable-sdl2 "compile SDL2 audio support (if it is available)" on )
-option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
+option ( enable-sdl3 "compile SDL3 audio support (if it is available)" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
+option ( enable-pipewire "compile PipeWire support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
+option ( enable-openmp "enable OpenMP support (parallelization of soundfont decoding, vectorization of voice mixing, etc.)" on )
+option ( enable-unicode "enable UNICODE build for Windows" on )
+option ( enable-native-dls "compile native DLS support (requires C++17)" on )
+option ( enable-signalsmith "compile Limiter and reverb engine support (requires signalsmith-audio)" on )
+
+set ( osal "cpp11" CACHE STRING "OS abstraction to use, provided by src/utils/fluid_sys_${osal}.*" )
 
 # Platform specific options
-if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-    option ( enable-lash "compile LASH support (if it is available)" on )
-    option ( enable-alsa "compile ALSA support (if it is available)" on )
-endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
-
 if ( CMAKE_SYSTEM MATCHES "Linux" )
     option ( enable-systemd "compile systemd support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
 
-if ( CMAKE_SYSTEM MATCHES "Darwin" )
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS" )
+
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
-endif ( CMAKE_SYSTEM MATCHES "Darwin" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
+    option ( enable-kai "compile KAI support (if it is available)" on )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
-
-# Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
-if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "64" )
-else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-  set ( _init_lib_suffix "" )
-endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-else ()
-  set ( _init_lib_suffix "" )
-endif()
-set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
-      "library directory name suffix (32/64/nothing)" )
-mark_as_advanced ( LIB_SUFFIX )
 
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
 # the default C++ standard to use for all targets
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 11)
 
 # whether to use gnu extensions
+set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
@@ -146,23 +146,27 @@ endif ( NOT CMAKE_POSITION_INDEPENDENT_CODE )
 # no visibility support on OS2
 if ( NOT OS2 )
     set ( CMAKE_C_VISIBILITY_PRESET hidden )
+    set ( CMAKE_CXX_VISIBILITY_PRESET hidden )
+    set ( CMAKE_VISIBILITY_INLINES_HIDDEN yes )
 endif ( NOT OS2 )
 
 # enforce visibility control for all types of cmake targets
-if ( POLICY CMP0063 )
+if ( POLICY CMP0063 ) # since version 3.3, CMake version 3.21.2 warns when the policy is not set and uses OLD behavior.
   cmake_policy ( SET CMP0063 NEW )
 endif ( POLICY CMP0063 )
 
-# Default install directory names
+# Default install directory names, some provided by GNUInstallDirs
 include ( DefaultDirs )
 
 # Basic C library checks
 include ( CheckCCompilerFlag )
 include ( CheckSTDC )
 include ( CheckIncludeFile )
+include ( CheckIncludeFileCXX )
 include ( CheckSymbolExists )
 include ( CheckTypeSize )
 check_include_file ( string.h HAVE_STRING_H )
+check_include_file ( strings.h HAVE_STRINGS_H )
 check_include_file ( stdlib.h HAVE_STDLIB_H )
 check_include_file ( stdio.h HAVE_STDIO_H )
 check_include_file ( math.h HAVE_MATH_H )
@@ -178,7 +182,7 @@ check_include_file ( sys/socket.h HAVE_SYS_SOCKET_H )
 check_include_file ( netinet/in.h HAVE_NETINET_IN_H )
 check_include_file ( netinet/tcp.h HAVE_NETINET_TCP_H )
 check_include_file ( arpa/inet.h HAVE_ARPA_INET_H )
-check_include_file ( limits.h  HAVE_LIMITS_H )
+check_include_file ( limits.h HAVE_LIMITS_H )
 check_include_file ( pthread.h HAVE_PTHREAD_H )
 check_include_file ( signal.h HAVE_SIGNAL_H )
 check_include_file ( getopt.h HAVE_GETOPT_H )
@@ -188,6 +192,7 @@ if ( NOT HAVE_LONG_LONG AND NOT MSVC)
     message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
 endif ()
 
+include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables()
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -200,12 +205,13 @@ unset ( FLUID_LIBS CACHE )
 unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
-  if ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
+  # If we ever bump to CMake 3.29+, replace this with CMAKE_LANG_COMPILER_LINKER_ID
+  if (NOT (CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS|OS2|Emscripten|SunOS") )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
-  endif ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
+  endif ()
 
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
@@ -260,30 +266,47 @@ unset ( WASAPI_SUPPORT CACHE )
 unset ( WAVEOUT_SUPPORT CACHE )
 unset ( WINMIDI_SUPPORT CACHE )
 unset ( MINGW32 CACHE )
-if ( WIN32 )
+
+if ( CYGWIN )
+  find_library(W32API_UUID_LIBRARY uuid
+    NO_DEFAULT_PATH
+    PATHS /lib/w32api
+  )
+  if ( NOT W32API_UUID_LIBRARY )
+    set ( enable-wasapi off )
+  else ()
+    message(STATUS "Found W32API uuid library for CYGWIN: " ${W32API_UUID_LIBRARY})
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};${W32API_UUID_LIBRARY}" )
+  endif ()
+endif ( CYGWIN )
+
+if ( WIN32 OR CYGWIN )
   include ( CheckIncludeFiles )
 
   # We have to set _WIN32_WINNT to make sure CMake gets correct results when probing for functions.
   # windows-version is supposed to be non-official variable that can be used to tweak the Windows target version.
   # Its value defaults to the Windows Version we are compiling for.
   if ( NOT windows-version )
-    if(CMAKE_SYSTEM_VERSION EQUAL 10) # Windows 10
+    if(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 10) # Windows 10
         set ( windows-version "0x0A00" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.3) # Windows 8.1
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.3) # Windows 8.1
         set ( windows-version "0x0603" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.2) # Windows 8
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.2) # Windows 8
         set ( windows-version "0x0602" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.1) # Windows 7
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.1) # Windows 7
         set ( windows-version "0x0601" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 6.0) # Windows Vista
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 6.0) # Windows Vista
         set ( windows-version "0x0600" )
-    elseif(CMAKE_SYSTEM_VERSION EQUAL 5.1) # Windows XP
+    elseif(CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 5.1) # Windows XP
         set ( windows-version "0x0501" )
     else()
         set ( windows-version "0x0400" )
     endif()
   endif ()
   message ( STATUS "Targeting Windows Version ${windows-version}" )
+  if ( enable-unicode )
+    add_definitions ( -D _UNICODE -D UNICODE )
+  endif ()
   add_definitions ( -D _WIN32_WINNT=${windows-version} )
   add_definitions ( -D WINVER=${windows-version} )
   list ( APPEND CMAKE_REQUIRED_DEFINITIONS "-DWINVER=${windows-version}" )
@@ -292,14 +315,10 @@ if ( WIN32 )
   # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
-  check_include_file ( dsound.h HAVE_DSOUND_H )
+  check_include_files ( "windows.h;dsound.h" HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
   check_include_files ( "mmdeviceapi.h;audioclient.h" HAVE_WASAPI_HEADERS )
   check_include_file ( objbase.h HAVE_OBJBASE_H )
-
-  if ( enable-network )
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
-  endif ( enable-network )
 
   if ( enable-dsound AND HAVE_DSOUND_H )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound;ksuser" )
@@ -317,32 +336,58 @@ if ( WIN32 )
   endif ()
 
   if ( enable-wasapi AND HAVE_WASAPI_HEADERS AND HAVE_OBJBASE_H)
-    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ole32" )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ole32;ksuser" ) # ksuser because of KSDATAFORMAT_SUBTYPE_PCM
     set ( WASAPI_SUPPORT 1 )
   endif ()
+endif ( WIN32 OR CYGWIN )
+
+if ( WIN32 )
+  if ( enable-network )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
+  endif ( enable-network )
 
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
   if  ( NOT MSVC )
-    # only set debug postfix if not MSVS building
+    # only set debug postfix if not MSVC building
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
   endif ( NOT MSVC )
 
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
     set ( MINGW32 1 )
-    add_compile_options ( -mms-bitfields )
+    check_c_compiler_flag( "-mms-bitfields" COMPILER_SUPPORTS_MMS_BITFIELDS )
+    if ( COMPILER_SUPPORTS_MMS_BITFIELDS )
+      add_compile_options ( -mms-bitfields )
+    endif ()
+    # mman-win32
+    if ( HAVE_SYS_MMAN_H )
+      set ( WINDOWS_LIBS "${WINDOWS_LIBS};mman" )
+    endif ()
   endif  ( MINGW )
-else ( WIN32 )
-# Check PThreads, but not in Windows
-  find_package ( Threads REQUIRED )
-  set ( LIBFLUID_LIBS "m" ${CMAKE_THREAD_LIBS_INIT} )
 endif ( WIN32 )
+
+find_package ( GCEM REQUIRED )
+
+find_library ( HAS_LIBM NAMES "m" )
+if ( HAS_LIBM )
+  set ( MATH_LIBRARY "m" )
+endif ( HAS_LIBM )
+
+set ( LIBFLUID_LIBS ${MATH_LIBRARY} )
+if (NOT ((CMAKE_SYSTEM_NAME MATCHES "SunOS") OR (osal STREQUAL "embedded")))
+  # Check for threads and math
+  find_package ( Threads REQUIRED )
+  list ( APPEND LIBFLUID_LIBS "Threads::Threads" )
+endif ()
 
 # IBM OS/2
 unset ( DART_SUPPORT CACHE )
 unset ( DART_LIBS CACHE )
 unset ( DART_INCLUDE_DIRS CACHE )
+unset ( KAI_SUPPORT CACHE )
+unset ( KAI_LIBS CACHE )
+unset ( KAI_INCLUDE_DIRS CACHE )
 if ( CMAKE_SYSTEM MATCHES "OS2" )
   set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Zbin-files" )
   set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Zbin-files" )
@@ -351,6 +396,14 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( DART_SUPPORT ${HAVE_DART_H} )
     unset ( DART_INCLUDE_DIRS CACHE )
   endif ( enable-dart )
+  if ( enable-kai )
+    check_include_files ( "kai.h" HAVE_KAI_H )
+    if ( HAVE_KAI_H )
+        set ( KAI_SUPPORT ${HAVE_KAI_H} )
+        set ( KAI_LIBS "-lkai" )
+    endif ( HAVE_KAI_H )
+    unset ( KAI_INCLUDE_DIRS CACHE )
+  endif ( enable-kai )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Solaris / SunOS
@@ -359,35 +412,44 @@ if ( CMAKE_SYSTEM MATCHES "SunOS" )
   set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};nsl;socket" )
 endif ( CMAKE_SYSTEM MATCHES "SunOS" )
 
-# Apple Mac OSX
+# Apple Mac OSX / iOS
 unset ( COREAUDIO_SUPPORT CACHE )
 unset ( COREAUDIO_LIBS CACHE )
 unset ( COREMIDI_SUPPORT CACHE )
 unset ( COREMIDI_LIBS CACHE )
 unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
-if ( CMAKE_SYSTEM MATCHES "Darwin" )
+if ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
   set ( DARWIN 1 )
-  set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR} )
+  set ( CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR} )
   if ( enable-coreaudio )
-    check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
+    check_include_file ( CoreAudio/CoreAudioTypes.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
-      set ( COREAUDIO_SUPPORT ${COREAUDIO_FOUND} )
-      set ( COREAUDIO_LIBS "-Wl,-framework,CoreAudio,-framework,AudioUnit" )
+      set ( COREAUDIO_SUPPORT 1 )
+      set ( COREAUDIO_LIBS "-Wl,-framework,CoreAudio,-framework,AudioToolbox,-framework,AVFoundation" )
     endif ( COREAUDIO_FOUND )
+    check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_HAL_FOUND )
+    if ( COREAUDIO_HAL_FOUND )
+      set ( COREAUDIO_SUPPORT_HAL 1 )
+      set ( COREAUDIO_LIBS "-Wl,-framework,CoreAudio,-framework,AudioUnit" )
+    endif ( COREAUDIO_HAL_FOUND )
   endif ( enable-coreaudio )
   if ( enable-coremidi )
     check_include_file ( CoreMIDI/MIDIServices.h COREMIDI_FOUND )
     if ( COREMIDI_FOUND )
-      set ( COREMIDI_SUPPORT ${COREMIDI_FOUND} )
-      set ( COREMIDI_LIBS "-Wl,-framework,CoreMIDI,-framework,CoreServices" )
+      set ( COREMIDI_SUPPORT 1 )
+      set ( COREMIDI_LIBS "-Wl,-framework,CoreFoundation,-framework,CoreMIDI,-framework,CoreServices" )
     endif ( COREMIDI_FOUND )
   endif ( enable-coremidi )
   if ( enable-framework )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
-endif ( CMAKE_SYSTEM MATCHES "Darwin" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Darwin|iOS|tvOS" )
+
+# Android
+if ( ANDROID_ABI )
+  set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};log" )
+endif ( ANDROID_ABI )
 
 unset ( NETWORK_SUPPORT )
 if ( enable-network )
@@ -402,28 +464,18 @@ endif ( enable-floats )
 unset ( WITH_PROFILING CACHE )
 if ( enable-profiling )
     set ( WITH_PROFILING 1 )
-    if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
-      set ( OPT_FLAGS "-Rpass=loop-vectorize" ) # -Rpass-analysis=loop-vectorize" )
-    elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
+    if ( CMAKE_C_COMPILER_ID MATCHES "Clang" )
+      set ( OPT_FLAGS "-Rpass=loop-vectorize -Rpass-analysis=loop-vectorize" )
+    elseif ( CMAKE_C_COMPILER_ID MATCHES "Intel" )
       set ( OPT_FLAGS "-qopt-report=3" )
-    elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
-      set ( OPT_FLAGS "" )
+    elseif ( CMAKE_C_COMPILER_ID MATCHES "GNU" )
+      set ( OPT_FLAGS "-fopt-info -fopt-info-vec-missed" )
+    elseif ( CMAKE_C_COMPILER_ID MATCHES "MSVC" )
+	  set ( OPT_FLAGS "/Qvec-report:2" )
     endif ( )
-    
+
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
-    
-    if ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
-        find_program( CLANG_TIDY
-                    NAMES "clang-tidy"
-                    DOC "Path to clang-tidy executable" )
-
-        if ( CLANG_TIDY )
-            message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
-            execute_process ( COMMAND ${CLANG_TIDY} "--version" )
-            set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
-        endif ( CLANG_TIDY )
-    endif ( CMAKE_VERSION VERSION_GREATER_EQUAL "3.6.0" )
-
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPT_FLAGS}" )
 endif ( enable-profiling )
 
 unset ( ENABLE_TRAPONFPE CACHE )
@@ -439,11 +491,6 @@ if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( ENABLE_FPECHECK 1 )
     set ( FPE_CHECK 1 )
 endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
-
-if ( enable-debug )
-    set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
-          "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
-endif ( enable-debug )
 
 if ( NOT CMAKE_BUILD_TYPE )
     set ( CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
@@ -461,13 +508,13 @@ endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 file(GLOB_RECURSE
      ALL_SOURCE_FILES
      LIST_DIRECTORIES false
-     ${CMAKE_SOURCE_DIR}/*.[chi]
-     ${CMAKE_SOURCE_DIR}/*.[chi]pp
-     ${CMAKE_SOURCE_DIR}/*.[chi]xx
-     ${CMAKE_SOURCE_DIR}/*.cc
-     ${CMAKE_SOURCE_DIR}/*.hh
-     ${CMAKE_SOURCE_DIR}/*.ii
-     ${CMAKE_SOURCE_DIR}/*.[CHI]
+     ${FluidSynth_SOURCE_DIR}/*.[chi]
+     ${FluidSynth_SOURCE_DIR}/*.[chi]pp
+     ${FluidSynth_SOURCE_DIR}/*.[chi]xx
+     ${FluidSynth_SOURCE_DIR}/*.cc
+     ${FluidSynth_SOURCE_DIR}/*.hh
+     ${FluidSynth_SOURCE_DIR}/*.ii
+     ${FluidSynth_SOURCE_DIR}/*.[CHI]
      )
 
 find_program ( ASTYLE "astyle" )
@@ -487,173 +534,199 @@ if ( ASTYLE )
     )
 endif(ASTYLE)
 
-if(NOT enable-pkgconfig)
+# Set the minimum version desired for libraries
+set ( ALSA_MINIMUM_VERSION 0.9.1 )
+set ( DBUS_MINIMUM_VERSION 1.11.12 )
+set ( LIBSNDFILE_MINIMUM_VERSION 1.0.0 )
+set ( PIPEWIRE_MINIMUM_VERSION 0.3 )
+set ( PORTAUDIO_MINIMUM_VERSION 2.19 )
+set ( PULSEAUDIO_MINIMUM_VERSION 2.0 )
 
-    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
-    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
-    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
-    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
+include ( PkgConfigHelpers ) # Needed for Find modules using pkg-config
 
-    IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
-            GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
-            GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
-            GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
-            message( WARNING "Not sure if I found GLIB, continuing anyway.")
-    ENDIF()
+# Make searching for packages easier on VCPKG
+if ( CMAKE_VERSION VERSION_GREATER_EQUAL 3.15 AND VCPKG_TOOLCHAIN )
+  set ( CMAKE_FIND_PACKAGE_PREFER_CONFIG ON )
+endif ()
 
-    SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
-    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
+unset ( HAVE_CXX_FILESYSTEM CACHE )
+if ( osal STREQUAL "cpp11" )
+    # Will silently fall back to a lower standard version if not available
+    set( CMAKE_CXX_STANDARD 17 )
+    include( CheckCXXSourceCompiles )
+    # Some OS - ie. FreeBSD - require explicitly linking pthread
+    set ( CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES} )
+    if ( TARGET Threads::Threads )
+        list( APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads )
+    endif ()
+    check_cxx_source_compiles( "#include <condition_variable>
+    #include <mutex>
+    #include <thread>
+    int main() {
+        std::mutex m;
+        std::condition_variable cv;
+        std::thread t([]{});
+        t.join();
+    }" HAVE_CXX_THREAD_PRIMITIVES )
+    set( CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE} )
+    if ( NOT HAVE_CXX_THREAD_PRIMITIVES )
+        message ( FATAL_ERROR "Your compiler does not support C++11 threading primitives "
+                              "(<mutex>, <condition_variable>, <thread>). "
+                              "This is required when building with osal=cpp11. " )
+    endif ( NOT HAVE_CXX_THREAD_PRIMITIVES )
+    check_cxx_source_compiles( "#include <filesystem>
+        int main() { static_assert(__cpp_lib_filesystem == 201703L); std::filesystem::path p = std::filesystem::current_path(); }" HAVE_CXX_FILESYSTEM )
+    if ( NOT HAVE_CXX_FILESYSTEM )
+        message ( WARNING "C++ filesystem support not found, some file operations will be stubs" )
+    endif ( NOT HAVE_CXX_FILESYSTEM )
+endif ( osal STREQUAL "cpp11" )
 
-    message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
-    message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
+# Optional features
+unset ( LIBSNDFILE_SUPPORT CACHE )
+unset ( LIBSNDFILE_HASVORBIS CACHE )
+if ( enable-libsndfile )
+    #set(CMAKE_FIND_DEBUG_MODE ON)
+    find_package ( SndFile ${LIBSNDFILE_MINIMUM_VERSION} QUIET )
+    if ( NOT SndFile_FOUND )
+        # Not all distros have switched to libsndfile's cmake based build system, see #1445.
+        # Therefore, discover sndfile via the legacy pkg-config magic.
+        find_package ( SndFileLegacy )
+    endif ()
+    if ( SndFile_FOUND )
+        set ( LIBSNDFILE_SUPPORT 1 )
+        message ( STATUS "Found libSndFile: ${SndFile_VERSION}" )
+        #cmake_print_properties(TARGETS SndFile::sndfile PROPERTIES LOCATION INTERFACE_INCLUDE_DIRECTORIES IMPORTED_CONFIGURATIONS)
+        #cmake_print_variables(SndFile_WITH_EXTERNAL_LIBS SndFile_WITH_MPEG)
+        list( APPEND PC_REQUIRES_PRIV "sndfile")
+        if ( SndFile_WITH_EXTERNAL_LIBS )
+            set ( LIBSNDFILE_HASVORBIS 1 )
+        else (SndFile_WITH_EXTERNAL_LIBS)
+            message ( "Seems like libsndfile was compiled without OGG/Vorbis support." )
+        endif (SndFile_WITH_EXTERNAL_LIBS)
+    else ( SndFile_FOUND )
+        message( STATUS "Could NOT find SndFile (Set SndFile_DIR to the directory containing its CMake config) (Required is at least version ${LIBSNDFILE_MINIMUM_VERSION})" )
+    endif ( SndFile_FOUND )
+    #set(CMAKE_FIND_DEBUG_MODE OFF)
+endif ( enable-libsndfile )
 
-else(NOT enable-pkgconfig)
+unset ( PULSE_SUPPORT CACHE )
+if ( enable-pulseaudio )
+    find_package ( PulseAudio ${PULSEAUDIO_MINIMUM_VERSION} QUIET )
+    # Upstream config does not search for pulse-simple
+    find_library ( PULSEAUDIO_SIMPLE_LIBRARY NAMES "pulse-simple" QUIET )
+    if ( PULSEAUDIO_FOUND AND PULSEAUDIO_SIMPLE_LIBRARY )
+        set ( PULSE_SUPPORT 1 )
+        set ( PULSEAUDIO_LIBRARIES ${PULSEAUDIO_SIMPLE_LIBRARY} ${PULSEAUDIO_LIBRARY} )
+        message ( STATUS "Found PulseAudio: ${PULSEAUDIO_LIBRARIES}" )
+        list( APPEND PC_REQUIRES_PRIV "libpulse-simple")
+    else ( PULSEAUDIO_FOUND AND PULSEAUDIO_SIMPLE_LIBRARY )
+        message( STATUS "Could NOT find PulseAudio (Set PulseAudio_DIR to the directory containing its CMake config) (Required is at least version ${PULSEAUDIO_MINIMUM_VERSION})" )
+    endif ( PULSEAUDIO_FOUND AND PULSEAUDIO_SIMPLE_LIBRARY )
+endif ( enable-pulseaudio )
 
-    find_package ( PkgConfig REQUIRED )
+unset ( ALSA_SUPPORT CACHE )
+if ( enable-alsa )
+    find_package ( ALSA ${ALSA_MINIMUM_VERSION} )
+    if ( ALSA_FOUND )
+        set ( ALSA_SUPPORT 1 )
+        list( APPEND PC_REQUIRES_PRIV "alsa")
+    endif ( ALSA_FOUND )
+endif ( enable-alsa )
 
-    # Mandatory libraries: glib and gthread
-    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
+unset ( PORTAUDIO_SUPPORT CACHE )
+if ( enable-portaudio )
+    find_package( PortAudio ${PORTAUDIO_MINIMUM_VERSION} )
+    if ( PortAudio_FOUND )
+        set ( PORTAUDIO_SUPPORT 1 )
+        list( APPEND PC_REQUIRES_PRIV "portaudio-2.0")
+    endif ( PortAudio_FOUND )
+endif ( enable-portaudio )
 
-    if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
-        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
-    endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+unset ( JACK_SUPPORT CACHE )
+if ( enable-jack )
+    find_package ( Jack )
+    if ( Jack_FOUND )
+        set ( JACK_SUPPORT 1 )
+        list( APPEND PC_REQUIRES_PRIV "jack")
+    endif( Jack_FOUND )
+endif ( enable-jack )
 
-    include ( UnsetPkgConfig )
+unset ( PIPEWIRE_SUPPORT CACHE )
+if ( enable-pipewire )
+    find_package ( PipeWire ${PIPEWIRE_MINIMUM_VERSION} )
+    if ( PipeWire_FOUND )
+        set ( PIPEWIRE_SUPPORT 1 )
+        list( APPEND PC_REQUIRES_PRIV "libpipewire-0.3")
+    endif( PipeWire_FOUND )
+endif ( enable-pipewire )
 
-    # Optional features
-    unset ( LIBSNDFILE_SUPPORT CACHE )
-    unset ( LIBSNDFILE_HASVORBIS CACHE )
-    if ( enable-libsndfile )
-    pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 )
-    set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
-    if ( LIBSNDFILE_SUPPORT )
-        message (DEBUG "LIBSNDFILE_STATIC_LIBRARIES: ${LIBSNDFILE_STATIC_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LINK_LIBRARIES: ${LIBSNDFILE_STATIC_LINK_LIBRARIES}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS: ${LIBSNDFILE_STATIC_LDFLAGS}")
-        message (DEBUG "LIBSNDFILE_STATIC_LDFLAGS_OTHER: ${LIBSNDFILE_STATIC_LDFLAGS_OTHER}")
-        if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
-             LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
-             LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
-          set ( LIBSNDFILE_HASVORBIS 1 )
-        else ()
-          message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
-        endif ()
-    endif ( LIBSNDFILE_SUPPORT )
-    else ( enable-libsndfile )
-    unset_pkg_config ( LIBSNDFILE )
-    unset_pkg_config ( LIBSNDFILE_VORBIS )
-    endif ( enable-libsndfile )
+unset ( SYSTEMD_SUPPORT CACHE )
+if ( enable-systemd )
+    find_package ( Systemd )
+    if ( Systemd_FOUND )
+        set ( SYSTEMD_SUPPORT 1 )
+        list( APPEND PC_REQUIRES_PRIV "libsystemd")
+    endif ( Systemd_FOUND )
+endif ( enable-systemd )
 
-    unset ( PULSE_SUPPORT CACHE )
-    if ( enable-pulseaudio )
-    pkg_check_modules ( PULSE libpulse-simple>=0.9.8 )
-    set ( PULSE_SUPPORT ${PULSE_FOUND} )
-    else ( enable-pulseaudio )
-    unset_pkg_config ( PULSE )
-    endif ( enable-pulseaudio )
+unset ( DBUS_SUPPORT CACHE )
+if ( enable-dbus )
+    find_package ( DBus1 ${DBUS_MINIMUM_VERSION} QUIET )
+    if ( DBus1_FOUND )
+        set ( DBUS_SUPPORT 1 )
+        message ( STATUS "Found DBus1: ${DBus1_LIBRARIES}" )
+        list( APPEND PC_REQUIRES_PRIV "dbus-1")
+    else ( DBus1_FOUND )
+        message ( STATUS "Could NOT find DBus1 (Set DBus1_DIR to the directory containing its CMake config)")
+    endif ( DBus1_FOUND )
+endif ( enable-dbus )
 
-    unset ( ALSA_SUPPORT CACHE )
-    if ( enable-alsa )
-    pkg_check_modules ( ALSA alsa>=0.9.1 )
-    set ( ALSA_SUPPORT ${ALSA_FOUND} )
-    else ( enable-alsa )
-    unset_pkg_config ( ALSA )
-    endif ( enable-alsa )
-
-    unset ( PORTAUDIO_SUPPORT CACHE )
-    if ( enable-portaudio )
-    pkg_check_modules ( PORTAUDIO portaudio-2.0>=19 )
-    set ( PORTAUDIO_SUPPORT ${PORTAUDIO_FOUND} )
-    else ( enable-portaudio )
-    unset_pkg_config ( PORTAUDIO )
-    endif ( enable-portaudio )
-
-    unset ( JACK_SUPPORT CACHE )
-    if ( enable-jack )
-    pkg_check_modules ( JACK jack )
-    set ( JACK_SUPPORT ${JACK_FOUND} )
-    else ( enable-jack )
-    unset_pkg_config ( JACK )
-    endif ( enable-jack )
-
-    unset ( LASH_SUPPORT CACHE )
-    if ( enable-lash )
-    pkg_check_modules ( LASH lash-1.0>=0.3 )
-    if ( LASH_FOUND )
-        set ( LASH_SUPPORT 1 )
-        add_definitions ( -DHAVE_LASH )
-    endif ( LASH_FOUND )
-    else ( enable-lash )
-    unset_pkg_config ( LASH )
-    remove_definitions( -DHAVE_LASH )
-    endif ( enable-lash )
-
-    unset ( SYSTEMD_SUPPORT CACHE )
-    if ( enable-systemd )
-        pkg_check_modules ( SYSTEMD libsystemd )
-        set ( SYSTEMD_SUPPORT ${SYSTEMD_FOUND} )
-    else ( enable-systemd )
-        unset_pkg_config ( SYSTEMD )
-    endif ( enable-systemd )
-
-    unset ( DBUS_SUPPORT CACHE )
-    if ( enable-dbus )
-    pkg_check_modules ( DBUS dbus-1>=1.0.0 )
-    set ( DBUS_SUPPORT ${DBUS_FOUND} )
-    else ( enable-dbus )
-    unset_pkg_config ( DBUS )
-    endif ( enable-dbus )
-
-    unset ( LADSPA_SUPPORT CACHE )
-    if ( enable-ladspa )
-    check_include_file ( ladspa.h LADSPA_SUPPORT )
-    if ( LADSPA_SUPPORT )
-        pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 )
+unset ( LADSPA_SUPPORT CACHE )
+if ( enable-ladspa )
+    check_include_file ( ladspa.h HAVE_LADSPA_H )
+    if ( HAVE_LADSPA_H )
+        set ( LADSPA_SUPPORT 1 )
         set ( LADSPA 1 )
-    endif ( LADSPA_SUPPORT )
-    endif ( enable-ladspa )
+    endif ( HAVE_LADSPA_H )
+endif ( enable-ladspa )
 
-    unset ( LIBINSTPATCH_SUPPORT CACHE )
-    if ( enable-libinstpatch )
-        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 )
-        set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
-    endif ( enable-libinstpatch )
+unset ( SDL3_SUPPORT CACHE )
+if ( enable-sdl3 )
+    find_package ( SDL3 QUIET CONFIG COMPONENTS SDL3 )
+    if ( SDL3_FOUND )
+        message ( STATUS "Found SDL3: ${SDL3_LIBRARIES} (version: ${SDL3_VERSION})" )
+        set ( SDL3_SUPPORT 1 )
+        list ( APPEND PC_REQUIRES_PRIV "sdl3")
+    endif ( SDL3_FOUND )
+endif ( enable-sdl3 )
 
-    unset ( SDL2_SUPPORT CACHE )
-    if ( enable-sdl2 )
-        pkg_check_modules ( SDL2 sdl2 )
-        set ( SDL2_SUPPORT ${SDL2_FOUND} )
-    else ( enable-sdl2 )
-        unset_pkg_config ( SDL2 )
-    endif ( enable-sdl2 )
+unset ( OBOE_SUPPORT CACHE )
+if ( enable-oboe )
+  find_package ( oboe )
+  if ( oboe_FOUND )
+    if(CMAKE_CXX_STANDARD VERSION_LESS 14)
+      message ( STATUS "Setting C++ standard to C++14 for Oboe support" )
+      set(CMAKE_CXX_STANDARD 14)
+    endif()
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set ( OBOE_SUPPORT 1 )
+    list( APPEND PC_REQUIRES_PRIV "oboe-1.0")
+  endif ( oboe_FOUND )
+endif ( enable-oboe )
 
-    unset ( OBOE_SUPPORT CACHE )
-    unset ( OBOE_LIBS CACHE )
-    if ( enable-oboe )
-      pkg_check_modules ( OBOE oboe-1.0 )
-      if ( OBOE_FOUND )
-        set(CMAKE_CXX_STANDARD 14)
-        set(CMAKE_CXX_STANDARD_REQUIRED ON)
-        set ( OBOE_SUPPORT 1 )
-        set ( OBOE_LIBS ${OBOE_LIBRARIES} )
-      endif ( OBOE_FOUND )
-    endif ( enable-oboe )
-
-    unset ( WITH_READLINE CACHE )
-    unset ( READLINE_LIBS CACHE )
-    if ( enable-readline )
-    pkg_check_modules ( READLINE readline )
-    if ( NOT READLINE_FOUND )
-        find_package ( READLINE )
-        set ( READLINE_FOUND ${HAVE_READLINE} )
-    endif ( NOT READLINE_FOUND )
-    if ( READLINE_FOUND )
-        set ( WITH_READLINE 1 )
-        set ( READLINE_LIBS ${READLINE_LIBRARIES} )
-    endif ( READLINE_FOUND )
-    endif ( enable-readline )
-
-endif(NOT enable-pkgconfig)
+unset ( READLINE_SUPPORT CACHE )
+if ( enable-readline )
+  find_package ( Readline )
+  if ( Readline_FOUND )
+    set ( READLINE_SUPPORT 1 )
+    if ( PC_READLINE_FOUND )
+      list( APPEND PC_REQUIRES_PRIV "readline")
+    else ()
+      message ( STATUS "No pkg-config file for readline found - trying to make it work anyway." )
+      list ( APPEND PC_LIBS_PRIV ${Readline_LIBRARY} )
+    endif ()
+  endif ( Readline_FOUND )
+endif ( enable-readline )
 
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )
@@ -662,33 +735,29 @@ endif ( enable-aufile )
 
 unset ( OSS_SUPPORT CACHE )
 if ( enable-oss )
-  find_package ( OSS QUIET )
-  set ( OSS_SUPPORT ${OSS_FOUND} )
+  check_include_file("sys/soundcard.h" HAVE_SYS_SOUNDCARD_H)
+  check_include_file("linux/soundcard.h" HAVE_LINUX_SOUNDCARD_H)
+  check_include_file("machine/soundcard.h" HAVE_MACHINE_SOUNDCARD_H)
+  if ( HAVE_SYS_SOUNDCARD_H OR HAVE_LINUX_SOUNDCARD_H OR HAVE_MACHINE_SOUNDCARD_H )
+    set ( OSS_SUPPORT 1 )
+  endif ( HAVE_SYS_SOUNDCARD_H OR HAVE_LINUX_SOUNDCARD_H OR HAVE_MACHINE_SOUNDCARD_H )
 endif ( enable-oss )
 
 unset ( MIDISHARE_SUPPORT CACHE )
 if ( enable-midishare )
   find_package ( MidiShare QUIET )
-  set ( MIDISHARE_SUPPORT ${MidiShare_FOUND} )
   if ( MidiShare_FOUND )
-    set ( MidiShare_LIBS ${MidiShare_LIBRARIES} )
-  else ( MidiShare_FOUND )
-    unset ( MidiShare_LIBS CACHE )
+    set ( MIDISHARE_SUPPORT 1 )
   endif ( MidiShare_FOUND )
-else ( enable-midishare )
-  unset ( MidiShare_LIBS CACHE )
 endif ( enable-midishare )
 
 unset ( OPENSLES_SUPPORT CACHE )
-unset ( OpenSLES_LIBS CACHE )
 if ( enable-opensles )
-  check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
-  if ( OPENSLES_SUPPORT )
-    find_library ( OpenSLES_LIBS OpenSLES )
-    if ( NOT OpenSLES_LIBS )
-      unset ( OPENSLES_SUPPORT )
-    endif ( NOT OpenSLES_LIBS )
-  endif ( OPENSLES_SUPPORT )
+  find_package( OpenSLES )
+  if ( OpenSLES_FOUND )
+    set ( OPENSLES_SUPPORT 1 )
+    list ( APPEND PC_LIBS_PRIV "-lOpenSLES" )
+  endif ( OpenSLES_FOUND )
 endif ( enable-opensles )
 
 unset ( ENABLE_MIXER_THREADS CACHE )
@@ -697,28 +766,84 @@ if ( enable-threads )
 endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
-find_package ( OpenMP QUIET )
-if ( OpenMP_FOUND OR OpenMP_C_FOUND )
-    message(STATUS "Found OpenMP ${OpenMP_C_SPEC_DATE}")
-    # require at least OMP 4.0
-    if ( ( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" ) )
-        set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-
-        # include dir and library link seems to be required for Xcode 12.5 (issue #917)
-        include_directories ( SYSTEM ${OpenMP_C_INCLUDE_DIRS} )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
-        set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
+find_package ( OpenMP COMPONENTS C )
+if (enable-openmp AND ENABLE_UBSAN)
+    message(WARNING "OpenMP is not supported when UBSan is enabled. Disabling OpenMP.")
+elseif (enable-openmp AND OpenMP_C_FOUND )
+    message(STATUS "Found OpenMP version: ${OpenMP_C_VERSION} date: ${OpenMP_C_SPEC_DATE}")
+    if ( TARGET OpenMP::OpenMP_C AND (( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" )) )
         set ( HAVE_OPENMP 1 )
+        list ( APPEND PC_LIBS_PRIV ${OpenMP_C_LIBRARIES} )
+    else()
+        message(STATUS "  OpenMP version is not supported. Feature disabled.")
     endif()
 endif()
 
+unset ( ENABLE_NATIVE_DLS CACHE )
+if (enable-native-dls)
+  if ("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+    set ( ENABLE_NATIVE_DLS 1 )
+    set ( CMAKE_CXX_STANDARD 17 )
+    set ( CMAKE_CXX_STANDARD_REQUIRED ON )
+  endif()
+endif()
+
+unset ( SIGNALSMITH_SUPPORT CACHE )
+find_path ( SIGNALSMITH_AUDIO_BASICS
+            NAMES "include/signalsmith-basics/reverb.h" "include/signalsmith-basics/limiter.h" "modules/dsp/delay.h"
+            PATHS "${CMAKE_SOURCE_DIR}/signalsmith-audio-basics"
+            HINTS ${SIGNALSMITH_AUDIO_BASICS_PATH} NO_CACHE
+            NO_CMAKE_FIND_ROOT_PATH )
+if ( enable-signalsmith )
+  if ( SIGNALSMITH_AUDIO_BASICS )
+    add_subdirectory(signalsmith-audio-basics)
+    set ( SIGNALSMITH_SUPPORT 1 )
+  else ( SIGNALSMITH_AUDIO_BASICS )
+    message ( STATUS "Could NOT find Signalsmith Audio Basics. Signalsmith reverb engine and limiter support disabled. Set CMake var SIGNALSMITH_AUDIO_BASICS_PATH to the root directory of the https://github.com/Signalsmith-Audio/basics repository (containing all the submodules it requires!)." )
+  endif ( SIGNALSMITH_AUDIO_BASICS )
+endif ( enable-signalsmith )
+
 # manipulate some variables to setup a proper test env
-set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
-set(TEST_SOUNDFONT_UTF8_1 "${CMAKE_SOURCE_DIR}/sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
-set(TEST_SOUNDFONT_UTF8_2 "${CMAKE_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2")
-set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
-set(TEST_MIDI_UTF8 "${CMAKE_SOURCE_DIR}/test/èmpty.mid")
+#
+# The unit tests resolve their test data relative to the current working
+# directory (the test build dir on the host via ctest, the adb-pushed
+# ${TEST_DIR} in the Android emulator), therefore TEST_* are plain relative
+# paths. The actual files are staged into ${TEST_DATA_STAGE} mirroring their
+# location relative to the source root (see TEST_DATA_FILES below), and on
+# the Android emulator test/run-android-tests.sh pushes that staged tree to
+# the device.
+set(TEST_DATA_STAGE "${CMAKE_BINARY_DIR}/test")
+set(TEST_DATA_FILES
+    "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.dls"
+    "${FluidSynth_SOURCE_DIR}/sf2/■VintageDreamsWaves-v2■.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/VìntàgèDrèàmsWàvès-v2.sf2"
+    "${FluidSynth_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3"
+    "${FluidSynth_SOURCE_DIR}/test/ⓉⒺⓈⓉ.mid"
+)
+set(TEST_DATA_OUTPUTS "")
+foreach(src IN LISTS TEST_DATA_FILES)
+    file(RELATIVE_PATH rel "${FluidSynth_SOURCE_DIR}" "${src}")
+    set(dst "${TEST_DATA_STAGE}/${rel}")
+    get_filename_component(dst_dir "${dst}" DIRECTORY)
+    add_custom_command(
+        OUTPUT "${dst}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${dst_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${src}" "${dst}"
+        DEPENDS "${src}"
+        VERBATIM
+    )
+    list(APPEND TEST_DATA_OUTPUTS "${dst}")
+endforeach()
+add_custom_target(test_data DEPENDS ${TEST_DATA_OUTPUTS})
+
+set(TEST_SOUNDFONT "sf2/VintageDreamsWaves-v2.sf2")
+set(TEST_DLS "sf2/VintageDreamsWaves-v2.dls")
+set(TEST_SOUNDFONT_UTF8_1 "sf2/\\xE2\\x96\\xA0VintageDreamsWaves-v2\\xE2\\x96\\xA0.sf2")
+set(TEST_SOUNDFONT_UTF8_2 "sf2/VìntàgèDrèàmsWàvès-v2.sf2")
+set(TEST_SOUNDFONT_SF3 "sf2/VintageDreamsWaves-v2.sf3")
+set(TEST_MIDI_UTF8 "test/ⓉⒺⓈⓉ.mid")
+set(TEST_WAV_UTF8 "test/ⓉⒺⓈⓉ.wav")
 
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
@@ -788,26 +913,18 @@ if ( HAVE_SOCKLEN_T )
 endif ( HAVE_SOCKLEN_T )
 
 # General configuration file
-configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
-                 ${CMAKE_BINARY_DIR}/config.h )
-
-# Setup linker directories NOW, as the command will apply only to targets created after it has been called.
-link_directories (
-    ${GLIB_LIBRARY_DIRS}
-    ${LASH_LIBRARY_DIRS}
-    ${JACK_LIBRARY_DIRS}
-    ${ALSA_LIBRARY_DIRS}
-    ${PULSE_LIBRARY_DIRS}
-    ${PORTAUDIO_LIBRARY_DIRS}
-    ${LIBSNDFILE_LIBRARY_DIRS}
-    ${DBUS_LIBRARY_DIRS}
-    ${SDL2_LIBRARY_DIRS}
-    ${OBOE_LIBRARY_DIRS}
-    ${LIBINSTPATCH_LIBRARY_DIRS}
-)
+configure_file ( ${FluidSynth_SOURCE_DIR}/src/config.cmake
+                 ${FluidSynth_BINARY_DIR}/config.h )
 
 # required to allow ctest to be called from top-level build directory
 ENABLE_TESTING()
+
+# to build the exported targets cmake file name
+if (BUILD_SHARED_LIBS)
+    set(target-type shared)
+else ()
+    set(target-type static)
+endif ()
 
 # Process subdirectories
 add_subdirectory ( src )
@@ -817,81 +934,81 @@ add_subdirectory ( doc )
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-if ( IS_ABSOLUTE "${LIB_INSTALL_DIR}" )
-  set ( libdir "${LIB_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}" )
+  set ( libdir "${CMAKE_INSTALL_LIBDIR}" )
 else ()
-  set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
+  set ( libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}" )
 endif ()
-if ( IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}" )
-  set ( includedir "${INCLUDE_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}" )
+  set ( includedir "${CMAKE_INSTALL_INCLUDEDIR}" )
 else ()
-  set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+  set ( includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}" )
 endif ()
 
-if ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
-    # retrieve all the private libs we depend on
-    get_target_property ( LIBS_PRIVATE libfluidsynth INTERFACE_LINK_LIBRARIES)
-    # make a copy
-    set ( LIBS_PRIVATE_WITH_PATH ${LIBS_PRIVATE} )
-
-    # this matches any path and any flag entries (starting with '-')
-    set ( LIB_LIST_REGEX "(^(.+)\/([^\/]+)$)|(^\-.*$)" )
-    # remove all entries from the list which are specified by path and which already have -l
-    list ( FILTER LIBS_PRIVATE EXCLUDE REGEX ${LIB_LIST_REGEX} )
-    # include only entries specifed by path
-    list ( FILTER LIBS_PRIVATE_WITH_PATH INCLUDE REGEX ${LIB_LIST_REGEX} )
-
-    # prepend the linker flag to all entries except the ones that already have it
-    list ( TRANSFORM LIBS_PRIVATE PREPEND "-l")
-    list ( JOIN LIBS_PRIVATE " " LIBS_PRIVATE_JOINED )
-    list ( JOIN LIBS_PRIVATE_WITH_PATH " " LIBS_PRIVATE_WITH_PATH_JOINED )
+if (WIN32)
+  set ( implibname "fluidsynth-${LIB_VERSION_CURRENT}" )
 else ()
-    set ( LIBS_PRIVATE "" )
-    set ( LIBS_PRIVATE_WITH_PATH "" )
-    message ( DEPRECATION "Your version of CMake is old. A complete pkg-config file can not created. Get cmake 3.13.3 or newer." )
-endif ( CMAKE_VERSION VERSION_EQUAL "3.12.0" OR CMAKE_VERSION VERSION_GREATER "3.12.0" )
+  set ( implibname "fluidsynth" )
+endif ()
 
-configure_file ( fluidsynth.pc.in
-	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
-install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
+generate_pkgconfig_spec(fluidsynth.pc.in ${FluidSynth_BINARY_DIR}/fluidsynth.pc libfluidsynth-OBJ)
+install ( FILES ${FluidSynth_BINARY_DIR}/fluidsynth.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    COMPONENT ${PACKAGE}_development)
+
+# Exported targets for cmake: find_package(FluidSynth)
+# when installed, use CMAKE_PREFIX_PATH=fluidsynth-prefix;...
+# to use the build directory directly set the FluidSynth_DIR variable instead.
+
+# targets in the build directory
+export(EXPORT FluidSynthTargets
+   FILE "${FluidSynth_BINARY_DIR}/FluidSynth-${target-type}-targets.cmake"
+   NAMESPACE FluidSynth::
+)
+
+include(CMakePackageConfigHelpers) # SameMinorVersion requires CMake 3.11
+write_basic_package_version_file(
+    FluidSynthConfigVersion.cmake
+    VERSION ${VERSION}
+    COMPATIBILITY SameMinorVersion
+)
+
+# In static builds, we need the extra modules so the config can
+# find the transitive dependencies.
+unset ( EXTRA_STATIC_MODULES )
+if ( NOT BUILD_SHARED_LIBS )
+  file ( GLOB EXTRA_STATIC_MODULES "${FluidSynth_SOURCE_DIR}/cmake_admin/Find*.cmake" )
+  list ( APPEND EXTRA_STATIC_MODULES "${FluidSynth_SOURCE_DIR}/cmake_admin/PkgConfigHelpers.cmake" )
+  file ( COPY ${EXTRA_STATIC_MODULES} DESTINATION "${FluidSynth_BINARY_DIR}" )
+endif ( NOT BUILD_SHARED_LIBS )
+
+# Here, configure_file() is used instead of the more orthodox macro
+# configure_package_config_file() because the latter does not
+# support generating a config.cmake file for both the installed
+# package and for using the build directory directly.
+configure_file(FluidSynthConfig.cmake.in FluidSynthConfig.cmake @ONLY)
+install(FILES "${FluidSynth_BINARY_DIR}/FluidSynthConfig.cmake"
+              "${FluidSynth_BINARY_DIR}/FluidSynthConfigVersion.cmake"
+              ${EXTRA_STATIC_MODULES}
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fluidsynth"
+    COMPONENT ${PACKAGE}_development)
 
 # Extra targets for Unix build environments
 if ( UNIX )
     if ( DEFINED FLUID_DAEMON_ENV_FILE)
         configure_file ( fluidsynth.service.in
-        ${CMAKE_BINARY_DIR}/fluidsynth.service @ONLY )
+        ${FluidSynth_BINARY_DIR}/fluidsynth.service @ONLY )
 
         configure_file ( fluidsynth.conf.in
-        ${CMAKE_BINARY_DIR}/fluidsynth.conf @ONLY )
+        ${FluidSynth_BINARY_DIR}/fluidsynth.conf @ONLY )
 
     endif ( DEFINED FLUID_DAEMON_ENV_FILE )
 
     # uninstall custom target
-    configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
-      "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
+    configure_file ( "${FluidSynth_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
+      "${FluidSynth_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
     add_custom_target ( uninstall
-      "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
-
-    # tarball custom target
-    add_custom_target ( tarball
-        COMMAND mkdir -p ${PACKAGE}-${VERSION}
-        COMMAND cp -r bindings ${PACKAGE}-${VERSION}
-        COMMAND cp -r cmake_admin ${PACKAGE}-${VERSION}
-        COMMAND cp -r doc ${PACKAGE}-${VERSION}
-        COMMAND cp -r include ${PACKAGE}-${VERSION}
-        COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt LICENSE ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
-#       COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-#       COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-#       COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
-        COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-        COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-        COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'
-        COMMAND rm -rf ${PACKAGE}-${VERSION}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-
+      "${CMAKE_COMMAND}" -P "${FluidSynth_BINARY_DIR}/cmake_uninstall.cmake")
 endif ( UNIX )
 
 include ( report )
@@ -899,23 +1016,33 @@ include ( report )
 # CPack support
 set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "FluidSynth real-time synthesizer" )
 set ( CPACK_PACKAGE_VENDOR "fluidsynth.org" )
-set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README.md" )
-set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE" )
+set ( CPACK_PACKAGE_DESCRIPTION_FILE "${FluidSynth_SOURCE_DIR}/README.md" )
+set ( CPACK_RESOURCE_FILE_LICENSE "${FluidSynth_SOURCE_DIR}/LICENSE" )
 set ( CPACK_PACKAGE_VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR} )
 set ( CPACK_PACKAGE_VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR} )
 set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )
 set ( CPACK_PACKAGE_EXECUTABLES "fluidsynth" "FluidSynth CLI" )
 
 # source packages
-set ( CPACK_SOURCE_GENERATOR TGZ;TBZ2;ZIP )
-set ( CPACK_SOURCE_IGNORE_FILES "/.svn/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
+set ( CPACK_SOURCE_IGNORE_FILES "/.git/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
 set ( CPACK_SOURCE_PACKAGE_FILE_NAME "${PACKAGE}-${VERSION}" )
 set ( CPACK_SOURCE_STRIP_FILES OFF )
 
 # binary packages
 include ( InstallRequiredSystemLibraries )
-set ( CPACK_GENERATOR STGZ;TGZ;TBZ2;ZIP )
 set ( CPACK_PACKAGE_NAME ${PACKAGE} )
 set ( CPACK_STRIP_FILES ON )
 
 include ( CPack )
+
+cpack_add_component(${PACKAGE}_runtime 
+  DISPLAY_NAME "Runtime Library"
+  DESCRIPTION "Shared library (DLL) needed to run FluidSynth programs")
+cpack_add_component(${PACKAGE}_program
+  DISPLAY_NAME "FluidSynth Application"
+  DESCRIPTION "FluidSynth Command Line Interface Program"
+  DEPENDS ${PACKAGE}_runtime)
+cpack_add_component(${PACKAGE}_development
+  DISPLAY_NAME "C Headers and import library"
+  DESCRIPTION "C headers and import library for using FluidSynth"
+  DEPENDS ${PACKAGE}_runtime)

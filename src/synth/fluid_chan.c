@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_chan.h"
@@ -87,7 +86,7 @@ fluid_channel_init(fluid_channel_t *chan)
     /*---*/
     chan->key_mono_sustained = INVALID_NOTE; /* No previous mono note sustained */
     chan->legatomode = FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER;		/* Default mode */
-    chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY;	/* Default mode */
+    chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE;	/* Default mode */
     /*--- End of poly/mono initialization --------------------------------------*/
 
     chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
@@ -128,6 +127,8 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
     for(i = 0; i < GEN_LAST; i++)
     {
         chan->gen[i] = 0.0f;
+        chan->override_gen_default[i].flags = GEN_UNUSED;
+        chan->override_gen_default[i].val = 0.0f;
     }
 
     if(is_all_ctrl_off)
@@ -162,9 +163,10 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
             fluid_channel_set_cc(chan, i, 0);
         }
 
-        fluid_channel_clear_portamento(chan); /* Clear PTC receive */
         chan->previous_cc_breath = 0;/* Reset previous breath */
     }
+    /* Unconditionally clear PTC receive (issue #1050) */
+    fluid_channel_clear_portamento(chan);
 
     /* Reset polyphonic key pressure on all voices */
     for(i = 0; i < 128; i++)
@@ -188,6 +190,9 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
     {
 
         chan->pitch_wheel_sensitivity = 2; /* two semi-tones */
+
+        /* Modulation depth range (GM2 RPN 0x05): default is 50 cents (half a semitone) */
+        chan->modulation_depth_range = 50.0f;
 
         /* Just like panning, a value of 64 indicates no change for sound ctrls */
         for(i = SOUND_CTRL1; i <= SOUND_CTRL10; i++)
@@ -291,16 +296,19 @@ fluid_channel_set_bank_lsb(fluid_channel_t *chan, int banklsb)
 
     style = chan->synth->bank_select;
 
-    if(style == FLUID_BANK_STYLE_GM ||
-            style == FLUID_BANK_STYLE_GS)
+    if(style == FLUID_BANK_STYLE_GM || style == FLUID_BANK_STYLE_GS)
     {
         return;    /* ignored */
     }
 
     oldval = chan->sfont_bank_prog;
 
-    if(style == FLUID_BANK_STYLE_XG)
+    if(style == FLUID_BANK_STYLE_XG || style == FLUID_BANK_STYLE_GM2)
     {
+        if(chan->channel_type == CHANNEL_TYPE_DRUM)
+        {
+            return; // bankLSB is ignored for drum channels
+        }
         newval = (oldval & ~BANK_MASKVAL) | (banklsb << BANK_SHIFTVAL);
     }
     else /* style == FLUID_BANK_STYLE_MMA */
@@ -318,26 +326,51 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
     int oldval, newval, style;
 
     style = chan->synth->bank_select;
+    oldval = chan->sfont_bank_prog;
 
-    if(style == FLUID_BANK_STYLE_XG)
+    if(style == FLUID_BANK_STYLE_GM2)
+    {
+        if(bankmsb == 120)
+        {
+            chan->channel_type = CHANNEL_TYPE_DRUM;
+            newval = (oldval & ~BANK_MASKVAL) | (DRUM_INST_BANK << BANK_SHIFTVAL);
+        }
+        else if(bankmsb == 121)
+        {
+            chan->channel_type = CHANNEL_TYPE_MELODIC;
+            newval = oldval & ~BANKMSB_MASKVAL;
+        }
+        else
+        {
+            return;
+        }
+    }
+    else if(style == FLUID_BANK_STYLE_XG)
     {
         /* XG bank, do drum-channel auto-switch */
         /* The number "120" was based on several keyboards having drums at 120 - 127,
            reference: https://lists.nongnu.org/archive/html/fluid-dev/2011-02/msg00003.html */
-        chan->channel_type = (120 <= bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
-        return;
-    }
+        chan->channel_type = (120 == bankmsb || 126 == bankmsb || 127 == bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
+        if(chan->channel_type == CHANNEL_TYPE_MELODIC)
+        {
+            // bankMSB is ignored for meldodic channels
+            return;
+        }
 
-    if(style == FLUID_BANK_STYLE_GM ||
-            chan->channel_type == CHANNEL_TYPE_DRUM)
+        // ...but for drum channels, hardcode SF2 drum bank 128. Ideally, we should use bankMSB as bank number.
+        // But we'd need to ensure that it's not a melodic preset, see #1524.
+        newval = (oldval & ~BANK_MASKVAL) | (128 << BANK_SHIFTVAL);
+    }
+    else if(style == FLUID_BANK_STYLE_GM )
     {
         return;    /* ignored */
     }
-
-    oldval = chan->sfont_bank_prog;
-
-    if(style == FLUID_BANK_STYLE_GS)
+    else if(style == FLUID_BANK_STYLE_GS)
     {
+        if(chan->channel_type == CHANNEL_TYPE_DRUM)
+        {
+            bankmsb += DRUM_INST_BANK;
+        }
         newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
     }
     else /* style == FLUID_BANK_STYLE_MMA */
@@ -346,7 +379,6 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
     }
 
     chan->sfont_bank_prog = newval;
-
 }
 
 /* Get SoundFont ID, MIDI bank and/or program.  Use NULL to ignore a value. */
@@ -427,7 +459,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t *chan)
  * @param chan  fluid_channel_t.
  * @param key MIDI note number (0-127).
  * @param vel MIDI velocity (0-127, 0=noteoff).
- * @param onenote. When 1 the function adds the note but the monophonic list
+ * @param onenote When 1 the function adds the note but the monophonic list
  *                 keeps only one note (used on noteOn poly).
  * Note: i_last index keeps a trace of the most recent note added.
  *       prev_note keeps a trace of the note prior i_last note.
@@ -528,11 +560,9 @@ fluid_channel_search_monolist(fluid_channel_t *chan, unsigned char key, int *i_p
  * and relinked after the i_last element.
  *
  * @param chan  fluid_channel_t.
- * @param
- *   i, index of the note to remove. If i is invalid or the list is
+ * @param i index of the note to remove. If i is invalid or the list is
  *      empty, the function do nothing and returns FLUID_FAILED.
- * @param
- *   On input, i_prev is a pointer on index of the note previous i.
+ * @param i_prev pointer on index of the note previous i.
  *   On output i_prev is a pointer on index of the note previous i if i is the last note
  *   in the list,FLUID_FAILED otherwise. When the returned index is valid it means
  *   a legato detection on noteoff.
@@ -557,7 +587,7 @@ fluid_channel_remove_monolist(fluid_channel_t *chan, int i, int *i_prev)
     }
 
     /* The element is about to be removed and inserted between i_last and next */
-    /* Note: when i is egal to i_last or egal to i_first, removing/inserting
+    /* Note: when i is equal to i_last or equal to i_first, removing/inserting
        isn't necessary */
     if(i == i_last)
     {
@@ -618,9 +648,9 @@ void fluid_channel_clear_monolist(fluid_channel_t *chan)
 /**
  * On noteOn on a polyphonic channel,adds the note into the monophonic list
  * keeping only this note.
- * @param
- *   chan  fluid_channel_t.
- *   key, vel, note and velocity added in the monolist
+ * @param chan  fluid_channel_t.
+ * @param key note number added in the monolist.
+ * @param vel velocity added in the monolist.
  * Note: i_last index keeps a trace of the most recent note inserted.
  *       prev_note keeps a trace of the note prior i_last note.
  *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
@@ -666,7 +696,7 @@ void fluid_channel_invalid_prev_note_staccato(fluid_channel_t *chan)
 /**
  * The function handles poly/mono commutation on legato pedal On/Off.
  * @param chan  fluid_channel_t.
- * @param value, value of the CC legato.
+ * @param value value of the CC legato.
  */
 void fluid_channel_cc_legato(fluid_channel_t *chan, int value)
 {
@@ -704,7 +734,7 @@ void fluid_channel_cc_legato(fluid_channel_t *chan, int value)
  * to trigger noteon/noteoff note when the musician starts to breath (noteon) and
  * stops to breath (noteoff).
  * @param chan  fluid_channel_t.
- * @param value, value of the CC Breath..
+ * @param value value of the CC Breath.
  */
 void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value)
 {
@@ -728,4 +758,87 @@ void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value)
     }
 
     chan->previous_cc_breath = value;
+}
+
+int fluid_channel_get_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t* val)
+{
+    if(chan->override_gen_default[gen].flags != GEN_UNUSED)
+    {
+        *val = chan->override_gen_default[gen].val;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t val)
+{
+    chan->override_gen_default[gen].flags = GEN_SET;
+    chan->override_gen_default[gen].val = val;
+}
+
+/* Calculate portamento time in milliseconds considering the synthesizer's portamento time mode */
+unsigned int fluid_channel_portamentotime_with_mode(fluid_channel_t *chan, enum fluid_portamento_time_mode time_mode, int lsb_seen, int fromkey, int tokey)
+{
+    int msb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_MSB);
+    int lsb = fluid_channel_get_cc(chan, PORTAMENTO_TIME_LSB);
+    int res;
+    fluid_real_t tmp;
+    static const int Max = 480*1000; /*ms*/
+    
+    /* Use 7-bit MSB initially, switch to 14-bit if LSB has been seen */
+    if(time_mode == FLUID_PORTAMENTO_TIME_MODE_AUTO)
+    {
+        if(lsb_seen)
+        {
+            time_mode = FLUID_PORTAMENTO_TIME_MODE_LINEAR;
+        }
+        else
+        {
+            time_mode = FLUID_PORTAMENTO_TIME_MODE_XG_GS;
+        }
+    }
+
+    switch(time_mode)
+    {
+        case FLUID_PORTAMENTO_TIME_MODE_XG_GS:
+            // Produce a curve similar to:
+            /*
+                CC 5 value  Portamento time
+                ----------  ---------------
+                    0            0.000 s
+                    1            0.006 s
+                    2            0.023 s
+                    4            0.050 s
+                    8            0.110 s
+                    16           0.250 s
+                    32           0.500 s
+                    64           2.060 s
+                    80           4.200 s
+                    96           8.400 s
+                    112         19.500 s
+                    116         26.700 s
+                    120         40.000 s
+                    124         80.000 s
+                    127        480.000 s
+            */
+            // Tests were performed by John Novak
+            // https://github.com/dosbox-staging/dosbox-staging/pull/2705
+            tmp = fluid_concave(msb);
+            res = (fluid_real_t)(Max/2 * 2.5) * tmp * fluid_concave(128 * tmp) + 400 * fluid_convex(msb * (fluid_real_t)(1/4.0));
+            res = res < Max ? res : Max;
+            // Apply a similar scaling hack as SpessaSynth to fix Descent Game08, it's unclear why exactly
+            // https://github.com/spessasus/spessasynth_core/blob/5a8730a80f8c0b74733ec193a968b36e2a0c0aee/src/synthesizer/audio_engine/engine_methods/portamento_time.ts#L84-87
+            // https://github.com/FluidSynth/fluidsynth/pull/1656#issuecomment-3355759938
+            res = (unsigned int)(res * abs(tokey - fromkey) / 36.0f + 0.5f);
+            return res;
+            
+        case FLUID_PORTAMENTO_TIME_MODE_LINEAR:
+            /* Always use 14-bit MSB+LSB */
+            return msb * 128 + lsb;
+            
+        default:
+            FLUID_LOG(FLUID_ERR, "THIS SHOULD NEVER HAPPEN! unknown portamento time mode %d", time_mode);
+    }
+    return 0;
 }

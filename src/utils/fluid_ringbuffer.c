@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /*
@@ -30,6 +29,7 @@
 /**
  * Create a lock free queue with a fixed maximum count and size of elements.
  * @param count Count of elements in queue (fixed max number of queued elements)
+ * @param elementsize Size of each element in bytes
  * @return New lock free queue or NULL if out of memory (error message logged)
  *
  * Lockless FIFO queues don't use any locking mechanisms and can therefore be

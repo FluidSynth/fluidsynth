@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_mod.h"
@@ -39,6 +38,9 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
     mod->src2 = src->src2;
     mod->flags2 = src->flags2;
     mod->amount = src->amount;
+    mod->trans = src->trans;
+    mod->mapping_func = src->mapping_func;
+    mod->data = src->data;
 }
 
 /**
@@ -53,6 +55,12 @@ fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src)
 void
 fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
 {
+    if ((flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
+    {
+        FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead. Disabling source.");
+        src = FLUID_MOD_NONE;
+    }
+
     mod->src1 = src;
     mod->flags1 = flags;
 }
@@ -69,6 +77,12 @@ fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags)
 void
 fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags)
 {
+    if ((flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SIN)
+    {
+        FLUID_LOG(FLUID_ERR, "This version of fluidsynth no longer supports FLUID_MOD_SIN, pls. use fluid_mod_set_custom_mapping() instead. Disabling source.");
+        src = FLUID_MOD_NONE;
+    }
+
     mod->src2 = src;
     mod->flags2 = flags;
 }
@@ -94,7 +108,40 @@ fluid_mod_set_dest(fluid_mod_t *mod, int dest)
 void
 fluid_mod_set_amount(fluid_mod_t *mod, double amount)
 {
-    mod->amount = (double) amount;
+    mod->amount = amount;
+}
+
+/**
+ * Set a user defined mapping function of type #fluid_mod_mapping_t to @p mod.
+ * To use this function, specify #FLUID_MOD_CUSTOM as source flag.
+ * @param mod The modulator instance
+ * @param mapping_function Pointer to the mapping function to assign
+ * @param data User defined data pointer that will be passed into the mapping function, or NULL if not needed
+ * @since 2.5.0
+ */
+void
+fluid_mod_set_custom_mapping(fluid_mod_t *mod, fluid_mod_mapping_t mapping_function, void* data)
+{
+    mod->mapping_func = mapping_function;
+    mod->data = data;
+}
+
+/**
+ * Set the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @param type Transform type, see #fluid_mod_transforms
+ */
+void
+fluid_mod_set_transform(fluid_mod_t *mod, int type)
+{
+    unsigned char flag = (unsigned char) type;
+    if(flag != FLUID_MOD_TRANSFORM_LINEAR && flag != FLUID_MOD_TRANSFORM_ABS)
+    {
+        FLUID_LOG(FLUID_ERR, "fluid_mod_set_transform() called with invalid transform type %d", type);
+        return;
+    }
+    mod->trans = flag;
 }
 
 /**
@@ -169,44 +216,43 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
     return (double) mod->amount;
 }
 
+/**
+ * Get the transform type of a modulator.
+ *
+ * @param mod The modulator instance
+ * @return Transform type, see #fluid_mod_transforms
+ */
+int
+fluid_mod_get_transform(const fluid_mod_t *mod)
+{
+    return (int) mod->trans;
+}
+
 /*
  * retrieves the initial value from the given source of the modulator
  */
-static fluid_real_t
+fluid_real_t
 fluid_mod_get_source_value(const unsigned char mod_src,
                            const unsigned char mod_flags,
                            fluid_real_t *range,
                            const fluid_voice_t *voice
                           )
 {
-    const fluid_channel_t *chan = voice->channel;
+    // voice might be NULL in case of unit testing
+    const fluid_channel_t *chan = voice != NULL ? voice->channel : NULL;
     fluid_real_t val;
 
     if(mod_flags & FLUID_MOD_CC)
     {
-        /* From MIDI Recommended Practice (RP-036) Default Pan Formula:
-         * "Since MIDI controller values range from 0 to 127, the exact center
-         * of the range, 63.5, cannot be represented. Therefore, the effective
-         * range for CC#10 is modified to be 1 to 127, and values 0 and 1 both
-         * pan hard left. The recommended method is to subtract 1 from the
-         * value of CC#10, and saturate the result to be non-negative."
-         *
-         * We treat the balance control in exactly the same way, as the same
-         * problem applies here as well.
-         */
-        if(mod_src == PAN_MSB || mod_src == BALANCE_MSB)
-        {
-            *range = 126;
-            val = fluid_channel_get_cc(chan, mod_src) - 1;
+        val = fluid_channel_get_cc(chan, mod_src);
 
-            if(val < 0)
+        if(mod_src == PORTAMENTO_CTRL)
+        {
+            // an invalid portamento fromkey should be treated as 0 when it's actually used for modulating
+            if(!fluid_channel_is_valid_note(val))
             {
                 val = 0;
             }
-        }
-        else
-        {
-            val = fluid_channel_get_cc(chan, mod_src);
         }
     }
     else
@@ -254,119 +300,115 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 /**
  * transforms the initial value retrieved by \c fluid_mod_get_source_value into [0.0;1.0]
  */
-static fluid_real_t
-fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range)
+fluid_real_t
+fluid_mod_transform_source_value(fluid_mod_t* mod, fluid_real_t val, const fluid_real_t range, int is_src1, fluid_voice_t *voice)
 {
     /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
+    /* inverted value used for negative mapping functions */
+    const fluid_real_t inv_norm = 1.0f - 1.0f / range - val_norm;
 
     /* we could also only switch case the lower nibble of mod_flags, however
      * this would keep us from adding further mod types in the future
      *
      * instead just remove the flag(s) we already took care of
      */
+    unsigned char mod_src = is_src1 ? mod->src1 : mod->src2;
+    unsigned char mod_flags = is_src1 ? mod->flags1 : mod->flags2;
+    unsigned char applyModulationDepth = is_src1 && (mod_flags & FLUID_MOD_CC) && (mod_src == MODULATION_MSB) && ((mod->dest == GEN_VIBLFOTOPITCH) || (mod->dest == GEN_MODLFOTOPITCH));
     mod_flags &= ~FLUID_MOD_CC;
 
-    switch(mod_flags/* & 0x0f*/)
+    if(mod_src == FLUID_MOD_NONE)
     {
-    case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =0 */
-        val = val_norm;
-        break;
+        // early opt out if no source has been set
+        return 1.0f;
+    }
 
-    case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =1 */
-        val = 1.0f - val_norm;
-        break;
+    if(FLUID_UNLIKELY((mod_flags & FLUID_MOD_CUSTOM) != 0))
+    {
+        if(FLUID_UNLIKELY(mod == NULL || mod->mapping_func == NULL))
+        {
+            FLUID_LOG(FLUID_ERR, "Modulator has FLUID_MOD_CUSTOM flag set, but doesn't provide a mapping function, disabling modulator.");
+            val = 0.0f;
+            if (mod)
+            {
+                mod->amount = 0.0f;
+            }
+        }
+        else
+        {
+            val = mod->mapping_func(mod, (int)(val+0.5f), (int)(range+0.5f), is_src1, mod->data);
+        }
+    }
+    else
+    {
+        if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_UNIPOLAR)
+        {
+            if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)
+            {
+                val = inv_norm;
+            }
+            else
+            {
+                val = val_norm;
+            }
 
-    case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =2 */
-        val = -1.0f + 2.0f * val_norm;
-        break;
+            if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH)
+            {
+                val = (val >= 0.5f) ? 1.0f : 0.0f;
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONCAVE)
+            {
+                // The maximum mapped value should not be 1.0! According to sections 8.4.1 and 8.4.7 it must be 127/128 yet again.
+                // Same is assumed for convex below, though this is not explicitly said by the spec.
+                val = fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
+            {
+                val = fmin(fluid_convex(FLUID_VEL_CB_SIZE * val), (range - 1) / range);
+            }
+            else
+            {
+                // FLUID_MOD_LINEAR, just keep it as is
+            }
+        }
+        else if ((mod_flags & FLUID_MOD_POLAR_MASK) == FLUID_MOD_BIPOLAR)
+        {
+            if ((mod_flags & FLUID_MOD_SIGN_MASK) == FLUID_MOD_NEGATIVE)
+            {
+                val = (inv_norm == (range - 1) / range) ? inv_norm : -1.0f + 2.0f * inv_norm;
+            }
+            else
+            {
+                val = (val_norm == (range - 1) / range) ? val_norm : -1.0f + 2.0f * val_norm;
+            }
 
-    case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =3 */
-        val = 1.0f - 2.0f * val_norm;
-        break;
+            if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_SWITCH)
+            {
+                val = (val >= 0.0f) ? 1.0f : -1.0f;
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONCAVE)
+            {
+                // The maximum mapped value should not be 1.0! According to sections 8.4.1 and 8.4.7 it must be 127/128 yet again.
+                // Same is assumed for convex below, though this is not explicitly said by the spec.
+                val = (val >= 0.0f) ? fmin(fluid_concave(FLUID_VEL_CB_SIZE * val), (range-1)/range) :
+                                      -fluid_concave(FLUID_VEL_CB_SIZE * -val);
+            }
+            else if ((mod_flags & FLUID_MOD_MAP_MASK) == FLUID_MOD_CONVEX)
+            {
+                val = (val >= 0.0f) ? fmin(fluid_convex(FLUID_VEL_CB_SIZE * val), (range-1)/range) :
+                                      -fluid_convex(FLUID_VEL_CB_SIZE * -val);
+            }
+            else
+            {
+                // FLUID_MOD_LINEAR
+            }
+        }
+    }
 
-    case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =4 */
-        val = fluid_concave(127 * (val_norm));
-        break;
-
-    case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =5 */
-        val = fluid_concave(127 * (1.0f - val_norm));
-        break;
-
-    case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =6 */
-        val = (val_norm > 0.5f) ?  fluid_concave(127 * 2 * (val_norm - 0.5f))
-              : -fluid_concave(127 * 2 * (0.5f - val_norm));
-        break;
-
-    case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =7 */
-        val = (val_norm > 0.5f) ? -fluid_concave(127 * 2 * (val_norm - 0.5f))
-              :  fluid_concave(127 * 2 * (0.5f - val_norm));
-        break;
-
-    case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =8 */
-        val = fluid_convex(127 * (val_norm));
-        break;
-
-    case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =9 */
-        val = fluid_convex(127 * (1.0f - val_norm));
-        break;
-
-    case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =10 */
-        val = (val_norm > 0.5f) ?  fluid_convex(127 * 2 * (val_norm - 0.5f))
-              : -fluid_convex(127 * 2 * (0.5f - val_norm));
-        break;
-
-    case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =11 */
-        val = (val_norm > 0.5f) ? -fluid_convex(127 * 2 * (val_norm - 0.5f))
-              :  fluid_convex(127 * 2 * (0.5f - val_norm));
-        break;
-
-    case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =12 */
-        val = (val_norm >= 0.5f) ? 1.0f : 0.0f;
-        break;
-
-    case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =13 */
-        val = (val_norm >= 0.5f) ? 0.0f : 1.0f;
-        break;
-
-    case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =14 */
-        val = (val_norm >= 0.5f) ? 1.0f : -1.0f;
-        break;
-
-    case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =15 */
-        val = (val_norm >= 0.5f) ? -1.0f : 1.0f;
-        break;
-
-    /*
-     * MIDI CCs only have a resolution of 7 bits. The closer val_norm gets to 1,
-     * the less will be the resulting change of the sinus. When using this sin()
-     * for scaling the cutoff frequency, there will be no audible difference between
-     * MIDI CCs 118 to 127. To avoid this waste of CCs multiply with 0.87
-     * (at least for unipolar) which makes sin() never get to 1.0 but to 0.98 which
-     * is close enough.
-     */
-    case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* custom sin(x) */
-        val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * val_norm);
-        break;
-
-    case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-        val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * (1.0f - val_norm));
-        break;
-
-    case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
-        val = (val_norm > 0.5f) ?  FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
-              : -FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
-        break;
-
-    case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-        val = (val_norm > 0.5f) ? -FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
-              :  FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
-        break;
-
-    default:
-        FLUID_LOG(FLUID_ERR, "Unknown modulator type '%d', disabling modulator.", mod_flags);
-        val = 0.0f;
-        break;
+    if(applyModulationDepth && voice != NULL && voice->channel != NULL)
+    {
+        val *= fluid_channel_get_modulation_depth_range(voice->channel) / 50.0f;
     }
 
     return val;
@@ -379,24 +421,31 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
  *
  * Output = Transform(Amount * Map(primary source input) * Map(secondary source input))
  *
- * Notes:
- * 1)fluid_mod_get_value, ignores the Transform operator. The result is:
+ * Note:
+ * fluid_mod_get_value ignores the Transform operator. The result is:
  *
  *   Output = Amount * Map(primary source input) * Map(secondary source input)
- *
- * 2)When primary source input (src1) is set to General Controller 'No Controller',
- *   output is forced to 0.
- *
- * 3)When secondary source input (src2) is set to General Controller 'No Controller',
- *   output is forced to +1.0 
  */
 fluid_real_t
 fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 {
     extern fluid_mod_t default_vel2filter_mod;
 
-    fluid_real_t v1 = 0.0, v2 = 1.0;
-    fluid_real_t range1 = 127.0, range2 = 127.0;
+    fluid_real_t v1, v2;
+    fluid_real_t final_value;
+    /* The wording of the default modulators refers to a range of 127/128.
+     * And the table in section 9.5.3 suggests, that this mapping should be applied
+     * to all unipolar and bipolar mappings respectively.
+     *
+     * Thinking about this further, this is actually pretty clever, as this is properly
+     * addresses MIDI Recommended Practice (RP-036) Default Pan Formula
+     * "Since MIDI controller values range from 0 to 127, the exact center
+     * of the range, 63.5, cannot be represented."
+     *
+     * When changing the overall range to 127/128 however, the "middle pan" value of 64
+     * can be correctly represented.
+     */
+    fluid_real_t range1 = 128.0, range2 = 128.0;
 
     /* 'special treatment' for default controller
      *
@@ -421,59 +470,42 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
      * */
     if(fluid_mod_test_identity(mod, &default_vel2filter_mod))
     {
-// S. Christian Collins' mod, to stop forcing velocity based filtering
         /*
             if (voice->vel < 64){
               return (fluid_real_t) mod->amount / 2.0;
             } else {
               return (fluid_real_t) mod->amount * (127 - voice->vel) / 127;
             }
+            return (fluid_real_t) mod->amount / 2.0;
         */
-        return 0; // (fluid_real_t) mod->amount / 2.0;
+        // S. Christian Collins' mod, to stop forcing velocity based filtering
+        return 0;
     }
 
-// end S. Christian Collins' mod
+    /* Get the initial value of the first source.
+     *
+     * Even if the src is FLUID_MOD_NONE, the value has to be transformed, see #1389
+     */
+    v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
-    /* get the initial value of the first source */
-    if(mod->src1 > 0)
-    {
-        v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
-
-        /* transform the input value */
-        v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
-    }
-    /* When primary source input (src1) is set to General Controller 'No Controller',
-       output is forced to 0.0
-    */
-    else
-    {
-        return 0.0;
-    }
-
-    /* no need to go further */
-    if(v1 == 0.0f)
-    {
-        return 0.0f;
-    }
+    /* transform the input value */
+    v1 = fluid_mod_transform_source_value(mod, v1, range1, TRUE, voice);
 
     /* get the second input source */
-    if(mod->src2 > 0)
-    {
-        v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
+    v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
-        /* transform the second input value */
-        v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
-    }
-    /* When secondary source input (src2) is set to General Controller 'No Controller',
-       output is forced to +1.0
-    */
-    else
-    {
-        v2 = 1.0f;
-    }
+    /* transform the second input value */
+    v2 = fluid_mod_transform_source_value(mod, v2, range2, FALSE, voice);
 
-    /* it's as simple as that: */
-    return (fluid_real_t) mod->amount * v1 * v2;
+    /* it indeed is as simple as that: */
+    final_value = (fluid_real_t) mod->amount * v1 * v2;
+
+    /* check for absolute value transform */
+    if(mod->trans == FLUID_MOD_TRANSFORM_ABS)
+    {
+        final_value = FLUID_FABS(final_value);
+    }
+    return final_value;
 }
 
 /**
@@ -482,7 +514,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
  * @return New allocated modulator or NULL if out of memory
  */
 fluid_mod_t *
-new_fluid_mod()
+new_fluid_mod(void)
 {
     fluid_mod_t *mod = FLUID_NEW(fluid_mod_t);
 
@@ -491,6 +523,7 @@ new_fluid_mod()
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+    FLUID_MEMSET(mod, 0, sizeof(*mod));
 
     return mod;
 }
@@ -506,6 +539,21 @@ delete_fluid_mod(fluid_mod_t *mod)
     FLUID_FREE(mod);
 }
 
+/*
+ * delete list of modulators.
+ */
+void delete_fluid_list_mod(fluid_mod_t *mod)
+{
+    fluid_mod_t *tmp;
+
+    while (mod) /* delete the modulators */
+    {
+        tmp = mod;
+        mod = mod->next;
+        delete_fluid_mod(tmp);
+    }
+}
+
 /**
  * Returns the size of the fluid_mod_t structure.
  *
@@ -513,7 +561,7 @@ delete_fluid_mod(fluid_mod_t *mod)
  *
  * Useful in low latency scenarios e.g. to allocate a modulator on the stack.
  */
-size_t fluid_mod_sizeof()
+size_t fluid_mod_sizeof(void)
 {
     return sizeof(fluid_mod_t);
 }
@@ -521,7 +569,7 @@ size_t fluid_mod_sizeof()
 /**
  * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE.
  *
- * @param mod, modulator.
+ * @param mod modulator.
  * @return TRUE if modulator source 1 other than cc is FLUID_MOD_NONE, FALSE otherwise.
  */
 static int
@@ -533,8 +581,8 @@ fluid_mod_is_src1_none(const fluid_mod_t *mod)
 /**
  * Checks if modulators source other than CC source is invalid.
  *
- * @param mod, modulator.
- * @param src1_select, source input selection to check.
+ * @param mod modulator.
+ * @param src1_select source input selection to check.
  *   1 to check src1 source.
  *   0 to check src2 source.
  * @return FALSE if selected modulator source other than cc is invalid, TRUE otherwise.
@@ -572,8 +620,8 @@ fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 /**
  * Checks if modulator CC source is invalid (specs SF 2.01  7.4, 7.8, 8.2.1).
  *
- * @param mod, modulator.
- * @src1_select, source input selection:
+ * @param mod modulator.
+ * @param src1_select source input selection:
  *   1 to check src1 source or
  *   0 to check src2 source.
  * @return FALSE if selected modulator's source CC is invalid, TRUE otherwise.
@@ -616,8 +664,8 @@ fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 /**
  * Checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1)
  *
- * @param mod, modulator.
- * @param name,if not NULL, pointer on a string displayed as a warning.
+ * @param mod modulator.
+ * @param name if not NULL, pointer on a string displayed as a warning.
  * @return TRUE if modulator sources src1, src2 are valid, FALSE otherwise.
  */
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
@@ -627,7 +675,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     static const char invalid_cc_src[] =
         "Invalid modulator, using CC source %s.src%d=%d";
     static const char src1_is_none[] =
-        "Modulator with source 1 none %s.src1=%d";
+        "Modulator with source 1 set to none %s.src1=%d";
 
     /* checks valid non cc sources */
     if(!fluid_mod_check_non_cc_source(mod, 1)) /* check src1 */
@@ -641,12 +689,9 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     }
 
     /*
-      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid but
-      the output of this modulator will be forced to 0 at synthesis time.
-      Also this modulator cannot be used to overwrite a default modulator (as
-      there is no default modulator with src1 source equal to FLUID_MOD_NONE).
-      Consequently it is useful to return FALSE to indicate this modulator
-      being useless. It will be removed later with others invalid modulators.
+      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid, yet it's pretty unusual
+      which is why it deserves a warning. However, it's totally legal. A use-case could be a
+      constant modulator that is meant to apply some offset to a generator.
     */
     if(fluid_mod_is_src1_none(mod))
     {
@@ -655,7 +700,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
             FLUID_LOG(FLUID_WARN, src1_is_none, name, mod->src1);
         }
 
-        return FALSE;
+        return TRUE;
     }
 
     if(!fluid_mod_check_non_cc_source(mod, 0)) /* check src2 */

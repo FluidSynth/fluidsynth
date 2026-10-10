@@ -13,15 +13,17 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "fluid_sys.h"
 
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+#include <poll.h>
+#endif
 
-#if WITH_READLINE
+#if READLINE_SUPPORT
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
@@ -30,10 +32,14 @@
 #include "fluid_rtkit.h"
 #endif
 
-#if HAVE_PTHREAD_H && !defined(WIN32)
+#if HAVE_PTHREAD_H && !defined(_WIN32)
 // Do not include pthread on windows. It includes winsock.h, which collides with ws2tcpip.h from fluid_sys.h
 // It isn't need on Windows anyway.
 #include <pthread.h>
+#endif
+
+#ifdef __ANDROID__
+#include <android/log.h>
 #endif
 
 /* WIN32 HACK - Flag used to differentiate between a file descriptor and a socket.
@@ -49,13 +55,6 @@
 /* SCHED_FIFO priority for high priority timer threads */
 #define FLUID_SYS_TIMER_HIGH_PRIO_LEVEL         10
 
-
-typedef struct
-{
-    fluid_thread_func_t func;
-    void *data;
-    int prio_level;
-} fluid_thread_info_t;
 
 struct _fluid_timer_t
 {
@@ -74,10 +73,14 @@ struct _fluid_timer_t
 struct _fluid_server_socket_t
 {
     fluid_socket_t socket;
+    int port;
     fluid_thread_t *thread;
     int cont;
     fluid_server_func_t func;
     void *data;
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    int wake_fds[2]; /* pipe fds used to interrupt accept(): [0]=read end, [1]=write end */
+#endif
 };
 
 
@@ -130,9 +133,38 @@ fluid_set_log_function(int level, fluid_log_function_t fun, void *data)
 void
 fluid_default_log_function(int level, const char *message, void *data)
 {
+#ifdef __ANDROID__
+    switch(level)
+    {
+    case FLUID_PANIC:
+        __android_log_print(ANDROID_LOG_FATAL, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_ERR:
+        __android_log_print(ANDROID_LOG_ERROR, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_WARN:
+        __android_log_print(ANDROID_LOG_WARN, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_INFO:
+        __android_log_print(ANDROID_LOG_INFO, fluid_libname, "%s", message);
+        break;
+
+    case FLUID_DBG:
+        __android_log_print(ANDROID_LOG_DEBUG, fluid_libname, "%s", message);
+        break;
+
+    default:
+        // is not expected to be used
+        __android_log_print(ANDROID_LOG_VERBOSE, fluid_libname, "%s", message);
+        break;
+    }
+#else
     FILE *out;
 
-#if defined(WIN32)
+#if defined(_WIN32)
     out = stdout;
 #else
     out = stderr;
@@ -166,6 +198,7 @@ fluid_default_log_function(int level, const char *message, void *data)
     }
 
     fflush(out);
+#endif
 }
 
 /**
@@ -228,7 +261,7 @@ void* fluid_alloc(size_t len)
  */
 FILE *fluid_fopen(const char *filename, const char *mode)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     wchar_t *wpath = NULL, *wmode = NULL;
     FILE *file = NULL;
     int length;
@@ -286,7 +319,7 @@ error_recovery:
  * @note Only use this function when the API documentation explicitly says so. Otherwise use
  * adequate \c delete_fluid_* functions.
  *
- * @warning Calling ::free() on memory that is advised to be freed with fluid_free() results in undefined behaviour!
+ * @warning Calling C-std lib <code>free()</code> on memory that is advised to be freed with fluid_free() results in undefined behaviour!
  * (cf.: "Potential Errors Passing CRT Objects Across DLL Boundaries" found in MS Docs)
  *
  * @since 2.0.7
@@ -373,83 +406,28 @@ char *fluid_strtok(char **str, char *delim)
 }
 
 /**
- * Suspend the execution of the current thread for the specified amount of time.
- * @param milliseconds to wait.
- */
-void fluid_msleep(unsigned int msecs)
-{
-    g_usleep(msecs * 1000);
-}
-
-/**
  * Get time in milliseconds to be used in relative timing operations.
  * @return Monotonic time in milliseconds.
  */
 unsigned int fluid_curtime(void)
 {
-    float now;
-    static float initial_time = 0;
+    double now;
+    static double initial_time = 0;
 
     if(initial_time == 0)
     {
-        initial_time = (float)fluid_utime();
+        initial_time = fluid_utime();
     }
 
-    now = (float)fluid_utime();
+    now = fluid_utime();
 
-    return (unsigned int)((now - initial_time) / 1000.0f);
-}
-
-/**
- * Get time in microseconds to be used in relative timing operations.
- * @return time in microseconds.
- * Note: When used for profiling we need high precision clock given
- * by g_get_monotonic_time()if available (glib version >= 2.53.3).
- * If glib version is too old and in the case of Windows the function
- * uses high precision performance counter instead of g_getmonotic_time().
- */
-double
-fluid_utime(void)
-{
-    double utime;
-
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
-    /* use high precision monotonic clock if available (g_monotonic_time().
-     * For Windows, if this clock is actually implemented as low prec. clock
-     * (i.e. in case glib is too old), high precision performance counter are
-     * used instead.
-     * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
-     */
-#if defined(WITH_PROFILING) &&  defined(WIN32) &&\
-	/* glib < 2.53.3 */\
-	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
-    /* use high precision performance counter. */
-    static LARGE_INTEGER freq_cache = {0, 0};	/* Performance Frequency */
-    LARGE_INTEGER perf_cpt;
-
-    if(! freq_cache.QuadPart)
-    {
-        QueryPerformanceFrequency(&freq_cache);  /* Frequency value */
-    }
-
-    QueryPerformanceCounter(&perf_cpt); /* Counter value */
-    utime = perf_cpt.QuadPart * 1000000.0 / freq_cache.QuadPart; /* time in micros */
-#else
-    utime = g_get_monotonic_time();
-#endif
-#else
-    /* fallback to less precise clock */
-    GTimeVal timeval;
-    g_get_current_time(&timeval);
-    utime = (timeval.tv_sec * 1000000.0 + timeval.tv_usec);
-#endif
-
-    return utime;
+    return (unsigned int)((now - initial_time) / 1000.0);
 }
 
 
+#if !OSAL_embedded
 
-#if defined(WIN32)      /* Windoze specific stuff */
+#if defined(_WIN32)      /* Windoze specific stuff */
 
 void
 fluid_thread_self_set_prio(int prio_level)
@@ -472,7 +450,7 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#else   /* POSIX stuff..  Nice POSIX..  Good POSIX. */
+#else /* POSIX stuff..  Nice POSIX..  Good POSIX. */
 
 void
 fluid_thread_self_set_prio(int prio_level)
@@ -503,7 +481,13 @@ fluid_thread_self_set_prio(int prio_level)
     }
 }
 
-#ifdef FPE_CHECK
+
+#endif	// #else    (its POSIX)
+
+#endif	// #if !OSAL_embedded
+
+
+#if defined(FPE_CHECK) && !defined(_WIN32) && !defined(__OS2__)
 
 /***************************************************************
  *
@@ -570,10 +554,7 @@ void fluid_clear_fpe_i386(void)
     _FPU_CLR_SW();
 }
 
-#endif	// ifdef FPE_CHECK
-
-
-#endif	// #else    (its POSIX)
+#endif	// #if defined(FPE_CHECK) && !defined(_WIN32) && !defined(__OS2__)
 
 
 /***************************************************************
@@ -590,11 +571,11 @@ void fluid_clear_fpe_i386(void)
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
-  profiling       |    Internal    |      |             |      Audio
-  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
-  shell           |    API         |      |             |      API
+  profiling       |    Internal     |      |             |      Audio
+  command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
+  shell           |    API          |      |             |      API
 
 */
 /* default parameters for shell command "prof_start" in fluid_sys.c */
@@ -864,7 +845,7 @@ int fluid_profile_is_cancel_req(void)
 {
 #ifdef FLUID_PROFILE_CANCEL
 
-#if defined(WIN32)      /* Windows specific stuff */
+#if defined(_WIN32)      /* Windows specific stuff */
     /* Profile cancellation is supported for Windows */
     /* returns TRUE if key <ENTER> is depressed */
     return(GetAsyncKeyState(VK_RETURN) & 0x1);
@@ -995,25 +976,8 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
  *
  */
 
-#if OLD_GLIB_THREAD_API
-
-/* Rather than inline this one, we just declare it as a function, to prevent
- * GCC warning about inline failure. */
-fluid_cond_t *
-new_fluid_cond(void)
-{
-    if(!g_thread_supported())
-    {
-        g_thread_init(NULL);
-    }
-
-    return g_cond_new();
-}
-
-#endif
-
-static gpointer
-fluid_thread_high_prio(gpointer data)
+fluid_pointer_t
+fluid_thread_high_prio(fluid_pointer_t data)
 {
     fluid_thread_info_t *info = data;
 
@@ -1023,109 +987,6 @@ fluid_thread_high_prio(gpointer data)
     FLUID_FREE(info);
 
     return NULL;
-}
-
-/**
- * Create a new thread.
- * @param func Function to execute in new thread context
- * @param data User defined data to pass to func
- * @param prio_level Priority level.  If greater than 0 then high priority scheduling will
- *   be used, with the given priority level (used by pthreads only).  0 uses normal scheduling.
- * @param detach If TRUE, 'join' does not work and the thread destroys itself when finished.
- * @return New thread pointer or NULL on error
- */
-fluid_thread_t *
-new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach)
-{
-    GThread *thread;
-    fluid_thread_info_t *info = NULL;
-    GError *err = NULL;
-
-    g_return_val_if_fail(func != NULL, NULL);
-
-#if OLD_GLIB_THREAD_API
-
-    /* Make sure g_thread_init has been called.
-     * Probably not a good idea in a shared library,
-     * but what can we do *and* remain backwards compatible? */
-    if(!g_thread_supported())
-    {
-        g_thread_init(NULL);
-    }
-
-#endif
-
-    if(prio_level > 0)
-    {
-        info = FLUID_NEW(fluid_thread_info_t);
-
-        if(!info)
-        {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
-            return NULL;
-        }
-
-        info->func = func;
-        info->data = data;
-        info->prio_level = prio_level;
-#if NEW_GLIB_THREAD_API
-        thread = g_thread_try_new(name, fluid_thread_high_prio, info, &err);
-#else
-        thread = g_thread_create(fluid_thread_high_prio, info, detach == FALSE, &err);
-#endif
-    }
-
-    else
-    {
-#if NEW_GLIB_THREAD_API
-        thread = g_thread_try_new(name, (GThreadFunc)func, data, &err);
-#else
-        thread = g_thread_create((GThreadFunc)func, data, detach == FALSE, &err);
-#endif
-    }
-
-    if(!thread)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create the thread: %s",
-                  fluid_gerror_message(err));
-        g_clear_error(&err);
-        FLUID_FREE(info);
-        return NULL;
-    }
-
-#if NEW_GLIB_THREAD_API
-
-    if(detach)
-    {
-        g_thread_unref(thread);    // Release thread reference, if caller wants to detach
-    }
-
-#endif
-
-    return thread;
-}
-
-/**
- * Frees data associated with a thread (does not actually stop thread).
- * @param thread Thread to free
- */
-void
-delete_fluid_thread(fluid_thread_t *thread)
-{
-    /* Threads free themselves when they quit, nothing to do */
-}
-
-/**
- * Join a thread (wait for it to terminate).
- * @param thread Thread to join
- * @return FLUID_OK
- */
-int
-fluid_thread_join(fluid_thread_t *thread)
-{
-    g_thread_join(thread);
-
-    return FLUID_OK;
 }
 
 
@@ -1264,12 +1125,14 @@ int
 fluid_timer_is_running(const fluid_timer_t *timer)
 {
     // for unit test usage only
-    return timer->callback != NULL;
+    return timer != NULL && timer->callback != NULL;
 }
 
 long fluid_timer_get_interval(const fluid_timer_t * timer)
 {
     // for unit test usage only
+    if (timer == NULL)
+        return 0;
     return timer->msec;
 }
 
@@ -1308,7 +1171,7 @@ int
 fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt,
                        char *buf, int len)
 {
-#if WITH_READLINE
+#if READLINE_SUPPORT
 
     if(in == fluid_get_stdin())
     {
@@ -1357,7 +1220,7 @@ fluid_istream_gets(fluid_istream_t in, char *buf, int len)
 
     while(--len > 0)
     {
-#ifndef WIN32
+#ifndef _WIN32
         n = read(in, &c, 1);
 
         if(n == -1)
@@ -1447,7 +1310,7 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
 
     buf[4095] = 0;
 
-#ifndef WIN32
+#ifndef _WIN32
     return write(out, buf, FLUID_STRLEN(buf));
 #else
     {
@@ -1475,6 +1338,12 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
 int fluid_server_socket_join(fluid_server_socket_t *server_socket)
 {
     return fluid_thread_join(server_socket->thread);
+}
+
+int fluid_server_socket_get_port(fluid_server_socket_t *server_socket)
+{
+    fluid_return_val_if_fail(server_socket != NULL, FLUID_FAILED);
+    return server_socket->port;
 }
 
 static int fluid_socket_init(void)
@@ -1522,13 +1391,33 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock)
 
 void fluid_socket_close(fluid_socket_t sock)
 {
+    int ret;
     if(sock != INVALID_SOCKET)
     {
+        /* Trigger any pending blocking I/O (e.g. accept()) before closing. */
 #ifdef _WIN32
+        shutdown(sock, SD_BOTH);
         closesocket(sock);
 
 #else
-        close(sock);
+        ret = shutdown(sock, SHUT_RDWR);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during shutdown(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "shutdown() succeeded");
+        }
+        ret = close(sock);
+        if(ret != 0)
+        {
+            FLUID_LOG(FLUID_DBG, "Got error %d during close(): %s", fluid_socket_get_error(), strerror(fluid_socket_get_error()));
+        }
+        else
+        {
+            FLUID_LOG(FLUID_DBG, "close() succeeded");
+        }
 #endif
     }
 }
@@ -1555,10 +1444,48 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
     int r;
     FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
-    FLUID_LOG(FLUID_DBG, "Server listening for connections");
+    FLUID_LOG(FLUID_DBG, "Server ready and listening for connections");
 
     while(server_socket->cont)
     {
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+        /* On POSIX, use poll() to wait on either an incoming connection or a
+         * wakeup from the wake pipe. Relying on shutdown()/close() to
+         * interrupt a concurrent accept() is unreliable on macOS/BSD where
+         * shutdown() is a no-op on a listening socket. */
+        {
+            struct pollfd fds[2];
+            fds[0].fd = server_socket->socket;
+            fds[0].events = POLLIN;
+            fds[1].fd = server_socket->wake_fds[0];
+            fds[1].events = POLLIN;
+
+            FLUID_LOG(FLUID_DBG, "Server Thread polling for events...");
+            if(poll(fds, 2, -1) < 0)
+            {
+                if(server_socket->cont)
+                {
+                    FLUID_LOG(FLUID_ERR, "Got error %d while polling server socket", fluid_socket_get_error());
+                }
+
+                server_socket->cont = 0;
+                return FLUID_THREAD_RETURN_VALUE;
+            }
+
+            if(fds[1].revents & POLLIN)
+            {
+                FLUID_LOG(FLUID_DBG, "Wakeup was requested by delete_fluid_server_socket().");
+                break;
+            }
+
+            if(!(fds[0].revents & POLLIN))
+            {
+                continue;
+            }
+        }
+#endif
+
+        FLUID_LOG(FLUID_DBG, "Server Thread calling accept()...");
         client_socket = accept(server_socket->socket, (struct sockaddr *)&addr, &addrlen);
 
         FLUID_LOG(FLUID_DBG, "New client connection");
@@ -1567,7 +1494,11 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
         {
             if(server_socket->cont)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to accept connection: %d", fluid_socket_get_error());
+                FLUID_LOG(FLUID_ERR, "Got error %d while trying to accept connection", fluid_socket_get_error());
+            }
+            else
+            {
+                FLUID_LOG(FLUID_DBG, "Got error %d while trying to accept connection, abort was requested", fluid_socket_get_error());
             }
 
             server_socket->cont = 0;
@@ -1575,6 +1506,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
         }
         else
         {
+            FLUID_LOG(FLUID_DBG, "Server thread got a client socket.");
 #ifdef HAVE_INETNTOP
 
 #ifdef IPV6_SUPPORT
@@ -1606,13 +1538,16 @@ fluid_server_socket_t *
 new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 {
     fluid_server_socket_t *server_socket;
+    struct sockaddr_in addr4;
 #ifdef IPV6_SUPPORT
-    struct sockaddr_in6 addr;
-#else
-    struct sockaddr_in addr;
+    struct sockaddr_in6 addr6;
 #endif
-
+    const struct sockaddr *addr;
+    size_t addr_size;
     fluid_socket_t sock;
+    int current_port = port;
+    int auto_port = (port == 0);
+    int bind_error;
 
     fluid_return_val_if_fail(func != NULL, NULL);
 
@@ -1621,48 +1556,96 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         return NULL;
     }
 
+    FLUID_MEMSET(&addr4, 0, sizeof(addr4));
+    addr4.sin_family = AF_INET;
+    addr4.sin_addr.s_addr = htonl(INADDR_ANY);
+
 #ifdef IPV6_SUPPORT
-    sock = socket(AF_INET6, SOCK_STREAM, 0);
-
-    if(sock == INVALID_SOCKET)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
-        fluid_socket_cleanup();
-        return NULL;
-    }
-
-    FLUID_MEMSET(&addr, 0, sizeof(addr));
-    addr.sin6_family = AF_INET6;
-    addr.sin6_port = htons((uint16_t)port);
-    addr.sin6_addr = in6addr_any;
-#else
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(sock == INVALID_SOCKET)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
-        fluid_socket_cleanup();
-        return NULL;
-    }
-
-    FLUID_MEMSET(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons((uint16_t)port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    FLUID_MEMSET(&addr6, 0, sizeof(addr6));
+    addr6.sin6_family = AF_INET6;
+    addr6.sin6_addr = in6addr_any;
 #endif
 
-    if(bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == SOCKET_ERROR)
+    if(auto_port)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %d", fluid_socket_get_error());
-        fluid_socket_close(sock);
+        current_port = FLUID_SHELL_AUTO_PORT_START;
+    }
+
+#ifdef IPV6_SUPPORT
+    sock = socket(AF_INET6, SOCK_STREAM, 0);
+    addr = (const struct sockaddr *) &addr6;
+    addr_size = sizeof(addr6);
+
+    if(sock == INVALID_SOCKET)
+    {
+        FLUID_LOG(FLUID_WARN, "Got error %d while trying to create IPv6 server socket (will try with IPv4)", fluid_socket_get_error());
+
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        addr = (const struct sockaddr *) &addr4;
+        addr_size = sizeof(addr4);
+    }
+
+#else
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    addr = (const struct sockaddr *) &addr4;
+    addr_size = sizeof(addr4);
+#endif
+
+    if(sock == INVALID_SOCKET)
+    {
+        FLUID_LOG(FLUID_ERR, "Got error %d while trying to create server socket", fluid_socket_get_error());
         fluid_socket_cleanup();
         return NULL;
+    }
+    
+    while(1)
+    {
+        addr4.sin_port = htons((uint16_t) current_port);
+#ifdef IPV6_SUPPORT
+        addr6.sin6_port = htons((uint16_t) current_port);
+#endif
+        if(bind(sock, addr, (int) addr_size) == 0)
+        {
+            break;
+        }
+
+        bind_error = fluid_socket_get_error();
+
+        if(!auto_port)
+        {
+            FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", bind_error);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+#if defined(_WIN32)
+        if(bind_error != WSAEADDRINUSE)
+#else
+        if(bind_error != EADDRINUSE)
+#endif
+        {
+            FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", bind_error);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+        if(current_port == FLUID_TCP_PORT_MAX)
+        {
+            FLUID_LOG(FLUID_ERR, "No free TCP port available for shell server auto mode (starting at %d)",
+                      FLUID_SHELL_AUTO_PORT_START);
+            fluid_socket_close(sock);
+            fluid_socket_cleanup();
+            return NULL;
+        }
+
+        current_port++;
     }
 
     if(listen(sock, SOMAXCONN) == SOCKET_ERROR)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to listen on server socket: %d", fluid_socket_get_error());
+        FLUID_LOG(FLUID_ERR, "Got error %d while trying to listen on server socket", fluid_socket_get_error());
         fluid_socket_close(sock);
         fluid_socket_cleanup();
         return NULL;
@@ -1679,15 +1662,31 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
     }
 
     server_socket->socket = sock;
+    server_socket->port = current_port;
     server_socket->func = func;
     server_socket->data = data;
     server_socket->cont = 1;
+
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    if(pipe(server_socket->wake_fds) == -1)
+    {
+        FLUID_LOG(FLUID_ERR, "Got error %d while creating wakeup pipe for server socket", errno);
+        FLUID_FREE(server_socket);
+        fluid_socket_close(sock);
+        fluid_socket_cleanup();
+        return NULL;
+    }
+#endif
 
     server_socket->thread = new_fluid_thread("server", fluid_server_socket_run, server_socket,
                             0, FALSE);
 
     if(server_socket->thread == NULL)
     {
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+        close(server_socket->wake_fds[0]);
+        close(server_socket->wake_fds[1]);
+#endif
         FLUID_FREE(server_socket);
         fluid_socket_close(sock);
         fluid_socket_cleanup();
@@ -1701,18 +1700,42 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
     fluid_return_if_fail(server_socket != NULL);
 
+    FLUID_LOG(FLUID_DBG, "Signaling server thread to exit...");
     server_socket->cont = 0;
 
+#if !defined(_POSIX_VERSION) || defined(__OS2__)
+    /* On Windows, closing the socket reliably interrupts a blocking accept(). */
     if(server_socket->socket != INVALID_SOCKET)
     {
         fluid_socket_close(server_socket->socket);
     }
+#else
+    /* On POSIX, writing to the wake pipe unblocks the server thread's poll()
+     * call. Using shutdown/close to interrupt accept() is unreliable on some
+     * platforms (e.g. macOS/BSD) where shutdown() on a listening socket is a
+     * no-op and close() may not wake a concurrent accept(). */
+    {
+        char dummy = 0;
+        (void)write(server_socket->wake_fds[1], &dummy, 1);
+    }
+#endif
 
     if(server_socket->thread)
     {
+        FLUID_LOG(FLUID_DBG, "Joining server thread...");
         fluid_thread_join(server_socket->thread);
         delete_fluid_thread(server_socket->thread);
+        FLUID_LOG(FLUID_DBG, "Server thread joined and deleted.");
     }
+
+#if defined(_POSIX_VERSION) && !defined(__OS2__)
+    if(server_socket->socket != INVALID_SOCKET)
+    {
+        fluid_socket_close(server_socket->socket);
+    }
+    close(server_socket->wake_fds[0]);
+    close(server_socket->wake_fds[1]);
+#endif
 
     FLUID_FREE(server_socket);
 
@@ -1730,14 +1753,14 @@ FILE* fluid_file_open(const char* path, const char** errMsg)
     
     FILE* handle = NULL;
     
-    if(!g_file_test(path, G_FILE_TEST_EXISTS))
+    if(!fluid_file_test(path, FLUID_FILE_TEST_EXISTS))
     {
         if(errMsg != NULL)
         {
             *errMsg = ErrExist;
         }
     }
-    else if(!g_file_test(path, G_FILE_TEST_IS_REGULAR))
+    else if(!fluid_file_test(path, FLUID_FILE_TEST_IS_REGULAR))
     {
         if(errMsg != NULL)
         {
@@ -1757,7 +1780,7 @@ FILE* fluid_file_open(const char* path, const char** errMsg)
 
 fluid_long_long_t fluid_file_tell(FILE* f)
 {
-#ifdef WIN32
+#ifdef _WIN32
     // On Windows, long is only a 32 bit integer. Thus ftell() does not support to handle files >2GiB.
     // We should use _ftelli64() in this case, however its availability depends on MS CRT and might not be
     // available on WindowsXP, Win98, etc.
@@ -1777,11 +1800,76 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #endif
 }
 
-#ifdef WIN32
+#ifdef _WIN32
+#define FLUID_PRIi64 "I64d"
+#else
+#define FLUID_PRIi64 "lld"
+#endif
+
+int fluid_file_read(void *buf, fluid_long_long_t count, FILE *fd)
+{
+    if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
+    {
+        if(feof((FILE *)fd))
+        {
+            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %" FLUID_PRIi64 " bytes", count);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_ERR, "File read failed");
+        }
+
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+int fluid_file_seek(FILE *fd, fluid_long_long_t ofs, int whence)
+{
+#if defined(__MINGW32__) && defined(__i386__)
+    // Some older versions of MinGW i686 report incorrect values for _ftelli64(). This is problematic,
+    // because _fseeki64() below would use these incorrect values when seeking with SEEK_CUR,
+    // resulting in incorrect file positions. So we need to work around this by doing the SEEK_CUR
+    // calculation ourselves.
+    // See https://sourceforge.net/p/mingw-w64/bugs/864/ for more details.
+    if(whence == SEEK_CUR)
+    {
+        whence = SEEK_SET;
+        ofs += fluid_file_tell((FILE *)fd);
+    }
+#endif
+
+#ifdef _WIN32
+#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
+#else
+#define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
+#endif
+
+    if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
+    {
+        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %" FLUID_PRIi64 " and whence = %d", ofs, whence);
+        return FLUID_FAILED;
+    }
+#undef FLUID_FSEEK
+
+    return FLUID_OK;
+}
+
+#undef FLUID_PRIi64
+
+#if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!
+#define FLUID_WINDOWS_MEX_ERROR_LEN    1024
+
 char* fluid_get_windows_error(void)
 {
-    static TCHAR err[1024];
+#ifdef _UNICODE
+    TCHAR err[FLUID_WINDOWS_MEX_ERROR_LEN];
+    static char ascii_err[FLUID_WINDOWS_MEX_ERROR_LEN];
+#else
+    static TCHAR err[FLUID_WINDOWS_MEX_ERROR_LEN];
+#endif
 
     FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL,
@@ -1792,8 +1880,6 @@ char* fluid_get_windows_error(void)
                   NULL);
 
 #ifdef _UNICODE
-    static char ascii_err[sizeof(err)];
-
     WideCharToMultiByte(CP_UTF8, 0, err, -1, ascii_err, sizeof(ascii_err)/sizeof(ascii_err[0]), 0, 0);
     return ascii_err;
 #else
@@ -1801,3 +1887,224 @@ char* fluid_get_windows_error(void)
 #endif
 }
 #endif
+
+static int fluid_strallocv_internal(char ***current, int *count, int add)
+{
+    int i;
+    char **new;
+
+    new = FLUID_REALLOC(*current, sizeof(char *) * (*count + add));
+    if (new == NULL)
+    {
+        if (*current != NULL)
+            fluid_strfreev_internal(*current);
+        return FALSE;
+    }
+
+    for (i = 0; i < add; i++)
+        new[*count + i] = NULL;
+
+    *current = new;
+    *count += add;
+    return TRUE;
+}
+
+int fluid_shell_parse_argv_internal(const char *line, int *argcp, char ***argvp)
+{
+    enum parse_state {
+        STATE_NORMAL,
+        STATE_ESCAPE_NORMAL,
+        STATE_ESCAPE_DOUBLE_QUOTE,
+        STATE_SINGLE_QUOTE,
+        STATE_DOUBLE_QUOTE,
+        STATE_COMMENT
+    };
+
+    enum parse_state state = STATE_NORMAL;
+    size_t line_length;
+    char *buffer = NULL;
+    char *token = NULL;
+    int length = 0;
+    int max = 0;
+    char current;
+
+    if (line == NULL || argcp == NULL || argvp == NULL)
+        return FALSE;
+
+    line_length = strlen(line);
+    if (line_length == 0)
+        return FALSE;
+
+    buffer = (char *)FLUID_MALLOC(line_length + 1);
+    if (buffer == NULL)
+        return FALSE;
+
+    *argcp = 0;
+    *argvp = NULL;
+
+    #define append() buffer[length++] = current;
+
+    do
+    {
+        current = *line++;
+        if (current == 0 && state != STATE_NORMAL)
+            break;
+
+        switch (state)
+        {
+        case STATE_NORMAL:
+        {
+            switch (current)
+            {
+            case '\\':
+                state = STATE_ESCAPE_NORMAL;
+                break;
+            case '\'':
+                state = STATE_SINGLE_QUOTE;
+                break;
+            case '"':
+                state = STATE_DOUBLE_QUOTE;
+                break;
+
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\0':
+                if (length == 0)
+                    break;
+
+                buffer[length] = 0;
+                token = FLUID_STRDUP(buffer);
+
+                if (token == NULL || (*argcp >= max && !fluid_strallocv_internal(argvp, &max, 10)))
+                {
+                    FLUID_FREE(token);
+                    FLUID_FREE(buffer);
+                    return FALSE;
+                }
+
+                buffer[length] = 0;
+                (*argvp)[(*argcp)++] = token;
+                length = 0;
+                break;
+
+            case '#':
+                if (length == 0)
+                {
+                    state = STATE_COMMENT;
+                    break;
+                }
+
+                // fall through
+
+            default:
+                append();
+                break;
+            }
+
+            break;
+        }
+
+        case STATE_ESCAPE_NORMAL:
+        {
+            state = STATE_NORMAL;
+            switch (current)
+            {
+            case '\n':
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case STATE_ESCAPE_DOUBLE_QUOTE:
+        {
+            state = STATE_DOUBLE_QUOTE;
+            switch (current)
+            {
+            case '"':
+            case '\\':
+            /* the ones below aren't useful, they are only here to mimic GLib */
+            case '`':
+            case '$':
+            case '\n':
+            {
+                append();
+                break;
+            }
+
+            default:
+            {
+                /* fill back the dropped backslash, this does not increase length  */
+                buffer[length++] = '\\';
+                append();
+                break;
+            }
+            }
+
+            break;
+        }
+
+        case STATE_SINGLE_QUOTE:
+        {
+            switch (current)
+            {
+            case '\'':
+                state = STATE_NORMAL;
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case STATE_DOUBLE_QUOTE:
+        {
+            switch (current)
+            {
+            case '\\':
+                state = STATE_ESCAPE_DOUBLE_QUOTE;
+                break;
+            case '"':
+                state = STATE_NORMAL;
+                break;
+            default:
+                append();
+                break;
+            }
+            break;
+        }
+
+        case STATE_COMMENT:
+            break;
+        }
+    } while (current != 0);
+
+    FLUID_FREE(buffer);
+
+    if (state != STATE_NORMAL && state != STATE_COMMENT)
+    {
+        fluid_strfreev_internal(*argvp);
+        return FALSE;
+    }
+
+    return *argcp > 0;
+}
+
+void fluid_strfreev_internal(char **argvp)
+{
+    int i = 0;
+
+    if (argvp == NULL)
+        return;
+
+    for (; argvp[i] != NULL; i++)
+    {
+        FLUID_FREE(argvp[i]);
+    }
+
+    FLUID_FREE(argvp);
+}

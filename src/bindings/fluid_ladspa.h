@@ -13,15 +13,18 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_LADSPA_H
 #define _FLUID_LADSPA_H
 
 #include "fluid_sys.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
@@ -32,5 +35,9 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size);
 
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
                                 int num_buffers, fluid_real_t buffers[], int buf_stride);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLUID_LADSPA_H */

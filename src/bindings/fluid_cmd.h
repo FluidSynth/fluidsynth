@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUID_CMD_H
@@ -47,17 +46,6 @@ int fluid_handle_load(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_unload(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_reload(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_fonts(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_chorus(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_gain(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_interp(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_interpc(void *data, int ac, char **av, fluid_ostream_t out);

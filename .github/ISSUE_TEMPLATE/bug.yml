@@ -1,0 +1,59 @@
+name: 🐞 Bug Report
+description: Create a bug report to help us improve FluidSynth.
+labels: [bug]
+type: "Bug"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **DO NOT SUBMIT SUPPORT REQUESTS OR "HOW TO" QUESTIONS HERE!**
+        Else it might be closed without further notice.
+
+        Please fill out the following form to help us understand and reproduce the bug.
+  - type: textarea
+    id: version
+    attributes:
+      label: FluidSynth version
+      description: 'Execute `fluidsynth -V` and provide the output.'
+      render: "sh"
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Describe the bug
+      description: Provide a clear and concise description of the current situation, e.g. how the bug manifests.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      description: Provide a clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Please explain the steps required to duplicate the issue, especially if you can provide a sample application. For example: How to start fluidsynth, what shell commands to enter, what MIDI events to send, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: |
+        If you are able to illustrate the bug with an example, please provide simple source code below or as an attached file. List any other information that is relevant to your issue, such as stack traces, related issues, build logs, suggestions on how to fix, or links to related discussions.
+      placeholder: |
+        ```
+        (Insert code snippets, soundfonts, or anything relevant here, or attach as extra file(s) if too much.)
+        ```
+    validations:
+      required: false

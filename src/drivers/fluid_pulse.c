@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 /* fluid_pulse.c
@@ -83,12 +82,12 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     pa_sample_spec samplespec;
     pa_buffer_attr bufattr;
     double sample_rate;
-    int period_size, period_bytes, adjust_latency;
+    int period_size, period_bytes, adjust_latency, periods;
     char *server = NULL;
     char *device = NULL;
     char *media_role = NULL;
     int realtime_prio = 0;
-    int err;
+    int err = 0;
     float *left = NULL,
            *right = NULL,
             *buf = NULL;
@@ -103,6 +102,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
 
     FLUID_MEMSET(dev, 0, sizeof(fluid_pulse_audio_driver_t));
 
+    fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.period-size", &period_size);
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */
@@ -115,7 +115,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     {
         if(FLUID_STRCMP(media_role, "") != 0)
         {
-            g_setenv("PULSE_PROP_media.role", media_role, TRUE);
+            fluid_setenv("PULSE_PROP_media.role", media_role, TRUE);
         }
 
         FLUID_FREE(media_role);       /* -- free media_role string */
@@ -143,7 +143,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     samplespec.rate = sample_rate;
 
     period_bytes = period_size * sizeof(float) * 2;
-    bufattr.maxlength = adjust_latency ? -1 : period_bytes;
+    bufattr.maxlength = adjust_latency ? -1 : period_bytes * periods;
     bufattr.tlength = period_bytes;
     bufattr.minreq = -1;
     bufattr.prebuf = -1;    /* Just initialize to same value as tlength */
@@ -155,9 +155,9 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
                                    &bufattr,
                                    &err);
 
-    if(!dev->pa_handle)
+    if(!dev->pa_handle || err != PA_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection");
+        FLUID_LOG(FLUID_ERR, "Failed to create PulseAudio connection, because pa_simple_new() failed with error: %s", pa_strerror(err));
         goto error_recovery;
     }
 
@@ -176,6 +176,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     }
 
     buf = FLUID_ARRAY(float, period_size * 2);
+
     if(buf == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory.");
@@ -242,10 +243,8 @@ fluid_pulse_audio_run(void *d)
 {
     fluid_pulse_audio_driver_t *dev = (fluid_pulse_audio_driver_t *) d;
     float *buf = dev->buf;
-    int buffer_size;
-    int err;
-
-    buffer_size = dev->buffer_size;
+    int buffer_size = dev->buffer_size;
+    int err = 0;
 
     while(dev->cont)
     {
@@ -254,9 +253,20 @@ fluid_pulse_audio_run(void *d)
         if(pa_simple_write(dev->pa_handle, buf,
                            buffer_size * sizeof(float) * 2, &err) < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Error writing to PulseAudio connection.");
+            FLUID_LOG(FLUID_ERR, "Error writing to PulseAudio connection: %s", pa_strerror(err));
             break;
         }
+
+#if 0
+        {
+            pa_usec_t pa_latency = pa_simple_get_latency(dev->pa_handle, &err);
+
+            if(err == PA_OK)
+            {
+                FLUID_LOG(FLUID_DBG, "PulseAudio latency: %d ms", (int) pa_latency / 1000);
+            }
+        }
+#endif
     }	/* while (dev->cont) */
 
     return FLUID_THREAD_RETURN_VALUE;
@@ -271,11 +281,9 @@ fluid_pulse_audio_run2(void *d)
            *right = dev->right,
             *buf = dev->buf;
     float *handle[2];
-    int buffer_size;
-    int err;
+    int buffer_size = dev->buffer_size;
+    int err = 0;
     int i;
-
-    buffer_size = dev->buffer_size;
 
     handle[0] = left;
     handle[1] = right;
@@ -297,9 +305,20 @@ fluid_pulse_audio_run2(void *d)
         if(pa_simple_write(dev->pa_handle, buf,
                            buffer_size * sizeof(float) * 2, &err) < 0)
         {
-            FLUID_LOG(FLUID_ERR, "Error writing to PulseAudio connection.");
+            FLUID_LOG(FLUID_ERR, "Error writing to PulseAudio connection: %s", pa_strerror(err));
             break;
         }
+
+#if 0
+        {
+            pa_usec_t pa_latency = pa_simple_get_latency(dev->pa_handle, &err);
+
+            if(err == PA_OK)
+            {
+                FLUID_LOG(FLUID_DBG, "PulseAudio latency: %d ms", (int) pa_latency / 1000);
+            }
+        }
+#endif
     }	/* while (dev->cont) */
 
     return FLUID_THREAD_RETURN_VALUE;

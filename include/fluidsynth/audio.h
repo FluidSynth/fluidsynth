@@ -13,9 +13,8 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #ifndef _FLUIDSYNTH_AUDIO_H
@@ -33,7 +32,7 @@ extern "C" {
  * The file renderer is used for fast rendering of MIDI files to
  * audio files. The audio drivers are a high-level interface to
  * connect the synthesizer with external audio sinks or to render
- * real-time audio to files.
+ * realtime audio to files.
  */
 
 /**
@@ -120,7 +119,7 @@ FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t *driver);
 /** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
-/* @} */
+/** @} */
 
 /**
  * @defgroup file_renderer File Renderer
@@ -132,7 +131,7 @@ FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
  * as possible. Please see \ref FileRenderer for a full example.
  *
  * If you are looking for a way to write audio generated
- * from real-time events (for example from an external sequencer or a MIDI controller) to a file,
+ * from realtime events (for example from an external sequencer or a MIDI controller) to a file,
  * please have a look at the \c file \ref audio_driver instead.
  *
  *
@@ -146,7 +145,7 @@ FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t *dev);
 
 FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t *dev);
 FLUIDSYNTH_API int fluid_file_set_encoding_quality(fluid_file_renderer_t *dev, double q);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }
