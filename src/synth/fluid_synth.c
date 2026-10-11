@@ -147,7 +147,8 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
 
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t *synth, int chan, int nbr_chan);
 static int fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mode, int val);
-static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val);
+static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val,
+        int send_all_notes_off);
 
 /***************************************************************
  *
@@ -1123,7 +1124,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* (i.e all channels are polyphonic) */
     /* Must be called after channel objects allocation */
     fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
-                                        synth->midi_channels);
+                                        synth->midi_channels, 1);
 
     synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
 
@@ -1872,6 +1873,8 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
     fluid_channel_t *chan = synth->channel[channum];
     int nrpn_select;
     int value;
+    int old_val;
+    int old_mode;
 
     value = fluid_channel_get_cc(chan, num);
 
@@ -1927,9 +1930,19 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             if(value != FLUID_FAILED)
             {
+                old_val = chan->mode_val;
+                old_mode = chan->mode & FLUID_CHANNEL_MODE_MASK;
+
                 /* reset the current basic channel before changing it */
-                fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-                fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+                fluid_synth_reset_basic_channel_LOCAL(synth, channum, old_val);
+                fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value, 1);
+
+                if(value < old_val)
+                {
+                    /* Keep the remaining channels enabled in their previous mode. */
+                    fluid_synth_set_basic_channel_LOCAL(synth, channum + value, old_mode,
+                                                        old_val - value, 0);
+                }
                 FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + value, new_mode);
                 break; /* FLUID_OK */
             }
@@ -8852,7 +8865,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int 
     }
 
     /* sets a new basic channel group */
-    fluid_synth_set_basic_channel_LOCAL(synth, chan, mode, val);
+    fluid_synth_set_basic_channel_LOCAL(synth, chan, mode, val, 1);
     /**/
     FLUID_API_RETURN(FLUID_OK);
 }
@@ -8863,10 +8876,12 @@ int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int 
  * - during creation new_fluid_synth() or on CC reset to set a default basic channel group.
  * - on CC ominoff, CC omnion, CC poly , CC mono to change an existing basic channel group.
  *
+ * @param send_all_notes_off Release voices before assigning the channel group.
  * @param see fluid_synth_set_basic_channel()
 */
 static void
-fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val)
+fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val,
+                                    int send_all_notes_off)
 {
     int i;
 
@@ -8875,8 +8890,12 @@ fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mod
     {
         int new_mode = mode; /* OMNI_OFF/ON, MONO/POLY ,others bits are zero */
         int new_val;
-        /* MIDI specs: when mode is changed, channel must receive ALL_NOTES_OFF */
-        fluid_synth_all_notes_off_LOCAL(synth, i);
+
+        if(send_all_notes_off)
+        {
+            /* MIDI specs: when mode is changed, channel must receive ALL_NOTES_OFF */
+            fluid_synth_all_notes_off_LOCAL(synth, i);
+        }
 
         if(i == basicchan)
         {

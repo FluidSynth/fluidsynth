@@ -65,6 +65,22 @@ static void test_sostenuto(fluid_synth_t *synth, int chan)
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
 }
 
+/* Changing a basic-channel group's mode must preserve the remaining channels. */
+static void test_mono_mode_transition_preserves_other_channels(fluid_synth_t *synth)
+{
+    TEST_SUCCESS(fluid_synth_noteon(synth, 1, 72, 127));
+    TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 1));
+    TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 1, 72));
+    TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
+}
+
 static void test_portamento_fromkey(fluid_synth_t* synth, int chan)
 {
     int ptc;
@@ -138,7 +154,10 @@ int main(void)
         test_sostenuto(synth, chan);
         fluid_synth_system_reset(synth);
     }
-    
+
+    fluid_synth_system_reset(synth);
+    test_mono_mode_transition_preserves_other_channels(synth);
+
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
 
