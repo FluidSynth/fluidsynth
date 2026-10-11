@@ -275,14 +275,7 @@ else ( ENABLE_COVERAGE )
   set ( DEVEL_REPORT "${DEVEL_REPORT}  Coverage:              no\n" )
 endif ( ENABLE_COVERAGE )
 
-message( STATUS 
-        "\n**************************************************************\n"
-        "Build Summary:\n"
-        "FluidSynth Version:    " ${FLUIDSYNTH_VERSION} "\n"
-        "Library version:       " ${LIB_VERSION_INFO} "\n"
-        "Git revision:          " ${FluidSynth_WC_REVISION} "\n"
-        "Build type:            " ${CMAKE_BUILD_TYPE} "\n"
-        "Install Prefix:        " ${CMAKE_INSTALL_PREFIX} "\n"
+string ( CONCAT FLUIDSYNTH_BUILD_SUMMARY
         "\n"
         "Audio / MIDI driver support:"
         ${AUDIO_MIDI_REPORT}
@@ -293,4 +286,26 @@ message( STATUS
         ${DEVEL_REPORT}
          )
 
+message ( STATUS "${FLUIDSYNTH_BUILD_SUMMARY}" )
+
+# Embed the summary as a C string literal, so that 'fluidsynth -V' can print it
+string ( REPLACE "\\" "\\\\" FLUIDSYNTH_BUILD_REPORT_C "${FLUIDSYNTH_BUILD_SUMMARY}" )
+string ( REPLACE "\"" "\\\"" FLUIDSYNTH_BUILD_REPORT_C "${FLUIDSYNTH_BUILD_REPORT_C}" )
+string ( REPLACE "\n" "\\n\"\\\n\"" FLUIDSYNTH_BUILD_REPORT_C "${FLUIDSYNTH_BUILD_REPORT_C}" )
+set ( FLUIDSYNTH_BUILD_REPORT_C "\"${FLUIDSYNTH_BUILD_REPORT_C}\"" )
+configure_file ( ${FluidSynth_SOURCE_DIR}/cmake_admin/report.h.in
+                 ${FluidSynth_BINARY_DIR}/report.h @ONLY )
+
+string ( CONCAT FLUIDSYNTH_BUILD_SUMMARY
+        "\n**************************************************************\n"
+        "Build Summary:\n"
+        "FluidSynth Version:    " ${FLUIDSYNTH_VERSION} "\n"
+        "Library version:       " ${LIB_VERSION_INFO} "\n"
+        "Git revision:          " ${FluidSynth_WC_REVISION} "\n"
+        "Build type:            " ${CMAKE_BUILD_TYPE} "\n"
+        "Install Prefix:        " ${CMAKE_INSTALL_PREFIX} "\n"
+        ${FLUIDSYNTH_BUILD_SUMMARY}
+         )
+
+message ( STATUS "${FLUIDSYNTH_BUILD_SUMMARY}" )
 message ( "**************************************************************\n\n" )

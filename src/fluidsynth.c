@@ -18,6 +18,7 @@
  */
 
 #include "fluid_sys.h"
+#include "report.h"
 
 #if !defined(_WIN32) && !defined(MACINTOSH)
 #define _GNU_SOURCE
@@ -1228,13 +1229,7 @@ print_welcome(void)
 void print_configure(void)
 {
     puts("FluidSynth executable version " FLUIDSYNTH_VERSION);
-    puts("Sample type="
-#ifdef WITH_FLOAT
-         "float"
-#else
-         "double"
-#endif
-        );
+    puts(FLUIDSYNTH_BUILD_REPORT);
 }
 
 /*
