@@ -147,8 +147,7 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
 
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t *synth, int chan, int nbr_chan);
 static int fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mode, int val);
-static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val,
-        int send_all_notes_off);
+static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val);
 
 /***************************************************************
  *
@@ -1124,7 +1123,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* (i.e all channels are polyphonic) */
     /* Must be called after channel objects allocation */
     fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
-                                        synth->midi_channels, 1);
+                                        synth->midi_channels);
 
     synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
 
@@ -1765,6 +1764,10 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
  *    could be used as CC global for all channels belonging to basic channel 7.
  * - Let a basic channel 0 in mode 3. If MIDI channel 15  is disabled it could be used
  *   as CC global for all channels belonging to basic channel 0.
+ * @note The channel mode messages (CC 124 to 127) are only accepted by basic channels and
+ * reconfigure their basic channel group. If the group gets smaller, the channels that don't
+ * belong to it anymore stay enabled in the mode they had, each of them as a basic channel of
+ * its own group of one channel.
  * @warning Contrary to the MIDI Standard, this function does not clear LSB controllers,
  * when MSB controllers are received.
  */
@@ -1873,8 +1876,6 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
     fluid_channel_t *chan = synth->channel[channum];
     int nrpn_select;
     int value;
-    int old_val;
-    int old_mode;
 
     value = fluid_channel_get_cc(chan, num);
 
@@ -1930,19 +1931,24 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             if(value != FLUID_FAILED)
             {
-                old_val = chan->mode_val;
-                old_mode = chan->mode & FLUID_CHANNEL_MODE_MASK;
+                int i;
+                int old_val = chan->mode_val;
+                int old_mode = chan->mode & FLUID_CHANNEL_MODE_MASK;
 
                 /* reset the current basic channel before changing it */
                 fluid_synth_reset_basic_channel_LOCAL(synth, channum, old_val);
-                fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value, 1);
+                fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
 
-                if(value < old_val)
+                /* If the group got smaller, the channels released from it keep on working in the mode
+                   they had and their notes keep on playing. Each of them becomes a basic channel of its
+                   own, because only basic channels accept channel mode messages, voice channels do not. */
+                for(i = channum + value; i < channum + old_val; i++)
                 {
-                    /* Keep the remaining channels enabled in their previous mode. */
-                    fluid_synth_set_basic_channel_LOCAL(synth, channum + value, old_mode,
-                                                        old_val - value, 0);
+                    fluid_channel_set_basic_channel_info(synth->channel[i],
+                                                         old_mode | FLUID_CHANNEL_BASIC | FLUID_CHANNEL_ENABLED);
+                    synth->channel[i]->mode_val = 1;
                 }
+
                 FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + value, new_mode);
                 break; /* FLUID_OK */
             }
@@ -8865,7 +8871,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int 
     }
 
     /* sets a new basic channel group */
-    fluid_synth_set_basic_channel_LOCAL(synth, chan, mode, val, 1);
+    fluid_synth_set_basic_channel_LOCAL(synth, chan, mode, val);
     /**/
     FLUID_API_RETURN(FLUID_OK);
 }
@@ -8876,12 +8882,10 @@ int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int 
  * - during creation new_fluid_synth() or on CC reset to set a default basic channel group.
  * - on CC ominoff, CC omnion, CC poly , CC mono to change an existing basic channel group.
  *
- * @param send_all_notes_off Release voices before assigning the channel group.
  * @param see fluid_synth_set_basic_channel()
 */
 static void
-fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val,
-                                    int send_all_notes_off)
+fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val)
 {
     int i;
 
@@ -8890,12 +8894,8 @@ fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mod
     {
         int new_mode = mode; /* OMNI_OFF/ON, MONO/POLY ,others bits are zero */
         int new_val;
-
-        if(send_all_notes_off)
-        {
-            /* MIDI specs: when mode is changed, channel must receive ALL_NOTES_OFF */
-            fluid_synth_all_notes_off_LOCAL(synth, i);
-        }
+        /* MIDI specs: when mode is changed, channel must receive ALL_NOTES_OFF */
+        fluid_synth_all_notes_off_LOCAL(synth, i);
 
         if(i == basicchan)
         {

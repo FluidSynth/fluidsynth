@@ -18,6 +18,7 @@ add_dependencies(check test_data)
 
 ## add unit tests here ##
 ADD_FLUID_TEST(test_synth_reset_cc)
+ADD_FLUID_TEST(test_synth_channel_mode_cc)
 ADD_FLUID_TEST(test_bank_select_gm2)
 ADD_FLUID_TEST(test_sample_cache)
 ADD_FLUID_TEST(test_sfont_loading)
