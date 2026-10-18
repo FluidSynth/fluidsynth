@@ -10,6 +10,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
 #include <cmath>
 #include <ctime>
 #include <complex>
@@ -138,10 +139,10 @@ static const struct { const char* name; hann_fn fn; } methods[] = {
 #ifdef _WIN32
 int fluid_clock_gettime(int df, struct timespec* spec)      //C-file part
 {
-    __int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
-    wintime -= 116444736000000000i64;  //1jan1601 to 1jan1970
-    spec->tv_sec = wintime / 10000000i64;           //seconds
-    spec->tv_nsec = wintime % 10000000i64 * 100;      //nano-seconds
+    int64_t wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
+    wintime -= 116444736000000000LL;  //1jan1601 to 1jan1970
+    spec->tv_sec = wintime / 10000000LL;           //seconds
+    spec->tv_nsec = wintime % 10000000LL * 100;      //nano-seconds
     return 0;
 }
 #define CLOCK_REALTIME 0
