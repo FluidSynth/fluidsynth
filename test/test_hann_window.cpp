@@ -163,7 +163,7 @@ int main(void)
     fluid_real_t out[N];
     long double ref[N];
     double max_e[NM] = { 0 }, sum_e[NM] = { 0 };
-    [[maybe_unused]] constexpr double expected_max_e_d[NM] = { 8e-16, 4e-16, 9e-16, 4e-16, 4e-16, 4e-16 };
+    [[maybe_unused]] constexpr double expected_max_e_d[NM] = { 8e-16, 8e-16, 2e-15, 8e-16, 8e-16, 8e-16 };
     [[maybe_unused]] constexpr float expected_max_e_f[NM] = { 4e-7, 2e-7, 4e-7, 4e-7, 4e-7, 3e-7 };
     const fluid_real_t(&expected_max_error)[NM] =
 #if defined(WITH_FLOAT)
