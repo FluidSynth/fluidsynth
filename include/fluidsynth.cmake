@@ -91,7 +91,7 @@ extern "C" {
  *
  * - Command lines: You can send textual commands to the synthesizer.
  *
- * SoundFont(R) is a registered trademark of E-mu Systems, Inc.
+ * SoundFont(R) was a registered trademark of Creative Technology Ltd.
  */
 
 #include "fluidsynth/types.h"
