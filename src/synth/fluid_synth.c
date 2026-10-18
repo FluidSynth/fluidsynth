@@ -8791,6 +8791,7 @@ fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mo
     /* checks if val range is above MIDI channel count */
     else if(basicchan + val > n_chan)
     {
+        FLUID_LOG(FLUID_WARN, "Failed to configure channel groups, requested from channel %d up to including chan %d, but there are only %d channels in total", basicchan, basicchan + val, n_chan);
         return FLUID_FAILED;
     }
 
@@ -8810,7 +8811,7 @@ fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mo
                 break;
             }
 
-            /* overlap with the next basic channel group */
+            FLUID_LOG(FLUID_WARN, "Failed to configure channel groups, requested from channel %d up to including chan %d would overlap with already existing basic channel %d", basicchan, basicchan + real_val, i);
             return FLUID_FAILED;
         }
     }
