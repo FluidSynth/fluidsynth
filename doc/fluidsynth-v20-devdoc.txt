@@ -21,7 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 This documentation may be partly incomplete. As always, the source code is the final reference.
 
-SoundFont(R) is a registered trademark of E-mu Systems, Inc.
+SoundFont(R) was a registered trademark of Creative Technology Ltd.
 
 \page Introduction Introduction
 

@@ -375,4 +375,4 @@ Please check the [AUTHORS](https://github.com/FluidSynth/fluidsynth/blob/master/
 
 ## DISCLAIMER
 
-SoundFont® is a registered trademark of Creative Technology Ltd. 
+SoundFont® was a registered trademark of Creative Technology Ltd.

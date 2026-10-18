@@ -1,22 +1,25 @@
 # Contributing
 
-Thanks for considering to contribute to FluidSynth. Before implementing
-any huge new feature, consider bringing up your ideas on our mailing list:
-https://lists.nongnu.org/mailman/listinfo/fluid-dev
+Thanks for considering to contribute to FluidSynth. Before implementing any **new feature**, consider bringing up your ideas on [our mailing list](https://lists.nongnu.org/mailman/listinfo/fluid-dev) or in the [discussion section on Github](https://github.com/FluidSynth/fluidsynth/discussions). This prevents you from investing time for something that my be rejected by this project.
 
 Contributing can be done by
-* [submitting pull requests on Github](
-https://help.github.com/articles/proposing-changes-to-your-work-with-pull-requests/) or
-* submitting patches to the mailing list.
+* preferably [submitting pull requests on Github](
+https://help.github.com/articles/proposing-changes-to-your-work-with-pull-requests/), or
+* submitting patches to the mailing list (to be created with `git format-patch`).
 
-Patches should be created with `git format-patch`, so in every case you should be familiar with the basics of git. Make sure you develop against the master branch, i.e. **not** against any FluidSynth release.
+Make sure you develop against the recent `master` branch, and **not** against any FluidSynth release!
 
-Some things that will increase the chance that your pull request or patch is accepted:
+The maintainer of FluidSynth doesn't like to be confronted with a solution without having a clue about the problem. For bugs and crashes, the problem is surely obvious. But if your contribution involves a new feature or a change in FluidSynth's behavior, it's mandatory to **provide a reason** for it! If your change is AI-assisted, pls. be transparent and honest by flagging it as such, ideally by *naming the exact AI-model* that was used.
 
-* Give a reasoning / motivation for any changes or proposals you make.
-* Follow our style guide.
-* Keep your commits "atomic".
-* Write meaningful commit messages.
+Here're some more points that will increase the chance that your pull request or patch is accepted:
+
+* Give a reasoning or motivation or problem for any changes or proposals you make!
+* Follow our coding style guide (see below) and coding conventions of the existing code-base.
+* Write meaningful commit messages or PR descriptions.
+* All CI builds and all unit tests must pass.
+* If applicable, write a new unit test or regression test for your proposed change; if you're unsure, ask the maintainer for help.
+* Don't just "dump a patch in my lap" without any justification or context!
+* **Don't throw unreflected AI output at me!!!**
 
 ## Style Guide
 

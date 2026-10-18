@@ -44,7 +44,7 @@ The FluidSynth library is distributed under the
 This documentation may be partly incomplete. As always, the source code is the
 final reference.
 
-SoundFont® is a registered trademark of E-mu Systems, Inc.
+SoundFont® was a registered trademark of Creative Technology Ltd.
 
 ## Getting started
 
