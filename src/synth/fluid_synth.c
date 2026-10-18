@@ -1930,7 +1930,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 /* reset the current basic channel before changing it */
                 fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
                 fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-                FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + value, new_mode);
+                FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + (value - 1), new_mode);
                 break; /* FLUID_OK */
             }
         }
