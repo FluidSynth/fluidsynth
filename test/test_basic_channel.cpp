@@ -185,7 +185,9 @@ static void test_global_cc(fluid_synth_t *synth)
     TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
     TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 1, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 3));
 
-    /* disabled channel 0 acts as global channel for the group starting at 1 */
+    /* Test the "GLOBAL CONTROLLERS" behavior mentioned in the MIDI spec:
+     * a CC on a disabled channel is forwarded to all channels of the omni off / mono group whose
+     * basic channel is the next higher channel. Here channel 0 forwards to the group starting at 1. */
     TEST_SUCCESS(fluid_synth_cc(synth, 0, 7, 50));
     for(chan = 1; chan <= 3; chan++)
     {
@@ -193,10 +195,10 @@ static void test_global_cc(fluid_synth_t *synth)
         TEST_ASSERT(val == 50);
     }
 
-    /* channel 5 is disabled, but channel 6 is not a basic channel */
+    /* channel 5 is disabled, but channel 6 is not a basic channel, so nothing is forwarded */
     TEST_ASSERT(fluid_synth_cc(synth, 5, 7, 20) == FLUID_FAILED);
 
-    /* only omni off / mono groups support global channels */
+    /* only omni off / mono groups receive forwarded CCs */
     TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
     TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 1, FLUID_CHANNEL_MODE_OMNION_POLY, 3));
     TEST_ASSERT(fluid_synth_cc(synth, 0, 7, 50) == FLUID_FAILED);
@@ -214,19 +216,21 @@ static void test_notes_off_on_mode_change(fluid_synth_t *synth, fluid_sample_t *
     v1 = start_voice(synth, sample, 1);
     v4 = start_voice(synth, sample, 4);
 
-    /* a mode change silences the notes of that group only */
+    /* spec: switching modes turns off all notes; only the group being changed is affected */
     TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 4));
     TEST_ASSERT(!fluid_voice_is_on(v0));
     TEST_ASSERT(!fluid_voice_is_on(v1));
     TEST_ASSERT(fluid_voice_is_on(v4));
 
-    /* all notes off in omni off / mono only affects the channel it was received on */
+    /* cleanup, so the next scenario starts without playing voices */
     TEST_SUCCESS(fluid_synth_all_sounds_off(synth, -1));
     TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
     TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 4));
 
     v0 = start_voice(synth, sample, 0);
     v1 = start_voice(synth, sample, 1);
+
+    /* spec: in omni off / mono, All Notes Off only cancels notes on the channel it was received on */
     TEST_SUCCESS(fluid_synth_cc(synth, 0, 123, 0));
     TEST_ASSERT(!fluid_voice_is_on(v0));
     TEST_ASSERT(fluid_voice_is_on(v1));
@@ -241,9 +245,9 @@ static void test_shrink_group_releases_notes(fluid_synth_t *synth, fluid_sample_
     v = start_voice(synth, sample, 1);
     TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 1));
     check_enabled(synth, 1, false);
-    TEST_ASSERT(fluid_synth_noteoff(synth, 1, 60) == FLUID_FAILED);
     TEST_ASSERT(!fluid_voice_is_on(v));
     TEST_ASSERT(!fluid_voice_is_sustained(v));
+    TEST_ASSERT(fluid_synth_noteoff(synth, 1, 60) == FLUID_FAILED);
 }
 
 static void test_shrink_group_releases_sustained_notes(fluid_synth_t *synth, fluid_sample_t *sample)
