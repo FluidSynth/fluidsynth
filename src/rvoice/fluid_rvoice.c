@@ -553,7 +553,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset)
     voice->envlfo.ticks = 0;
     voice->envlfo.noteoff_ticks = 0;
 
-    /* Reinitialize mixer gains when the buffer mappings are set up for the
+    /* Force a proper buffer-amplitude-reinitialization by fluid_rvoice_buffers_check_bufnum() when the buffer mappings are set up for the
      * new voice, so its onset ramp cannot inherit a previous voice's gain. */
     voice->buffers.count = 0;
 
