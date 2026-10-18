@@ -91,10 +91,10 @@ static float fluid_dattorro_read_tap(const fluid_reverb_delay_line<float> &delay
     }
 
     int index = delay.line_out + tap;
-    index %= size;
-    if(index < 0)
+    /* DATTORRO_TAP_S yields taps in [0, size), so the index needs at most one wrap. */
+    if(index >= size)
     {
-        index += size;
+        index -= size;
     }
     return delay.line[index];
 }
