@@ -5,6 +5,8 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h> // GetSystemTimeAsFileTime()
+#else
+#include <time.h>
 #endif
 
 #include "fluidsynth_priv.h"
@@ -146,6 +148,7 @@ int fluid_clock_gettime(int df, struct timespec* spec)      //C-file part
     spec->tv_nsec = wintime % 10000000i64 * 100;      //nano-seconds
     return 0;
 }
+#define CLOCK_REALTIME 0
 #else
 #define fluid_clock_gettime clock_gettime
 #endif
@@ -153,7 +156,7 @@ int fluid_clock_gettime(int df, struct timespec* spec)      //C-file part
 static double now_sec(void)
 {
     struct timespec ts;
-    fluid_clock_gettime(0, &ts);
+    fluid_clock_gettime(CLOCK_REALTIME, &ts);
     return ts.tv_sec + ts.tv_nsec * 1e-9;
 }
 
