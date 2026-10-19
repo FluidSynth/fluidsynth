@@ -2752,7 +2752,10 @@ fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)
     if(c >= 0xF8)
     {
         parser->event.type = c;
-        parser->status = 0; /* clear the status */
+        if(c == MIDI_SYSTEM_RESET)
+        {
+            parser->status = 0; /* clear the status */
+        }
         return &parser->event;
     }
 
