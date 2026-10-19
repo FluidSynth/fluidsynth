@@ -54,32 +54,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-      with:
-        submodules: recursive
 
-    - name: Add apt-get repositories
-      run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    - name: Checkout build dependencies
+      # Skip test/manual; this workflow does not run check_rendering or check_manual.
+      run: git -c submodule.test/manual.update=none submodule update --init --depth=1 --recursive
 
     - name: Update apt
       run: sudo apt-get update -y
 
-    - name: Install Dependencies
+    - name: Install dependencies
+      # Consider caching APT packages in the future to reduce dependency setup time.
       run: |
         sudo apt-get -yq --no-install-suggests --no-install-recommends install \
           clang-15 \
-          clang-tidy \
-          cmake \
-          cmake-data \
           ladspa-sdk \
           libasound2-dev \
           libdbus-1-dev \
           libjack-dev \
           libpulse-dev \
           libreadline-dev \
-          libsdl2-dev \
           libsndfile-dev \
           libsystemd-dev \
-          ninja-build \
           libomp-dev \
           portaudio19-dev
 
@@ -175,8 +170,10 @@ jobs:
           ninja-build
 
     - uses: actions/checkout@v7
-      with:
-        submodules: recursive
+
+    - name: Checkout build dependencies
+      # Skip test/manual; this workflow does not run check_rendering or check_manual.
+      run: git -c safe.directory="$GITHUB_WORKSPACE" -c submodule.test/manual.update=none submodule update --init --depth=1 --recursive
 
     - name: Configure CMake
       run: |
