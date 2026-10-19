@@ -24,6 +24,17 @@
 #include <algorithm>
 #include <cmath>
 
+/* Return the sin/cos table index used for coefficient lookup. */
+template<typename R>
+static inline signed fluid_iir_filter_sincos_index(R fres)
+{
+    signed tab_idx = (static_cast<signed>(fres) - FRES_MIN) / CENTS_STEP;
+#ifndef DBG_FILTER
+    fluid_clip(tab_idx, 0, SINCOS_TAB_SIZE - 1);
+#endif
+    return tab_idx;
+}
+
 
 // Calculating the sine and cosine coefficients for every possible cutoff frequency is too CPU expensive and can harm realtime playback.
 // Therefore, we precalculate the coefficients with a precision of CENTS_STEP and store them in a table.
@@ -62,10 +73,7 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
      * into account for both significant frequency relocation and for
      * bandwidth readjustment'. */
 
-    signed tab_idx = (static_cast<signed>(fres) - FRES_MIN) / CENTS_STEP;
-#ifndef DBG_FILTER
-    fluid_clip(tab_idx, 0, SINCOS_TAB_SIZE - 1);
-#endif
+    signed tab_idx = fluid_iir_filter_sincos_index(fres);
     R sin_coeff = sincos_table[tab_idx].sin;
     R cos_coeff = sincos_table[tab_idx].cos;
     R alpha_coeff = sin_coeff / (2.0f * q);
@@ -154,9 +162,10 @@ static inline void fluid_iir_filter_calculate_coefficients(R fres,
  * - dsp_hist1: same
  * - dsp_hist2: same
  */
-template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
+// Specialize the loop to remove the cache check when coefficient reuse is disabled.
+template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE, bool REUSE_COEFFICIENTS>
 static void
-fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, unsigned int count)
+fluid_iir_filter_apply_samples(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, unsigned int count)
 {
     // FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0
     // Due to the linear smoothing, last_q may not exactly become zero.
@@ -183,6 +192,8 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
         fluid_real_t dsp_amp_incr = iir_filter->amp_incr;
         IIR_COEFF_T fres = static_cast<IIR_COEFF_T>(iir_filter->last_fres);
         IIR_COEFF_T q = static_cast<IIR_COEFF_T>(iir_filter->last_q);
+        // Force coefficient calculation on the first smoothed update.
+        signed previous_table_index = -1;
         
         const IIR_COEFF_T fres_incr = static_cast<IIR_COEFF_T>(iir_filter->fres_incr);
         const IIR_COEFF_T q_incr = static_cast<IIR_COEFF_T>(iir_filter->q_incr);
@@ -245,7 +256,13 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
 
                 LOG_FILTER("fres: %.2f Hz  | target_fres: %.2f Hz | fres_incr: %f\t| fres_incr_count: %d\t|---| q: %f\t| target_q: %f\t| q_incr: %f\t| q_incr_count: %d", fres, iir_filter->target_fres, fres_incr, fres_incr_count, q, iir_filter->target_q, q_incr, q_incr_count);
                 
-                fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
+                // Reuse is safe only while Q and the cutoff table entry are unchanged.
+                const signed table_index = REUSE_COEFFICIENTS ? fluid_iir_filter_sincos_index(fres) : -1;
+                if(!REUSE_COEFFICIENTS || table_index != previous_table_index)
+                {
+                    fluid_iir_filter_calculate_coefficients<IIR_COEFF_T, GAIN_NORM, TYPE>(fres, q, iir_filter->sincos_table, &dsp_a1, &dsp_a2, &dsp_b02, &dsp_b1);
+                    previous_table_index = table_index;
+                }
             }
         }
 
@@ -271,6 +288,22 @@ fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID
         iir_filter->last_q = q;
         iir_filter->q_incr_count = q_incr_count;
         iir_filter->amp = dsp_amp;
+    }
+}
+
+/* Reuse only for fixed-Q ramps whose per-sample cutoff change is below one table step. */
+template<bool GAIN_NORM, bool AMPLIFY, enum fluid_iir_filter_type TYPE>
+static void
+fluid_iir_filter_apply_local(fluid_iir_filter_t *iir_filter, fluid_real_t *FLUID_RESTRICT dsp_buf, unsigned int count)
+{
+    if(iir_filter->q_incr_count <= 0 && iir_filter->fres_incr_count > 1
+            && std::abs(static_cast<IIR_COEFF_T>(iir_filter->fres_incr)) < CENTS_STEP)
+    {
+        fluid_iir_filter_apply_samples<GAIN_NORM, AMPLIFY, TYPE, true>(iir_filter, dsp_buf, count);
+    }
+    else
+    {
+        fluid_iir_filter_apply_samples<GAIN_NORM, AMPLIFY, TYPE, false>(iir_filter, dsp_buf, count);
     }
 }
 
