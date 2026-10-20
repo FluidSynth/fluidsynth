@@ -1326,6 +1326,62 @@ static void test_M_sine_wave_interpolation(void)
     }
 }
 
+/* =========================================================================
+ * Test N – Negative phase after rounded loop wrap (regression)
+ *
+ * With loopstart == 0, the rounded wrap check of the NONE and silence renderers
+ * can leave the phase slightly negative (e.g. dsp_phase == 66.6, loopend - loopstart == 67: 66.6 - 67 = -0.4). The next call
+ * must still make progress instead of spinning forever.
+ * ========================================================================= */
+static void test_N_negative_phase_after_loop_wrap(void)
+{
+    printf("Test N: Negative phase after rounded loop wrap\n");
+
+    constexpr int loop_end = FLUID_BUFSIZE + 3;
+    constexpr double phase_start = 2.6; /* phase after one buffer: loop_end - 0.4 */
+
+    std::array<short, loop_end + 8> data;
+    data.fill(CONST_VAL);
+
+    for(int silence = 0; silence < 2; silence++)
+    {
+        fluid_rvoice_t  rvoice;
+        fluid_sample_t  samp;
+        std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+
+        setup_rvoice(&rvoice, &samp, data.data(), nullptr,
+                     phase_start, 1.0,
+                     0, (int)data.size() - 1,
+                     0, loop_end,
+                     1, FLUID_INTERP_NONE);
+
+        for(int iter = 0; iter < 2; iter++)
+        {
+            buf.fill(12345.0f);
+
+            int count = silence ? fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/1)
+                        : fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+            TEST_ASSERT(count == FLUID_BUFSIZE);
+
+            for(int i = 0; i < count; i++)
+            {
+                test_sample_eq(buf[i], silence ? 0.0f : (fluid_real_t)CONST_VAL, TOL_POLY, i);
+            }
+
+            if(iter == 0)
+            {
+                TEST_ASSERT((int64_t)rvoice.dsp.phase < 0);
+            }
+            else
+            {
+                TEST_ASSERT(std::abs(fluid_phase_double(rvoice.dsp.phase) - (FLUID_BUFSIZE - 0.4)) < 1e-3);
+            }
+        }
+
+        printf("  %s: PASS\n", silence ? "SILENCE" : "NONE");
+    }
+}
+
 /* ========================================================================= */
 
 int main(void)
@@ -1370,6 +1426,9 @@ int main(void)
     printf("\n");
 
     test_M_sine_wave_interpolation();
+    printf("\n");
+
+    test_N_negative_phase_after_loop_wrap();
     printf("\n");
 
     printf("========================================\n");
