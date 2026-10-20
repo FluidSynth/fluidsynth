@@ -1386,6 +1386,8 @@ static void test_N_negative_phase_after_loop_wrap(void)
 
 int main(void)
 {
+    TEST_DISABLE_STDOUT_BUFFERING();
+
     printf("FluidSynth DSP Interpolation Unit Tests\n");
     printf("========================================\n\n");
 

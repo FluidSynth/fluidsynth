@@ -25,5 +25,8 @@
 
 #define TEST_ASSERT(COND) do { if (!(COND)) { fflush(stdout); fprintf(stderr, __FILE__ ":%d assertion (%s) failed\n", __LINE__, #COND); fflush(stderr); TEST_ABORT; } } while (0)
 
+/* Call this at very first in main(): ctest pipes stdout, and buffered output is lost if the test is killed on timeout. */
+#define TEST_DISABLE_STDOUT_BUFFERING() setvbuf(stdout, NULL, _IONBF, 0)
+
 /* macro to test whether a fluidsynth function succeeded or not */
 #define TEST_SUCCESS(FLUID_FUNCT) TEST_ASSERT((FLUID_FUNCT) != FLUID_FAILED)
