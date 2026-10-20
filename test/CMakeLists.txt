@@ -736,10 +736,11 @@ endif (ENABLE_NATIVE_DLS )
     add_dependencies(check_rendering renderDMOD)
     add_dependencies(check_rendering renderRPN)
     add_dependencies(check_rendering renderSf2NRPN)
-    # The check_rendering target is used by the rendering regression tests, rendering the reverbOverview would make the regression tests take way too long!
+    # Rendering the reverbOverview would make the regression tests take way too long in CI!
     #add_dependencies(check_rendering renderReverbOverview)
     add_dependencies(check_rendering renderMtsTests)
-    # Temporarily disable limiter tests, because those tests will fail with reference fluidsynth 2.5.x, as it is lacking the limiter
     add_dependencies(check_rendering renderLimiterTests)
+    add_dependencies(check_rendering render1505)
+    add_dependencies(check_rendering renderGSDT1)
 
 endif ( NOT CMAKE_GENERATOR MATCHES "Visual Studio" )
