@@ -1331,6 +1331,8 @@ static void test_M_sine_wave_interpolation(void)
     }
 }
 
+// nicht vergessen!!!: fluid_rvoice_dsp_interpolate_force_mode(&rvoice, buf.data(), /*looping=*/1, FLUID_INTERP_NONE);
+
 /* ========================================================================= */
 
 int main(void)
