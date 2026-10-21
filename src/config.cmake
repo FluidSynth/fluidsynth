@@ -17,6 +17,9 @@
 /* whether or not we are supporting DART */
 #cmakedefine DART_SUPPORT @DART_SUPPORT@
 
+/* Define if building for Apple platforms */
+#cmakedefine APPLE @APPLE@
+
 /* Define if building for Mac OS X Darwin */
 #cmakedefine DARWIN @DARWIN@
 
@@ -121,6 +124,15 @@
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@
+
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#cmakedefine HAVE_STDATOMIC_H @HAVE_STDATOMIC_H@
+
+/* Define to 1 if you have the <linux/futex.h> header file. */
+#cmakedefine HAVE_FUTEX @HAVE_FUTEX@
+
+/* Define to 1 if you have futex_time64(2) system call. */
+#cmakedefine HAVE_FUTEX_TIME64 @HAVE_FUTEX_TIME64@
 
 /* Define to 1 if you have the inet_ntop() function. */
 #cmakedefine HAVE_INETNTOP @HAVE_INETNTOP@
