@@ -1,0 +1,65 @@
+name: FluidSynth Alpine
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: ['**']
+    paths:
+      - '**'
+      - '!.azure/**'
+      - '!.circleci/**'
+      - '!.github/**'
+      - '.github/workflows/alpine.yml'
+      - '!README.md'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  alpine:
+    name: Alpine ${{ matrix.profile }}
+    runs-on: ubuntu-24.04
+    container: alpine:3.24
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - {profile: default, cflags: '', cxxflags: '', cmflags: ''}
+          - {profile: posix, cflags: '-D_POSIX_C_SOURCE=199506L', cxxflags: '', cmflags: ''}
+          - profile: gentoo
+            cflags: '-pipe -frecord-gcc-switches -fno-diagnostics-color -fmessage-length=0 -D_POSIX_C_SOURCE=199506L'
+            cxxflags: '-pipe -frecord-gcc-switches -fno-diagnostics-color -fmessage-length=0'
+            cmflags: '-Denable-profiling=ON -Denable-readline=ON -Denable-systemd=OFF -Denable-threads=OFF -Denable-trap-on-fpe=ON -Denable-ubsan=OFF'
+          - profile: strncasecmp
+            cflags: '-D_POSIX_C_SOURCE=199506L -DNCURSES_WIDECHAR'
+            cxxflags: ''
+            cmflags: '-Denable-floats=ON'
+          - {profile: osal-cpp11, cflags: '', cxxflags: '', cmflags: '-Dosal=cpp11'}
+    steps:
+      - name: Install dependencies
+        shell: sh
+        run: |
+          apk add --no-cache \
+            bash cmake make ninja gcc g++ git pkgconf \
+            dbus-dev ladspa-dev libsndfile-dev sdl3-dev readline-dev
+      - uses: actions/checkout@v7
+      - name: Checkout build dependencies
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git -c submodule.test/manual.update=none submodule update --init --depth=1 --recursive
+      - name: Build and run the musl tests
+        env:
+          CFLAGS: ${{ matrix.cflags }}
+          CXXFLAGS: ${{ matrix.cxxflags }}
+          CMFLAGS: ${{ matrix.cmflags }}
+        run: |
+          set -euo pipefail
+          read -r -a flags <<< "$CMFLAGS"
+          cmake -S "$GITHUB_WORKSPACE" -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo "${flags[@]}"
+          cmake --build build --parallel "$(nproc)"
+          CTEST_PARALLEL_LEVEL=$(nproc) cmake --build build --target check --parallel "$(nproc)"
