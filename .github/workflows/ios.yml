@@ -38,7 +38,7 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: macos-latest
+    runs-on: macos-26
     outputs:
       artifact_name: ${{ steps.artifact_name.outputs.name }}
     steps:
@@ -75,7 +75,7 @@ jobs:
     if: github.ref_type == 'tag'
     needs:
       - ios-build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: 🚀 Publish Release Artifacts
     steps:
     - uses: actions/checkout@v7
