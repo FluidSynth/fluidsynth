@@ -146,7 +146,7 @@ jobs:
 
   # Tests to see if FluidSynth will build with GCC for PowerPC targets that use the IBM long double ABI
   build-ibm-long-double:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
       image: debian:trixie
       options: -u root
