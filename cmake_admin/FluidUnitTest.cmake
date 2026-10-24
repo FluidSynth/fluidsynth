@@ -28,6 +28,9 @@ macro ( ADD_FLUID_TEST _test )
     # add the test to ctest
     if( NOT ANDROID )
         ADD_TEST(NAME ${_test} COMMAND ${_test})
+        # All unit tests run fairly quick within a few seconds.
+        # Set a timeout of 120 seconds to ensure that tests do not hang indefinitely.
+        set_tests_properties(${_test} PROPERTIES TIMEOUT 120)
     endif()
 
     # append the current unit test to check-target as dependency
