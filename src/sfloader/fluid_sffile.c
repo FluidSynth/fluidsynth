@@ -2625,6 +2625,70 @@ static sf_count_t sfvio_tell(void *user_data)
     return data->offset;
 }
 
+/* SIMD-friendly conversion: NaN -> 0, clamp to [-1, 32767/32768], then
+ * round sample * 32768. The 384.0f bias assumes round-to-nearest, ties-to-even. */
+static inline int16_t fluid_sf3_float_to_s16(float sample)
+{
+    uint32_t bits;
+    int32_t magnitude, limit, pcm;
+    float bias;
+
+    /* Inspect IEEE binary32 bits, not a numeric cast. Ignoring the sign lets
+     * integer NaN classification and saturation auto-vectorize; memcpy avoids
+     * strict-aliasing violations. NaNs become silence, infinities saturate. */
+    memcpy(&bits, &sample, sizeof bits);
+    magnitude = (int32_t)(bits & 0x7fffffffu);
+    limit = bits >> 31 ? 0x3f800000 : 0x3f7ffe00; /* 1 or 32767/32768. */
+    magnitude = magnitude > 0x7f800000 ? 0 : magnitude; /* NaN -> 0. */
+    magnitude = magnitude > limit ? limit : magnitude;
+    bits = (bits & 0x80000000u) | (uint32_t)magnitude;
+    memcpy(&sample, &bits, sizeof sample);
+
+    /* +/-384 has ULP 1/32768; matching signs preserves rounding direction. */
+    bias = copysignf(384.0f, sample);
+    sample += bias;
+    memcpy(&bits, &sample, sizeof bits);
+    pcm = (int32_t)(bits & 0xffffu); /* The bias has zero low 16 bits. */
+    return (int16_t)(bits >> 31 ? -pcm : pcm);
+}
+
+/* Read normalized mono frames and saturate each sample without rescaling the
+ * entire waveform when the Vorbis decoder exceeds full scale (issue #1856). */
+static int fluid_sffile_read_vorbis_samples(SNDFILE *sndfile, short *data, sf_count_t num_frames)
+{
+    float float_data[1024];
+    const sf_count_t buffer_size = sizeof(float_data) / sizeof(float_data[0]);
+    sf_count_t frames_read = 0;
+
+    while(frames_read < num_frames)
+    {
+        sf_count_t frames = num_frames - frames_read;
+        sf_count_t i;
+        short *output = data + frames_read;
+
+        if(frames > buffer_size)
+        {
+            frames = buffer_size;
+        }
+
+        if(sf_readf_float(sndfile, float_data, frames) < frames)
+        {
+            FLUID_LOG(FLUID_DBG, "Decompression failed!");
+            FLUID_LOG(FLUID_ERR, "sf_readf_float(): %s", sf_strerror(sndfile));
+            return FLUID_FAILED;
+        }
+
+        for(i = 0; i < frames; i++)
+        {
+            output[i] = fluid_sf3_float_to_s16(float_data[i]);
+        }
+
+        frames_read += frames;
+    }
+
+    return FLUID_OK;
+}
+
 /**
  * Read Ogg Vorbis compressed data from the Soundfont and decompress it, returning the number of samples
  * in the decompressed WAV. Only 16-bit mono samples are supported.
@@ -2703,7 +2767,13 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         FLUID_LOG(FLUID_WARN, "OGG sample is not OGG compressed, this is not officially supported");
     }
 
-    wav_data = FLUID_ARRAY(short, sfinfo.frames * sfinfo.channels);
+    /* The frame count must fit the int return value and the PCM allocation. */
+    if(sfinfo.frames > INT_MAX || (uint64_t)sfinfo.frames > SIZE_MAX / sizeof(short))
+    {
+        FLUID_LOG(FLUID_ERR, "Decompressed sample exceeds the supported frame count");
+        goto error_exit;
+    }
+    wav_data = FLUID_ARRAY(short, sfinfo.frames);
 
     if(!wav_data)
     {
@@ -2711,17 +2781,8 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         goto error_exit;
     }
 
-    // Avoid clipping for loud samples, see
-    // https://github.com/FluidSynth/fluidsynth/issues/1380
-    // and
-    // https://github.com/libsndfile/libsndfile/issues/194
-    sf_command(sndfile, SFC_SET_SCALE_FLOAT_INT_READ, NULL, SF_TRUE);
-
-    /* Automatically decompresses the Ogg Vorbis data to 16-bit PCM */
-    if(sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
+    if(fluid_sffile_read_vorbis_samples(sndfile, wav_data, sfinfo.frames) == FLUID_FAILED)
     {
-        FLUID_LOG(FLUID_DBG, "Decompression failed!");
-        FLUID_LOG(FLUID_ERR, "sf_readf_short(): %s", sf_strerror(sndfile));
         goto error_exit;
     }
 
