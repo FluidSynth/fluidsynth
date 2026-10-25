@@ -123,7 +123,10 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
             break;
         }
 
-        dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
+        /* Match the unrounded boundary used by compute_interpolation_steps.
+         * Rounding could rewind early and underflow the unsigned phase
+         * when the loop starts at zero. */
+        dsp_phase_index = fluid_phase_index(dsp_phase);
 
         /* go back to loop start */
         if(dsp_phase_index > end_index)

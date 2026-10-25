@@ -1326,6 +1326,37 @@ static void test_M_sine_wave_interpolation(void)
     }
 }
 
+/* Silent looping must not wrap a fractional phase before reaching loopend.
+ * The exact binary step 133/128 leaves phase 66.5 after 64 frames. Rounding this
+ * to 67 would rewind a zero-based 67-point loop too early and underflow phase.
+ * Use independent fixed-point modulo arithmetic across multiple DSP blocks. */
+static void test_N_silence_fractional_loop_boundary(void)
+{
+    printf("Test N: Silent fractional loop boundary\n");
+
+    std::array<short, 67> data{};
+    fluid_rvoice_t rvoice;
+    fluid_sample_t sample;
+    setup_rvoice(&rvoice, &sample, data.data(), nullptr,
+                 0.0, 133.0 / 128.0, 0, 66, 0, 67, 0, FLUID_INTERP_NONE);
+
+    const fluid_phase_t unit = fluid_phase_t{1} << 32;
+    const fluid_phase_t increment = 133 * (unit / 128);
+    const fluid_phase_t loop_length = 67 * unit;
+    for(int block = 1; block <= 4; ++block)
+    {
+        std::array<fluid_real_t, FLUID_BUFSIZE> buffer;
+        buffer.fill(std::numeric_limits<fluid_real_t>::quiet_NaN());
+        TEST_ASSERT(fluid_rvoice_dsp_silence(&rvoice, buffer.data(), 1) == FLUID_BUFSIZE);
+        const fluid_phase_t expected = (block * FLUID_BUFSIZE * increment) % loop_length;
+        TEST_ASSERT(rvoice.dsp.phase == expected);
+        for(auto value : buffer)
+        {
+            TEST_ASSERT(value == 0);
+        }
+    }
+}
+
 /* ========================================================================= */
 
 int main(void)
@@ -1370,6 +1401,9 @@ int main(void)
     printf("\n");
 
     test_M_sine_wave_interpolation();
+    printf("\n");
+
+    test_N_silence_fractional_loop_boundary();
     printf("\n");
 
     printf("========================================\n");
