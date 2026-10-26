@@ -75,6 +75,7 @@ ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf2)
 
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
+    ADD_FLUID_TEST(test_sf3_gain)
     ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf3)
 endif ( LIBSNDFILE_HASVORBIS )
 
