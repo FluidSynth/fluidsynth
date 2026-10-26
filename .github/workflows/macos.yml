@@ -1,0 +1,196 @@
+name: FluidSynth MacOS
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: ['**']
+    paths:
+      - '**'
+      - '!.azure/**'
+      - '!.circleci/**'
+      - '!.github/**'
+      - '.github/workflows/macos.yml'
+      - '.github/scripts/macos-*'
+      - '!README.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: '1'
+
+jobs:
+  ports-build-test:
+    env:
+      MACPORTS_VERSION: '2.12.7'
+    name: MacPorts universal build and test (${{ matrix.image }})
+    runs-on: ${{ matrix.image }}
+    timeout-minutes: 90
+    strategy:
+      matrix:
+        image: [macos-15, macos-26]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout build dependencies
+        run: git -c submodule.test/manual.update=none submodule update --init --depth=1 --recursive
+      - name: Prepare cache directory and identify the compiler image
+        id: host
+        run: |
+          sudo install -d -o "$(id -u)" -g "$(id -g)" /opt/local
+          echo "image=$ImageVersion" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v5
+        id: dependencies
+        with:
+          path: |
+            /opt/local/include
+            /opt/local/lib
+            /opt/local/share
+          # Cache the SDK without MacPorts tools, registry or build directories.
+          # Increment v1 when changing the cached dependency set or variants.
+          key: macports-v1-${{ matrix.image }}-${{ runner.arch }}-${{ steps.host.outputs.image }}-${{ env.MACPORTS_VERSION }}
+      - name: Install universal dependencies
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/macos-install-macports.sh "$MACPORTS_VERSION"
+      - uses: actions/cache/save@v5
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        with:
+          path: |
+            /opt/local/include
+            /opt/local/lib
+            /opt/local/share
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
+      - name: Build and test the universal SDK
+        env:
+          PKG_CONFIG_LIBDIR: /opt/local/lib/pkgconfig:/opt/local/share/pkgconfig
+          PKG_CONFIG_PATH: /opt/local/lib/pkgconfig:/opt/local/share/pkgconfig
+        run: |
+          for library in libsndfile libreadline; do
+            lipo "/opt/local/lib/$library.dylib" -verify_arch arm64 x86_64
+          done
+          # Avoid Homebrew libraries when linking both architectures.
+          # Apple's arm64 linker needs function deduplication disabled (SIGILL).
+          bash .github/scripts/macos-build-and-test.sh --stage-tests "$RUNNER_TEMP/macos" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=ON \
+            -Denable-framework=OFF -Denable-sdl3=OFF -Werror=dev \
+            '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' \
+            -DCMAKE_PREFIX_PATH=/opt/local "-DCMAKE_IGNORE_PREFIX_PATH=$(brew --prefix)" \
+            '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-no_deduplicate'
+      - name: Package the universal SDK and compiled tests
+        run: |
+          package_dir="$RUNNER_TEMP/macos/package"
+          cp -pL /opt/local/lib/*.dylib "$package_dir/lib/"
+          for binary in "$package_dir/bin/fluidsynth" "$package_dir"/lib/libfluidsynth*.dylib; do
+            lipo "$binary" -verify_arch arm64 x86_64
+            lipo -info "$binary"
+          done
+          # Tar preserves executable modes and symlinks during artifact upload.
+          tar -cf "$RUNNER_TEMP/macos/sdk.tar" -C "$package_dir" .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fluidsynth-universal-${{ matrix.image }}
+          path: ${{ runner.temp }}/macos/sdk.tar
+          if-no-files-found: error
+          retention-days: 14
+
+  ports-intel-test:
+    name: MacPorts universal tests (${{ matrix.image }})
+    needs: ports-build-test
+    runs-on: ${{ matrix.image }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        include:
+          - {image: macos-15-intel, build_image: macos-15}
+          - {image: macos-26-intel, build_image: macos-26}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: fluidsynth-universal-${{ matrix.build_image }}
+          path: ${{ runner.temp }}/macos
+      - name: Unpack the SDK
+        run: |
+          mkdir -p "$RUNNER_TEMP/macos/sdk"
+          tar -xf "$RUNNER_TEMP/macos/sdk.tar" -C "$RUNNER_TEMP/macos/sdk"
+      - name: Run the tests and installed CLI natively on Intel
+        run: |
+          # Resolve missing SDK libraries without overriding system libraries used by CTest.
+          export DYLD_FALLBACK_LIBRARY_PATH="$RUNNER_TEMP/macos/sdk/lib"
+          ctest --test-dir "$RUNNER_TEMP/macos/sdk/tests" --output-on-failure \
+            --no-tests=error --parallel "$(sysctl -n hw.logicalcpu)"
+          "$RUNNER_TEMP/macos/sdk/bin/fluidsynth" --version
+
+  brew:
+    env:
+      BREW_PACKAGES: 'libsndfile pkgconf jack pulseaudio portaudio sdl3 libomp readline ccache'
+      CMAKE_C_COMPILER_LAUNCHER: ccache
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+    name: Homebrew (${{ matrix.image }})
+    runs-on: ${{ matrix.image }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        image: [macos-15, macos-26, macos-15-intel, macos-26-intel]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout build dependencies
+        run: git -c submodule.test/manual.update=none submodule update --init --depth=1 --recursive
+      - name: Install dependencies
+        run: |
+          read -r -a packages <<< "$BREW_PACKAGES"
+          brew install "${packages[@]}"
+          ccache --zero-stats
+      - name: Set dependency search paths
+        run: |
+          {
+            echo "PKG_CONFIG_PATH=$(brew --prefix libffi)/lib/pkgconfig"
+            echo "READLINE_PKGCONFIG=$(brew --prefix readline)/lib/pkgconfig"
+            echo "CMAKE_PREFIX_PATH=$(brew --prefix libomp)"
+            echo "CCACHE_BASEDIR=$RUNNER_TEMP"
+          } >> "$GITHUB_ENV"
+          # Apple's arm64 linker can emit an invalid entry point when folding functions.
+          if [[ "$RUNNER_ARCH" == ARM64 ]]; then
+            echo 'LDFLAGS=-Wl,-no_deduplicate' >> "$GITHUB_ENV"
+          fi
+      # Reuse CMake checks for the same compiler, SDK and dependency search paths.
+      - name: Build and test the shared library
+        run: |
+          bash .github/scripts/macos-build-and-test.sh --check-pkg-config "$RUNNER_TEMP/macos/native" \
+            -DCMAKE_BUILD_TYPE=Release -Denable-framework=OFF -DBUILD_SHARED_LIBS=ON
+      - name: Build and test the static library
+        run: |
+          bash .github/scripts/macos-build-and-test.sh --check-pkg-config "$RUNNER_TEMP/macos/native" \
+            -DCMAKE_BUILD_TYPE=Release -Denable-framework=OFF -DBUILD_SHARED_LIBS=OFF
+      - name: Build and test the static library with readline pkg-config
+        env:
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}:${{ env.READLINE_PKGCONFIG }}
+        run: |
+          bash .github/scripts/macos-build-and-test.sh --check-pkg-config "$RUNNER_TEMP/macos/static-readline" \
+            -DCMAKE_BUILD_TYPE=Release -Denable-framework=OFF -DBUILD_SHARED_LIBS=OFF
+      - name: Build and test the framework and Xcode generator
+        run: |
+          bash .github/scripts/macos-build-and-test.sh --check-xcode "$RUNNER_TEMP/macos/native" \
+            -DCMAKE_BUILD_TYPE=Release -Denable-framework=ON -DBUILD_SHARED_LIBS=ON
+      - name: Build and test the framework with a macOS 10.14 deployment target
+        if: matrix.image == 'macos-15-intel'
+        run: |
+          bash .github/scripts/macos-build-and-test.sh "$RUNNER_TEMP/macos/framework-10.14" \
+            -DCMAKE_BUILD_TYPE=Release -Denable-framework=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14
+      - name: Build and test the framework with a macOS 11.0 deployment target
+        if: matrix.image == 'macos-15'
+        run: |
+          bash .github/scripts/macos-build-and-test.sh "$RUNNER_TEMP/macos/framework-11.0" \
+            -DCMAKE_BUILD_TYPE=Release -Denable-framework=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+          xcrun vtool -show-build "$RUNNER_TEMP/macos/framework-11.0/package/Library/Frameworks/FluidSynth.framework/FluidSynth"
+      - name: Report compiler cache statistics
+        run: ccache --show-stats
