@@ -9,19 +9,43 @@
 /* Regression for #1856: saturate decoded peaks without changing the gain of
  * the remaining samples. */
 
-static int read_bytes(void *ptr, fluid_long_long_t count, void *file)
+static void test_stereo_rejected(int format, const fluid_file_callbacks_t *callbacks)
 {
-    return std::fread(ptr, 1, count, static_cast<FILE *>(file)) == static_cast<size_t>(count) ? FLUID_OK : FLUID_FAILED;
-}
+    constexpr int frames = 1025;
+    const char *name = "test_sf3_stereo.ogg";
+    float input[frames * 2] = {};
+    SF_INFO info = {};
+    info.samplerate = 44100;
+    info.channels = 2;
+    info.format = format;
+    SNDFILE *encoded = sf_open(name, SFM_WRITE, &info);
+    TEST_ASSERT(encoded != nullptr);
+    TEST_ASSERT(sf_writef_float(encoded, input, frames) == frames);
+    TEST_ASSERT(sf_close(encoded) == 0);
 
-static int seek_bytes(void *file, fluid_long_long_t offset, int origin)
-{
-    return std::fseek(static_cast<FILE *>(file), offset, origin) == 0 ? FLUID_OK : FLUID_FAILED;
-}
+    info = {};
+    encoded = sf_open(name, SFM_READ, &info);
+    TEST_ASSERT(encoded != nullptr && info.frames == frames && info.channels == 2);
+    TEST_ASSERT(sf_close(encoded) == 0);
 
-static fluid_long_long_t tell_bytes(void *file)
-{
-    return std::ftell(static_cast<FILE *>(file));
+    SFData source = {};
+    source.sffd = static_cast<FILE *>(callbacks->fopen(name));
+    TEST_ASSERT(source.sffd != nullptr);
+    TEST_SUCCESS(callbacks->fseek(source.sffd, 0, SEEK_END));
+    source.samplesize = callbacks->ftell(source.sffd);
+    source.fcbs = callbacks;
+    fluid_rec_mutex_init(source.mtx);
+    short *decoded = nullptr;
+    char *data24 = nullptr;
+
+    /* Reject stereo before allocating or decoding mono sample buffers. */
+    TEST_ASSERT(fluid_sffile_read_sample_data(&source, 0, source.samplesize - 1,
+                FLUID_SAMPLETYPE_OGG_VORBIS, &decoded, &data24) == -1);
+    TEST_ASSERT(decoded == nullptr && data24 == nullptr);
+
+    fluid_rec_mutex_destroy(source.mtx);
+    TEST_SUCCESS(callbacks->fclose(source.sffd));
+    TEST_ASSERT(std::remove(name) == 0);
 }
 
 int main()
@@ -29,11 +53,17 @@ int main()
     /* Exercise multiple decode blocks and a one-frame tail. */
     constexpr int frames = 8193;
     const char *name = "test_sf3_gain.ogg";
-    const fluid_file_callbacks_t callbacks = {nullptr, read_bytes, seek_bytes, nullptr, tell_bytes};
+    fluid_settings_t *settings = new_fluid_settings();
+    TEST_ASSERT(settings != nullptr);
+    fluid_sfloader_t *loader = new_fluid_defsfloader(settings);
+    TEST_ASSERT(loader != nullptr);
+    const fluid_file_callbacks_t *callbacks = &loader->file_callbacks;
 
     /* Also cover the non-OGG compatibility path accepted by the SF3 loader. */
     for(int format : {SF_FORMAT_OGG | SF_FORMAT_VORBIS, SF_FORMAT_WAV | SF_FORMAT_PCM_16})
     {
+        test_stereo_rejected(format, callbacks);
+
         /* Quiet and normal samples must keep their gain; loud samples must clip. */
         for(float amplitude : {0.01f, 0.5f, 1.25f})
         {
@@ -57,16 +87,16 @@ int main()
              * waveform as the reference for PCM conversion. */
             info = {};
             encoded = sf_open(name, SFM_READ, &info);
-            TEST_ASSERT(encoded != nullptr && info.frames == frames);
+            TEST_ASSERT(encoded != nullptr && info.frames == frames && info.channels == 1);
             TEST_ASSERT(sf_readf_float(encoded, reference, frames) == frames);
-            sf_close(encoded);
+            TEST_ASSERT(sf_close(encoded) == 0);
 
             SFData source = {};
-            source.sffd = std::fopen(name, "rb");
+            source.sffd = static_cast<FILE *>(callbacks->fopen(name));
             TEST_ASSERT(source.sffd != nullptr);
-            std::fseek(source.sffd, 0, SEEK_END);
-            source.samplesize = std::ftell(source.sffd);
-            source.fcbs = &callbacks;
+            TEST_SUCCESS(callbacks->fseek(source.sffd, 0, SEEK_END));
+            source.samplesize = callbacks->ftell(source.sffd);
+            source.fcbs = callbacks;
             fluid_rec_mutex_init(source.mtx);
             short *decoded = nullptr;
             char *data24 = nullptr;
@@ -92,10 +122,12 @@ int main()
 
             FLUID_FREE(decoded);
             fluid_rec_mutex_destroy(source.mtx);
-            std::fclose(source.sffd);
+            TEST_SUCCESS(callbacks->fclose(source.sffd));
         }
     }
 
-    std::remove(name);
+    delete_fluid_sfloader(loader);
+    delete_fluid_settings(settings);
+    TEST_ASSERT(std::remove(name) == 0);
     return EXIT_SUCCESS;
 }

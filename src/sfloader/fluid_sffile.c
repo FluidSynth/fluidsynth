@@ -26,6 +26,7 @@
 #include "fluid_sys.h"
 
 #if LIBSNDFILE_SUPPORT
+#include <float.h>
 #include <sndfile.h>
 #endif
 
@@ -2625,6 +2626,19 @@ static sf_count_t sfvio_tell(void *user_data)
     return data->offset;
 }
 
+/* Reject excess precision where the compiler reports its evaluation method. */
+#if defined(__FLT_EVAL_METHOD__) && __FLT_EVAL_METHOD__ != 0
+#error "SF3 sample conversion requires float-precision evaluation"
+#endif
+
+#if FLT_RADIX == 2 && FLT_MANT_DIG == 24 && \
+    FLT_MAX_EXP == 128 && FLT_MIN_EXP == -125
+#define FLUID_SF3_HAVE_FAST_F2S16 1
+#else
+#define FLUID_SF3_HAVE_FAST_F2S16 0
+#endif
+
+#if FLUID_SF3_HAVE_FAST_F2S16
 /* SIMD-friendly conversion: NaN -> 0, clamp to [-1, 32767/32768], then
  * round sample * 32768. The 384.0f bias assumes round-to-nearest, ties-to-even. */
 static inline int16_t fluid_sf3_float_to_s16(float sample)
@@ -2636,35 +2650,39 @@ static inline int16_t fluid_sf3_float_to_s16(float sample)
     /* Inspect IEEE binary32 bits, not a numeric cast. Ignoring the sign lets
      * integer NaN classification and saturation auto-vectorize; memcpy avoids
      * strict-aliasing violations. NaNs become silence, infinities saturate. */
-    memcpy(&bits, &sample, sizeof bits);
+    FLUID_MEMCPY(&bits, &sample, sizeof bits);
     magnitude = (int32_t)(bits & 0x7fffffffu);
     limit = bits >> 31 ? 0x3f800000 : 0x3f7ffe00; /* 1 or 32767/32768. */
     magnitude = magnitude > 0x7f800000 ? 0 : magnitude; /* NaN -> 0. */
     magnitude = magnitude > limit ? limit : magnitude;
     bits = (bits & 0x80000000u) | (uint32_t)magnitude;
-    memcpy(&sample, &bits, sizeof sample);
+    FLUID_MEMCPY(&sample, &bits, sizeof sample);
 
     /* +/-384 has ULP 1/32768; matching signs preserves rounding direction. */
     bias = copysignf(384.0f, sample);
     sample += bias;
-    memcpy(&bits, &sample, sizeof bits);
+    FLUID_MEMCPY(&bits, &sample, sizeof bits);
     pcm = (int32_t)(bits & 0xffffu); /* The bias has zero low 16 bits. */
     return (int16_t)(bits >> 31 ? -pcm : pcm);
 }
+#else
+#error "Unknown or uncommon float architecture"
+#endif
 
 /* Read normalized mono frames and saturate each sample without rescaling the
- * entire waveform when the Vorbis decoder exceeds full scale (issue #1856). */
+ * entire waveform when the Vorbis decoder exceeds full scale
+ * (issues #1856, #1380, and libsndfile/libsndfile#194). */
 static int fluid_sffile_read_vorbis_samples(SNDFILE *sndfile, short *data, sf_count_t num_frames)
 {
     float float_data[1024];
-    const sf_count_t buffer_size = sizeof(float_data) / sizeof(float_data[0]);
+    const sf_count_t buffer_size = FLUID_N_ELEMENTS(float_data);
     sf_count_t frames_read = 0;
 
     while(frames_read < num_frames)
     {
         sf_count_t frames = num_frames - frames_read;
         sf_count_t i;
-        short *output = data + frames_read;
+        short *FLUID_RESTRICT output = data + frames_read;
 
         if(frames > buffer_size)
         {
@@ -2773,6 +2791,8 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         FLUID_LOG(FLUID_ERR, "Decompressed sample exceeds the supported frame count");
         goto error_exit;
     }
+    /* Allocate frames PCM values. The check above jumps to error_exit when
+     * channels != 1, so frames * channels equals frames here. */
     wav_data = FLUID_ARRAY(short, sfinfo.frames);
 
     if(!wav_data)
