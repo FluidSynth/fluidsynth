@@ -1592,8 +1592,7 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t *synth, int chan)
     return FLUID_OK;
 }
 
-/* Damps voices on a channel (turn notes off), if they're sustained by
-   sostenuto pedal */
+/* Transfers sostenuto-held voices to sustain, or releases them. */
 static int
 fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t *synth, int chan)
 {
@@ -1607,6 +1606,12 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t *synth, int chan)
 
         if((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sostenuto(voice))
         {
+            if(fluid_channel_sustained(channel))
+            {
+                voice->status = FLUID_VOICE_SUSTAINED;
+                continue;
+            }
+
             if(voice->key == channel->key_mono_sustained)
             {
                 /* key_mono_sustained is a possible mono note sustainted
