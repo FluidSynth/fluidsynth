@@ -2626,19 +2626,17 @@ static sf_count_t sfvio_tell(void *user_data)
     return data->offset;
 }
 
-/* Reject excess precision where the compiler reports its evaluation method. */
-#if defined(__FLT_EVAL_METHOD__) && __FLT_EVAL_METHOD__ != 0
-#error "SF3 sample conversion requires float-precision evaluation"
+#if    FLT_RADIX == 2 && FLT_MANT_DIG == 24              \
+    && FLT_MAX_EXP == 128 && FLT_MIN_EXP == -125         \
+    && (!defined(__FLOAT_WORD_ORDER__) || !defined(__BYTE_ORDER__) \
+        || __FLOAT_WORD_ORDER__ == __BYTE_ORDER__)
+#  define FLUID_SF3_HAVE_FAST_F2S16 1
 #endif
 
-#if FLT_RADIX == 2 && FLT_MANT_DIG == 24 && \
-    FLT_MAX_EXP == 128 && FLT_MIN_EXP == -125
-#define FLUID_SF3_HAVE_FAST_F2S16 1
-#else
-#define FLUID_SF3_HAVE_FAST_F2S16 0
-#endif
+#ifdef FLUID_SF3_HAVE_FAST_F2S16
 
-#if FLUID_SF3_HAVE_FAST_F2S16
+FLUID_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t), "float must be 32-bit wide");
+
 /* SIMD-friendly conversion: NaN -> 0, clamp to [-1, 32767/32768], then
  * round sample * 32768. The 384.0f bias assumes round-to-nearest, ties-to-even. */
 static inline int16_t fluid_sf3_float_to_s16(float sample)
