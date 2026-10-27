@@ -2641,7 +2641,7 @@ FLUID_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t), "float must be 32-bit wid
 
 /* SIMD-friendly conversion: NaN -> 0, clamp to [-1, 32767/32768], then
  * round sample * 32768. The 384.0f bias assumes round-to-nearest, ties-to-even. */
-static inline int16_t fluid_sf3_float_to_s16(float sample)
+static FLUID_INLINE int16_t fluid_sf3_float_to_s16(float sample)
 {
     uint32_t bits;
     int32_t magnitude, limit, pcm;
