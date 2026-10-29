@@ -2,7 +2,10 @@
 #include "fluidsynth.h"
 #include "fluid_midi.h"
 
-enum { NumChannels = 16 };
+#include <array>
+
+constexpr int NumChannels = 16;
+constexpr int SampleFrames = 256;
 
 static void check_basic(fluid_synth_t *synth, int chan, int exp_basic, int exp_mode, int exp_val)
 {
@@ -21,12 +24,10 @@ static void check_enabled(fluid_synth_t *synth, int chan, int enabled)
     TEST_ASSERT((res == FLUID_OK) == (enabled != 0));
 }
 
-enum { SampleFrames = 256 };
-
 static fluid_voice_t *start_voice(fluid_synth_t *synth, fluid_sample_t *sample, int chan)
 {
     fluid_voice_t *voice = fluid_synth_alloc_voice(synth, sample, chan, 60, 100);
-    TEST_ASSERT(voice != NULL);
+    TEST_ASSERT(voice != nullptr);
     fluid_synth_start_voice(synth, voice);
     TEST_ASSERT(fluid_voice_is_on(voice));
     return voice;
@@ -34,9 +35,7 @@ static fluid_voice_t *start_voice(fluid_synth_t *synth, fluid_sample_t *sample, 
 
 static void test_defaults(fluid_synth_t *synth)
 {
-    int chan;
-
-    for(chan = 0; chan < NumChannels; chan++)
+    for(int chan = 0; chan < NumChannels; chan++)
     {
         check_basic(synth, chan, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
         check_enabled(synth, chan, true);
@@ -47,11 +46,11 @@ static void test_invalid_arguments(fluid_synth_t *synth)
 {
     int basic, mode, val;
 
-    TEST_ASSERT(fluid_synth_get_basic_channel(NULL, 0, &basic, &mode, &val) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_get_basic_channel(nullptr, 0, &basic, &mode, &val) == FLUID_FAILED);
     TEST_ASSERT(fluid_synth_get_basic_channel(synth, -1, &basic, &mode, &val) == FLUID_FAILED);
     TEST_ASSERT(fluid_synth_get_basic_channel(synth, NumChannels, &basic, &mode, &val) == FLUID_FAILED);
 
-    TEST_ASSERT(fluid_synth_set_basic_channel(NULL, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_set_basic_channel(nullptr, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 1) == FLUID_FAILED);
     TEST_ASSERT(fluid_synth_set_basic_channel(synth, NumChannels, FLUID_CHANNEL_MODE_OMNION_POLY, 1) == FLUID_FAILED);
     TEST_ASSERT(fluid_synth_set_basic_channel(synth, 0, -1, 1) == FLUID_FAILED);
     TEST_ASSERT(fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_LAST, 1) == FLUID_FAILED);
@@ -65,15 +64,13 @@ static void test_invalid_arguments(fluid_synth_t *synth)
 
 static void test_reset(fluid_synth_t *synth)
 {
-    int chan;
-
     /* channel 5 is enabled but not a basic channel */
     TEST_ASSERT(fluid_synth_reset_basic_channel(synth, 5) == FLUID_FAILED);
     test_defaults(synth);
 
     TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, 0));
 
-    for(chan = 0; chan < NumChannels; chan++)
+    for(int chan = 0; chan < NumChannels; chan++)
     {
         check_basic(synth, chan, FLUID_FAILED, FLUID_FAILED, FLUID_FAILED);
         check_enabled(synth, chan, false);
@@ -253,7 +250,7 @@ static void test_mode_cc(fluid_synth_t *synth)
 
 static void test_global_cc(fluid_synth_t *synth)
 {
-    int chan, val;
+    int val;
 
     TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
     TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 1, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 3));
@@ -262,7 +259,7 @@ static void test_global_cc(fluid_synth_t *synth)
      * a CC on a disabled channel is forwarded to all channels of the omni off / mono group whose
      * basic channel is the next higher channel. Here channel 0 forwards to the group starting at 1. */
     TEST_SUCCESS(fluid_synth_cc(synth, 0, 7, 50));
-    for(chan = 1; chan <= 3; chan++)
+    for(int chan = 1; chan <= 3; chan++)
     {
         TEST_SUCCESS(fluid_synth_get_cc(synth, chan, 7, &val));
         TEST_ASSERT(val == 50);
@@ -279,7 +276,7 @@ static void test_global_cc(fluid_synth_t *synth)
 
 static void test_notes_off_on_mode_change(fluid_synth_t *synth, fluid_sample_t *sample)
 {
-    fluid_voice_t *v0, *v1, *v4;
+    const fluid_voice_t *v0, *v1, *v4;
 
     TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
     TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 4));
@@ -311,11 +308,9 @@ static void test_notes_off_on_mode_change(fluid_synth_t *synth, fluid_sample_t *
 
 static void test_shrink_group_releases_notes(fluid_synth_t *synth, fluid_sample_t *sample)
 {
-    fluid_voice_t *v;
-
     /* the note off arrives on a channel that is no longer enabled, so the mode change must end the note */
     TEST_SUCCESS(fluid_synth_system_reset(synth));
-    v = start_voice(synth, sample, 1);
+    const fluid_voice_t *v = start_voice(synth, sample, 1);
     TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
     check_enabled(synth, 1, false);
     TEST_ASSERT(!fluid_voice_is_on(v));
@@ -325,7 +320,7 @@ static void test_shrink_group_releases_notes(fluid_synth_t *synth, fluid_sample_
 
 static void test_shrink_group_releases_sustained_notes(fluid_synth_t *synth, fluid_sample_t *sample)
 {
-    fluid_voice_t *held, *playing;
+    const fluid_voice_t *held, *playing;
 
     TEST_SUCCESS(fluid_synth_system_reset(synth));
     TEST_SUCCESS(fluid_synth_cc(synth, 1, 64, 127));
@@ -363,15 +358,15 @@ int main(void)
     fluid_settings_t *settings = new_fluid_settings();
     fluid_synth_t *synth;
     fluid_sample_t *sample = new_fluid_sample();
-    short data[SampleFrames] = {0};
+    std::array<short, SampleFrames> data = {0};
 
-    TEST_ASSERT(settings != NULL);
-    TEST_ASSERT(sample != NULL);
+    TEST_ASSERT(settings != nullptr);
+    TEST_ASSERT(sample != nullptr);
     TEST_SUCCESS(fluid_settings_setint(settings, "synth.midi-channels", NumChannels));
     synth = new_fluid_synth(settings);
-    TEST_ASSERT(synth != NULL);
+    TEST_ASSERT(synth != nullptr);
 
-    TEST_SUCCESS(fluid_sample_set_sound_data(sample, data, NULL, SampleFrames, 44100, 1));
+    TEST_SUCCESS(fluid_sample_set_sound_data(sample, data.data(), nullptr, SampleFrames, 44100, 1));
     TEST_SUCCESS(fluid_sample_set_pitch(sample, 60, 0));
 
     test_defaults(synth);
