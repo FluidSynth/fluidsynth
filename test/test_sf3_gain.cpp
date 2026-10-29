@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <initializer_list>
+#include <limits>
 
 /* Regression for #1856: saturate decoded peaks without changing the gain of
  * the remaining samples. */
@@ -59,8 +60,41 @@ int main()
     TEST_ASSERT(loader != nullptr);
     const fluid_file_callbacks_t *callbacks = &loader->file_callbacks;
 
+    /* Float WAV preserves exact ties and their adjacent floats, unlike Vorbis
+     * or PCM16. Exercise the same conversion through the SF3 loader. */
+    const float half_lsb = 0.5f / 32768.0f;
+    const struct
+    {
+        float input;
+        short expected;
+    } boundaries[] =
+    {
+        {0.0f, 0}, {-0.0f, 0},
+        {half_lsb, 0}, {-half_lsb, 0},
+        {3 * half_lsb, 2}, {-3 * half_lsb, -2},
+        {std::nextafter(half_lsb, 0.0f), 0},
+        {std::nextafter(half_lsb, 1.0f), 1},
+        {std::nextafter(-half_lsb, 0.0f), 0},
+        {std::nextafter(-half_lsb, -1.0f), -1},
+        {std::nextafter(3 * half_lsb, 0.0f), 1},
+        {std::nextafter(3 * half_lsb, 1.0f), 2},
+        {std::nextafter(-3 * half_lsb, 0.0f), -1},
+        {std::nextafter(-3 * half_lsb, -1.0f), -2},
+        {-1.0f, -32768}, {32767.0f / 32768.0f, 32767},
+        {1.0f, 32767}, {-1.25f, -32768}, {1.25f, 32767},
+        {std::nextafter(-1.0f, 0.0f), -32768},
+        {std::nextafter(-1.0f, -2.0f), -32768},
+        {std::nextafter(32767.0f / 32768.0f, 0.0f), 32767},
+        {std::nextafter(32767.0f / 32768.0f, 1.0f), 32767},
+        {std::numeric_limits<float>::quiet_NaN(), 0},
+        {std::numeric_limits<float>::infinity(), 32767},
+        {-std::numeric_limits<float>::infinity(), -32768}
+    };
+    constexpr int boundary_count = FLUID_N_ELEMENTS(boundaries);
+
     /* Also cover the non-OGG compatibility path accepted by the SF3 loader. */
-    for(int format : {SF_FORMAT_OGG | SF_FORMAT_VORBIS, SF_FORMAT_WAV | SF_FORMAT_PCM_16})
+    for(int format : {SF_FORMAT_OGG | SF_FORMAT_VORBIS, SF_FORMAT_WAV | SF_FORMAT_PCM_16,
+                     SF_FORMAT_WAV | SF_FORMAT_FLOAT})
     {
         test_stereo_rejected(format, callbacks);
 
@@ -77,7 +111,9 @@ int main()
 
             for(int i = 0; i < frames; i++)
             {
-                input[i] = amplitude * std::sin(i * 0.14);
+                input[i] = format == (SF_FORMAT_WAV | SF_FORMAT_FLOAT) &&
+                           i < boundary_count ? boundaries[i].input
+                           : amplitude * std::sin(i * 0.14);
             }
 
             TEST_ASSERT(sf_writef_float(encoded, input, frames) == frames);
@@ -107,8 +143,17 @@ int main()
             for(int i = 0; i < frames; i++)
             {
                 const float value = reference[i];
-                const int expected = value >= 32767.0f / 32768.0f ? 32767
-                                     : value <= -1 ? -32768 : std::lrint(value * 32768.0f);
+                int expected;
+                if(format == (SF_FORMAT_WAV | SF_FORMAT_FLOAT) && i < boundary_count)
+                {
+                    expected = boundaries[i].expected;
+                }
+                else
+                {
+                    expected = value >= 32767.0f / 32768.0f ? 32767
+                               : value <= -1 ? -32768 : std::lrint(value * 32768.0f);
+                }
+
                 TEST_ASSERT(decoded[i] == expected);
                 saturated += value > 1 || value < -1;
             }
