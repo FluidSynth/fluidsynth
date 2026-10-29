@@ -2626,10 +2626,12 @@ static sf_count_t sfvio_tell(void *user_data)
     return data->offset;
 }
 
+/* Verify that single precision float format (roughly) matches up with IEEE754 format */
 #if    FLT_RADIX == 2 && FLT_MANT_DIG == 24              \
     && FLT_MAX_EXP == 128 && FLT_MIN_EXP == -125         \
-    && (!defined(__FLOAT_WORD_ORDER__) || !defined(__BYTE_ORDER__) \
-        || __FLOAT_WORD_ORDER__ == __BYTE_ORDER__)
+    && (!defined(__FLOAT_WORD_ORDER__) || !defined(__BYTE_ORDER__) || __FLOAT_WORD_ORDER__ == __BYTE_ORDER__) \
+    /* Use the bias conversion only without reported excess precision (as present on x87). */ \
+    && (!defined(__FLT_EVAL_METHOD__) || __FLT_EVAL_METHOD__ == 0)
 #  define FLUID_SF3_HAVE_FAST_F2S16 1
 #endif
 
@@ -2639,7 +2641,7 @@ FLUID_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t), "float must be 32-bit wid
 
 /* SIMD-friendly conversion: NaN -> 0, clamp to [-1, 32767/32768], then
  * round sample * 32768. The 384.0f bias assumes round-to-nearest, ties-to-even. */
-static inline int16_t fluid_sf3_float_to_s16(float sample)
+static FLUID_INLINE int16_t fluid_sf3_float_to_s16(float sample)
 {
     uint32_t bits;
     int32_t magnitude, limit, pcm;
@@ -2664,7 +2666,18 @@ static inline int16_t fluid_sf3_float_to_s16(float sample)
     return (int16_t)(bits >> 31 ? -pcm : pcm);
 }
 #else
-#error "Unknown or uncommon float architecture"
+/* Numeric fallback for excess precision (e.g. x87) or other float formats. */
+static FLUID_INLINE int16_t fluid_sf3_float_to_s16(float sample)
+{
+    if(isnan(sample))
+    {
+        return 0;
+    }
+
+    fluid_clip(sample, -1.0f, 32767.0f / 32768.0f);
+    /* Match the fast path's ties-to-even rounding in the default mode. */
+    return (int16_t)lrintf(sample * 32768.0f);
+}
 #endif
 
 /* Read normalized mono frames and saturate each sample without rescaling the
