@@ -42,6 +42,11 @@
 #define SDTA_FCC    FLUID_FOURCC('s','d','t','a')
 #define PDTA_FCC    FLUID_FOURCC('p','d','t','a') /* info/sample/preset */
 
+/* RMIDI (RIFF MIDI) chunk identifiers */
+#define RMID_FCC    FLUID_FOURCC('R','M','I','D')
+#define DATA_FCC    FLUID_FOURCC('d','a','t','a')
+#define DBNK_FCC    FLUID_FOURCC('D','B','N','K')
+
 #define IFIL_FCC    FLUID_FOURCC('i','f','i','l')
 #define ISNG_FCC    FLUID_FOURCC('i','s','n','g')
 #define INAM_FCC    FLUID_FOURCC('I','N','A','M')
@@ -228,6 +233,9 @@ static const unsigned short invalid_preset_gen[] =
 
 
 static int load_header(SFData *sf);
+static int load_rmidi_header(SFData *sf);
+static int load_rmidi_info(SFData *sf, fluid_long_long_t start, fluid_long_long_t end,
+                           int *bank_offset, int *have_bank_offset);
 static int load_body(SFData *sf);
 static int process_info(SFData *sf, int size);
 static int process_sdta(SFData *sf, unsigned int size);
@@ -252,6 +260,61 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24);
 
 /**
+ * Check whether an RMIDI (RIFF RMID) file contains an embedded sound bank.
+ * The file position is unspecified after this function returns.
+ */
+static int fluid_sffile_rmidi_has_bank(FILE *fp, fluid_long_long_t filesize)
+{
+    unsigned char header[8];
+    fluid_long_long_t pos = 12; /* skip RIFF, size and the RMID form type */
+
+    while(pos + 8 <= filesize)
+    {
+        uint32_t id, size, form;
+
+        if(fluid_file_seek(fp, pos, SEEK_SET) ||
+                FLUID_FREAD(header, sizeof(header), 1, fp) != 1)
+        {
+            break;
+        }
+
+        memcpy(&id, header, 4);
+        memcpy(&size, header + 4, 4);
+        size = FLUID_LE32TOH(size);
+
+        if((fluid_long_long_t)size > filesize - (pos + 8))
+        {
+            break;
+        }
+
+        if(id == RIFF_FCC && size >= 4)
+        {
+            if(fluid_file_seek(fp, pos + 8, SEEK_SET) ||
+                    FLUID_FREAD(&form, sizeof(form), 1, fp) != 1)
+            {
+                break;
+            }
+
+            if(form == SFBK_FCC)
+            {
+                return TRUE;
+            }
+
+#ifdef ENABLE_NATIVE_DLS
+            if(form == DLS_FCC)
+            {
+                return TRUE;
+            }
+#endif
+        }
+
+        pos += 8 + size + (size & 1);
+    }
+
+    return FALSE;
+}
+
+/**
  * Check if a file is a SoundFont file.
  *
  * @param filename Path to the file to check
@@ -259,6 +322,7 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
  *
  * This function uses regular <code>fopen()</code>, <code>fread()</code> and <code>fseek()</code> to identify known Soundfont formats.
  * If fluidsynth was built with DLS support, this function will also identify DLS files.
+ * RMIDI files containing an embedded SoundFont or DLS bank are recognized as well.
  *
  * @note This function only checks whether certain RIFF chunks are present in the file.
  * A call to fluid_synth_sfload() might still fail, as it imposes much stricter structural checks.
@@ -286,7 +350,12 @@ int fluid_is_soundfont(const char *filename)
 
         if(fcc != RIFF_FCC)
         {
-            FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): expected RIFF chunk id '0x%04X' but got '0x%04X'.", (unsigned int) RIFF_FCC, (unsigned int)fcc);
+            /* A MIDI file is not a SoundFont, don't complain about it. */
+            if(fcc != FLUID_FOURCC('M', 'T', 'h', 'd'))
+            {
+                FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): expected RIFF chunk id '0x%04X' but got '0x%04X'.", (unsigned int) RIFF_FCC, (unsigned int)fcc);
+            }
+
             break;
         }
 
@@ -316,6 +385,22 @@ int fluid_is_soundfont(const char *filename)
             break;  // seems to be DLS, stop here
         }
 #endif
+
+        if(fcc == RMID_FCC)
+        {
+            fluid_long_long_t filesize;
+
+            if(fluid_file_seek(fp, 0, SEEK_END))
+            {
+                FLUID_LOG(FLUID_ERR, "fluid_is_soundfont(): cannot seek to end of file.");
+                break;
+            }
+
+            filesize = FLUID_FTELL(fp);
+            retcode = (filesize != FLUID_FAILED) && fluid_sffile_rmidi_has_bank(fp, filesize);
+            break;
+        }
+
         FLUID_LOG(FLUID_ERR,
             "fluid_is_soundfont(): expected '0x%04X' ('sfbk') "
 #ifdef ENABLE_NATIVE_DLS
@@ -550,9 +635,159 @@ static int chunkid(uint32_t id)
     return i;
 }
 
+/*
+ * Read the INFO chunk of an RMIDI file and remember the DBNK bank offset.
+ * All other INFO chunks are metadata and are ignored by the SoundFont loader.
+ */
+static int load_rmidi_info(SFData *sf, fluid_long_long_t start, fluid_long_long_t end,
+                           int *bank_offset, int *have_bank_offset)
+{
+    while(start + 8 <= end)
+    {
+        SFChunk chunk;
+        fluid_long_long_t payload;
+
+        if(sf->fcbs->fseek(sf->sffd, start, SEEK_SET) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to seek to RMIDI INFO chunk");
+            return FALSE;
+        }
+
+        READCHUNK(sf, &chunk);
+
+        payload = start + 8;
+
+        if((fluid_long_long_t)chunk.size > end - payload)
+        {
+            FLUID_LOG(FLUID_ERR, "RMIDI INFO chunk size mismatch");
+            return FALSE;
+        }
+
+        if(chunk.id == DBNK_FCC)
+        {
+            uint16_t offset;
+
+            if(chunk.size != 2)
+            {
+                FLUID_LOG(FLUID_ERR, "RMIDI DBNK chunk has invalid size of %u bytes", chunk.size);
+                return FALSE;
+            }
+
+            READW(sf, offset);
+
+            if(offset > 127)
+            {
+                FLUID_LOG(FLUID_ERR, "RMIDI DBNK bank offset %u is out of range", offset);
+                return FALSE;
+            }
+
+            *bank_offset = offset;
+            *have_bank_offset = TRUE;
+        }
+
+        start = payload + chunk.size + (chunk.size & 1);
+    }
+
+    return TRUE;
+}
+
+/*
+ * Locate the embedded SoundFont in an RMIDI (RIFF RMID) file.
+ *
+ * On success, the file position is set to the beginning of the embedded
+ * RIFF chunk and sf->is_rmidi has been set. If the file contains a DLS bank
+ * instead of a SoundFont, FALSE is returned so that the DLS loader can try.
+ */
+static int load_rmidi_header(SFData *sf)
+{
+    fluid_long_long_t end = sf->filesize;
+    fluid_long_long_t pos = 12; /* skip RIFF, size and the RMID form type */
+    int bank_offset = 1;        /* RMIDI default when DBNK is omitted */
+    int have_bank_offset = FALSE;
+
+    while(pos + 8 <= end)
+    {
+        SFChunk chunk;
+        fluid_long_long_t payload;
+
+        if(sf->fcbs->fseek(sf->sffd, pos, SEEK_SET) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to seek to RMIDI chunk");
+            return FALSE;
+        }
+
+        READCHUNK(sf, &chunk);
+
+        payload = pos + 8;
+
+        if((fluid_long_long_t)chunk.size > end - payload)
+        {
+            FLUID_LOG(FLUID_ERR, "RMIDI chunk size mismatch");
+            return FALSE;
+        }
+
+        if(chunk.id == LIST_FCC)
+        {
+            uint32_t list_type;
+
+            if(chunk.size < 4)
+            {
+                FLUID_LOG(FLUID_ERR, "RMIDI LIST chunk is too small");
+                return FALSE;
+            }
+
+            READD(sf, list_type);
+
+            if(list_type == INFO_FCC &&
+                    !load_rmidi_info(sf, payload + 4, payload + chunk.size,
+                                     &bank_offset, &have_bank_offset))
+            {
+                return FALSE;
+            }
+        }
+        else if(chunk.id == RIFF_FCC)
+        {
+            uint32_t form;
+
+            if(chunk.size < 4)
+            {
+                FLUID_LOG(FLUID_ERR, "RMIDI embedded RIFF chunk is too small");
+                return FALSE;
+            }
+
+            READD(sf, form);
+
+            if(form == SFBK_FCC)
+            {
+                if(sf->fcbs->fseek(sf->sffd, pos, SEEK_SET) == FLUID_FAILED)
+                {
+                    FLUID_LOG(FLUID_ERR, "Failed to seek to embedded SoundFont");
+                    return FALSE;
+                }
+
+                sf->is_rmidi = TRUE;
+                sf->rmidi_bank_offset = have_bank_offset ? bank_offset : 1;
+                return TRUE;
+            }
+            else if(form == DLS_FCC)
+            {
+                /* Let the DLS loader handle the embedded bank. */
+                FLUID_LOG(FLUID_DBG, "RMIDI file contains a DLS bank instead of a SoundFont");
+                return FALSE;
+            }
+        }
+
+        pos = payload + chunk.size + (chunk.size & 1);
+    }
+
+    FLUID_LOG(FLUID_ERR, "No embedded SoundFont found in RMIDI file");
+    return FALSE;
+}
+
 static int load_header(SFData *sf)
 {
     SFChunk chunk;
+    fluid_long_long_t riff_start = sf->fcbs->ftell(sf->sffd);
 
     READCHUNK(sf, &chunk); /* load RIFF chunk */
 
@@ -565,6 +800,25 @@ static int load_header(SFData *sf)
 
     READID(sf, &chunk.id); /* load file ID */
 
+    if(chunk.id == RMID_FCC)
+    {
+        /* RMIDI file: find and parse the embedded SoundFont. */
+        if((fluid_long_long_t)chunk.size + 8 > sf->filesize)
+        {
+            FLUID_LOG(FLUID_ERR, "RMIDI file size mismatch");
+            return FALSE;
+        }
+
+        if(!load_rmidi_header(sf))
+        {
+            return FALSE;
+        }
+
+        riff_start = sf->fcbs->ftell(sf->sffd);
+        READCHUNK(sf, &chunk); /* load embedded RIFF chunk */
+        READID(sf, &chunk.id); /* load embedded file ID */
+    }
+
     if(chunk.id != SFBK_FCC)
     {
         /* error if not SFBK_ID */
@@ -572,7 +826,13 @@ static int load_header(SFData *sf)
         return FALSE;
     }
 
-    if(chunk.size != sf->filesize - 8)
+    if((fluid_long_long_t)chunk.size > sf->filesize - (riff_start + 8))
+    {
+        FLUID_LOG(FLUID_ERR, "SoundFont file size mismatch");
+        return FALSE;
+    }
+
+    if(!sf->is_rmidi && chunk.size != sf->filesize - 8)
     {
         FLUID_LOG(FLUID_ERR, "SoundFont file size mismatch");
         return FALSE;

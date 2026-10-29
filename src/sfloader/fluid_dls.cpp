@@ -363,6 +363,7 @@ struct fluid_dls_instrument_fluid_data
     int bankmsb;
     int banklsb;
     bool is_drums;
+    int bank_offset;
 
     fluid_preset_t fluid{};           // its user data is `this` (fluid_dls_instrument_fluid_data*)
     fluid_dls_instrument *instrument; // backing instrument
@@ -389,6 +390,9 @@ struct fluid_dls_font
             }
         } };
     fluid_long_long_t filesize{};
+
+    /* bank offset of an embedded DLS bank in an RMIDI file, 0 for plain DLS */
+    int bank_offset{};
 
     // offset to chunk header
     fluid_long_long_t linsoffset{};
@@ -438,6 +442,9 @@ struct fluid_dls_font
     ~fluid_dls_font() = default;
 
     // parsing functions
+
+    // locate the embedded DLS bank in an RMIDI file; returns the chunk offset
+    inline fluid_long_long_t find_rmidi_dls(fluid_long_long_t filesize, int *bank_offset);
 
     // visitor(RIFFChunk chunk, int headersize, fluid_long_long_t pos)
     template<class Visitor>
@@ -534,6 +541,8 @@ static void delete_fluid_dls_font(fluid_dls_font *dlsfont) noexcept
 // non-LIST chunks
 #define RIFF_FCC FLUID_FOURCC('R', 'I', 'F', 'F')
 #define LIST_FCC FLUID_FOURCC('L', 'I', 'S', 'T')
+#define RMID_FCC FLUID_FOURCC('R', 'M', 'I', 'D')
+#define DBNK_FCC FLUID_FOURCC('D', 'B', 'N', 'K')
 #define DLID_FCC FLUID_FOURCC('d', 'l', 'i', 'd')
 #define CDL_FCC FLUID_FOURCC('c', 'd', 'l', ' ')
 #define PTBL_FCC FLUID_FOURCC('p', 't', 'b', 'l')
@@ -662,6 +671,86 @@ static inline int READCHUNK(fluid_dls_font *dlsfont, RIFFChunk &chunk)
     }
 
     return 8;
+}
+
+inline fluid_long_long_t
+fluid_dls_font::find_rmidi_dls(fluid_long_long_t filesize, int *bank_offset)
+{
+    fluid_long_long_t pos = 12; /* skip RIFF, size and the RMID form type */
+
+    *bank_offset = 1; /* RMIDI default when DBNK is omitted */
+
+    while(pos + 8 <= filesize)
+    {
+        RIFFChunk chunk;
+
+        fseek(pos, SEEK_SET);
+        auto headersize = READCHUNK(this, chunk);
+
+        if(pos + headersize + chunk.size > filesize)
+        {
+            throw std::runtime_error{ "RMIDI chunk size exceeds file size" };
+        }
+
+        if(headersize == 12 && chunk.id == DLS_FCC)
+        {
+            return pos;
+        }
+
+        if(headersize == 12 && chunk.id == INFO_FCC)
+        {
+            fluid_long_long_t info_pos = pos + headersize;
+            fluid_long_long_t info_end = info_pos + chunk.size;
+
+            while(info_pos + 8 <= info_end)
+            {
+                RIFFChunk info_chunk;
+
+                fseek(info_pos, SEEK_SET);
+                auto info_headersize = READCHUNK(this, info_chunk);
+
+                if(info_pos + info_headersize + info_chunk.size > info_end)
+                {
+                    throw std::runtime_error{ "RMIDI INFO chunk size exceeds LIST size" };
+                }
+
+                if(info_chunk.id == DBNK_FCC)
+                {
+                    uint16_t offset;
+
+                    if(info_chunk.size != 2)
+                    {
+                        throw std::runtime_error{ "RMIDI DBNK chunk has invalid size" };
+                    }
+
+                    READ16(this, offset);
+
+                    if(offset > 127)
+                    {
+                        throw std::runtime_error{ "RMIDI DBNK bank offset is out of range" };
+                    }
+
+                    *bank_offset = offset;
+                }
+
+                info_pos += info_headersize + info_chunk.size;
+
+                if(info_chunk.size % 2 != 0)
+                {
+                    info_pos++;
+                }
+            }
+        }
+
+        pos += headersize + chunk.size;
+
+        if(chunk.size % 2 != 0)
+        {
+            pos++;
+        }
+    }
+
+    throw std::runtime_error{ "No embedded DLS bank found in RMIDI file" };
 }
 
 template<class Visitor>
@@ -1507,43 +1596,74 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     READID(this, &chunk.id); // load file ID
 
-    if(chunk.id != DLS_FCC)
+    fluid_long_long_t riff_offset = 0;
+
+    if(chunk.id == RMID_FCC)
+    {
+        if(chunk.size + 8LL > filesize)
+        {
+            throw std::runtime_error{ "RMIDI file is too short" };
+        }
+
+        riff_offset = find_rmidi_dls(filesize, &bank_offset);
+
+        fseek(riff_offset, SEEK_SET);
+        READCHUNK_RAW(this, &chunk); // load embedded RIFF chunk
+
+        if(chunk.id != RIFF_FCC)
+        {
+            throw std::runtime_error{ "RMIDI embedded chunk is not a RIFF chunk" };
+        }
+
+        READID(this, &chunk.id); // load embedded file ID
+
+        if(chunk.id != DLS_FCC)
+        {
+            auto* p = (unsigned char *)&chunk.id;
+            throw std::runtime_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
+        }
+
+        filesize = riff_offset + chunk.size + 8LL;
+    }
+    else if(chunk.id == DLS_FCC)
+    {
+        if(chunk.size + 8LL > filesize)
+        {
+            uint8_t from[4] = {
+                static_cast<uint8_t>(chunk.size >>  0),
+                static_cast<uint8_t>(chunk.size >>  8),
+                static_cast<uint8_t>(chunk.size >> 16),
+                static_cast<uint8_t>(chunk.size >> 24),
+            };
+            auto maxSize = filesize - 8LL;
+            uint8_t to[4] = {
+                static_cast<uint8_t>(maxSize >>  0),
+                static_cast<uint8_t>(maxSize >>  8),
+                static_cast<uint8_t>(maxSize >> 16),
+                static_cast<uint8_t>(maxSize >> 24),
+            };
+            auto Hint = string_format(" (Hint: Try changing the hexadecimal little-endian size of the RIFF chunk from %02X%02X%02X%02X to %02X%02X%02X%02X using a hex editor.)", from[0], from[1], from[2], from[3], to[0], to[1], to[2], to[3]);
+            throw std::runtime_error{ string_format("DLS file is too short! Outermost RIFF chunk reports a payload size of %u bytes, but there are only %lld bytes left in the file.%s", chunk.size, maxSize, chunk.size == filesize ? Hint.c_str() : "") };
+        }
+
+        if(chunk.size + 8LL < filesize)
+        {
+            FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk, ignoring.");
+        }
+
+        // we don't care about real file size after this point
+        filesize = chunk.size + 8LL;
+    }
+    else
     {
         auto* p = (unsigned char *)&chunk.id;
         throw std::runtime_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
     }
 
-    if(chunk.size + 8LL > filesize)
-    {
-        uint8_t from[4] = {
-            static_cast<uint8_t>(chunk.size >>  0),
-            static_cast<uint8_t>(chunk.size >>  8),
-            static_cast<uint8_t>(chunk.size >> 16),
-            static_cast<uint8_t>(chunk.size >> 24),
-        };
-        auto maxSize = filesize - 8LL;
-        uint8_t to[4] = {
-            static_cast<uint8_t>(maxSize >>  0),
-            static_cast<uint8_t>(maxSize >>  8),
-            static_cast<uint8_t>(maxSize >> 16),
-            static_cast<uint8_t>(maxSize >> 24),
-        };
-        auto Hint = string_format(" (Hint: Try changing the hexadecimal little-endian size of the RIFF chunk from %02X%02X%02X%02X to %02X%02X%02X%02X using a hex editor.)", from[0], from[1], from[2], from[3], to[0], to[1], to[2], to[3]);
-        throw std::runtime_error{ string_format("DLS file is too short! Outermost RIFF chunk reports a payload size of %u bytes, but there are only %lld bytes left in the file.%s", chunk.size, maxSize, chunk.size == filesize ? Hint.c_str() : "") };
-    }
-
-    if(chunk.size + 8LL < filesize)
-    {
-        FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk, ignoring.");
-    }
-
-    // we don't care about real file size after this point
-    filesize = chunk.size + 8LL;
-
     // iterate over chunks in the RIFF form
     try
     {
-        visit_subchunks(0, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos)
+        visit_subchunks(riff_offset, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos)
         {
             switch(subchunk.id)  // toplevel chunk
             {
@@ -1862,6 +1982,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         self_data.bankmsb = instrument.bankmsb;
         self_data.pcnum = instrument.pcnum;
         self_data.is_drums = instrument.is_drums;
+        self_data.bank_offset = bank_offset;
         self_data.instrument = &instrument;
         self_data.fluid.sfont = sfont;
         self_data.fluid.get_name = fluid_dls_preset_get_name;
@@ -1879,6 +2000,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             alias_data.bankmsb = alias.bankmsb;
             alias_data.pcnum = alias.pcnum;
             alias_data.is_drums = false;
+            alias_data.bank_offset = bank_offset;
             alias_data.instrument = &instrument;
             alias_data.fluid.sfont = sfont;
             alias_data.fluid.get_name = fluid_dls_preset_get_name;
@@ -3207,6 +3329,7 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
 {
     const auto *inst = static_cast<const fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset));
     const auto *synth = inst->instrument->synth;
+    int bank;
 
     // see fluid_synth.h enum fluid_midi_bank_select
     // see fluid_chan.c fluid_channel_set_bank_msb()
@@ -3217,15 +3340,18 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
             return DRUM_INST_BANK;
         }
 
-        return inst->bankmsb; // to always match bank 0 for GM
+        bank = inst->bankmsb; // to always match bank 0 for GM
     }
-
-    if(synth->bank_select == FLUID_BANK_STYLE_GS)
+    else if(synth->bank_select == FLUID_BANK_STYLE_GS)
     {
-        return inst->bankmsb + (inst->is_drums ? DRUM_INST_BANK : 0);
-    }
+        if(inst->is_drums)
+        {
+            return inst->bankmsb + DRUM_INST_BANK;
+        }
 
-    if(synth->bank_select == FLUID_BANK_STYLE_XG ||
+        bank = inst->bankmsb;
+    }
+    else if(synth->bank_select == FLUID_BANK_STYLE_XG ||
             synth->bank_select == FLUID_BANK_STYLE_GM2)
     {
         if(inst->is_drums)
@@ -3235,16 +3361,30 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
             return 128;
         }
 
-        return inst->banklsb;
+        bank = inst->banklsb;
     }
-
-    // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
-    if(inst->is_drums)
+    else
     {
-        return DRUM_INST_BANK * 128;
+        // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
+        if(inst->is_drums)
+        {
+            return DRUM_INST_BANK * 128;
+        }
+
+        bank = inst->banklsb + (128 * inst->bankmsb);
     }
 
-    return inst->banklsb + (128 * inst->bankmsb);
+    if(inst->bank_offset > 0)
+    {
+        bank += inst->bank_offset;
+
+        if(bank > 127 && synth->bank_select != FLUID_BANK_STYLE_MMA)
+        {
+            bank = 0;
+        }
+    }
+
+    return bank;
 }
 
 static int fluid_dls_preset_get_num(fluid_preset_t *preset) noexcept
