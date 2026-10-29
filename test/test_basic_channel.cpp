@@ -145,11 +145,23 @@ static void test_mode_cc(fluid_synth_t *synth)
     TEST_SUCCESS(fluid_synth_system_reset(synth));
     test_defaults(synth);
 
-    /* mono on, 4 channels */
+    /* omni on ignores M: mono on spans all channels (issue 1859) */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 1));
+    for(chan = 0; chan < NumChannels; chan++)
+    {
+        check_basic(synth, chan, 0, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels);
+        check_enabled(synth, chan, true);
+    }
+
+    /* omni off then mono on, M = 4 */
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_POLY, 1);
+    check_enabled(synth, 1, false);
     TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 4));
     for(chan = 0; chan < 4; chan++)
     {
-        check_basic(synth, chan, 0, FLUID_CHANNEL_MODE_OMNION_MONO, 4);
+        check_basic(synth, chan, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 4);
         check_enabled(synth, chan, true);
     }
     for(chan = 4; chan < NumChannels; chan++)
@@ -157,25 +169,86 @@ static void test_mode_cc(fluid_synth_t *synth)
         check_enabled(synth, chan, false);
     }
 
-    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 4));
-    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 4);
+    /* mono on, M = 4, then omni off: M is remembered (issue 1859) */
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 4));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
+    for(chan = 0; chan < 4; chan++)
+    {
+        check_basic(synth, chan, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 4);
+        check_enabled(synth, chan, true);
+    }
+    for(chan = 4; chan < NumChannels; chan++)
+    {
+        check_enabled(synth, chan, false);
+    }
 
     /* omni off + poly on collapses the group to one channel */
-    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_ON, 4));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_ON, 0));
     check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_POLY, 1);
     check_enabled(synth, 1, false);
 
-    /* omni on + poly on, val 0 spans all channels again */
-    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_ON, 0));
+    /* poly on, then omni off */
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_ON, 0));
     check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_POLY, 1);
+    check_enabled(synth, 1, false);
+
+    /* omni on, then mono on with M = 4 */
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_ON, 0));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 4));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels);
+    check_basic(synth, NumChannels - 1, 0, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels);
+
+    /* mono on with M = 4, then omni on */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_ON, 0));
+    check_basic(synth, NumChannels - 1, 0, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels);
+
+    /* omni on, then poly on */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_ON, 0));
+    check_basic(synth, NumChannels - 1, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
+
+    /* poly on, then omni on */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_ON, 0));
+    check_basic(synth, NumChannels - 1, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
+
+    /* the group grows back after it has been shrunk by omni off */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_POLY, 1);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_ON, 0));
+    check_basic(synth, NumChannels - 1, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
+
+    /* M = 0 means all channels up to the end */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 0));
+    check_basic(synth, NumChannels - 1, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, NumChannels);
 
     /* mode CCs are rejected on channels that are not basic channels */
     TEST_ASSERT(fluid_synth_cc(synth, 1, POLY_OFF, 1) == FLUID_FAILED);
-    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, NumChannels);
 
-    /* group larger than the channel count is rejected */
+    /* group larger than the channel count is rejected, M stays untouched */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 2));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 2);
     TEST_ASSERT(fluid_synth_cc(synth, 0, POLY_OFF, 17) == FLUID_FAILED);
-    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNION_POLY, NumChannels);
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 2);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_ON, 0));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
+    check_basic(synth, 0, 0, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 2);
+
+    /* an omni off / mono group set up via the API keeps its size across omni on / off */
+    TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
+    TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 2, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 3));
+    TEST_SUCCESS(fluid_synth_cc(synth, 2, OMNI_ON, 0));
+    check_basic(synth, NumChannels - 1, 2, FLUID_CHANNEL_MODE_OMNION_MONO, NumChannels - 2);
+    TEST_SUCCESS(fluid_synth_cc(synth, 2, OMNI_OFF, 0));
+    check_basic(synth, 2, 2, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 3);
+    check_enabled(synth, 5, false);
 }
 
 static void test_global_cc(fluid_synth_t *synth)
@@ -243,7 +316,7 @@ static void test_shrink_group_releases_notes(fluid_synth_t *synth, fluid_sample_
     /* the note off arrives on a channel that is no longer enabled, so the mode change must end the note */
     TEST_SUCCESS(fluid_synth_system_reset(synth));
     v = start_voice(synth, sample, 1);
-    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 1));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
     check_enabled(synth, 1, false);
     TEST_ASSERT(!fluid_voice_is_on(v));
     TEST_ASSERT(!fluid_voice_is_sustained(v));
@@ -265,7 +338,7 @@ static void test_shrink_group_releases_sustained_notes(fluid_synth_t *synth, flu
     TEST_ASSERT(!fluid_voice_is_on(held) && fluid_voice_is_playing(held) && fluid_voice_is_sustained(held));
     TEST_ASSERT(fluid_voice_is_on(playing));
 
-    TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 1));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, OMNI_OFF, 0));
     check_enabled(synth, 1, false);
     check_enabled(synth, 2, false);
 
