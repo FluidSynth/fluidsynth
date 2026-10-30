@@ -685,8 +685,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         }
 
         /* go back to loop start */
-        unsigned int dsp_phase_index = fluid_phase_index(dsp_phase);
-        if(dsp_phase_index > end_index + right_guard)
+        if(fluid_phase_index(dsp_phase) > end_index + right_guard)
         {
             fluid_phase_sub_int(dsp_phase, loop_len);
 
