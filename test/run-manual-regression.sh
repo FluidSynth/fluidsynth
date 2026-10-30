@@ -166,8 +166,8 @@ if [[ ! -d "$CURRENT_OUTPUT_DIR" || ! -d "$REFERENCE_OUTPUT_DIR" ]]; then
   exit 1
 fi
 
-mapfile -d '' current_files < <(find "$CURRENT_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" -o -name "*.oga" \) -print0 | LC_ALL=C sort -z)
-mapfile -d '' reference_files < <(find "$REFERENCE_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" -o -name "*.oga" \) -print0 | LC_ALL=C sort -z)
+mapfile -d '' current_files < <(find "$CURRENT_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" -o -name "*.oga" -o -name "*.flac" \) -print0 | LC_ALL=C sort -z)
+mapfile -d '' reference_files < <(find "$REFERENCE_OUTPUT_DIR" -type f \( -name "*.wav" -o -name "*.raw" -o -name "*.oga" -o -name "*.flac" \) -print0 | LC_ALL=C sort -z)
 
 if [[ ${#current_files[@]} -eq 0 ]]; then
   echo "No rendered audio files found in ${CURRENT_OUTPUT_DIR}." >&2

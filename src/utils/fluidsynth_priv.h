@@ -349,6 +349,17 @@ else \
  fluid_return_if_fail(cond) (val)
 
 #ifdef __cplusplus
+#  define FLUID_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define FLUID_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
+#else
+   /* C90 fallback: a negative array size is a compile error. A repeated
+    * extern declaration is legal, so no unique names are needed */
+#  define FLUID_STATIC_ASSERT(cond, msg) \
+       extern char fluid_static_assert_failed[(cond) ? 1 : -1]
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

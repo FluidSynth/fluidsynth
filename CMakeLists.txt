@@ -779,6 +779,15 @@ elseif (enable-openmp AND OpenMP_C_FOUND )
     endif()
 endif()
 
+# Without OpenMP, the "#pragma omp" directives are unknown to the compiler and merely produce noise.
+if (NOT HAVE_OPENMP)
+    if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        add_compile_options ( $<$<COMPILE_LANGUAGE:C>:-Wno-unknown-pragmas> )
+    elseif (MSVC)
+        add_compile_options ( $<$<COMPILE_LANGUAGE:C>:/wd4068> )
+    endif()
+endif()
+
 unset ( ENABLE_NATIVE_DLS CACHE )
 if (enable-native-dls)
   if ("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)

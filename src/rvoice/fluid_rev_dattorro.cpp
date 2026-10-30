@@ -91,10 +91,10 @@ static float fluid_dattorro_read_tap(const fluid_reverb_delay_line<float> &delay
     }
 
     int index = delay.line_out + tap;
-    index %= size;
-    if(index < 0)
+    /* DATTORRO_TAP_S yields taps in [0, size), so the index needs at most one wrap. */
+    if(index >= size)
     {
-        index += size;
+        index -= size;
     }
     return delay.line[index];
 }
@@ -126,7 +126,7 @@ fluid_revmodel_dattorro::~fluid_revmodel_dattorro() = default;
 
 void fluid_revmodel_dattorro::setup()
 {
-    predelay.set_buffer(fluid_dattorro_seconds_to_samples(DATTORRO_PREDELAY_S / 1000.0f, cached_sample_rate));
+    predelay.set_buffer(fluid_dattorro_seconds_to_samples(DATTORRO_PREDELAY_S, cached_sample_rate));
 
     for(int i = 0; i < 4; ++i)
     {

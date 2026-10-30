@@ -161,7 +161,7 @@
  * - In mono staccato playing,default_fromkey must be INVALID_NOTE.
  * - In mono legato playing,default_fromkey must be valid.
  */
-static char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t *chan,
+static int fluid_synth_get_fromkey_portamento_legato(fluid_channel_t *chan,
         int default_fromkey)
 {
     unsigned char ptc = fluid_channel_get_cc(chan, PORTAMENTO_CTRL);

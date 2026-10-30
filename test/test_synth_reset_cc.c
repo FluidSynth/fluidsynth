@@ -40,7 +40,7 @@ static void test_sustain(fluid_synth_t* synth, int chan)
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
 }
 
-static void test_sostenuto(fluid_synth_t *synth, int chan)
+static void test_sostenuto(fluid_synth_t *synth, int chan, int sustain_takeover)
 {
     // play a note
     TEST_SUCCESS(fluid_synth_noteon(synth, chan, 60, 127));
@@ -57,10 +57,58 @@ static void test_sostenuto(fluid_synth_t *synth, int chan)
     TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
 
+    if(sustain_takeover)
+    {
+        /* Release notes played after sostenuto was pressed. */
+        TEST_SUCCESS(fluid_synth_noteon(synth, chan, 64, 127));
+        TEST_SUCCESS(fluid_synth_noteoff(synth, chan, 64));
+        TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+        TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+
+        /* Press sustain after key-up, then release sostenuto. */
+        TEST_SUCCESS(fluid_synth_cc(synth, chan, SUSTAIN_SWITCH, 127));
+        TEST_SUCCESS(fluid_synth_cc(synth, chan, SOSTENUTO_SWITCH, 0));
+        TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+        TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+    }
+
     // reset controllers
     TEST_SUCCESS(fluid_synth_cc(synth, chan, ALL_CTRL_OFF, 0));
 
     // voice should be off now
+    TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
+}
+
+static void test_pedal_overlap(fluid_synth_t *synth, int mono, int first_up)
+{
+    int second_up = first_up == SUSTAIN_SWITCH ? SOSTENUTO_SWITCH : SUSTAIN_SWITCH;
+
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    if(mono)
+    {
+        TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
+        TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_MONO, 1));
+    }
+
+    TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 127));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SUSTAIN_SWITCH, 127));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SOSTENUTO_SWITCH, 127));
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, first_up, 0));
+    TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+
+    if(mono && first_up == SOSTENUTO_SWITCH)
+    {
+        /* Cut the previous mono note when the next key is pressed. */
+        TEST_SUCCESS(fluid_synth_noteon(synth, 0, 64, 127));
+        TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+        TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+        TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 64));
+    }
+
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, second_up, 0));
     TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
 }
@@ -108,13 +156,61 @@ static void test_portamento_fromkey(fluid_synth_t* synth, int chan)
     TEST_ASSERT(!fluid_channel_is_valid_note(ptc));
 }
 
-// this test should make sure that sample rate changed are handled correctly
+static void test_all_off_monolist(fluid_synth_t *synth, int all_sounds)
+{
+    int scenario;
+    int (*all_off)(fluid_synth_t *, int) = all_sounds ? fluid_synth_all_sounds_off : fluid_synth_all_notes_off;
+    int ctrl = all_sounds ? ALL_SOUND_OFF : ALL_NOTES_OFF;
+
+    for(scenario = all_sounds ? 1 : 0; scenario < 4; scenario++)
+    {
+        int other_notes = scenario == 3 ? 0 : 2;
+
+        TEST_SUCCESS(fluid_synth_system_reset(synth));
+        TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
+        TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 0,
+                     scenario == 0 ? FLUID_CHANNEL_MODE_OMNION_POLY : FLUID_CHANNEL_MODE_OMNIOFF_MONO, 1));
+        TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 1, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 1));
+        TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 100));
+        TEST_SUCCESS(fluid_synth_noteon(synth, 0, 64, 100));
+        TEST_SUCCESS(fluid_synth_noteon(synth, 1, 60, 100));
+        TEST_SUCCESS(fluid_synth_noteon(synth, 1, 64, 100));
+        TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+
+        if(scenario == 0)
+        {
+            TEST_SUCCESS(fluid_synth_cc(synth, 0, POLY_OFF, 1));
+        }
+        else if(scenario == 1)
+        {
+            TEST_SUCCESS(fluid_synth_cc(synth, 0, ctrl, 0));
+        }
+        else
+        {
+            TEST_SUCCESS(all_off(synth, scenario == 3 ? -1 : 0));
+        }
+
+        TEST_ASSERT(synth->channel[0]->n_notes == 0);
+        TEST_ASSERT(!(synth->channel[0]->mode & FLUID_CHANNEL_LEGATO_PLAYING));
+        TEST_ASSERT(synth->channel[1]->n_notes == other_notes);
+        TEST_ASSERT(!!(synth->channel[1]->mode & FLUID_CHANNEL_LEGATO_PLAYING) == !!other_notes);
+        TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+        /* Release a new note after the stop command to check for stale-key revival. */
+        TEST_SUCCESS(fluid_synth_noteon(synth, 0, 67, 100));
+        TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 67));
+        TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+        TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == other_notes);
+    }
+}
+
+/* Test controller resets and overlapping hold pedals. */
 int main(void)
 {
-    int chan;
+    int chan, mono;
     fluid_synth_t *synth;
     fluid_settings_t *settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
+    TEST_SUCCESS(fluid_settings_setint(settings, "synth.note-cut", 2));
 
     synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
@@ -135,10 +231,18 @@ int main(void)
         test_sustain(synth, chan);
         fluid_synth_system_reset(synth);
         
-        test_sostenuto(synth, chan);
+        test_sostenuto(synth, chan, 0);
         fluid_synth_system_reset(synth);
     }
-    
+
+    test_sostenuto(synth, 0, 1);
+    for(mono = 0; mono <= 1; mono++)
+    {
+        test_pedal_overlap(synth, mono, SUSTAIN_SWITCH);
+        test_pedal_overlap(synth, mono, SOSTENUTO_SWITCH);
+    }
+    test_all_off_monolist(synth, 0);
+    test_all_off_monolist(synth, 1);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
 
