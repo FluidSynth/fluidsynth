@@ -18,6 +18,7 @@
  */
 
 #include "fluid_midi.h"
+#include "fluid_rmidi.h"
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_settings.h"
@@ -56,8 +57,6 @@ static void fluid_player_playlist_load(fluid_player_t *player, unsigned int msec
 static void fluid_player_update_tempo(fluid_player_t *player);
 
 static fluid_midi_file *new_fluid_midi_file(const char *buffer, size_t length);
-static int fluid_midi_file_unwrap_rmidi(const char *buffer, size_t length,
-                                        const char **midi_buffer, size_t *midi_length);
 static void delete_fluid_midi_file(fluid_midi_file *mf);
 static int fluid_midi_file_read_mthd(fluid_midi_file *midifile);
 static int fluid_midi_file_load_tracks(fluid_midi_file *midifile, fluid_player_t *player);
@@ -91,7 +90,8 @@ static int fluid_midi_file_get_division(fluid_midi_file *midifile);
 int fluid_is_midifile(const char *filename)
 {
     FILE    *fp;
-    uint32_t id, form;
+    unsigned char header[12];
+    size_t   length;
     int      retcode = FALSE;
 
     do
@@ -101,101 +101,22 @@ int fluid_is_midifile(const char *filename)
             return retcode;
         }
         
-        if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
+        length = FLUID_FREAD(header, 1, sizeof(header), fp);
+
+        if(length < 4)
         {
             break;
         }
 
-        if(id == FLUID_FOURCC('M', 'T', 'h', 'd'))
-        {
-            retcode = TRUE;
-            break;
-        }
-
-        if(id != FLUID_FOURCC('R', 'I', 'F', 'F'))
-        {
-            break;
-        }
-
-        /* skip the RIFF chunk size */
-        if(fluid_file_seek(fp, 4, SEEK_CUR))
-        {
-            break;
-        }
-
-        if(FLUID_FREAD(&form, sizeof(form), 1, fp) != 1)
-        {
-            break;
-        }
-
-        retcode = (form == FLUID_FOURCC('R', 'M', 'I', 'D'));
+        retcode = (FLUID_STRNCMP((const char *)header, "MThd", 4) == 0) ||
+                  (length == sizeof(header) &&
+                   fluid_rmidi_is_rmidi_mem(header, sizeof(header)));
     }
     while(0);
 
     FLUID_FCLOSE(fp);
 
     return retcode;
-}
-
-static uint32_t fluid_rmidi_read_u32le(const unsigned char *p)
-{
-    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
-           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
-}
-
-/**
- * Extract the MIDI data chunk from an RMIDI (RIFF RMID) file.
- *
- * @param buffer Pointer to the complete file contents.
- * @param length Size of the file contents in bytes.
- * @param midi_buffer Location to store the pointer to the MIDI data.
- * @param midi_length Location to store the length of the MIDI data.
- * @return 1 if the file is an RMIDI file and a data chunk was found, 0 if the
- *  file is not an RMIDI file, or -1 if the RMIDI file is malformed.
- */
-static int fluid_midi_file_unwrap_rmidi(const char *buffer, size_t length,
-                                        const char **midi_buffer, size_t *midi_length)
-{
-    const unsigned char *data = (const unsigned char *)buffer;
-    size_t pos;
-
-    if(length < 12 || FLUID_STRNCMP(buffer, "RIFF", 4) != 0 ||
-            FLUID_STRNCMP(buffer + 8, "RMID", 4) != 0)
-    {
-        return 0;
-    }
-
-    pos = 12;
-
-    while(pos + 8 <= length)
-    {
-        uint32_t size = fluid_rmidi_read_u32le(data + pos + 4);
-        size_t payload = pos + 8;
-
-        if((size_t)size > length - payload)
-        {
-            FLUID_LOG(FLUID_ERR, "RMIDI chunk size exceeds file size");
-            return -1;
-        }
-
-        if(FLUID_STRNCMP(buffer + pos, "data", 4) == 0)
-        {
-            if(size == 0)
-            {
-                FLUID_LOG(FLUID_ERR, "RMIDI data chunk is empty");
-                return -1;
-            }
-
-            *midi_buffer = buffer + payload;
-            *midi_length = size;
-            return 1;
-        }
-
-        pos = payload + size + (size & 1);
-    }
-
-    FLUID_LOG(FLUID_ERR, "RMIDI file does not contain a data chunk");
-    return -1;
 }
 
 /**
@@ -2068,7 +1989,8 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     int buffer_owned;
     const char *midi_data;
     size_t midi_length;
-    int rmidi;
+    fluid_rmidi_info_t rmidi;
+    int rmidi_status;
 
     if(item->filename != NULL)
     {
@@ -2108,9 +2030,9 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     }
 
     /* RMIDI files wrap the actual MIDI file in a RIFF container. */
-    rmidi = fluid_midi_file_unwrap_rmidi(buffer, buffer_length, &midi_data, &midi_length);
+    rmidi_status = fluid_rmidi_parse_mem(buffer, buffer_length, &rmidi);
 
-    if(rmidi < 0)
+    if(rmidi_status < 0)
     {
         if(buffer_owned)
         {
@@ -2119,10 +2041,15 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
 
         return FLUID_FAILED;
     }
-    if(rmidi == 0)
+    if(rmidi_status == 0)
     {
         midi_data = buffer;
         midi_length = buffer_length;
+    }
+    else
+    {
+        midi_data = buffer + rmidi.midi_offset;
+        midi_length = (size_t)rmidi.midi_size;
     }
 
     midifile = new_fluid_midi_file(midi_data, midi_length);
