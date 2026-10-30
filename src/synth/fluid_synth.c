@@ -1897,6 +1897,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         {
             /* Construction of new_mode from current channel mode and this CC mode */
             int new_mode = chan->mode & FLUID_CHANNEL_MODE_MASK;
+            int mono_val = (num == POLY_OFF) ? value : chan->mono_val;
 
             switch(num)
             {
@@ -1920,18 +1921,22 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 return FLUID_FAILED;
             }
 
-            /* MIDI specs: if value is 0 it means all channels from channum to next
-                basic channel minus 1 (if any) or to MIDI channel count minus 1.
-                However, if value is > 0 (e.g. 4), the group of channels will be be
-                limited to 4.
-                value is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this mode
-                implies a group of only one channel.
+            /* MIDI specs: only Mono On (CC126) carries a meaningful data byte M, i.e. the
+                number of channels of an Omni Off/Mono group. A value of 0 means all channels
+                from channum to next basic channel minus 1 (if any) or to MIDI channel count minus 1.
+                Omni and Poly/Mono are independent flags that may be received in any order,
+                hence M is remembered and applied once Omni Off is received later.
+                With Omni On, M is ignored and the group spans all channels.
+                #FLUID_CHANNEL_MODE_OMNIOFF_POLY implies a group of only one channel.
             */
+            value = (new_mode == FLUID_CHANNEL_MODE_OMNIOFF_MONO) ? mono_val : 0;
+
             /* Checks value range and changes this existing basic channel group */
             value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 
             if(value != FLUID_FAILED)
             {
+                chan->mono_val = mono_val;
                 /* reset the current basic channel before changing it */
                 fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
                 fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
@@ -8695,10 +8700,22 @@ int fluid_synth_get_breath_mode(fluid_synth_t *synth, int chan, int *breathmode)
 static void
 fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t *synth, int chan, int nbr_chan)
 {
-    int i;
+    int i, v;
 
     for(i = chan; i < chan + nbr_chan; i++)
     {
+        /* MIDI specs: when mode is changed, channel must receive ALL_NOTES_OFF */
+        /* Disabled channels never see a note off or sustain release, so release even sustained voices now. */
+        for(v = 0; v < synth->polyphony; v++)
+        {
+            fluid_voice_t *voice = synth->voice[v];
+
+            if(fluid_voice_is_playing(voice) && !voice->has_noteoff && fluid_voice_get_channel(voice) == i)
+            {
+                fluid_voice_release(voice);
+            }
+        }
+
         fluid_channel_reset_basic_channel_info(synth->channel[i]);
         synth->channel[i]->mode_val = 0;
     }
@@ -8791,6 +8808,7 @@ fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mo
     /* checks if val range is above MIDI channel count */
     else if(basicchan + val > n_chan)
     {
+        FLUID_LOG(FLUID_WARN, "Failed to configure channel groups, requested from channel %d up to including chan %d, but there are only %d channels in total", basicchan, basicchan + val - 1, n_chan);
         return FLUID_FAILED;
     }
 
@@ -8810,7 +8828,7 @@ fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mo
                 break;
             }
 
-            /* overlap with the next basic channel group */
+            FLUID_LOG(FLUID_WARN, "Failed to configure channel groups, requested from channel %d up to including chan %d would overlap with already existing basic channel %d", basicchan, basicchan + real_val - 1, i);
             return FLUID_FAILED;
         }
     }
@@ -8847,6 +8865,8 @@ fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mo
  */
 int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int val)
 {
+    int requested_val = val;
+
     /* check parameters */
     fluid_return_val_if_fail(mode >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(mode < FLUID_CHANNEL_MODE_LAST, FLUID_FAILED);
@@ -8862,15 +8882,21 @@ int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int 
     /* Checks if there is an overlap with the next basic channel */
     val = fluid_synth_check_next_basic_channel(synth, chan, mode, val);
 
-    if(val == FLUID_FAILED || synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
+    if(val == FLUID_FAILED)
     {
-        /* overlap with the next or previous channel group */
-        FLUID_LOG(FLUID_INFO, "basic channel %d overlaps another group", chan);
+        /* already logged by fluid_synth_check_next_basic_channel() */
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if(synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to configure channel groups, requested from channel %d up to including chan %d would overlap with already existing channel group containing channel %d", chan, chan + val - 1, chan);
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
     /* sets a new basic channel group */
     fluid_synth_set_basic_channel_LOCAL(synth, chan, mode, val);
+    synth->channel[chan]->mono_val = requested_val;
     /**/
     FLUID_API_RETURN(FLUID_OK);
 }

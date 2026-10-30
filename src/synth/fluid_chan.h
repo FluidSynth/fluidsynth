@@ -87,6 +87,7 @@ struct _fluid_channel_t
     /* Poly Mono variables see macro access description */
     int mode;								/**< Poly Mono mode */
     int mode_val;							/**< number of channel in basic channel group */
+    int mono_val;							/**< M of the last Mono On (CC126) received by a basic channel, 0 means all channels */
 
     /* monophonic list - legato detector */
     unsigned char i_first;          /**< First note index */

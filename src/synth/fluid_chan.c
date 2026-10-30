@@ -72,6 +72,7 @@ fluid_channel_init(fluid_channel_t *chan)
     /*--- Init poly/mono modes variables --------------------------------------*/
     chan->mode = 0;
     chan->mode_val = 0;
+    chan->mono_val = 0;
 
     /* monophonic list initialization */
     for(i = 0; i < FLUID_CHANNEL_SIZE_MONOLIST; i++)
