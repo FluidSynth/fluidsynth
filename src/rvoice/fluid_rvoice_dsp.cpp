@@ -56,6 +56,8 @@ extern "C" const fluid_real_t *const interp_coeff_linear;
 extern "C" const fluid_real_t *const interp_coeff;
 extern "C" const fluid_real_t *const sinc_table7;
 
+using dsp_t = unsigned short;
+
 template<bool IS_24BIT>
 static FLUID_INLINE fluid_real_t
 fluid_rvoice_get_float_sample(const short int *FLUID_RESTRICT dsp_msb, const char *FLUID_RESTRICT dsp_lsb, unsigned int idx)
@@ -75,7 +77,7 @@ fluid_rvoice_get_float_sample(const short int *FLUID_RESTRICT dsp_msb, const cha
 }
 
 static FLUID_INLINE unsigned short
-compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_incr, unsigned int dsp_end_index, unsigned short dsp_i)
+compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_incr, unsigned int dsp_end_index, dsp_t dsp_i)
 {
     // How many steps until phase_index > limit?
     fluid_phase_t boundary;
@@ -85,15 +87,15 @@ compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_inc
     return iters;
 }
 
-/* Special case of interpolate_none for rendering silent voices, i.e. in delay phase or zero volume */
+/* Special case of interpolate_none for silent voices, i.e. in delay phase or zero volume.
+ * No samples are rendered, only the phase is advanced by the number of samples that would have been processed. */
 template<bool LOOPING>
-static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
+static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice)
 {
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
-    unsigned short dsp_i = 0;
-    unsigned int dsp_phase_index;
+    dsp_t dsp_i = 0;
     unsigned int end_index;
 
     /* Convert playback "speed" floating point value to phase index/fract */
@@ -103,19 +105,12 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
 
     while(1)
     {
-        dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
-
-        /* interpolate sequence of sample points */
+        /* number of samples that can be processed before reaching the end index */
         auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
-        for(; safe_count--; dsp_i++)
-        {
-            fluid_real_t sample = 0;
-            dsp_buf[dsp_i] = sample;
-
-            /* increment phase and amplitude */
-            fluid_phase_incr(dsp_phase, dsp_phase_incr);
-        }
+        /* advance the phase by safe_count steps at once */
+        dsp_phase += static_cast<fluid_phase_t>(safe_count) * dsp_phase_incr;
+        dsp_i += safe_count;
 
         /* break out if not looping (buffer may not be full) */
         if(!LOOPING)
@@ -123,10 +118,8 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
             break;
         }
 
-        dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
-
         /* go back to loop start */
-        if(dsp_phase_index > end_index)
+        if(fluid_phase_index_round(dsp_phase) > end_index)
         {
             fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
             voice->has_looped = 1;
@@ -510,7 +503,6 @@ static int
 fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
     static_assert(SINC_ORDER >= 1, "SINC_ORDER must be at least 1");
-    using dsp_t = unsigned short;
 
     fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
@@ -721,9 +713,9 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 struct ProcessSilence
 {
     template<bool IS_24BIT, bool LOOPING>
-    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf) const
+    int operator()(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT) const
     {
-        return fluid_rvoice_dsp_silence_local<LOOPING>(rvoice, dsp_buf);
+        return fluid_rvoice_dsp_silence_local<LOOPING>(rvoice);
     }
 };
 

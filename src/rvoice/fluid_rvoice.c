@@ -465,10 +465,13 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     if(count < 0)
     {
-        // The voice is quite, i.e. either in delay phase or zero volume.
+        // The voice is quiet, i.e. either in delay phase or zero volume.
         // We need to update the rvoice's dsp phase, as the delay phase shall not "postpone" the sound, rather
         // it should be played silently, see https://github.com/FluidSynth/fluidsynth/issues/1312
-        return fluid_rvoice_dsp_silence(voice, dsp_buf, is_looping);
+        // No samples are rendered into dsp_buf, so report the block as quiet to make the mixer skip it.
+        // If the sample ended during the block, the voice has finished.
+        count = fluid_rvoice_dsp_silence(voice, dsp_buf, is_looping);
+        return (count < FLUID_BUFSIZE) ? 0 /* voice finished */ : -1;
     }
 
     count = fluid_rvoice_dsp_interpolate(voice, dsp_buf, is_looping);
