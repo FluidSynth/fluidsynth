@@ -59,7 +59,6 @@ typedef struct
 const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_driver_t *dev)
 {
     AudioDeviceList *list;
-    SDL_Mutex *AudioDeviceLock = SDL_CreateMutex();
     const char *retval = NULL;
 
     if(!SDL_GetCurrentAudioDriver())
@@ -68,7 +67,6 @@ const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_dri
         return NULL;
     }
 
-    SDL_LockMutex(AudioDeviceLock);
     list = iscapture ? &(dev->AudioSDL3RecordingDevices) : &(dev->AudioSDL3PlaybackDevices);
 
     if((idx < 0) || (idx >= list->num_devices))
@@ -79,9 +77,6 @@ const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_dri
     {
         retval = list->devices[idx].name;
     }
-
-    SDL_UnlockMutex(AudioDeviceLock);
-    SDL_free(AudioDeviceLock);
 
     return retval;
 }
