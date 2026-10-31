@@ -206,6 +206,8 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_finished_callback);
 
 int fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping);
 int fluid_rvoice_dsp_interpolate(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
+int fluid_rvoice_dsp_interpolate_force_mode(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping, enum fluid_interp interp_mode);
+
 
 
 /*
