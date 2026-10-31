@@ -208,8 +208,11 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
 
     if(list == NULL)
     {
+        SDL_free(devices);
         return;
     }
+
+    SDL_zero(*list);
 
     if(nDevs > 0)
     {
@@ -219,6 +222,8 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         if(!list->devices)
         {
             SDL_free(devices);
+            SDL_free(list);
+            return;
         }
 
         for(n = 0; n < nDevs; n++)
@@ -240,11 +245,14 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
                 /* we're in real trouble now.  :/  */
                 for(j = 0; j < n; j++)
                 {
-                    SDL_free(list->devices[n].name);
+                    SDL_free(list->devices[j].name);
                 }
 
                 SDL_free(fullname);
                 SDL_free(devices);
+                SDL_free(list->devices);
+                SDL_free(list);
+                return;
             }
 
             list->devices[n].devid = devices[n];
@@ -259,7 +267,7 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         if(!SDL_GetCurrentAudioDriver())
         {
             SDL_SetError("Audio subsystem is not initialized");
-            return;
+            break;
         }
 
         if((n < 0) || (n >= list->num_devices))
@@ -277,6 +285,15 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
             fluid_settings_add_option(settings, "audio.sdl3.device", dev_name);
         }
     }
+
+    for(n = 0; n < nDevs; n++)
+    {
+        SDL_free(list->devices[n].name);
+    }
+
+    SDL_free(list->devices);
+    SDL_free(list);
+    SDL_free(devices);
 }
 
 
