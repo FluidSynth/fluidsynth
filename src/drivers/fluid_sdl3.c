@@ -191,7 +191,6 @@ SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
 {
     int n = 0, j = 0, nDevs = 0;
-    SDL_Mutex *AudioDeviceLock = SDL_CreateMutex();
     AudioDeviceList *list = NULL;
     SDL_AudioDeviceID *devices = NULL;
 
@@ -263,8 +262,6 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
             return;
         }
 
-        SDL_LockMutex(AudioDeviceLock);
-
         if((n < 0) || (n >= list->num_devices))
         {
             SDL_InvalidParamError("index");
@@ -274,16 +271,12 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
             dev_name = list->devices[n].name;
         }
 
-        SDL_UnlockMutex(AudioDeviceLock);
-
         if(dev_name != NULL)
         {
             FLUID_LOG(FLUID_DBG, "sdl3 driver testing audio device: %s", dev_name);
             fluid_settings_add_option(settings, "audio.sdl3.device", dev_name);
         }
     }
-
-    SDL_free(AudioDeviceLock);
 }
 
 
