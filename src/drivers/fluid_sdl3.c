@@ -59,7 +59,6 @@ typedef struct
 const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_driver_t *dev)
 {
     AudioDeviceList *list;
-    SDL_Mutex *AudioDeviceLock = SDL_CreateMutex();
     const char *retval = NULL;
 
     if(!SDL_GetCurrentAudioDriver())
@@ -68,7 +67,6 @@ const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_dri
         return NULL;
     }
 
-    SDL_LockMutex(AudioDeviceLock);
     list = iscapture ? &(dev->AudioSDL3RecordingDevices) : &(dev->AudioSDL3PlaybackDevices);
 
     if((idx < 0) || (idx >= list->num_devices))
@@ -79,9 +77,6 @@ const char *SDLC_GetAudioDeviceName(int idx, int iscapture, fluid_sdl3_audio_dri
     {
         retval = list->devices[idx].name;
     }
-
-    SDL_UnlockMutex(AudioDeviceLock);
-    SDL_free(AudioDeviceLock);
 
     return retval;
 }
@@ -191,7 +186,6 @@ SDLAudioCallback(void *data, SDL_AudioStream *stream, int add_len, int len)
 void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
 {
     int n = 0, j = 0, nDevs = 0;
-    SDL_Mutex *AudioDeviceLock = SDL_CreateMutex();
     AudioDeviceList *list = NULL;
     SDL_AudioDeviceID *devices = NULL;
 
@@ -209,8 +203,11 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
 
     if(list == NULL)
     {
+        SDL_free(devices);
         return;
     }
+
+    SDL_zero(*list);
 
     if(nDevs > 0)
     {
@@ -220,6 +217,8 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         if(!list->devices)
         {
             SDL_free(devices);
+            SDL_free(list);
+            return;
         }
 
         for(n = 0; n < nDevs; n++)
@@ -241,11 +240,14 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
                 /* we're in real trouble now.  :/  */
                 for(j = 0; j < n; j++)
                 {
-                    SDL_free(list->devices[n].name);
+                    SDL_free(list->devices[j].name);
                 }
 
                 SDL_free(fullname);
                 SDL_free(devices);
+                SDL_free(list->devices);
+                SDL_free(list);
+                return;
             }
 
             list->devices[n].devid = devices[n];
@@ -260,10 +262,8 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         if(!SDL_GetCurrentAudioDriver())
         {
             SDL_SetError("Audio subsystem is not initialized");
-            return;
+            break;
         }
-
-        SDL_LockMutex(AudioDeviceLock);
 
         if((n < 0) || (n >= list->num_devices))
         {
@@ -274,8 +274,6 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
             dev_name = list->devices[n].name;
         }
 
-        SDL_UnlockMutex(AudioDeviceLock);
-
         if(dev_name != NULL)
         {
             FLUID_LOG(FLUID_DBG, "sdl3 driver testing audio device: %s", dev_name);
@@ -283,7 +281,14 @@ void fluid_sdl3_audio_driver_settings(fluid_settings_t *settings)
         }
     }
 
-    SDL_free(AudioDeviceLock);
+    for(n = 0; n < nDevs; n++)
+    {
+        SDL_free(list->devices[n].name);
+    }
+
+    SDL_free(list->devices);
+    SDL_free(list);
+    SDL_free(devices);
 }
 
 
