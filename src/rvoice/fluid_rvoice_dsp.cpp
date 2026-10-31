@@ -394,6 +394,12 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             dsp_phase_index = fluid_phase_index(dsp_phase);
         }
 
+        /* break out if buffer filled */
+        if(dsp_i >= FLUID_BUFSIZE)
+        {
+            break;
+        }
+
         /* interpolate the sequence of sample points */
         safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
@@ -436,6 +442,12 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
             dsp_phase_index = fluid_phase_index(dsp_phase);
+        }
+
+        /* break out if buffer filled */
+        if(dsp_i >= FLUID_BUFSIZE)
+        {
+            break;
         }
 
         end_index++;	/* we're now interpolating the last point */
@@ -610,6 +622,12 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 
             dsp_i += safe_count;
             dsp_phase += dsp_phase_incr * safe_count;
+        }
+
+        /* break out if buffer filled */
+        if(dsp_i >= FLUID_BUFSIZE)
+        {
+            break;
         }
 
         /* Interpolate the main body — all taps read from live sample data */
