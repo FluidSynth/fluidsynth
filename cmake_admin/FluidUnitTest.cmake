@@ -14,7 +14,17 @@ macro ( ADD_FLUID_TEST _test )
     if ( FLUID_CPPFLAGS )
         set_target_properties ( ${_test} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
-    target_link_libraries( ${_test} libfluidsynth-OBJ $<$<BOOL:${SIGNALSMITH_SUPPORT}>:fluid_limiter_impl-OBJ> )
+    # Link through an archive when the test provides a replacement library module.
+    if("${ARGN}" STREQUAL "LINK_AS_ARCHIVE")
+        add_library(${_test}-archive STATIC EXCLUDE_FROM_ALL
+            $<TARGET_OBJECTS:libfluidsynth-OBJ>
+            $<$<BOOL:${SIGNALSMITH_SUPPORT}>:$<TARGET_OBJECTS:fluid_limiter_impl-OBJ>>)
+        target_link_libraries(${_test}-archive PUBLIC libfluidsynth-OBJ
+            $<$<BOOL:${SIGNALSMITH_SUPPORT}>:fluid_limiter_impl-OBJ>)
+        target_link_libraries(${_test} ${_test}-archive)
+    else()
+        target_link_libraries( ${_test} libfluidsynth-OBJ $<$<BOOL:${SIGNALSMITH_SUPPORT}>:fluid_limiter_impl-OBJ> )
+    endif()
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}

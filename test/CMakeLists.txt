@@ -66,6 +66,10 @@ if ( NOT OSAL STREQUAL "embedded" )
     ADD_FLUID_TEST(test_threading)
 endif ( NOT OSAL STREQUAL "embedded" )
 
+if ( ENABLE_MIXER_THREADS AND NOT osal STREQUAL "embedded" )
+    ADD_FLUID_TEST(test_mixer_worker_startup LINK_AS_ARCHIVE)
+endif()
+
 if( LIBSNDFILE_SUPPORT )
     ADD_FLUID_TEST(test_fast_render)
 endif()

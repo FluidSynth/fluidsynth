@@ -1375,6 +1375,28 @@ fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t *mixer)
 #define THREAD_BUF_NODATA 2
 #define THREAD_BUF_TERMINATE 3
 
+static void
+fluid_mixer_thread_wait(fluid_mixer_buffers_t *buffers)
+{
+    fluid_rvoice_mixer_t *mixer = buffers->mixer;
+
+    fluid_cond_mutex_lock(mixer->wakeup_threads_m);
+
+    while(1)
+    {
+        int state = fluid_atomic_int_get(&buffers->ready);
+
+        if(state == THREAD_BUF_PROCESSING || state == THREAD_BUF_TERMINATE)
+        {
+            break;
+        }
+
+        fluid_cond_wait(mixer->wakeup_threads, mixer->wakeup_threads_m);
+    }
+
+    fluid_cond_mutex_unlock(mixer->wakeup_threads_m);
+}
+
 /* Core thread function (processes voices in parallel to primary synthesis thread) */
 static fluid_thread_return_t
 fluid_mixer_thread_func(void *data)
@@ -1386,6 +1408,10 @@ fluid_mixer_thread_func(void *data)
     int bufcount = 0;
     int current_blockcount = 0;
     fluid_real_t *local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
+
+    /* Wait for the primary thread to publish the first render job before
+     * reading its voice list and block count. */
+    fluid_mixer_thread_wait(buffers);
 
     while(!fluid_atomic_int_get(&mixer->threads_should_terminate))
     {
@@ -1399,21 +1425,7 @@ fluid_mixer_thread_func(void *data)
             fluid_cond_signal(mixer->thread_ready);
             fluid_cond_mutex_unlock(mixer->thread_ready_m);
 
-            fluid_cond_mutex_lock(mixer->wakeup_threads_m);
-
-            while(1)
-            {
-                int j = fluid_atomic_int_get(&buffers->ready);
-
-                if(j == THREAD_BUF_PROCESSING || j == THREAD_BUF_TERMINATE)
-                {
-                    break;
-                }
-
-                fluid_cond_wait(mixer->wakeup_threads, mixer->wakeup_threads_m);
-            }
-
-            fluid_cond_mutex_unlock(mixer->wakeup_threads_m);
+            fluid_mixer_thread_wait(buffers);
 
             hasValidData = 0;
         }
