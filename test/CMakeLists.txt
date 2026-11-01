@@ -67,7 +67,7 @@ if ( NOT OSAL STREQUAL "embedded" )
 endif ( NOT OSAL STREQUAL "embedded" )
 
 if ( ENABLE_MIXER_THREADS AND NOT osal STREQUAL "embedded" )
-    ADD_FLUID_TEST(test_mixer_worker_startup LINK_AS_ARCHIVE)
+    ADD_FLUID_TEST(test_rvoice_mixer_worker_startup LINK_AS_ARCHIVE)
 endif()
 
 if( LIBSNDFILE_SUPPORT )
