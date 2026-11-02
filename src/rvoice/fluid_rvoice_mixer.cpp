@@ -26,6 +26,9 @@
 #include "fluid_ladspa.h"
 #include "fluid_synth.h"
 
+#include <atomic>
+#include <new>
+
 
 // If less than x voices, the thread overhead is larger than the gain,
 // so don't activate the thread(s).
@@ -38,7 +41,7 @@ struct _fluid_mixer_buffers_t
     fluid_rvoice_mixer_t *mixer; /**< Owner of object */
 #if ENABLE_MIXER_THREADS
     fluid_thread_t *thread;     /**< Thread object */
-    fluid_atomic_int_t ready;   /**< Atomic: buffers are ready for mixing */
+    std::atomic<int> ready{0};   /**< Atomic: buffers are ready for mixing */
 #endif
 
     fluid_rvoice_t **finished_voices; /* List of voices who have finished */
@@ -114,8 +117,8 @@ struct _fluid_rvoice_mixer_t
 #if ENABLE_MIXER_THREADS
 //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
 //  int active_threads;          /**< Atomic: number of threads in the thread loop */
-    fluid_atomic_int_t threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
-    fluid_atomic_int_t current_rvoice;           /**< Atomic: for the threads to know next voice to  */
+    std::atomic<int> threads_should_terminate{0}; /**< Atomic: Set to TRUE when threads should terminate */
+    std::atomic<int> current_rvoice{0};           /**< Atomic: for the threads to know next voice to  */
     decltype(new_fluid_cond()) wakeup_threads; /**< Signalled when the threads should wake up */
     fluid_cond_mutex_t *wakeup_threads_m; /**< wakeup_threads mutex companion */
     decltype(new_fluid_cond()) thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
@@ -839,7 +842,7 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
                        int extra_threads, int prio)
 {
     int i;
-    fluid_rvoice_mixer_t *mixer = FLUID_NEW(fluid_rvoice_mixer_t);
+    fluid_rvoice_mixer_t *mixer = new(std::nothrow) fluid_rvoice_mixer_t();
 
     if(mixer == NULL)
     {
@@ -847,7 +850,6 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
         return NULL;
     }
 
-    FLUID_MEMSET(mixer, 0, sizeof(fluid_rvoice_mixer_t));
     mixer->eventhandler = evthandler;
     mixer->fx_units = fx_units;
     mixer->buffers.buf_count = buf_count;
@@ -976,7 +978,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 
     FLUID_FREE(mixer->fx);
     FLUID_FREE(mixer->rvoices);
-    FLUID_FREE(mixer);
+    delete mixer;
 }
 
 #ifdef LADSPA
@@ -1360,7 +1362,7 @@ int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer)
 static FLUID_INLINE fluid_rvoice_t *
 fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t *mixer)
 {
-    int i = fluid_atomic_int_exchange_and_add(&mixer->current_rvoice, 1);
+    int i = mixer->current_rvoice.fetch_add(1);
 
     if(i >= mixer->active_voices)
     {
@@ -1384,7 +1386,7 @@ fluid_mixer_thread_wait(fluid_mixer_buffers_t *buffers)
 
     while(1)
     {
-        int state = fluid_atomic_int_get(&buffers->ready);
+        int state = buffers->ready.load();
 
         if(state == THREAD_BUF_PROCESSING || state == THREAD_BUF_TERMINATE)
         {
@@ -1413,14 +1415,14 @@ fluid_mixer_thread_func(void *data)
      * reading its voice list and block count. */
     fluid_mixer_thread_wait(buffers);
 
-    while(!fluid_atomic_int_get(&mixer->threads_should_terminate))
+    while(!mixer->threads_should_terminate.load())
     {
         fluid_rvoice_t *rvoice = fluid_mixer_get_mt_rvoice(mixer);
 
         if(rvoice == NULL)
         {
             // if no voices: signal rendered buffers, sleep
-            fluid_atomic_int_set(&buffers->ready, hasValidData ? THREAD_BUF_VALID : THREAD_BUF_NODATA);
+            buffers->ready.store(hasValidData ? THREAD_BUF_VALID : THREAD_BUF_NODATA);
             fluid_cond_mutex_lock(mixer->thread_ready_m);
             fluid_cond_signal(mixer->thread_ready);
             fluid_cond_mutex_unlock(mixer->thread_ready_m);
@@ -1545,7 +1547,7 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t *mixer, int extra_threads, int current_b
 
         for(i = 0; i < extra_threads; i++)
         {
-            int j = fluid_atomic_int_get(&mixer->threads[i].ready);
+            int j = mixer->threads[i].ready.load();
 
             switch(j)
             {
@@ -1554,7 +1556,7 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t *mixer, int extra_threads, int current_b
                 break;
 
             case THREAD_BUF_VALID:
-                fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_NODATA);
+                mixer->threads[i].ready.store(THREAD_BUF_NODATA);
                 fluid_mixer_buffers_mix(&mixer->buffers, &mixer->threads[i], current_blockcount);
                 hasmixed = 1;
                 break;
@@ -1593,11 +1595,11 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 
     // Prepare voice list
     fluid_cond_mutex_lock(mixer->wakeup_threads_m);
-    fluid_atomic_int_set(&mixer->current_rvoice, 0);
+    mixer->current_rvoice.store(0);
 
     for(i = 0; i < extra_threads; i++)
     {
-        fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_PROCESSING);
+        mixer->threads[i].ready.store(THREAD_BUF_PROCESSING);
     }
 
     // Signal threads to wake up
@@ -1627,7 +1629,7 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 
             for(i = 0; i < extra_threads; i++)
             {
-                if(fluid_atomic_int_get(&mixer->threads[i].ready) ==
+                if(mixer->threads[i].ready.load() ==
                         THREAD_BUF_PROCESSING)
                 {
                     is_processing = 1;
@@ -1655,13 +1657,13 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
     // mutexes and condition variables), skip terminating threads
     if(mixer->thread_count != 0)
     {
-        fluid_atomic_int_set(&mixer->threads_should_terminate, 1);
+        mixer->threads_should_terminate.store(1);
         // Signal threads to wake up
         fluid_cond_mutex_lock(mixer->wakeup_threads_m);
 
         for(i = 0; i < mixer->thread_count; i++)
         {
-            fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_TERMINATE);
+            mixer->threads[i].ready.store(THREAD_BUF_TERMINATE);
         }
 
         fluid_cond_broadcast(mixer->wakeup_threads);
@@ -1679,7 +1681,7 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
         }
     }
 
-    FLUID_FREE(mixer->threads);
+    delete[] mixer->threads;
     mixer->thread_count = 0;
     mixer->threads = NULL;
 }
@@ -1706,8 +1708,8 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
     }
 
     // Now prepare the new threads
-    fluid_atomic_int_set(&mixer->threads_should_terminate, 0);
-    mixer->threads = FLUID_ARRAY(fluid_mixer_buffers_t, thread_count);
+    mixer->threads_should_terminate.store(0);
+    mixer->threads = new(std::nothrow) fluid_mixer_buffers_t[thread_count]();
 
     if(mixer->threads == NULL)
     {
@@ -1715,7 +1717,6 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
         return FLUID_FAILED;
     }
 
-    FLUID_MEMSET(mixer->threads, 0, thread_count * sizeof(fluid_mixer_buffers_t));
     mixer->thread_count = thread_count;
 
     for(i = 0; i < thread_count; i++)
@@ -1727,7 +1728,7 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
             return FLUID_FAILED;
         }
 
-        fluid_atomic_int_set(&b->ready, THREAD_BUF_NODATA);
+        b->ready.store(THREAD_BUF_NODATA);
         FLUID_SNPRINTF(name, sizeof(name), "mixer%d", i);
         b->thread = new_fluid_thread(name, fluid_mixer_thread_func, b, prio_level, 0);
 
