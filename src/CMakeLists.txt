@@ -157,7 +157,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice_event.h
     rvoice/fluid_rvoice_event.c
     rvoice/fluid_rvoice_mixer.h
-    rvoice/fluid_rvoice_mixer.c
+    rvoice/fluid_rvoice_mixer.cpp
     rvoice/fluid_phase.h
     rvoice/fluid_rev.cpp
     rvoice/fluid_rev.h
@@ -441,7 +441,7 @@ target_link_libraries ( libfluidsynth-OBJ PUBLIC
 )
 
 if ( TARGET OpenMP::OpenMP_C AND HAVE_OPENMP )
-    target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C )
+    target_link_libraries ( libfluidsynth-OBJ PUBLIC OpenMP::OpenMP_C OpenMP::OpenMP_CXX )
 endif()
 
 if ( TARGET SndFile::sndfile AND LIBSNDFILE_SUPPORT )
