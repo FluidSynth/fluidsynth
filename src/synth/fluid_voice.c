@@ -1506,6 +1506,13 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
 {
     int i;
 
+    if(mod->dest >= GEN_LAST)
+    {
+        FLUID_LOG(FLUID_WARN, "Ignoring modulator with invalid generator destination %u",
+                  (unsigned int)mod->dest);
+        return;
+    }
+
     /* check_limit_count cannot be above voice->mod_count */
     if(check_limit_count > voice->mod_count)
     {

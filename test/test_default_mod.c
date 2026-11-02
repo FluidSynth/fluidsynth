@@ -5,6 +5,7 @@
 #include "fluid_synth.h"
 #include "fluid_mod.h"
 #include "fluid_sfont.h"
+#include "fluid_voice.h"
 
 unsigned int count_modulator_list(fluid_mod_t *mod)
 {
@@ -196,13 +197,15 @@ void sfont_default_mods(fluid_sfont_t *sfont)
 // this test should make sure that sample rate changed are handled correctly
 int main(void)
 {
-    fluid_mod_t *mod;
+    fluid_mod_t mods[2] = {0};
+    fluid_voice_t *voice;
+    short data[256] = {0};
     fluid_sfont_t *sfont;
     fluid_settings_t *settings;
     fluid_synth_t *synth;
+    fluid_sample_t *sample = new_fluid_sample();
 
-    mod = new_fluid_mod();
-    TEST_ASSERT(mod != NULL);
+    TEST_ASSERT(sample != NULL);
 
     sfont = new_fluid_sfont_local(NULL, NULL, NULL, NULL, NULL);
     TEST_ASSERT(sfont != NULL);
@@ -216,10 +219,29 @@ int main(void)
     synth_global_default_mods(synth);
     sfont_default_mods(sfont);
 
+    fluid_mod_set_source1(&mods[1], FLUID_MOD_VELOCITY, FLUID_MOD_LINEAR);
+    fluid_mod_set_dest(&mods[1], GEN_PAN);
+    fluid_mod_set_amount(&mods[1], 128);
+    fluid_mod_clone(&mods[0], &mods[1]);
+    fluid_mod_set_dest(&mods[0], GEN_LAST);
+    TEST_SUCCESS(fluid_sfont_set_default_mod(sfont, mods, FLUID_N_ELEMENTS(mods)));
+    TEST_SUCCESS(fluid_sample_set_sound_data(sample, data, NULL, FLUID_N_ELEMENTS(data), 44100, 1));
+    /* A custom loader associates the SoundFont's default list with its samples. */
+    sample->default_modulators = sfont->default_mod_list;
+    voice = fluid_synth_alloc_voice(synth, sample, 0, 60, 127);
+    TEST_ASSERT(voice != NULL);
+    TEST_ASSERT(voice->mod_count == 1);
+    TEST_ASSERT(fluid_mod_test_identity(&voice->mod[0], &mods[1]));
+    TEST_ASSERT(voice->mod[0].amount == mods[1].amount);
+    fluid_voice_add_mod(voice, &mods[0], FLUID_VOICE_ADD);
+    TEST_ASSERT(voice->mod_count == 1);
+    fluid_synth_start_voice(synth, voice);
+    TEST_ASSERT(voice->gen[GEN_PAN].mod > 0);
+
     delete_fluid_synth(synth);
+    delete_fluid_sample(sample);
     delete_fluid_settings(settings);
     delete_fluid_sfont(sfont);
-    delete_fluid_mod(mod);
 
     return EXIT_SUCCESS;
 }
