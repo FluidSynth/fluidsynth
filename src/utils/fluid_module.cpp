@@ -26,6 +26,7 @@
 #include "fluid_module.h"
 #include "fluid_sys.h"
 
+#include <new>
 #include <string>
 
 #if defined(_WIN32)

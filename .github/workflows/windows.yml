@@ -300,6 +300,7 @@ jobs:
           cmake:p
           ninja:p
           libsndfile:p
+          ladspa-sdk:p
 
     - name: '${{ matrix.icon }} Configure CMake'
       run: cmake -B build -Dosal=${{matrix.osal}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_VERBOSE_MAKEFILE=1 -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
