@@ -47,7 +47,7 @@ jobs:
         run: |
           sudo install -d -o "$(id -u)" -g "$(id -g)" /opt/local
           echo "image=$ImageVersion" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         id: dependencies
         with:
           path: |
@@ -62,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash .github/scripts/macos-install-macports.sh "$MACPORTS_VERSION"
-      - uses: actions/cache/save@v5
+      - uses: actions/cache/save@v6
         if: steps.dependencies.outputs.cache-hit != 'true'
         with:
           path: |
