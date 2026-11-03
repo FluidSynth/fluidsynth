@@ -25,6 +25,10 @@
 
 #ifdef SIGNALSMITH_SUPPORT
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // how many channel buffers to process at once
 // maybe if we want to parallelize, we might set this to 1
 #define FLUID_LIMITER_NUM_CHANNELS_AT_ONCE 2
@@ -50,6 +54,10 @@ void delete_fluid_limiter(fluid_limiter_t* lim);
 int fluid_limiter_samplerate_change(fluid_limiter_t* lim, fluid_real_t sample_rate);
 
 void fluid_limiter_run(fluid_limiter_t *lim, fluid_real_t *buf_l, fluid_real_t *buf_r, int block_count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SIGNALSMITH_SUPPORT */
 
