@@ -1587,7 +1587,13 @@ fluid_mod_import_sfont(fluid_mod_t **mod, fluid_list_t *sfmod)
             return FLUID_OK;
         }
 
-        /* Validate the 16-bit destination before narrowing it to 8 bits. */
+        if((mod_src->dest & (1u << 15u)) != 0)
+        {
+            FLUID_LOG(FLUID_WARN, "Ignoring SoundFont modulator linked to modulator index %u of the zone; linked modulators are not supported yet", (unsigned int)(mod_src->dest & ~(1u << 15u)));
+            continue;
+        }
+
+        /* Validate the destination being a valid SFGenerator before narrowing it to 8 bits. */
         if(mod_src->dest >= GEN_LAST)
         {
             FLUID_LOG(FLUID_WARN, "Ignoring SoundFont modulator with invalid generator destination %u",
