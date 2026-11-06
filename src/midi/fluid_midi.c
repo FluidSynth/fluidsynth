@@ -18,6 +18,7 @@
  */
 
 #include "fluid_midi.h"
+#include "fluid_rmidi.h"
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_settings.h"
@@ -82,13 +83,15 @@ static int fluid_midi_file_get_division(fluid_midi_file *midifile);
  * @param filename Path to the file to check
  * @return TRUE if it could be a MIDI file, FALSE otherwise
  *
- * The current implementation only checks for the "MThd" header in the file.
- * It is useful only to distinguish between SoundFont and MIDI files.
+ * The current implementation checks for the "MThd" header, as well as for an
+ * RMIDI (RIFF RMID) container. It is useful only to distinguish between
+ * SoundFont and MIDI files.
  */
 int fluid_is_midifile(const char *filename)
 {
     FILE    *fp;
-    uint32_t id;
+    unsigned char header[12];
+    size_t   length;
     int      retcode = FALSE;
 
     do
@@ -98,12 +101,16 @@ int fluid_is_midifile(const char *filename)
             return retcode;
         }
         
-        if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
+        length = FLUID_FREAD(header, 1, sizeof(header), fp);
+
+        if(length < 4)
         {
             break;
         }
 
-        retcode = (id == FLUID_FOURCC('M', 'T', 'h', 'd'));
+        retcode = (FLUID_STRNCMP((const char *)header, "MThd", 4) == 0) ||
+                  (length == sizeof(header) &&
+                   fluid_rmidi_is_rmidi_mem(header, sizeof(header)));
     }
     while(0);
 
@@ -1980,6 +1987,10 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     char *buffer;
     size_t buffer_length;
     int buffer_owned;
+    const char *midi_data;
+    size_t midi_length;
+    fluid_rmidi_info_t rmidi;
+    int rmidi_status;
 
     if(item->filename != NULL)
     {
@@ -2018,7 +2029,30 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
         buffer_owned = 0;
     }
 
-    midifile = new_fluid_midi_file(buffer, buffer_length);
+    /* RMIDI files wrap the actual MIDI file in a RIFF container. */
+    rmidi_status = fluid_rmidi_parse_mem(buffer, buffer_length, &rmidi);
+
+    if(rmidi_status < 0)
+    {
+        if(buffer_owned)
+        {
+            FLUID_FREE(buffer);
+        }
+
+        return FLUID_FAILED;
+    }
+    if(rmidi_status == 0)
+    {
+        midi_data = buffer;
+        midi_length = buffer_length;
+    }
+    else
+    {
+        midi_data = buffer + rmidi.midi_offset;
+        midi_length = (size_t)rmidi.midi_size;
+    }
+
+    midifile = new_fluid_midi_file(midi_data, midi_length);
 
     if(midifile == NULL)
     {

@@ -921,9 +921,7 @@ int main(int argc, char **argv)
         {
             const char *u8_path = argv[optind];
 
-            if(fluid_is_midifile(u8_path))
-            {}
-            else if(fluid_is_soundfont(u8_path))
+            if(fluid_is_soundfont(u8_path))
             {
                 if(verbose)
                 {
@@ -943,7 +941,7 @@ int main(int argc, char **argv)
                     fluid_synth_set_bank_offset(synth, i, bank_ofs);
                 }
             }
-            else
+            else if(!fluid_is_midifile(u8_path))
             {
                 fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", u8_path);
                 goto cleanup;

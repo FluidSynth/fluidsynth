@@ -458,6 +458,7 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
     SFSample *sfsample;
     fluid_sample_t *sample;
     fluid_defpreset_t *defpreset = NULL;
+    int bank_offset;
 
     defsfont->filename = FLUID_STRDUP(file);
 
@@ -483,6 +484,10 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         FLUID_LOG(FLUID_ERR, "Couldn't parse presets from soundfont file");
         goto err_exit;
     }
+
+    /* RMIDI files specify the bank offset of their embedded sound bank. Apply it
+     * to every preset except the SoundFont drum bank, as mandated by the spec. */
+    bank_offset = sfdata->is_rmidi ? sfdata->rmidi_bank_offset : 0;
 
     dmod_data = sfdata->default_mod_list;
     if (dmod_data != NULL)
@@ -553,6 +558,18 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         if(defpreset == NULL)
         {
             goto err_exit;
+        }
+
+        if(bank_offset > 0 && sfpreset->bank != DRUM_INST_BANK)
+        {
+            int bank = sfpreset->bank + bank_offset;
+
+            if(bank > 127)
+            {
+                bank = 0;
+            }
+
+            sfpreset->bank = bank;
         }
 
         if(fluid_defpreset_import_sfont(defpreset, sfpreset, defsfont, sfdata) != FLUID_OK)
