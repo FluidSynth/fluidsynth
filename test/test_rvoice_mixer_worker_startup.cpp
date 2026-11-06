@@ -15,7 +15,7 @@ static fluid_thread_t *test_new_fluid_thread(const char *name, fluid_thread_func
     TEST_ASSERT(worker == NULL);
     worker = func;
     worker_data = data;
-    return data;
+    return static_cast<fluid_thread_t *>(data);
 }
 
 static int test_fluid_thread_join(fluid_thread_t *thread)
@@ -90,4 +90,4 @@ int main(void)
 #define delete_fluid_thread test_delete_fluid_thread
 #define fluid_thread_join test_fluid_thread_join
 #define fluid_cond_wait test_fluid_cond_wait
-#include "../src/rvoice/fluid_rvoice_mixer.c"
+#include "../src/rvoice/fluid_rvoice_mixer.cpp"

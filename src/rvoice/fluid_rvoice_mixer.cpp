@@ -26,6 +26,9 @@
 #include "fluid_ladspa.h"
 #include "fluid_synth.h"
 
+#include <atomic>
+#include <new>
+
 
 // If less than x voices, the thread overhead is larger than the gain,
 // so don't activate the thread(s).
@@ -38,7 +41,7 @@ struct _fluid_mixer_buffers_t
     fluid_rvoice_mixer_t *mixer; /**< Owner of object */
 #if ENABLE_MIXER_THREADS
     fluid_thread_t *thread;     /**< Thread object */
-    fluid_atomic_int_t ready;   /**< Atomic: buffers are ready for mixing */
+    std::atomic<int> ready{0};   /**< Atomic: buffers are ready for mixing */
 #endif
 
     fluid_rvoice_t **finished_voices; /* List of voices who have finished */
@@ -114,11 +117,11 @@ struct _fluid_rvoice_mixer_t
 #if ENABLE_MIXER_THREADS
 //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
 //  int active_threads;          /**< Atomic: number of threads in the thread loop */
-    fluid_atomic_int_t threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
-    fluid_atomic_int_t current_rvoice;           /**< Atomic: for the threads to know next voice to  */
-    fluid_cond_t *wakeup_threads; /**< Signalled when the threads should wake up */
+    std::atomic<int> threads_should_terminate{0}; /**< Atomic: Set to TRUE when threads should terminate */
+    std::atomic<int> current_rvoice{0};           /**< Atomic: for the threads to know next voice to  */
+    decltype(new_fluid_cond()) wakeup_threads; /**< Signalled when the threads should wake up */
     fluid_cond_mutex_t *wakeup_threads_m; /**< wakeup_threads mutex companion */
-    fluid_cond_t *thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
+    decltype(new_fluid_cond()) thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
     fluid_cond_mutex_t *thread_ready_m; /**< thread_ready mutex companion */
 
     int thread_count;            /**< Number of extra mixer threads for multi-core rendering */
@@ -146,7 +149,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     fluid_real_t *out_rev_l, *out_rev_r, *out_ch_l, *out_ch_r;
 
     // all dry unprocessed mono input is stored in the left channel
-    fluid_real_t *in_rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t *in_rev = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
     fluid_real_t *in_ch = in_rev;
 
     fluid_profile_ref_var(prof_ref);
@@ -166,8 +169,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     if(mix_fx_to_out)
     {
         // mix effects to first stereo channel
-        out_ch_l = out_rev_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
-        out_ch_r = out_rev_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        out_ch_l = out_rev_l = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT));
+        out_ch_r = out_rev_r = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT));
 
         reverb_process_func = fluid_revmodel_processmix;
         chorus_process_func = fluid_chorus_processmix;
@@ -175,8 +178,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     else
     {
         // replace effects into respective stereo effects channel
-        out_ch_l = out_rev_l = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
-        out_ch_r = out_rev_r = fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+        out_ch_l = out_rev_l = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
+        out_ch_r = out_rev_r = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT));
 
         reverb_process_func = fluid_revmodel_processreplace;
         chorus_process_func = fluid_chorus_processreplace;
@@ -272,8 +275,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 #ifdef SIGNALSMITH_SUPPORT
     if(mixer->limiter)
     {
-        fluid_real_t* buf_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
-        fluid_real_t* buf_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t* buf_l = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT));
+        fluid_real_t* buf_r = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT));
         fluid_limiter_run(mixer->limiter, buf_l, buf_r, current_blockcount);
         fluid_check_fpe("LIMITER");
     }
@@ -305,7 +308,7 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t *buffers, fluid_real_t **outbu
 #endif
 
     // all the dry, non-processed mono audio for effects is to be stored in the left buffers
-    base_ptr = fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_ptr = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < buffers->mixer->fx_units; i++)
     {
@@ -334,14 +337,14 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t *buffers, fluid_real_t **outbu
      * channels 1, 4, 7, 10 etc go to output 1; 2, 5, 8, 11 etc to
      * output 2, 3, 6, 9, 12 etc to output 3.
      */
-    base_ptr = fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_ptr = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < buffers->buf_count; i++)
     {
         outbufs[i * 2] = &base_ptr[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
     }
 
-    base_ptr = fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_ptr = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < buffers->buf_count; i++)
     {
@@ -576,8 +579,8 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice)
 {
     int i;
-    fluid_rvoice_mixer_t *mixer = obj;
-    fluid_rvoice_t *voice = param[0].ptr;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
+    fluid_rvoice_t *voice = static_cast<fluid_rvoice_t *>(param[0].ptr);
 
     if(mixer->active_voices < mixer->polyphony)
     {
@@ -624,7 +627,7 @@ fluid_mixer_buffers_update_polyphony(fluid_mixer_buffers_t *buffers, int value)
         return FLUID_FAILED;
     }
 
-    buffers->finished_voices = newptr;
+    buffers->finished_voices = static_cast<fluid_rvoice_t **>(newptr);
     return FLUID_OK;
 }
 
@@ -635,7 +638,7 @@ fluid_mixer_buffers_update_polyphony(fluid_mixer_buffers_t *buffers, int value)
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
 {
     void *newptr;
-    fluid_rvoice_mixer_t *handler = obj;
+    fluid_rvoice_mixer_t *handler = static_cast<fluid_rvoice_mixer_t *>(obj);
     int value = param[0].i;
 
     if(handler->active_voices > value)
@@ -650,7 +653,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
         return /*FLUID_FAILED*/;
     }
 
-    handler->rvoices = newptr;
+    handler->rvoices = static_cast<fluid_rvoice_t **>(newptr);
 
     if(fluid_mixer_buffers_update_polyphony(&handler->buffers, value)
             == FLUID_FAILED)
@@ -686,7 +689,7 @@ fluid_render_loop_singlethread(fluid_rvoice_mixer_t *mixer, int blockcount)
                       mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
     int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
 
-    fluid_real_t *local_buf = fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t *local_buf = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT));
 
     fluid_profile_ref_var(prof_ref);
 
@@ -707,8 +710,8 @@ fluid_mixer_buffers_zero(fluid_mixer_buffers_t *buffers, int current_blockcount)
     /* TODO: Optimize by only zero out the buffers we actually use later on. */
     int buf_count = buffers->buf_count, fx_buf_count = buffers->fx_buf_count;
 
-    fluid_real_t *FLUID_RESTRICT buf_l = fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT);
-    fluid_real_t *FLUID_RESTRICT buf_r = fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t *FLUID_RESTRICT buf_l = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT));
+    fluid_real_t *FLUID_RESTRICT buf_r = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < buf_count; i++)
     {
@@ -716,8 +719,8 @@ fluid_mixer_buffers_zero(fluid_mixer_buffers_t *buffers, int current_blockcount)
         FLUID_MEMSET(&buf_r[i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE], 0, size);
     }
 
-    buf_l = fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
-    buf_r = fluid_align_ptr(buffers->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+    buf_l = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
+    buf_r = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->fx_right_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < fx_buf_count; i++)
     {
@@ -777,7 +780,7 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice_mixer_t *m
  */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     fluid_real_t samplerate = param[1].real; // because fluid_synth_update_mixer() puts real into arg2
 
     int i;
@@ -839,7 +842,7 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
                        int extra_threads, int prio)
 {
     int i;
-    fluid_rvoice_mixer_t *mixer = FLUID_NEW(fluid_rvoice_mixer_t);
+    fluid_rvoice_mixer_t *mixer = new(std::nothrow) fluid_rvoice_mixer_t();
 
     if(mixer == NULL)
     {
@@ -847,7 +850,6 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
         return NULL;
     }
 
-    FLUID_MEMSET(mixer, 0, sizeof(fluid_rvoice_mixer_t));
     mixer->eventhandler = evthandler;
     mixer->fx_units = fx_units;
     mixer->buffers.buf_count = buf_count;
@@ -976,7 +978,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 
     FLUID_FREE(mixer->fx);
     FLUID_FREE(mixer->rvoices);
-    FLUID_FREE(mixer);
+    delete mixer;
 }
 
 #ifdef LADSPA
@@ -994,10 +996,10 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
     }
     else
     {
-        fluid_real_t *main_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
-        fluid_real_t *main_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t *main_l = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT));
+        fluid_real_t *main_r = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT));
 
-        fluid_real_t *rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t *rev = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
         fluid_real_t *chor = rev;
 
         rev = &rev[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
@@ -1157,7 +1159,7 @@ fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
 /* @deprecated: use fluid_rvoice_mixer_reverb_enable instead */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int on = param[0].i;
 
     mixer->with_reverb = on;
@@ -1165,7 +1167,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled)
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int fx_group = param[0].i; /* reverb fx group index */
     int on = param[1].i;       /* on/off */
 
@@ -1202,14 +1204,14 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
 /* @deprecated: use fluid_rvoice_mixer_chorus_enable instead */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_enabled)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int on = param[0].i;
     mixer->with_chorus = on;
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int fx_group = param[0].i; /* chorus fx group index */
     int on = param[1].i;       /* on/off */
 
@@ -1250,7 +1252,7 @@ void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t *mixer, int on)
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int i = param[0].i;
     int set = param[1].i;
     int nr = param[2].i;
@@ -1279,7 +1281,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int i = param[0].i; /* fx group index */
     int set = param[1].i;
     fluid_real_t roomsize = param[2].real;
@@ -1307,7 +1309,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_reverb)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int i;
 
     for(i = 0; i < mixer->fx_units; i++)
@@ -1318,7 +1320,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_reverb)
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus)
 {
-    fluid_rvoice_mixer_t *mixer = obj;
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
     int i;
 
     for(i = 0; i < mixer->fx_units; i++)
@@ -1330,16 +1332,16 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus)
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t *mixer,
                                 fluid_real_t **left, fluid_real_t **right)
 {
-    *left = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
-    *right = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+    *left = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT));
+    *right = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT));
     return mixer->buffers.buf_count;
 }
 
 int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t *mixer,
                                    fluid_real_t **fx_left, fluid_real_t **fx_right)
 {
-    *fx_left = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
-    *fx_right = fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+    *fx_left = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
+    *fx_right = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT));
     return mixer->buffers.fx_buf_count;
 }
 
@@ -1360,7 +1362,7 @@ int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer)
 static FLUID_INLINE fluid_rvoice_t *
 fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t *mixer)
 {
-    int i = fluid_atomic_int_exchange_and_add(&mixer->current_rvoice, 1);
+    int i = mixer->current_rvoice.fetch_add(1);
 
     if(i >= mixer->active_voices)
     {
@@ -1384,7 +1386,7 @@ fluid_mixer_thread_wait(fluid_mixer_buffers_t *buffers)
 
     while(1)
     {
-        int state = fluid_atomic_int_get(&buffers->ready);
+        int state = buffers->ready.load();
 
         if(state == THREAD_BUF_PROCESSING || state == THREAD_BUF_TERMINATE)
         {
@@ -1401,26 +1403,26 @@ fluid_mixer_thread_wait(fluid_mixer_buffers_t *buffers)
 static fluid_thread_return_t
 fluid_mixer_thread_func(void *data)
 {
-    fluid_mixer_buffers_t *buffers = data;
+    fluid_mixer_buffers_t *buffers = static_cast<fluid_mixer_buffers_t *>(data);
     fluid_rvoice_mixer_t *mixer = buffers->mixer;
     int hasValidData = 0;
     FLUID_DECLARE_VLA(fluid_real_t *, bufs, buffers->buf_count * 2 + buffers->fx_buf_count * 2);
     int bufcount = 0;
     int current_blockcount = 0;
-    fluid_real_t *local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t *local_buf = static_cast<fluid_real_t *>(fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT));
 
     /* Wait for the primary thread to publish the first render job before
      * reading its voice list and block count. */
     fluid_mixer_thread_wait(buffers);
 
-    while(!fluid_atomic_int_get(&mixer->threads_should_terminate))
+    while(!mixer->threads_should_terminate.load())
     {
         fluid_rvoice_t *rvoice = fluid_mixer_get_mt_rvoice(mixer);
 
         if(rvoice == NULL)
         {
             // if no voices: signal rendered buffers, sleep
-            fluid_atomic_int_set(&buffers->ready, hasValidData ? THREAD_BUF_VALID : THREAD_BUF_NODATA);
+            buffers->ready.store(hasValidData ? THREAD_BUF_VALID : THREAD_BUF_NODATA);
             fluid_cond_mutex_lock(mixer->thread_ready_m);
             fluid_cond_signal(mixer->thread_ready);
             fluid_cond_mutex_unlock(mixer->thread_ready_m);
@@ -1465,8 +1467,8 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t *dst, fluid_mixer_buffers_t *src, 
         minbuf = src->buf_count;
     }
 
-    base_src = fluid_align_ptr(src->left_buf, FLUID_DEFAULT_ALIGNMENT);
-    base_dst = fluid_align_ptr(dst->left_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_src = static_cast<fluid_real_t *>(fluid_align_ptr(src->left_buf, FLUID_DEFAULT_ALIGNMENT));
+    base_dst = static_cast<fluid_real_t *>(fluid_align_ptr(dst->left_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < minbuf; i++)
     {
@@ -1479,8 +1481,8 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t *dst, fluid_mixer_buffers_t *src, 
         }
     }
 
-    base_src = fluid_align_ptr(src->right_buf, FLUID_DEFAULT_ALIGNMENT);
-    base_dst = fluid_align_ptr(dst->right_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_src = static_cast<fluid_real_t *>(fluid_align_ptr(src->right_buf, FLUID_DEFAULT_ALIGNMENT));
+    base_dst = static_cast<fluid_real_t *>(fluid_align_ptr(dst->right_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < minbuf; i++)
     {
@@ -1500,8 +1502,8 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t *dst, fluid_mixer_buffers_t *src, 
         minbuf = src->fx_buf_count;
     }
 
-    base_src = fluid_align_ptr(src->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
-    base_dst = fluid_align_ptr(dst->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_src = static_cast<fluid_real_t *>(fluid_align_ptr(src->fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
+    base_dst = static_cast<fluid_real_t *>(fluid_align_ptr(dst->fx_left_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < minbuf; i++)
     {
@@ -1514,8 +1516,8 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t *dst, fluid_mixer_buffers_t *src, 
         }
     }
 
-    base_src = fluid_align_ptr(src->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
-    base_dst = fluid_align_ptr(dst->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+    base_src = static_cast<fluid_real_t *>(fluid_align_ptr(src->fx_right_buf, FLUID_DEFAULT_ALIGNMENT));
+    base_dst = static_cast<fluid_real_t *>(fluid_align_ptr(dst->fx_right_buf, FLUID_DEFAULT_ALIGNMENT));
 
     for(i = 0; i < minbuf; i++)
     {
@@ -1545,7 +1547,7 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t *mixer, int extra_threads, int current_b
 
         for(i = 0; i < extra_threads; i++)
         {
-            int j = fluid_atomic_int_get(&mixer->threads[i].ready);
+            int j = mixer->threads[i].ready.load();
 
             switch(j)
             {
@@ -1554,7 +1556,7 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t *mixer, int extra_threads, int current_b
                 break;
 
             case THREAD_BUF_VALID:
-                fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_NODATA);
+                mixer->threads[i].ready.store(THREAD_BUF_NODATA);
                 fluid_mixer_buffers_mix(&mixer->buffers, &mixer->threads[i], current_blockcount);
                 hasmixed = 1;
                 break;
@@ -1570,7 +1572,7 @@ static void
 fluid_render_loop_multithread(fluid_rvoice_mixer_t *mixer, int current_blockcount)
 {
     int i, bufcount;
-    fluid_real_t *local_buf = fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t *local_buf = static_cast<fluid_real_t *>(fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT));
 
     FLUID_DECLARE_VLA(fluid_real_t *, bufs,
                       mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
@@ -1593,11 +1595,11 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 
     // Prepare voice list
     fluid_cond_mutex_lock(mixer->wakeup_threads_m);
-    fluid_atomic_int_set(&mixer->current_rvoice, 0);
+    mixer->current_rvoice.store(0);
 
     for(i = 0; i < extra_threads; i++)
     {
-        fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_PROCESSING);
+        mixer->threads[i].ready.store(THREAD_BUF_PROCESSING);
     }
 
     // Signal threads to wake up
@@ -1627,7 +1629,7 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 
             for(i = 0; i < extra_threads; i++)
             {
-                if(fluid_atomic_int_get(&mixer->threads[i].ready) ==
+                if(mixer->threads[i].ready.load() ==
                         THREAD_BUF_PROCESSING)
                 {
                     is_processing = 1;
@@ -1655,13 +1657,13 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
     // mutexes and condition variables), skip terminating threads
     if(mixer->thread_count != 0)
     {
-        fluid_atomic_int_set(&mixer->threads_should_terminate, 1);
+        mixer->threads_should_terminate.store(1);
         // Signal threads to wake up
         fluid_cond_mutex_lock(mixer->wakeup_threads_m);
 
         for(i = 0; i < mixer->thread_count; i++)
         {
-            fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_TERMINATE);
+            mixer->threads[i].ready.store(THREAD_BUF_TERMINATE);
         }
 
         fluid_cond_broadcast(mixer->wakeup_threads);
@@ -1679,7 +1681,7 @@ static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t *mixer)
         }
     }
 
-    FLUID_FREE(mixer->threads);
+    delete[] mixer->threads;
     mixer->thread_count = 0;
     mixer->threads = NULL;
 }
@@ -1706,8 +1708,8 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
     }
 
     // Now prepare the new threads
-    fluid_atomic_int_set(&mixer->threads_should_terminate, 0);
-    mixer->threads = FLUID_ARRAY(fluid_mixer_buffers_t, thread_count);
+    mixer->threads_should_terminate.store(0);
+    mixer->threads = new(std::nothrow) fluid_mixer_buffers_t[thread_count]();
 
     if(mixer->threads == NULL)
     {
@@ -1715,7 +1717,6 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
         return FLUID_FAILED;
     }
 
-    FLUID_MEMSET(mixer->threads, 0, thread_count * sizeof(fluid_mixer_buffers_t));
     mixer->thread_count = thread_count;
 
     for(i = 0; i < thread_count; i++)
@@ -1727,7 +1728,7 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
             return FLUID_FAILED;
         }
 
-        fluid_atomic_int_set(&b->ready, THREAD_BUF_NODATA);
+        b->ready.store(THREAD_BUF_NODATA);
         FLUID_SNPRINTF(name, sizeof(name), "mixer%d", i);
         b->thread = new_fluid_thread(name, fluid_mixer_thread_func, b, prio_level, 0);
 

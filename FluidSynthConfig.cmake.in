@@ -98,8 +98,8 @@ if(NOT FLUIDSYNTH_IS_SHARED)
     find_dependency(oboe)
   endif()
 
-  if(FLUIDSYNTH_SUPPORT_OPENMP AND NOT TARGET OpenMP::OpenMP_C)
-    find_dependency(OpenMP COMPONENTS C)
+  if(FLUIDSYNTH_SUPPORT_OPENMP AND (NOT TARGET OpenMP::OpenMP_C OR NOT TARGET OpenMP::OpenMP_CXX))
+    find_dependency(OpenMP COMPONENTS C CXX)
   endif()
 
   if(FLUIDSYNTH_SUPPORT_OPENSLES AND NOT TARGET OpenSLES::OpenSLES)
