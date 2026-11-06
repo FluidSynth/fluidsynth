@@ -1573,20 +1573,35 @@ static int
 fluid_mod_import_sfont(fluid_mod_t **mod, fluid_list_t *sfmod)
 {
     fluid_list_t *r;
-    int count;
 
     /* Import the modulators (only SF2.1 and higher) */
-    for(count = 0, r = sfmod; r != NULL; count++)
+    for(r = sfmod; r != NULL; r = fluid_list_next(r))
     {
 
         SFMod *mod_src = (SFMod*)(r->data);
-        fluid_mod_t *mod_dest = new_fluid_mod();
+        fluid_mod_t *mod_dest;
 
         if (mod_src == NULL)
         {
             // empty list (DMOD case) - nothing to do!
             return FLUID_OK;
         }
+
+        if((mod_src->dest & (1u << 15u)) != 0)
+        {
+            FLUID_LOG(FLUID_WARN, "Ignoring SoundFont modulator linked to modulator index %u of the zone; linked modulators are not supported yet", (unsigned int)(mod_src->dest & ~(1u << 15u)));
+            continue;
+        }
+
+        /* Validate the destination being a valid SFGenerator before narrowing it to 8 bits. */
+        if(mod_src->dest >= GEN_LAST)
+        {
+            FLUID_LOG(FLUID_WARN, "Ignoring SoundFont modulator with invalid generator destination %u",
+                      (unsigned int)mod_src->dest);
+            continue;
+        }
+
+        mod_dest = new_fluid_mod();
 
         if(mod_dest == NULL)
         {
@@ -1636,7 +1651,7 @@ fluid_mod_import_sfont(fluid_mod_t **mod, fluid_list_t *sfmod)
          * will make a difference, at least in an instrument context: The
          * second modulator overwrites the first one, if they only differ
          * in amount. */
-        if(count == 0)
+        if(*mod == NULL)
         {
             *mod = mod_dest;
         }
@@ -1653,7 +1668,6 @@ fluid_mod_import_sfont(fluid_mod_t **mod, fluid_list_t *sfmod)
             last_mod->next = mod_dest;
         }
 
-        r = fluid_list_next(r);
     } /* foreach modulator */
     return FLUID_OK;
 }

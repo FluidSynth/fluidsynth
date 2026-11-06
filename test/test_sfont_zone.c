@@ -453,6 +453,52 @@ static void bad_test_additional_gens_after_final_gen(int (*load_func)(SFData *sf
     }
 }
 
+/* Ignore invalid destinations before narrowing them, in both zone import paths. */
+static void bad_test_mod_dest(void)
+{
+    SFZone sfzone = {0};
+    SFMod mods[] =
+    {
+        {2, GEN_LAST, 1, 0, 0},
+        {2, GEN_PAN, 2, 0, 0},
+        {2, 256, 3, 0, 0},
+        {2, GEN_ATTENUATION, 4, 0, 0},
+        {2, 65535, 5, 0, 0}
+    };
+    fluid_preset_zone_t *preset_zone;
+    fluid_inst_zone_t *inst_zone;
+    fluid_mod_t *mod;
+    int i, preset;
+
+    for(i = 0; i < (int)FLUID_N_ELEMENTS(mods); i++)
+    {
+        sfzone.mod = fluid_list_append(sfzone.mod, &mods[i]);
+    }
+    for(preset = 0; preset <= 1; preset++)
+    {
+        preset_zone = new_fluid_preset_zone("mod destination");
+        inst_zone = new_fluid_inst_zone("mod destination");
+        TEST_ASSERT(preset_zone != NULL && inst_zone != NULL);
+        if(preset)
+        {
+            TEST_SUCCESS(fluid_preset_zone_import_sfont(preset_zone, NULL, &sfzone, NULL, NULL));
+            mod = preset_zone->mod;
+        }
+        else
+        {
+            TEST_SUCCESS(fluid_inst_zone_import_sfont(inst_zone, NULL, &sfzone, NULL, NULL));
+            mod = inst_zone->mod;
+        }
+        TEST_ASSERT(mod != NULL && mod->dest == GEN_PAN && mod->amount == 2);
+        mod = mod->next;
+        TEST_ASSERT(mod != NULL && mod->dest == GEN_ATTENUATION && mod->amount == 4);
+        TEST_ASSERT(mod->next == NULL);
+        delete_fluid_preset_zone(preset_zone);
+        delete_fluid_inst_zone(inst_zone);
+    }
+    delete_fluid_list(sfzone.mod);
+}
+
 int main(void)
 {
     // prepare a soundfont that has one preset and one instrument, with up to 2 zones
@@ -468,6 +514,8 @@ int main(void)
     FLUID_MEMSET(preset, 0, sizeof(*preset));
     TEST_ASSERT(inst != NULL);
     FLUID_MEMSET(inst, 0, sizeof(*inst));
+
+    bad_test_mod_dest();
 
     sf->fcbs = &fcb;
     sf->preset = fluid_list_append(sf->preset, preset);
