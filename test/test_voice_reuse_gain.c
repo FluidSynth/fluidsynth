@@ -80,6 +80,22 @@ int main(void)
         TEST_ASSERT(audible_samples > 0);
     }
 
+    stop_voice(synth);
+
+    /* Finished voices above a reduced polyphony limit must still be retired. */
+    delete_fluid_synth(synth);
+    TEST_SUCCESS(fluid_settings_setint(settings, "synth.polyphony", 4));
+    synth = new_fluid_synth(settings);
+    TEST_ASSERT(synth != NULL);
+    for(frame = 0; frame < 4; frame++)
+    {
+        start_voice(synth, sample, 0);
+    }
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 4);
+    TEST_SUCCESS(fluid_synth_set_polyphony(synth, 1));
+    render(synth, reused);
+    stop_voice(synth);
+
     delete_fluid_synth(synth);
     delete_fluid_sample(sample);
     delete_fluid_settings(settings);
