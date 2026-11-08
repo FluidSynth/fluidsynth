@@ -27,9 +27,6 @@
 extern "C" {
 #endif
 
-/* Bank offset assumed when an embedded bank has no DBNK chunk. */
-#define FLUID_RMIDI_DEFAULT_BANK_OFFSET 1
-
 typedef enum
 {
     FLUID_RMIDI_BANK_NONE = 0, /* No embedded sound bank */
@@ -39,13 +36,13 @@ typedef enum
 
 typedef struct _fluid_rmidi_info_t
 {
-    int is_rmidi;                  /* TRUE if the file is an RMIDI file */
-    fluid_long_long_t midi_offset; /* Offset of the MIDI data in the file */
+    uint8_t is_rmidi;              /* TRUE if the file is an RMIDI file */
+    uint8_t bank_offset;           /* Bank offset to apply to the embedded bank */
+    fluid_long_long_t midi_pos;    /* Offset of the MIDI data in the file */
     fluid_long_long_t midi_size;   /* Size of the MIDI data in bytes */
     fluid_long_long_t bank_pos;    /* Offset of the embedded bank's RIFF chunk */
     fluid_long_long_t bank_size;   /* Size of the embedded bank, including its RIFF header */
     fluid_rmidi_bank_type bank_type;
-    int bank_offset;               /* Bank offset to apply to the embedded bank */
 } fluid_rmidi_info_t;
 
 /* Check whether a memory buffer starts with an RMIDI header. */

@@ -122,6 +122,7 @@ struct _fluid_defsfont_t
     fluid_list_t *inst;             /* the instruments of this soundfont */
     int mlock;                      /* Should we try memlock (avoid swapping)? */
     int dynamic_samples;            /* Enables dynamic sample loading if set */
+    int mma_bank_select;            /* TRUE if the synth uses MMA bank select (14 bit banks) */
 
     fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 };

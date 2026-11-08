@@ -1498,7 +1498,10 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     fluid_long_long_t offset = rmidi.is_rmidi ? rmidi.bank_pos : 0;
     bank_offset = rmidi.bank_offset;
 
-    if(filesize - offset < 12)
+    // from here on, filesize is the size of the DLS bank only
+    filesize -= offset;
+
+    if(filesize < 12)
     {
         throw std::runtime_error{ "File too short! (< 12 bytes)" };
     }
@@ -1524,9 +1527,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         throw std::runtime_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
     }
 
-    fluid_long_long_t bank_filesize = filesize - offset;
-
-    if(chunk.size + 8LL > bank_filesize)
+    if(chunk.size + 8LL > filesize)
     {
         uint8_t from[4] = {
             static_cast<uint8_t>(chunk.size >>  0),
@@ -1534,7 +1535,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             static_cast<uint8_t>(chunk.size >> 16),
             static_cast<uint8_t>(chunk.size >> 24),
         };
-        auto maxSize = bank_filesize - 8LL;
+        auto maxSize = filesize - 8LL;
         uint8_t to[4] = {
             static_cast<uint8_t>(maxSize >>  0),
             static_cast<uint8_t>(maxSize >>  8),
@@ -1542,10 +1543,10 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             static_cast<uint8_t>(maxSize >> 24),
         };
         auto Hint = string_format(" (Hint: Try changing the hexadecimal little-endian size of the RIFF chunk from %02X%02X%02X%02X to %02X%02X%02X%02X using a hex editor.)", from[0], from[1], from[2], from[3], to[0], to[1], to[2], to[3]);
-        throw std::runtime_error{ string_format("DLS file is too short! Outermost RIFF chunk reports a payload size of %u bytes, but there are only %lld bytes left in the file.%s", chunk.size, maxSize, chunk.size == bank_filesize ? Hint.c_str() : "") };
+        throw std::runtime_error{ string_format("DLS file is too short! Outermost RIFF chunk reports a payload size of %u bytes, but there are only %lld bytes left in the file.%s", chunk.size, maxSize, chunk.size == filesize ? Hint.c_str() : "") };
     }
 
-    if(chunk.size + 8LL < bank_filesize)
+    if(chunk.size + 8LL < filesize)
     {
         FLUID_LOG(FLUID_WARN, "DLS file has extra data after RIFF chunk, ignoring.");
     }
@@ -3271,6 +3272,8 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     {
         bank += inst->bank_offset;
 
+        // with MMA bank select the bank is a 14 bit value, so only the
+        // 7 bit styles need to fall back to bank 0 on overflow
         if(bank > 127 && synth->bank_select != FLUID_BANK_STYLE_MMA)
         {
             bank = 0;

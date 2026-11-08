@@ -108,7 +108,7 @@ int fluid_is_midifile(const char *filename)
             break;
         }
 
-        retcode = (FLUID_STRNCMP((const char *)header, "MThd", 4) == 0) ||
+        retcode = (memcmp(header, "MThd", 4) == 0) ||
                   (length == sizeof(header) &&
                    fluid_rmidi_is_rmidi_mem(header, sizeof(header)));
     }
@@ -2032,24 +2032,27 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     /* RMIDI files wrap the actual MIDI file in a RIFF container. */
     rmidi_status = fluid_rmidi_parse_mem(buffer, buffer_length, &rmidi);
 
-    if(rmidi_status < 0)
+    if(rmidi_status == 0)
     {
+        // regular SMF
+        midi_data = buffer;
+        midi_length = buffer_length;
+    }
+    else if(rmidi_status == 1)
+    {
+        // RMID file
+        midi_data = buffer + rmidi.midi_pos;
+        midi_length = (size_t)rmidi.midi_size;
+    }
+    else
+    {
+        // error
         if(buffer_owned)
         {
             FLUID_FREE(buffer);
         }
 
         return FLUID_FAILED;
-    }
-    if(rmidi_status == 0)
-    {
-        midi_data = buffer;
-        midi_length = buffer_length;
-    }
-    else
-    {
-        midi_data = buffer + rmidi.midi_offset;
-        midi_length = (size_t)rmidi.midi_size;
     }
 
     midifile = new_fluid_midi_file(midi_data, midi_length);

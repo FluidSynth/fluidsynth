@@ -625,13 +625,13 @@ static int load_header(SFData *sf)
 
     if((fluid_long_long_t)chunk.size > sf->filesize - (riff_start + 8))
     {
-        FLUID_LOG(FLUID_ERR, "SoundFont file size mismatch");
+        FLUID_LOG(FLUID_ERR, "SoundFont RIFF chunk is larger than the file");
         return FALSE;
     }
 
     if(!sf->is_rmidi && chunk.size != sf->filesize - 8)
     {
-        FLUID_LOG(FLUID_ERR, "SoundFont file size mismatch");
+        FLUID_LOG(FLUID_ERR, "SoundFont RIFF chunk size does not match the file size");
         return FALSE;
     }
 

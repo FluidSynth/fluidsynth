@@ -28,6 +28,9 @@
 #define SFBK_FCC    FLUID_FOURCC('s', 'f', 'b', 'k')
 #define DLS_FCC     FLUID_FOURCC('D', 'L', 'S', ' ')
 
+/* Bank offset assumed when an embedded bank has no DBNK chunk. */
+#define FLUID_RMIDI_DEFAULT_BANK_OFFSET 1
+
 typedef struct _fluid_rmidi_src_t
 {
     const unsigned char *data;            /* the whole file if it is in memory, otherwise NULL */
@@ -110,6 +113,7 @@ static int fluid_rmidi_parse_info(const fluid_rmidi_src_t *src,
 
             if(fluid_rmidi_read_at(src, start + 8, end, &value, sizeof(value)) != FLUID_OK)
             {
+                FLUID_LOG(FLUID_ERR, "RMIDI DBNK chunk could not be read");
                 return FLUID_FAILED;
             }
 
@@ -125,7 +129,7 @@ static int fluid_rmidi_parse_info(const fluid_rmidi_src_t *src,
             *have_bank_offset = TRUE;
         }
 
-        start = start + 8 + size + (size & 1);
+        start = start + 8 + size + (size % 2);
     }
 
     return FLUID_OK;
@@ -135,7 +139,7 @@ static int fluid_rmidi_parse_info(const fluid_rmidi_src_t *src,
  * Parse an RMIDI container.
  *
  * @return 1 if the file is an RMIDI file and was parsed successfully, 0 if the
- *  file is not an RMIDI file, or -1 if the RMIDI file is malformed.
+ *  file is not an RMIDI file, or FLUID_FAILED if the RMIDI file is malformed.
  */
 static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info_t *info)
 {
@@ -170,7 +174,7 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
     if((fluid_long_long_t)riff_size > filesize - 8)
     {
         FLUID_LOG(FLUID_ERR, "RMIDI file size mismatch");
-        return -1;
+        return FLUID_FAILED;
     }
 
     end = (fluid_long_long_t)riff_size + 8;
@@ -184,12 +188,12 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
                 id != DATA_FCC || size == 0)
         {
             FLUID_LOG(FLUID_ERR, "RMIDI file does not start with a valid data chunk");
-            return -1;
+            return FLUID_FAILED;
         }
 
-        info->midi_offset = pos + 8;
+        info->midi_pos = pos + 8;
         info->midi_size = size;
-        pos = pos + 8 + size + (size & 1);
+        pos = pos + 8 + size + (size % 2);
     }
 
     /* Scan the remaining chunks. Unknown chunks are ignored, as required by
@@ -201,7 +205,7 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
         if(fluid_rmidi_read_chunk(src, pos, end, &id, &size) != FLUID_OK)
         {
             FLUID_LOG(FLUID_ERR, "RMIDI chunk size exceeds file size");
-            return -1;
+            return FLUID_FAILED;
         }
 
         if(id == LIST_FCC)
@@ -211,19 +215,20 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
             if(size < 4)
             {
                 FLUID_LOG(FLUID_ERR, "RMIDI LIST chunk is too small");
-                return -1;
+                return FLUID_FAILED;
             }
 
             if(fluid_rmidi_read_at(src, pos + 8, end, &type, sizeof(type)) != FLUID_OK)
             {
-                return -1;
+                FLUID_LOG(FLUID_ERR, "RMIDI LIST chunk could not be read");
+                return FLUID_FAILED;
             }
 
             if(type == INFO_FCC &&
                     fluid_rmidi_parse_info(src, pos + 12, pos + 8 + size,
                                            &bank_offset, &have_bank_offset) != FLUID_OK)
             {
-                return -1;
+                return FLUID_FAILED;
             }
         }
         else if(id == RIFF_FCC)
@@ -233,12 +238,13 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
             if(size < 4)
             {
                 FLUID_LOG(FLUID_ERR, "RMIDI embedded RIFF chunk is too small");
-                return -1;
+                return FLUID_FAILED;
             }
 
             if(fluid_rmidi_read_at(src, pos + 8, end, &form_id, sizeof(form_id)) != FLUID_OK)
             {
-                return -1;
+                FLUID_LOG(FLUID_ERR, "RMIDI embedded RIFF chunk could not be read");
+                return FLUID_FAILED;
             }
 
             if(form_id == SFBK_FCC || form_id == DLS_FCC)
@@ -255,7 +261,7 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
             }
         }
 
-        pos = pos + 8 + size + (size & 1);
+        pos = pos + 8 + size + (size % 2);
     }
 
     /* Without an embedded bank the DBNK chunk is ignored and no offset is
@@ -308,10 +314,8 @@ int fluid_rmidi_parse_mem(const void *buffer, size_t length, fluid_rmidi_info_t 
 {
     fluid_rmidi_src_t src = { (const unsigned char *)buffer, NULL, NULL, (fluid_long_long_t)length };
 
-    if(buffer == NULL || info == NULL)
-    {
-        return 0;
-    }
+    fluid_return_val_if_fail(buffer != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(info != NULL, FLUID_FAILED);
 
     return fluid_rmidi_parse_impl(&src, info);
 }
@@ -322,10 +326,9 @@ int fluid_rmidi_parse(const fluid_file_callbacks_t *fcbs, void *file,
 {
     fluid_rmidi_src_t src = { NULL, fcbs, file, filesize };
 
-    if(fcbs == NULL || file == NULL || info == NULL)
-    {
-        return 0;
-    }
+    fluid_return_val_if_fail(fcbs != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(file != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(info != NULL, FLUID_FAILED);
 
     return fluid_rmidi_parse_impl(&src, info);
 }

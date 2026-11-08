@@ -214,6 +214,7 @@ fluid_defsfont_t *new_fluid_defsfont(fluid_settings_t *settings)
 
     fluid_settings_getint(settings, "synth.lock-memory", &defsfont->mlock);
     fluid_settings_getint(settings, "synth.dynamic-sample-loading", &defsfont->dynamic_samples);
+    defsfont->mma_bank_select = fluid_settings_str_equal(settings, "synth.midi-bank-select", "mma");
 
     return defsfont;
 }
@@ -564,7 +565,10 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         {
             int bank = sfpreset->bank + bank_offset;
 
-            if(bank > 127)
+            /* With MMA bank select the bank is a 14 bit value, so only the
+             * 7 bit styles need to fall back to bank 0 on overflow. This
+             * matches the DLS loader. */
+            if(bank > 127 && !defsfont->mma_bank_select)
             {
                 bank = 0;
             }
