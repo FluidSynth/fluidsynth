@@ -50,6 +50,14 @@ static void test_sostenuto(fluid_synth_t *synth, int chan, int sustain_takeover)
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
     TEST_SUCCESS(fluid_synth_cc(synth, chan, SOSTENUTO_SWITCH, 127));
 
+    /* Repeated CC66 on-values must not capture notes played after pedal-down. */
+    TEST_SUCCESS(fluid_synth_noteon(synth, chan, 61, 127));
+    TEST_SUCCESS(fluid_synth_cc(synth, chan, SOSTENUTO_SWITCH, 127));
+    TEST_SUCCESS(fluid_synth_cc(synth, chan, SOSTENUTO_SWITCH, 64));
+    TEST_SUCCESS(fluid_synth_noteoff(synth, chan, 61));
+    TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
+    TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 2);
+
     // send noteoff right afterwards
     TEST_SUCCESS(fluid_synth_noteoff(synth, chan, 60));
 
@@ -111,6 +119,26 @@ static void test_pedal_overlap(fluid_synth_t *synth, int mono, int first_up)
     TEST_SUCCESS(fluid_synth_cc(synth, 0, second_up, 0));
     TEST_SUCCESS(fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL));
     TEST_ASSERT(fluid_synth_get_active_voice_count(synth) == 0);
+}
+
+/* Exercise global CC66 with different pedal states on the receiving channels. */
+static void test_sostenuto_global(fluid_synth_t *synth)
+{
+    unsigned int orderid;
+
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    TEST_SUCCESS(fluid_synth_reset_basic_channel(synth, -1));
+    TEST_SUCCESS(fluid_synth_set_basic_channel(synth, 1, FLUID_CHANNEL_MODE_OMNIOFF_MONO, 2));
+    TEST_SUCCESS(fluid_synth_noteon(synth, 1, 60, 127));
+    TEST_SUCCESS(fluid_synth_cc(synth, 1, SOSTENUTO_SWITCH, 127));
+    orderid = synth->channel[1]->sostenuto_orderid;
+    TEST_SUCCESS(fluid_synth_noteon(synth, 2, 60, 127));
+    TEST_SUCCESS(fluid_synth_cc(synth, 2, SOSTENUTO_SWITCH, 63));
+
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SOSTENUTO_SWITCH, 64));
+    TEST_ASSERT(synth->channel[1]->sostenuto_orderid == orderid);
+    TEST_ASSERT(synth->channel[2]->sostenuto_orderid == synth->noteid);
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
 }
 
 static void test_portamento_fromkey(fluid_synth_t* synth, int chan)
@@ -235,6 +263,7 @@ int main(void)
         fluid_synth_system_reset(synth);
     }
 
+    test_sostenuto_global(synth);
     test_sostenuto(synth, 0, 1);
     for(mono = 0; mono <= 1; mono++)
     {
