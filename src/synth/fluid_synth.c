@@ -7100,7 +7100,7 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
             enum fluid_msgs_note_cut note_cut_mode = synth->msgs_note_cut_mode;
 
             /* Id of voices that was sustained by sostenuto */
-            if(fluid_voice_is_sostenuto(voice))
+            if(fluid_voice_is_sostenuto(voice) && !voice->has_noteoff)
             {
                 synth->storeid = fluid_voice_get_id(voice);
             }

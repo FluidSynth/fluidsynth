@@ -163,6 +163,30 @@ int main(void)
     TEST_ASSERT(finished_count > 0);
     TEST_ASSERT(finished_data_received == &marker);
 
+    /* === Test 4: Sostenuto holds retriggered notes until pedal release === */
+    reset_callback_state();
+    TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 100));
+    render_frames(synth, fluid_synth_get_internal_bufsize(synth));
+    TEST_ASSERT(setup_voices(synth, 0, 60, voice_callback, &marker) > 0);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SOSTENUTO_SWITCH, 127));
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
+    TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 100));
+    TEST_ASSERT(setup_voices(synth, 0, 60, voice_callback, &marker) > 0);
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
+    TEST_ASSERT(noteoff_count == 0);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SOSTENUTO_SWITCH, 0));
+    TEST_ASSERT(noteoff_count > 0);
+
+    /* The next pedal cycle starts before the released voices finish. */
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SOSTENUTO_SWITCH, 127));
+    TEST_SUCCESS(fluid_synth_noteon(synth, 0, 60, 100));
+    TEST_ASSERT(setup_voices(synth, 0, 60, voice_callback, &marker) > 0);
+    reset_callback_state();
+    TEST_SUCCESS(fluid_synth_noteoff(synth, 0, 60));
+    TEST_ASSERT(noteoff_count > 0);
+    TEST_SUCCESS(fluid_synth_cc(synth, 0, SOSTENUTO_SWITCH, 0));
+    render_frames(synth, 44100 * 2);
+
     /* cleanup */
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
