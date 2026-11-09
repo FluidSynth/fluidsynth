@@ -105,28 +105,25 @@ static int fluid_rmidi_parse_info(const fluid_rmidi_src_t *src,
         {
             uint16_t value, offset;
 
+            /* An invalid DBNK chunk is ignored, as if it was not present. */
             if(size != 2)
             {
-                FLUID_LOG(FLUID_ERR, "RMIDI DBNK chunk has invalid size of %u bytes", size);
-                return FLUID_FAILED;
+                FLUID_LOG(FLUID_WARN, "Ignoring RMIDI DBNK chunk with invalid size of %u bytes", size);
             }
-
-            if(fluid_rmidi_read_at(src, start + 8, end, &value, sizeof(value)) != FLUID_OK)
+            else if(fluid_rmidi_read_at(src, start + 8, end, &value, sizeof(value)) != FLUID_OK)
             {
                 FLUID_LOG(FLUID_ERR, "RMIDI DBNK chunk could not be read");
                 return FLUID_FAILED;
             }
-
-            offset = FLUID_LE16TOH(value);
-
-            if(offset > 127)
+            else if((offset = FLUID_LE16TOH(value)) > 127)
             {
-                FLUID_LOG(FLUID_ERR, "RMIDI DBNK bank offset %u is out of range", offset);
-                return FLUID_FAILED;
+                FLUID_LOG(FLUID_WARN, "Ignoring RMIDI DBNK bank offset %u, as it is out of range", offset);
             }
-
-            *bank_offset = offset;
-            *have_bank_offset = TRUE;
+            else
+            {
+                *bank_offset = offset;
+                *have_bank_offset = TRUE;
+            }
         }
 
         start = start + 8 + size + (size % 2);
@@ -247,17 +244,15 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
                 return FLUID_FAILED;
             }
 
-            if(form_id == SFBK_FCC || form_id == DLS_FCC)
+            /* Use the first embedded bank. The LIST chunk may come after it,
+             * so keep scanning. */
+            if((form_id == SFBK_FCC || form_id == DLS_FCC) &&
+                    info->bank_type == FLUID_RMIDI_BANK_NONE)
             {
                 info->bank_type = (form_id == SFBK_FCC) ? FLUID_RMIDI_BANK_SF2
                                   : FLUID_RMIDI_BANK_DLS;
                 info->bank_pos = pos;
                 info->bank_size = 8 + (fluid_long_long_t)size;
-                info->bank_offset = have_bank_offset ? bank_offset
-                                    : FLUID_RMIDI_DEFAULT_BANK_OFFSET;
-
-                /* The embedded bank is the last chunk of an RMIDI file. */
-                break;
             }
         }
 
@@ -269,6 +264,10 @@ static int fluid_rmidi_parse_impl(const fluid_rmidi_src_t *src, fluid_rmidi_info
     if(info->bank_type == FLUID_RMIDI_BANK_NONE)
     {
         info->bank_offset = 0;
+    }
+    else
+    {
+        info->bank_offset = have_bank_offset ? bank_offset : FLUID_RMIDI_DEFAULT_BANK_OFFSET;
     }
 
     return 1;
@@ -362,7 +361,7 @@ int fluid_rmidi_seek_bank(const fluid_file_callbacks_t *fcbs, void *file,
     {
         if(info->bank_type != type)
         {
-            FLUID_LOG(FLUID_DBG, "RMIDI file does not contain the expected embedded bank");
+            FLUID_LOG(FLUID_ERR, "RMIDI file does not contain the expected embedded bank");
             return FLUID_FAILED;
         }
 

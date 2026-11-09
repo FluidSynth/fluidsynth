@@ -1498,8 +1498,9 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     fluid_long_long_t offset = rmidi.is_rmidi ? rmidi.bank_pos : 0;
     bank_offset = rmidi.bank_offset;
 
-    // from here on, filesize is the size of the DLS bank only
-    filesize -= offset;
+    // from here on, filesize is the size of the DLS bank only. An RMIDI file may
+    // have more chunks after the bank, so don't derive it from the file's end
+    filesize = rmidi.is_rmidi ? rmidi.bank_size : filesize;
 
     if(filesize < 12)
     {
@@ -3154,8 +3155,11 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
     {
         for(auto &inst : dlsfont->instruments_fluid_data)
         {
-            // Drum bank fallback for MMA bank style
-            if(bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
+            // Drum bank fallback for MMA bank style. An RMIDI bank offset moves the
+            // kit to the bank selected by that Bank Select MSB
+            int drum_bank = inst.bank_offset > 0 ? inst.bank_offset * 128 : DRUM_INST_BANK;
+
+            if(bank == drum_bank && inst.is_drums && inst.pcnum == prenum)
             {
                 return &inst.fluid;
             }
@@ -3186,12 +3190,17 @@ static fluid_preset_t *fluid_dls_iteration_next(fluid_sfont_t *sfont) noexcept
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
 
-    if(dlsfont->fluid_preset_iterator == dlsfont->instruments_fluid_data.end())
+    while(dlsfont->fluid_preset_iterator != dlsfont->instruments_fluid_data.end())
     {
-        return nullptr;
+        auto &inst = *(dlsfont->fluid_preset_iterator++);
+
+        if(fluid_dls_preset_get_banknum(&inst.fluid) != FLUID_FAILED)
+        {
+            return &inst.fluid;
+        }
     }
 
-    return &(*(dlsfont->fluid_preset_iterator++)).fluid;
+    return nullptr;
 }
 
 static int fluid_dls_sfont_delete(fluid_sfont_t *sfont) noexcept
@@ -3231,6 +3240,7 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     {
         if(inst->is_drums || inst->bankmsb == 0x78)  // GM2 rhythm bank
         {
+            // bank select is ignored in this style, so the RMIDI bank offset can't apply
             return DRUM_INST_BANK;
         }
 
@@ -3240,7 +3250,13 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     {
         if(inst->is_drums)
         {
-            return inst->bankmsb + DRUM_INST_BANK;
+            // the RMIDI bank offset is added to the Bank Select MSB of the drum kit
+            if(inst->bankmsb + inst->bank_offset > 127)
+            {
+                return FLUID_FAILED;
+            }
+
+            return inst->bankmsb + inst->bank_offset + DRUM_INST_BANK;
         }
 
         bank = inst->bankmsb;
@@ -3272,11 +3288,11 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     {
         bank += inst->bank_offset;
 
-        // with MMA bank select the bank is a 14 bit value, so only the
-        // 7 bit styles need to fall back to bank 0 on overflow
-        if(bank > 127 && synth->bank_select != FLUID_BANK_STYLE_MMA)
+        // a preset pushed out of the 7 bit bank range can't be selected, so it is
+        // ignored. The negative bank never matches a lookup and the iteration skips it.
+        if(bank > 127)
         {
-            bank = 0;
+            return FLUID_FAILED;
         }
     }
 
