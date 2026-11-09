@@ -202,7 +202,7 @@ long long rtkit_get_rttime_nsec_max(DBusConnection *connection)
     long long retval = 0;
     int err;
 
-    err = rtkit_get_int_property(connection, "RTTimeNSecMax", &retval);
+    err = rtkit_get_int_property(connection, "RTTimeUSecMax", &retval);
     return err < 0 ? err : retval;
 }
 
