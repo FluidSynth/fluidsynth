@@ -14,6 +14,7 @@
 #include <cmath>
 #include <ctime>
 #include <complex>
+#include <array>
 
 #ifndef SINC_ORDER
 #define SINC_ORDER 11
@@ -21,10 +22,10 @@
 #define N SINC_ORDER
 
 /* Tables, filled once */
-static fluid_real_t C_tab[2 * N], S_tab[2 * N];
+static std::array<fluid_real_t, 2 * N> C_tab, S_tab;
 // same table content as above, but stored as array of struct
-static std::complex<fluid_real_t> AoS_tab[2 * N];
-static fluid_real_t C2_tab[N], S2_tab[N];
+static std::array<std::complex<fluid_real_t>, 2 * N> AoS_tab;
+static std::array<fluid_real_t, N> C2_tab, S2_tab;
 
 static void init_tables(void)
 {
@@ -39,7 +40,7 @@ static void init_tables(void)
 }
 
 /* 0: original */
-static void hann_orig(fluid_real_t center, fluid_real_t* out)
+static void hann_orig(fluid_real_t center, std::array<fluid_real_t, N> &out)
 {
     for (int i = 0; i < N; i++) {
         fluid_real_t i_shifted = (fluid_real_t)i - center;
@@ -50,12 +51,11 @@ static void hann_orig(fluid_real_t center, fluid_real_t* out)
 }
 
 /* 1: rotation recurrence on (FLUID_COS 2θ, FLUID_SIN 2θ) */
-static void hann_rot(fluid_real_t center, fluid_real_t* out)
+static void hann_rot(fluid_real_t center, std::array<fluid_real_t, N> &out)
 {
     const fluid_real_t d2 = 2.0 * FLUID_M_PI / N;
     const fluid_real_t cd = FLUID_COS(d2), sd = FLUID_SIN(d2);
-    fluid_real_t a0 = -d2 * center / 2.0 * 2.0 / 2.0 * 2.0; /* = -d2*center */
-    a0 = -d2 * center;
+    fluid_real_t a0 = -d2 * center;
     fluid_real_t c = FLUID_COS(a0), s = FLUID_SIN(a0);
     for (int i = 0; i < N; i++) {
         out[i] = 0.5 * (1.0 + c);
@@ -66,7 +66,7 @@ static void hann_rot(fluid_real_t center, fluid_real_t* out)
 }
 
 /* 2: Chebyshev recurrence */
-static void hann_cheb(fluid_real_t center, fluid_real_t* out)
+static void hann_cheb(fluid_real_t center, std::array<fluid_real_t, N> &out)
 {
     const fluid_real_t d2 = 2.0 * FLUID_M_PI / N;
     const fluid_real_t k = 2.0 * FLUID_COS(d2);
@@ -80,7 +80,7 @@ static void hann_cheb(fluid_real_t center, fluid_real_t* out)
 }
 
 /* 3: tables period 2N, then square */
-static void hann_tab(fluid_real_t center, fluid_real_t* out)
+static void hann_tab(fluid_real_t center, std::array<fluid_real_t, N> &out)
 {
     const fluid_real_t cc = FLUID_COS(FLUID_M_PI * center / N);
     const fluid_real_t sc = FLUID_SIN(FLUID_M_PI * center / N);
@@ -93,7 +93,7 @@ static void hann_tab(fluid_real_t center, fluid_real_t* out)
 }
 
 /* 3.2: tables period 2N, then square, but this time using array of struct */
-static void hann_tab_aos(fluid_real_t center, fluid_real_t* out)
+static void hann_tab_aos(fluid_real_t center, std::array<fluid_real_t, N> &out)
 {
     const fluid_real_t cc = FLUID_COS(FLUID_M_PI * center / N);
     const fluid_real_t sc = FLUID_SIN(FLUID_M_PI * center / N);
@@ -106,7 +106,7 @@ static void hann_tab_aos(fluid_real_t center, fluid_real_t* out)
 }
 
 /* 4: half-angle tables, no square */
-static void hann_tab2(fluid_real_t center, fluid_real_t* out)
+static void hann_tab2(fluid_real_t center, std::array<fluid_real_t, N> &out)
 {
     const fluid_real_t cc = FLUID_COS(2.0 * FLUID_M_PI * center / N);
     const fluid_real_t sc = FLUID_SIN(2.0 * FLUID_M_PI * center / N);
@@ -115,7 +115,7 @@ static void hann_tab2(fluid_real_t center, fluid_real_t* out)
 }
 
 /* long double reference */
-static void hann_ref(double center, long double* out)
+static void hann_ref(double center, std::array<long double, N> &out)
 {
     const long double pi = 3.141592653589793238462643383279502884L;
     for (int i = 0; i < N; i++) {
@@ -124,7 +124,7 @@ static void hann_ref(double center, long double* out)
     }
 }
 
-typedef void (*hann_fn)(fluid_real_t, fluid_real_t*);
+typedef void (*hann_fn)(fluid_real_t, std::array<fluid_real_t, N>&);
 
 static const struct { const char* name; hann_fn fn; } methods[] = {
     { "original FLUID_COS()",  hann_orig },
@@ -159,13 +159,15 @@ static double now_sec(void)
 
 int main(void)
 {
-    enum { NCENTERS = 1001, REPS = 20000 };
-    fluid_real_t out[N];
-    long double ref[N];
-    double max_e[NM] = { 0 }, sum_e[NM] = { 0 };
-    [[maybe_unused]] constexpr double expected_max_e_d[NM] = { 8e-16, 8e-16, 2e-15, 9e-16, 9e-16, 8e-16 };
-    [[maybe_unused]] constexpr float expected_max_e_f[NM] = { 5e-7, 2e-7, 4e-7, 4e-7, 4e-7, 3e-7 };
-    const fluid_real_t(&expected_max_error)[NM] =
+    constexpr int NCENTERS = 1001;
+    constexpr int REPS = 20000;
+
+    std::array<fluid_real_t, N> out;
+    std::array<long double, N> ref;
+    std::array<double, NM> max_e{}, sum_e{};
+    [[maybe_unused]] constexpr std::array<double, NM> expected_max_e_d = { 8e-16, 8e-16, 2e-15, 9e-16, 9e-16, 8e-16 };
+    [[maybe_unused]] constexpr std::array<float, NM> expected_max_e_f = { 5e-7, 2e-7, 4e-7, 4e-7, 4e-7, 3e-7 };
+    const std::array<fluid_real_t, NM> &expected_max_error =
 #if defined(WITH_FLOAT)
         expected_max_e_f
 #else
@@ -215,7 +217,7 @@ int main(void)
         "method", "expected max err", "max err", "mean err", "ns/window", "speedup");
     for (int m = 0; m < NM; m++)
         printf("%-22s %16.1e %12.3e %12.3e %12.1f %9.2fx\n",
-            methods[m].name, expected_max_error[m], max_e[m], sum_e[m] / cnt,
+            methods[m].name, expected_max_error[m], max_e[m], sum_e[m] / static_cast<double>(cnt),
             ns_per_call[m], ns_per_call[0] / ns_per_call[m]);
 
     for (int m = 0; m < NM; m++)
