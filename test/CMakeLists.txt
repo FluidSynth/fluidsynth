@@ -113,6 +113,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
     set(SYSEX_GS_DT1 "${RENDERING_OUTPUT_DIR}/sysex/gs_dt1")
     set(LIMITER_RENDER_DIR "${RENDERING_OUTPUT_DIR}/limiter")
     set(MTS_RENDER_DIR "${RENDERING_OUTPUT_DIR}/mts")
+    set(RMID_RENDER_DIR "${RENDERING_OUTPUT_DIR}/rmidi")
 
     if(LIBSNDFILE_SUPPORT)
         set(FEXT "wav")
@@ -718,6 +719,43 @@ endif (ENABLE_NATIVE_DLS )
         -R 0 -C 0 -g 1 ${GENERAL_USER_GS2} issue1833/out.mid
     )
 
+
+    add_custom_target(renderRMID
+        COMMENT "Rendering RMIDI examples"
+        DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+    )
+    set_target_properties(renderRMID PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/sf2-rmidi-specification/examples"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/AWE - 4-16 One Winged Angel.${FEXT}"
+        -R 0 -C 0 -g 0.6 "AWE - 4-16 One Winged Angel.rmi"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/AWEBLOWN.${FEXT}"
+        -R 0 -C 0 -g 1 "AWEBLOWN.rmi"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/bachsb.${FEXT}"
+        -R 0 -C 0 -g 0.4 ${GENERAL_USER_GS2} "bachsb.rmi"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/Field of Hopes and Dreams.${FEXT}"
+        -R 0 -C 0 -g 0.45 "Field of Hopes and Dreams.rmi"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/GRABBAG_EmbeddedSF2.${FEXT}"
+        -R 0 -C 0 -g 0.8 "GRABBAG_EmbeddedSF2.rmi"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/offset_5.${FEXT}"
+        -R 0 -C 0 -g 0.4 "offset_5.rmi"
+    )
+    add_render_job(renderRMID
+        "${RMID_RENDER_DIR}/Rock_test.rmi.${FEXT}"
+        -R 0 -C 0 -g 1.3 "Rock_test.rmi"
+    )
+
     # Add a dependency so that rendering targets depends on check_rendering
     add_dependencies(check_rendering render1415)
     add_dependencies(check_rendering render1417)
@@ -750,5 +788,6 @@ endif (ENABLE_NATIVE_DLS )
     add_dependencies(check_rendering renderLimiterTests)
     add_dependencies(check_rendering render1505)
     add_dependencies(check_rendering renderGSDT1)
+    add_dependencies(check_rendering renderRMID)
 
 endif ( NOT CMAKE_GENERATOR MATCHES "Visual Studio" )
