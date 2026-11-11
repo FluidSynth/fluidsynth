@@ -23,6 +23,12 @@ FluidSynth can also be used to play a list of MIDI files. Simply run FluidSynth 
 fluidsynth -ni soundfont.sf2 midifile1.mid midifile2.mid
 ``` 
 
+FluidSynth also plays RMIDI files (`.rmi`), i.e. MIDI files wrapped in a RIFF container that may include an embedded SoundFont or DLS bank. When such a file is passed on the command line, both its embedded bank and its MIDI sequence are loaded. The bank offset declared by the RMIDI file is applied automatically. If the file has no embedded bank, the currently loaded SoundFont is used instead:
+
+```shell
+fluidsynth -ni song.rmi
+```
+
 Run FluidSynth with the `--help` option to check for changes in the list of options. 
 
 For some scenarios, it might be useful to execute certain shell commands right upon starting FluidSynth, e.g. to do some custom default initialization of the synth, change the default audio driver in use, etc. This can be achieved with a configuration file as described below. If no such file is provided via the `-f` command-line argument, FluidSynth tries to load a user-specific configuration file (as given by [fluid_get_userconf()](https://www.fluidsynth.org/wiki/api/command-interface/?h=fluid_get_userconf#fluid_get_userconf)). If that fails, it tries to load a system-wide configuration file (as given by [fluid_get_sysconf()](https://www.fluidsynth.org/wiki/api/command-interface/?h=fluid_get_userconf#fluid_get_sysconf)).

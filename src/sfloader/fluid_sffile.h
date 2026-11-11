@@ -140,6 +140,9 @@ struct _SFData
 
     unsigned int filesize;
 
+    int is_rmidi;          /* TRUE if the loaded file is an RMIDI (RIFF RMID) file */
+    int rmidi_bank_offset; /* bank offset from the RMIDI INFO/DBNK chunk, only valid if is_rmidi */
+
     unsigned int samplepos; /* position within sffd of the sample chunk */
     unsigned int samplesize; /* length within sffd of the sample chunk */
 
