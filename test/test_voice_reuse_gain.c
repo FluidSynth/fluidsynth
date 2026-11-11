@@ -81,9 +81,9 @@ int main(void)
     }
 
     stop_voice(synth);
-
-    /* Finished voices above a reduced polyphony limit must still be retired. */
     delete_fluid_synth(synth);
+
+    /* Finished voices exceeding the (later reduced) polyphony limit must still be retired. */
     TEST_SUCCESS(fluid_settings_setint(settings, "synth.polyphony", 4));
     synth = new_fluid_synth(settings);
     TEST_ASSERT(synth != NULL);
