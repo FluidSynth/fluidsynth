@@ -60,7 +60,7 @@ struct _fluid_midi_router_rule_t
     int par2_add;
 
     int pending_events;                      /* In case of noteon: How many keys are still down? */
-    char keys_cc[128];                       /* Flags, whether a key is down / controller is set (sustain) */
+    char keys_cc[128];                       /* Flags, whether a key is down / controller is set (sustain or sostenuto) */
     fluid_midi_router_rule_t *next;          /* next entry */
     int waiting;                             /* Set to TRUE when rule has been deactivated but there are still pending_events */
 };
@@ -785,15 +785,15 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         }
 
         /* At this point we have to create an event of event->type on 'chan' with par1 (maybe par2).
-         * We keep track on the state of noteon and sustain pedal events. If the application tries
+         * We keep track on the state of noteon and hold pedal events. If the application tries
          * to delete a rule, it will only be fully removed, if pending noteoff / pedal off events have
          * arrived. In the meantime while waiting, it will only let through 'negative' events
          * (noteoff or pedal up).
          */
         if(event->type == NOTE_ON || (event->type == CONTROL_CHANGE
-                                      && par1 == SUSTAIN_SWITCH && par2 >= 64))
+                                      && (par1 == SUSTAIN_SWITCH || par1 == SOSTENUTO_SWITCH) && par2 >= 64))
         {
-            /* Noteon or sustain pedal down event generated */
+            /* Noteon or hold pedal down event generated */
             if(rule->keys_cc[par1] == 0)
             {
                 rule->keys_cc[par1] = 1;
@@ -801,9 +801,9 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
             }
         }
         else if(event->type == NOTE_OFF || (event->type == CONTROL_CHANGE
-                                            && par1 == SUSTAIN_SWITCH && par2 < 64))
+                                            && (par1 == SUSTAIN_SWITCH || par1 == SOSTENUTO_SWITCH) && par2 < 64))
         {
-            /* Noteoff or sustain pedal up event generated */
+            /* Noteoff or hold pedal up event generated */
             if(rule->keys_cc[par1] > 0)
             {
                 rule->keys_cc[par1] = 0;
