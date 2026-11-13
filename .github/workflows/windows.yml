@@ -25,6 +25,7 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   INSTALL_LOCATION: fluidsynth_install
+  VCPKG_REF: '2026.10.16'
   LIBSNDFILE_URL_X86: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win32.zip'
   LIBSNDFILE_URL_X64: 'https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win64.zip'
   SDL3_URL: 'https://github.com/libsdl-org/SDL/releases/download/release-3.2.10/SDL3-devel-3.2.10-VC.zip'
@@ -173,6 +174,136 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact_name.outputs.name }}-win10-${{ matrix.platformAlt }}-${{ matrix.osal }}
+        path: ${{ env.INSTALL_LOCATION }}
+        retention-days: 14
+        overwrite: true
+
+  # Native ARM64 build; libsndfile and SDL3 have no prebuilt ARM64 binaries, so they are built with vcpkg (pinned via VCPKG_REF)
+  msvc-arm64-build:
+    runs-on: windows-11-arm
+    name: 🔨 MSVC arm64 cpp11 (native)
+    env:
+      VCPKG_TRIPLET: arm64-windows-mt
+      VCPKG_INSTALLED: c:\vcpkg-installed
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Restore vcpkg dependencies
+      id: vcpkg_cache
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ env.VCPKG_INSTALLED }}
+        key: vcpkg-arm64-${{ env.VCPKG_REF }}-${{ hashFiles('.github/workflows/windows.yml', '.github/vcpkg-triplets/**') }}
+
+    - name: Checkout vcpkg revision
+      shell: cmd
+      run: |
+        @ECHO ON
+        git config --global --add safe.directory "*"
+        git -C %VCPKG_INSTALLATION_ROOT% fetch --depth 1 origin %VCPKG_REF% || exit /b 1
+        git -C %VCPKG_INSTALLATION_ROOT% checkout --force FETCH_HEAD || exit /b 1
+        echo VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%>> "%GITHUB_ENV%"
+
+    - name: Build dependencies with vcpkg
+      if: steps.vcpkg_cache.outputs.cache-hit != 'true'
+      shell: cmd
+      run: |
+        @ECHO ON
+        call %VCPKG_ROOT%\bootstrap-vcpkg.bat -disableMetrics || exit /b 1
+        %VCPKG_ROOT%\vcpkg.exe install "libsndfile[core,external-libs]" sdl3 ^
+          --triplet %VCPKG_TRIPLET% ^
+          --x-install-root=%VCPKG_INSTALLED% ^
+          --overlay-triplets=${{ github.workspace }}\.github\vcpkg-triplets || exit /b 1
+
+    - name: Save vcpkg dependencies
+      if: steps.vcpkg_cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ env.VCPKG_INSTALLED }}
+        key: vcpkg-arm64-${{ env.VCPKG_REF }}-${{ hashFiles('.github/workflows/windows.yml', '.github/vcpkg-triplets/**') }}
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=%VCPKG_INSTALLED%\%VCPKG_TRIPLET%\bin;%PATH%"
+        mkdir build && cd build || exit /b 1
+        cmake -Werror=dev -A ARM64 -T v143 ^
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
+          -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake ^
+          -DVCPKG_TARGET_TRIPLET=%VCPKG_TRIPLET% ^
+          -DVCPKG_INSTALLED_DIR=%VCPKG_INSTALLED% ^
+          -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}\.github\vcpkg-triplets ^
+          -DVCPKG_MANIFEST_MODE=OFF ^
+          -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON ^
+          -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 ^
+          -Dosal=cpp11 -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
+          -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
+
+    - name: Build
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=%VCPKG_INSTALLED%\%VCPKG_TRIPLET%\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --parallel 3 || exit /b 1
+
+    - name: Test
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=%VCPKG_INSTALLED%\%VCPKG_TRIPLET%\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --target check || exit /b 1
+
+    - name: Demo
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=%VCPKG_INSTALLED%\%VCPKG_TRIPLET%\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --target demo || exit /b 1
+
+    - name: Install
+      shell: cmd
+      run: |
+        @ECHO ON
+        cd build
+        cmake --build . --config Release --target install || exit /b 1
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll"
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll"
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll"
+        COPY %VCPKG_INSTALLED%\%VCPKG_TRIPLET%\bin\*.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" || exit /b 1
+        exit 0
+
+    - name: Validate library
+      shell: bash
+      working-directory: ${{ env.INSTALL_LOCATION }}
+      run: |
+        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.lib" ]; then
+          echo "Fluidsynth library has unexpected filename!"
+          ls -la . bin lib
+          exit 1
+        fi
+
+    - name: Set artifact name
+      shell: bash
+      id: artifact_name
+      run: |
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          echo "name=fluidsynth-${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "name=fluidsynth-${{ github.run_id }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.artifact_name.outputs.name }}-win11-arm64-cpp11
         path: ${{ env.INSTALL_LOCATION }}
         retention-days: 14
         overwrite: true
@@ -337,11 +468,16 @@ jobs:
   acceptance-test:
     needs:
     - msvc-build
+    - msvc-arm64-build
     - msys2-build
     strategy:
       fail-fast: false
       matrix:  # https://github.com/actions/runner-images#available-images
-        os: [windows-2022, windows-2025]
+        include:
+          # ARM64 binaries only run on ARM64 hosts, which in turn can also run the x86/x64 ones
+          - { os: windows-2022, pattern: 'fluidsynth-*-win10-x*' }
+          - { os: windows-2025, pattern: 'fluidsynth-*-win10-x*' }
+          - { os: windows-11-arm, pattern: 'fluidsynth-*' }
     runs-on: ${{ matrix.os }}
     name: 🧪 Acceptance Test
     steps:
@@ -349,7 +485,7 @@ jobs:
       uses: actions/download-artifact@v8
       with:
         path: artifacts
-        pattern: fluidsynth-*
+        pattern: ${{ matrix.pattern }}
         merge-multiple: false
         
     - name: Try to execute fluidsynth
@@ -368,6 +504,7 @@ jobs:
     needs:
       - acceptance-test
       - msvc-build
+      - msvc-arm64-build
     runs-on: ubuntu-24.04
     name: 🚀 Publish Release Artifacts
     steps:
