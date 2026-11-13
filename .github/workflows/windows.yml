@@ -177,6 +177,108 @@ jobs:
         retention-days: 14
         overwrite: true
 
+  # Native ARM64 build; libsndfile has no prebuilt ARM64 binaries, so it is built from source
+  msvc-arm64-build:
+    runs-on: windows-11-arm
+    name: 🔨 MSVC arm64 cpp11 (native)
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Build libsndfile
+      shell: cmd
+      run: |
+        @ECHO ON
+        git clone --depth 1 --branch 1.2.2 https://github.com/libsndfile/libsndfile.git d:\libsndfile-src || exit /b 1
+        cmake -S d:\libsndfile-src -B d:\libsndfile-build -A ARM64 ^
+          -DCMAKE_INSTALL_PREFIX=d:\deps ^
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
+          -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF -DBUILD_PROGRAMS=OFF -DBUILD_EXAMPLES=OFF ^
+          -DENABLE_EXTERNAL_LIBS=OFF -DENABLE_MPEG=OFF || exit /b 1
+        cmake --build d:\libsndfile-build --config Release --parallel 3 || exit /b 1
+        cmake --install d:\libsndfile-build --config Release || exit /b 1
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit /b 1
+        cmake -Werror=dev -A ARM64 -T v143 ^
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
+          -DCMAKE_PREFIX_PATH=d:\deps ^
+          -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl3=0 ^
+          -Dosal=cpp11 -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
+          -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 .. || exit /b 1
+
+    - name: Build
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --parallel 3 || exit /b 1
+
+    - name: Test
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --target check || exit /b 1
+
+    - name: Demo
+      shell: cmd
+      run: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit /b 1
+        cmake --build . --config Release --target demo || exit /b 1
+
+    - name: Install
+      shell: cmd
+      run: |
+        @ECHO ON
+        cd build
+        cmake --build . --config Release --target install || exit /b 1
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll"
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll"
+        del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll"
+        COPY d:\deps\bin\sndfile.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" || exit /b 1
+        exit 0
+
+    - name: Validate library
+      shell: bash
+      working-directory: ${{ env.INSTALL_LOCATION }}
+      run: |
+        if [ ! -f "bin/libfluidsynth-3.dll" ] || [ ! -f "lib/libfluidsynth-3.lib" ]; then
+          echo "Fluidsynth library has unexpected filename!"
+          ls -la . bin lib
+          exit 1
+        fi
+
+    - name: Set artifact name
+      shell: bash
+      id: artifact_name
+      run: |
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          echo "name=fluidsynth-${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "name=fluidsynth-${{ github.run_id }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.artifact_name.outputs.name }}-win11-arm64-cpp11
+        path: ${{ env.INSTALL_LOCATION }}
+        retention-days: 14
+        overwrite: true
+
   # Additional MSVC builds migrated from Azure Pipeline Windows10Additional job
   msvc-additional:
     runs-on: windows-2022
@@ -337,11 +439,16 @@ jobs:
   acceptance-test:
     needs:
     - msvc-build
+    - msvc-arm64-build
     - msys2-build
     strategy:
       fail-fast: false
       matrix:  # https://github.com/actions/runner-images#available-images
-        os: [windows-2022, windows-2025]
+        include:
+          # ARM64 binaries only run on ARM64 hosts, which in turn can also run the x86/x64 ones
+          - { os: windows-2022, pattern: 'fluidsynth-*-win10-x*' }
+          - { os: windows-2025, pattern: 'fluidsynth-*-win10-x*' }
+          - { os: windows-11-arm, pattern: 'fluidsynth-*' }
     runs-on: ${{ matrix.os }}
     name: 🧪 Acceptance Test
     steps:
@@ -349,7 +456,7 @@ jobs:
       uses: actions/download-artifact@v8
       with:
         path: artifacts
-        pattern: fluidsynth-*
+        pattern: ${{ matrix.pattern }}
         merge-multiple: false
         
     - name: Try to execute fluidsynth
@@ -368,6 +475,7 @@ jobs:
     needs:
       - acceptance-test
       - msvc-build
+      - msvc-arm64-build
     runs-on: ubuntu-24.04
     name: 🚀 Publish Release Artifacts
     steps:
