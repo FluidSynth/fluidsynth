@@ -455,8 +455,9 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
         return;
     }
 
+    /* Keep sample indices relative to block-aligned pointers for vectorization. */
+    dsp_buf += start_block * FLUID_BUFSIZE;
     FLUID_ASSERT((uintptr_t)dsp_buf % FLUID_DEFAULT_ALIGNMENT == 0);
-    FLUID_ASSERT((uintptr_t)(&dsp_buf[start_block * FLUID_BUFSIZE]) % FLUID_DEFAULT_ALIGNMENT == 0);
 
     /* mixdown for each buffer */
     for(i = 0; i < bufcount; i++)
@@ -473,6 +474,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
 
         amp_incr = (target_amp - current_amp) / FLUID_BUFSIZE;
 
+        buf += start_block * FLUID_BUFSIZE;
         FLUID_ASSERT((uintptr_t)buf % FLUID_DEFAULT_ALIGNMENT == 0);
 
         /* Mixdown sample_count samples in the current buffer buf
@@ -489,7 +491,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
             // scalar loop variant, the voice will have finished afterwards
             for(dsp_i = 0; dsp_i < sample_count; dsp_i++)
             {
-                buf[start_block * FLUID_BUFSIZE + dsp_i] += current_amp * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+                buf[dsp_i] += current_amp * dsp_buf[dsp_i];
                 current_amp += amp_incr;
             }
         }
@@ -500,7 +502,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
             for(dsp_i = 0; dsp_i < FLUID_BUFSIZE; dsp_i++)
             {
                 // We cannot simply increment current_amp by amp_incr during every iteration, as this would create a dependency and prevent vectorization.
-                buf[start_block * FLUID_BUFSIZE + dsp_i] += (current_amp + amp_incr * dsp_i) * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+                buf[dsp_i] += (current_amp + amp_incr * dsp_i) * dsp_buf[dsp_i];
             }
             
             // we have reached the target_amp
@@ -510,12 +512,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
                 #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
                 for(dsp_i = FLUID_BUFSIZE; dsp_i < sample_count; dsp_i++)
                 {
-                    // Index by blocks (not by samples) to let the compiler know that we always start accessing
-                    // buf and dsp_buf at the FLUID_BUFSIZE*sizeof(fluid_real_t) byte boundary and never somewhere
-                    // in between.
-                    // A good compiler should understand: Aha, so I don't need to add a peel loop when vectorizing
-                    // this loop. Great.
-                    buf[start_block * FLUID_BUFSIZE + dsp_i] += target_amp * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
+                    buf[dsp_i] += target_amp * dsp_buf[dsp_i];
                 }
             }
         }
