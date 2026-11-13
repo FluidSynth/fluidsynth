@@ -191,25 +191,25 @@ jobs:
       shell: cmd
       run: |
         @ECHO ON
-        git clone --depth 1 --branch 1.2.2 https://github.com/libsndfile/libsndfile.git d:\libsndfile-src || exit /b 1
-        cmake -S d:\libsndfile-src -B d:\libsndfile-build -A ARM64 ^
-          -DCMAKE_INSTALL_PREFIX=d:\deps ^
+        git clone --depth 1 --branch 1.2.2 https://github.com/libsndfile/libsndfile.git c:\libsndfile-src || exit /b 1
+        cmake -S c:\libsndfile-src -B c:\libsndfile-build -A ARM64 ^
+          -DCMAKE_INSTALL_PREFIX=c:\deps ^
           -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
           -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
           -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF -DBUILD_PROGRAMS=OFF -DBUILD_EXAMPLES=OFF ^
           -DENABLE_EXTERNAL_LIBS=OFF -DENABLE_MPEG=OFF || exit /b 1
-        cmake --build d:\libsndfile-build --config Release --parallel 3 || exit /b 1
-        cmake --install d:\libsndfile-build --config Release || exit /b 1
+        cmake --build c:\libsndfile-build --config Release --parallel 3 || exit /b 1
+        cmake --install c:\libsndfile-build --config Release || exit /b 1
 
     - name: Configure CMake
       shell: cmd
       run: |
         @ECHO ON
-        SET "PATH=d:\deps\bin;%PATH%"
+        SET "PATH=c:\deps\bin;%PATH%"
         mkdir build && cd build || exit /b 1
         cmake -Werror=dev -A ARM64 -T v143 ^
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
-          -DCMAKE_PREFIX_PATH=d:\deps ^
+          -DCMAKE_PREFIX_PATH=c:\deps ^
           -Denable-readline=0 -Denable-floats=1 -Denable-jack=0 -Denable-sdl3=0 ^
           -Dosal=cpp11 -DCMAKE_BUILD_TYPE=Release ^
           -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
@@ -219,7 +219,7 @@ jobs:
       shell: cmd
       run: |
         @ECHO ON
-        SET "PATH=d:\deps\bin;%PATH%"
+        SET "PATH=c:\deps\bin;%PATH%"
         cd build || exit /b 1
         cmake --build . --config Release --parallel 3 || exit /b 1
 
@@ -227,7 +227,7 @@ jobs:
       shell: cmd
       run: |
         @ECHO ON
-        SET "PATH=d:\deps\bin;%PATH%"
+        SET "PATH=c:\deps\bin;%PATH%"
         cd build || exit /b 1
         cmake --build . --config Release --target check || exit /b 1
 
@@ -235,7 +235,7 @@ jobs:
       shell: cmd
       run: |
         @ECHO ON
-        SET "PATH=d:\deps\bin;%PATH%"
+        SET "PATH=c:\deps\bin;%PATH%"
         cd build || exit /b 1
         cmake --build . --config Release --target demo || exit /b 1
 
@@ -248,7 +248,7 @@ jobs:
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\concrt*.dll"
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\vcruntime*.dll"
         del "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\msvcp*.dll"
-        COPY d:\deps\bin\sndfile.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" || exit /b 1
+        COPY c:\deps\bin\sndfile.dll "${{ github.workspace }}\${{ env.INSTALL_LOCATION }}\bin\" || exit /b 1
         exit 0
 
     - name: Validate library
