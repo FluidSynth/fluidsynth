@@ -455,11 +455,9 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
         return;
     }
 
-    FLUID_ASSERT((uintptr_t)dsp_buf % FLUID_DEFAULT_ALIGNMENT == 0);
-    FLUID_ASSERT((uintptr_t)(&dsp_buf[start_block * FLUID_BUFSIZE]) % FLUID_DEFAULT_ALIGNMENT == 0);
-
     /* Keep sample indices relative to block-aligned pointers for vectorization. */
     dsp_buf += start_block * FLUID_BUFSIZE;
+    FLUID_ASSERT((uintptr_t)dsp_buf % FLUID_DEFAULT_ALIGNMENT == 0);
 
     /* mixdown for each buffer */
     for(i = 0; i < bufcount; i++)
@@ -476,8 +474,8 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
 
         amp_incr = (target_amp - current_amp) / FLUID_BUFSIZE;
 
-        FLUID_ASSERT((uintptr_t)buf % FLUID_DEFAULT_ALIGNMENT == 0);
         buf += start_block * FLUID_BUFSIZE;
+        FLUID_ASSERT((uintptr_t)buf % FLUID_DEFAULT_ALIGNMENT == 0);
 
         /* Mixdown sample_count samples in the current buffer buf
          *
