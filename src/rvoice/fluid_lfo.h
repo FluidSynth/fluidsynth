@@ -38,6 +38,7 @@ static FLUID_INLINE void
 fluid_lfo_reset(fluid_lfo_t *lfo)
 {
     lfo->val = 0.0f;
+    lfo->increment = 0.0f;
 }
 
 // These two cannot be inlined since they're used by event_dispatch
