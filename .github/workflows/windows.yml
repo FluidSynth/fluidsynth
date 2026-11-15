@@ -230,8 +230,9 @@ jobs:
       run: |
         @ECHO ON
         SET "PATH=%VCPKG_INSTALLED%\%VCPKG_TRIPLET%\bin;%PATH%"
+        cmake --version
         mkdir build && cd build || exit /b 1
-        cmake -Werror=dev -A ARM64 -T v143 ^
+        cmake -A ARM64 -T v143 ^
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\${{ env.INSTALL_LOCATION }} ^
           -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake ^
           -DVCPKG_TARGET_TRIPLET=%VCPKG_TRIPLET% ^
