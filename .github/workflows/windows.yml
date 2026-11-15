@@ -404,7 +404,6 @@ jobs:
         fail-fast: false
         matrix:
           include:
-            - { icon: '⬛', sys: mingw32, osal: cpp11 }
             - { icon: '🟦', sys: mingw64, osal: cpp11 }
             - { icon: '🟨', sys: ucrt64, osal: cpp11 }
             - { icon: '🟧', sys: clang64, osal: cpp11 }
