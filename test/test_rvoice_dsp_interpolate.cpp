@@ -1382,6 +1382,107 @@ static void test_N_negative_phase_after_loop_wrap(void)
     }
 }
 
+/* =========================================================================
+ * Test O – Degenerate phase_incr (zero or insanely huge)
+ *
+ * Looping: the phase must lie within the valid sample range afterwards.
+ * Non-looping: the voice must signal completion (count < FLUID_BUFSIZE).
+ * ========================================================================= */
+static void test_O_degenerate_phase_incr(void)
+{
+    printf("Test O: Degenerate phase_incr (zero / huge)\n");
+
+    std::array<short, SAMPLE_SIZE> data;
+    data.fill(CONST_VAL);
+
+    constexpr const std::array<double, 6> incrs = { 0.0, 1.0e5, 1.0e9, 2147483648.0, 2.15992e9, 4.0e9 };
+
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
+                                                          FLUID_INTERP_LINEAR,
+                                                          FLUID_INTERP_4THORDER,
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
+                                                        };
+
+    for(double incr : incrs)
+    {
+        printf("  phase_incr=%.5g\n", incr);
+
+        for(int silence = 0; silence < 2; silence++)
+        {
+            for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
+            {
+                if(silence && m > 0)
+                {
+                    break; /* silence rendering is independent of the interpolation mode */
+                }
+
+                const char *name = silence ? "SILENCE" : interp_name(modes[m]);
+
+                /* O1: looping, with and without has_looped */
+                for(int has_looped = 0; has_looped < 2; has_looped++)
+                {
+                    fluid_rvoice_t  rvoice;
+                    fluid_sample_t  samp;
+                    std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+                    buf.fill(0);
+
+                    setup_rvoice_16bit(&rvoice, &samp, data.data(),
+                                       LOOP_START + 1.25, incr,
+                                       LOOP_START, LOOP_END,
+                                       has_looped, modes[m]);
+
+                    int count = silence ? fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/1)
+                                : fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+                    TEST_ASSERT(count == FLUID_BUFSIZE);
+
+                    const int64_t phase = (int64_t)rvoice.dsp.phase;
+                    const unsigned int index = fluid_phase_index(rvoice.dsp.phase);
+
+                    if(phase < 0 || index < (unsigned)rvoice.dsp.start || index >= (unsigned)LOOP_END)
+                    {
+                        fprintf(stderr, "FAIL: %s looping (has_looped=%d, incr=%.5g): phase index %u outside [%d, %d)\n",
+                                name, has_looped, incr, index, rvoice.dsp.start, LOOP_END);
+                        TEST_ASSERT(0);
+                    }
+                }
+
+                /* O2: non-looping, voice finishes only if one step exceeds the sample length */
+                {
+                    fluid_rvoice_t  rvoice;
+                    fluid_sample_t  samp;
+                    std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+                    buf.fill(0);
+
+                    setup_rvoice_16bit(&rvoice, &samp, data.data(),
+                                       0.0, incr,
+                                       0, SAMPLE_SIZE,
+                                       0, modes[m]);
+
+                    int count = silence ? fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/0)
+                                : fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/0);
+
+                    fluid_phase_t dsp_phase_incr, end_index;
+                    fluid_phase_set_float(dsp_phase_incr, incr);
+                    fluid_phase_set_int(end_index, SAMPLE_SIZE);
+
+                    const bool finished = end_index + 1 < dsp_phase_incr;
+
+                    if(finished ? count >= FLUID_BUFSIZE : count != FLUID_BUFSIZE)
+                    {
+                        fprintf(stderr, "FAIL: %s non-looping (incr=%.5g) returned %d samples, expected %s %d\n",
+                                name, incr, count, finished ? "<" : "==", FLUID_BUFSIZE);
+                        TEST_ASSERT(0);
+                    }
+                }
+
+                printf("    %s: PASS\n", name);
+            }
+        }
+    }
+}
+
 /* ========================================================================= */
 
 int main(void)
@@ -1431,6 +1532,9 @@ int main(void)
     printf("\n");
 
     test_N_negative_phase_after_loop_wrap();
+    printf("\n");
+
+    test_O_degenerate_phase_incr();
     printf("\n");
 
     printf("========================================\n");
