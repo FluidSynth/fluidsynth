@@ -87,6 +87,17 @@ compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_inc
     return iters;
 }
 
+static FLUID_INLINE void
+fluid_wrap_phase(fluid_phase_t& dsp_phase, int loopstart, int loopend)
+{
+    fluid_phase_t dsp_phase_index;
+    do
+    {
+        fluid_phase_sub_int(dsp_phase, loopend - loopstart);
+        dsp_phase_index = fluid_phase_index_round(dsp_phase);
+    } while (dsp_phase_index > (loopend - 1 /* == end_index */));
+}
+
 /* Special case of interpolate_none for rendering silent voices, i.e. in delay phase or zero volume */
 template<bool LOOPING>
 static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
@@ -135,11 +146,7 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
         /* go back to loop start */
         if (dsp_phase_index > end_index)
         {
-            do
-            {
-                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-                dsp_phase_index = fluid_phase_index_round(dsp_phase);
-            } while (dsp_phase_index > end_index);
+            fluid_wrap_phase(dsp_phase, voice->loopstart, voice->loopend);
             voice->has_looped = 1;
         }
     } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
@@ -204,12 +211,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index)
         {
-            do
-            {
-                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-                dsp_phase_index = fluid_phase_index_round(dsp_phase);
-            } while (dsp_phase_index > end_index);
-
+            fluid_wrap_phase(dsp_phase, voice->loopstart, voice->loopend);
             voice->has_looped = 1;
         }
     } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
@@ -310,12 +312,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
         /* go back to loop start (if past */
         if(dsp_phase_index > end_index)
         {
-            do
-            {
-                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-                dsp_phase_index = fluid_phase_index_round(dsp_phase);
-            } while (dsp_phase_index > end_index);
-
+            fluid_wrap_phase(dsp_phase, voice->loopstart, voice->loopend);
             voice->has_looped = 1;
         }
         end_index--;	/* set end back to second to last sample point */
@@ -476,12 +473,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         /* go back to loop start */
         if(dsp_phase_index > end_index)
         {
-            do
-            {
-                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-                dsp_phase_index = fluid_phase_index_round(dsp_phase);
-            } while (dsp_phase_index > end_index);
-
+            fluid_wrap_phase(dsp_phase, voice->loopstart, voice->loopend);
             if(!voice->has_looped)
             {
                 voice->has_looped = 1;
@@ -681,12 +673,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index + right_guard)
         {
-            do
-            {
-                fluid_phase_sub_int(dsp_phase, loop_len);
-                dsp_phase_index = fluid_phase_index_round(dsp_phase);
-            } while (dsp_phase_index > end_index);
-
+            fluid_wrap_phase(dsp_phase, voice->loopstart, voice->loopend);
             if(!voice->has_looped)
             {
                 voice->has_looped = 1;
