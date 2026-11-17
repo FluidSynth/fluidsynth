@@ -380,7 +380,10 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             + modenv_val * voice->envlfo.modenv_to_pitch)
                             / 
                             voice->dsp.root_pitch_hz;
-
+    if (voice->dsp.phase_incr > 1e6 || voice->dsp.phase_incr < 1e-5)
+    {
+        FLUID_LOG(FLUID_INFO, "%g", voice->dsp.phase_incr);
+    }
     /******************* portamento ****************/
     /* pitchoffset is updated if enabled.
        Pitchoffset will be added to dsp pitch at next phase calculation time */
@@ -415,12 +418,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     }
 
     fluid_check_fpe("voice_write phase calculation");
-
-    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
-    if(voice->dsp.phase_incr == 0)
-    {
-        voice->dsp.phase_incr = 1;
-    }
 
     /* loop mode release? if not in release, the voice is silent
      * note: this intentionally processes the volenv before returning silence,

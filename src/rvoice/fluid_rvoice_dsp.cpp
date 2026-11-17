@@ -100,6 +100,11 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
@@ -166,6 +171,11 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
@@ -232,6 +242,11 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     /* last index before 2nd interpolation point must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 1;
@@ -342,6 +357,11 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     /* last index before 4th interpolation point must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 2;
@@ -531,6 +551,11 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     /* add 1/2 sample to dsp_phase since sinc interpolation is centered on
      * the (half+1)-th sample point */
