@@ -1395,7 +1395,7 @@ static void test_O_degenerate_phase_incr(void)
     std::array<short, SAMPLE_SIZE> data;
     data.fill(CONST_VAL);
 
-    constexpr const std::array<double, 6> incrs = { 0.0, 1.0e5, 1.0e9, 2147483648.0, 2.15992e9, 4.0e9 };
+    constexpr const std::array<double, 9> incrs = { 0.0, 1.e-11, 2.e-10, 1, 1.0e5, 1.0e9, 2147483648.0, 2.15992e9, 4.0e9 };
 
     constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,

@@ -56,7 +56,7 @@ fluid_ct2hz_real(fluid_real_t cents)
     if (FLUID_UNLIKELY(FLUID_FABS(cents) > ((fluid_real_t)(INT_MAX - 127))))
     {
         // values bigger than that cannot be represented as int32 and deserve a warning
-        FLUID_LOG(FLUID_WARN, "fluid_ct2hz_real() was called with out-of-range argument %g");
+        FLUID_LOG(FLUID_WARN, "fluid_ct2hz_real() was called with out-of-range argument %g", cents);
     }
 
     // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
