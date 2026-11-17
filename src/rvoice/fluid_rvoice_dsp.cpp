@@ -108,7 +108,7 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
 
     end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
 
@@ -133,18 +133,16 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
         dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
 
         /* go back to loop start */
-        if(dsp_phase_index > end_index)
+        if (dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            do
+            {
+                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+                dsp_phase_index = fluid_phase_index_round(dsp_phase);
+            } while (dsp_phase_index > end_index);
             voice->has_looped = 1;
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     voice->phase = dsp_phase;
     // Note, there is no need to update the amplitude here. When the voice becomes audible again, the amp will be updated anyway in fluid_rvoice_calc_amp().
@@ -179,7 +177,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 
     end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index_round(dsp_phase);	/* round to nearest point */
 
@@ -206,16 +204,15 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            do
+            {
+                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+                dsp_phase_index = fluid_phase_index_round(dsp_phase);
+            } while (dsp_phase_index > end_index);
+
             voice->has_looped = 1;
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     voice->phase = dsp_phase;
 
@@ -267,7 +264,7 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
         return (coeffs[0] * s0 + coeffs[1] * s1);
     };
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index(dsp_phase);
 
@@ -285,12 +282,6 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
             dsp_phase_index = fluid_phase_index(dsp_phase);
-        }
-
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
         }
 
         end_index++;	/* we're now interpolating the last point */
@@ -319,18 +310,16 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
         /* go back to loop start (if past */
         if(dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            do
+            {
+                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+                dsp_phase_index = fluid_phase_index_round(dsp_phase);
+            } while (dsp_phase_index > end_index);
+
             voice->has_looped = 1;
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         end_index--;	/* set end back to second to last sample point */
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     voice->phase = dsp_phase;
 
@@ -399,7 +388,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 + coeffs[3] * s3);
     };
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index(dsp_phase);
 
@@ -437,12 +426,6 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
             dsp_phase_index = fluid_phase_index(dsp_phase);
-        }
-
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
         }
 
         end_index++;	/* we're now interpolating the 2nd to last point */
@@ -493,7 +476,11 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         /* go back to loop start */
         if(dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+            do
+            {
+                fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
+                dsp_phase_index = fluid_phase_index_round(dsp_phase);
+            } while (dsp_phase_index > end_index);
 
             if(!voice->has_looped)
             {
@@ -502,15 +489,8 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);
             }
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         end_index -= 2;	/* set end back to third to last sample point */
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     voice->phase = dsp_phase;
 
@@ -610,7 +590,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         return fluid_interp_sinc_kernel<SINC_ORDER>(s, x);
     };
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index(dsp_phase);
 
@@ -663,12 +643,6 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
             }
         }
 
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         /* Interpolate the right guard region.
          * For border step e (0-based), the rightmost (e+1) taps are drawn from
          * end_points; the remaining taps read live data at offsets (j-half)
@@ -707,7 +681,11 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index + right_guard)
         {
-            fluid_phase_sub_int(dsp_phase, loop_len);
+            do
+            {
+                fluid_phase_sub_int(dsp_phase, loop_len);
+                dsp_phase_index = fluid_phase_index_round(dsp_phase);
+            } while (dsp_phase_index > end_index);
 
             if(!voice->has_looped)
             {
@@ -721,13 +699,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
                 }
             }
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     /* sub 1/2 sample from dsp_phase since sinc interpolation is centered on
      * the (half+1)-th sample point (correct back to real value) */
