@@ -380,6 +380,9 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             + modenv_val * voice->envlfo.modenv_to_pitch)
                             / 
                             voice->dsp.root_pitch_hz;
+    // phase increment must always be positive -> sample is always played forward, never backward
+    FLUID_ASSERT(voice->dsp.phase_incr >= 0);
+
     if (voice->dsp.phase_incr > 1e6 || voice->dsp.phase_incr < 1e-5)
     {
         FLUID_LOG(FLUID_INFO, "%g", voice->dsp.phase_incr);
