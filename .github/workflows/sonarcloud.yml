@@ -30,6 +30,10 @@ env:
 name: SonarCloud Workflow
 jobs:
   sonarcloud:
+    if: >-
+      github.repository == 'FluidSynth/fluidsynth' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
