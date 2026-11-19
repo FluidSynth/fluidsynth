@@ -364,7 +364,6 @@ struct fluid_dls_instrument_fluid_data
     int bankmsb;
     int banklsb;
     bool is_drums;
-    int bank_offset;
 
     fluid_preset_t fluid{};           // its user data is `this` (fluid_dls_instrument_fluid_data*)
     fluid_dls_instrument *instrument; // backing instrument
@@ -391,9 +390,6 @@ struct fluid_dls_font
             }
         } };
     fluid_long_long_t filesize{};
-
-    /* bank offset of an embedded DLS bank in an RMIDI file, 0 for plain DLS */
-    int bank_offset{};
 
     // offset to chunk header
     fluid_long_long_t linsoffset{};
@@ -1496,7 +1492,9 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     }
 
     fluid_long_long_t offset = rmidi.is_rmidi ? rmidi.bank_pos : 0;
-    bank_offset = rmidi.bank_offset;
+
+    // the synth applies the RMIDI bank offset when looking up presets
+    sfont->bankofs = rmidi.bank_offset;
 
     // from here on, filesize is the size of the DLS bank only. An RMIDI file may
     // have more chunks after the bank, so don't derive it from the file's end
@@ -1877,7 +1875,6 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         self_data.bankmsb = instrument.bankmsb;
         self_data.pcnum = instrument.pcnum;
         self_data.is_drums = instrument.is_drums;
-        self_data.bank_offset = bank_offset;
         self_data.instrument = &instrument;
         self_data.fluid.sfont = sfont;
         self_data.fluid.get_name = fluid_dls_preset_get_name;
@@ -1895,7 +1892,6 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
             alias_data.bankmsb = alias.bankmsb;
             alias_data.pcnum = alias.pcnum;
             alias_data.is_drums = false;
-            alias_data.bank_offset = bank_offset;
             alias_data.instrument = &instrument;
             alias_data.fluid.sfont = sfont;
             alias_data.fluid.get_name = fluid_dls_preset_get_name;
@@ -3155,11 +3151,8 @@ static fluid_preset_t *fluid_dls_sfont_get_preset(fluid_sfont_t *sfont, int bank
     {
         for(auto &inst : dlsfont->instruments_fluid_data)
         {
-            // Drum bank fallback for MMA bank style. An RMIDI bank offset moves the
-            // kit to the bank selected by that Bank Select MSB
-            int drum_bank = inst.bank_offset > 0 ? inst.bank_offset * 128 : DRUM_INST_BANK;
-
-            if(bank == drum_bank && inst.is_drums && inst.pcnum == prenum)
+            // Drum bank fallback for MMA bank style
+            if(bank == DRUM_INST_BANK && inst.is_drums && inst.pcnum == prenum)
             {
                 return &inst.fluid;
             }
@@ -3190,17 +3183,12 @@ static fluid_preset_t *fluid_dls_iteration_next(fluid_sfont_t *sfont) noexcept
 {
     auto *dlsfont = static_cast<fluid_dls_font *>(fluid_sfont_get_data(sfont));
 
-    while(dlsfont->fluid_preset_iterator != dlsfont->instruments_fluid_data.end())
+    if(dlsfont->fluid_preset_iterator == dlsfont->instruments_fluid_data.end())
     {
-        auto &inst = *(dlsfont->fluid_preset_iterator++);
-
-        if(fluid_dls_preset_get_banknum(&inst.fluid) != FLUID_FAILED)
-        {
-            return &inst.fluid;
-        }
+        return nullptr;
     }
 
-    return nullptr;
+    return &(*(dlsfont->fluid_preset_iterator++)).fluid;
 }
 
 static int fluid_dls_sfont_delete(fluid_sfont_t *sfont) noexcept
@@ -3232,7 +3220,6 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
 {
     const auto *inst = static_cast<const fluid_dls_instrument_fluid_data *>(fluid_preset_get_data(preset));
     const auto *synth = inst->instrument->synth;
-    int bank;
 
     // see fluid_synth.h enum fluid_midi_bank_select
     // see fluid_chan.c fluid_channel_set_bank_msb()
@@ -3240,28 +3227,18 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
     {
         if(inst->is_drums || inst->bankmsb == 0x78)  // GM2 rhythm bank
         {
-            // bank select is ignored in this style, so the RMIDI bank offset can't apply
             return DRUM_INST_BANK;
         }
 
-        bank = inst->bankmsb; // to always match bank 0 for GM
+        return inst->bankmsb; // to always match bank 0 for GM
     }
-    else if(synth->bank_select == FLUID_BANK_STYLE_GS)
+
+    if(synth->bank_select == FLUID_BANK_STYLE_GS)
     {
-        if(inst->is_drums)
-        {
-            // the RMIDI bank offset is added to the Bank Select MSB of the drum kit
-            if(inst->bankmsb + inst->bank_offset > 127)
-            {
-                return FLUID_FAILED;
-            }
-
-            return inst->bankmsb + inst->bank_offset + DRUM_INST_BANK;
-        }
-
-        bank = inst->bankmsb;
+        return inst->bankmsb + (inst->is_drums ? DRUM_INST_BANK : 0);
     }
-    else if(synth->bank_select == FLUID_BANK_STYLE_XG ||
+
+    if(synth->bank_select == FLUID_BANK_STYLE_XG ||
             synth->bank_select == FLUID_BANK_STYLE_GM2)
     {
         if(inst->is_drums)
@@ -3271,32 +3248,16 @@ static int fluid_dls_preset_get_banknum(fluid_preset_t *preset) noexcept
             return 128;
         }
 
-        bank = inst->banklsb;
+        return inst->banklsb;
     }
-    else
+
+    // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
+    if(inst->is_drums)
     {
-        // if (synth->bank_select == FLUID_BANK_STYLE_MMA)
-        if(inst->is_drums)
-        {
-            return DRUM_INST_BANK * 128;
-        }
-
-        bank = inst->banklsb + (128 * inst->bankmsb);
+        return DRUM_INST_BANK * 128;
     }
 
-    if(inst->bank_offset > 0)
-    {
-        bank += inst->bank_offset;
-
-        // a preset pushed out of the 7 bit bank range can't be selected, so it is
-        // ignored. The negative bank never matches a lookup and the iteration skips it.
-        if(bank > 127)
-        {
-            return FLUID_FAILED;
-        }
-    }
-
-    return bank;
+    return inst->banklsb + (128 * inst->bankmsb);
 }
 
 static int fluid_dls_preset_get_num(fluid_preset_t *preset) noexcept

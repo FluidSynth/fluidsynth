@@ -215,25 +215,6 @@ fluid_defsfont_t *new_fluid_defsfont(fluid_settings_t *settings)
     fluid_settings_getint(settings, "synth.lock-memory", &defsfont->mlock);
     fluid_settings_getint(settings, "synth.dynamic-sample-loading", &defsfont->dynamic_samples);
 
-    defsfont->bank_select_style = FLUID_BANK_STYLE_GS;
-
-    if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm"))
-    {
-        defsfont->bank_select_style = FLUID_BANK_STYLE_GM;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm2"))
-    {
-        defsfont->bank_select_style = FLUID_BANK_STYLE_GM2;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "xg"))
-    {
-        defsfont->bank_select_style = FLUID_BANK_STYLE_XG;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "mma"))
-    {
-        defsfont->bank_select_style = FLUID_BANK_STYLE_MMA;
-    }
-
     return defsfont;
 }
 
@@ -477,7 +458,6 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
     SFSample *sfsample;
     fluid_sample_t *sample;
     fluid_defpreset_t *defpreset = NULL;
-    int bank_offset;
 
     defsfont->filename = FLUID_STRDUP(file);
 
@@ -504,9 +484,9 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         goto err_exit;
     }
 
-    /* RMIDI files specify the bank offset of their embedded sound bank. Apply it
-     * to every preset, as mandated by the spec. Drum kits are handled separately. */
-    bank_offset = sfdata->is_rmidi ? sfdata->rmidi_bank_offset : 0;
+    /* RMIDI files specify the bank offset of their embedded sound bank. The synth
+     * applies it when looking up presets, see fluid_synth_sfont_get_preset(). */
+    defsfont->sfont->bankofs = sfdata->is_rmidi ? sfdata->rmidi_bank_offset : 0;
 
     dmod_data = sfdata->default_mod_list;
     if (dmod_data != NULL)
@@ -572,34 +552,6 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
     while(p != NULL)
     {
         sfpreset = (SFPreset *)fluid_list_get(p);
-        if(bank_offset > 0 && sfpreset->bank == DRUM_INST_BANK)
-        {
-            /* The offset is added to the Bank Select MSB that selects the drum kit
-             * on a drum channel (0 by default). How that maps to a bank number
-             * depends on the bank select style. The other styles always select
-             * bank 128, so the kit stays there. */
-            if(defsfont->bank_select_style == FLUID_BANK_STYLE_GS)
-            {
-                sfpreset->bank = DRUM_INST_BANK + bank_offset;
-            }
-            else if(defsfont->bank_select_style == FLUID_BANK_STYLE_MMA)
-            {
-                sfpreset->bank = bank_offset * 128;
-            }
-        }
-        else if(bank_offset > 0)
-        {
-            /* A preset pushed out of the 7 bit bank range can't be selected,
-             * so it is ignored. */
-            if(sfpreset->bank + bank_offset > 127)
-            {
-                p = fluid_list_next(p);
-                continue;
-            }
-
-            sfpreset->bank += bank_offset;
-        }
-
         defpreset = new_fluid_defpreset();
 
         if(defpreset == NULL)

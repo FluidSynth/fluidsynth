@@ -3,6 +3,7 @@
 #include "test.h"
 #include "fluidsynth.h"
 #include "midi/fluid_midi.h"
+#include "synth/fluid_synth.h"
 
 /* Minimal valid MIDI file: one track with a valid tempo and end-of-track. */
 static const unsigned char test_midi[] =
@@ -130,34 +131,15 @@ static unsigned char *read_file(const char *path, size_t *size)
     return data;
 }
 
-static int has_preset(fluid_sfont_t *sfont, int bank, int num)
+/*
+ * Check whether the synth finds a preset in the given SoundFont when asked for
+ * a bank, so that the SoundFont's bank offset is taken into account.
+ */
+static int has_preset(fluid_synth_t *synth, fluid_sfont_t *sfont, int bank, int num)
 {
-    fluid_preset_t *preset = fluid_sfont_get_preset(sfont, bank, num);
+    fluid_preset_t *preset = fluid_synth_find_preset(synth, bank, num);
 
-    if(preset == NULL)
-    {
-        return FALSE;
-    }
-
-    return fluid_preset_get_banknum(preset) == bank &&
-           fluid_preset_get_num(preset) == num;
-}
-
-static int sfont_has_bank(fluid_sfont_t *sfont, int bank)
-{
-    fluid_preset_t *preset;
-
-    fluid_sfont_iteration_start(sfont);
-
-    while((preset = fluid_sfont_iteration_next(sfont)) != NULL)
-    {
-        if(fluid_preset_get_banknum(preset) == bank)
-        {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
+    return preset != NULL && fluid_preset_get_sfont(preset) == sfont;
 }
 
 static void test_player_load(const char *path)
@@ -201,13 +183,19 @@ static void test_sf2_bank_offset(const unsigned char *bank, size_t bank_size, co
     TEST_SUCCESS(id = fluid_synth_sfload(synth, path, 1));
     sfont = fluid_synth_get_sfont_by_id(synth, id);
     TEST_ASSERT(sfont != NULL);
+    TEST_ASSERT(fluid_synth_get_bank_offset(synth, id) == 3);
 
     /* Bank 0 presets are shifted by the RMIDI bank offset. */
-    TEST_ASSERT(!has_preset(sfont, 0, 0));
-    TEST_ASSERT(has_preset(sfont, 3, 0));
+    TEST_ASSERT(!has_preset(synth, sfont, 0, 0));
+    TEST_ASSERT(has_preset(synth, sfont, 3, 0));
     /* With the default GS bank select, the offset is added to the drum bank select MSB. */
-    TEST_ASSERT(!has_preset(sfont, 128, 0));
-    TEST_ASSERT(has_preset(sfont, 131, 0));
+    TEST_ASSERT(!has_preset(synth, sfont, 128, 0));
+    TEST_ASSERT(has_preset(synth, sfont, 131, 0));
+
+    /* An explicitly set offset overrides the one from the file. */
+    TEST_SUCCESS(fluid_synth_set_bank_offset(synth, id, 0));
+    TEST_ASSERT(has_preset(synth, sfont, 0, 0));
+    TEST_ASSERT(has_preset(synth, sfont, 128, 0));
 
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
     delete_fluid_synth(synth);
@@ -216,45 +204,16 @@ static void test_sf2_bank_offset(const unsigned char *bank, size_t bank_size, co
     test_player_load(path);
 }
 
-static void test_sf2_default_offset(const unsigned char *bank, size_t bank_size, const char *path)
-{
-    fluid_settings_t *settings = new_fluid_settings();
-    fluid_synth_t *synth;
-    fluid_sfont_t *sfont;
-    int id;
-
-    TEST_ASSERT(settings != NULL);
-    synth = new_fluid_synth(settings);
-    TEST_ASSERT(synth != NULL);
-
-    /* Without a DBNK chunk, the RMIDI default offset of 1 applies. */
-    write_rmidi(path, test_midi, sizeof(test_midi), bank, bank_size, 0, 0, FALSE);
-
-    TEST_ASSERT(fluid_is_soundfont(path) == TRUE);
-    TEST_SUCCESS(id = fluid_synth_sfload(synth, path, 1));
-    sfont = fluid_synth_get_sfont_by_id(synth, id);
-    TEST_ASSERT(sfont != NULL);
-
-    TEST_ASSERT(!has_preset(sfont, 0, 0));
-    TEST_ASSERT(has_preset(sfont, 1, 0));
-    TEST_ASSERT(has_preset(sfont, 129, 0));
-
-    TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
-    delete_fluid_synth(synth);
-    delete_fluid_settings(settings);
-}
-
 /*
- * Load an RMIDI file containing the SF2 bank and check that its bank 0 preset
- * ends up in the expected bank.
+ * Load an RMIDI file containing the SF2 bank and check the bank offset the
+ * synth got from it.
  */
 static void check_sf2_offset(const unsigned char *bank, size_t bank_size, const char *path,
                              int bank_offset, uint32_t dbnk_size, int list_after_bank,
-                             int expected_bank, int expected_drum_bank)
+                             int expected_offset)
 {
     fluid_settings_t *settings = new_fluid_settings();
     fluid_synth_t *synth;
-    fluid_sfont_t *sfont;
     int id;
 
     TEST_ASSERT(settings != NULL);
@@ -265,11 +224,7 @@ static void check_sf2_offset(const unsigned char *bank, size_t bank_size, const 
                 bank_offset, dbnk_size, list_after_bank);
 
     TEST_SUCCESS(id = fluid_synth_sfload(synth, path, 1));
-    sfont = fluid_synth_get_sfont_by_id(synth, id);
-    TEST_ASSERT(sfont != NULL);
-
-    TEST_ASSERT(has_preset(sfont, expected_bank, 0));
-    TEST_ASSERT(has_preset(sfont, expected_drum_bank, 0));
+    TEST_ASSERT(fluid_synth_get_bank_offset(synth, id) == expected_offset);
 
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
     delete_fluid_synth(synth);
@@ -278,12 +233,14 @@ static void check_sf2_offset(const unsigned char *bank, size_t bank_size, const 
 
 static void test_dbnk_handling(const unsigned char *bank, size_t bank_size, const char *path)
 {
+    /* Without a DBNK chunk, the RMIDI default offset of 1 applies. */
+    check_sf2_offset(bank, bank_size, path, 0, 0, FALSE, 1);
     /* The LIST chunk may come after the bank. */
-    check_sf2_offset(bank, bank_size, path, 3, 2, TRUE, 3, 131);
+    check_sf2_offset(bank, bank_size, path, 3, 2, TRUE, 3);
     /* An invalid DBNK chunk is ignored, so the default offset of 1 applies. */
-    check_sf2_offset(bank, bank_size, path, 3, 4, FALSE, 1, 129);
-    check_sf2_offset(bank, bank_size, path, 128, 2, FALSE, 1, 129);
-    check_sf2_offset(bank, bank_size, path, 128, 2, TRUE, 1, 129);
+    check_sf2_offset(bank, bank_size, path, 3, 4, FALSE, 1);
+    check_sf2_offset(bank, bank_size, path, 128, 2, FALSE, 1);
+    check_sf2_offset(bank, bank_size, path, 128, 2, TRUE, 1);
 }
 
 /* The drum kit bank depends on how the bank select style maps the MSB. */
@@ -296,8 +253,8 @@ static void test_sf2_drum_banks(const unsigned char *bank, size_t bank_size, con
     } styles[] =
     {
         { "gs", 131 },   /* 128 + MSB */
-        { "mma", 384 },  /* MSB * 128 */
-        { "gm", 128 },   /* the MSB can't select a drum kit */
+        { "mma", 131 },  /* MSB 1, LSB 3 */
+        { "gm", 128 },   /* drum channels always select bank 128 */
         { "gm2", 128 },
         { "xg", 128 }
     };
@@ -320,12 +277,58 @@ static void test_sf2_drum_banks(const unsigned char *bank, size_t bank_size, con
         TEST_SUCCESS(id = fluid_synth_sfload(synth, path, 1));
         sfont = fluid_synth_get_sfont_by_id(synth, id);
         TEST_ASSERT(sfont != NULL);
-        TEST_ASSERT(has_preset(sfont, styles[i].drum_bank, 0));
+        TEST_ASSERT(has_preset(synth, sfont, styles[i].drum_bank, 0));
 
         TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
         delete_fluid_synth(synth);
         delete_fluid_settings(settings);
     }
+}
+
+/*
+ * The bank select style can change while a song plays, e.g. through a GM
+ * System On message. The embedded drum kit must still be found afterwards.
+ */
+static void test_sf2_style_change(const unsigned char *bank, size_t bank_size, const char *path)
+{
+    static const char gm_on[] = { 0x7E, 0x7F, 0x09, 0x01 };
+    fluid_settings_t *settings = new_fluid_settings();
+    fluid_synth_t *synth;
+    fluid_sfont_t *sfont;
+    fluid_preset_t *preset;
+    int id;
+
+    TEST_ASSERT(settings != NULL);
+    synth = new_fluid_synth(settings);
+    TEST_ASSERT(synth != NULL);
+    TEST_ASSERT(synth->bank_select == FLUID_BANK_STYLE_GS);
+
+    write_rmidi(path, test_midi, sizeof(test_midi), bank, bank_size, 1, 2, FALSE);
+
+    TEST_SUCCESS(id = fluid_synth_sfload(synth, path, 1));
+    sfont = fluid_synth_get_sfont_by_id(synth, id);
+    TEST_ASSERT(sfont != NULL);
+
+    /* In GS mode, the song selects the embedded kit with bank select MSB 1. */
+    TEST_SUCCESS(fluid_synth_cc(synth, 9, 0, 1));
+    TEST_SUCCESS(fluid_synth_program_change(synth, 9, 0));
+    preset = fluid_synth_get_channel_preset(synth, 9);
+    TEST_ASSERT(preset != NULL);
+    TEST_ASSERT(fluid_preset_get_sfont(preset) == sfont);
+    TEST_ASSERT(fluid_preset_get_banknum(preset) == 128);
+
+    /* After GM System On, drum channels select bank 128, and the kit stays there. */
+    TEST_SUCCESS(fluid_synth_sysex(synth, gm_on, sizeof(gm_on), NULL, NULL, NULL, FALSE));
+    TEST_ASSERT(synth->bank_select == FLUID_BANK_STYLE_GM);
+    TEST_SUCCESS(fluid_synth_program_change(synth, 9, 0));
+    preset = fluid_synth_get_channel_preset(synth, 9);
+    TEST_ASSERT(preset != NULL);
+    TEST_ASSERT(fluid_preset_get_sfont(preset) == sfont);
+    TEST_ASSERT(fluid_preset_get_banknum(preset) == 128);
+
+    TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
 }
 
 static void test_no_bank(const char *path)
@@ -360,8 +363,9 @@ static void test_dls_bank_offset(const char *path)
     TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_DLS, 1));
     sfont = fluid_synth_get_sfont_by_id(synth, id);
     TEST_ASSERT(sfont != NULL);
-    TEST_ASSERT(has_preset(sfont, 0, 0));
-    TEST_ASSERT(!has_preset(sfont, 1, 0));
+    TEST_ASSERT(fluid_synth_get_bank_offset(synth, id) == 0);
+    TEST_ASSERT(has_preset(synth, sfont, 0, 0));
+    TEST_ASSERT(!has_preset(synth, sfont, 1, 0));
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
 
     /*
@@ -376,9 +380,9 @@ static void test_dls_bank_offset(const char *path)
     TEST_SUCCESS(id = fluid_synth_sfload(synth, path, 1));
     sfont = fluid_synth_get_sfont_by_id(synth, id);
     TEST_ASSERT(sfont != NULL);
-    TEST_ASSERT(sfont_has_bank(sfont, 1));
-    TEST_ASSERT(has_preset(sfont, 1, 0));
-    TEST_ASSERT(!has_preset(sfont, 0, 0));
+    TEST_ASSERT(fluid_synth_get_bank_offset(synth, id) == 1);
+    TEST_ASSERT(has_preset(synth, sfont, 1, 0));
+    TEST_ASSERT(!has_preset(synth, sfont, 0, 0));
 
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));
     delete_fluid_synth(synth);
@@ -400,9 +404,9 @@ int main(void)
     bank = read_file(TEST_SOUNDFONT, &bank_size);
 
     test_sf2_bank_offset(bank, bank_size, path);
-    test_sf2_default_offset(bank, bank_size, path);
     test_dbnk_handling(bank, bank_size, path);
     test_sf2_drum_banks(bank, bank_size, path);
+    test_sf2_style_change(bank, bank_size, path);
     test_no_bank(path);
 #ifdef ENABLE_NATIVE_DLS
     test_dls_bank_offset(path);
