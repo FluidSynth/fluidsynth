@@ -1483,6 +1483,186 @@ static void test_O_degenerate_phase_incr(void)
     }
 }
 
+/* =========================================================================
+ * Test P – Out-of-range sample / loop points are sanitized before rendering
+ *
+ * The valid sample is surrounded by poison values. The rvoice's start, end
+ * and loop points are set far outside the sample, then fluid_rvoice_write()
+ * sanitizes them (fluid_rvoice_check_sample_sanity) and renders the voice.
+ * If the DSP ever reads outside [sample->start, sample->end], a poison value
+ * leaks into the otherwise constant output.
+ * ========================================================================= */
+static void setup_sustain_env(fluid_adsr_env_t *env)
+{
+    memset(env, 0, sizeof(*env));
+    env->section = FLUID_VOICE_ENVSUSTAIN;
+    env->val = 1.0f;
+    env->data[FLUID_VOICE_ENVSUSTAIN].count = std::numeric_limits<unsigned int>::max();
+    env->data[FLUID_VOICE_ENVSUSTAIN].coeff = 1.0f;
+    env->data[FLUID_VOICE_ENVSUSTAIN].increment = 0.0f;
+    env->data[FLUID_VOICE_ENVSUSTAIN].min = -1.0f;
+    env->data[FLUID_VOICE_ENVSUSTAIN].max = 2.0f;
+}
+
+static void test_P_sanitized_out_of_range_points(void)
+{
+    printf("Test P: Sanitized out-of-range sample / loop points\n");
+
+    constexpr int PAD = 32; /* larger than the widest sinc stencil */
+    constexpr int TOTAL = PAD + SAMPLE_SIZE + PAD;
+    constexpr short POISON = -20000;
+
+    std::array<short, TOTAL> data;
+    data.fill(POISON);
+
+    for(int i = PAD; i < PAD + SAMPLE_SIZE; i++)
+    {
+        data[i] = CONST_VAL;
+    }
+
+    constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
+                                                          FLUID_INTERP_LINEAR,
+                                                          FLUID_INTERP_4THORDER,
+                                                          FLUID_INTERP_MID,
+                                                          FLUID_INTERP_HIGH,
+                                                          FLUID_INTERP_HIGHEST
+                                                        };
+
+    /* 440 Hz root pitch: 5700 / 6900 / 8100 cents give phase_incr of about 0.5 / 1 / 2 */
+    constexpr const std::array<fluid_real_t, 3> pitches = { 5700, 6900, 8100 };
+
+    std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+    for(int looping = 0; looping < 2; looping++)
+    {
+        printf("  %s\n", looping ? "Looping" : "Non-looping");
+
+        for(fluid_real_t pitch : pitches)
+        {
+            for(size_t m = 0; m < FLUID_N_ELEMENTS(modes); m++)
+            {
+                fluid_rvoice_t  rvoice;
+                fluid_sample_t  samp;
+                memset(&rvoice, 0, sizeof(rvoice));
+                memset(&samp, 0, sizeof(samp));
+
+                samp.data = data.data();
+                samp.start = PAD;
+                samp.end = PAD + SAMPLE_SIZE - 1;
+                samp.loopstart = PAD + LOOP_START;
+                samp.loopend = PAD + LOOP_END;
+
+                fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+                memset(param, 0, sizeof(param));
+
+                param[0].ptr = &samp;
+                fluid_rvoice_set_sample(&rvoice, param);
+                TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_STARTUP) != 0);
+
+                /* manipulate the points such that they are all outside the sample data */
+                param[0].i = -50;
+                fluid_rvoice_set_start(&rvoice, param);
+                TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
+                param[0].i = TOTAL + 50;
+                fluid_rvoice_set_end(&rvoice, param);
+                TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
+                param[0].i = -20;
+                fluid_rvoice_set_loopstart(&rvoice, param);
+                TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
+                param[0].i = TOTAL + 20;
+                fluid_rvoice_set_loopend(&rvoice, param);
+                TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
+
+                param[0].i = looping ? FLUID_LOOP_DURING_RELEASE : FLUID_UNLOOPED;
+                fluid_rvoice_set_samplemode(&rvoice, param);
+                param[0].i = modes[m];
+                fluid_rvoice_set_interp_method(&rvoice, param);
+
+                param[0].real = 440;
+                fluid_rvoice_set_root_pitch_hz(&rvoice, param);
+                param[0].real = pitch;
+                fluid_rvoice_set_pitch(&rvoice, param);
+
+                setup_sustain_env(&rvoice.envlfo.volenv);
+                setup_sustain_env(&rvoice.envlfo.modenv);
+
+                const fluid_real_t tol = get_tolerance(modes[m], true);
+                const int iterations = looping ? 4 : 1;
+
+                for(int iter = 0; iter < iterations; iter++)
+                {
+                    buf.fill(0);
+
+                    /* sanitizes the sample points on the first call */
+                    int count = fluid_rvoice_write(&rvoice, buf.data());
+
+                    TEST_ASSERT(rvoice.dsp.check_sample_sanity_flag == 0);
+                    TEST_ASSERT(rvoice.dsp.start == PAD);
+                    TEST_ASSERT(rvoice.dsp.end == PAD + SAMPLE_SIZE - 1);
+
+                    if(looping)
+                    {
+                        TEST_ASSERT(rvoice.dsp.loopstart == PAD);
+                        TEST_ASSERT(rvoice.dsp.loopend == PAD + SAMPLE_SIZE);
+                        TEST_ASSERT(count == FLUID_BUFSIZE);
+                    }
+                    else
+                    {
+                        TEST_ASSERT(count > 0);
+                    }
+
+                    for(int i = 0; i < count; i++)
+                    {
+                        test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
+                    }
+                }
+
+                if(looping)
+                {
+                    TEST_ASSERT(rvoice.dsp.has_looped);
+
+                    /* Restart from inside the sample so every render below exercises the interpolator. */
+                    auto render_from_sample_start = [&]()
+                    {
+                        buf.fill(0);
+
+                        // Phase reset: Before the second and third calls, reset the phase, so each call renders inside the sample. Without this, the voice could already be finished and the call would return 0 without reading anything.
+                        fluid_phase_set_int(rvoice.dsp.phase, PAD + 4);
+                        int count = fluid_rvoice_write(&rvoice, buf.data());
+                        TEST_ASSERT(count > 0);
+
+                        for(int i = 0; i < count; i++)
+                        {
+                            test_sample_eq(buf[i], (fluid_real_t)CONST_VAL, tol, i);
+                        }
+                    };
+
+                    /* Zero-length loop: the sanity check silently switches the voice to FLUID_UNLOOPED. */
+                    param[0].i = PAD + 10;
+                    fluid_rvoice_set_loopstart(&rvoice, param);
+                    fluid_rvoice_set_loopend(&rvoice, param);
+                    TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
+                    render_from_sample_start();
+                    TEST_ASSERT(rvoice.dsp.samplemode == FLUID_UNLOOPED);
+                    TEST_ASSERT(rvoice.dsp.check_sample_sanity_flag == 0);
+
+                    /* Out-of-range loop points on the now unlooped voice (has_looped stays set); the samplemode is not touched. */
+                    param[0].i = PAD + SAMPLE_SIZE + 4;
+                    fluid_rvoice_set_loopstart(&rvoice, param);
+                    param[0].i = PAD + SAMPLE_SIZE + 12;
+                    fluid_rvoice_set_loopend(&rvoice, param);
+                    TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
+                    TEST_ASSERT(rvoice.dsp.samplemode == FLUID_UNLOOPED);
+                    render_from_sample_start();
+                    TEST_ASSERT(rvoice.dsp.samplemode == FLUID_UNLOOPED);
+                    TEST_ASSERT(rvoice.dsp.check_sample_sanity_flag == 0);
+                }
+
+                printf("    %s (pitch=%.0f): PASS\n", interp_name(modes[m]), (double)pitch);
+            }
+        }
+    }
+}
+
 /* ========================================================================= */
 
 int main(void)
@@ -1535,6 +1715,9 @@ int main(void)
     printf("\n");
 
     test_O_degenerate_phase_incr();
+    printf("\n");
+
+    test_P_sanitized_out_of_range_points();
     printf("\n");
 
     printf("========================================\n");
