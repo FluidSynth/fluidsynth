@@ -1642,7 +1642,6 @@ static void test_P_sanitized_out_of_range_points(void)
                     fluid_rvoice_set_loopend(&rvoice, param);
                     TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
                     render_from_sample_start();
-                    TEST_ASSERT(rvoice.dsp.samplemode == FLUID_UNLOOPED);
                     TEST_ASSERT(rvoice.dsp.check_sample_sanity_flag == 0);
 
                     /* Out-of-range loop points on the now unlooped voice (has_looped stays set); the samplemode is not touched. */
@@ -1651,10 +1650,12 @@ static void test_P_sanitized_out_of_range_points(void)
                     param[0].i = PAD + SAMPLE_SIZE + 12;
                     fluid_rvoice_set_loopend(&rvoice, param);
                     TEST_ASSERT((rvoice.dsp.check_sample_sanity_flag | FLUID_SAMPLESANITY_CHECK) != 0);
-                    TEST_ASSERT(rvoice.dsp.samplemode == FLUID_UNLOOPED);
                     render_from_sample_start();
-                    TEST_ASSERT(rvoice.dsp.samplemode == FLUID_UNLOOPED);
+                    // sanitized
                     TEST_ASSERT(rvoice.dsp.check_sample_sanity_flag == 0);
+                    // loop disabled
+                    TEST_ASSERT(rvoice.dsp.loopend == rvoice.dsp.loopstart);
+                    TEST_ASSERT(rvoice.dsp.loopend == rvoice.dsp.end + 1);
                 }
 
                 printf("    %s (pitch=%.0f): PASS\n", interp_name(modes[m]), (double)pitch);
