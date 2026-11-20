@@ -113,9 +113,6 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
 #define FLUID_MIN_LOOP_SIZE 2
 #define FLUID_MIN_LOOP_PAD 0
 
-#define FLUID_SAMPLESANITY_CHECK (1 << 0)
-#define FLUID_SAMPLESANITY_STARTUP (1 << 1)
-
 /* Purpose:
  *
  * Make sure, that sample start / end point and loop points are in
@@ -133,11 +130,11 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     int max_index_loop = (int) voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1;	/* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
-#if 0
-    printf("Sample from %i to %i\n", voice->dsp.sample->start, voice->dsp.sample->end);
-    printf("Sample loop from %i %i\n", voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
-    printf("Playback from %i to %i\n", voice->dsp.start, voice->dsp.end);
-    printf("Playback loop from %i to %i\n", voice->dsp.loopstart, voice->dsp.loopend);
+#if 1
+    FLUID_LOG(FLUID_DBG, "Sample from %i to %i", voice->dsp.sample->start, voice->dsp.sample->end);
+    FLUID_LOG(FLUID_DBG, "Sample loop from %i %i", voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
+    FLUID_LOG(FLUID_DBG, "Playback from %i to %i", voice->dsp.start, voice->dsp.end);
+    FLUID_LOG(FLUID_DBG, "Playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
 #endif
 
     /* Keep the start point within the sample data */
@@ -166,7 +163,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
         int temp = voice->dsp.start;
         voice->dsp.start = voice->dsp.end;
         voice->dsp.end = temp;
-        /*FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of start / end points!"); */
+        FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of start / end points!");
     }
 
     /* Zero length? */
@@ -205,13 +202,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
             int temp = voice->dsp.loopstart;
             voice->dsp.loopstart = voice->dsp.loopend;
             voice->dsp.loopend = temp;
-            /*FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of loop points!"); */
-        }
-
-        /* Loop too short? Then don't loop. */
-        if(voice->dsp.loopend < voice->dsp.loopstart + FLUID_MIN_LOOP_SIZE)
-        {
-            voice->dsp.samplemode = FLUID_UNLOOPED;
+            FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of loop points!");
         }
 
         /* The loop points may have changed. Obtain a new estimate for the loop volume. */
@@ -271,12 +262,12 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
 
         if(index_in_sample >= voice->dsp.loopend)
         {
-            /* FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Phase after 2nd loop point!"); */
+            FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Phase after 2nd loop point!");
             fluid_phase_set_int(voice->dsp.phase, voice->dsp.loopstart);
         }
     }
 
-    /*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend); */
+    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend);
 
     /* Sample sanity has been assured. Don't check again, until some
        sample parameter is changed by modulation. */
@@ -434,6 +425,9 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
                  || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
                      && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE);
+
+    // do not loop if the loop length is too short
+    is_looping &= voice->dsp.loopend >= voice->dsp.loopstart + FLUID_MIN_LOOP_SIZE;
 
     /*************** resonant filter ******************/
     // Only "prepare" the filter here, the filter itself will be applied in the dsp_interpolation routines below.

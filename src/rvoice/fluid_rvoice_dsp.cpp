@@ -74,12 +74,18 @@ fluid_rvoice_get_float_sample(const short int *FLUID_RESTRICT dsp_msb, const cha
     return (fluid_real_t)sample;
 }
 
+template<bool ROUND_PHASE_INDEX = false>
 static FLUID_INLINE unsigned short
 compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_incr, unsigned int dsp_end_index, unsigned short dsp_i)
 {
     // How many steps until phase_index > limit?
     fluid_phase_t boundary;
     fluid_phase_set_int(boundary, dsp_end_index + 1);
+    if (ROUND_PHASE_INDEX)
+    {
+        // fluid_phase_index_round() already reaches dsp_end_index + 1 at dsp_end_index + 0.5
+        boundary -= 0x80000000;
+    }
     // Phase can be slightly negative after a loop wrap and a previously rounded dsp_phase, so compare signed.
     int64_t remaining = static_cast<int64_t>(boundary - dsp_phase);
     fluid_phase_t steps = remaining <= 0 ? 0 : ((static_cast<fluid_phase_t>(remaining) + dsp_phase_incr - 1) / dsp_phase_incr);
@@ -87,6 +93,7 @@ compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_inc
     return iters;
 }
 
+// Wrap the phase back inside the loop range of the sample. MUST NOT be called for non-looping voices!
 template<bool ROUND_PHASE_INDEX>
 static FLUID_INLINE void
 fluid_wrap_phase(fluid_phase_t& dsp_phase, int loopstart, int loopend)
@@ -155,7 +162,7 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
         dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
 
         /* interpolate sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        auto safe_count = compute_interpolation_steps<true>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -220,7 +227,7 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         dsp_phase_index = fluid_phase_index_round(dsp_phase);	/* round to nearest point */
 
         /* interpolate sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        auto safe_count = compute_interpolation_steps<true>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -383,7 +390,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
     /* last index before 4th interpolation point must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 2;
 
-    if(voice->has_looped)	/* set start_index and start point if looped or not */
+    if(LOOPING && voice->has_looped)	/* set start_index and start point if looped or not */
     {
         start_index = voice->loopstart;
         start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);	/* last point in loop (wrap around) */
@@ -567,7 +574,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     /* last index before the right guard region must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - right_guard;
 
-    if(voice->has_looped)   /* set start_index and start points if looped or not */
+    if(LOOPING && voice->has_looped)   /* set start_index and start points if looped or not */
     {
         start_index = voice->loopstart;
         for(int j = 0; j < half; j++)
