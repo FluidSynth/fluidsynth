@@ -3324,6 +3324,37 @@ fluid_synth_set_preset(fluid_synth_t *synth, int chan, fluid_preset_t *preset)
     return fluid_channel_set_preset(channel, preset);
 }
 
+/* Look up a preset in a SoundFont, applying the SoundFont's bank offset.
+ * Returns preset pointer or NULL.
+ */
+static fluid_preset_t *
+fluid_synth_sfont_get_preset(fluid_synth_t *synth, fluid_sfont_t *sfont,
+                             int banknum, int prognum)
+{
+    int sfont_bank;
+
+    if(banknum >= DRUM_INST_BANK &&
+            (synth->bank_select == FLUID_BANK_STYLE_GM ||
+             synth->bank_select == FLUID_BANK_STYLE_GM2 ||
+             synth->bank_select == FLUID_BANK_STYLE_XG))
+    {
+        /* These styles always select bank 128 on drum channels, so there is no
+         * bank select MSB the offset could be added to. Keep the kit at 128. */
+        return fluid_sfont_get_preset(sfont, banknum, prognum);
+    }
+
+    sfont_bank = banknum - sfont->bankofs;
+
+    /* Don't let the offset turn a drum bank into a melodic one. Otherwise,
+     * with an offset of 1, drum bank 128 would select melodic bank 127. */
+    if(banknum >= DRUM_INST_BANK && sfont_bank < DRUM_INST_BANK)
+    {
+        return NULL;
+    }
+
+    return fluid_sfont_get_preset(sfont, sfont_bank, prognum);
+}
+
 /* Get a preset by SoundFont, bank and program numbers.
  * Returns preset pointer or NULL.
  */
@@ -3346,7 +3377,7 @@ fluid_synth_get_preset(fluid_synth_t *synth, int sfontnum,
 
         if(fluid_sfont_get_id(sfont) == sfontnum)
         {
-            return fluid_sfont_get_preset(sfont, banknum - sfont->bankofs, prognum);
+            return fluid_synth_sfont_get_preset(synth, sfont, banknum, prognum);
         }
     }
 
@@ -3369,7 +3400,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t *synth, const char *sfontname
 
         if(FLUID_STRCMP(fluid_sfont_get_name(sfont), sfontname) == 0)
         {
-            return fluid_sfont_get_preset(sfont, banknum - sfont->bankofs, prognum);
+            return fluid_synth_sfont_get_preset(synth, sfont, banknum, prognum);
         }
     }
 
@@ -3391,7 +3422,7 @@ fluid_synth_find_preset(fluid_synth_t *synth, int banknum,
     {
         sfont = fluid_list_get(list);
 
-        preset = fluid_sfont_get_preset(sfont, banknum - sfont->bankofs, prognum);
+        preset = fluid_synth_sfont_get_preset(synth, sfont, banknum, prognum);
 
         if(preset)
         {
@@ -8194,6 +8225,14 @@ fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id)
 /**
  * Offset the bank numbers of a loaded SoundFont, i.e.\ subtract
  * \c offset from any bank number when assigning instruments.
+ *
+ * Drum banks (128 and above) are never shifted into the melodic range. With the
+ * GS and MMA bank select styles, the offset moves the drum kits like any other
+ * bank. The GM, GM2 and XG styles always select bank 128 on drum channels, so
+ * drum kits are not shifted there.
+ *
+ * RMIDI files set this offset automatically when loaded, based on their DBNK
+ * chunk. Calling this function afterwards overrides it.
  *
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont

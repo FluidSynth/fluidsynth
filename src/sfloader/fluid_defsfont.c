@@ -484,6 +484,10 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
         goto err_exit;
     }
 
+    /* RMIDI files specify the bank offset of their embedded sound bank. The synth
+     * applies it when looking up presets, see fluid_synth_sfont_get_preset(). */
+    defsfont->sfont->bankofs = sfdata->is_rmidi ? sfdata->rmidi_bank_offset : 0;
+
     dmod_data = sfdata->default_mod_list;
     if (dmod_data != NULL)
     {

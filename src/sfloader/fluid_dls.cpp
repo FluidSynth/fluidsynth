@@ -11,6 +11,7 @@
 
 #include "fluid_dls.h"
 
+#include "fluid_rmidi.h"
 #include "fluid_sys.h"
 #include "fluid_sfont.h"
 #include "fluidsynth_priv.h"
@@ -1482,10 +1483,22 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
         throw std::runtime_error{ "Get end of file position failed" };
     }
 
-    if(fcbs.fseek(file, 0, SEEK_SET) == FLUID_FAILED)
+    // Seek to the start of the DLS bank, which is embedded if this is an RMIDI file
+    fluid_rmidi_info_t rmidi;
+
+    if(fluid_rmidi_seek_bank(&fcbs, file, filesize, FLUID_RMIDI_BANK_DLS, &rmidi) == FLUID_FAILED)
     {
-        throw std::runtime_error{ "Rewind to start of file failed" };
+        throw std::runtime_error{ "Seek to DLS bank failed" };
     }
+
+    fluid_long_long_t offset = rmidi.is_rmidi ? rmidi.bank_pos : 0;
+
+    // the synth applies the RMIDI bank offset when looking up presets
+    sfont->bankofs = rmidi.bank_offset;
+
+    // from here on, filesize is the size of the DLS bank only. An RMIDI file may
+    // have more chunks after the bank, so don't derive it from the file's end
+    filesize = rmidi.is_rmidi ? rmidi.bank_size : filesize;
 
     if(filesize < 12)
     {
@@ -1538,12 +1551,12 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     }
 
     // we don't care about real file size after this point
-    filesize = chunk.size + 8LL;
+    filesize = offset + chunk.size + 8LL;
 
     // iterate over chunks in the RIFF form
     try
     {
-        visit_subchunks(0, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos)
+        visit_subchunks(offset, DLS_FCC, [this](RIFFChunk subchunk, int headersize, fluid_long_long_t pos)
         {
             switch(subchunk.id)  // toplevel chunk
             {

@@ -361,7 +361,7 @@ int main(int argc, char **argv)
     int result = -1;
     int arg1 = 1;
     char buf[512];
-    int c, i, bank_ofs=0, verbose = FALSE;
+    int c, i, bank_ofs=0, bank_ofs_set = FALSE, verbose = FALSE;
     int interactive = 1;
     int quiet = 0;
     int midi_in = 1;
@@ -532,6 +532,7 @@ int main(int argc, char **argv)
 
         case 'b':
             bank_ofs = atoi(optarg);
+            bank_ofs_set = TRUE;
             break;
 
         case 'C':
@@ -910,6 +911,7 @@ int main(int argc, char **argv)
         {
         case 'b':
             bank_ofs = atoi(optarg);
+            bank_ofs_set = TRUE;
             break;
         default:
             printf("?? getopt returned character code 0%o ??\n", c);
@@ -921,9 +923,7 @@ int main(int argc, char **argv)
         {
             const char *u8_path = argv[optind];
 
-            if(fluid_is_midifile(u8_path))
-            {}
-            else if(fluid_is_soundfont(u8_path))
+            if(fluid_is_soundfont(u8_path))
             {
                 if(verbose)
                 {
@@ -938,12 +938,14 @@ int main(int argc, char **argv)
                     // might be highly confusing to the user.
                     goto cleanup;
                 }
-                else
+                else if(bank_ofs_set)
                 {
+                    /* Only override the offset if one was given, so that the
+                     * offset an RMIDI file brings along is kept otherwise. */
                     fluid_synth_set_bank_offset(synth, i, bank_ofs);
                 }
             }
-            else
+            else if(!fluid_is_midifile(u8_path))
             {
                 fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", u8_path);
                 goto cleanup;
