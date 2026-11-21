@@ -50,10 +50,25 @@ extern const fluid_real_t *const fluid_pan_tab;
 fluid_real_t
 fluid_ct2hz_real(fluid_real_t cents)
 {
+    static const fluid_real_t CENTS_MAX = (fluid_real_t)(INT_MAX - 127);
+
     fluid_real_t mult;
     int fac, rem;
-    int icents = (int)cents;
+    int icents;
 
+    /* Written as !(x <= max) so NaN also takes this branch */
+#ifndef NDEBUG
+    if(FLUID_UNLIKELY(!(FLUID_FABS(cents) <= CENTS_MAX)))
+    {
+        // break on NaN values
+        FLUID_ASSERT(cents == cents);
+        // values bigger than that cannot be represented as int32 and deserve a debug warning
+        FLUID_LOG(FLUID_DBG, "fluid_ct2hz_real() was called with out-of-range argument %g, clamping", cents);
+    }
+#endif
+    // Clip cents to valid 2^31 range for int32 conversion, NaNs become -CENTS_MAX i.e. harmless 0Hz
+    fluid_clip(cents, -CENTS_MAX, CENTS_MAX);
+    icents = (int)cents;
     // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
     // which is nicely divisible by 1200 and yields 2^6, which just perfectly matches the
     // 440/2^6 Hz reference value of our lookup table. Magic.
@@ -94,7 +109,7 @@ fluid_ct2hz_real(fluid_real_t cents)
         // which is much more than ever needed. For bigger values, just
         // safely wrap around (the & is just a replacement for the quick
         // modulo operation % 32).
-        mult = 1u << (fac & (sizeof(unsigned int)*8u - 1u));
+        mult = 1u << ((unsigned int)(fac) & (unsigned int)(sizeof(unsigned int)*8u - 1u));
 
         // don't use ldexp() either (poor performance)
         return mult * fluid_ct2hz_tab[rem];
@@ -106,7 +121,7 @@ fluid_ct2hz_real(fluid_real_t cents)
         // mult = 1.0 / fast_shift
         // return mult * lookuptable
         // instead, already multiply in the lookup table here, do the division and save the multiplication
-        mult = fluid_ct2hz_tab[rem] / (fluid_real_t)(1u << ((-fac) & (sizeof(unsigned int) * 8u - 1u)));
+        mult = fluid_ct2hz_tab[rem] / (fluid_real_t)(1u << ((unsigned int)(-fac) & (unsigned int)(sizeof(unsigned int) * 8u - 1u)));
         return mult;
     }
 }

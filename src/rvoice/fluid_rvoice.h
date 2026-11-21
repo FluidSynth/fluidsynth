@@ -51,6 +51,9 @@ enum fluid_loop
     FLUID_LOOP_UNTIL_RELEASE = 3
 };
 
+#define FLUID_SAMPLESANITY_CHECK (1 << 0)
+#define FLUID_SAMPLESANITY_STARTUP (1 << 1)
+
 /*
  * rvoice ticks-based parameters
  * These parameters must be updated even if the voice is currently quiet.
