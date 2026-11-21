@@ -60,6 +60,8 @@ fluid_ct2hz_real(fluid_real_t cents)
 #ifndef NDEBUG
     if(FLUID_UNLIKELY(!(FLUID_FABS(cents) <= CENTS_MAX)))
     {
+        // break on NaN values
+        FLUID_ASSERT(cents == cents);
         // values bigger than that cannot be represented as int32 and deserve a debug warning
         FLUID_LOG(FLUID_DBG, "fluid_ct2hz_real() was called with out-of-range argument %g, clamping", cents);
     }
