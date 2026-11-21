@@ -50,15 +50,23 @@ extern const fluid_real_t *const fluid_pan_tab;
 fluid_real_t
 fluid_ct2hz_real(fluid_real_t cents)
 {
+    static const fluid_real_t CENTS_MAX = (fluid_real_t)(INT_MAX - 127);
+
     fluid_real_t mult;
     int fac, rem;
-    int icents = (int)cents;
-    if (FLUID_UNLIKELY(FLUID_FABS(cents) > ((fluid_real_t)(INT_MAX - 127))))
-    {
-        // values bigger than that cannot be represented as int32 and deserve a warning
-        FLUID_LOG(FLUID_WARN, "fluid_ct2hz_real() was called with out-of-range argument %g", cents);
-    }
+    int icents;
 
+    /* Written as !(x <= max) so NaN also takes this branch */
+#ifndef NDEBUG
+    if(FLUID_UNLIKELY(!(FLUID_FABS(cents) <= CENTS_MAX)))
+    {
+        // values bigger than that cannot be represented as int32 and deserve a debug warning
+        FLUID_LOG(FLUID_DBG, "fluid_ct2hz_real() was called with out-of-range argument %g, clamping", cents);
+    }
+#endif
+    // Clip cents to valid 2^31 range for int32 conversion, NaNs become -CENTS_MAX i.e. harmless 0Hz
+    fluid_clip(cents, -CENTS_MAX, CENTS_MAX);
+    icents = (int)cents;
     // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
     // which is nicely divisible by 1200 and yields 2^6, which just perfectly matches the
     // 440/2^6 Hz reference value of our lookup table. Magic.

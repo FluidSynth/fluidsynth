@@ -120,6 +120,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
 /* these should be the absolute minimum that FluidSynth can deal with */
 #define FLUID_MIN_LOOP_SIZE 2
 #define FLUID_MIN_LOOP_PAD 0
+#define FLUID_MAX_PHASE_INCR ((fluid_real_t)(INT_MAX - 127))
 
 /* Purpose:
  *
@@ -370,6 +371,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             voice->dsp.root_pitch_hz;
     // phase increment must always be positive -> sample is always played forward, never backward
     FLUID_ASSERT(voice->dsp.phase_incr >= 0);
+    fluid_clip(voice->dsp.phase_incr, 0.0f, FLUID_MAX_PHASE_INCR);
 
     /******************* portamento ****************/
     /* pitchoffset is updated if enabled.
