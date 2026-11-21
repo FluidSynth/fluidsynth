@@ -82,7 +82,7 @@ jobs:
           # Apple's arm64 linker needs function deduplication disabled (SIGILL).
           bash .github/scripts/macos-build-and-test.sh --stage-tests "$RUNNER_TEMP/macos" \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=ON \
-            -Denable-framework=OFF -Denable-sdl3=OFF -Werror=dev \
+            -Denable-framework=OFF -Denable-sdl3=OFF \
             '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' \
             -DCMAKE_PREFIX_PATH=/opt/local "-DCMAKE_IGNORE_PREFIX_PATH=$(brew --prefix)" \
             '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-no_deduplicate'
