@@ -1399,7 +1399,15 @@ static void test_O_degenerate_phase_incr(void)
     // 2^31 is the first value overflowing an int32, triggering UB (the actual behavior differs on x64/ARM64);
     // 2^31 + 1 is no multiple of the 16-sample loop length, so the phase index drifts after every loop wrap.
     // Note that this only applies for double builds, a -Denable-floats=1 build rounds it back to 2^31)
-    constexpr const std::array<double, 9> incrs = { 0.0, 1.e-11, 2.e-10, 1, 1.0e5, 1.0e9, (double)(1ULL << 31), (double)((1ULL << 31) + 1), (double)((1ULL << 32) + 1) };
+    //
+    // 2^31 + 256 and 3 * 2^30 are the first values for which a single step moves the phase index beyond 2^31 plus the next
+    // interpolation boundary (those values are exactly representable as float, 2^31 + 64 would not be). The phase is then
+    // negative as int64_t, and the unsigned distance to the boundary, which is far behind the phase, looks like a huge positive distance.
+    // Without the runaway guard in compute_interpolation_steps(), the multi-region renderers would take another step
+    // and read the sample data at an index >= 2^31. Note that such values exceed the FLUID_MAX_PHASE_INCR clamp
+    // of fluid_rvoice_write(), so only direct callers of the DSP can run into this.
+    constexpr const std::array<double, 11> incrs = { 0.0, 1.e-11, 2.e-10, 1, 1.0e5, 1.0e9, (double)(1ULL << 31), (double)((1ULL << 31) + 1),
+                                                     (double)((1ULL << 31) + 256), 3.0 * (double)(1ULL << 30), (double)((1ULL << 32) + 1) };
 
     constexpr const std::array<fluid_interp, 6> modes = { FLUID_INTERP_NONE,
                                                           FLUID_INTERP_LINEAR,
@@ -1411,7 +1419,7 @@ static void test_O_degenerate_phase_incr(void)
 
     for(double incr : incrs)
     {
-        printf("  phase_incr=%.5g\n", incr);
+        printf("  phase_incr=%.12g\n", incr);
 
         for(int silence = 0; silence < 2; silence++)
         {
