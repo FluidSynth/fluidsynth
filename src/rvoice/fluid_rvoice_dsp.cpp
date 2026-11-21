@@ -86,7 +86,7 @@ compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_inc
         // fluid_phase_index_round() already reaches dsp_end_index + 1 at dsp_end_index + 0.5
         boundary -= 0x80000000;
     }
-    // Phase can be slightly negative after a rounded loop wrap while the renderer is still running (see fluid_phase_leave_rounded_wrap()), so compare signed.
+    // Phase can be slightly negative after a loop wrap and a previously rounded dsp_phase, so compare signed.
     // Anything more negative is a runaway phase (index >= 2^31, caused by a huge phase_incr) that lies beyond every
     // boundary; its unsigned difference to the boundary would otherwise look like a huge positive distance.
     if (static_cast<int64_t>(dsp_phase) < -(static_cast<int64_t>(1) << 32))
@@ -144,29 +144,6 @@ fluid_wrap_phase(fluid_phase_t& dsp_phase, int loopstart, int loopend)
 #endif
 }
 
-// The renderers silence and NONE round the phase index, and the sinc renderers center it (by adding half a sample), so
-// they wrap the phase half a sample early. This can leave the phase in [loopstart - 0.5, loopstart), which is negative
-// for loopstart == 0. The renderers linear and 4th order truncate the phase index and would read far outside of the
-// sample data (index 0xFFFFFFFF). They might run next, after the voice became audible or the interpolation method changed.
-// Therefore, a renderer that wrapped the phase must hand it over as a truncating renderer would have left it, i.e. the
-// equivalent phase at the end of the loop.
-//
-// MUST only be called, if the renderer wrapped the phase during this very call: Only then the loop points are known to
-// be valid, and the phase is known to originate from the wrap. A phase in front of the loop start is legit otherwise.
-static FLUID_INLINE void
-fluid_phase_leave_rounded_wrap(fluid_phase_t& dsp_phase, int loopstart, int loopend)
-{
-    fluid_phase_t window_start;
-    fluid_phase_set_int(window_start, loopstart);
-    window_start -= 0x80000000;
-
-    // unsigned arithmetic: checks for dsp_phase in [loopstart - 0.5, loopstart), also if that is negative
-    if (dsp_phase - window_start < 0x80000000)
-    {
-        dsp_phase += static_cast<fluid_phase_t>(loopend - loopstart) << 32;
-    }
-}
-
 /* Special case of interpolate_none for rendering silent voices, i.e. in delay phase or zero volume */
 template<bool LOOPING>
 static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf)
@@ -177,7 +154,6 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
-    bool has_wrapped = false;
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
@@ -218,15 +194,8 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
         {
             fluid_wrap_phase<true>(dsp_phase, voice->loopstart, voice->loopend);
             voice->has_looped = 1;
-            has_wrapped = true;
         }
     } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
-
-    if (has_wrapped)
-    {
-        // The next renderer might truncate the phase, see fluid_phase_leave_rounded_wrap()
-        fluid_phase_leave_rounded_wrap(dsp_phase, voice->loopstart, voice->loopend);
-    }
 
     voice->phase = dsp_phase;
     // Note, there is no need to update the amplitude here. When the voice becomes audible again, the amp will be updated anyway in fluid_rvoice_calc_amp().
@@ -250,7 +219,6 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
-    bool has_wrapped = false;
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
@@ -291,15 +259,8 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         {
             fluid_wrap_phase<true>(dsp_phase, voice->loopstart, voice->loopend);
             voice->has_looped = 1;
-            has_wrapped = true;
         }
     } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
-
-    if (has_wrapped)
-    {
-        // The next renderer might truncate the phase, see fluid_phase_leave_rounded_wrap()
-        fluid_phase_leave_rounded_wrap(dsp_phase, voice->loopstart, voice->loopend);
-    }
 
     voice->phase = dsp_phase;
 
@@ -599,7 +560,6 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int start_index, end_index;
-    bool has_wrapped = false;
 
     constexpr int half = SINC_ORDER / 2;
     constexpr int right_guard = SINC_ORDER - half - 1;
@@ -760,7 +720,6 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         if(dsp_phase_index > end_index + right_guard)
         {
             fluid_wrap_phase<false>(dsp_phase, voice->loopstart, voice->loopend);
-            has_wrapped = true;
             if(!voice->has_looped)
             {
                 voice->has_looped = 1;
@@ -778,12 +737,6 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     /* sub 1/2 sample from dsp_phase since sinc interpolation is centered on
      * the (half+1)-th sample point (correct back to real value) */
     fluid_phase_decr(dsp_phase, (fluid_phase_t)0x80000000);
-
-    if (has_wrapped)
-    {
-        // Removing the half sample offset may have moved the phase in front of the loop start, see fluid_phase_leave_rounded_wrap()
-        fluid_phase_leave_rounded_wrap(dsp_phase, voice->loopstart, voice->loopend);
-    }
 
     voice->phase = dsp_phase;
 
