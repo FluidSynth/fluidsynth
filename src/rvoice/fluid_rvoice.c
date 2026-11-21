@@ -138,10 +138,10 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     int max_index_loop = (int) voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1;	/* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
-    LOG_SANITIZE(FLUID_DBG, "Sample from %i to %i", voice->dsp.sample->start, voice->dsp.sample->end);
-    LOG_SANITIZE(FLUID_DBG, "Sample loop from %i %i", voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
-    LOG_SANITIZE(FLUID_DBG, "Playback from %i to %i", voice->dsp.start, voice->dsp.end);
-    LOG_SANITIZE(FLUID_DBG, "Playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
+    LOG_SANITIZE("Sample from %i to %i", voice->dsp.sample->start, voice->dsp.sample->end);
+    LOG_SANITIZE("Sample loop from %i %i", voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
+    LOG_SANITIZE("Playback from %i to %i", voice->dsp.start, voice->dsp.end);
+    LOG_SANITIZE("Playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
 
     /* Keep the start point within the sample data */
     if(voice->dsp.start < min_index_nonloop)
@@ -169,7 +169,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
         int temp = voice->dsp.start;
         voice->dsp.start = voice->dsp.end;
         voice->dsp.end = temp;
-        LOG_SANITIZE(FLUID_DBG, "Loop / sample sanity check: Changing order of start / end points!");
+        LOG_SANITIZE("Loop / sample sanity check: Changing order of start / end points!");
     }
 
     /* Zero length? */
@@ -208,7 +208,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
             int temp = voice->dsp.loopstart;
             voice->dsp.loopstart = voice->dsp.loopend;
             voice->dsp.loopend = temp;
-            LOG_SANITIZE(FLUID_DBG, "Loop / sample sanity check: Changing order of loop points!");
+            LOG_SANITIZE("Loop / sample sanity check: Changing order of loop points!");
         }
 
         /* The loop points may have changed. Obtain a new estimate for the loop volume. */
@@ -259,18 +259,18 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
 
         if(index_in_sample >= voice->dsp.loopend)
         {
-            LOG_SANITIZE(FLUID_DBG, "Loop / sample sanity check: Phase after 2nd loop point!");
+            LOG_SANITIZE("Loop / sample sanity check: Phase after 2nd loop point!");
             fluid_phase_set_int(voice->dsp.phase, voice->dsp.loopstart);
         }
     }
 
-    LOG_SANITIZE(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend);
+    LOG_SANITIZE("Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend);
 
     /* Sample sanity has been assured. Don't check again, until some
        sample parameter is changed by modulation. */
     voice->dsp.check_sample_sanity_flag = 0;
 
-    LOG_SANITIZE(FLUID_DBG, "Sane? playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
+    LOG_SANITIZE("Sane? playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
 
     fluid_check_fpe("voice_check_sample_sanity");
 }
