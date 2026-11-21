@@ -109,7 +109,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
 }
 
 
-// Uncomment to get debug logging for filter parameters
+// Uncomment to get debug logging for sample sanity checks
 // #define DBG_SANITIZE
 #ifdef DBG_SANITIZE
 #define LOG_SANITIZE(...) FLUID_LOG(FLUID_DBG, __VA_ARGS__)
