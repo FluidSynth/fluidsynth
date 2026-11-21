@@ -126,6 +126,7 @@ fluid_wrap_phase(fluid_phase_t& dsp_phase, int loopstart, int loopend)
     } while (dsp_phase_index > (loopend - 1 /* == end_index */));
 #else
     unsigned int loop_len = loopend - loopstart;
+    FLUID_ASSERT(loop_len > 0);
     if (ROUND_PHASE_INDEX)
     {
         dsp_phase_index = fluid_phase_index_round(dsp_phase);
