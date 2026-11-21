@@ -87,8 +87,15 @@ compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_inc
         boundary -= 0x80000000;
     }
     // Phase can be slightly negative after a loop wrap and a previously rounded dsp_phase, so compare signed.
+    // Anything more negative is a runaway phase (index >= 2^31, caused by a huge phase_incr) that lies beyond every
+    // boundary; its unsigned difference to the boundary would otherwise look like a huge positive distance.
+    if (static_cast<int64_t>(dsp_phase) < -(static_cast<int64_t>(1) << 32))
+    {
+        return 0;
+    }
     int64_t remaining = static_cast<int64_t>(boundary - dsp_phase);
-    fluid_phase_t steps = remaining <= 0 ? 0 : ((static_cast<fluid_phase_t>(remaining) + dsp_phase_incr - 1) / dsp_phase_incr);
+    // Compute ceil(remaining / dsp_phase_incr) without overflowing for huge dsp_phase_incr (i.e. without adding dsp_phase_incr back into the numerator)
+    fluid_phase_t steps = remaining <= 0 ? 0 : ((static_cast<fluid_phase_t>(remaining) - 1) / dsp_phase_incr + 1);
     unsigned short iters = static_cast<unsigned short>(std::min<fluid_phase_t>(steps, (FLUID_BUFSIZE - dsp_i)));
     return iters;
 }

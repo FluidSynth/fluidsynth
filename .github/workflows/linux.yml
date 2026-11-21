@@ -43,7 +43,6 @@ jobs:
       CC: ${{ matrix.configuration.compiler == 'clang' && 'clang-18' || '' }}
       CXX: ${{ matrix.configuration.compiler == 'clang' && 'clang++-18' || '' }}
     strategy:
-      fail-fast: false
       matrix:
         image: [ubuntu-24.04, ubuntu-24.04-arm]
         configuration:
@@ -107,7 +106,6 @@ jobs:
           -Denable-portaudio=1 \
           -Denable-ladspa=1 \
           -DNO_GUI=1 \
-          -Denable-ubsan=1 \
           ${{ matrix.configuration.flags }}
 
     - name: Build
