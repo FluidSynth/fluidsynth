@@ -1327,11 +1327,12 @@ static void test_M_sine_wave_interpolation(void)
 }
 
 /* =========================================================================
- * Test N – Negative phase after rounded loop wrap (regression)
+ * Test N – Negative phase while rendering after a rounded loop wrap (regression)
  *
  * With loopstart == 0, the rounded wrap check of the NONE and silence renderers
- * can leave the phase slightly negative (e.g. dsp_phase == 66.6, loopend - loopstart == 67: 66.6 - 67 = -0.4). The next call
- * must still make progress instead of spinning forever.
+ * leaves the phase slightly negative (e.g. dsp_phase == 66.6, loopend - loopstart == 67: 66.6 - 67 = -0.4).
+ * The renderer must still make progress with that phase instead of spinning forever.
+ * The phase handed over to the next call is expected to be the equivalent one in front of the loop end though (see test Q).
  * ========================================================================= */
 static void test_N_negative_phase_after_loop_wrap(void)
 {
@@ -1370,7 +1371,7 @@ static void test_N_negative_phase_after_loop_wrap(void)
 
             if(iter == 0)
             {
-                TEST_ASSERT((int64_t)rvoice.dsp.phase < 0);
+                TEST_ASSERT(std::abs(fluid_phase_double(rvoice.dsp.phase) - (loop_end - 0.4)) < 1e-3);
             }
             else
             {
@@ -1670,20 +1671,17 @@ static void test_P_sanitized_out_of_range_points(void)
 /* =========================================================================
  * Test Q – Switching from a rounded to a truncating renderer after a loop wrap
  *
- * The silence and NONE renderers round the phase, hence a loop wrap with loopstart == 0 can leave the phase slightly
- * negative (see test N). The sinc renderers do the same, as they remove their half sample offset on exit.
- * When the voice then becomes audible, or the interpolation method changes, to one of the truncating renderers, the
- * phase index would be 0xFFFFFFFF and the first sample would be read far outside of the sample data.
- * The output must be the same as for a voice that sits at the equivalent phase (phase + loop length) from the start.
+ * The silence and NONE renderers round the phase index, and the sinc renderers center it. Hence they wrap the phase half
+ * a sample early, which can leave it in [loopstart - 0.5, loopstart), i.e. slightly negative for loopstart == 0 (see test N).
+ * When the voice then becomes audible, or the interpolation method changes, to one of the truncating renderers (linear, 4th order),
+ * the phase index would be 0xFFFFFFFF and the first sample would be read far outside of the sample data.
+ * A renderer that wrapped the phase must therefore hand over the equivalent phase in front of the loop end.
  * ========================================================================= */
 static void test_Q_switch_rounded_to_truncating_after_loop_wrap(void)
 {
     printf("Test Q: Switch from rounded to truncating renderer after loop wrap\n");
 
     constexpr int loop_end = FLUID_BUFSIZE + 3;
-    /* The fraction must be exact within the 8 bit interpolation table, so the expected value can be calculated exactly */
-    constexpr double phase_start = 2.75; /* phase after one buffer: loop_end - 0.25, which is rounded up and wrapped to -0.25 */
-    constexpr double phase_equiv = phase_start + FLUID_BUFSIZE; /* the negative phase, moved before the loop end */
     constexpr int ramp_step = 400;
 
     static_assert((loop_end - 1) * ramp_step <= std::numeric_limits<short>::max(), "Ramp overflows short");
@@ -1694,6 +1692,22 @@ static void test_Q_switch_rounded_to_truncating_after_loop_wrap(void)
     {
         data[i] = (i < (size_t)loop_end) ? (short)(i * ramp_step) : CONST_VAL;
     }
+
+    /* The fractions must be exact within the 8 bit interpolation table, so the expected values can be calculated exactly */
+    struct Scenario
+    {
+        const char *name;
+        double phase_start;
+        double phase_incr;
+    };
+
+    const std::array<Scenario, 2> scenarios = {{
+            /* the loop is wrapped by the last sample: 66.75 is rounded up to 67, which is wrapped to -0.25 */
+            { "wrap at end of buffer", 2.75, 1.0 },
+            /* the loop is wrapped by the 17th sample at 66.5, then the phase advances inside of [-0.5, 0): -0.5 -> -0.453125 */
+            { "wrap within buffer", loop_end - 0.5 - 1.0 / 64, 1.0 / 1024 }
+        }
+    };
 
     struct Predecessor
     {
@@ -1716,60 +1730,68 @@ static void test_Q_switch_rounded_to_truncating_after_loop_wrap(void)
                                                      FLUID_INTERP_HIGHEST
                                                    };
 
-    for(const Predecessor &pre : predecessors)
+    for(const Scenario &sc : scenarios)
     {
-        for(fluid_interp succ : successors)
+        /* the continuation of the phase without wrapping, which lies in front of the loop end */
+        const double phase_after = sc.phase_start + FLUID_BUFSIZE * sc.phase_incr;
+        TEST_ASSERT(phase_after > loop_end - 1 && phase_after < loop_end);
+
+        for(const Predecessor &pre : predecessors)
         {
-            fluid_rvoice_t  rvoice;
-            fluid_sample_t  samp;
-            std::array<fluid_real_t, FLUID_BUFSIZE> buf;
-            buf.fill(0);
-
-            setup_rvoice(&rvoice, &samp, data.data(), nullptr,
-                         phase_start, 1.0,
-                         0, (int)data.size() - 1,
-                         0, loop_end,
-                         1, pre.mode);
-
-            int count = pre.silence ? fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/1)
-                        : fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
-            TEST_ASSERT(count == FLUID_BUFSIZE);
-            TEST_ASSERT((int64_t)rvoice.dsp.phase < 0);
-
-            rvoice.dsp.interp_method = succ;
-            buf.fill(0);
-            count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
-            TEST_ASSERT(count == FLUID_BUFSIZE);
-
-            fluid_rvoice_t  ref_rvoice;
-            fluid_sample_t  ref_samp;
-            std::array<fluid_real_t, FLUID_BUFSIZE> ref_buf;
-            ref_buf.fill(0);
-
-            setup_rvoice(&ref_rvoice, &ref_samp, data.data(), nullptr,
-                         phase_equiv, 1.0,
-                         0, (int)data.size() - 1,
-                         0, loop_end,
-                         1, succ);
-
-            int ref_count = fluid_rvoice_dsp_interpolate(&ref_rvoice, ref_buf.data(), /*looping=*/1);
-            TEST_ASSERT(ref_count == FLUID_BUFSIZE);
-
-            for(int i = 0; i < count; i++)
+            for(fluid_interp succ : successors)
             {
-                test_sample_eq(buf[i], ref_buf[i] / DSP_SCALE, TOL_POLY, i);
+                fluid_rvoice_t  rvoice;
+                fluid_sample_t  samp;
+                std::array<fluid_real_t, FLUID_BUFSIZE> buf;
+                buf.fill(0);
+
+                setup_rvoice(&rvoice, &samp, data.data(), nullptr,
+                             sc.phase_start, sc.phase_incr,
+                             0, (int)data.size() - 1,
+                             0, loop_end,
+                             1, pre.mode);
+
+                int count = pre.silence ? fluid_rvoice_dsp_silence(&rvoice, buf.data(), /*looping=*/1)
+                            : fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+                TEST_ASSERT(count == FLUID_BUFSIZE);
+                TEST_ASSERT(std::abs(fluid_phase_double(rvoice.dsp.phase) - phase_after) < 1e-6);
+
+                rvoice.dsp.interp_method = succ;
+                buf.fill(0);
+                count = fluid_rvoice_dsp_interpolate(&rvoice, buf.data(), /*looping=*/1);
+                TEST_ASSERT(count == FLUID_BUFSIZE);
+
+                /* a voice that has been sitting at that phase from the start must sound the same */
+                fluid_rvoice_t  ref_rvoice;
+                fluid_sample_t  ref_samp;
+                std::array<fluid_real_t, FLUID_BUFSIZE> ref_buf;
+                ref_buf.fill(0);
+
+                setup_rvoice(&ref_rvoice, &ref_samp, data.data(), nullptr,
+                             phase_after, sc.phase_incr,
+                             0, (int)data.size() - 1,
+                             0, loop_end,
+                             1, succ);
+
+                int ref_count = fluid_rvoice_dsp_interpolate(&ref_rvoice, ref_buf.data(), /*looping=*/1);
+                TEST_ASSERT(ref_count == FLUID_BUFSIZE);
+
+                for(int i = 0; i < count; i++)
+                {
+                    test_sample_eq(buf[i], ref_buf[i] / DSP_SCALE, TOL_POLY, i);
+                }
+
+                if(succ == FLUID_INTERP_LINEAR)
+                {
+                    /* interpolates between the last loop sample and the loop start (value 0) */
+                    const double fract = phase_after - (loop_end - 1);
+                    test_sample_eq(buf[0], (fluid_real_t)((1.0 - fract) * (loop_end - 1) * ramp_step), TOL_POLY, 0);
+                }
+
+                TEST_ASSERT(rvoice.dsp.phase == ref_rvoice.dsp.phase);
+
+                printf("  %s: %s -> %s: PASS\n", sc.name, pre.name, interp_name(succ));
             }
-
-            if(succ == FLUID_INTERP_LINEAR)
-            {
-                /* between the last loop sample and the loop start (value 0), 0.25 samples before the loop end */
-                test_sample_eq(buf[0], (fluid_real_t)((loop_end - 1) * ramp_step * 0.25), TOL_POLY, 0);
-            }
-
-            const double phase_diff = std::abs((double)((int64_t)rvoice.dsp.phase - (int64_t)ref_rvoice.dsp.phase) / FLUID_FRACT_MAX);
-            TEST_ASSERT(phase_diff < 1e-4);
-
-            printf("  %s -> %s: PASS\n", pre.name, interp_name(succ));
         }
     }
 }
