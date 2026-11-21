@@ -24,7 +24,7 @@
 %endif
 
 Name:           fluidsynth
-Version:        2.5.1
+Version:        2.6.3
 Release:        0
 Summary:        A Real-Time Software Synthesizer That Uses Soundfont(tm)
 License:        LGPL-2.1-or-later
@@ -78,7 +78,8 @@ This package contains the shared library for Fluidsynth.
 
 %build
 %cmake \
-    -DFLUID_DAEMON_ENV_FILE=%{_fillupdir}/sysconfig.%{name}
+    -DFLUID_DAEMON_ENV_FILE=%{_fillupdir}/sysconfig.%{name} \
+    -Denable-signalsmith=0 # currently requires internet access, which isn't available on OBS
 %cmake_build
 
 %check
