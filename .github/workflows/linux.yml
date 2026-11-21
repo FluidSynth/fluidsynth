@@ -43,8 +43,8 @@ jobs:
       CC: ${{ matrix.configuration.compiler == 'clang' && 'clang-18' || '' }}
       CXX: ${{ matrix.configuration.compiler == 'clang' && 'clang++-18' || '' }}
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         image: [ubuntu-24.04, ubuntu-24.04-arm]
         configuration:
           - {flags: "-Denable-profiling=1"}
