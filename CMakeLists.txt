@@ -234,10 +234,10 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align" )
 
     if ( enable-ubsan )
-      set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
-      set ( CMAKE_CXX_FLAGS "-fsanitize=address,undefined ${CMAKE_CXX_FLAGS}" )
-      set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_EXE_LINKER_FLAGS}" )
-      set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
+      set ( CMAKE_C_FLAGS "-fsanitize=address,undefined,float-cast-overflow ${CMAKE_C_FLAGS}" )
+      set ( CMAKE_CXX_FLAGS "-fsanitize=address,undefined,float-cast-overflow ${CMAKE_CXX_FLAGS}" )
+      set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=address,undefined,float-cast-overflow ${CMAKE_EXE_LINKER_FLAGS}" )
+      set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address,undefined,float-cast-overflow ${CMAKE_SHARED_LINKER_FLAGS}" )
       set ( ENABLE_UBSAN 1 )
     endif ( enable-ubsan )
 
