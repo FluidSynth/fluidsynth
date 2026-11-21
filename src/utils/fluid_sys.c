@@ -1109,13 +1109,18 @@ fluid_timer_join(fluid_timer_t *timer)
 
     if(timer->thread)
     {
+        /* with auto_destroy, the timer may be freed by its own thread, so don't touch it after joining */
+        fluid_thread_t *thread = timer->thread;
         auto_destroy = timer->auto_destroy;
-        fluid_thread_join(timer->thread);
+        fluid_thread_join(thread);
 
         if(!auto_destroy)
         {
             timer->thread = NULL;
         }
+
+        /* the thread has terminated, release its handle */
+        delete_fluid_thread(thread);
     }
 
     return FLUID_OK;

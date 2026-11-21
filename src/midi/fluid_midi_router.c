@@ -146,6 +146,13 @@ delete_fluid_midi_router(fluid_midi_router_t *router)
         }
     }
 
+    /* Free deactivated rules which were waiting for events and are now done */
+    for(rule = router->free_rules; rule; rule = next_rule)
+    {
+        next_rule = rule->next;
+        FLUID_FREE(rule);
+    }
+
     fluid_mutex_destroy(router->rules_mutex);
     FLUID_FREE(router);
 }

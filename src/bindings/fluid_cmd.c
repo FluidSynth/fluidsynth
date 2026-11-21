@@ -4482,6 +4482,7 @@ new_fluid_server2(fluid_settings_t *settings,
 
     if(server->socket == NULL)
     {
+        fluid_mutex_destroy(server->mutex);
         FLUID_FREE(server);
         return NULL;
     }
@@ -4516,6 +4517,7 @@ delete_fluid_server(fluid_server_t *server)
     fluid_return_if_fail(server != NULL);
 
     fluid_server_close(server);
+    fluid_mutex_destroy(server->mutex);
 
     FLUID_FREE(server);
 #endif
