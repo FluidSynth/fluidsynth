@@ -233,15 +233,6 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     /* Run startup specific code (only once, when the voice is started) */
     if(voice->dsp.check_sample_sanity_flag & FLUID_SAMPLESANITY_STARTUP)
     {
-        if(max_index_loop - min_index_loop < FLUID_MIN_LOOP_SIZE)
-        {
-            if((voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE)
-                    || (voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE))
-            {
-                voice->dsp.samplemode = FLUID_UNLOOPED;
-            }
-        }
-
         /* Set the initial phase of the voice (using the result from the
         start offset modulators). */
         fluid_phase_set_int(voice->dsp.phase, voice->dsp.start);
