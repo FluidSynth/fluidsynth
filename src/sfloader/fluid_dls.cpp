@@ -47,6 +47,15 @@ using std::uint16_t;
 using std::uint32_t;
 using std::uint8_t;
 
+// Custom exception for DLS format-mismatch errors (e.g. "Not a RIFF file", "Not a DLS file").
+// These are expected when one loader tries a file belonging to another loader, so they are
+// logged at debug level rather than error level.
+class fluid_dls_format_error : public std::runtime_error
+{
+public:
+    explicit fluid_dls_format_error(const std::string &what) : std::runtime_error(what) {}
+};
+
 // based of https://stackoverflow.com/a/26221725
 // original license: CC0 1.0
 template<size_t N, typename... Args>
@@ -501,6 +510,14 @@ new_fluid_dls_font(Args &&...args) noexcept
     catch(const std::bad_alloc &)
     {
         FLUID_LOG(FLUID_PANIC, "Out of memory when allocing fluid_dls_font");
+        return nullptr;
+    }
+    catch(const fluid_dls_format_error &exc)
+    {
+        /* Format-mismatch errors are expected when one loader tries a file
+         * belonging to another loader. Log them at debug level only, to avoid
+         * spurious error output. */
+        FLUID_LOG(FLUID_DBG, "Exception thrown in fluid_dls_font constructor: %s", exc.what());
         return nullptr;
     }
     catch(const std::exception &exc)
@@ -1502,7 +1519,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
 
     if(chunk.id != RIFF_FCC)
     {
-        throw std::runtime_error{ "Not a RIFF file" };
+        throw fluid_dls_format_error{ "Not a RIFF file" };
     }
 
     READID(this, &chunk.id); // load file ID
@@ -1510,7 +1527,7 @@ fluid_dls_font::fluid_dls_font(fluid_synth_t *synth,
     if(chunk.id != DLS_FCC)
     {
         auto* p = (unsigned char *)&chunk.id;
-        throw std::runtime_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
+        throw fluid_dls_format_error{ string_format("Not a DLS file. Expected header identifier 'DLS ' but found '%c%c%c%c'", p[0], p[1], p[2], p[3]) };
     }
 
     if(chunk.size + 8LL > filesize)
