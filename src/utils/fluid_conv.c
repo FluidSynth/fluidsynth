@@ -71,7 +71,7 @@ fluid_ct2hz_real(fluid_real_t cents)
         FLUID_LOG(FLUID_DBG, "fluid_ct2hz_real() was called with out-of-range argument %g, clamping", cents);
     }
 #endif
-    // Clip cents to valid 2^31 range for int32 conversion, NaNs become -CENTS_MAX i.e. harmless 0Hz
+    // Clip cents to valid range for int32 conversion, NaNs become -CENTS_MAX i.e. harmless 0Hz
     fluid_clip(cents, -CENTS_MAX, CENTS_MAX);
     icents = (int)cents;
     // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
