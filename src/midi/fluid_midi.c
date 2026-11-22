@@ -46,6 +46,11 @@ static int fluid_track_add_event(fluid_track_t *track, fluid_midi_event_t *evt);
 static fluid_midi_event_t *fluid_track_next_event(fluid_track_t *track);
 static int fluid_track_get_duration(fluid_track_t *track);
 static int fluid_track_reset(fluid_track_t *track);
+static int fluid_track_send_next_event(fluid_track_t *track,
+                                       fluid_synth_t *synth,
+                                       fluid_player_t *player,
+                                       unsigned int ticks,
+                                       int seeking);
 
 static int fluid_player_add_track(fluid_player_t *player, fluid_track_t *track);
 static int fluid_player_callback(void *data, unsigned int msec);
@@ -1563,87 +1568,77 @@ fluid_track_reset(fluid_track_t *track)
 }
 
 /*
- * fluid_track_send_events
+ * fluid_track_send_next_event
+ *
+ * Sends the next event from `track` if it is due at or before `ticks`.
+ * Returns 1 if an event was sent, 0 otherwise (track exhausted or next
+ * event is beyond `ticks`).
+ *
+ * When seeking (seeking != 0), the target tick is `seek_ticks` and tracks
+ * whose `track->ticks` is at or beyond the seek position are reset once
+ * before the merge loop in the player callback (not here).
  */
-static void
-fluid_track_send_events(fluid_track_t *track,
-                        fluid_synth_t *synth,
-                        fluid_player_t *player,
-                        unsigned int ticks,
-                        int seek_ticks
-                       )
+static int
+fluid_track_send_next_event(fluid_track_t *track,
+                            fluid_synth_t *synth,
+                            fluid_player_t *player,
+                            unsigned int ticks,
+                            int seeking)
 {
     fluid_midi_event_t *event;
-    int seeking = seek_ticks >= 0;
 
-    if(seeking)
+    event = track->cur;
+
+    if(event == NULL)
     {
-        ticks = seek_ticks; /* update target ticks */
-
-        // the track ticks is beyond the current ticks,
-        // or if the track ticks is equal to the current ticks,
-        // we want to play all events from the beginning of that tick
-        if(track->ticks >= ticks)
-        {
-            fluid_track_reset(track);    /* reset track if seeking backwards */
-        }
+        return 0;
     }
 
-    while(1)
+    /*         printf("track=%02d\tticks=%05u\ttrack=%05u\tdtime=%05u\tnext=%05u\n", */
+    /*                track->num, */
+    /*                ticks, */
+    /*                track->ticks, */
+    /*                event->dtime, */
+    /*                track->ticks + event->dtime); */
+
+    if(track->ticks + event->dtime > ticks)
     {
+        return 0;
+    }
 
-        event = track->cur;
+    track->ticks += event->dtime;
 
-        if(event == NULL)
+    if(!player || event->type == MIDI_EOT)
+    {
+        /* don't send EOT events to the callback */
+    }
+    else if(seeking && track->ticks != ticks && (event->type == NOTE_ON || event->type == NOTE_OFF))
+    {
+        /* skip on/off messages when seeking */
+    }
+    else
+    {
+        if(player->playback_callback)
         {
-            return;
-        }
-
-        /*         printf("track=%02d\tticks=%05u\ttrack=%05u\tdtime=%05u\tnext=%05u\n", */
-        /*                track->num, */
-        /*                ticks, */
-        /*                track->ticks, */
-        /*                event->dtime, */
-        /*                track->ticks + event->dtime); */
-
-        if(track->ticks + event->dtime > ticks)
-        {
-            return;
-        }
-
-        track->ticks += event->dtime;
-
-        if(!player || event->type == MIDI_EOT)
-        {
-            /* don't send EOT events to the callback */
-        }
-        else if(seeking && track->ticks != ticks && (event->type == NOTE_ON || event->type == NOTE_OFF))
-        {
-            /* skip on/off messages */
-        }
-        else
-        {
-            if(player->playback_callback)
+            int *chan_is_playing = &player->channel_isplaying[event->channel % MAX_NUMBER_OF_CHANNELS];
+            player->playback_callback(player->playback_userdata, event);
+            if(event->type == NOTE_ON && event->param2 != 0 && !*chan_is_playing)
             {
-                int *chan_is_playing = &player->channel_isplaying[event->channel % MAX_NUMBER_OF_CHANNELS];
-                player->playback_callback(player->playback_userdata, event);
-                if(event->type == NOTE_ON && event->param2 != 0 && !*chan_is_playing)
-                {
-                    *chan_is_playing = TRUE;
-                }
+                *chan_is_playing = TRUE;
             }
         }
-
-        if(event->type == MIDI_SET_TEMPO && player != NULL)
-        {
-            /* memorize the tempo change value coming from the MIDI file */
-            fluid_atomic_int_set(&player->miditempo, event->param1);
-            fluid_player_update_tempo(player);
-        }
-
-        fluid_track_next_event(track);
-
     }
+
+    if(event->type == MIDI_SET_TEMPO && player != NULL)
+    {
+        /* memorize the tempo change value coming from the MIDI file */
+        fluid_atomic_int_set(&player->miditempo, event->param1);
+        fluid_player_update_tempo(player);
+    }
+
+    fluid_track_next_event(track);
+
+    return 1;
 }
 
 /******************************************************
@@ -2206,12 +2201,95 @@ fluid_player_callback(void *data, unsigned int msec)
             }
         }
 
-        for(i = 0; i < player->ntracks; i++)
+        if(seek_ticks >= 0)
         {
-            fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
-            if(!fluid_track_eot(player->track[i]))
+            /* When seeking, reset tracks whose tick position is at or
+             * beyond the seek position so they are re-played from the
+             * beginning of the seek target. */
+            for(i = 0; i < player->ntracks; i++)
             {
-                status = FLUID_PLAYER_PLAYING;
+                if(player->track[i]->ticks >= (unsigned int) seek_ticks)
+                {
+                    fluid_track_reset(player->track[i]);
+                }
+            }
+        }
+
+        /* Determine the target tick for this callback: when seeking,
+         * use the seek position; otherwise use the current tick. */
+        {
+            unsigned int target_ticks = player->cur_ticks;
+
+            if(seek_ticks >= 0)
+            {
+                target_ticks = (unsigned int) seek_ticks;
+            }
+
+            /* Process all events due at or before target_ticks in global
+             * tick order across all tracks. This ensures that events on
+             * different tracks of a format 1 file are sent in tick order,
+             * not track order, so that an event with an earlier tick on
+             * another track is not delayed past an event with a later
+             * tick. */
+            {
+                int sent;
+                do
+                {
+                    int best_track = -1;
+                    unsigned int best_tick = 0;
+
+                    /* Find the track whose next event has the earliest
+                     * absolute tick (track->ticks + event->dtime). */
+                    for(i = 0; i < player->ntracks; i++)
+                    {
+                        fluid_track_t *trk = player->track[i];
+                        fluid_midi_event_t *evt = trk->cur;
+
+                        if(evt == NULL)
+                        {
+                            continue;
+                        }
+
+                        if(best_track < 0 || (trk->ticks + evt->dtime) < best_tick)
+                        {
+                            best_track = i;
+                            best_tick = trk->ticks + evt->dtime;
+                        }
+                    }
+
+                    if(best_track < 0)
+                    {
+                        break;  /* no track has any remaining events */
+                    }
+
+                    if(best_tick > target_ticks)
+                    {
+                        break;  /* no event due yet at this tick */
+                    }
+
+                    /* Send the single earliest event from the chosen track. */
+                    sent = fluid_track_send_next_event(player->track[best_track],
+                                                       synth, player,
+                                                       target_ticks,
+                                                       seek_ticks >= 0 ? 1 : 0);
+
+                    if(!fluid_track_eot(player->track[best_track]))
+                    {
+                        status = FLUID_PLAYER_PLAYING;
+                    }
+                }
+                while(sent);
+
+                /* Check whether any track still has events left (for the
+                 * FLUID_PLAYER_PLAYING status). */
+                for(i = 0; i < player->ntracks; i++)
+                {
+                    if(!fluid_track_eot(player->track[i]))
+                    {
+                        status = FLUID_PLAYER_PLAYING;
+                        break;
+                    }
+                }
             }
         }
 
