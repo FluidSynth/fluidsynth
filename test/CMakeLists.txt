@@ -116,6 +116,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
     set(SYSEX_GS_DT1 "${RENDERING_OUTPUT_DIR}/sysex/gs_dt1")
     set(LIMITER_RENDER_DIR "${RENDERING_OUTPUT_DIR}/limiter")
     set(MTS_RENDER_DIR "${RENDERING_OUTPUT_DIR}/mts")
+    set(MISC_RENDER_DIR "${RENDERING_OUTPUT_DIR}/misc")
 
     if(LIBSNDFILE_SUPPORT)
         set(FEXT "wav")
@@ -136,7 +137,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
     add_custom_target(check_manual)
 
     add_custom_target(create_out_dir
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR} ${SFE_RENDER_DIR} ${SYSEX_GS_DT1} ${RPN_RENDER_DIR} ${LIMITER_RENDER_DIR}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${IIR_FILTER_RENDER_DIR} ${AWE32_NRPN_RENDER_DIR} ${SFSPEC_RENDER_DIR} ${PORTAMENTO_RENDER_DIR} ${REVERB_RENDER_DIR} ${EXCL_RENDER_DIR} ${DSPINTERP_RENDER_DIR} ${DYNSAM_RENDER_DIR} ${STACKEDSF_RENDER_DIR} ${GUGDEMO_RENDER_DIR} ${BANKSELECT_RENDER_DIR} ${SFE_RENDER_DIR} ${SYSEX_GS_DT1} ${RPN_RENDER_DIR} ${LIMITER_RENDER_DIR} ${MTS_RENDER_DIR} ${MISC_RENDER_DIR}
         VERBATIM)
 
     add_custom_target(render1415
@@ -721,6 +722,22 @@ endif (ENABLE_NATIVE_DLS )
         -R 0 -C 0 -g 1 ${GENERAL_USER_GS2} issue1833/out.mid
     )
 
+    add_custom_target(renderMisc
+        COMMENT "Rendering misc. MIDIs"
+        DEPENDS ${MANUAL_TEST_DEPENDS} create_out_dir
+    )
+    set_target_properties(renderMisc PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/manual/misc"
+    )
+    add_render_job(renderMisc
+        "${MISC_RENDER_DIR}/crash-1-fpe.${FEXT}"
+        -R 0 -C 0 -r 8000 -g 0.8 ${GENERAL_USER_GS2} crash-1-fpe.bin
+    )
+    add_render_job(renderMisc
+        "${MISC_RENDER_DIR}/crash-2-segv.${FEXT}"
+        -R 0 -C 0 -r 22050 -g 0.8 ${GENERAL_USER_GS2} crash-2-segv.bin
+    )
+
     # Add a dependency so that rendering targets depends on check_rendering
     add_dependencies(check_rendering render1415)
     add_dependencies(check_rendering render1417)
@@ -753,5 +770,6 @@ endif (ENABLE_NATIVE_DLS )
     add_dependencies(check_rendering renderLimiterTests)
     add_dependencies(check_rendering render1505)
     add_dependencies(check_rendering renderGSDT1)
+    add_dependencies(check_rendering renderMisc)
 
 endif ( NOT CMAKE_GENERATOR MATCHES "Visual Studio" )

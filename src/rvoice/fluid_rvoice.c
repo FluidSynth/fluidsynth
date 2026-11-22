@@ -109,12 +109,13 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
 }
 
 
-/* these should be the absolute minimum that FluidSynth can deal with */
-#define FLUID_MIN_LOOP_SIZE 2
-#define FLUID_MIN_LOOP_PAD 0
-
-#define FLUID_SAMPLESANITY_CHECK (1 << 0)
-#define FLUID_SAMPLESANITY_STARTUP (1 << 1)
+// Uncomment to get debug logging for sample sanity checks
+// #define DBG_SANITIZE
+#ifdef DBG_SANITIZE
+#define LOG_SANITIZE(...) FLUID_LOG(FLUID_DBG, __VA_ARGS__)
+#else
+#define LOG_SANITIZE(...) 
+#endif
 
 /* Purpose:
  *
@@ -133,12 +134,10 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     int max_index_loop = (int) voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1;	/* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
-#if 0
-    printf("Sample from %i to %i\n", voice->dsp.sample->start, voice->dsp.sample->end);
-    printf("Sample loop from %i %i\n", voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
-    printf("Playback from %i to %i\n", voice->dsp.start, voice->dsp.end);
-    printf("Playback loop from %i to %i\n", voice->dsp.loopstart, voice->dsp.loopend);
-#endif
+    LOG_SANITIZE("Sample from %i to %i", voice->dsp.sample->start, voice->dsp.sample->end);
+    LOG_SANITIZE("Sample loop from %i %i", voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
+    LOG_SANITIZE("Playback from %i to %i", voice->dsp.start, voice->dsp.end);
+    LOG_SANITIZE("Playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
 
     /* Keep the start point within the sample data */
     if(voice->dsp.start < min_index_nonloop)
@@ -166,7 +165,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
         int temp = voice->dsp.start;
         voice->dsp.start = voice->dsp.end;
         voice->dsp.end = temp;
-        /*FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of start / end points!"); */
+        LOG_SANITIZE("Loop / sample sanity check: Changing order of start / end points!");
     }
 
     /* Zero length? */
@@ -205,13 +204,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
             int temp = voice->dsp.loopstart;
             voice->dsp.loopstart = voice->dsp.loopend;
             voice->dsp.loopend = temp;
-            /*FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of loop points!"); */
-        }
-
-        /* Loop too short? Then don't loop. */
-        if(voice->dsp.loopend < voice->dsp.loopstart + FLUID_MIN_LOOP_SIZE)
-        {
-            voice->dsp.samplemode = FLUID_UNLOOPED;
+            LOG_SANITIZE("Loop / sample sanity check: Changing order of loop points!");
         }
 
         /* The loop points may have changed. Obtain a new estimate for the loop volume. */
@@ -236,15 +229,6 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     /* Run startup specific code (only once, when the voice is started) */
     if(voice->dsp.check_sample_sanity_flag & FLUID_SAMPLESANITY_STARTUP)
     {
-        if(max_index_loop - min_index_loop < FLUID_MIN_LOOP_SIZE)
-        {
-            if((voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE)
-                    || (voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE))
-            {
-                voice->dsp.samplemode = FLUID_UNLOOPED;
-            }
-        }
-
         /* Set the initial phase of the voice (using the result from the
         start offset modulators). */
         fluid_phase_set_int(voice->dsp.phase, voice->dsp.start);
@@ -271,19 +255,19 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
 
         if(index_in_sample >= voice->dsp.loopend)
         {
-            /* FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Phase after 2nd loop point!"); */
+            LOG_SANITIZE("Loop / sample sanity check: Phase after 2nd loop point!");
             fluid_phase_set_int(voice->dsp.phase, voice->dsp.loopstart);
         }
     }
 
-    /*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend); */
+    LOG_SANITIZE("Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend);
 
     /* Sample sanity has been assured. Don't check again, until some
        sample parameter is changed by modulation. */
     voice->dsp.check_sample_sanity_flag = 0;
-#if 0
-    printf("Sane? playback loop from %i to %i\n", voice->dsp.loopstart, voice->dsp.loopend);
-#endif
+
+    LOG_SANITIZE("Sane? playback loop from %i to %i", voice->dsp.loopstart, voice->dsp.loopend);
+
     fluid_check_fpe("voice_check_sample_sanity");
 }
 
@@ -380,6 +364,9 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             + modenv_val * voice->envlfo.modenv_to_pitch)
                             / 
                             voice->dsp.root_pitch_hz;
+    // phase increment must always be positive -> sample is always played forward, never backward
+    FLUID_ASSERT(voice->dsp.phase_incr >= 0);
+    fluid_clip(voice->dsp.phase_incr, 0.0f, FLUID_MAX_PHASE_INCR);
 
     /******************* portamento ****************/
     /* pitchoffset is updated if enabled.
@@ -416,12 +403,6 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     fluid_check_fpe("voice_write phase calculation");
 
-    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
-    if(voice->dsp.phase_incr == 0)
-    {
-        voice->dsp.phase_incr = 1;
-    }
-
     /* loop mode release? if not in release, the voice is silent
      * note: this intentionally processes the volenv before returning silence,
      * since that's what polyphone does (PR #1400) */
@@ -434,6 +415,9 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
                  || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
                      && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE);
+
+    // do not loop if the loop length is too short
+    is_looping &= voice->dsp.loopend >= voice->dsp.loopstart + FLUID_MIN_LOOP_SIZE;
 
     /*************** resonant filter ******************/
     // Only "prepare" the filter here, the filter itself will be applied in the dsp_interpolation routines below.

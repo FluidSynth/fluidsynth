@@ -74,17 +74,97 @@ fluid_rvoice_get_float_sample(const short int *FLUID_RESTRICT dsp_msb, const cha
     return (fluid_real_t)sample;
 }
 
+template<bool ROUND_PHASE_INDEX>
 static FLUID_INLINE unsigned short
 compute_interpolation_steps(fluid_phase_t dsp_phase, fluid_phase_t dsp_phase_incr, unsigned int dsp_end_index, unsigned short dsp_i)
 {
     // How many steps until phase_index > limit?
     fluid_phase_t boundary;
     fluid_phase_set_int(boundary, dsp_end_index + 1);
+    if (ROUND_PHASE_INDEX)
+    {
+        // fluid_phase_index_round() already reaches dsp_end_index + 1 at dsp_end_index + 0.5
+        boundary -= 0x80000000;
+    }
     // Phase can be slightly negative after a loop wrap and a previously rounded dsp_phase, so compare signed.
+    // Anything more negative is a runaway phase (index >= 2^31, caused by a huge phase_incr) that lies beyond every
+    // boundary; its unsigned difference to the boundary would otherwise look like a huge positive distance.
+    if (static_cast<int64_t>(dsp_phase) < -(static_cast<int64_t>(1) << 32))
+    {
+        return 0;
+    }
     int64_t remaining = static_cast<int64_t>(boundary - dsp_phase);
-    fluid_phase_t steps = remaining <= 0 ? 0 : ((static_cast<fluid_phase_t>(remaining) + dsp_phase_incr - 1) / dsp_phase_incr);
+    // Compute ceil(remaining / dsp_phase_incr) without overflowing for huge dsp_phase_incr (i.e. without adding dsp_phase_incr back into the numerator)
+    fluid_phase_t steps = remaining <= 0 ? 0 : ((static_cast<fluid_phase_t>(remaining) - 1) / dsp_phase_incr + 1);
     unsigned short iters = static_cast<unsigned short>(std::min<fluid_phase_t>(steps, (FLUID_BUFSIZE - dsp_i)));
     return iters;
+}
+
+// Wrap the phase back inside the loop range of the sample. MUST NOT be called for non-looping voices!
+template<bool ROUND_PHASE_INDEX>
+static FLUID_INLINE void
+fluid_wrap_phase(fluid_phase_t& dsp_phase, int loopstart, int loopend)
+{
+    fluid_phase_t dsp_phase_index;
+#if 0
+    // Subtract the full loop length until dsp_phase is in sample range again.
+    // In 99% of all cases, only a single iteration is required here.
+    // However, some MIDIs have successfully caused dsp_phase_incr to exceed the sample length by magnitudes,
+    // in which case N iterations would be required. This is not real-time safe.
+    // We therefore use the division / modulo wraparound below which is O(1).
+    do
+    {
+        fluid_phase_sub_int(dsp_phase, loopend - loopstart);
+        if (ROUND_PHASE_INDEX)
+        {
+            dsp_phase_index = fluid_phase_index_round(dsp_phase);
+        }
+        else
+        {
+            dsp_phase_index = fluid_phase_index(dsp_phase);
+        }
+    } while (dsp_phase_index > (loopend - 1 /* == end_index */));
+#else
+    unsigned int loop_len = loopend - loopstart;
+    FLUID_ASSERT(loopend >= loopstart + FLUID_MIN_LOOP_SIZE);
+    if (ROUND_PHASE_INDEX)
+    {
+        dsp_phase_index = fluid_phase_index_round(dsp_phase);
+    }
+    else
+    {
+        dsp_phase_index = fluid_phase_index(dsp_phase);
+    }
+    // index relative to loop start
+    unsigned int over = dsp_phase_index - loopstart;
+    unsigned int n_wraps = over / loop_len;
+
+    // subtract the index part, and keep the fractional part
+    fluid_phase_sub_int(dsp_phase, n_wraps * loop_len);
+#endif
+}
+
+/* Rounded renderers (none, silence) and sinc (which renders with a +0.5 phase offset)
+ * can leave dsp_phase up to half a sample *before* loopstart after a loop wrap.
+ * That is equivalent to the same offset before loopend, but truncating renderers
+ * would read sample loopstart-1 (or index 0xFFFFFFFF if loopstart == 0).
+ * Move the phase to the equivalent position at the loop end, so that every renderer
+ * can rely on phase >= loopstart once the voice has looped. */
+static FLUID_INLINE void
+fluid_normalize_loop_phase(const fluid_rvoice_dsp_t *voice, fluid_phase_t &dsp_phase, bool has_looped)
+{
+    if (has_looped)
+    {
+        fluid_phase_t loopstart_phase;
+        fluid_phase_set_int(loopstart_phase, voice->loopstart);
+
+        if (static_cast<int64_t>(dsp_phase) < static_cast<int64_t>(loopstart_phase))
+        {
+            fluid_phase_t loop_len;
+            fluid_phase_set_int(loop_len, voice->loopend - voice->loopstart);
+            fluid_phase_incr(dsp_phase, loop_len);
+        }
+    }
 }
 
 /* Special case of interpolate_none for rendering silent voices, i.e. in delay phase or zero volume */
@@ -97,18 +177,25 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
+    // whether the phase has wrapped this cycle
+    bool has_looped = false;
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
 
         /* interpolate sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        auto safe_count = compute_interpolation_steps<true>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -128,20 +215,16 @@ static int fluid_rvoice_dsp_silence_local(fluid_rvoice_t *rvoice, fluid_real_t *
         dsp_phase_index = fluid_phase_index_round(dsp_phase); /* round to nearest point */
 
         /* go back to loop start */
-        if(dsp_phase_index > end_index)
+        if (dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-            voice->has_looped = 1;
+            fluid_wrap_phase<true>(dsp_phase, voice->loopstart, voice->loopend);
+            has_looped = true;
         }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-    }
-
+    fluid_normalize_loop_phase(voice, dsp_phase, has_looped);
     voice->phase = dsp_phase;
+    voice->has_looped |= has_looped;
     // Note, there is no need to update the amplitude here. When the voice becomes audible again, the amp will be updated anyway in fluid_rvoice_calc_amp().
     // voice->amp = dsp_amp;
 
@@ -163,18 +246,25 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
+    // whether the phase has wrapped this cycle
+    bool has_looped = false;
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     end_index = LOOPING ? voice->loopend - 1 : voice->end;
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index_round(dsp_phase);	/* round to nearest point */
 
         /* interpolate sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        auto safe_count = compute_interpolation_steps<true>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -196,18 +286,14 @@ fluid_rvoice_dsp_interpolate_none_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-            voice->has_looped = 1;
+            fluid_wrap_phase<true>(dsp_phase, voice->loopstart, voice->loopend);
+            has_looped = true;
         }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-    }
-
+    fluid_normalize_loop_phase(voice, dsp_phase, has_looped);
     voice->phase = dsp_phase;
+    voice->has_looped |= has_looped;
 
     return (dsp_i);
 }
@@ -228,10 +314,17 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int end_index;
+    // whether the phase has wrapped this cycle
+    bool has_looped = false;
     fluid_real_t point;
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     /* last index before 2nd interpolation point must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 1;
@@ -252,12 +345,12 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
         return (coeffs[0] * s0 + coeffs[1] * s1);
     };
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index(dsp_phase);
 
         /* interpolate the sequence of sample points */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        auto safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -272,16 +365,10 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
             dsp_phase_index = fluid_phase_index(dsp_phase);
         }
 
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         end_index++;	/* we're now interpolating the last point */
 
         /* interpolate within last point */
-        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -304,20 +391,14 @@ fluid_rvoice_dsp_interpolate_linear_local(fluid_rvoice_t *rvoice, fluid_real_t *
         /* go back to loop start (if past */
         if(dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-            voice->has_looped = 1;
+            fluid_wrap_phase<false>(dsp_phase, voice->loopstart, voice->loopend);
+            has_looped = true;
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         end_index--;	/* set end back to second to last sample point */
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     voice->phase = dsp_phase;
+    voice->has_looped |= has_looped;
 
     return (dsp_i);
 }
@@ -342,11 +423,17 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     /* last index before 4th interpolation point must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - 2;
 
-    if(voice->has_looped)	/* set start_index and start point if looped or not */
+    /* set start_index and start point if voice has already looped AND loop points are actually valid (LOOPING==true) */
+    if(LOOPING && voice->has_looped)
     {
         start_index = voice->loopstart;
         start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);	/* last point in loop (wrap around) */
@@ -379,12 +466,12 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 + coeffs[3] * s3);
     };
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index(dsp_phase);
 
         /* interpolate first sample point (start or loop start) if needed */
-        auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, start_index, dsp_i);
+        auto safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, start_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -402,7 +489,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         }
 
         /* interpolate the sequence of sample points */
-        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -419,16 +506,10 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
             dsp_phase_index = fluid_phase_index(dsp_phase);
         }
 
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         end_index++;	/* we're now interpolating the 2nd to last point */
 
         /* interpolate within 2nd to last point */
-        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -448,7 +529,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index++;	/* we're now interpolating the last point */
 
         /* interpolate within the last point */
-        safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+        safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
         for(; safe_count--; dsp_i++)
         {
@@ -473,8 +554,7 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         /* go back to loop start */
         if(dsp_phase_index > end_index)
         {
-            fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-
+            fluid_wrap_phase<false>(dsp_phase, voice->loopstart, voice->loopend);
             if(!voice->has_looped)
             {
                 voice->has_looped = 1;
@@ -482,16 +562,11 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
                 start_point = fluid_rvoice_get_float_sample<IS_24BIT>(dsp_data, dsp_data24, voice->loopend - 1);
             }
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         end_index -= 2;	/* set end back to third to last sample point */
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
+    // Intentionally do NOT call fluid_normalize_loop_phase() here, because this is a truncating wrap (i.e. fluid_phase_index() is used to compute dsp_phase_index), so fluid_wrap_phase() leaves the phase in [loopstart, loopend).
+    // Calling fluid_normalize_loop_phase() wouldn't hurt though, it just wouldn't do anything.
     voice->phase = dsp_phase;
 
     return (dsp_i);
@@ -522,6 +597,8 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     unsigned short dsp_i = 0;
     unsigned int dsp_phase_index;
     unsigned int start_index, end_index;
+    // whether the phase has wrapped this cycle
+    bool has_looped = false;
 
     constexpr int half = SINC_ORDER / 2;
     constexpr int right_guard = SINC_ORDER - half - 1;
@@ -531,6 +608,11 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 
     /* Convert playback "speed" floating point value to phase index/fract */
     fluid_phase_set_float(dsp_phase_incr, voice->phase_incr);
+    /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+    if (dsp_phase_incr == 0)
+    {
+        fluid_phase_incr(dsp_phase_incr, 1);
+    }
 
     /* add 1/2 sample to dsp_phase since sinc interpolation is centered on
      * the (half+1)-th sample point */
@@ -539,7 +621,8 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
     /* last index before the right guard region must be specially handled */
     end_index = (LOOPING ? voice->loopend - 1 : voice->end) - right_guard;
 
-    if(voice->has_looped)   /* set start_index and start points if looped or not */
+    /* set start_index and start point if voice has already looped AND loop points are actually valid (LOOPING==true) */
+    if(LOOPING && voice->has_looped)
     {
         start_index = voice->loopstart;
         for(int j = 0; j < half; j++)
@@ -585,7 +668,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         return fluid_interp_sinc_kernel<SINC_ORDER>(s, x);
     };
 
-    while(1)
+    do
     {
         dsp_phase_index = fluid_phase_index(dsp_phase);
 
@@ -595,7 +678,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
          * relative to dsp_phase_index. start_index+i is the phase-index boundary. */
         for(int i = 0; i < half; i++)
         {
-            auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, start_index + i, dsp_i);
+            auto safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, start_index + i, dsp_i);
 
             for(; safe_count--; dsp_i++)
             {
@@ -621,7 +704,7 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
 
         /* Interpolate the main body — all taps read from live sample data */
         {
-            auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index, dsp_i);
+            auto safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index, dsp_i);
 
             for(; safe_count--; dsp_i++)
             {
@@ -638,19 +721,13 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
             }
         }
 
-        /* break out if buffer filled */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-
         /* Interpolate the right guard region.
          * For border step e (0-based), the rightmost (e+1) taps are drawn from
          * end_points; the remaining taps read live data at offsets (j-half)
          * relative to dsp_phase_index. end_index+1+e is the phase-index boundary. */
         for(int e = 0; e < right_guard; e++)
         {
-            auto safe_count = compute_interpolation_steps(dsp_phase, dsp_phase_incr, end_index + 1 + e, dsp_i);
+            auto safe_count = compute_interpolation_steps<false>(dsp_phase, dsp_phase_incr, end_index + 1 + e, dsp_i);
 
             for(; safe_count--; dsp_i++)
             {
@@ -682,8 +759,8 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
         /* go back to loop start */
         if(dsp_phase_index > end_index + right_guard)
         {
-            fluid_phase_sub_int(dsp_phase, loop_len);
-
+            fluid_wrap_phase<false>(dsp_phase, voice->loopstart, voice->loopend);
+            has_looped = true;
             if(!voice->has_looped)
             {
                 voice->has_looped = 1;
@@ -696,18 +773,13 @@ fluid_rvoice_dsp_interpolate_sinc_local(fluid_rvoice_t *rvoice, fluid_real_t *FL
                 }
             }
         }
-
-        /* break out if filled buffer */
-        if(dsp_i >= FLUID_BUFSIZE)
-        {
-            break;
-        }
-    }
+    } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
     /* sub 1/2 sample from dsp_phase since sinc interpolation is centered on
      * the (half+1)-th sample point (correct back to real value) */
     fluid_phase_decr(dsp_phase, (fluid_phase_t)0x80000000);
 
+    fluid_normalize_loop_phase(voice, dsp_phase, has_looped);
     voice->phase = dsp_phase;
 
     return (dsp_i);

@@ -62,7 +62,7 @@ typedef uint64_t fluid_phase_t;
  * the playing pointer will advance it by 0.9 samples. */
 #define fluid_phase_set_float(a, b) \
   (a) = (((uint64_t)(b)) << 32) \
-  | (uint32_t) (((double)(b) - (int)(b)) * (double)FLUID_FRACT_MAX)
+  | (uint32_t) (((double)(b) - (double)(uint64_t)(b)) * (double)FLUID_FRACT_MAX)
 
 /* create a fluid_phase_t from an index and a fraction value */
 #define fluid_phase_from_index_fract(index, fract) \
