@@ -1,5 +1,47 @@
 # 📝 Release Notes
 
+## FluidSynth 2.6.3
+
+* Fix CVE-2026-111123 (#1900, #1901, GHSA-xx3f-mq9p-5prg)
+* Fix a heap-based buffer overflow vulnerability when rendering crafted MIDI files (#1917, GHSA-g4r7-g73m-843m)
+* Fix a regression introduced in 2.6.0 that might have cause a div-by-zero when rendering certain MIDI files at low sample rates (#1917)
+* Fix a build issue with clang 23 when LADSPA support was enabled (#1898, thanks to @pedrolcl)
+* Fix several quirks related to sostenuto (#1904, #1905, #1908 thanks to @Yikai-Liao)
+* Fix `Failed to set thread to high priority` error (#1907, thanks to @shumvgolove)
+* Fix handling of finished voices after reducing polyphony (#1909, thanks to @Yikai-Liao)
+* Fix stack use-after-scope in `channelsmode` shell command (#1913⁠, thanks to @laramiel)
+* Preserve LFO direction during frequency updates (#1310, thanks to @Yikai-Liao)
+* Add Windows ARM64 binaries to fluidsynth releases (#1911)
+* Fix several memory leaks (#1916)
+* Minor performance improvements (#1902, #1910, thanks to @Yikai-Liao)
+
+## FluidSynth 2.6.2
+
+* Fix inconsistent note-onset-ramps when fluidsynth reuses a voice (#1863, thanks to @Yikai-Liao)
+* Preserve MIDI parser state except on System Reset (#1868, thanks to @Yikai-Liao)
+* Performance optimization for the IIR-filter (#1867, thanks to @Yikai-Liao)
+* Fix infinite loop in DSP when sample-loop-wrap leaves phase negative (#1871)
+* Fix the 4 ms predelay in Dattorro reverb (#1872, thanks to @Yikai-Liao)
+* Honor sustain when releasing sostenuto (#1880, thanks to @Yikai-Liao)
+* The MIDI player now rejects zero tempo in MIDI files (#1881 thanks to @Yikai-Liao)
+* Fix loud and distorted sound for some SF3 files (#1856, thanks to @Yikai-Liao)
+* Fix `NoteOff` events  possibly reviving stale notes after receiving `AllNotesOff` and `AllSoundsOff` (#1879, thanks to @Yikai-Liao)
+* When switching between MIDI modes, fluidsynth now force-releases playing notes, as per MIDI spec (#1859)
+* Fluidsynth now enforces the data value of CC126 events only when being in OMNI OFF mode, and remembers it when in OMNI ON mode (#1859)
+* Fix libfluidsynth's install name on MacOS to make it relocatable (`@rpath`) rather than tied to an absolute build/install path (#1891, thanks to @pedrolcl)
+* Fix memory leaks in the SDL3 audio driver (#1893, thanks to @rsp4jack)
+* Fix a race-condition during multi-threaded rendering (#1895, thanks to @Yikai-Liao)
+
+## FluidSynth 2.6.1
+
+* It's now possible to set the node name of the pipewire driver, see `audio.pipewire.id` setting (#1842, thanks to @anupam-git)
+* Fix a random race condition and possible deadlock in `delete_fluid_server()` on MacOS and possibly other POSIX-based OSs (#1837)
+* Fix AWE32 NRPNs not working for DLS files (#1849)
+* Fix a bug that might have caused samples from outside the sample loop to be considered for interpolation, when the interpolation order is larger than the sample loop length (#1826)
+* Fix a build issue with old Pipewire versions (#1828)
+* Fix a build issue when cross-compiling (#1835, thanks to @tpetazzoni)
+* Fix a build issue on FreeBSD (#1836, thanks to @lhondareyte)
+
 ## FluidSynth 2.6.0
 
 ### New Features
