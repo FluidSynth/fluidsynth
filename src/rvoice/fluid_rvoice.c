@@ -117,11 +117,6 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
 #define LOG_SANITIZE(...) 
 #endif
 
-/* these should be the absolute minimum that FluidSynth can deal with */
-#define FLUID_MIN_LOOP_SIZE 2
-#define FLUID_MIN_LOOP_PAD 0
-#define FLUID_MAX_PHASE_INCR ((fluid_real_t)(INT_MAX - 127))
-
 /* Purpose:
  *
  * Make sure, that sample start / end point and loop points are in

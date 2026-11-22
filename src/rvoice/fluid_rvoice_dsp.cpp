@@ -126,7 +126,7 @@ fluid_wrap_phase(fluid_phase_t& dsp_phase, int loopstart, int loopend)
     } while (dsp_phase_index > (loopend - 1 /* == end_index */));
 #else
     unsigned int loop_len = loopend - loopstart;
-    FLUID_ASSERT(loop_len > 0);
+    FLUID_ASSERT(loopend >= loopstart + FLUID_MIN_LOOP_SIZE);
     if (ROUND_PHASE_INDEX)
     {
         dsp_phase_index = fluid_phase_index_round(dsp_phase);
@@ -565,6 +565,8 @@ fluid_rvoice_dsp_interpolate_4th_order_local(fluid_rvoice_t *rvoice, fluid_real_
         end_index -= 2;	/* set end back to third to last sample point */
     } while (dsp_i < FLUID_BUFSIZE); /* break out if filled buffer */
 
+    // Intentionally do NOT call fluid_normalize_loop_phase() here, because this is a truncating wrap (i.e. fluid_phase_index() is used to compute dsp_phase_index), so fluid_wrap_phase() leaves the phase in [loopstart, loopend).
+    // Calling fluid_normalize_loop_phase() wouldn't hurt though, it just wouldn't do anything.
     voice->phase = dsp_phase;
 
     return (dsp_i);

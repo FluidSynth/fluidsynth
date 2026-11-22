@@ -43,6 +43,11 @@ typedef struct _fluid_rvoice_t fluid_rvoice_t;
  */
 #define FLUID_NOISE_FLOOR ((fluid_real_t)2.e-7)
 
+/* these should be the absolute minimum that FluidSynth can deal with */
+#define FLUID_MIN_LOOP_SIZE 2
+#define FLUID_MIN_LOOP_PAD 0
+#define FLUID_MAX_PHASE_INCR ((fluid_real_t)(INT_MAX - 127))
+
 enum fluid_loop
 {
     FLUID_UNLOOPED = 0,
