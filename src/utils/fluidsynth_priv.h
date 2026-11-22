@@ -290,8 +290,11 @@ _fluid_snprintf(char *buffer, size_t count, const char *format, ...)
 #endif
 
 
+/* Clamp _val to [_min, _max]. NaN is mapped to _min, because all
+ * comparisons with NaN are false and fall through to the _min branch.
+ * Note: _val is evaluated multiple times, so watch out for side effects! */
 #define fluid_clip(_val, _min, _max) \
-{ (_val) = ((_val) < (_min))? (_min) : (((_val) > (_max))? (_max) : (_val)); }
+do{ (_val) = ((_val) > (_min)) ? (((_val) < (_max)) ? (_val) : (_max)) : (_min); } while(0)
 
 #if WITH_FTS
 #define FLUID_PRINTF                 post
