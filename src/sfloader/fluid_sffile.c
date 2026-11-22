@@ -559,7 +559,7 @@ static int load_header(SFData *sf)
     if(chunk.id != RIFF_FCC)
     {
         /* error if not RIFF */
-        FLUID_LOG(FLUID_ERR, "Not a RIFF file");
+        FLUID_LOG(FLUID_DBG, "Not a RIFF file");
         return FALSE;
     }
 
@@ -568,7 +568,7 @@ static int load_header(SFData *sf)
     if(chunk.id != SFBK_FCC)
     {
         /* error if not SFBK_ID */
-        FLUID_LOG(FLUID_ERR, "Not a SoundFont file");
+        FLUID_LOG(FLUID_DBG, "Not a SoundFont file");
         return FALSE;
     }
 
