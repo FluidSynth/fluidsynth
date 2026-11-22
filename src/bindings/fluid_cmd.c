@@ -963,15 +963,15 @@ fluid_handle_load(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "failed to load the SoundFont\n");
         return FLUID_FAILED;
     }
-    else
-    {
-        fluid_ostream_printf(out, "loaded SoundFont has ID %d and bankofs=%d\n", id, offset);
-    }
 
+    /* Without an explicit offset, keep the one an RMIDI file may bring along. */
     if(offset)
     {
         fluid_synth_set_bank_offset(handler->synth, id, offset);
     }
+
+    fluid_ostream_printf(out, "loaded SoundFont has ID %d and bankofs=%d\n", id,
+                         fluid_synth_get_bank_offset(handler->synth, id));
 
     /* The reset should be done after the offset is set. */
     if(reset)

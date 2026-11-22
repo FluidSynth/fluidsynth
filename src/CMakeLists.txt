@@ -138,6 +138,8 @@ set ( libfluidsynth_SOURCES
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h
     sfloader/fluid_sfont.c
+    sfloader/fluid_rmidi.c
+    sfloader/fluid_rmidi.h
     sfloader/fluid_sffile.c
     sfloader/fluid_sffile.h
     sfloader/fluid_samplecache.c
