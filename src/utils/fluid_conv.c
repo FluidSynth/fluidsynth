@@ -50,7 +50,12 @@ extern const fluid_real_t *const fluid_pan_tab;
 fluid_real_t
 fluid_ct2hz_real(fluid_real_t cents)
 {
-    static const fluid_real_t CENTS_MAX = (fluid_real_t)(INT_MAX - 127);
+    // Maximum absolute range supported by this function, without triggering impl. def. integer wraparounds.
+    // 32 because that's the maximum shift amount of the uint "fac" below.
+    // 1200 is the divisor for computing "fac".
+    // 300 because that's what we're adding back to icents
+    // -1 to ensure we're not shifting by 32 bits and risking an overflow.
+    static const fluid_real_t CENTS_MAX = (fluid_real_t)(32 * 1200 - 300 -1);
 
     fluid_real_t mult;
     int fac, rem;
