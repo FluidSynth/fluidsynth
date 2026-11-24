@@ -12,10 +12,19 @@ endif( NOT expected_output )
 
 separate_arguments( test_args )
 
-execute_process(
-   COMMAND ${test_cmd} ${test_args}
-   RESULT_VARIABLE test_not_successful
-)
+if( test_emulator )
+   separate_arguments( test_emulator )
+   execute_process(
+      COMMAND ${test_emulator} ${test_cmd} ${test_args}
+      OUTPUT_FILE ${test_output}
+      RESULT_VARIABLE test_not_successful
+   )
+else()
+   execute_process(
+      COMMAND ${test_cmd} ${test_args}
+      RESULT_VARIABLE test_not_successful
+   )
+endif()
 
 if( test_not_successful )
     message( FATAL_ERROR "${test_cmd} ${test_args} returned error ${test_not_successful}!" )

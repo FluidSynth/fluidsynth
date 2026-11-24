@@ -91,16 +91,28 @@ macro ( ADD_FLUID_SF_DUMP_TEST _sfname)
 
     set( test_args "${PROJECT_SOURCE_DIR}/sf2/${_sfname} ${_sfname}.yml" )
 
-    # RunOutputTest.cmake invokes dump_sfont on the host and uses source-tree paths.
-    if(NOT ANDROID)
-        ADD_TEST(${_sfname}_dump_test
-            ${CMAKE_COMMAND}
-            -Dtest_cmd=${PROJECT_BINARY_DIR}/test/utils/dump_sfont${CMAKE_EXECUTABLE_SUFFIX}
-            -Dtest_args=${test_args}
-            -Dtest_output=${_sfname}.yml
-            -Dexpected_output=${PROJECT_SOURCE_DIR}/sf2/${_sfname}.yml
-            -P ${PROJECT_SOURCE_DIR}/cmake_admin/RunOutputTest.cmake
-        )
+    if( NOT ANDROID OR CMAKE_CROSSCOMPILING_EMULATOR )
+        if( ANDROID )
+            ADD_TEST(NAME ${_sfname}_dump_test
+                COMMAND cmake
+                "-Dtest_emulator=${CMAKE_CROSSCOMPILING_EMULATOR}"
+                -Dtest_cmd=./dump_sfont
+                -Dtest_args=sf2/${_sfname}
+                -Dtest_output=${_sfname}.yml
+                -Dexpected_output=sf2/${_sfname}.yml
+                -P ./RunOutputTest.cmake
+            )
+        else()
+            ADD_TEST(${_sfname}_dump_test
+                ${CMAKE_COMMAND}
+                -Dtest_cmd=${PROJECT_BINARY_DIR}/test/utils/dump_sfont${CMAKE_EXECUTABLE_SUFFIX}
+                -Dtest_args=${test_args}
+                -Dtest_output=${_sfname}.yml
+                -Dexpected_output=${PROJECT_SOURCE_DIR}/sf2/${_sfname}.yml
+                -P ${PROJECT_SOURCE_DIR}/cmake_admin/RunOutputTest.cmake
+            )
+        endif()
+        set_tests_properties(${_sfname}_dump_test PROPERTIES TIMEOUT 120)
     endif()
 
 endmacro ( ADD_FLUID_SF_DUMP_TEST )

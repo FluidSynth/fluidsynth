@@ -116,7 +116,10 @@ package_libraries() {
         [[ -f "$executable" && -x "$executable" ]] || continue
         cp -a "$executable" "$work/tests/"
     done
+    cp -a "$tests/utils/dump_sfont" "$work/tests/"
     cp -a "$tests/sf2" "$tests/test" "$tests/CTestTestfile.cmake" "$work/tests/"
+    cp -a "$root"/sf2/*.yml "$work/tests/sf2/"
+    cp -a "$root/cmake_admin/RunOutputTest.cmake" "$work/tests/"
     cp -a "$package/lib/$abi/." "$work/tests/lib/"
 }
 
