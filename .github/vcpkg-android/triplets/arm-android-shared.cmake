@@ -1,0 +1,3 @@
+set(VCPKG_TARGET_ARCHITECTURE arm)
+set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DANDROID_ABI=armeabi-v7a)
+include("${CMAKE_CURRENT_LIST_DIR}/android-shared.cmake")
