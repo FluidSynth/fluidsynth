@@ -38,7 +38,7 @@
 * Limiter API.
 */
 fluid_limiter_t *
-new_fluid_limiter(fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
+new_fluid_limiter(fluid_real_t sample_rate, const fluid_limiter_settings_t *settings)
 {
     fluid_limiter_t *lim;
 
@@ -67,6 +67,17 @@ delete_fluid_limiter(fluid_limiter_t *lim)
 {
     fluid_return_if_fail(lim != NULL);
     fluid_limiter_impl_delete(lim);
+}
+
+/*
+* Updates limiter DSP parameters in-place without reallocating.
+*/
+void
+fluid_limiter_set_params(fluid_limiter_t *lim, const fluid_limiter_settings_t *settings)
+{
+    fluid_return_if_fail(lim != NULL);
+    fluid_return_if_fail(settings != NULL);
+    fluid_limiter_impl_set_params(lim, settings);
 }
 
 /*
