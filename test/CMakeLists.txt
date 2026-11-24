@@ -78,6 +78,10 @@ if( LIBSNDFILE_SUPPORT )
     ADD_FLUID_TEST(test_fast_render)
 endif()
 
+if( SIGNALSMITH_SUPPORT )
+    ADD_FLUID_TEST(test_synth_limiter)
+endif()
+
 ADD_FLUID_TEST_UTIL(dump_sfont)
 
 ADD_FLUID_SF_DUMP_TEST(VintageDreamsWaves-v2.sf2)

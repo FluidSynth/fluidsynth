@@ -35,6 +35,9 @@ using fluid_real_t = double;
 #include <exception>
 #include <memory>
 #include <new>
+#ifdef TRAP_ON_FPE
+#include <cfenv>
+#endif
 
 #ifdef WITH_FLOAT
 using Limiter = signalsmith::basics::LimiterFloat;
@@ -44,8 +47,28 @@ using Limiter = signalsmith::basics::LimiterDouble;
 
 namespace
 {
+#ifdef TRAP_ON_FPE
+/* Signalsmith's ChannelEnvelope default-constructs BoxFilter(0), which divides
+ * 1/0 before resizing during configure(). Mask traps only around configure(). */
+struct fpe_trap_guard
+{
+    std::fenv_t env;
+    fpe_trap_guard()
+    {
+        std::feholdexcept(&env);
+    }
+    ~fpe_trap_guard()
+    {
+        std::fesetenv(&env);
+    }
+};
+#endif
+
 bool configure_limiter(Limiter &lim, fluid_real_t sample_rate, unsigned int block_size)
 {
+#ifdef TRAP_ON_FPE
+    fpe_trap_guard fpe_guard;
+#endif
     if(!lim.configure(sample_rate, block_size,
                       FLUID_LIMITER_NUM_CHANNELS_AT_ONCE,
                       FLUID_LIMITER_NUM_CHANNELS_AT_ONCE))
