@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    {
+      "name": "libsndfile",
+      "default-features": false,
+      "features": ["external-libs"]
+    },
+    "oboe"
+  ]
+}
