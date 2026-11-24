@@ -36,8 +36,14 @@ macro ( ADD_FLUID_TEST _test )
     )
 
     # add the test to ctest
-    if( NOT ANDROID )
-        ADD_TEST(NAME ${_test} COMMAND ${_test})
+    if( NOT ANDROID OR CMAKE_CROSSCOMPILING_EMULATOR )
+        if( ANDROID )
+            # Android suites are staged separately from their build tree. A target
+            # reference would make CTest require the original executable path.
+            ADD_TEST(NAME ${_test} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "./${_test}")
+        else()
+            ADD_TEST(NAME ${_test} COMMAND ${_test})
+        endif()
         # All unit tests run fairly quick within a few seconds.
         # Set a timeout of 120 seconds to ensure that tests do not hang indefinitely.
         set_tests_properties(${_test} PROPERTIES TIMEOUT 120)
@@ -85,14 +91,17 @@ macro ( ADD_FLUID_SF_DUMP_TEST _sfname)
 
     set( test_args "${PROJECT_SOURCE_DIR}/sf2/${_sfname} ${_sfname}.yml" )
 
-    ADD_TEST(${_sfname}_dump_test
-        ${CMAKE_COMMAND}
-        -Dtest_cmd=${PROJECT_BINARY_DIR}/test/utils/dump_sfont${CMAKE_EXECUTABLE_SUFFIX}
-        -Dtest_args=${test_args}
-        -Dtest_output=${_sfname}.yml
-        -Dexpected_output=${PROJECT_SOURCE_DIR}/sf2/${_sfname}.yml
-        -P ${PROJECT_SOURCE_DIR}/cmake_admin/RunOutputTest.cmake
-    )
+    # RunOutputTest.cmake invokes dump_sfont on the host and uses source-tree paths.
+    if(NOT ANDROID)
+        ADD_TEST(${_sfname}_dump_test
+            ${CMAKE_COMMAND}
+            -Dtest_cmd=${PROJECT_BINARY_DIR}/test/utils/dump_sfont${CMAKE_EXECUTABLE_SUFFIX}
+            -Dtest_args=${test_args}
+            -Dtest_output=${_sfname}.yml
+            -Dexpected_output=${PROJECT_SOURCE_DIR}/sf2/${_sfname}.yml
+            -P ${PROJECT_SOURCE_DIR}/cmake_admin/RunOutputTest.cmake
+        )
+    endif()
 
 endmacro ( ADD_FLUID_SF_DUMP_TEST )
 
