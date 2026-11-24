@@ -64,6 +64,17 @@ struct fpe_trap_guard
 };
 #endif
 
+void apply_limiter_settings(Limiter &lim, const fluid_limiter_settings_t &settings)
+{
+    lim.inputGain = settings.input_gain;
+    lim.outputLimit = settings.output_limit;
+    lim.attackMs = settings.attack_ms;
+    lim.holdMs = settings.hold_ms;
+    lim.releaseMs = settings.release_ms;
+    lim.smoothingStages = settings.smoothing_stages;
+    lim.linkChannels = settings.link_channels;
+}
+
 bool configure_limiter(Limiter &lim, fluid_real_t sample_rate, unsigned int block_size)
 {
 #ifdef TRAP_ON_FPE
@@ -100,19 +111,18 @@ extern "C" void fluid_limiter_impl_set_sample_rate(fluid_limiter_t* lim, fluid_r
     }
 }
 
-extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, fluid_limiter_settings_t* settings, unsigned int block_size)
+extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, const fluid_limiter_settings_t *settings, unsigned int block_size)
 {
     try
     {
-        std::unique_ptr<Limiter> lim(new Limiter(settings->attack_ms + settings->hold_ms));
+        /* Pre-size ring buffers for the maximum registered attack + hold range
+         * (+1 ms rounding margin for ceil(attack) + ceil(hold)) so runtime
+         * parameter changes update in-place without audio-thread reallocation.
+         * Actual look-ahead latency still depends only on attackMs. */
+        constexpr double max_delay_ms = FLUID_LIMITER_MAX_ATTACK_MS + FLUID_LIMITER_MAX_HOLD_MS + 1.0;
+        std::unique_ptr<Limiter> lim(new Limiter(max_delay_ms));
 
-        lim->inputGain = settings->input_gain;
-        lim->outputLimit = settings->output_limit;
-        lim->attackMs = settings->attack_ms;
-        lim->holdMs = settings->hold_ms;
-        lim->releaseMs = settings->release_ms;
-        lim->smoothingStages = settings->smoothing_stages;
-        lim->linkChannels = settings->link_channels;
+        apply_limiter_settings(*lim, *settings);
 
         if(!configure_limiter(*lim, sample_rate, block_size))
         {
@@ -135,6 +145,11 @@ extern "C" fluid_limiter_t *fluid_limiter_impl_new(fluid_real_t sample_rate, flu
     }
 
     return nullptr;
+}
+
+extern "C" void fluid_limiter_impl_set_params(fluid_limiter_t *lim, const fluid_limiter_settings_t *settings)
+{
+    apply_limiter_settings(*(Limiter *)lim, *settings);
 }
 
 extern "C" void fluid_limiter_impl_delete(fluid_limiter_t* lim)

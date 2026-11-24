@@ -32,6 +32,8 @@ extern "C" {
 // how many channel buffers to process at once
 // maybe if we want to parallelize, we might set this to 1
 #define FLUID_LIMITER_NUM_CHANNELS_AT_ONCE 2
+#define FLUID_LIMITER_MAX_ATTACK_MS 250.0f
+#define FLUID_LIMITER_MAX_HOLD_MS 250.0f
 
 typedef struct
 {
@@ -47,9 +49,11 @@ typedef struct
 typedef void fluid_limiter_t;
 
 fluid_limiter_t *
-new_fluid_limiter(fluid_real_t sample_rate, fluid_limiter_settings_t* settings);
+new_fluid_limiter(fluid_real_t sample_rate, const fluid_limiter_settings_t *settings);
 
 void delete_fluid_limiter(fluid_limiter_t* lim);
+
+void fluid_limiter_set_params(fluid_limiter_t *lim, const fluid_limiter_settings_t *settings);
 
 int fluid_limiter_samplerate_change(fluid_limiter_t* lim, fluid_real_t sample_rate);
 

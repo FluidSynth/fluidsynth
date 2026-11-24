@@ -108,6 +108,7 @@ struct _fluid_rvoice_mixer_t
 
 #ifdef SIGNALSMITH_SUPPORT
     fluid_limiter_t *limiter;
+    fluid_real_t limiter_sample_rate;
 #endif
 
 #ifdef LADSPA
@@ -803,6 +804,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
     }
 
 #ifdef SIGNALSMITH_SUPPORT
+    mixer->limiter_sample_rate = samplerate;
     if(mixer->limiter != NULL)
     {
         fluid_limiter_samplerate_change(mixer->limiter, samplerate);
@@ -851,6 +853,9 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
     mixer->fx_units = fx_units;
     mixer->buffers.buf_count = buf_count;
     mixer->buffers.fx_buf_count = fx_buf_count * fx_units;
+#ifdef SIGNALSMITH_SUPPORT
+    mixer->limiter_sample_rate = sample_rate;
+#endif
 
     /* allocate the reverb module */
     mixer->fx = FLUID_ARRAY(fluid_mixer_fx_t, fx_units);
@@ -1022,11 +1027,47 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
 #endif
 
 #ifdef SIGNALSMITH_SUPPORT
-int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sample_rate, fluid_limiter_settings_t* settings)
+int fluid_rvoice_mixer_set_limiter(fluid_rvoice_mixer_t *mixer, fluid_real_t sample_rate, const fluid_limiter_settings_t *settings)
 {
+    mixer->limiter_sample_rate = sample_rate;
     mixer->limiter = new_fluid_limiter(sample_rate, settings);
 
     return mixer->limiter != NULL;
+}
+
+/* Enable, disable, or update limiter parameters in-place. */
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_limiter_params)
+{
+    fluid_rvoice_mixer_t *mixer = static_cast<fluid_rvoice_mixer_t *>(obj);
+    int active = (param[0].i != 0);
+    fluid_limiter_settings_t settings;
+
+    if(!active)
+    {
+        if(mixer->limiter != NULL)
+        {
+            delete_fluid_limiter(mixer->limiter);
+            mixer->limiter = NULL;
+        }
+        return;
+    }
+
+    settings.input_gain = FLUID_LIMITER_DEFAULT_INPUT_GAIN;
+    settings.smoothing_stages = param[1].i;
+    settings.output_limit = param[2].real;
+    settings.attack_ms = param[3].real;
+    settings.hold_ms = param[4].real;
+    settings.release_ms = param[5].real;
+    settings.link_channels = param[6].real;
+
+    if(mixer->limiter != NULL)
+    {
+        fluid_limiter_set_params(mixer->limiter, &settings);
+    }
+    else
+    {
+        mixer->limiter = new_fluid_limiter(mixer->limiter_sample_rate, &settings);
+    }
 }
 #endif /* SIGNALSMITH_SUPPORT */
 
