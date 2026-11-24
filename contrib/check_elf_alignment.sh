@@ -9,10 +9,11 @@ progname="${progname%.sh}"
 # usage: check_elf_alignment.sh [path to *.so files|path to *.apk]
 
 cleanup_trap() {
+  local status=$?
   if [ -n "${tmp}" -a -d "${tmp}" ]; then
-    rm -rf ${tmp}
+    rm -rf "${tmp}"
   fi
-  exit $1
+  exit "$status"
 }
 
 usage() {
@@ -21,6 +22,7 @@ usage() {
   echo "16 KB or 64 KB aligned. Otherwise they are reported as UNALIGNED."
   echo
   echo "Usage: ${progname} [input-path|input-APK|input-APEX]"
+  echo "Set OBJDUMP to select an ELF reader (for example, the NDK llvm-objdump)."
 }
 
 if [ ${#} -ne 1 ]; then
@@ -100,11 +102,17 @@ for match in $matches; do
 
   [[ $(file "${match}") == *"ELF"* ]] || continue
 
-  res="$(objdump -p "${match}" | grep LOAD | awk '{ print $NF }' | head -1)"
-  if [[ $res =~ 2\*\*(1[4-9]|[2-9][0-9]|[1-9][0-9]{2,}) ]]; then
-    echo -e "${match}: ${GREEN}ALIGNED${ENDCOLOR} ($res)"
+  if ! headers="$("${OBJDUMP:-objdump}" -p "${match}")"; then
+    echo "Failed to read ELF headers: ${match}" >&2
+    exit 1
+  fi
+  res="$(printf '%s\n' "$headers" | awk '$1 == "LOAD" { print $NF }')"
+  res_inline=${res//$'\n'/ }
+  # Every LOAD segment must be aligned, not only the first one.
+  if [[ -n "$res" ]] && ! grep -qvE '^2\*\*(1[4-9]|[2-9][0-9]|[1-9][0-9]{2,})$' <<< "$res"; then
+    echo -e "${match}: ${GREEN}ALIGNED${ENDCOLOR} (${res_inline})"
   else
-    echo -e "${match}: ${RED}UNALIGNED${ENDCOLOR} ($res)"
+    echo -e "${match}: ${RED}UNALIGNED${ENDCOLOR} (${res_inline})"
     unaligned_libs+=("${match}")
   fi
 done
