@@ -231,10 +231,71 @@ static void test_all_off_monolist(fluid_synth_t *synth, int all_sounds)
     }
 }
 
+/* Check the Bank Select MSB defaults on every channel. */
+static void test_bank_select_defaults(fluid_synth_t *synth, int melodic_msb, int drum_msb)
+{
+    int chan, msb;
+
+    for(chan = 0; chan < fluid_synth_count_midi_channels(synth); chan++)
+    {
+        TEST_SUCCESS(fluid_synth_get_cc(synth, chan, BANK_SELECT_MSB, &msb));
+        TEST_ASSERT(msb == (chan == 9 ? drum_msb : melodic_msb));
+    }
+}
+
+/* Check Bank Select at creation, system reset and mode-specific SysEx reset. */
+static void test_bank_select_reset(const char *style, const char *sysex, int len,
+                                   int melodic_msb, int drum_msb)
+{
+    fluid_settings_t *settings = new_fluid_settings();
+    fluid_synth_t *synth;
+    fluid_preset_t *preset;
+    int msb, lsb;
+    char gm_sysex[] = { MIDI_SYSEX_UNIV_NON_REALTIME, MIDI_SYSEX_DEVICE_ID_ALL,
+                        MIDI_SYSEX_GM_ID, MIDI_SYSEX_GM_ON };
+
+    TEST_ASSERT(settings != NULL);
+    TEST_SUCCESS(fluid_settings_setstr(settings, "synth.midi-bank-select", style));
+    synth = new_fluid_synth(settings);
+    TEST_ASSERT(synth != NULL);
+    test_bank_select_defaults(synth, melodic_msb, drum_msb);
+
+    TEST_SUCCESS(fluid_synth_cc(synth, 9, BANK_SELECT_MSB, melodic_msb));
+    TEST_SUCCESS(fluid_synth_cc(synth, 9, BANK_SELECT_MSB, 1));
+    TEST_SUCCESS(fluid_synth_cc(synth, 9, BANK_SELECT_LSB, 3));
+    TEST_SUCCESS(fluid_synth_cc(synth, 9, ALL_CTRL_OFF, 0));
+    TEST_SUCCESS(fluid_synth_get_cc(synth, 9, BANK_SELECT_MSB, &msb));
+    TEST_SUCCESS(fluid_synth_get_cc(synth, 9, BANK_SELECT_LSB, &lsb));
+    TEST_ASSERT(msb == 1 && lsb == 3);
+
+    TEST_SUCCESS(fluid_synth_system_reset(synth));
+    test_bank_select_defaults(synth, melodic_msb, drum_msb);
+
+    TEST_SUCCESS(fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
+    TEST_SUCCESS(fluid_synth_sysex(synth, gm_sysex, sizeof(gm_sysex), NULL, NULL, NULL, FALSE));
+    test_bank_select_defaults(synth, 0, 0);
+    TEST_SUCCESS(fluid_synth_sysex(synth, sysex, len, NULL, NULL, NULL, FALSE));
+    test_bank_select_defaults(synth, melodic_msb, drum_msb);
+
+    /* Resend CC0 and select program 8 to exercise fallback to the default drum preset. */
+    TEST_SUCCESS(fluid_synth_get_cc(synth, 9, BANK_SELECT_MSB, &msb));
+    TEST_SUCCESS(fluid_synth_cc(synth, 9, BANK_SELECT_MSB, msb));
+    TEST_SUCCESS(fluid_synth_program_change(synth, 9, 8));
+    preset = fluid_synth_get_channel_preset(synth, 9);
+    TEST_ASSERT(preset != NULL);
+    TEST_ASSERT(fluid_preset_get_banknum(preset) == DRUM_INST_BANK);
+
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
+}
+
 /* Test controller resets and overlapping hold pedals. */
 int main(void)
 {
     int chan, mono;
+    char xg_sysex[] = { MIDI_SYSEX_MANUF_YAMAHA, 0x10, MIDI_SYSEX_XG_ID, 0, 0, 0x7e, 0 };
+    char gm2_sysex[] = { MIDI_SYSEX_UNIV_NON_REALTIME, MIDI_SYSEX_DEVICE_ID_ALL,
+                         MIDI_SYSEX_GM_ID, MIDI_SYSEX_GM2_ON };
     fluid_synth_t *synth;
     fluid_settings_t *settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
@@ -274,6 +335,9 @@ int main(void)
     test_all_off_monolist(synth, 1);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
+
+    test_bank_select_reset("xg", xg_sysex, sizeof(xg_sysex), 0, 127);
+    test_bank_select_reset("gm2", gm2_sysex, sizeof(gm2_sysex), 121, 120);
 
     return EXIT_SUCCESS;
 }

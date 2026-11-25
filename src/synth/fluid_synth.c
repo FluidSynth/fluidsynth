@@ -1078,6 +1078,30 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_synth_add_sfloader(synth, loader);
     }
 
+    /* Set the bank selection mode before initializing channel controllers. */
+    synth->bank_select = FLUID_BANK_STYLE_GS;
+
+    if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm"))
+    {
+        synth->bank_select = FLUID_BANK_STYLE_GM;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm2"))
+    {
+        synth->bank_select = FLUID_BANK_STYLE_GM2;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gs"))
+    {
+        synth->bank_select = FLUID_BANK_STYLE_GS;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "xg"))
+    {
+        synth->bank_select = FLUID_BANK_STYLE_XG;
+    }
+    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "mma"))
+    {
+        synth->bank_select = FLUID_BANK_STYLE_MMA;
+    }
+
     /* allocate all channel objects */
     synth->channel = FLUID_ARRAY(fluid_channel_t *, synth->midi_channels);
 
@@ -1161,29 +1185,6 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_ALL, values);
     }
 
-
-    synth->bank_select = FLUID_BANK_STYLE_GS;
-
-    if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm"))
-    {
-        synth->bank_select = FLUID_BANK_STYLE_GM;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gm2"))
-    {
-        synth->bank_select = FLUID_BANK_STYLE_GM2;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "gs"))
-    {
-        synth->bank_select = FLUID_BANK_STYLE_GS;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "xg"))
-    {
-        synth->bank_select = FLUID_BANK_STYLE_XG;
-    }
-    else if(fluid_settings_str_equal(settings, "synth.midi-bank-select", "mma"))
-    {
-        synth->bank_select = FLUID_BANK_STYLE_MMA;
-    }
 
     if(fluid_synth_reinitialize_tuning(synth) != FLUID_OK)
     {

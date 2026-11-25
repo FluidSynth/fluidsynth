@@ -164,6 +164,17 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
             fluid_channel_set_cc(chan, i, 0);
         }
 
+        /* Set Bank Select MSB to match the initialized channel type (issue #1924). */
+        if(chan->synth->bank_select == FLUID_BANK_STYLE_GM2)
+        {
+            fluid_channel_set_cc(chan, BANK_SELECT_MSB,
+                                 chan->channel_type == CHANNEL_TYPE_DRUM ? 120 : 121);
+        }
+        else if(chan->synth->bank_select == FLUID_BANK_STYLE_XG && chan->channel_type == CHANNEL_TYPE_DRUM)
+        {
+            fluid_channel_set_cc(chan, BANK_SELECT_MSB, 127);
+        }
+
         chan->previous_cc_breath = 0;/* Reset previous breath */
     }
     /* Unconditionally clear PTC receive (issue #1050) */
