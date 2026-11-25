@@ -1593,7 +1593,7 @@ fluid_track_send_events(fluid_track_t *track,
         /*                event->dtime, */
         /*                track->ticks + event->dtime); */
 
-        if(track->ticks + event->dtime > ticks)
+        if(track->ticks > ticks || event->dtime > ticks - track->ticks)
         {
             return;
         }
@@ -2109,6 +2109,51 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
     }
 }
 
+typedef struct
+{
+    int track;
+    unsigned int tick;
+} fluid_player_track_event_t;
+
+/* Order pending events by tick, breaking ties by the original track order. */
+static int
+fluid_player_track_event_before(const fluid_player_track_event_t *a,
+                                const fluid_player_track_event_t *b)
+{
+    return a->tick < b->tick || (a->tick == b->tick && a->track < b->track);
+}
+
+/* Restore the min-heap after replacing an entry. */
+static void
+fluid_player_track_heap_sift_down(fluid_player_track_event_t *heap, int size, int root)
+{
+    for(;;)
+    {
+        int left = 2 * root + 1;
+        int right = left + 1;
+        int smallest = root;
+        fluid_player_track_event_t tmp;
+
+        if(left < size && fluid_player_track_event_before(&heap[left], &heap[smallest]))
+        {
+            smallest = left;
+        }
+        if(right < size && fluid_player_track_event_before(&heap[right], &heap[smallest]))
+        {
+            smallest = right;
+        }
+        if(smallest == root)
+        {
+            return;
+        }
+
+        tmp = heap[root];
+        heap[root] = heap[smallest];
+        heap[smallest] = tmp;
+        root = smallest;
+    }
+}
+
 /*
  * fluid_player_callback
  */
@@ -2203,39 +2248,77 @@ fluid_player_callback(void *data, unsigned int msec)
             {
                 if(player->track[i]->ticks >= (unsigned int)seek_ticks)
                 {
+                    break;
+                }
+            }
+            if(i < player->ntracks)
+            {
+                /* A partial rewind would replay one track's older controller
+                 * events after newer events left over from another track. */
+                for(i = 0; i < player->ntracks; i++)
+                {
                     fluid_track_reset(player->track[i]);
                 }
             }
         }
         {
             unsigned int target = seek_ticks >= 0 ? (unsigned int)seek_ticks : player->cur_ticks;
-            for(;;)
+            fluid_player_track_event_t heap[MAX_NUMBER_OF_TRACKS];
+            int heap_size = 0;
+            int active_tracks = 0;
+
+            for(i = 0; i < player->ntracks; i++)
             {
-                int next_track = -1;
-                unsigned int next_tick = 0;
-                for(i = 0; i < player->ntracks; i++)
+                fluid_track_t *track = player->track[i];
+                if(!fluid_track_eot(track))
                 {
-                    fluid_track_t *track = player->track[i];
-                    if(track->cur && track->ticks <= target && track->cur->dtime <= target - track->ticks)
+                    active_tracks++;
+                    if(track->ticks <= target && track->cur->dtime <= target - track->ticks)
                     {
-                        unsigned int tick = track->ticks + track->cur->dtime;
-                        if(next_track < 0 || tick < next_tick)
-                        {
-                            next_track = i;
-                            next_tick = tick;
-                        }
+                        heap[heap_size].track = i;
+                        heap[heap_size].tick = track->ticks + track->cur->dtime;
+                        heap_size++;
                     }
                 }
-                if(next_track < 0)
-                {
-                    break;
-                }
-                fluid_track_send_events(player->track[next_track], synth, player, next_tick, seek_ticks);
             }
-        }
-        for(i = 0; i < player->ntracks; i++)
-        {
-            if(!fluid_track_eot(player->track[i]))
+
+            for(i = heap_size / 2 - 1; i >= 0; i--)
+            {
+                fluid_player_track_heap_sift_down(heap, heap_size, i);
+            }
+
+            while(heap_size > 1)
+            {
+                fluid_track_t *track = player->track[heap[0].track];
+                fluid_track_send_events(track, synth, player, heap[0].tick, seek_ticks);
+                if(fluid_track_eot(track))
+                {
+                    active_tracks--;
+                }
+
+                if(track->cur && track->ticks <= target && track->cur->dtime <= target - track->ticks)
+                {
+                    heap[0].tick = track->ticks + track->cur->dtime;
+                }
+                else
+                {
+                    heap[0] = heap[--heap_size];
+                }
+                fluid_player_track_heap_sift_down(heap, heap_size, 0);
+            }
+
+            /* No other track has a due event, so drain the last one at once. */
+            if(heap_size == 1)
+            {
+                fluid_track_t *track = player->track[heap[0].track];
+                fluid_track_send_events(track, synth, player, target, seek_ticks);
+                if(fluid_track_eot(track))
+                {
+                    active_tracks--;
+                }
+            }
+
+            if(active_tracks > 0)
             {
                 status = FLUID_PLAYER_PLAYING;
             }
