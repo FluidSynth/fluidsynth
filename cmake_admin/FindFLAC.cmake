@@ -20,7 +20,7 @@ Result Variables
 This will define the following variables:
 
 ``FLAC_FOUND``
-  True if both libraries were found.
+  True if the C library was found.
 ``FLAC_FLAC_FOUND``
   True if the C library was found.
 ``FLAC_FLAC++_FOUND``
@@ -74,8 +74,7 @@ endif()
 # Forward the result to CMake
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  FLAC REQUIRED_VARS "FLAC_LIBRARY" "FLAC_INCLUDE_DIR" "FLAC++_LIBRARY"
-                     "FLAC++_INCLUDE_DIR")
+  FLAC REQUIRED_VARS "FLAC_LIBRARY" "FLAC_INCLUDE_DIR")
 
 # Create the target
 if(FLAC_FOUND AND NOT TARGET FLAC::FLAC)
@@ -90,7 +89,10 @@ if(FLAC_FOUND AND NOT TARGET FLAC::FLAC)
   set(FLAC_FLAC_FOUND TRUE)
 endif()
 
-if(FLAC_FOUND AND NOT TARGET FLAC::FLAC++)
+if(FLAC_FOUND
+   AND FLAC++_LIBRARY
+   AND FLAC++_INCLUDE_DIR
+   AND NOT TARGET FLAC::FLAC++)
   add_library(FLAC::FLAC++ UNKNOWN IMPORTED)
   set_target_properties(
     FLAC::FLAC++
